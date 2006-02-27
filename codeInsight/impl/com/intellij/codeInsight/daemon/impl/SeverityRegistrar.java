@@ -1,0 +1,155 @@
+/*
+ * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
+ */
+
+package com.intellij.codeInsight.daemon.impl;
+
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+
+import java.awt.*;
+import java.util.*;
+import java.util.List;
+
+/**
+ * User: anna
+ * Date: 24-Feb-2006
+ */
+public class SeverityRegistrar implements JDOMExternalizable, ApplicationComponent {
+  @NonNls private static final String INFO = "info";
+  private static final Map<HighlightSeverity, HighlightInfoType.HighlightInfoTypeImpl> ourMap = new HashMap<HighlightSeverity, HighlightInfoType.HighlightInfoTypeImpl>();
+  private static final Map<HighlightSeverity, Color> ourRendererColors = new HashMap<HighlightSeverity, Color>();
+  @NonNls private static final String ERROR = "error";
+  @NonNls private static final String WARNING = "warning";
+  @NonNls private static final String COLOR = "color";
+
+  public static SeverityRegistrar getInstance(){
+    return ApplicationManager.getApplication().getComponent(SeverityRegistrar.class);
+  }
+
+  public static void registerSeverity(HighlightInfoType.HighlightInfoTypeImpl info, Color renderColor){
+    final HighlightSeverity severity = info.getSeverity(null);
+    ourMap.put(severity, info);
+    ourRendererColors.put(severity, renderColor);
+    HighlightDisplayLevel.registerSeverity(severity, renderColor);
+  }
+
+  public static Collection<HighlightInfoType.HighlightInfoTypeImpl> getRegisteredHighlightingInfoTypes() {
+    return ourMap.values();
+  }
+
+  public static HighlightInfoType.HighlightInfoTypeImpl unregisterSeverity(HighlightSeverity severity){
+    return ourMap.remove(severity);
+  }
+
+  public static HighlightInfoType.HighlightInfoTypeImpl getHighlightInfoTypeBySeverity(HighlightSeverity severity) {
+    if (severity == HighlightSeverity.ERROR){
+      return (HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.ERROR;
+    }
+    if (severity == HighlightSeverity.WARNING){
+      return (HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.WARNING;
+    }
+    if (severity == HighlightSeverity.INFORMATION){
+      return (HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.INFORMATION;
+    }
+    return ourMap.get(severity);
+  }
+
+
+
+  public void readExternal(Element element) throws InvalidDataException {
+    ourMap.clear();
+    ourRendererColors.clear();
+    final List children = element.getChildren(INFO);
+    if (children != null){
+      for (Object child : children) {
+        HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl();
+        final Element infoElement = (Element)child;
+        info.readExternal(infoElement);
+        Color color = null;
+        final String colorStr = infoElement.getAttributeValue(COLOR);
+        if (colorStr != null){
+          color = new Color(Integer.parseInt(colorStr, 16));
+        }
+        registerSeverity(info, color);
+      }
+    }
+    
+    final Element error = element.getChild(ERROR);
+    if (error != null) {
+      HighlightSeverity.ERROR.readExternal(error);
+    }
+
+    final Element warning = element.getChild(WARNING);
+    if (warning != null){
+      HighlightSeverity.WARNING.readExternal(warning);
+    }
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    for (HighlightSeverity severity : ourMap.keySet()) {
+      Element info = new Element(INFO);
+      final HighlightInfoType.HighlightInfoTypeImpl infoType = ourMap.get(severity);
+      infoType.writeExternal(info);
+      final Color color = ourRendererColors.get(severity);
+      if (color != null) {
+        info.setAttribute(COLOR, Integer.toString(color.getRGB() & 0xFFFFFF, 16));
+      }
+      element.addContent(info);
+    }
+    Element errorSeverity = new Element(ERROR);
+    HighlightSeverity.ERROR.writeExternal(errorSeverity);
+    element.addContent(errorSeverity);
+
+    Element warningSeverity = new Element(WARNING);
+    HighlightSeverity.WARNING.writeExternal(warningSeverity);
+    element.addContent(warningSeverity);
+
+  }
+
+  @NonNls
+  public String getComponentName() {
+    return "SeverityRegistrar";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+  }
+
+  public static int getSeveritiesCount() {
+    return ourMap.keySet().size() + 2;
+  }
+
+  public static HighlightSeverity getSeverityByIndex(final int i) {
+    TreeSet<HighlightSeverity> set = new TreeSet<HighlightSeverity>();
+    set.add(HighlightSeverity.ERROR);
+    set.add(HighlightSeverity.WARNING);
+    set.addAll(ourMap.keySet());
+    int index = 0;
+    for (HighlightSeverity severity : set) {
+      if (index == i) return severity;
+      index++;
+    }
+    return null; 
+  }
+
+  public static Color getRendererColorByIndex(final int i) {
+    final HighlightSeverity severity = getSeverityByIndex(i);
+    if (severity == HighlightSeverity.ERROR){
+      return Color.RED;
+    }
+    if (severity == HighlightSeverity.WARNING){
+      return Color.YELLOW;
+    }
+    return ourRendererColors.get(severity);
+  }
+}

@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -17,7 +16,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -222,17 +220,16 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
   private void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool) {
     if (problemDescriptors == null) return;
-    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile((PsiElement)myFile);
-    boolean isError = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())) == HighlightDisplayLevel.ERROR;
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
+    final HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
       ProgressManager.getInstance().checkCanceled();
-
       if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool.getID())) {
         myDescriptors.add(problemDescriptor);
         ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
         HighlightInfoType type = null;
         if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
-          type = isError ? HighlightInfoType.ERROR : HighlightInfoType.WARNING;
+          type = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
         }
         else if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
           type = HighlightInfoType.DEPRECATED;
@@ -263,23 +260,12 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement == null) continue;
       String message = renderDescriptionMessage(descriptor);
-      final HighlightInfoType level = myLevels.get(i);
 
-      HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-      InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile((PsiElement)myFile);
+      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+      final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
       if (!inspectionProfile.isToolEnabled(key)) continue;
-      final boolean isError = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR;
 
-
-      HighlightInfoType type = new HighlightInfoType() {
-        public HighlightSeverity getSeverity(final PsiElement psiElement) {
-          return isError ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
-        }
-
-        public TextAttributesKey getAttributesKey() {
-          return level.getAttributesKey();
-        }
-      };
+      HighlightInfoType type = SeverityRegistrar.getHighlightInfoTypeBySeverity(inspectionProfile.getErrorLevel(key).getSeverity());
       String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
       @NonNls String tooltip = "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
       HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);

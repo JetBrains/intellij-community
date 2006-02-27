@@ -19,7 +19,6 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -237,7 +236,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (javadocKey == null){
         HighlightDisplayKey.register(JavaDocReferenceInspection.SHORT_NAME, JavaDocReferenceInspection.DISPLAY_NAME);
       }
-      if (((InspectionProfile)InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile((PsiElement)myFile)).getErrorLevel(javadocKey) ==
+      if (InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile).getErrorLevel(javadocKey) ==
           HighlightDisplayLevel.ERROR) {
         return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
       }

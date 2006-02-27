@@ -1,16 +1,17 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -19,10 +20,7 @@ import java.util.ArrayList;
 
 public class RefreshStatusRenderer implements ErrorStripeRenderer {
   private static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
-  private static final Icon NO_ERRORS_ICON = IconLoader.getIcon("/general/errorsOK.png");
-  private static final Icon ERRORS_FOUND_ICON = IconLoader.getIcon("/general/errorsFound.png");
   private static final Icon NO_ANALYSIS_ICON = IconLoader.getIcon("/general/noAnalysis.png");
-  private static final Icon WARNINGS_FOUND_ICON = IconLoader.getIcon("/general/warningsFound.png");
   private static final Icon INSPECTION_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
   private static final Icon NO_ICON = new EmptyIcon(IN_PROGRESS_ICON.getIconWidth(), IN_PROGRESS_ICON.getIconHeight());
 
@@ -40,8 +38,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     public boolean errorAnalyzingFinished;
     public boolean inspectionFinished;
     public String [] noHighlightingRoots;
-    public int warningErrorCount;
-    public int errorCount;
+    public int[] errorCount = new int[SeverityRegistrar.getSeveritiesCount()];
     public String [] noInspectionRoots;
     public int rootsNumber;
   }
@@ -67,11 +64,10 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
 
     if (myHighlighter.isErrorAnalyzingFinished(myFile)) {
       status.errorAnalyzingFinished = true;
-      HighlightInfo[] infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.WARNING, myProject);
-      status.warningErrorCount = infos.length;
-      infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
-      status.errorCount = infos.length;
-
+      for (int i = 0; i < status.errorCount.length; i++) {
+        HighlightInfo[] infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, SeverityRegistrar.getSeverityByIndex(i), myProject);
+        status.errorCount[i] = infos.length;
+      }
       status.inspectionFinished = myHighlighter.isInspectionCompleted(myFile);
     }
     return status;
@@ -97,7 +93,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     else if (status.errorAnalyzingFinished) {
       boolean inspecting = !status.inspectionFinished;
       text += inspecting ? DaemonBundle.message("pass.inspection") : DaemonBundle.message("analysis.completed");
-      if (status.warningErrorCount == 0) {
+      if (status.errorCount[0] == 0){
         text += BR;
         if (inspecting) {
           text += DaemonBundle.message("no.errors.or.warnings.found.so.far");
@@ -105,17 +101,20 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
         else {
           text += DaemonBundle.message("no.errors.or.warnings.found");
         }
-      }
-      else {
-        if (status.errorCount != 0) {
-          text += BR;
-          text += DaemonBundle.message(inspecting ? "errors.count.so.far" : "errors.count", status.errorCount);
-        }
-
-        int warnings = status.warningErrorCount - status.errorCount;
-        if (warnings != 0) {
-          text += BR;
-          text += DaemonBundle.message(inspecting ? "warnings.count.so.far" : "warnings.count", warnings);
+      } else {
+        int currentSeverityErrors = 0;
+        for (int i = status.errorCount.length - 1; i >=0; i--){
+          final HighlightSeverity severity = SeverityRegistrar.getSeverityByIndex(i);
+          final int count = (status.errorCount[i] - currentSeverityErrors);
+          if (count > 0){
+            text += BR;
+            if (inspecting){
+              text += DaemonBundle.message("errors.found.so.far", count, (count > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase()));
+            } else {
+              text += DaemonBundle.message("errors.found", count, (count > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase()));
+            }
+          }
+          currentSeverityErrors += status.errorCount[i];
         }
       }
 
@@ -157,16 +156,13 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
       icon = IN_PROGRESS_ICON;
     }
     else {
-      if (status.warningErrorCount == 0) {
-        icon = NO_ERRORS_ICON;
+      icon = HighlightDisplayLevel.DO_NOT_SHOW.getIcon();
+      for (int i = status.errorCount.length - 1; i >= 0; i--) {
+        if (status.errorCount[i] != 0) {
+          icon = HighlightDisplayLevel.createIconByMask(SeverityRegistrar.getRendererColorByIndex(i));
+          break;
+        }
       }
-      else if (status.errorCount != 0) {
-        icon = ERRORS_FOUND_ICON;
-      }
-      else {
-        icon = WARNINGS_FOUND_ICON;
-      }
-
       boolean inspecting = !status.inspectionFinished;
       if (inspecting) {
         icon = IconUtilEx.createLayeredIcon(icon, INSPECTION_ICON);

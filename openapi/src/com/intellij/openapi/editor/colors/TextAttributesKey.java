@@ -17,8 +17,13 @@ package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,16 +32,24 @@ import java.util.Map;
  * A type of item with a distinct highlighting in an editor or in other views.
  */
 
-public final class TextAttributesKey implements Comparable<TextAttributesKey> {
+public final class TextAttributesKey implements Comparable<TextAttributesKey>, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.TextAttributesKey");
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
 
-  private final String myExternalName;
-  private TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
+  public String myExternalName;
+  public TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
   private static Map<String, TextAttributesKey> ourRegistry = new HashMap<String, TextAttributesKey>();
 
   private TextAttributesKey(String externalName) {
     myExternalName = externalName;
+    register();
+  }
+
+  //read external only
+  public TextAttributesKey() {
+  }
+
+  private void register() {
     if (ourRegistry.containsKey(myExternalName)) {
       LOG.error("Key " + myExternalName + " already registered.");
     }
@@ -111,5 +124,31 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    */
   public static TextAttributesKey createTextAttributesKey(@NonNls String externalName) {
     return find(externalName);
+  }
+
+  public void readExternal(Element element) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final TextAttributesKey that = (TextAttributesKey)o;
+
+    if (!myExternalName.equals(that.myExternalName)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = myExternalName.hashCode();
+    return result;
   }
 }

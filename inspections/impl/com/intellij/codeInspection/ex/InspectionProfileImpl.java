@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,6 +68,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
   private String myEnabledTool = null;
+  @NonNls private static final String USED_LEVELS = "used_levels";
 
 //private String myBaseProfileName;
 
@@ -219,6 +221,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         LOG.error(e);
       }
     }
+
+    final Element highlightElement = element.getChild(USED_LEVELS);
+    if (highlightElement != null) {
+      SeverityRegistrar.getInstance().readExternal(highlightElement);
+    }
+
     for (final Object o : element.getChildren(INSPECTION_TOOL_TAG)) {
       Element toolElement = (Element)o;
 
@@ -255,6 +263,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     element.setAttribute(VERSION_TAG, VALID_VERSION);
+
+    Element highlightSettings = new Element(USED_LEVELS);
+    SeverityRegistrar.getInstance().writeExternal(highlightSettings);
+    element.addContent(highlightSettings);
+
     for (final HighlightDisplayKey key : myDisplayLevelMap.keySet()) {
       Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
       final String toolName = key.toString();

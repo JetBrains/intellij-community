@@ -13,9 +13,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import org.jdom.Element;
 
 public interface HighlightInfoType {
   HighlightInfoType WRONG_REF = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
@@ -76,9 +80,16 @@ public interface HighlightInfoType {
 
   TextAttributesKey getAttributesKey();
 
-  class HighlightInfoTypeImpl implements HighlightInfoType {
-    private final HighlightSeverity mySeverity;
-    private final TextAttributesKey myAttributesKey;
+  class HighlightInfoTypeImpl implements HighlightInfoType, JDOMExternalizable {
+    private HighlightSeverity mySeverity;
+    private TextAttributesKey myAttributesKey;
+
+
+    //read external only
+    public HighlightInfoTypeImpl() {
+      mySeverity = new HighlightSeverity();
+      myAttributesKey = new TextAttributesKey();
+    }
 
     public HighlightInfoTypeImpl(HighlightSeverity severity, TextAttributesKey attributesKey) {
       mySeverity = severity;
@@ -97,24 +108,54 @@ public interface HighlightInfoType {
     public String toString() {
       return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + myAttributesKey + "]";
     }
+
+    public void readExternal(Element element) throws InvalidDataException {
+      mySeverity.readExternal(element);
+      myAttributesKey.readExternal(element);
+    }
+
+    public void writeExternal(Element element) throws WriteExternalException {
+      mySeverity.writeExternal(element);
+      myAttributesKey.writeExternal(element);
+    }
+
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final HighlightInfoTypeImpl that = (HighlightInfoTypeImpl)o;
+
+      if (!myAttributesKey.equals(that.myAttributesKey)) return false;
+      if (!mySeverity.equals(that.mySeverity)) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = mySeverity.hashCode();
+      result = 29 * result + myAttributesKey.hashCode();
+      return result;
+    }
   }
 
   class HighlightInfoTypeSeverityByKey implements HighlightInfoType {
     static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfoType.HighlightInfoTypeSeverityByKey");
 
     private final TextAttributesKey myAttributesKey;
-    private final HighlightDisplayKey mySeverityKey;
+    private final HighlightDisplayKey myToolKey;
 
     public HighlightInfoTypeSeverityByKey(HighlightDisplayKey severityKey, TextAttributesKey attributesKey) {
-      mySeverityKey = severityKey;
+      myToolKey = severityKey;
       myAttributesKey = attributesKey;
     }
 
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       HighlightDisplayLevel level = (psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile(psiElement) :
-                                    ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile())).getErrorLevel(mySeverityKey);
+                                     ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile())).getErrorLevel(myToolKey);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
-      return level == HighlightDisplayLevel.ERROR ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
+      return level.getSeverity();
     }
 
     public TextAttributesKey getAttributesKey() {
@@ -123,11 +164,11 @@ public interface HighlightInfoType {
 
     @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
-      return "HighlightInfoTypeSeverityByKey[severity=" + mySeverityKey + ", key=" + myAttributesKey + "]";
+      return "HighlightInfoTypeSeverityByKey[severity=" + myToolKey + ", key=" + myAttributesKey + "]";
     }
 
     public HighlightDisplayKey getSeverityKey() {
-      return mySeverityKey;
+      return myToolKey;
     }
   }
 
@@ -144,11 +185,13 @@ public interface HighlightInfoType {
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       HighlightDisplayLevel level = psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile(psiElement).getErrorLevel(mySeverityKey) : ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(mySeverityKey);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
-      return level == HighlightDisplayLevel.ERROR ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
+      return level.getSeverity();
     }
 
     public TextAttributesKey getAttributesKey() {
-      return getSeverity(null) == HighlightSeverity.ERROR ? CodeInsightColors.ERRORS_ATTRIBUTES : CodeInsightColors.WARNINGS_ATTRIBUTES;
+      final HighlightSeverity severity = getSeverity(null);
+      final HighlightInfoTypeImpl infoType = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      return infoType != null ? infoType.getAttributesKey() : (severity == HighlightSeverity.ERROR ? CodeInsightColors.ERRORS_ATTRIBUTES : CodeInsightColors.WARNINGS_ATTRIBUTES);
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})

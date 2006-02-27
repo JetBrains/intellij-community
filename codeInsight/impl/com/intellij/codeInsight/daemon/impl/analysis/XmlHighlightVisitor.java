@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
@@ -507,7 +507,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       addElementsForTagWithManyQuickFixes(
         tag,
         localizedMessage,
-        profile.getErrorLevel(key) == HighlightDisplayLevel.ERROR ? HighlightInfoType.ERROR : HighlightInfoType.WARNING,
+        SeverityRegistrar.getHighlightInfoTypeBySeverity(profile.getErrorLevel(key).getSeverity()),
         intentionAction,
         new EditInspectionToolsSettingsAction(key),
         basicIntention);
@@ -665,7 +665,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         new EditInspectionToolsSettingsAction(key)
       };
 
-      tagProblemInfoType = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR ? HighlightInfoType.ERROR : HighlightInfoType.WARNING;
+      tagProblemInfoType = SeverityRegistrar.getHighlightInfoTypeBySeverity(inspectionProfile.getErrorLevel(key).getSeverity());
     } else {
       tagProblemInfoType = HighlightInfoType.WRONG_REF; quickFixes = null;
     }

@@ -15,6 +15,11 @@
  */
 package com.intellij.lang.annotation;
 
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -24,9 +29,9 @@ import org.jetbrains.annotations.NonNls;
  * @see Annotation
  */
 
-public class HighlightSeverity implements Comparable<HighlightSeverity> {
-  private final String myName; // for debug only
-  private final int myVal;
+public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExternalizable {
+  public String myName;
+  public int myVal;
 
   /**
    * The standard severity level for information annotations.
@@ -56,11 +61,46 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
     myVal = val;
   }
 
+
+  //read external only
+  public HighlightSeverity() {
+  }
+
   public String toString() {
     return myName;
   }
 
   public int compareTo(final HighlightSeverity highlightSeverity) {
     return myVal - highlightSeverity.myVal;
+  }
+
+  public void setVal(final int val) {
+    myVal = val;
+  }
+
+  public void readExternal(Element element) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  public void writeExternal(final Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final HighlightSeverity that = (HighlightSeverity)o;
+
+    if (!myName.equals(that.myName)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = myName.hashCode();
+    return result;
   }
 }

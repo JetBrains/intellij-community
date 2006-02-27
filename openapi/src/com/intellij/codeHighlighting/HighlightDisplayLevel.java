@@ -15,40 +15,69 @@
  */
 package com.intellij.codeHighlighting;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Map;
 
-import org.jetbrains.annotations.NonNls;
-
 public class HighlightDisplayLevel {
+  private static final Icon EMPTY = new EmptyIcon(12, 12);
   private static Map<String, HighlightDisplayLevel> ourMap = new HashMap<String, HighlightDisplayLevel>();
 
-  public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel("ERROR", IconLoader.getIcon("/general/errorsFound.png"));
-  public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel("WARNING", IconLoader.getIcon("/general/warningsFound.png"));
-  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel("DO_NOT_SHOW", IconLoader.getIcon("/general/errorsOK.png"));
+  public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByMask(Color.red));
+  public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByMask(Color.yellow));
+  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(Color.green));
 
-  private final String myName;
   private final Icon myIcon;
+  private final HighlightSeverity mySeverity;
 
   public static HighlightDisplayLevel find(String name) {
     return ourMap.get(name);
   }
 
-  private HighlightDisplayLevel(@NonNls String name, Icon icon) {
-    myName = name;
+  public HighlightDisplayLevel(HighlightSeverity severity, Icon icon){
+    mySeverity = severity;
     myIcon = icon;
-    ourMap.put(myName, this);
+    ourMap.put(mySeverity.toString(), this);
   }
 
   public String toString() {
-    return myName;
+    return mySeverity.toString();
   }
 
   public Icon getIcon() {
     return myIcon;
   }
 
+  public HighlightSeverity getSeverity(){
+    return mySeverity;
+  }
+
+  public static void registerSeverity(final HighlightSeverity severity, final Color renderColor) {
+    Icon severityIcon = createIconByMask(renderColor);
+    new HighlightDisplayLevel(severity, severityIcon);
+  }
+
+  public static Icon createIconByMask(final Color renderColor) {
+    return new Icon() {
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        Graphics2D g2 = (Graphics2D)g;
+        g2.drawImage(ImageLoader.loadFromResource("/general/errorMask.png"), 1, 1, renderColor, null);
+      }
+
+
+      public int getIconWidth() {
+        return EMPTY.getIconWidth();
+      }
+
+
+      public int getIconHeight() {
+        return EMPTY.getIconHeight();
+      }
+    };
+  }
 }

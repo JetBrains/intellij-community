@@ -31,6 +31,8 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -46,8 +48,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class JavaColorSettingsPage implements ColorSettingsPage {
   private final static AttributesDescriptor[] ourDescriptors = new AttributesDescriptor[] {
@@ -71,12 +72,6 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.comment"), HighlighterColors.JAVA_DOC_COMMENT),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.tag"), HighlighterColors.JAVA_DOC_TAG),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.markup"), HighlighterColors.JAVA_DOC_MARKUP),
-
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol"), CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.error"), CodeInsightColors.ERRORS_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.warning"), CodeInsightColors.WARNINGS_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.deprecated.symbol"), CodeInsightColors.DEPRECATED_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unused.symbol"), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES),
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.class"), CodeInsightColors.CLASS_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.type.parameter"), CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES),
@@ -143,7 +138,18 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
 
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
-    return ourDescriptors;
+    List<AttributesDescriptor> descriptors = new ArrayList<AttributesDescriptor>();
+    descriptors.addAll(Arrays.asList(ourDescriptors));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol"), CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.deprecated.symbol"), CodeInsightColors.DEPRECATED_ATTRIBUTES));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unused.symbol"), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.error"), CodeInsightColors.ERRORS_ATTRIBUTES));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.warning"), CodeInsightColors.WARNINGS_ATTRIBUTES));
+    final Collection<HighlightInfoType.HighlightInfoTypeImpl> infoTypes = SeverityRegistrar.getRegisteredHighlightingInfoTypes();
+    for (HighlightInfoType type : infoTypes) {
+      descriptors.add(new AttributesDescriptor(type.getSeverity(null).toString(), type.getAttributesKey()));
+    }
+    return descriptors.toArray(new AttributesDescriptor[descriptors.size()]);
   }
 
   @NotNull
