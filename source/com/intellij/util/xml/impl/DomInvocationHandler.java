@@ -567,24 +567,5 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       myFixedChildrenClasses.put(tagName, aClass);
     }
   }
-
-
-  public void navigate(boolean requestFocus) {
-    final Project project = getManager().getProject();
-
-    final OpenFileDescriptor fileDescriptor = new OpenFileDescriptor(project, getFile().getVirtualFile(),
-                                                                           getXmlTag().getTextOffset());
-
-
-    FileEditorManagerEx.getInstanceEx(project).openTextEditor(fileDescriptor, requestFocus);
-  }
-
-  public boolean canNavigate() {
-    return true;
-  }
-
-  public boolean canNavigateToSource() {
-    return true;
-  }
 }
 

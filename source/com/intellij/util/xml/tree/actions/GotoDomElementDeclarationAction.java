@@ -7,7 +7,12 @@ package com.intellij.util.xml.tree.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.util.xml.tree.DomModelTreeView;
 import com.intellij.util.xml.tree.BaseDomElementNode;
+import com.intellij.util.xml.DomElementsNavigationManager;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementNavigateProvider;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
+
+import java.util.Set;
 
 /**
  * User: Sergey.Vasiliev
@@ -16,9 +21,14 @@ public class GotoDomElementDeclarationAction extends BaseDomTreeAction {
 
   public void actionPerformed(AnActionEvent e, DomModelTreeView treeView) {
     final SimpleNode simpleNode = treeView.getTree().getSelectedNode();
-    
+
     if(simpleNode instanceof BaseDomElementNode) {
-         ((BaseDomElementNode)simpleNode).getDomElement().navigate(true);
+      final DomElement domElement = ((BaseDomElementNode)simpleNode).getDomElement();
+      final DomElementNavigateProvider provider =
+        DomElementsNavigationManager.getManager(domElement.getManager().getProject()).getDomElementsNavigateProvider(DomElementsNavigationManager.DEFAULT_PROVIDER_NAME);
+
+      provider.navigate(domElement, true);
+      
     }
   }
 

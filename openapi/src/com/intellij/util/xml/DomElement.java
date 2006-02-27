@@ -16,7 +16,7 @@ import java.lang.reflect.Type;
 /**
  * @author peter
  */
-public interface DomElement extends Navigatable {
+public interface DomElement {
 
   @Nullable
   XmlTag getXmlTag();
