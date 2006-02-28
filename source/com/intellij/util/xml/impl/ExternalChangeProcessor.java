@@ -7,6 +7,7 @@ import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -75,8 +76,12 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
 
   public void visitDocumentChanged(final XmlDocumentChanged change) {
     assert myChangeSets.isEmpty();
+    documentChanged((XmlFile)change.getDocument().getContainingFile());
+  }
+
+  private void documentChanged(final XmlFile xmlFile) {
     myDocumentChanged = true;
-    final DomFileElementImpl element = DomManagerImpl.getCachedElement((XmlFile)change.getDocument().getContainingFile());
+    final DomFileElementImpl element = DomManagerImpl.getCachedElement(xmlFile);
     if (element != null) {
       final DomInvocationHandler rootHandler = element.getRootHandler();
       rootHandler.detach(false);
@@ -110,7 +115,15 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
 
   public void visitXmlTagNameChanged(final XmlTagNameChanged xmlTagNameChanged) {
     final XmlTag tag = xmlTagNameChanged.getTag();
-    getChangeSet(tag.getParentTag()).addChanged(tag);
+    final XmlTag parentTag = tag.getParentTag();
+    if (parentTag != null) {
+      getChangeSet(parentTag).addChanged(tag);
+    } else {
+      final PsiFile file = tag.getContainingFile();
+      if (file instanceof XmlFile) {
+        documentChanged((XmlFile)file);
+      }
+    }
   }
 
   public void visitXmlTextChanged(final XmlTextChanged xmlTextChanged) {
