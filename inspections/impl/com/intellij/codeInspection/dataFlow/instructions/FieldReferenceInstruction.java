@@ -8,6 +8,7 @@ import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -15,9 +16,9 @@ import org.jetbrains.annotations.NonNls;
 public class FieldReferenceInstruction extends Instruction {
   private PsiExpression myExpression;
   private boolean myIsPhysical;
-  private final String mySyntheticFieldName;
+  @Nullable private final String mySyntheticFieldName;
 
-  public FieldReferenceInstruction(PsiExpression expression, @NonNls String syntheticFieldName) {
+  public FieldReferenceInstruction(PsiExpression expression, @Nullable @NonNls String syntheticFieldName) {
     myExpression = expression;
     myIsPhysical = expression.isPhysical();
     mySyntheticFieldName = syntheticFieldName;
@@ -51,9 +52,5 @@ public class FieldReferenceInstruction extends Instruction {
     return myExpression instanceof PsiArrayAccessExpression
            ? ((PsiArrayAccessExpression)myExpression).getArrayExpression()
            : ((PsiReferenceExpression)myExpression).getQualifierExpression();
-  }
-
-  public String getSyntheticFieldName() {
-    return mySyntheticFieldName;
   }
 }

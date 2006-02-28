@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class MethodCallInstruction extends Instruction {
-  private final PsiCallExpression myCall;
+  @Nullable private final PsiCallExpression myCall;
   private DfaValueFactory myFactory;
   private boolean myIsNullable;
   private boolean myIsNotNull;
@@ -31,13 +31,16 @@ public class MethodCallInstruction extends Instruction {
   private @Nullable PsiType myType;
   private @NotNull PsiExpression[] myArgs;
   private boolean myShouldFlushFields;
+  @NotNull private final PsiExpression myContext;
 
-  public MethodCallInstruction(PsiCallExpression call, DfaValueFactory factory) {
-    myCall = call;
+  public MethodCallInstruction(@NotNull("!(context instanceof PsiCallExpression) means (implicit) xxxvalue() unboxing method call") 
+                               PsiExpression context, DfaValueFactory factory) {
+    myContext = context;
+    myCall = context instanceof PsiCallExpression ? (PsiCallExpression)context : null;
     myFactory = factory;
-    final PsiMethod callee = myCall.resolveMethod();
-    final PsiExpressionList argList = myCall.getArgumentList();
-    myArgs = argList != null ? argList.getExpressions() : new PsiExpression[0];
+    final PsiMethod callee = myCall == null ? null : myCall.resolveMethod();
+    final PsiExpressionList argList = myCall == null ? null : myCall.getArgumentList();
+    myArgs = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
 
     if (callee != null) {
       myIsNullable = AnnotationUtil.isNullable(callee);
@@ -51,7 +54,7 @@ public class MethodCallInstruction extends Instruction {
     else {
       myParametersNotNull = ArrayUtil.EMPTY_BOOLEAN_ARRAY;
     }
-    myType = myCall.getType();
+    myType = myCall == null ? null : myCall.getType();
 
     myShouldFlushFields = true;
     if (myCall instanceof PsiNewExpression) {
@@ -86,7 +89,12 @@ public class MethodCallInstruction extends Instruction {
     final @NotNull DfaValue qualifier = memState.pop();
     try {
       if (!memState.applyNotNull(qualifier)) {
-        runner.onInstructionProducesNPE(this);
+        if (myCall == null) {
+          runner.onUnboxingNullable(myContext);
+        }
+        else {
+          runner.onInstructionProducesNPE(this);
+        }
         if (qualifier instanceof DfaVariableValue) {
           memState.setVarValue((DfaVariableValue)qualifier, myFactory.getNotNullFactory().create(((DfaVariableValue)qualifier).getPsiVariable().getType()));
         }
@@ -95,17 +103,21 @@ public class MethodCallInstruction extends Instruction {
       return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
     }
     finally {
-      pushResult(memState);
+      pushResult(memState, qualifier);
       if (myShouldFlushFields) {
         memState.flushFields(runner);
       }
     }
   }
 
-  private void pushResult(DfaMemoryState state) {
+  private void pushResult(DfaMemoryState state, final DfaValue qualifier) {
     final DfaValue dfaValue;
     if (myType != null && (myType instanceof PsiClassType || myType.getArrayDimensions() > 0)) {
       dfaValue = myIsNotNull ? myFactory.getNotNullFactory().create(myType) : myFactory.getTypeFactory().create(myType, myIsNullable);
+    }
+    else if (myCall == null){
+      // unboxing
+      dfaValue = qualifier;
     }
     else {
       dfaValue = DfaUnknownValue.getInstance();
@@ -119,6 +131,6 @@ public class MethodCallInstruction extends Instruction {
   }
 
   public String toString() {
-    return "CALL_METHOD: " + myCall.getText();
+    return myCall == null ? "Unboxing" : "CALL_METHOD: " + myCall.getText();
   }
 }

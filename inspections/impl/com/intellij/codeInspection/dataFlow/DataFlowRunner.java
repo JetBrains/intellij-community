@@ -18,6 +18,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.EmptyStackException;
@@ -29,12 +31,12 @@ public class DataFlowRunner {
   private static final long ourTimeLimit = 10000;
 
   private Instruction[] myInstructions;
-  private final HashSet<Instruction> myNPEInstructions;
+  private final HashSet<Instruction> myNPEInstructions = new HashSet<Instruction>();
   private DfaVariableValue[] myFields;
-  private final HashSet<Instruction> myCCEInstructions;
-  private final HashSet<PsiExpression> myNullableArguments;
-  private final HashSet<PsiExpression> myNullableAssignments;
-  private final HashSet<PsiReturnStatement> myNullableReturns;
+  private final HashSet<Instruction> myCCEInstructions = new HashSet<Instruction>();
+  private final HashSet<PsiExpression> myNullableArguments = new HashSet<PsiExpression>();
+  private final HashSet<PsiExpression> myNullableAssignments = new HashSet<PsiExpression>();
+  private final HashSet<PsiReturnStatement> myNullableReturns = new HashSet<PsiReturnStatement>();
   private DfaValueFactory myValueFactory;
 
   private final boolean mySuggestNullableAnnotations;
@@ -45,6 +47,7 @@ public class DataFlowRunner {
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   public static final int MAX_STATES_PER_BRANCH = 300;
+  private Set<PsiExpression> myUnboxedNullables = new THashSet<PsiExpression>();
 
   public Instruction getInstruction(int index) {
     return myInstructions[index];
@@ -52,11 +55,6 @@ public class DataFlowRunner {
 
   public DataFlowRunner(boolean suggestNullableAnnotations) {
     mySuggestNullableAnnotations = suggestNullableAnnotations;
-    myNPEInstructions = new HashSet<Instruction>();
-    myCCEInstructions = new HashSet<Instruction>();
-    myNullableArguments = new HashSet<PsiExpression>();
-    myNullableAssignments = new HashSet<PsiExpression>();
-    myNullableReturns = new HashSet<PsiReturnStatement>();
     myValueFactory = new DfaValueFactory();
   }
 
@@ -83,7 +81,7 @@ public class DataFlowRunner {
       if (LOG.isDebugEnabled()) {
         for (int i = 0; i < myInstructions.length; i++) {
           Instruction instruction = myInstructions[i];
-          LOG.debug("" + i + ": " + instruction.toString());
+          LOG.debug(i + ": " + instruction.toString());
         }
       }
 
@@ -129,7 +127,7 @@ public class DataFlowRunner {
           }
         }
 
-        DfaInstructionState[] after = instruction.apply(DataFlowRunner.this, instructionState.getMemoryState());
+        DfaInstructionState[] after = instruction.apply(this, instructionState.getMemoryState());
         if (after != null) {
           for (DfaInstructionState state : after) {
             Instruction nextInstruction = state.getInstruction();
@@ -157,15 +155,15 @@ public class DataFlowRunner {
     myCCEInstructions.add(instruction);
   }
 
-  public Set<Instruction> getCCEInstructions() {
+  @NotNull public Set<Instruction> getCCEInstructions() {
     return myCCEInstructions;
   }
 
-  public Set<Instruction> getNPEInstructions() {
+  @NotNull public Set<Instruction> getNPEInstructions() {
     return myNPEInstructions;
   }
 
-  public Set<Instruction> getRedundantInstanceofs() {
+  @NotNull public Set<Instruction> getRedundantInstanceofs() {
     HashSet<Instruction> result = new HashSet<Instruction>(1);
     for (Instruction instruction : myInstructions) {
       if (instruction instanceof BinopInstruction) {
@@ -178,7 +176,7 @@ public class DataFlowRunner {
     return result;
   }
 
-  public HashSet<PsiReturnStatement> getNullableReturns() {
+  @NotNull public Set<PsiReturnStatement> getNullableReturns() {
     return myNullableReturns;
   }
 
@@ -190,12 +188,23 @@ public class DataFlowRunner {
     return myInNotNullMethod;
   }
 
-  public Set<PsiExpression> getNullableArguments() {
+  @NotNull public Set<PsiExpression> getNullableArguments() {
     return myNullableArguments;
   }
 
-  public HashSet<PsiExpression> getNullableAssignments() {
+  @NotNull public Set<PsiExpression> getNullableAssignments() {
     return myNullableAssignments;
+  }
+
+  @NotNull public Set<PsiExpression> getUnboxedNullables() {
+    return myUnboxedNullables;
+  }
+
+  public void onUnboxingNullable(@NotNull PsiExpression expression) {
+    LOG.assertTrue(expression.isValid());
+    if (expression.isPhysical()) {
+      myUnboxedNullables.add(expression);
+    }
   }
 
   public DfaVariableValue[] getFields() {
@@ -254,12 +263,14 @@ public class DataFlowRunner {
   public boolean problemsDetected() {
     final HashSet[] constConditions = getConstConditionalExpressions();
     return constConditions[0].size() > 0 ||
-        constConditions[1].size() > 0 ||
-        myNPEInstructions.size() > 0 ||
-        myCCEInstructions.size() > 0 ||
-        getRedundantInstanceofs().size() > 0 ||
-        myNullableArguments.size() > 0 ||
-        myNullableAssignments.size() > 0 ||
-        myNullableReturns.size() > 0;
+           constConditions[1].size() > 0 ||
+           myNPEInstructions.size() > 0 ||
+           myCCEInstructions.size() > 0 ||
+           getRedundantInstanceofs().size() > 0 ||
+           myNullableArguments.size() > 0 ||
+           myNullableAssignments.size() > 0 ||
+           myNullableReturns.size() > 0 ||
+           !myUnboxedNullables.isEmpty();
   }
+
 }

@@ -1,13 +1,12 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiPrefixExpression {
@@ -27,11 +26,10 @@ public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiP
   }
 
   public PsiType getType() {
-    PsiElementFactoryImpl factory = (PsiElementFactoryImpl)getManager().getElementFactory();
     PsiExpression operand = getOperand();
     if (operand == null) return null;
     PsiType type = operand.getType();
-    IElementType opCode = (SourceTreeToPsiMap.psiElementToTree(getOperationSign())).getElementType();
+    IElementType opCode = SourceTreeToPsiMap.psiElementToTree(getOperationSign()).getElementType();
     if (opCode == PLUS || opCode == MINUS || opCode == TILDE) {
       if (type == null) return null;
       if (type == PsiType.BYTE || type == PsiType.CHAR || type == PsiType.SHORT) {

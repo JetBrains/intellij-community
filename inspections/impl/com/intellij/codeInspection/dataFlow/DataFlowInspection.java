@@ -123,7 +123,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           PsiMethodCallExpression callExpression = (PsiMethodCallExpression)mcInstruction.getCallExpression();
           LocalQuickFix[] fix = createNPEFixes(callExpression.getMethodExpression().getQualifierExpression());
 
-          holder.registerProblem(mcInstruction.getCallExpression(),
+          holder.registerProblem(callExpression,
                                  InspectionsBundle.message("dataflow.message.npe.method.invocation"),
                                  fix);
         }
@@ -172,22 +172,18 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
                                    InspectionsBundle.message("dataflow.message.unreachable.switch.label"));
           }
         }
-        else if (psiAnchor != null) {
-          if (!reportedAnchors.contains(psiAnchor)) {
-            if (onTheLeftSideOfConditionalAssignemnt(psiAnchor)) {
-              holder.registerProblem(psiAnchor,
-                                     InspectionsBundle.message("dataflow.message.pointless.assignment.expression",
-                                                               Boolean.toString(trueSet.contains(instruction))));
-            }
-            else {
-              final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, trueSet.contains(instruction));
-              holder.registerProblem(psiAnchor,
-                                     InspectionsBundle.message("dataflow.message.constant.condition",
-                                                               Boolean.toString(trueSet.contains(instruction))),
-                                     localQuickFix==null ? null : new LocalQuickFix[]{localQuickFix});
-            }
-            reportedAnchors.add(psiAnchor);
+        else if (psiAnchor != null && !reportedAnchors.contains(psiAnchor) && !isCompileConstantInIfCondition(psiAnchor)) {
+          if (onTheLeftSideOfConditionalAssignemnt(psiAnchor)) {
+            holder.registerProblem(psiAnchor, InspectionsBundle.message("dataflow.message.pointless.assignment.expression",
+                                                                        Boolean.toString(trueSet.contains(instruction))));
           }
+          else {
+            final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, trueSet.contains(instruction));
+            holder.registerProblem(psiAnchor, InspectionsBundle.message("dataflow.message.constant.condition",
+                                                                        Boolean.toString(trueSet.contains(instruction))),
+                                              localQuickFix == null ? null : new LocalQuickFix[]{localQuickFix});
+          }
+          reportedAnchors.add(psiAnchor);
         }
       }
     }
@@ -209,7 +205,12 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       holder.registerProblem(expr, text);
     }
 
-    final HashSet<PsiReturnStatement> statements = runner.getNullableReturns();
+    exprs = runner.getUnboxedNullables();
+    for (PsiExpression expr : exprs) {
+      holder.registerProblem(expr, InspectionsBundle.message("dataflow.message.unboxing"));
+    }
+
+    final Set<PsiReturnStatement> statements = runner.getNullableReturns();
     for (PsiReturnStatement statement : statements) {
       final PsiExpression expr = statement.getReturnValue();
       if (runner.isInNotNullMethod()) {
@@ -226,6 +227,22 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
       }
     }
+  }
+
+  private static boolean isCompileConstantInIfCondition(PsiElement element) {
+    if (!(element instanceof PsiReferenceExpression)) return false;
+    PsiElement resolved = ((PsiReferenceExpression)element).resolve();
+    if (!(resolved instanceof PsiField)) return false;
+    PsiField field = (PsiField)resolved;
+
+    if (!field.hasModifierProperty(PsiModifier.FINAL)) return false;
+
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiPrefixExpression && ((PsiPrefixExpression)parent).getOperationSign().getTokenType() == JavaTokenType.EXCL) {
+      element = parent;
+      parent = parent.getParent();
+    }
+    return parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == element;
   }
 
   private static boolean isNullLiteralExpression(PsiExpression expr) {

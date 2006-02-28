@@ -14,19 +14,15 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 public class DataFlowTest extends InspectionTestCase {
   private void doTest() throws Exception {
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new DataFlowInspection());
-    doTest("dataFlow/" + getTestName(false),
-           tool);
+    doTest("dataFlow/" + getTestName(false), tool);
   }
 
   private void doTest15() throws Exception {
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new DataFlowInspection());
-    doTest("dataFlow/" + getTestName(false),
-           tool, "java 1.5");
+    doTest("dataFlow/" + getTestName(false), tool, "java 1.5");
   }
 
-  public void testnpe1() throws Exception {
-    doTest();
-  }
+  public void testnpe1() throws Exception { doTest(); }
 
   public void testcaseAndNpe() throws Exception {
     doTest();
@@ -201,7 +197,8 @@ public class DataFlowTest extends InspectionTestCase {
   public void testArrayAccessNPE() throws Exception {
     doTest15();
   }
-  public void testArrayAccessDoesntCancelAnalysis() throws Exception {
-    doTest15();
-  }
+  public void testArrayAccessDoesntCancelAnalysis() throws Exception { doTest15(); }
+  public void testCompileTimeConst() throws Exception { doTest15(); }
+  public void testAutoboxing() throws Exception { doTest15(); }
+  public void testUnboxingNPE() throws Exception { doTest15(); }
 }

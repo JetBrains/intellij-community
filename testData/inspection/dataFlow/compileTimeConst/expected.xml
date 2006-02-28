@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+<problem>
+  <file>Test.java</file>
+  <line>5</line>
+  <method>
+    <name>void foo(boolean param)</name>
+    <display_name>foo(boolean)</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>Y</name>
+      <display_name>Y</display_name>
+    </class>
+  </method>
+  <problem_class>Constant conditions &amp; exceptions</problem_class>
+  <description>Condition &lt;code&gt;CONST&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+</problem>
+</problems>

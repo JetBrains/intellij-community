@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+<problem>
+  <file>Test.java</file>
+  <line>5</line>
+  <method>
+    <name>void f(int k)</name>
+    <display_name>f(int)</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>Auto</name>
+      <display_name>Auto</display_name>
+    </class>
+  </method>
+  <problem_class>Constant conditions &amp; exceptions</problem_class>
+  <description>Condition &lt;code&gt;i==j&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+</problem>
+
+
+<problem>
+  <file>Test.java</file>
+  <line>9</line>
+  <method>
+    <name>void f(int k)</name>
+    <display_name>f(int)</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>Auto</name>
+      <display_name>Auto</display_name>
+    </class>
+  </method>
+  <problem_class>Constant conditions &amp; exceptions</problem_class>
+  <description>Condition &lt;code&gt;i==j2&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+</problem>
+
+
+<problem>
+  <file>Test.java</file>
+  <line>12</line>
+  <method>
+    <name>void f(int k)</name>
+    <display_name>f(int)</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>Auto</name>
+      <display_name>Auto</display_name>
+    </class>
+  </method>
+  <problem_class>Constant conditions &amp; exceptions</problem_class>
+  <description>Condition &lt;code&gt;i==0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+</problem>
+
+
+<problem>
+  <file>Test.java</file>
+  <line>15</line>
+  <method>
+    <name>void f(int k)</name>
+    <display_name>f(int)</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>Auto</name>
+      <display_name>Auto</display_name>
+    </class>
+  </method>
+  <problem_class>Constant conditions &amp; exceptions</problem_class>
+  <description>Condition &lt;code&gt;i==1&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+</problem>
+</problems>

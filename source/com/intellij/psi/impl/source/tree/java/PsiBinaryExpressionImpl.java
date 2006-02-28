@@ -84,7 +84,7 @@ public class PsiBinaryExpressionImpl extends CompositePsiElement implements PsiB
     return null;
   }
 
-  private PsiType unboxAndBalanceTypes(PsiType type1, PsiType type2) {
+  private static PsiType unboxAndBalanceTypes(PsiType type1, PsiType type2) {
     if (type1 instanceof PsiClassType) type1 = PsiPrimitiveType.getUnboxedType(type1);
     if (type2 instanceof PsiClassType) type2 = PsiPrimitiveType.getUnboxedType(type2);
 
@@ -126,13 +126,8 @@ public class PsiBinaryExpressionImpl extends CompositePsiElement implements PsiB
     }
   }
 
-  private static final TokenSet OUR_OPERATIONS_BIT_SET = TokenSet.create(new IElementType[]{
-    OROR, ANDAND, OR, XOR,
-    AND, EQEQ, NE, LT,
-    GT, LE, GE, LTLT,
-    GTGT, GTGTGT, PLUS, MINUS,
-    ASTERISK, DIV, PERC
-  });
+  private static final TokenSet OUR_OPERATIONS_BIT_SET =
+    TokenSet.create(OROR, ANDAND, OR, XOR, AND, EQEQ, NE, LT, GT, LE, GE, LTLT, GTGT, GTGTGT, PLUS, MINUS, ASTERISK, DIV, PERC);
 
   public void accept(PsiElementVisitor visitor) {
     visitor.visitBinaryExpression(this);
