@@ -21,11 +21,7 @@ import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 17.11.2005
- * Time: 16:25:33
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class AsmCodeGeneratorTest extends TestCase {
   private AsmCodeGenerator initCodeGenerator(final String formFileName, final String className) throws Exception {

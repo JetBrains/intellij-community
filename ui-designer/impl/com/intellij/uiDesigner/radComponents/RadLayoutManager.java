@@ -4,11 +4,12 @@
 
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.uiDesigner.XmlWriter;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Design-time support for a layout manager.
@@ -42,4 +43,8 @@ public abstract class RadLayoutManager {
   public boolean canChangeLayout(final RadContainer container) {
     return true;
   }
+
+  public abstract void writeChildConstraints(final XmlWriter writer, final RadComponent child);
+
+  public abstract void writeLayout(final XmlWriter writer, final RadContainer radContainer);
 }

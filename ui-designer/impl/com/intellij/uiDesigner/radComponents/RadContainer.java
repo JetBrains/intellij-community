@@ -52,7 +52,7 @@ public class RadContainer extends RadComponent implements IContainer {
    */
   @Nullable private StringDescriptor myBorderTitle;
 
-  private RadLayoutManager myLayoutManager;
+  protected RadLayoutManager myLayoutManager;
 
   public RadContainer(final Module module, final String id){
     this(module, JPanel.class, id);
@@ -66,11 +66,21 @@ public class RadContainer extends RadComponent implements IContainer {
     // By default container doesn't have any special border
     setBorderType(BorderType.NONE);
 
-    //noinspection OverriddenMethodCallInConstructor
-    final AbstractLayout initialLayout = createInitialLayout();
-    if (initialLayout != null){
-      getDelegee().setLayout(initialLayout);
+    myLayoutManager = createInitialLayoutManager();
+    if (myLayoutManager != null) {
+      setLayout(myLayoutManager.createLayout());
     }
+    else {
+      //noinspection OverriddenMethodCallInConstructor
+      final AbstractLayout initialLayout = createInitialLayout();
+      if (initialLayout != null){
+        getDelegee().setLayout(initialLayout);
+      }
+    }
+  }
+
+  @Nullable protected RadLayoutManager createInitialLayoutManager() {
+    return null;
   }
 
   public Property getInplaceProperty(final int x, final int y) {
@@ -560,34 +570,8 @@ public class RadContainer extends RadComponent implements IContainer {
       if (myLayoutManager != null) {
         writer.addAttribute("layout-manager", myLayoutManager.getName());
       }
-      
-      final AbstractLayout layout = (AbstractLayout)getLayout();
-      if (isGrid()) {
-        final GridLayoutManager _layout = (GridLayoutManager)layout;
-        writer.addAttribute("row-count", _layout.getRowCount());
-        writer.addAttribute("column-count", _layout.getColumnCount());
 
-        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SAME_SIZE_HORIZONTALLY, _layout.isSameSizeHorizontally());
-        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SAME_SIZE_VERTICALLY, _layout.isSameSizeVertically());
-      }
-      // It has sense to save hpap and vgap even for XY layout. The reason is
-      // that XY was previously GRID with non default gaps, so when the user
-      // compose XY into the grid again then he will get the same non default gaps.
-      writer.addAttribute("hgap", layout.getHGap());
-      writer.addAttribute("vgap", layout.getVGap());
-
-      // Margins
-      final Insets margin = layout.getMargin();
-      writer.startElement("margin");
-      try {
-        writer.addAttribute("top", margin.top);
-        writer.addAttribute("left", margin.left);
-        writer.addAttribute("bottom", margin.bottom);
-        writer.addAttribute("right", margin.right);
-      }
-      finally {
-        writer.endElement(); // margin
-      }
+      getLayoutManager().writeLayout(writer, this);
 
       // Constraints and properties
       writeConstraints(writer);
@@ -607,55 +591,11 @@ public class RadContainer extends RadComponent implements IContainer {
    * Serializes child constraints into the currently opened "constraints" tag
    */
   public void writeConstraints(final XmlWriter writer, @NotNull final RadComponent child){
-    //noinspection ConstantConditions
-    if (child == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("child cannot be null");
-    }
     if(child.getParent() != this){
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("parent mismatch: "+child.getParent());
     }
-    writeXYConstraints(writer, child);
-    writeGridConstraints(writer, child);
-  }
-
-  public static void writeXYConstraints(final XmlWriter writer, final RadComponent child) {
-    // Constraints of XY layout
-    writer.startElement("xy");
-    try{
-      writer.addAttribute("x", child.getX());
-      writer.addAttribute("y", child.getY());
-      writer.addAttribute("width", child.getWidth());
-      writer.addAttribute("height", child.getHeight());
-    }finally{
-      writer.endElement(); // xy
-    }
-  }
-
-  public static void writeGridConstraints(final XmlWriter writer, final RadComponent child) {
-    // Constraints in Grid layout
-    writer.startElement("grid");
-    try {
-      final GridConstraints constraints = child.getConstraints();
-      writer.addAttribute("row",constraints.getRow());
-      writer.addAttribute("column",constraints.getColumn());
-      writer.addAttribute("row-span",constraints.getRowSpan());
-      writer.addAttribute("col-span",constraints.getColSpan());
-      writer.addAttribute("vsize-policy",constraints.getVSizePolicy());
-      writer.addAttribute("hsize-policy",constraints.getHSizePolicy());
-      writer.addAttribute("anchor",constraints.getAnchor());
-      writer.addAttribute("fill",constraints.getFill());
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_INDENT, constraints.getIndent());
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_USE_PARENT_LAYOUT, constraints.isUseParentLayout());
-
-      // preferred size
-      writer.writeDimension(constraints.myMinimumSize,"minimum-size");
-      writer.writeDimension(constraints.myPreferredSize,"preferred-size");
-      writer.writeDimension(constraints.myMaximumSize,"maximum-size");
-    } finally {
-      writer.endElement(); // grid
-    }
+    getLayoutManager().writeChildConstraints(writer, child);
   }
 
   public boolean accept(ComponentVisitor visitor) {

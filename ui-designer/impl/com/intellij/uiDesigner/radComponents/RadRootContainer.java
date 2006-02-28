@@ -5,7 +5,6 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.lw.LwButtonGroup;
@@ -92,9 +91,18 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     }
   }
 
+  @Override public void writeConstraints(final XmlWriter writer) {
+    writer.startElement("constraints");
+    try {
+      myLayoutManager.writeChildConstraints(writer, this);
+    } finally {
+      writer.endElement(); // constraints
+    }
+  }
+
   @Override @Nullable
-  protected AbstractLayout createInitialLayout() {
-    return new XYLayoutManagerImpl();
+  protected RadLayoutManager createInitialLayoutManager() {
+    return RadXYLayoutManager.INSTANCE;
   }
 
   @Nullable public RadButtonGroup findGroupForComponent(@NotNull final RadComponent component) {

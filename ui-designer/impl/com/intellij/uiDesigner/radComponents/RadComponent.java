@@ -469,15 +469,11 @@ public abstract class RadComponent implements IComponent {
     }
   }
 
-  protected final void writeConstraints(final XmlWriter writer){
+  protected void writeConstraints(final XmlWriter writer){
     writer.startElement("constraints");
     try {
       if (getParent() != null) {
         getParent().writeConstraints(writer, this);
-      }
-      else {
-        RadContainer.writeXYConstraints(writer, this);
-        RadContainer.writeGridConstraints(writer, this);
       }
     } finally {
       writer.endElement(); // constraints
