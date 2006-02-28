@@ -210,7 +210,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       setCursor(Cursor.getDefaultCursor());
       myEditor.getActiveDecorationLayer().removeFeedback();
 
-      if (myResizeLine >= 0) {
+      if (myResizeLine > 0) {
         Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                                 mySelectedContainer.getDelegee());
         doResize(pnt);
