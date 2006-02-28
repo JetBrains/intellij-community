@@ -101,7 +101,7 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
     return null;
   }
 
-  private static class MyVisitor extends PsiRecursiveElementVisitor {
+  private static class MyVisitor extends PsiElementVisitor {
     private ProblemsHolder myHolder;
 
     public MyVisitor(final ProblemsHolder holder) {
