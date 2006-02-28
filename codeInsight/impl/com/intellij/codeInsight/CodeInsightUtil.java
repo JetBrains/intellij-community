@@ -27,7 +27,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -152,24 +151,34 @@ public class CodeInsightUtil {
     final List<PsiElement> list = new ArrayList<PsiElement>();
 
     final int currentOffset = commonParent.getTextRange().getStartOffset();
-    final TreeElementVisitor visitor = new TreeElementVisitor() {
+    final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       int offset = currentOffset;
-      public void visitLeaf(LeafElement leaf) {
-        offset += leaf.getTextLength();
+
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitExpression(expression);
       }
-      public void visitComposite(CompositeElement composite) {
-        ChameleonTransforming.transformChildren(composite);
-        for (TreeElement child = composite.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-          if (offset > endOffset) break;
-          int start = offset;
-          child.acceptTree(this);
-          if (startOffset <= start && offset <= endOffset) {
-            list.add(child.getPsi());
+
+      public void visitElement(PsiElement element) {
+        if(element.getFirstChild() != null){
+          // composite element
+          PsiElement child = element.getFirstChild();
+          while(child != null){
+            if (offset > endOffset)
+              break;
+            int start = offset;
+            child.accept(this);
+            if (startOffset <= start && offset <= endOffset)
+              list.add(child);
+            child = child.getNextSibling();
           }
+        }
+        else{
+          // leaf element
+          offset += element.getTextLength();
         }
       }
     };
-    ((TreeElement)commonParent.getNode()).acceptTree(visitor);
+    commonParent.accept(visitor);
     list.add(commonParent);
 
     if (includeAllParents) {
@@ -183,25 +192,36 @@ public class CodeInsightUtil {
     return Collections.unmodifiableList(list);
   }
 
-  @Nullable public static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
-    final ASTNode leafElementAt1 = root.getNode().findLeafElementAt(startOffset);
-    if(leafElementAt1 == null) return null;
-    ASTNode leafElementAt2 = root.getNode().findLeafElementAt(endOffset);
-    if (leafElementAt2 == null && endOffset == root.getTextLength()) leafElementAt2 = root.getNode().findLeafElementAt(endOffset - 1);
-    if(leafElementAt2 == null) return null;
-    ASTNode prev = leafElementAt2.getTreePrev();
-    if (prev != null && prev.getTextRange().getEndOffset() == endOffset) {
-      leafElementAt2 = prev;
-    }
-    TreeElement commonParent = (TreeElement)TreeUtil.findCommonParent(leafElementAt1, leafElementAt2);
+  private static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
+    final PsiElement left = findElementAtInRoot(root, startOffset);
+    PsiElement right = findElementAtInRoot(root, endOffset);
+    if(right == null) right = findElementAtInRoot(root, endOffset - 1);
+    if(left == null || right == null) return null;
+
+    //ASTNode prev = leafElementAt2.getTreePrev();
+    //if (prev != null && prev.getTextRange().getEndOffset() == endOffset) {
+    //  leafElementAt2 = prev;
+    //}
+    PsiElement commonParent = PsiTreeUtil.findCommonParent(left, right);
     LOG.assertTrue(commonParent != null);
     LOG.assertTrue(commonParent.getTextRange() != null);
 
-    while(commonParent.getTreeParent() != null &&
-          commonParent.getTextRange().equals(commonParent.getTreeParent().getTextRange())) {
-      commonParent = commonParent.getTreeParent();
+    while(commonParent.getParent() != null &&
+          commonParent.getTextRange().equals(commonParent.getParent().getTextRange())) {
+      commonParent = commonParent.getParent();
     }
-    return commonParent.getPsi();
+    return commonParent;
+  }
+
+  private static PsiElement findElementAtInRoot(final PsiElement root, final int startOffset) {
+    final PsiElement left;
+    if(root instanceof PsiFile) {
+      left = ((PsiFile)root).getViewProvider().findElementAt(startOffset, root.getLanguage());
+    }
+    else {
+      left = root.findElementAt(startOffset);
+    }
+    return left;
   }
 
   public static void sortIdenticalShortNameClasses(PsiClass[] classes) {
