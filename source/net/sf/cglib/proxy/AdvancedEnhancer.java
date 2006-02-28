@@ -395,7 +395,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   protected ClassLoader getDefaultClassLoader() {
-    if (interfaces != null) return interfaces[0].getClassLoader();
+    if (interfaces != null && interfaces.length > 0) return interfaces[0].getClassLoader();
     if (superclass != null) return superclass.getClassLoader();
     return null;
   }
