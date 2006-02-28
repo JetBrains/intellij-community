@@ -52,7 +52,7 @@ public class RadContainer extends RadComponent implements IContainer {
    */
   @Nullable private StringDescriptor myBorderTitle;
 
-  private String myLayoutManager;
+  private RadLayoutManager myLayoutManager;
 
   public RadContainer(final Module module, final String id){
     this(module, JPanel.class, id);
@@ -128,12 +128,15 @@ public class RadContainer extends RadComponent implements IContainer {
     return getDelegee().getLayout();
   }
 
-  public final void setLayout(final AbstractLayout layout) {
+  public final void setLayout(final LayoutManager layout) {
     getDelegee().setLayout(layout);
 
-    for (int i=0; i < getComponentCount(); i++) {
-      final RadComponent c = getComponent(i);
-      layout.addLayoutComponent(c.getDelegee(), c.getConstraints());
+    if (layout instanceof AbstractLayout) {
+      AbstractLayout aLayout = (AbstractLayout) layout;
+      for (int i=0; i < getComponentCount(); i++) {
+        final RadComponent c = getComponent(i);
+        aLayout.addLayoutComponent(c.getDelegee(), c.getConstraints());
+      }
     }
   }
 
@@ -486,12 +489,20 @@ public class RadContainer extends RadComponent implements IContainer {
     getDelegee().setBorder(myBorderType.createBorder(title));
   }
 
-  public String getLayoutManager() {
-    return myLayoutManager;
+  public RadLayoutManager getLayoutManager() {
+    RadContainer parent = this;
+    while(parent != null) {
+      if (parent.myLayoutManager != null) {
+        return parent.myLayoutManager;
+      }
+      parent = parent.getParent();
+    }
+    return null;
   }
 
-  public void setLayoutManager(final String layoutManager) {
+  public void setLayoutManager(final RadLayoutManager layoutManager) {
     myLayoutManager = layoutManager;
+    setLayout(myLayoutManager.createLayout());
   }
 
   /**
@@ -547,7 +558,7 @@ public class RadContainer extends RadComponent implements IContainer {
       writeBinding(writer);
 
       if (myLayoutManager != null) {
-        writer.addAttribute("layout-manager", myLayoutManager);
+        writer.addAttribute("layout-manager", myLayoutManager.getName());
       }
       
       final AbstractLayout layout = (AbstractLayout)getLayout();

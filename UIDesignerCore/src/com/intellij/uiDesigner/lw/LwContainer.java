@@ -15,16 +15,14 @@
  */
 package com.intellij.uiDesigner.lw;
 
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.core.AbstractLayout;
-import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
-import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -51,6 +49,7 @@ public class LwContainer extends LwComponent implements IContainer{
   private StringDescriptor myBorderTitle;
   private AbstractLayout myLayout;
   private String myLayoutManager;
+  protected LayoutSerializer myLayoutSerializer;
 
   public LwContainer(final String className){
     super(className);
@@ -177,59 +176,9 @@ public class LwContainer extends LwComponent implements IContainer{
    * @param element XML element which should contains 'constraints' tag
    */
   protected void readConstraintsForChild(final Element element, final LwComponent component){
-    final Element constraintsElement = LwXmlReader.getRequiredChild(element, "constraints");
-
-    // Read XY constrainst
-    final Element xyElement = LwXmlReader.getChild(constraintsElement, "xy");
-    if(xyElement != null){
-      component.setBounds(
-        new Rectangle(
-          LwXmlReader.getRequiredInt(xyElement, "x"),
-          LwXmlReader.getRequiredInt(xyElement, "y"),
-          LwXmlReader.getRequiredInt(xyElement, "width"),
-          LwXmlReader.getRequiredInt(xyElement, "height")
-        )
-      );
-    }
-
-    final GridConstraints constraints=new GridConstraints();
-
-    // Read Grid constraints
-    final Element gridElement = LwXmlReader.getChild(constraintsElement, "grid");
-    if(gridElement != null){
-      constraints.setRow(LwXmlReader.getRequiredInt(gridElement, "row"));
-      constraints.setColumn(LwXmlReader.getRequiredInt(gridElement, "column"));
-      constraints.setRowSpan(LwXmlReader.getRequiredInt(gridElement, "row-span"));
-      constraints.setColSpan(LwXmlReader.getRequiredInt(gridElement, "col-span"));
-      constraints.setVSizePolicy(LwXmlReader.getRequiredInt(gridElement, "vsize-policy"));
-      constraints.setHSizePolicy(LwXmlReader.getRequiredInt(gridElement, "hsize-policy"));
-      constraints.setAnchor(LwXmlReader.getRequiredInt(gridElement, "anchor"));
-      constraints.setFill(LwXmlReader.getRequiredInt(gridElement, "fill"));
-      constraints.setIndent(LwXmlReader.getOptionalInt(gridElement, UIFormXmlConstants.ATTRIBUTE_INDENT, 0));
-      constraints.setUseParentLayout(LwXmlReader.getOptionalBoolean(gridElement, UIFormXmlConstants.ATTRIBUTE_USE_PARENT_LAYOUT, false));
-
-      // minimum size
-      final Element minSizeElement = LwXmlReader.getChild(gridElement, "minimum-size");
-      if (minSizeElement != null) {
-        constraints.myMinimumSize.width = LwXmlReader.getRequiredInt(minSizeElement, "width");
-        constraints.myMinimumSize.height = LwXmlReader.getRequiredInt(minSizeElement, "height");
-      }
-
-      // preferred size
-      final Element prefSizeElement = LwXmlReader.getChild(gridElement, "preferred-size");
-      if (prefSizeElement != null) {
-        constraints.myPreferredSize.width = LwXmlReader.getRequiredInt(prefSizeElement, "width");
-        constraints.myPreferredSize.height = LwXmlReader.getRequiredInt(prefSizeElement, "height");
-      }
-
-      // maximum size
-      final Element maxSizeElement = LwXmlReader.getChild(gridElement, "maximum-size");
-      if (maxSizeElement != null) {
-        constraints.myMaximumSize.width = LwXmlReader.getRequiredInt(maxSizeElement, "width");
-        constraints.myMaximumSize.height = LwXmlReader.getRequiredInt(maxSizeElement, "height");
-      }
-
-      component.getConstraints().restore(constraints);
+    if (myLayoutSerializer != null) {
+      final Element constraintsElement = LwXmlReader.getRequiredChild(element, "constraints");
+      myLayoutSerializer.readChildConstraints(constraintsElement, component);
     }
   }
 
@@ -305,38 +254,15 @@ public class LwContainer extends LwComponent implements IContainer{
   protected final void readLayout(final Element element){
     myLayoutManager = element.getAttributeValue("layout-manager");
     if("xy".equals(element.getName())){
-      setLayout(new XYLayoutManager());
+      myLayoutSerializer = XYLayoutSerializer.INSTANCE;
     }
     else if("grid".equals(element.getName())){
-      final int rowCount = LwXmlReader.getRequiredInt(element, "row-count");
-      final int columnCount = LwXmlReader.getRequiredInt(element, "column-count");
-
-      final int hGap = LwXmlReader.getRequiredInt(element, "hgap");
-      final int vGap = LwXmlReader.getRequiredInt(element, "vgap");
-
-      // attribute is optional for compatibility with IDEA 4.0 forms
-      final boolean sameSizeHorizontally = LwXmlReader.getOptionalBoolean(element, UIFormXmlConstants.ATTRIBUTE_SAME_SIZE_HORIZONTALLY, false);
-      final boolean sameSizeVertically = LwXmlReader.getOptionalBoolean(element, UIFormXmlConstants.ATTRIBUTE_SAME_SIZE_VERTICALLY, false);
-
-      final Element marginElement = LwXmlReader.getRequiredChild(element, "margin");
-      final Insets margin = new Insets(
-        LwXmlReader.getRequiredInt(marginElement,"top"),
-        LwXmlReader.getRequiredInt(marginElement,"left"),
-        LwXmlReader.getRequiredInt(marginElement,"bottom"),
-        LwXmlReader.getRequiredInt(marginElement,"right")
-      );
-
-      final GridLayoutManager layout = new GridLayoutManager(rowCount, columnCount);
-      layout.setMargin(margin);
-      layout.setVGap(vGap);
-      layout.setHGap(hGap);
-      layout.setSameSizeHorizontally(sameSizeHorizontally);
-      layout.setSameSizeVertically(sameSizeVertically);
-      setLayout(layout);
+      myLayoutSerializer = GridLayoutSerializer.INSTANCE;
     }
     else{
       throw new IllegalArgumentException("unexpected element: "+element);
     }
+    myLayoutSerializer.readLayout(element, this);
   }
 
   public void read(final Element element, final PropertiesProvider provider) throws Exception {

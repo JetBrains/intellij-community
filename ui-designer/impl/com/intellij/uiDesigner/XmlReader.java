@@ -129,6 +129,10 @@ public final class XmlReader {
           else {
             component = new RadContainer(module, componentClass, id);
           }
+          final String layoutManagerName = lwContainer.getLayoutManager();
+          if (layoutManagerName != null && layoutManagerName.length() > 0) {
+            ((RadContainer) component).setLayoutManager(RadLayoutManager.createLayoutManager(layoutManagerName));
+          }
           ((RadContainer)component).setLayout(layout);
         }
       }
@@ -176,7 +180,6 @@ public final class XmlReader {
       // border
       container.setBorderType(lwContainer.getBorderType());
       container.setBorderTitle(lwContainer.getBorderTitle());
-      container.setLayoutManager(lwContainer.getLayoutManager());
 
       // add children
       for (int i=0; i < lwContainer.getComponentCount(); i++){

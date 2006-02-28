@@ -37,6 +37,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
 
   public LwRootContainer() throws Exception{
     super(JPanel.class.getName());
+    myLayoutSerializer = XYLayoutSerializer.INSTANCE;
   }
 
   public String getMainComponentBinding(){
