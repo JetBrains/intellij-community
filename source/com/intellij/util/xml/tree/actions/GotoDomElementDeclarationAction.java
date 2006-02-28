@@ -12,8 +12,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigateProvider;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
-import java.util.Set;
-
 /**
  * User: Sergey.Vasiliev
  */
@@ -28,7 +26,7 @@ public class GotoDomElementDeclarationAction extends BaseDomTreeAction {
         DomElementsNavigationManager.getManager(domElement.getManager().getProject()).getDomElementsNavigateProvider(DomElementsNavigationManager.DEFAULT_PROVIDER_NAME);
 
       provider.navigate(domElement, true);
-      
+
     }
   }
 
