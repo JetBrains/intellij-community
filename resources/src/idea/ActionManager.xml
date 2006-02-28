@@ -134,6 +134,7 @@
       <action id="CreateTransferObject" class="com.intellij.j2ee.module.view.ejb.actions.CreateTransferObjectAction" icon="/nodes/class.png"/>
       <action id="CreateCMPField" class="com.intellij.j2ee.module.view.ejb.actions.CreateCmpFieldAction" icon="/nodes/ejbCmpField.png"/>
       <action id="CreateEJBRelationship" class="com.intellij.j2ee.module.view.ejb.actions.CreateEjbRelationshipAction" icon="/nodes/ejbCmrField.png"/>
+      <action id="CreateEJBInterceptor" class="com.intellij.j2ee.module.view.ejb.actions.CreateInterceptorAction" icon="/nodes/ejbInterceptor.png"/>
 
       <action id="CreateJSPAction" class="com.intellij.j2ee.module.view.web.CreateJspAction" icon="/fileTypes/jsp.png"/>
       <action id="CreateJSPXAction" class="com.intellij.j2ee.module.view.web.CreateJspxAction" icon="/fileTypes/jspx.png"/>

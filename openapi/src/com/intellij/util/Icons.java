@@ -50,6 +50,7 @@ public abstract class Icons {
   public static final Icon JAR_ICON = IconLoader.getIcon("/nodes/ppJar.png");
   public static final Icon FILE_ICON = IconLoader.getIcon("/nodes/ppFile.png");
   public static final Icon EJB_CLASS_ICON = IconLoader.getIcon("/nodes/ejbClass.png");
+  public static final Icon EJB_INTERCEPTOR_CLASS_ICON = IconLoader.getIcon("/nodes/ejbInterceptor.png");  
   public static final Icon EJB_HOME_INTERFACE_ICON = IconLoader.getIcon("/nodes/ejbHomeClass.png");
   public static final Icon EJB_LOCAL_HOME_INTERFACE_ICON = IconLoader.getIcon("/nodes/ejbHomeLocalClass.png");
   public static final Icon EJB_LOCAL_INTERFACE_ICON = IconLoader.getIcon("/nodes/ejbRemoteLocalClass.png");

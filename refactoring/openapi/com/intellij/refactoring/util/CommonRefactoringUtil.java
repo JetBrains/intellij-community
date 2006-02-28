@@ -41,11 +41,11 @@ public class CommonRefactoringUtil {
     return checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false);
   }
 
-  public static boolean checkReadOnlyStatusRecursively(Project project, Collection<PsiElement> element) {
+  public static boolean checkReadOnlyStatusRecursively(Project project, Collection<? extends PsiElement> element) {
     return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true);
   }
 
-  private static boolean checkReadOnlyStatus(Collection<PsiElement> elements,
+  private static boolean checkReadOnlyStatus(Collection<? extends PsiElement> elements,
                                              Project project,
                                              final String messagePrefix,
                                              boolean recursively

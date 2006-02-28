@@ -186,10 +186,12 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_CLASS_STATELESS_TEMPLATE_3),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_HOME_INTERFACE_TEMPLATE),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_LOCAL_HOME_INTERFACE_TEMPLATE),
+            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_SERVICE_ENDPOINT_INTERFACE),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.MESSAGE_CLASS_TEMPLATE),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.MESSAGE_CLASS_TEMPLATE_3),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.PERSISTENT_ENTITY_CLASS_TEMPLATE_3),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.PERSISTENT_EMBEDDABLE_CLASS_TEMPLATE_3),
+            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.INTERCEPTOR_TEMPLATE_3),
           }),
           new TreeNode(IdeBundle.message("template.node.deployment.descriptors"), StdFileTypes.XML.getIcon(), new TreeNode[]{
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.EJB_JAR_XML_1_1),
