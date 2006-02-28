@@ -3,33 +3,30 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiClass;
+import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.impl.ui.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.table.TableCellEditor;
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 /**
  * @author peter
  */
-public class DomUIFactory {
-  private static final Logger LOG;
+public abstract class DomUIFactory implements ApplicationComponent {
   public static Method GET_VALUE_METHOD = null;
   public static Method SET_VALUE_METHOD = null;
   public static Method GET_STRING_METHOD = null;
   public static Method SET_STRING_METHOD = null;
 
   static {
-    LOG = Logger.getInstance("#com.intellij.util.xml.ui.DomUIFactory");
     try {
       GET_VALUE_METHOD = GenericDomValue.class.getMethod("getValue");
       GET_STRING_METHOD = GenericDomValue.class.getMethod("getStringValue");
@@ -37,7 +34,7 @@ public class DomUIFactory {
       SET_STRING_METHOD = findMethod(GenericDomValue.class, "setStringValue");
     }
     catch (NoSuchMethodException e) {
-      LOG.error(e);
+      Logger.getInstance("#com.intellij.util.xml.ui.DomUIFactory").error(e);
     }
   }
 
@@ -75,35 +72,19 @@ public class DomUIFactory {
     return null;
   }
 
-  private static TableCellEditor createCellEditor(DomElement element, Class type) {
-    if (String.class.equals(type)) {
-      return new DefaultCellEditor(removeBorder(new JTextField()));
-    }
+  protected abstract TableCellEditor createCellEditor(DomElement element, Class type);
 
-    if (PsiClass.class.equals(type)) {
-      return new PsiClassTableCellEditor(element.getManager().getProject(), element.getResolveScope());
-    }
-
-    if (Enum.class.isAssignableFrom(type)) {
-      return new DefaultCellEditor(removeBorder(EnumControl.createEnumComboBox(type)));
-    }
-
-    assert false : "Type not supported: " + type;
-    return null;
+  public static DomUIFactory getDomUIFactory() {
+    return ApplicationManager.getApplication().getComponent(DomUIFactory.class);
   }
 
-  private static <T extends JComponent> T removeBorder(final T component) {
-    component.setBorder(new EmptyBorder(0, 0, 0, 0));
-    return component;
-  }
-
-  public static DomUIControl createCollectionControl(DomElement element, DomCollectionChildDescription description) {
+  public DomUIControl createCollectionControl(DomElement element, DomCollectionChildDescription description) {
     final ColumnInfo columnInfo = createColumnInfo(description, element);
     final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());
     return new DomCollectionControl<GenericDomValue<?>>(element, description, aClass == null, columnInfo);
   }
 
-  public static ColumnInfo createColumnInfo(final DomCollectionChildDescription description,
+  public ColumnInfo createColumnInfo(final DomCollectionChildDescription description,
                                              final DomElement element) {
     final String presentableName = description.getCommonPresentableName(element);
     final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());

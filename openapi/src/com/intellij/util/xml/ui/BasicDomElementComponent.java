@@ -6,9 +6,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.impl.ui.BigStringControl;
-import com.intellij.util.xml.impl.ui.BigStringComponent;
-import com.intellij.util.xml.impl.ui.DomFixedWrapper;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -59,7 +56,7 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
           }
         }
         else if (description instanceof DomCollectionChildDescription) {
-          DomUIControl control = DomUIFactory.createCollectionControl(domElement, (DomCollectionChildDescription)description);
+          DomUIControl control = DomUIFactory.getDomUIFactory().createCollectionControl(domElement, (DomCollectionChildDescription)description);
           doBind(control, boundComponent);
         }
       }
