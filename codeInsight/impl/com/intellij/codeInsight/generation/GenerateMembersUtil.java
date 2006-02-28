@@ -14,6 +14,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -28,6 +29,7 @@ public class GenerateMembersUtil {
   }
 
   public static Object[] insertMembersAtOffset(PsiFile file, int offset, Object[] memberPrototypes) throws IncorrectOperationException {
+    if (memberPrototypes.length == 0) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     PsiElement anchor = findAnchor(file, offset);
     if (anchor == null) return null;
     PsiClass aClass = (PsiClass) anchor.getParent();
