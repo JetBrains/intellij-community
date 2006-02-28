@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -182,10 +183,21 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if (insertingAnnotation()) {
       final Document document = context.editor.getDocument();
       PsiDocumentManager.getInstance(context.project).commitDocument(document);
-      final PsiElement elementAt = myFile.findElementAt(myStartOffset - 1 );
+      int expectedDogOffset = myStartOffset;
 
-      if(!"@".equals(elementAt.getText())) {
-        document.insertString(myStartOffset, "@");
+      PsiElement elementAt = myFile.findElementAt(expectedDogOffset - 1);
+      final PsiJavaCodeReferenceElement javaCodeRef = PsiTreeUtil.getParentOfType(elementAt, PsiJavaCodeReferenceElement.class);
+
+      if (javaCodeRef != null) {
+        elementAt = myFile.findElementAt(
+          (expectedDogOffset = javaCodeRef.getTextRange().getStartOffset()) - 1
+        );
+      }
+
+      if(!"@".equals(elementAt.getText()) &&
+         PsiTreeUtil.getParentOfType(elementAt,PsiImportStatement.class) == null
+        ) {
+        document.insertString(expectedDogOffset, "@");
       }
     }
     return true;
@@ -367,11 +379,17 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
   private boolean insertingAnnotationWithParameters() {
     if(insertingAnnotation()) {
-      final PsiClass psiClass = (PsiClass)myLookupItem.getObject();
-      for(PsiMethod m:psiClass.getMethods()) {
-        if (!(m instanceof PsiAnnotationMethod)) continue;
-        final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)m).getDefaultValue();
-        if (defaultValue == null) return true;
+      final Document document = myContext.editor.getDocument();
+      PsiDocumentManager.getInstance(myContext.project).commitDocument(document);
+      final PsiElement elementAt = myFile.findElementAt(myStartOffset - 1);
+
+      if (PsiTreeUtil.getParentOfType(elementAt,PsiImportStatement.class) == null) {
+        final PsiClass psiClass = (PsiClass)myLookupItem.getObject();
+        for(PsiMethod m:psiClass.getMethods()) {
+          if (!(m instanceof PsiAnnotationMethod)) continue;
+          final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)m).getDefaultValue();
+          if (defaultValue == null) return true;
+        }
       }
     }
     return false;
