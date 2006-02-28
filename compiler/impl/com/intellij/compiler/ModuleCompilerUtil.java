@@ -1,9 +1,7 @@
 package com.intellij.compiler;
 
 import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
-import com.intellij.j2ee.j2eeDom.application.J2EEApplicationModel;
-import com.intellij.j2ee.j2eeDom.application.ModuleInApplication;
-import com.intellij.j2ee.j2eeDom.xmlData.ObjectsList;
+import com.intellij.javaee.model.JavaeeApplicationModel;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,6 +10,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -33,15 +34,35 @@ public final class ModuleCompilerUtil {
       return ModuleRootManager.getInstance(module).getDependencies();
     }
     List<Module> result = new ArrayList<Module>();
-    final ObjectsList<ModuleInApplication> modules = ((J2EEApplicationModel)J2EEModuleProperties.getInstance(module)).getModules();
-    for (final ModuleInApplication moduleInApplication : modules) {
-      final Module depModule = moduleInApplication.getReferenceModule();
+    final com.intellij.javaee.model.xml.application.Application root = ((JavaeeApplicationModel)J2EEModuleProperties.getInstance(module)).getRoot();
+    if (root == null) {
+      return Module.EMPTY_ARRAY;
+    }
+    final List<com.intellij.javaee.model.xml.application.Module> modules = root.getModules();
+    for (final com.intellij.javaee.model.xml.application.Module moduleInApplication : modules) {
+      final Module depModule = getReferenceModule(moduleInApplication);
       if (depModule != null && !dependsOn(depModule, module)) {
         result.add(depModule);
       }
     }
     return result.toArray(new Module[result.size()]);
   }
+
+  public static Module getReferenceModule(final com.intellij.javaee.model.xml.application.Module moduleLink) {
+    String id = moduleLink.getId().getValue();
+    Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>(){
+      public Module[] compute() {
+        return ModuleManager.getInstance(moduleLink.getModule().getProject()).getModules();
+      }
+    });
+
+    for (Module module : modules) {
+      VirtualFile moduleFile = module.getModuleFile();
+      if (moduleFile != null && Comparing.equal(moduleFile.getName(), id)) return module;
+    }
+    return null;
+  }
+
 
   private static boolean dependsOn(final Module dependant, final Module dependee) {
     return new Object(){
