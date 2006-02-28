@@ -117,15 +117,17 @@ public final class BindingProperty extends Property {
 
     // Show question to the user
 
-    final int option = Messages.showYesNoDialog(
-      myProject,
-      MessageFormat.format(UIDesignerBundle.message("message.rename.field"), oldBinding, newBinding),
-      UIDesignerBundle.message("title.rename"),
-      Messages.getQuestionIcon()
-    );
+    if (!isFieldUnreferenced(oldField)) {
+      final int option = Messages.showYesNoDialog(
+        myProject,
+        MessageFormat.format(UIDesignerBundle.message("message.rename.field"), oldBinding, newBinding),
+        UIDesignerBundle.message("title.rename"),
+        Messages.getQuestionIcon()
+      );
 
-    if(option != 0/*Yes*/){
-      return;
+      if(option != 0/*Yes*/){
+        return;
+      }
     }
 
     // Commit document before refactoring starts
@@ -134,6 +136,10 @@ public final class BindingProperty extends Property {
       editor.refreshAndSave(false);
     }
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) {
+      return;
+    }
 
     final RenameProcessor processor = new RenameProcessor(myProject, oldField, newBinding, true, true);
     processor.run();
@@ -148,17 +154,7 @@ public final class BindingProperty extends Property {
       if (aClass != null) {
         final PsiField oldBindingField = aClass.findFieldByName(component.getBinding(), false);
         if (oldBindingField != null) {
-          final Query<PsiReference> query = ReferencesSearch.search(oldBindingField);
-          boolean unreferenced = query.forEach(new Processor<PsiReference>() {
-            public boolean process(final PsiReference t) {
-              PsiMethod method = PsiTreeUtil.getParentOfType(t.getElement(), PsiMethod.class);
-              if (method != null && method.getName().equals(AsmCodeGenerator.SETUP_METHOD_NAME)) {
-                return true;
-              }
-              return false;
-            }
-          });
-          if (unreferenced) {
+          if (isFieldUnreferenced(oldBindingField)) {
             if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) {
               return;
             }
@@ -188,5 +184,18 @@ public final class BindingProperty extends Property {
       }
     }
 
+  }
+
+  private static boolean isFieldUnreferenced(final PsiField field) {
+    final Query<PsiReference> query = ReferencesSearch.search(field);
+    return query.forEach(new Processor<PsiReference>() {
+      public boolean process(final PsiReference t) {
+        PsiMethod method = PsiTreeUtil.getParentOfType(t.getElement(), PsiMethod.class);
+        if (method != null && method.getName().equals(AsmCodeGenerator.SETUP_METHOD_NAME)) {
+          return true;
+        }
+        return false;
+      }
+    });
   }
 }
