@@ -206,6 +206,10 @@ public class ChangesListView extends Tree implements DataProvider {
           return ((ChangeList)o1).getDescription().compareToIgnoreCase(((ChangeList)o2).getDescription());
         }
 
+        if (o1 instanceof VirtualFile && o2 instanceof VirtualFile) {
+          return ((VirtualFile)o1).getName().compareToIgnoreCase(((VirtualFile)o2).getName());
+        }
+
         return 0;
       }
     });
