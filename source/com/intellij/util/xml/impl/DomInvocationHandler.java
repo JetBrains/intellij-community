@@ -3,11 +3,12 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.javaee.model.ElementPresentation;
+import com.intellij.javaee.model.ElementPresentationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
@@ -18,8 +19,6 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
-import com.intellij.javaee.model.ElementPresentation;
-import com.intellij.javaee.model.ElementPresentationManager;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,6 +86,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public final Type getDomElementType() {
     return myType;
+  }
+
+  public final Module getModule() {
+    return ModuleUtil.findModuleForPsiElement(getFile());
   }
 
   public XmlTag ensureTagExists() {

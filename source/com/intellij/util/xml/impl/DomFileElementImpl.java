@@ -11,6 +11,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.javaee.model.ElementPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +104,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     myManager = manager;
   }
 
-  public XmlFile getFile() {
+  public final XmlFile getFile() {
     return myFile;
   }
 
@@ -154,6 +156,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   public <T extends DomElement> T getParentOfType(Class<T> requiredClass, boolean strict) {
     return DomFileElement.class.isAssignableFrom(requiredClass) && !strict ? (T)this : null;
+  }
+
+  public Module getModule() {
+    return ModuleUtil.findModuleForPsiElement(getFile());
   }
 
   @NotNull

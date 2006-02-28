@@ -3,13 +3,13 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.javaee.model.ElementPresentation;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import com.intellij.javaee.model.ElementPresentation;
-import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
@@ -51,4 +51,6 @@ public interface DomElement {
   GlobalSearchScope getResolveScope();
 
   <T extends DomElement> T getParentOfType(Class<T> requiredClass, boolean strict);
+
+  Module getModule();
 }

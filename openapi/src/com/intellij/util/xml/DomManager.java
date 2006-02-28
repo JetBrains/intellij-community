@@ -11,6 +11,7 @@ import com.intellij.util.Function;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -27,7 +28,7 @@ public abstract class DomManager {
   public abstract Project getProject();
 
   @NotNull
-  public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, String rootTagName);
+  public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, @NonNls String rootTagName);
 
   public abstract void addDomEventListener(DomEventListener listener);
 
