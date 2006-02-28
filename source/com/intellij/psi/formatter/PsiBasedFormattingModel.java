@@ -115,7 +115,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
       final PsiElement psiElement = myASTNode.getPsi().findElementAt(offset);
       if (psiElement == null) return null;
       if (psiElement.getTextRange().getStartOffset() != offset) {
-        LOG.assertTrue(false);
+        return null;
       }
       return psiElement.getNode();
     }
@@ -123,7 +123,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
       final ASTNode result = myASTNode.findLeafElementAt(offset);
       if (result == null) return null;
       if (result.getTextRange().getStartOffset() != offset) {
-        LOG.assertTrue(false);
+        return null;
       }      
       return result;
     }
