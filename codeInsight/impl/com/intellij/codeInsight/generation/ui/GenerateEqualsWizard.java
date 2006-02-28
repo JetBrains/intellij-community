@@ -49,19 +49,21 @@ public class GenerateEqualsWizard extends AbstractWizard {
     }
     myTestBoxedStep = 0;
     if (needEquals) {
-      myEqualsPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.equals.fields.chooser.title"),
-                                               myClassFields, null);
+      myEqualsPanel =
+        new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.equals.fields.chooser.title"), myClassFields, null);
       myEqualsPanel.getTable().setMemberInfoModel(new EqualsMemberInfoModel());
       myTestBoxedStep++;
-    } else {
+    }
+    else {
       myEqualsPanel = null;
     }
     if (needHashCode) {
       final MemberInfo[] hashCodeMemberInfos;
-      if(needEquals) {
+      if (needEquals) {
         myFieldsToHashCode = createFieldToMemberInfoMap(true);
         hashCodeMemberInfos = new MemberInfo[0];
-      } else {
+      }
+      else {
         hashCodeMemberInfos = myClassFields;
         myFieldsToHashCode = null;
       }
@@ -72,7 +74,8 @@ public class GenerateEqualsWizard extends AbstractWizard {
         updateHashCodeMemberInfos(myClassFields);
       }
       myTestBoxedStep++;
-    } else {
+    }
+    else {
       myHashCodePanel = null;
       myFieldsToHashCode = null;
     }
@@ -98,7 +101,8 @@ public class GenerateEqualsWizard extends AbstractWizard {
   public PsiField[] getEqualsFields() {
     if (myEqualsPanel != null) {
       return memberInfosToFields(myEqualsPanel.getTable().getSelectedMemberInfos());
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -106,7 +110,8 @@ public class GenerateEqualsWizard extends AbstractWizard {
   public PsiField[] getHashCodeFields() {
     if (myHashCodePanel != null) {
       return memberInfosToFields(myHashCodePanel.getTable().getSelectedMemberInfos());
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -124,11 +129,12 @@ public class GenerateEqualsWizard extends AbstractWizard {
   }
 
   protected void doNextAction() {
-    switch(getCurrentStep()) {
+    switch (getCurrentStep()) {
       case 0:
         if (myEqualsPanel != null) {
           equalsFieldsSelected();
-        } else {
+        }
+        else {
           MemberInfo[] selectedMemberInfos = myHashCodePanel.getTable().getSelectedMemberInfos();
           updateNonNullMemberInfos(selectedMemberInfos);
         }
@@ -142,7 +148,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
   protected void updateStep() {
     super.updateStep();
-    ((MemberSelectionPanel) getCurrentStepComponent()).getTable().requestFocus();
+    ((MemberSelectionPanel)getCurrentStepComponent()).getTable().requestFocus();
   }
 
   protected String getHelpID() {
@@ -166,11 +172,11 @@ public class GenerateEqualsWizard extends AbstractWizard {
   }
 
   private void updateHashCodeMemberInfos(MemberInfo[] equalsMemberInfos) {
-    if(myHashCodePanel == null) return;
+    if (myHashCodePanel == null) return;
     MemberInfo[] hashCodeFields = new MemberInfo[equalsMemberInfos.length];
 
     for (int i = 0; i < equalsMemberInfos.length; i++) {
-      hashCodeFields[i] = (MemberInfo) myFieldsToHashCode.get(equalsMemberInfos[i].getMember());
+      hashCodeFields[i] = (MemberInfo)myFieldsToHashCode.get(equalsMemberInfos[i].getMember());
     }
     myHashCodePanel.getTable().setMemberInfos(hashCodeFields);
   }
@@ -190,7 +196,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
   private void updateStatus() {
     boolean finishEnabled = true;
     boolean nextEnabled = true;
-    if(myEqualsPanel != null & getCurrentStep() == 0) {
+    if (myEqualsPanel != null & getCurrentStep() == 0) {
       finishEnabled = false;
     }
 
@@ -205,11 +211,11 @@ public class GenerateEqualsWizard extends AbstractWizard {
           }
         }
       }
-      finishEnabled = finishEnabled && !anyNonBoxed;
+      finishEnabled &= !anyNonBoxed;
       nextEnabled = anyNonBoxed;
     }
 
-    if(getCurrentStep() == 0) {
+    if (getCurrentStep() == 0) {
       boolean anyChecked = false;
       for (MemberInfo classField : myClassFields) {
         if (classField.isChecked()) {
@@ -217,26 +223,27 @@ public class GenerateEqualsWizard extends AbstractWizard {
           break;
         }
       }
-      finishEnabled = finishEnabled && anyChecked;
-      nextEnabled = nextEnabled && anyChecked;
+      finishEnabled &= anyChecked;
+      nextEnabled = !(!nextEnabled || !anyChecked);
     }
 
-    if(getCurrentStep() == myTestBoxedStep) {
+    if (getCurrentStep() == myTestBoxedStep) {
       finishEnabled = true;
       nextEnabled = false;
     }
     getFinishButton().setEnabled(finishEnabled);
     getNextButton().setEnabled(nextEnabled);
 
-    if(finishEnabled) {
+    if (finishEnabled) {
       getRootPane().setDefaultButton(getFinishButton());
-    } else if(nextEnabled) {
+    }
+    else if (nextEnabled) {
       getRootPane().setDefaultButton(getNextButton());
     }
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return ((MemberSelectionPanel) getCurrentStepComponent()).getTable();
+    return ((MemberSelectionPanel)getCurrentStepComponent()).getTable();
   }
 
   private class MyTableModelListener implements TableModelListener {
@@ -272,9 +279,9 @@ public class GenerateEqualsWizard extends AbstractWizard {
   private static class EqualsMemberInfoModel implements MemberInfoModel {
     MemberInfoTooltipManager myTooltipManager = new MemberInfoTooltipManager(new MemberInfoTooltipManager.TooltipProvider() {
       public String getTooltip(MemberInfo memberInfo) {
-        if(checkForProblems(memberInfo) == OK) return null;
+        if (checkForProblems(memberInfo) == OK) return null;
         if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
-        final PsiType type = ((PsiField) memberInfo.getMember()).getType();
+        final PsiType type = ((PsiField)memberInfo.getMember()).getType();
         if (GenerateEqualsHelper.isNestedArray(type)) {
           return CodeInsightBundle .message("generate.equals.warning.equals.for.nested.arrays.not.supported");
         }
@@ -287,7 +294,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
     public boolean isMemberEnabled(MemberInfo member) {
       if (!(member.getMember() instanceof PsiField)) return false;
-      final PsiType type = ((PsiField) member.getMember()).getType();
+      final PsiType type = ((PsiField)member.getMember()).getType();
       return !GenerateEqualsHelper.isNestedArray(type);
     }
 
@@ -308,10 +315,10 @@ public class GenerateEqualsWizard extends AbstractWizard {
     }
 
     public int checkForProblems(MemberInfo member) {
-      if(!(member.getMember() instanceof PsiField)) return ERROR;
-      final PsiType type = ((PsiField) member.getMember()).getType();
-      if(GenerateEqualsHelper.isNestedArray(type)) return ERROR;
-      if(GenerateEqualsHelper.isArrayOfObjects(type)) return WARNING;
+      if (!(member.getMember() instanceof PsiField)) return ERROR;
+      final PsiType type = ((PsiField)member.getMember()).getType();
+      if (GenerateEqualsHelper.isNestedArray(type)) return ERROR;
+      if (GenerateEqualsHelper.isArrayOfObjects(type)) return WARNING;
       return OK;
     }
 
@@ -328,15 +335,15 @@ public class GenerateEqualsWizard extends AbstractWizard {
       public String getTooltip(MemberInfo memberInfo) {
         if (isMemberEnabled(memberInfo)) return null;
         if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
-        final PsiType type = ((PsiField) memberInfo.getMember()).getType();
+        final PsiType type = ((PsiField)memberInfo.getMember()).getType();
         if (!(type instanceof PsiArrayType)) return null;
         return CodeInsightBundle.message("generate.equals.hashcode.warning.hashcode.for.arrays.is.not.supported");
       }
     });
+
     public boolean isMemberEnabled(MemberInfo member) {
-      if (!(member.getMember() instanceof PsiField)) return false;
-      final PsiType type = ((PsiField) member.getMember()).getType();
-      return !(type instanceof PsiArrayType);
+      final PsiMember psiMember = member.getMember();
+      return psiMember instanceof PsiField;
     }
 
     public boolean isCheckedWhenDisabled(MemberInfo member) {
