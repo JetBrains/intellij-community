@@ -7,9 +7,8 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.designSurface.*;
-import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.designSurface.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,7 +23,7 @@ public class RadToolBar extends RadContainer {
   }
 
   @Override @Nullable
-  protected AbstractLayout createInitialLayout() {
+  protected RadLayoutManager createInitialLayoutManager() {
     return null;
   }
 

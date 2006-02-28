@@ -2,12 +2,11 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.core.AbstractLayout;
-import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,7 @@ public final class RadSplitPane extends RadContainer {
     super(module, JSplitPane.class, id);
   }
 
-  protected AbstractLayout createInitialLayout() {
+  @Override protected RadLayoutManager createInitialLayoutManager() {
     return null;
   }
 

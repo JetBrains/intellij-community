@@ -6,9 +6,8 @@ import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.designSurface.*;
-import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.ITabbedPane;
 import com.intellij.uiDesigner.lw.LwTabbedPane;
@@ -45,7 +44,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     super(module, JTabbedPane.class, id);
   }
 
-  protected AbstractLayout createInitialLayout(){
+  @Override protected RadLayoutManager createInitialLayoutManager() {
     return null;
   }
 

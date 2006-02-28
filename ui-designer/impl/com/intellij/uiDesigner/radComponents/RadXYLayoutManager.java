@@ -5,7 +5,12 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.FeedbackLayer;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.core.GridConstraints;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -56,6 +61,62 @@ public class RadXYLayoutManager extends RadLayoutManager {
       writer.addAttribute("height", child.getHeight());
     }finally{
       writer.endElement(); // xy
+    }
+  }
+
+  @Override public DropLocation getDropLocation(RadContainer container, final Point location) {
+    return new MyDropLocation(container, location);
+  }
+
+  private static class MyDropLocation implements DropLocation {
+    private final RadContainer myContainer;
+    private final Point myLocation;
+
+    public MyDropLocation(final RadContainer container, final Point location) {
+      myContainer = container;
+      myLocation = location;
+    }
+
+    public RadContainer getContainer() {
+      return myContainer;
+    }
+
+    public boolean canDrop(ComponentDragObject dragObject) {
+      return myLocation != null && myContainer.getComponentCount() == 0 && dragObject.getComponentCount() == 1;
+    }
+
+    public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
+    }
+
+    public void processDrop(GuiEditor editor,
+                            RadComponent[] components,
+                            GridConstraints[] constraintsToAdjust,
+                            ComponentDragObject dragObject) {
+      int patchX = 0;
+      int patchY = 0;
+
+      for (int i = 0; i < components.length; i++) {
+        final RadComponent c = components[i];
+
+        final Point p = new Point(myLocation);
+        Point delta = dragObject.getDelta(i);
+        if (delta != null) {
+          p.translate(delta.x, delta.y);
+        }
+        c.setLocation(p);
+
+        patchX = Math.min(patchX, p.x);
+        patchY = Math.min(patchY, p.y);
+
+        myContainer.addComponent(c);
+      }
+
+      // shift components if necessary to make sure that no component has negative x or y
+      if (patchX < 0 || patchY < 0) {
+        for(RadComponent component : components) {
+          component.shift(-patchX, -patchY);
+        }
+      }
     }
   }
 }

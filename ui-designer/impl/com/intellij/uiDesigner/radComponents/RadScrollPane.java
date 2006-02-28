@@ -2,12 +2,11 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.core.AbstractLayout;
-import com.intellij.uiDesigner.core.GridConstraints;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,8 +24,8 @@ public final class RadScrollPane extends RadContainer {
     super(module, COMPONENT_CLASS, id);
   }
 
-  @Nullable
-  protected AbstractLayout createInitialLayout(){
+  @Nullable @Override
+  protected RadLayoutManager createInitialLayoutManager() {
     return null;
   }
 

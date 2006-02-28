@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -70,17 +71,13 @@ public class RadContainer extends RadComponent implements IContainer {
     if (myLayoutManager != null) {
       setLayout(myLayoutManager.createLayout());
     }
-    else {
-      //noinspection OverriddenMethodCallInConstructor
-      final AbstractLayout initialLayout = createInitialLayout();
-      if (initialLayout != null){
-        getDelegee().setLayout(initialLayout);
-      }
-    }
   }
 
   @Nullable protected RadLayoutManager createInitialLayoutManager() {
-    return null;
+    if (GuiDesignerConfiguration.getInstance(getModule().getProject()).IRIDA_LAYOUT_MODE) {
+      return new RadXYLayoutManager();
+    }
+    return new RadGridLayoutManager();
   }
 
   public Property getInplaceProperty(final int x, final int y) {
@@ -124,14 +121,6 @@ public class RadContainer extends RadComponent implements IContainer {
       getWidth() - insets.left - insets.right,
       _property.getPreferredSize().height
     );
-  }
-
-  @Nullable
-  protected AbstractLayout createInitialLayout() {
-    if (GuiDesignerConfiguration.getInstance(getModule().getProject()).IRIDA_LAYOUT_MODE) {
-      return new XYLayoutManagerImpl();
-    }
-    return new GridLayoutManager(1, 1);
   }
 
   public final LayoutManager getLayout(){
@@ -249,18 +238,20 @@ public class RadContainer extends RadComponent implements IContainer {
     return myComponents.toArray(new RadComponent[myComponents.size()]);
   }
 
+  @Override @Nullable
+  public DropLocation getDropLocation(@Nullable Point location) {
+    return getLayoutManager().getDropLocation(this, location);
+  }
+
   @Override public boolean canDrop(@Nullable Point location, final ComponentDragObject dragObject) {
     if (location == null) {
-      if (isXY() || dragObject.getComponentCount() > 1) {
+      if (dragObject.getComponentCount() > 1) {
         return false;
       }
       return getComponentAtGrid(0, 0) == null;
     }
 
-    if (isXY()) {
-      return true;
-    }
-    else if (isGrid()) {
+    if (isGrid()) {
       final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
       final int row = gridLayout.getRowAt(location.y);
       final int column = gridLayout.getColumnAt(location.x);
@@ -282,7 +273,7 @@ public class RadContainer extends RadComponent implements IContainer {
             relativeRow + rowSpan > gridLayout.getRowCount() ||
             relativeCol + colSpan > gridLayout.getColumnCount()) {
           LOG.debug("RadContainer.canDrop=false because range is outside grid: row=" + (row+relativeRow) +
-            ", col=" + (column+relativeCol) + ", colSpan=" + colSpan + ", rowSpan=" + rowSpan);
+                    ", col=" + (column+relativeCol) + ", colSpan=" + colSpan + ", rowSpan=" + rowSpan);
           return false;
         }
 
@@ -351,34 +342,7 @@ public class RadContainer extends RadComponent implements IContainer {
       return;
     }
 
-    if (isXY()) {
-      int patchX = 0;
-      int patchY = 0;
-
-      for (int i = 0; i < components.length; i++) {
-        final RadComponent c = components[i];
-
-        final Point p = new Point(location);
-        Point delta = dragObject.getDelta(i);
-        if (delta != null) {
-          p.translate(delta.x, delta.y);
-        }
-        c.setLocation(p);
-
-        patchX = Math.min(patchX, p.x);
-        patchY = Math.min(patchY, p.y);
-
-        addComponent(c);
-      }
-
-      // shift components if necessary to make sure that no component has negative x or y
-      if (patchX < 0 || patchY < 0) {
-        for(RadComponent component : components) {
-          component.shift(-patchX, -patchY);
-        }
-      }
-    }
-    else if (isGrid()) {
+    if (isGrid()) {
 
       // If target point doesn't belong to any cell and column
       // then cancel drop. If the target cell is not empty

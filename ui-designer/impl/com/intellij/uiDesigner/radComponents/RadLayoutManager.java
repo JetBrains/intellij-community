@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.designSurface.DropLocation;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -47,4 +48,8 @@ public abstract class RadLayoutManager {
   public abstract void writeChildConstraints(final XmlWriter writer, final RadComponent child);
 
   public abstract void writeLayout(final XmlWriter writer, final RadContainer radContainer);
+
+  public DropLocation getDropLocation(RadContainer container, final Point location) {
+    return null;
+  }
 }
