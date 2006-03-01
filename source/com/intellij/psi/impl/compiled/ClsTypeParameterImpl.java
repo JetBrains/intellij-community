@@ -28,6 +28,7 @@ import java.util.*;
  */
 public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeParameterImpl");
+  static ClsTypeParameterImpl[] EMPTY_ARRAY = new ClsTypeParameterImpl[0];
 
   private String myName;
   private ClsReferenceListImpl myBoundsList;
