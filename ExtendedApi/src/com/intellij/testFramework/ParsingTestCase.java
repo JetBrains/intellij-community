@@ -93,7 +93,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
   }
 
   protected String toParseTreeText(final PsiElement file) {
-    return DebugUtil.treeToString(com.intellij.psi.impl.source.SourceTreeToPsiMap.psiElementToTree(file), false);
+    return DebugUtil.psiToString(file, false);
   }
 
   protected String loadFile(String name) throws Exception {

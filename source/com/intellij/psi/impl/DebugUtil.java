@@ -250,6 +250,45 @@ public class DebugUtil {
     LOG.assertTrue(fromCharTab == toCharTab);
   }
 
+  public static String psiToString(final PsiElement file, final boolean skipWhitespaces) {
+    final StringBuffer stringBuffer = new StringBuffer(file.getTextLength() * 5);
+    if(file.getNode() == null)
+      psiToBuffer(stringBuffer, file, 0, skipWhitespaces, false, false);
+    else
+      treeToBuffer(stringBuffer, file.getNode(), 0, skipWhitespaces, false, false);
+    return stringBuffer.toString();
+  }
+
+  public static void psiToBuffer(StringBuffer buffer,
+                                 PsiElement root,
+                                 int indent,
+                                 boolean skipWhiteSpaces,
+                                 boolean showRanges,
+                                 final boolean showChildrenRanges) {
+    if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
+
+    for (int i = 0; i < indent; i++) {
+      buffer.append(' ');
+    }
+    buffer.append(root.toString());
+    PsiElement child = root.getFirstChild();
+    if (child == null) {
+      String text = root.getText();
+      text = StringUtil.replace(text, "\n", "\\n");
+      text = StringUtil.replace(text, "\r", "\\r");
+      text = StringUtil.replace(text, "\t", "\\t");
+      buffer.append(root.toString() + "('" + text + "')");
+    }
+
+    if(showRanges) buffer.append(root.getTextRange());
+    buffer.append("\n");
+    while (child != null) {
+      psiToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges);
+      child = child.getNextSibling();
+    }
+  }
+
+
   public static class IncorrectTreeStructureException extends RuntimeException {
     private final ASTNode myElement;
 
