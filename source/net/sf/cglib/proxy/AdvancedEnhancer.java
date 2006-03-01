@@ -16,6 +16,7 @@
 package net.sf.cglib.proxy;
 
 import com.intellij.util.xml.JavaMethodSignature;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import net.sf.cglib.asm.ClassVisitor;
 import net.sf.cglib.asm.Label;
 import net.sf.cglib.asm.Type;
@@ -395,7 +396,12 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   protected ClassLoader getDefaultClassLoader() {
-    if (interfaces != null && interfaces.length > 0) return interfaces[0].getClassLoader();
+    if (interfaces != null && interfaces.length > 0) {
+      for (final Class anInterface : interfaces) {
+        final ClassLoader classLoader1 = anInterface.getClassLoader();
+        if (classLoader1 instanceof PluginClassLoader) return classLoader1;
+      }
+    }
     if (superclass != null) return superclass.getClassLoader();
     return null;
   }
