@@ -19,6 +19,7 @@ public abstract class XmlFormattingPolicy {
   private Map<Pair<PsiElement, Language>, Block> myRootToBlockMap = new HashMap<Pair<PsiElement, Language>, Block>();
   private boolean myProcessJsp = true;
   protected final FormattingDocumentModel myDocumentModel;
+  private boolean myProcessJavaTree = true;
 
   protected XmlFormattingPolicy(final FormattingDocumentModel documentModel) {
     myDocumentModel = documentModel;
@@ -27,6 +28,7 @@ public abstract class XmlFormattingPolicy {
   public void copyFrom(final XmlFormattingPolicy xmlFormattingPolicy) {
     myProcessJsp = xmlFormattingPolicy.myProcessJsp;
     myRootToBlockMap.putAll(xmlFormattingPolicy.myRootToBlockMap);
+    myProcessJavaTree = xmlFormattingPolicy.processJavaTree(); 
   }
 
   public Block getOrCreateBlockFor(Pair<PsiElement, Language> root){
@@ -111,4 +113,13 @@ public abstract class XmlFormattingPolicy {
   }
 
   public abstract boolean shouldSaveSpacesBetweenTagAndText();
+
+  public boolean processJavaTree() {
+    return myProcessJavaTree;
+  }
+
+
+  public void dontProcessJavaTree() {
+    myProcessJavaTree = false;
+  }
 }

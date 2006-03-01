@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
+import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -341,6 +342,9 @@ public class FormatterImpl extends FormatterEx
         ((PsiBasedFormattingModel)model).doNotUseallTrees();
       }
       Block block = model.getRootBlock();
+      if (block instanceof XmlBlock) {
+        ((XmlBlock)block).getPolicy().dontProcessJavaTree();
+      }
       final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), block, settings, indentOptions, affectedRange);
       LeafBlockWrapper current = processor.getFirstTokenBlock();
       while (current != null) {

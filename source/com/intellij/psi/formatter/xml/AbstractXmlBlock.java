@@ -45,6 +45,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                           final XmlFormattingPolicy policy) {
     super(node, wrap, alignment);
     myXmlFormattingPolicy = policy;
+    if (node == null) {
+      LOG.assertTrue(false);
+    }
     if (node.getTreeParent() == null) {
       myXmlFormattingPolicy.setRootBlock(node, this);
     }
@@ -242,7 +245,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (myXmlFormattingPolicy.processJsp() &&
         (child.getElementType() == ElementType.JSP_XML_TEXT
          || child.getPsi() instanceof OuterLanguageElement)) {
-      final Pair<PsiElement, Language> root = JspTextBlock.findPsiRootAt(child);
+      final Pair<PsiElement, Language> root = JspTextBlock.findPsiRootAt(child, myXmlFormattingPolicy.processJavaTree());
       if (root != null) {
         createJspTextNode(result, child, indent);
         return;
@@ -372,7 +375,7 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
       return false;
     }
     if (child.getText().trim().length() == 0) return false;
-    return JspTextBlock.findPsiRootAt(child) != null;
+    return JspTextBlock.findPsiRootAt(child, myXmlFormattingPolicy.processJavaTree()) != null;
   }
 
   public ASTNode getTreeNode() {
@@ -439,7 +442,7 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
 
     localResult.add(new JspTextBlock(child,
                                      myXmlFormattingPolicy,
-                                     JspTextBlock.findPsiRootAt(child),
+                                     JspTextBlock.findPsiRootAt(child, myXmlFormattingPolicy.processJavaTree()),
                                      indent
     ));
   }
