@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -260,12 +261,22 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement == null) continue;
       String message = renderDescriptionMessage(descriptor);
+      final HighlightInfoType level = myLevels.get(i);
 
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
       if (!inspectionProfile.isToolEnabled(key)) continue;
 
-      HighlightInfoType type = SeverityRegistrar.getHighlightInfoTypeBySeverity(inspectionProfile.getErrorLevel(key).getSeverity());
+
+      HighlightInfoType type = new HighlightInfoType() {
+        public HighlightSeverity getSeverity(final PsiElement psiElement) {
+          return inspectionProfile.getErrorLevel(key).getSeverity();
+        }
+
+        public TextAttributesKey getAttributesKey() {
+          return level.getAttributesKey();
+        }
+      };
       String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
       @NonNls String tooltip = "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
       HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
