@@ -372,6 +372,12 @@ public class ChangesListView extends Tree implements DataProvider {
     else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
       return getSelectedFiles();
     }
+    else if (DataConstants.NAVIGATABLE.equals(dataId)) {
+      final VirtualFile[] files = getSelectedFiles();
+      if (files.length == 1) {
+        return new OpenFileDescriptor(myProject, files[0], 0);
+      }
+    }
     else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
       final VirtualFile[] files = getSelectedFiles();
       Navigatable[] navigatables = new Navigatable[files.length];

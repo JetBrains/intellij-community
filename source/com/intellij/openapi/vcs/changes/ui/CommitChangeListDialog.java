@@ -110,7 +110,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     commit(project, new ArrayList<ChangeList>(lists), new ArrayList<Change>(changes));
   }
 
-  private CommitChangeListDialog(Project project, List<ChangeList> changeLists, final List<Change> changes) {
+  private CommitChangeListDialog(final Project project, List<ChangeList> changeLists, final List<Change> changes) {
     super(project, true);
     myProject = project;
     myChangeLists = changeLists;
@@ -224,6 +224,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           baseRect.setSize(checkboxWidth, baseRect.height);
           if (baseRect.contains(e.getPoint())) {
             toggleChange((Change)myChangesList.getModel().getElementAt(idx));
+          }
+          else if (e.getClickCount() == 2) {
+            ShowDiffAction.showDiffForChange((Change)myChangesList.getModel().getElementAt(idx), project);
           }
         }
       }

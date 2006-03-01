@@ -29,6 +29,10 @@ public class ShowDiffAction extends AnAction {
 
     Change change = changes[0];
 
+    showDiffForChange(change, project);
+  }
+
+  public static void showDiffForChange(final Change change, final Project project) {
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
 
     final ContentRevision bRev = change.getBeforeRevision();
@@ -46,7 +50,7 @@ public class ShowDiffAction extends AnAction {
     tool.show(diffReq);
   }
 
-  private DiffContent createContent(Project project, ContentRevision revision) {
+  private static DiffContent createContent(Project project, ContentRevision revision) {
     if (revision == null) return new SimpleContent("");
     if (revision instanceof CurrentContentRevision) {
       final CurrentContentRevision current = (CurrentContentRevision)revision;
