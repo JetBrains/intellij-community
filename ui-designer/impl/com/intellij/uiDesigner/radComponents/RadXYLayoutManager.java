@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
@@ -34,8 +35,8 @@ public class RadXYLayoutManager extends RadLayoutManager {
     // It has sense to save hpap and vgap even for XY layout. The reason is
     // that XY was previously GRID with non default gaps, so when the user
     // compose XY into the grid again then he will get the same non default gaps.
-    writer.addAttribute("hgap", layout.getHGap());
-    writer.addAttribute("vgap", layout.getVGap());
+    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_HGAP, layout.getHGap());
+    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VGAP, layout.getVGap());
 
     // Margins
     final Insets margin = layout.getMargin();
@@ -66,6 +67,10 @@ public class RadXYLayoutManager extends RadLayoutManager {
 
   @Override public DropLocation getDropLocation(RadContainer container, final Point location) {
     return new MyDropLocation(container, location);
+  }
+
+  public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
+    container.getDelegee().add(component.getDelegee(), component.getConstraints());
   }
 
   private static class MyDropLocation implements DropLocation {

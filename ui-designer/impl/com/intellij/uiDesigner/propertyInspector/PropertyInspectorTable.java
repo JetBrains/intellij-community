@@ -315,6 +315,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     super.setValueAt(aValue, row, column);
     // We need to repaint whole inspector because change of one property
     // might causes change of another property.
+    // TODO[yole]: hack!
+    if (myProperties.get(row) instanceof LayoutManagerProperty) {
+      synchWithTree(true);
+    }
     repaint();
   }
 

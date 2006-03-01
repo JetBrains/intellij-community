@@ -15,11 +15,11 @@
  */
 package com.intellij.uiDesigner.lw;
 
-import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -30,7 +30,7 @@ public final class LwTabbedPane extends LwContainer implements ITabbedPane {
     super(JTabbedPane.class.getName());
   }
 
-  protected AbstractLayout createInitialLayout(){
+  protected LayoutManager createInitialLayout(){
     return null;
   }
 
@@ -55,7 +55,7 @@ public final class LwTabbedPane extends LwContainer implements ITabbedPane {
   public static final class Constraints {
     /**
      * never null
-     */ 
+     */
     public final StringDescriptor myTitle;
 
     public Constraints(final StringDescriptor title){

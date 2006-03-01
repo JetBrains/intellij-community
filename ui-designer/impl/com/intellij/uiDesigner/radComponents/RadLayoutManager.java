@@ -23,6 +23,7 @@ public abstract class RadLayoutManager {
   static {
     ourLayoutManagerRegistry.put("GridLayoutManager", RadGridLayoutManager.class);
     ourLayoutManagerRegistry.put("GridBagLayout", RadGridBagLayoutManager.class);
+    ourLayoutManagerRegistry.put("BorderLayout", RadBorderLayoutManager.class);
   }
 
   public static String[] getLayoutManagerNames() {
@@ -52,4 +53,6 @@ public abstract class RadLayoutManager {
   public DropLocation getDropLocation(RadContainer container, final Point location) {
     return null;
   }
+
+  public abstract void addComponentToContainer(final RadContainer container, final RadComponent component, final int index);
 }

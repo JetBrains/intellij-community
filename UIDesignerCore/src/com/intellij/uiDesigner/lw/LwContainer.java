@@ -16,13 +16,13 @@
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jdom.Element;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -47,7 +47,7 @@ public class LwContainer extends LwComponent implements IContainer{
    * this member is <code>null</code>.
    */
   private StringDescriptor myBorderTitle;
-  private AbstractLayout myLayout;
+  private LayoutManager myLayout;
   private String myLayoutManager;
   protected LayoutSerializer myLayoutSerializer;
 
@@ -62,15 +62,15 @@ public class LwContainer extends LwComponent implements IContainer{
   }
 
 
-  protected AbstractLayout createInitialLayout(){
+  protected LayoutManager createInitialLayout(){
     return new XYLayoutManager();
   }
 
-  public final AbstractLayout getLayout(){
+  public final LayoutManager getLayout() {
     return myLayout;
   }
 
-  public final void setLayout(final AbstractLayout layout) {
+  public final void setLayout(final LayoutManager layout) {
     myLayout = layout;
   }
 
@@ -257,7 +257,12 @@ public class LwContainer extends LwComponent implements IContainer{
       myLayoutSerializer = XYLayoutSerializer.INSTANCE;
     }
     else if("grid".equals(element.getName())){
-      myLayoutSerializer = GridLayoutSerializer.INSTANCE;
+      if ("BorderLayout".equals(myLayoutManager)) {
+        myLayoutSerializer = BorderLayoutSerializer.INSTANCE;
+      }
+      else {
+        myLayoutSerializer = GridLayoutSerializer.INSTANCE;
+      }
     }
     else{
       throw new IllegalArgumentException("unexpected element: "+element);
@@ -278,7 +283,7 @@ public class LwContainer extends LwComponent implements IContainer{
 
     // Border
     readBorder(element);
-    
+
     readChildren(element, provider);
   }
 

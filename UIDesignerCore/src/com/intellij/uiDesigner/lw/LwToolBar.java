@@ -16,10 +16,10 @@
 
 package com.intellij.uiDesigner.lw;
 
-import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jdom.Element;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author yole
@@ -29,7 +29,7 @@ public class LwToolBar extends LwContainer {
     super(JToolBar.class.getName());
   }
 
-  protected AbstractLayout createInitialLayout() {
+  protected LayoutManager createInitialLayout() {
     return null;
   }
 

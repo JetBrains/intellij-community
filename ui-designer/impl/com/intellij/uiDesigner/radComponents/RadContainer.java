@@ -181,8 +181,8 @@ public class RadContainer extends RadComponent implements IContainer {
     addComponent(component, myComponents.size());
   }
 
-  protected void addToDelegee(final int index, final RadComponent component){
-    getDelegee().add(component.getDelegee(), component.getConstraints(), 0);
+  protected void addToDelegee(final int index, final RadComponent component) {
+    myLayoutManager.addComponentToContainer(this, component, index);
   }
 
   /**
@@ -520,12 +520,8 @@ public class RadContainer extends RadComponent implements IContainer {
     if (isXY()) {
       writer.startElement("xy");
     }
-    else if (isGrid()) {
-      writer.startElement("grid");
-    }
     else {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("unknown layout: " + getLayout());
+      writer.startElement("grid");
     }
     try{
       writeId(writer);

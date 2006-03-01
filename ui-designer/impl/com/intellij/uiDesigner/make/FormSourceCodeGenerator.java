@@ -64,6 +64,7 @@ public final class FormSourceCodeGenerator {
     ourContainerLayoutCodeGenerators.clear();
     ourContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_INTELLIJ, new GridLayoutSourceGenerator());
     ourContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_GRIDBAG, new GridBagLayoutSourceGenerator());
+    ourContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_BORDER, new BorderLayoutSourceGenerator());
 
     final PsiPropertiesProvider propertiesProvider = new PsiPropertiesProvider(module);
 

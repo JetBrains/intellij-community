@@ -15,10 +15,10 @@
  */
 package com.intellij.uiDesigner.lw;
 
-import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jdom.Element;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -27,12 +27,12 @@ import javax.swing.*;
 public final class LwSplitPane extends LwContainer{
   public static final String POSITION_LEFT = "left";
   public static final String POSITION_RIGHT = "right";
-  
+
   public LwSplitPane() throws Exception{
     super(JSplitPane.class.getName());
   }
 
-  protected AbstractLayout createInitialLayout(){
+  protected LayoutManager createInitialLayout(){
     return null;
   }
 

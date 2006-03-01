@@ -35,6 +35,10 @@ public class RadGridLayoutManager extends RadLayoutManager {
     RadXYLayoutManager.INSTANCE.writeLayout(writer, radContainer);
   }
 
+  public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
+    container.getDelegee().add(component.getDelegee(), component.getConstraints());
+  }
+
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     // Constraints in Grid layout
     writer.startElement("grid");

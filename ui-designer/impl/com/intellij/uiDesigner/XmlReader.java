@@ -4,17 +4,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.compiler.CodeGenerationException;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.make.PsiNestedFormLoader;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.shared.XYLayoutManager;
 import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.MessageFormat;
 import java.awt.*;
+import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin
@@ -112,7 +111,7 @@ public final class XmlReader {
       }
       else if (lwComponent instanceof LwContainer) {
         final LwContainer lwContainer = (LwContainer)lwComponent;
-        AbstractLayout layout = lwContainer.getLayout();
+        LayoutManager layout = lwContainer.getLayout();
         if (layout instanceof XYLayoutManager) {
           // replace stub layout with the real one
           final XYLayoutManagerImpl xyLayoutManager = new XYLayoutManagerImpl();

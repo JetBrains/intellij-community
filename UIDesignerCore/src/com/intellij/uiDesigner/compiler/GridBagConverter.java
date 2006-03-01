@@ -94,9 +94,10 @@ public class GridBagConverter {
 
   private static int getGap(LwContainer container, final boolean horizontal) {
     while(container != null) {
-      final AbstractLayout layout = container.getLayout();
-      if (layout != null) {
-        final int gap = horizontal ? layout.getHGap() : layout.getVGap();
+      final LayoutManager layout = container.getLayout();
+      if (layout instanceof AbstractLayout) {
+        AbstractLayout aLayout = (AbstractLayout) layout;
+        final int gap = horizontal ? aLayout.getHGap() : aLayout.getVGap();
         if (gap >= 0) {
           return gap;
         }
