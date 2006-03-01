@@ -183,7 +183,7 @@ public class CodeInsightUtil {
 
     if (includeAllParents) {
       PsiElement parent = commonParent;
-      while (parent != root) {
+      while (parent != null && parent != root) {
         parent = parent.getParent();
         list.add(parent);
       }
