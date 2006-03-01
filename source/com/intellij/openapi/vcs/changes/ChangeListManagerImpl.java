@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Alarm;
+import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -47,6 +48,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private boolean myInitilized = false;
   private boolean myDisposed = false;
+
+  private boolean SHOW_FLATTEN_MODE = true;
 
   private final UnversionedFilesHolder myUnversionedFilesHolder = new UnversionedFilesHolder();
   private final List<ChangeList> myChangeLists = new ArrayList<ChangeList>();
@@ -102,6 +105,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     RefreshAction refreshAction = new RefreshAction();
     refreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
 
+    ToggleShowFlattenAction showFlattenAction = new ToggleShowFlattenAction();
+    showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P,
+                                                                                             SystemInfo.isMac
+                                                                                             ? KeyEvent.META_DOWN_MASK
+                                                                                             : KeyEvent.CTRL_DOWN_MASK)),
+                                                panel);
+
     AddChangeListAction newChangeListAction = new AddChangeListAction();
     newChangeListAction.registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
 
@@ -123,6 +133,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     toolBarGroup.add(refreshAction);
     toolBarGroup.add(commitAction);
+    toolBarGroup.add(showFlattenAction);
     toolBarGroup.add(newChangeListAction);
     toolBarGroup.add(removeChangeListAction);
     toolBarGroup.add(setDefaultChangeListAction);
@@ -147,6 +158,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
 
     myView.setMenuActions(menuGroup);
+
+    myView.setShowFlatten(SHOW_FLATTEN_MODE);
 
     myProgressLabel = new JLabel();
     panel.add(myProgressLabel, BorderLayout.NORTH);
@@ -234,12 +247,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myRepaintAlarm.cancelAllRequests();
     myRepaintAlarm.addRequest(new Runnable() {
       public void run() {
-        if (myDisposed) return;
-        synchronized (myChangeLists) {
-          myView.updateModel(getChangeLists(), new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()));
-        }
+        refreshView();
       }
     }, 100, ModalityState.NON_MMODAL);
+  }
+
+  private void refreshView() {
+    if (myDisposed) return;
+    synchronized (myChangeLists) {
+      myView.updateModel(getChangeLists(), new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()));
+    }
   }
 
   @NotNull
@@ -379,6 +396,21 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
+  public class ToggleShowFlattenAction extends ToggleAction {
+    public ToggleShowFlattenAction() {
+      super("Show Directories", "Group changes by directories and modules", Icons.DIRECTORY_CLOSED_ICON);
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return !SHOW_FLATTEN_MODE;
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      SHOW_FLATTEN_MODE = !state;
+      myView.setShowFlatten(SHOW_FLATTEN_MODE);
+      refreshView();
+    }
+  }
 
   public class RefreshAction extends AnAction {
     public RefreshAction() {
@@ -516,6 +548,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   @SuppressWarnings({"unchecked"})
   public void readExternal(Element element) throws InvalidDataException {
+    SHOW_FLATTEN_MODE = Boolean.valueOf(element.getAttributeValue("flattened_view")).booleanValue();
+
     final List<Element> listNodes = (List<Element>)element.getChildren("list");
     for (Element listNode : listNodes) {
       ChangeList list = addChangeList(listNode.getAttributeValue("name"));
@@ -540,6 +574,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
+    element.setAttribute("flattened_view", String.valueOf(SHOW_FLATTEN_MODE));
+
     synchronized (myChangeLists) {
       for (ChangeList list : myChangeLists) {
         Element listNode = new Element("list");

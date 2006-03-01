@@ -7,17 +7,18 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListOwner;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
@@ -25,6 +26,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +40,8 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author max
@@ -55,6 +55,7 @@ public class ChangesListView extends Tree implements DataProvider {
   private FileStatusListener myFileStatusManager;
   private TreeState myTreeState;
   private boolean myTreeStateFrozen = false;
+  private boolean myShowFlatten = false;
 
   private static FilePath getFilePath(final Change change) {
     ContentRevision revision = change.getAfterRevision();
@@ -69,12 +70,8 @@ public class ChangesListView extends Tree implements DataProvider {
     return FileStatusManager.getInstance(myProject).getStatus(vFile);
   }
 
-  private DefaultMutableTreeNode myRoot;
-
   public ChangesListView(final Project project) {
     myProject = project;
-    myRoot = new DefaultMutableTreeNode("root");
-    setModel(new DefaultTreeModel(myRoot));
 
     setShowsRootHandles(true);
     setRootVisible(false);
@@ -98,17 +95,33 @@ public class ChangesListView extends Tree implements DataProvider {
           final Change change = (Change)object;
           final FilePath filePath = getFilePath(change);
           append(filePath.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
-          append(" (" + filePath.getVirtualFileParent().getPresentableUrl() + ", " + getChangeStatus(change).getText() + ")",
-                 SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          if (isShowFlatten()) {
+            append(" (" + filePath.getVirtualFileParent().getPresentableUrl() + ", " + getChangeStatus(change).getText() + ")",
+                   SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
           setIcon(filePath.getFileType().getIcon());
         }
         else if (object instanceof VirtualFile) {
           final VirtualFile file = (VirtualFile)object;
           append(file.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.COLOR_UNKNOWN));
-          final VirtualFile parentFile = file.getParent();
-          assert parentFile != null;
-          append(" (" + parentFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          if (isShowFlatten()) {
+            final VirtualFile parentFile = file.getParent();
+            assert parentFile != null;
+            append(" (" + parentFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
           setIcon(file.getFileType().getIcon());
+        }
+        else if (object instanceof FilePath) {
+          final FilePath path = (FilePath)object;
+          append(getRelativePath(safeCastToFilePath(((DefaultMutableTreeNode)node.getParent()).getUserObject()), path),
+                 SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
+        }
+        else if (object instanceof Module) {
+          final Module module = (Module)object;
+
+          append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          setIcon(module.getModuleType().getNodeIcon(expanded));
         }
         else {
           append(object.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -131,20 +144,16 @@ public class ChangesListView extends Tree implements DataProvider {
     };
 
     FileStatusManager.getInstance(project).addFileStatusListener(myFileStatusManager);
+  }
 
-    /*
-    myTreeExpansionMonitor = TreeExpansionMonitor.install(this, new Equality<DefaultMutableTreeNode>() {
-      public boolean equals(final DefaultMutableTreeNode n1, final DefaultMutableTreeNode n2) {
-        final Object o1 = n1.getUserObject();
-        final Object o2 = n2.getUserObject();
-        if (o1 instanceof Change && o2 instanceof Change) {
-          return ChangeList.changesEqual((Change)o1, (Change)o2);
-        }
+  public FilePath safeCastToFilePath(Object o) {
+    if (o instanceof FilePath) return (FilePath)o;
+    return null;
+  }
 
-        return Comparing.equal(o1, o2);
-      }
-    });
-    */
+  public String getRelativePath(FilePath parent, FilePath child) {
+    if (parent == null) return child.getPath();
+    return child.getPath().substring(parent.getPath().length() + 1);
   }
 
   public void installDndSupport(ChangeListOwner owner) {
@@ -171,39 +180,32 @@ public class ChangesListView extends Tree implements DataProvider {
   }
 
   private void reload() {
-    if (!myTreeStateFrozen) {
-      myTreeState = TreeState.createOn(this, myRoot);
-    }
+    storeState();
     ((DefaultTreeModel)getModel()).reload();
-    if (myTreeState != null) {
-      myTreeState.applyTo(this, myRoot);
+    restoreState();
+  }
+
+  private void storeState() {
+    if (!myTreeStateFrozen) {
+      myTreeState = TreeState.createOn(this, (DefaultMutableTreeNode)getModel().getRoot());
     }
   }
 
+
+  public boolean isShowFlatten() {
+    return myShowFlatten;
+  }
+
+  public void setShowFlatten(final boolean showFlatten) {
+    myShowFlatten = showFlatten;
+  }
+
   public void updateModel(java.util.List<ChangeList> changeLists, java.util.List<VirtualFile> unversionedFiles) {
-    if (!myTreeStateFrozen) {
-      myTreeState = TreeState.createOn(this, myRoot);
-    }
-    myRoot = new DefaultMutableTreeNode("root");
-    final DefaultTreeModel model = new DefaultTreeModel(myRoot);
+    storeState();
 
-    for (ChangeList list : changeLists) {
-      DefaultMutableTreeNode listNode = new DefaultMutableTreeNode(list);
-      model.insertNodeInto(listNode, myRoot, 0);
-      for (Change change : list.getChanges()) {
-        model.insertNodeInto(new DefaultMutableTreeNode(change), listNode, 0);
-      }
-    }
+    final DefaultTreeModel model = buildModel(changeLists, unversionedFiles);
 
-    if (!unversionedFiles.isEmpty()) {
-      DefaultMutableTreeNode unversionedNode = new DefaultMutableTreeNode("Unversioned Files");
-      model.insertNodeInto(unversionedNode, myRoot, myRoot.getChildCount());
-      for (VirtualFile file : unversionedFiles) {
-        model.insertNodeInto(new DefaultMutableTreeNode(file), unversionedNode, 0);
-      }
-    }
-
-    TreeUtil.sort(myRoot, new Comparator() {
+    TreeUtil.sort((DefaultTreeModel)getModel(), new Comparator() {
       public int compare(final Object n1, final Object n2) {
         Object o1 = ((DefaultMutableTreeNode)n1).getUserObject();
         Object o2 = ((DefaultMutableTreeNode)n2).getUserObject();
@@ -219,16 +221,144 @@ public class ChangesListView extends Tree implements DataProvider {
           return ((VirtualFile)o1).getName().compareToIgnoreCase(((VirtualFile)o2).getName());
         }
 
+        if (o1 instanceof FilePath && o2 instanceof FilePath) {
+          return ((FilePath)o1).getPath().compareToIgnoreCase(((FilePath)o2).getPath());
+        }
+
+        if (o1 instanceof FilePath) {
+          return -1;
+        }
+
+        if (o2 instanceof FilePath) {
+          return 1;
+        }
+
         return 0;
       }
     });
 
     setModel(model);
-    expandPath(new TreePath(myRoot.getPath()));
+    expandPath(new TreePath(((DefaultMutableTreeNode)getModel().getRoot()).getPath()));
 
+    restoreState();
+  }
+
+  private void restoreState() {
     if (myTreeState != null) {
-      myTreeState.applyTo(this, myRoot);
+      myTreeState.applyTo(this, (DefaultMutableTreeNode)getModel().getRoot());
     }
+  }
+
+  private DefaultTreeModel buildModel(final java.util.List<ChangeList> changeLists, final java.util.List<VirtualFile> unversionedFiles) {
+    DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
+    final DefaultTreeModel model = new DefaultTreeModel(root);
+
+    for (ChangeList list : changeLists) {
+      DefaultMutableTreeNode listNode = new DefaultMutableTreeNode(list);
+      model.insertNodeInto(listNode, root, 0);
+      final HashMap<FilePath, DefaultMutableTreeNode> foldersCache = new HashMap<FilePath, DefaultMutableTreeNode>();
+      final HashMap<Module, DefaultMutableTreeNode> moduleCache = new HashMap<Module, DefaultMutableTreeNode>();
+      for (Change change : list.getChanges()) {
+        final DefaultMutableTreeNode node = new DefaultMutableTreeNode(change);
+        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, listNode), 0);
+      }
+    }
+
+    if (!unversionedFiles.isEmpty()) {
+      DefaultMutableTreeNode unversionedNode = new DefaultMutableTreeNode("Unversioned Files");
+      model.insertNodeInto(unversionedNode, root, root.getChildCount());
+      final HashMap<FilePath, DefaultMutableTreeNode> foldersCache = new HashMap<FilePath, DefaultMutableTreeNode>();
+      final HashMap<Module, DefaultMutableTreeNode> moduleCache = new HashMap<Module, DefaultMutableTreeNode>();
+      for (VirtualFile file : unversionedFiles) {
+        final DefaultMutableTreeNode node = new DefaultMutableTreeNode(file);
+        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, unversionedNode), 0);
+      }
+    }
+
+    collapseDirectories(model, root);
+
+    return model;
+  }
+
+  private void collapseDirectories(DefaultTreeModel model, DefaultMutableTreeNode node) {
+    if (node.getUserObject() instanceof FilePath && node.getChildCount() == 1) {
+      final DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(0);
+      if (child.getUserObject() instanceof FilePath) {
+        DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
+        final int idx = parent.getIndex(node);
+        model.removeNodeFromParent(node);
+        model.removeNodeFromParent(child);
+        model.insertNodeInto(child, parent, idx);
+        collapseDirectories(model, parent);
+      }
+    }
+    else {
+      final Enumeration children = node.children();
+      while (children.hasMoreElements()) {
+        DefaultMutableTreeNode child = (DefaultMutableTreeNode)children.nextElement();
+        collapseDirectories(model, child);
+      }
+    }
+  }
+
+  private FilePath getPathForObject(Object o) {
+    if (o instanceof Change) {
+      return getFilePath((Change)o);
+    }
+    else if (o instanceof VirtualFile) {
+      return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn((VirtualFile)o);
+    }
+    else if (o instanceof FilePath) {
+      return (FilePath)o;
+    }
+
+    return null;
+  }
+
+  private DefaultMutableTreeNode getParentNodeFor(DefaultMutableTreeNode node,
+                                                  Map<FilePath, DefaultMutableTreeNode> folderNodesCache,
+                                                  Map<Module, DefaultMutableTreeNode> moduleNodesCache,
+                                                  DefaultMutableTreeNode rootNode) {
+    if (isShowFlatten()) {
+      return rootNode;
+    }
+
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final FilePath path = getPathForObject(node.getUserObject());
+
+    final VirtualFile rootFolder = VcsDirtyScope.getRootFor(index, path);
+    if (path.getVirtualFile() == rootFolder) {
+      Module module = index.getModuleForFile(rootFolder);
+      return getNodeForModule(module, moduleNodesCache, rootNode);
+    }
+
+    FilePath parentPath = getParentPath(path);
+
+    DefaultMutableTreeNode parentNode = folderNodesCache.get(parentPath);
+    if (parentNode == null) {
+      parentNode = new DefaultMutableTreeNode(parentPath);
+      DefaultMutableTreeNode grandPa = getParentNodeFor(parentNode, folderNodesCache, moduleNodesCache, rootNode);
+      ((DefaultTreeModel)getModel()).insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
+      folderNodesCache.put(parentPath, parentNode);
+    }
+
+    return parentNode;
+  }
+
+  private static FilePath getParentPath(final FilePath path) {
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getIOFile().getParentFile());
+  }
+
+  private DefaultMutableTreeNode getNodeForModule(final Module module,
+                                                  final Map<Module, DefaultMutableTreeNode> moduleNodesCache,
+                                                  DefaultMutableTreeNode root) {
+    DefaultMutableTreeNode node = moduleNodesCache.get(module);
+    if (node == null) {
+      node = new DefaultMutableTreeNode(module);
+      ((DefaultTreeModel)getModel()).insertNodeInto(node, root, root.getChildCount());
+      moduleNodesCache.put(module, node);
+    }
+    return node;
   }
 
   @Nullable
@@ -300,9 +430,25 @@ public class ChangesListView extends Tree implements DataProvider {
       if (userObject instanceof Change) {
         changes.add((Change)userObject);
       }
+      else if (userObject instanceof FilePath || userObject instanceof Module) {
+        changes.addAll(getAllChangesUnder(node));
+      }
     }
 
     return changes.toArray(new Change[changes.size()]);
+  }
+
+  private static List<Change> getAllChangesUnder(final DefaultMutableTreeNode node) {
+    List<Change> changes = new ArrayList<Change>();
+    final Enumeration enumeration = node.breadthFirstEnumeration();
+    while (enumeration.hasMoreElements()) {
+      DefaultMutableTreeNode child = (DefaultMutableTreeNode)enumeration.nextElement();
+      final Object value = child.getUserObject();
+      if (value instanceof Change) {
+        changes.add((Change)value);
+      }
+    }
+    return changes;
   }
 
   @NotNull
@@ -329,10 +475,8 @@ public class ChangesListView extends Tree implements DataProvider {
   }
 
   public void freezeState() {
-    if (!myTreeStateFrozen) {
-      myTreeStateFrozen = true;
-      myTreeState = TreeState.createOn(this, myRoot);
-    }
+    storeState();
+    myTreeStateFrozen = true;
   }
 
   public void unfeezeState() {
