@@ -284,7 +284,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         final PsiVariable variable = (PsiVariable)parent;
         if (lastElement.equals(variable.getNameIdentifier())) {
           myPreferencePolicy = completionData.completeFieldName(lookupSet, context, variable);
-          if(parent.getLastChild().getNode().getElementType() != ElementType.ERROR_ELEMENT) return;
+          if(parent.getLastChild() instanceof PsiErrorElement) return;
           myPreferencePolicy = completionData.completeMethodName(lookupSet, context, variable);
         }
       }

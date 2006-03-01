@@ -19,10 +19,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 public class PsiTreeUtil {
   private static final Key<Integer> INDEX = Key.create("PsiTreeUtil.copyElements.INDEX");
@@ -341,10 +343,10 @@ public class PsiTreeUtil {
    */
   @Nullable
   public static <T extends PsiElement> T findElementOfClassAtRange (@NotNull PsiFile file, int startOffset, int endOffset, @NotNull Class<T> clazz) {
-    final PsiElement[] psiRoots = file.getPsiRoots();
+    final FileViewProvider viewProvider = file.getViewProvider();
     T result = null;
-    for (PsiElement root : psiRoots) {
-      PsiElement elementAt = root.getNode().findLeafElementAt(startOffset).getPsi();
+    for (Language lang : viewProvider.getRelevantLanguages()) {
+      PsiElement elementAt = viewProvider.findElementAt(startOffset, lang);
       T run = getParentOfType(elementAt, clazz, false);
       T prev = run;
       while (run != null && run.getTextRange().getStartOffset() == startOffset &&
@@ -386,5 +388,43 @@ public class PsiTreeUtil {
       res = lastChild;
     }
     while (true);
+  }
+
+  public static PsiElement prevLeaf(PsiElement current){
+    final PsiElement prevSibling = current.getPrevSibling();
+    if(prevSibling != null) return lastChild(prevSibling);
+    final PsiElement parent = current.getParent();
+    if(parent == null) return null;
+    return prevLeaf(parent);
+  }
+
+  public static PsiElement nextLeaf(PsiElement current){
+    final PsiElement nextSibling = current.getNextSibling();
+    if(nextSibling != null) return firstChild(nextSibling);
+    final PsiElement parent = current.getParent();
+    if(parent == null) return null;
+    return nextLeaf(parent);
+  }
+
+  public static PsiElement lastChild(final PsiElement element) {
+    if(element.getLastChild() != null) return lastChild(element.getLastChild());
+    return element;
+  }
+
+  public static PsiElement firstChild(final PsiElement element) {
+    if(element.getFirstChild() != null) return firstChild(element.getFirstChild());
+    return element;
+  }
+
+  public static PsiElement prevLeaf(final PsiErrorElement element, final boolean skipEmptyElements) {
+    PsiElement prevLeaf = prevLeaf(element);
+    while (skipEmptyElements && prevLeaf != null && prevLeaf.getTextLength() == 0) prevLeaf = prevLeaf(prevLeaf);
+    return prevLeaf;
+  }
+
+  public static PsiElement nextLeaf(final PsiErrorElement element, final boolean skipEmptyElements) {
+    PsiElement nextLeaf = nextLeaf(element);
+    while (skipEmptyElements && nextLeaf != null && nextLeaf.getTextLength() == 0) nextLeaf = nextLeaf(nextLeaf);
+    return nextLeaf;
   }
 }

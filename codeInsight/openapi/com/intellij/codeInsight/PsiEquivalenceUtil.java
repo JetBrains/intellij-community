@@ -26,6 +26,7 @@ public class PsiEquivalenceUtil {
                                               @NotNull PsiElement element2,
                                               @Nullable Comparator<PsiElement> resolvedElementsComparator,
                                               boolean areCommentsSignificant) {
+    if(element1 == element2) return true;
     ASTNode node1 = element1.getNode();
     ASTNode node2 = element2.getNode();
     if (node1 == null || node2 == null) return false;

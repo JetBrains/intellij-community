@@ -71,10 +71,10 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     if (document == null) return;
     // optimization
-    if (child instanceof PsiWhiteSpace 
+    if (child instanceof PsiWhiteSpace
         || child instanceof PsiComment
         || child instanceof PsiDocToken
-        || PropertiesTokenTypes.PROPERTIES_TYPES_TO_IGNORE.contains(child.getNode().getElementType())) {
+        || child.getNode() != null && PropertiesTokenTypes.PROPERTIES_TYPES_TO_IGNORE.contains(child.getNode().getElementType())) {
       return;
     }
 

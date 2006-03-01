@@ -315,8 +315,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       return true;
     }
 
-    final ASTNode astNode = TreeUtil.prevLeaf(element.getNode());
-    if (astNode != null && astNode.getPsi() instanceof OuterLanguageElement) {
+    final PsiElement prevLeaf = PsiTreeUtil.prevLeaf(element, true);
+    if (prevLeaf instanceof OuterLanguageElement) {
       return true;
     }
 
