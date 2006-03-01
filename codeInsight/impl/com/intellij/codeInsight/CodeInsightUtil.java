@@ -15,10 +15,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -145,7 +148,7 @@ public class CodeInsightUtil {
     return getElementsInRange(root, startOffset, endOffset, false);
   }
 
-  public static List<PsiElement> getElementsInRange(PsiElement root, final int startOffset, final int endOffset, boolean includeAllParents) {
+  public static List<PsiElement> getElementsInRange(final PsiElement root, final int startOffset, final int endOffset, boolean includeAllParents) {
     PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
     if (commonParent == null) return Collections.emptyList();
     final List<PsiElement> list = new ArrayList<PsiElement>();
@@ -155,7 +158,7 @@ public class CodeInsightUtil {
       int offset = currentOffset;
 
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        super.visitExpression(expression);
+        visitElement(expression);
       }
 
       public void visitElement(PsiElement element) {
@@ -176,6 +179,20 @@ public class CodeInsightUtil {
           // leaf element
           offset += element.getTextLength();
         }
+      }
+
+
+      public void visitMethod(PsiMethod method) {
+        if(method instanceof JspHolderMethod && root != method) {
+          list.addAll(getElementsInRange(method, startOffset, endOffset, false));
+        }
+        else visitElement(method);
+      }
+
+
+      public void visitImportList(PsiImportList list) {
+        if(!(list instanceof JspxImportList))
+          super.visitImportList(list);
       }
     };
     commonParent.accept(visitor);
