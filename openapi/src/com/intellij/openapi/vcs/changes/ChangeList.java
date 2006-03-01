@@ -92,4 +92,21 @@ public class ChangeList {
 
     return Comparing.equal(fbr1, fbr2) && Comparing.equal(far1, far2);
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final ChangeList list = (ChangeList)o;
+
+    if (myIsDefault != list.myIsDefault) return false;
+    if (!myChanges.equals(list.myChanges)) return false;
+    if (!myDescription.equals(list.myDescription)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myDescription.hashCode();
+  }
 }

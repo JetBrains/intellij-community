@@ -181,6 +181,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
             list.removeChangesInScope(scope);
           }
           myUnversionedFilesHolder.cleanScope(scope);
+          myView.freezeState();
           scheduleRefresh();
 
           final AbstractVcs vcs = myVcsManager.getVcsFor(scope.getScopeRoot());
@@ -215,6 +216,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               }, null); // TODO: make real indicator
             }
           }
+          myView.unfeezeState();
         }
 
         updateProgressText("");

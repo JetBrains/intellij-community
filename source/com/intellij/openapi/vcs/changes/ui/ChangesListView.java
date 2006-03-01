@@ -1,13 +1,13 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.*;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
@@ -28,7 +27,6 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.Equality;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +53,8 @@ public class ChangesListView extends Tree implements DataProvider {
   private ChangeListOwner myDragOwner;
   private final Project myProject;
   private FileStatusListener myFileStatusManager;
-  private final TreeExpansionMonitor<DefaultMutableTreeNode> myTreeExpansionMonitor;
+  private TreeState myTreeState;
+  private boolean myTreeStateFrozen = false;
 
   private static FilePath getFilePath(final Change change) {
     ContentRevision revision = change.getAfterRevision();
@@ -133,6 +132,7 @@ public class ChangesListView extends Tree implements DataProvider {
 
     FileStatusManager.getInstance(project).addFileStatusListener(myFileStatusManager);
 
+    /*
     myTreeExpansionMonitor = TreeExpansionMonitor.install(this, new Equality<DefaultMutableTreeNode>() {
       public boolean equals(final DefaultMutableTreeNode n1, final DefaultMutableTreeNode n2) {
         final Object o1 = n1.getUserObject();
@@ -144,6 +144,7 @@ public class ChangesListView extends Tree implements DataProvider {
         return Comparing.equal(o1, o2);
       }
     });
+    */
   }
 
   public void installDndSupport(ChangeListOwner owner) {
@@ -170,27 +171,35 @@ public class ChangesListView extends Tree implements DataProvider {
   }
 
   private void reload() {
-    myTreeExpansionMonitor.freeze();
+    if (!myTreeStateFrozen) {
+      myTreeState = TreeState.createOn(this, myRoot);
+    }
     ((DefaultTreeModel)getModel()).reload();
-    myTreeExpansionMonitor.restore();
+    if (myTreeState != null) {
+      myTreeState.applyTo(this, myRoot);
+    }
   }
 
   public void updateModel(java.util.List<ChangeList> changeLists, java.util.List<VirtualFile> unversionedFiles) {
-    myTreeExpansionMonitor.freeze();
-    myRoot.removeAllChildren();
+    if (!myTreeStateFrozen) {
+      myTreeState = TreeState.createOn(this, myRoot);
+    }
+    myRoot = new DefaultMutableTreeNode("root");
+    final DefaultTreeModel model = new DefaultTreeModel(myRoot);
+
     for (ChangeList list : changeLists) {
       DefaultMutableTreeNode listNode = new DefaultMutableTreeNode(list);
-      myRoot.add(listNode);
+      model.insertNodeInto(listNode, myRoot, 0);
       for (Change change : list.getChanges()) {
-        listNode.add(new DefaultMutableTreeNode(change));
+        model.insertNodeInto(new DefaultMutableTreeNode(change), listNode, 0);
       }
     }
 
     if (!unversionedFiles.isEmpty()) {
       DefaultMutableTreeNode unversionedNode = new DefaultMutableTreeNode("Unversioned Files");
-      myRoot.add(unversionedNode);
+      model.insertNodeInto(unversionedNode, myRoot, myRoot.getChildCount());
       for (VirtualFile file : unversionedFiles) {
-        unversionedNode.add(new DefaultMutableTreeNode(file));
+        model.insertNodeInto(new DefaultMutableTreeNode(file), unversionedNode, 0);
       }
     }
 
@@ -214,9 +223,12 @@ public class ChangesListView extends Tree implements DataProvider {
       }
     });
 
-    ((DefaultTreeModel)getModel()).nodeStructureChanged(myRoot);
+    setModel(model);
+    expandPath(new TreePath(myRoot.getPath()));
 
-    myTreeExpansionMonitor.restore();
+    if (myTreeState != null) {
+      myTreeState.applyTo(this, myRoot);
+    }
   }
 
   @Nullable
@@ -314,6 +326,17 @@ public class ChangesListView extends Tree implements DataProvider {
   public void setMenuActions(final ActionGroup menuGroup) {
     PopupHandler.installUnknownPopupHandler(this, menuGroup, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(this);
+  }
+
+  public void freezeState() {
+    if (!myTreeStateFrozen) {
+      myTreeStateFrozen = true;
+      myTreeState = TreeState.createOn(this, myRoot);
+    }
+  }
+
+  public void unfeezeState() {
+    myTreeStateFrozen = false;
   }
 
   public class DragSource implements DnDSource {
