@@ -72,6 +72,9 @@
     <component>
       <implementation-class>com.intellij.ide.ui.search.SearchUtil</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.coverage.CoverageDataManager</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
