@@ -43,7 +43,6 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   private PsiFile myPsiFile = null;
   private Content myContent;
   private WeakReference<Document> myDocument;
-  private boolean myInSynchronization;
 
   public SingleRootFileViewProvider(PsiManager manager, VirtualFile file) {
     this(manager, file, true);
@@ -84,11 +83,9 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public void beforeContentsSynchronized() {
-    myInSynchronization = true;
   }
 
   public void contentsSynchronized() {
-    myInSynchronization = false;
     unsetPsiContent();
   }
 

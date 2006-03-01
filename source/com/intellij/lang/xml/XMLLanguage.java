@@ -7,18 +7,19 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Commenter;
-import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.*;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
@@ -38,6 +39,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -51,6 +55,8 @@ public class XMLLanguage extends Language {
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
   private final FormattingModelBuilder myFormattingModelBuilder;
   private XmlFindUsagesProvider myXmlFindUsagesProvider;
+
+  private List<LanguageExtension> myExtensions = new ArrayList<LanguageExtension>();
 
   public XMLLanguage() {
     this("XML", "text/xml");
@@ -131,5 +137,25 @@ public class XMLLanguage extends Language {
   @Nullable
   public ExternalAnnotator getExternalAnnotator() {
     return new XMLExternalAnnotator();
+  }
+
+  public void registerLanguageExtension(LanguageExtension extension){
+    if(!myExtensions.contains(extension)) myExtensions.add(extension);
+  }
+
+  public FileViewProvider createViewProvider(final VirtualFile file, final PsiManager manager, final boolean physical) {
+    return new XmlFileViewProvider(manager, file, physical, this);
+  }
+
+  public Language[] getLanguageExtensionsForFile(final PsiFile psi) {
+    final List<Language> extensions = new ArrayList<Language>();
+    for (LanguageExtension extension : myExtensions) {
+      if(extension.isRelevantForFile(psi)) extensions.add(extension.getLanguage());
+    }
+    return extensions.toArray(new Language[extensions.size()]);
+  }
+
+  public LanguageExtension[] getLanguageExtensions() {
+    return myExtensions.toArray(new LanguageExtension[myExtensions.size()]);
   }
 }
