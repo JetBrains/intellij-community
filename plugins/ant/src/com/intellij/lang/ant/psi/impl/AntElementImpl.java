@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
   protected final AntFile myFile;
-  private AntASTNode myNode = null;
 
   public AntElementImpl(final PsiElement sourceElement, final AntFile file) {
     super(sourceElement);
@@ -59,11 +58,6 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public ASTNode getNode() {
-    if (myNode == null) {
-      final ASTNode sourceNode = getSourceElement().getNode();
-      myNode = new AntASTNode(sourceNode, this, myFile);
-      myFile.registerAntNode(myNode);
-    }
-    return myNode;
+    return null;
   }
 }
