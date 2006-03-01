@@ -316,4 +316,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     childDescription.getValues(parent.getProxy());
     return getCachedElement(tag);
   }
+
+  public <T extends DomElement> T createMockElement(final Class<T> aClass) {
+    return null;
+  }
 }

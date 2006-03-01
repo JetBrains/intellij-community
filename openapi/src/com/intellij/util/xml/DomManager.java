@@ -4,6 +4,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -19,7 +20,7 @@ import java.util.Collection;
 /**
  * @author peter
  */
-public abstract class DomManager {
+public abstract class DomManager implements ProjectComponent {
 
   public static DomManager getDomManager(Project project) {
     return project.getComponent(DomManager.class);
@@ -47,4 +48,5 @@ public abstract class DomManager {
 
   public abstract void unregisterPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider);
 
+  public abstract <T extends DomElement> T createMockElement(Class<T> aClass);
 }
