@@ -10,6 +10,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
@@ -32,6 +33,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -244,14 +246,14 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     return aClass.isInheritor(serializableClass, true);
   }
 
-  public void runInspection(AnalysisScope scope) {
+  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(final RefEntity refEntity) {
         if (refEntity instanceof RefElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           final PsiElement element = refElement.getElement();
           final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
-          if (getManager().RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
+          if (((GlobalInspectionContextImpl)getContext()).RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
           if (!refElement.isSuspicious()) return;
           refElement.accept(new RefVisitor() {
             public void visitMethod(RefMethod method) {
@@ -307,7 +309,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                                                        return false;
                                                      }
                                                    },
-                                                   GlobalSearchScope.projectScope(getManager().getProject()));
+                                                   GlobalSearchScope.projectScope(getContext().getProject()));
               }
             }
           });
@@ -347,7 +349,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       if (refElement.isEntry() || !((RefElementImpl)refElement).isSuspicious() || refElement.isSyntheticJSP()) return 0;
 
       final PsiElement element = refElement.getElement();
-      if (!(element instanceof PsiDocCommentOwner) || !InspectionManagerEx.isToCheckMember((PsiDocCommentOwner)element, myTool)) return 0;
+      if (!(element instanceof PsiDocCommentOwner) || !myTool.getContext().isToCheckMember((PsiDocCommentOwner)element, myTool)) return 0;
 
       if (refElement instanceof RefField) {
         RefField refField = (RefField)refElement;
@@ -360,7 +362,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
   }
 
-  public boolean queryExternalUsagesRequests() {
+  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
     checkForReachables();
     final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this) : new RefUnreachableFilter(this);
     final boolean[] requestAdded = new boolean[]{false};
@@ -378,7 +380,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                 return;
               }
 
-              getManager().enqueueFieldUsagesProcessor(refField, new InspectionManagerEx.UsagesProcessor() {
+              getContext().enqueueFieldUsagesProcessor(refField, new GlobalInspectionContextImpl.UsagesProcessor() {
                 public boolean process(PsiReference psiReference) {
                   getEntryPointsManager().addEntryPoint(refField, false);
                   return false;
@@ -423,14 +425,14 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                 getEntryPointsManager().addEntryPoint(refClass, false);
               }
               else if (!refClass.isAnonymous()) {
-                getManager().enqueueDerivedClassesProcessor(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
+                getContext().enqueueDerivedClassesProcessor(refClass, new GlobalInspectionContextImpl.DerivedClassesProcessor() {
                   public boolean process(PsiClass inheritor) {
                     getEntryPointsManager().addEntryPoint(refClass, false);
                     return false;
                   }
                 });
 
-                getManager().enqueueClassUsagesProcessor(refClass, new InspectionManagerEx.UsagesProcessor() {
+                getContext().enqueueClassUsagesProcessor(refClass, new GlobalInspectionContextImpl.UsagesProcessor() {
                   public boolean process(PsiReference psiReference) {
                     getEntryPointsManager().addEntryPoint(refClass, false);
                     return false;
@@ -471,7 +473,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private void enqueueMethodUsages(final RefMethod refMethod) {
     if (refMethod.getSuperMethods().isEmpty()) {
-      getManager().enqueueMethodUsagesProcessor(refMethod, new InspectionManagerEx.UsagesProcessor() {
+      getContext().enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContextImpl.UsagesProcessor() {
         public boolean process(PsiReference psiReference) {
           getEntryPointsManager().addEntryPoint(refMethod, false);
           return false;
@@ -529,15 +531,16 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     return myQuickFixActions;
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[]{InspectionManagerEx.BUILD_GRAPH, InspectionManagerEx.FIND_EXTERNAL_USAGES};
+    return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
   private void commentOutDead(PsiElement psiElement) {
     PsiFile psiFile = psiElement.getContainingFile();
 
     if (psiFile != null) {
-      Document doc = PsiDocumentManager.getInstance(getManager().getProject()).getDocument(psiFile);
+      Document doc = PsiDocumentManager.getInstance(getContext().getProject()).getDocument(psiFile);
       TextRange textRange = psiElement.getTextRange();
       SimpleDateFormat format = new SimpleDateFormat();
       String date = format.format(new Date());
@@ -594,7 +597,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          SafeDeleteHandler.invoke(getManager().getProject(), psiElements.toArray(new PsiElement[psiElements.size()]), false);
+          SafeDeleteHandler.invoke(getContext().getProject(), psiElements.toArray(new PsiElement[psiElements.size()]), false);
         }
       });
 
@@ -618,7 +621,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         RefUtil.getInstance().removeRefElement(refElement, deletedRefs);
       }
 
-      EntryPointsManager entryPointsManager = getEntryPointsManager(getManager().getProject());
+      EntryPointsManager entryPointsManager = getEntryPointsManager(getContext().getProject());
       for (RefElement refElement : deletedRefs) {
         entryPointsManager.removeEntryPoint(refElement);
       }
@@ -634,7 +637,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
     protected boolean applyFix(RefElement[] refElements) {
       for (RefElement refElement : refElements) {
-        EntryPointsManager.getInstance(getManager().getProject()).addEntryPoint(refElement, true);
+        EntryPointsManager.getInstance(getContext().getProject()).addEntryPoint(refElement, true);
       }
 
       return true;
@@ -650,7 +653,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         if (refEntity instanceof RefElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           final InspectionProfile profile = InspectionProjectProfileManager.getInstance(refElement.getElement().getProject()).getInspectionProfile(refElement.getElement());
-          if (getManager().RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
+          if (((GlobalInspectionContextImpl)getContext()).RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
           refElement.setReachable(false);
           refElement.accept(new RefVisitor() {
             public void visitMethod(RefMethod method) {
@@ -826,7 +829,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private EntryPointsManager getEntryPointsManager() {
-    return EntryPointsManager.getInstance(getManager().getProject());
+    return EntryPointsManager.getInstance(getContext().getProject());
   }
 
   public void updateContent() {

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -91,7 +91,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     PsiDocComment docComment = container.getDocComment();
     PsiManager manager = myContext.getManager();
     if (docComment == null) {
-      String commentText = "/** @" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myID + "*/";
+      String commentText = "/** @" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myID + "*/";
       docComment = manager.getElementFactory().createDocCommentFromText(commentText, null);
       manager.getCodeStyleManager().reformat(docComment);
       PsiElement firstChild = container.getFirstChild();
@@ -102,13 +102,13 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
       return;
     }
 
-    PsiDocTag noInspectionTag = docComment.findTagByName(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME);
+    PsiDocTag noInspectionTag = docComment.findTagByName(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
     if (noInspectionTag != null) {
-      String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " "
+      String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "
                        + noInspectionTag.getValueElement().getText() + ","+ myID;
       noInspectionTag.replace(manager.getElementFactory().createDocTagFromText(tagText, null));
     } else {
-      String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
+      String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
       docComment.add(manager.getElementFactory().createDocTagFromText(tagText, null));
     }
   }

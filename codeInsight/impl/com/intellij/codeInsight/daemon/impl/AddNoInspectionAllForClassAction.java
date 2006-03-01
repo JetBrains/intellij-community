@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagAction{
   @NonNls private static final String ID = "ALL";
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.AddNoInspectionAllForClassAction");
 
   public AddNoInspectionAllForClassAction(final PsiElement context) {
     super(ID, context);
@@ -49,14 +50,15 @@ public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagActio
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer();
+    LOG.assertTrue(container != null);
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
-      .ensureFilesWritable(new VirtualFile[]{container.getContainingFile().getVirtualFile()});
+      .ensureFilesWritable(container.getContainingFile().getVirtualFile());
     if (status.hasReadonlyFiles()) return;
     PsiDocComment docComment = container.getDocComment();
     if (docComment != null){
-      PsiDocTag noInspectionTag = docComment.findTagByName(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME);
+      PsiDocTag noInspectionTag = docComment.findTagByName(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (noInspectionTag != null) {
-        String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " " + ID;
+        String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + ID;
         noInspectionTag.replace(myContext.getManager().getElementFactory().createDocTagFromText(tagText, null));
         return;
       }

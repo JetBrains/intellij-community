@@ -8,8 +8,8 @@
  */
 package com.intellij.codeInspection.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.offlineViewer.OfflineView;
 import com.intellij.ide.RecentProjectsManager;
@@ -92,19 +92,18 @@ public class ViewOfflineResultsAction extends AnAction {
       return;
     }
 
-    OfflineView view = OfflineView.create(file.getName(), project);
+    InspectionManagerEx manager = (InspectionManagerEx) InspectionManager.getInstance(project);
+    final GlobalInspectionContextImpl inspectionContext = manager.createNewGlobalContext(false);
+    OfflineView view = OfflineView.create(file.getName(), project, inspectionContext);
 
     Element root = doc.getRootElement();
-    InspectionManagerEx manager = (InspectionManagerEx) InspectionManager.getInstance(project);
-    manager.close();
-
     List problems = root.getChildren("problem");
     for (final Object problemElement : problems) {
       Element problem = (Element)problemElement;
       view.addProblem(problem);
     }
     view.init();
-    manager.getContentManager().addContent(view.getContent());
+    inspectionContext.getContentManager().addContent(view.getContent());
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.INSPECTION).activate(null);
   }
 

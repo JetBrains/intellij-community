@@ -78,13 +78,15 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   public final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new HashMap<HighlightDisplayLevel, InspectionSeverityGroupNode>();
 
   private Splitter mySplitter;
+  private GlobalInspectionContextImpl myGlobalInspectionContext;
 
-  public InspectionResultsView(final Project project, InspectionProfile inspectionProfile, AnalysisScope scope) {
+  public InspectionResultsView(final Project project, InspectionProfile inspectionProfile, AnalysisScope scope, GlobalInspectionContextImpl globalInspectionContext) {
     setLayout(new BorderLayout());
 
     myProject = project;
     myInspectionProfile = inspectionProfile;
     myScope = scope;
+    myGlobalInspectionContext = globalInspectionContext;
     myTree = new InspectionTree(project);
     myOccurenceNavigator = new OccurenceNavigatorSupport(myTree) {
       @Nullable
@@ -135,8 +137,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
         if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
-          final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
-          manager.setSplitterProportion(((Float)evt.getNewValue()).floatValue());
+          myGlobalInspectionContext.setSplitterProportion(((Float)evt.getNewValue()).floatValue());
         }
       }
     });
@@ -215,7 +216,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     group.add(actionsManager.createExpandAllAction(treeExpander));
     group.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
     group.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
-    group.add(manager.createToggleAutoscrollAction());
+    group.add(myGlobalInspectionContext.createToggleAutoscrollAction());
     group.add(new ExportHTMLAction(this));
     group.add(new HelpAction());
 
@@ -223,7 +224,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     westPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, group, false).getComponent(), BorderLayout.WEST);
 
     DefaultActionGroup specialGroup = new DefaultActionGroup();
-    specialGroup.add(manager.createGroupBySeverityAction());
+    specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
     specialGroup.add(new EditSettingsAction());
     specialGroup.add(new InvokeQuickFixAction(this));
     specialGroup.add(new SuppressInspectionToolbarAction(this));
@@ -239,6 +240,11 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     myOccurenceNavigator = null;
   }
 
+
+  public GlobalInspectionContextImpl getInspectionContext() {
+    return myGlobalInspectionContext;
+  }
+
   private static OpenFileDescriptor getOpenFileDescriptor(PsiElement psiElement) {
     return new OpenFileDescriptor(psiElement.getProject(), psiElement.getContainingFile().getVirtualFile(), psiElement.getTextOffset());
   }
@@ -251,8 +257,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
   private boolean isAutoScrollMode() {
     String activeToolWindowId = ToolWindowManager.getInstance(myProject).getActiveToolWindowId();
-    final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-    return manager.getUIOptions().AUTOSCROLL_TO_SOURCE &&
+    return myGlobalInspectionContext.getUIOptions().AUTOSCROLL_TO_SOURCE &&
            (activeToolWindowId == null || activeToolWindowId.equals(ToolWindowId.INSPECTION));
   }
 
@@ -263,9 +268,6 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       FileEditorManager.getInstance(project).openTextEditor(descriptor, false);
     }
   }
-
-
-
 
   @Nullable
   private static OpenFileDescriptor getOpenFileDescriptor(final RefElement refElement) {
@@ -370,7 +372,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
   @SuppressWarnings({"ConstantConditions"})
   private void mergeBranch(InspectionTreeNode child, InspectionTreeNode parent){
-    if (((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).RUN_WITH_EDITOR_PROFILE){
+    if (myGlobalInspectionContext.RUN_WITH_EDITOR_PROFILE){
       for(int i = 0; i < parent.getChildCount(); i++){
         InspectionTreeNode current = (InspectionTreeNode)parent.getChildAt(i);
         if (child.getClass() != current.getClass()){
@@ -437,12 +439,11 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   public boolean update() {
     clearTree();
     boolean resultsFound = false;
-    final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
-    final boolean isGroupedBySeverity = manager.getUIOptions().GROUP_BY_SEVERITY;
+    final boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
     myGroups = new HashMap<HighlightDisplayLevel, Map<String, InspectionGroupNode>>();
     Map<InspectionTool, HighlightDisplayLevel> tools = new HashMap<InspectionTool, HighlightDisplayLevel>();
     InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
-    if (manager.RUN_WITH_EDITOR_PROFILE){
+    if (myGlobalInspectionContext.RUN_WITH_EDITOR_PROFILE){
       final Set<String> profiles = myScope.getActiveInspectionProfiles();
       for (String profileName : profiles) {
         processProfile((InspectionProfileImpl)inspectionProfileManager.getProfile(profileName), tools);
@@ -706,8 +707,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
-      managerEx.close();
+      myGlobalInspectionContext.close();
       //may differ from CurrentProfile in case of editor set up
       if (myInspectionProfile != null) {
         myInspectionProfile.cleanup();
@@ -772,12 +772,11 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         } else {
           InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(profile.getName()).getInspectionProfile().cleanup();
         }
-        final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
-        inspectionManagerEx.setExternalProfile(profile);
-        inspectionManagerEx.doInspections(myScope);
+        myGlobalInspectionContext.setExternalProfile(profile);
+        myGlobalInspectionContext.doInspections(myScope, InspectionManager.getInstance(myProject));
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            inspectionManagerEx.setExternalProfile(null);
+            myGlobalInspectionContext.setExternalProfile(null);
           }
         });
       }

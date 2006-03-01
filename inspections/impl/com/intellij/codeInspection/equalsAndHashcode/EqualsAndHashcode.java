@@ -1,12 +1,9 @@
 package com.intellij.codeInspection.equalsAndHashcode;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -24,11 +21,11 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
   public EqualsAndHashcode() {
   }
 
-  public void initialize(InspectionManagerEx manager) {
-    super.initialize(manager);
+  public void initialize(GlobalInspectionContextImpl context) {
+    super.initialize(context);
     myHashCode = null;
     myEquals = null;
-    PsiManager psiManager = PsiManager.getInstance(getManager().getProject());
+    PsiManager psiManager = PsiManager.getInstance(getContext().getProject());
     PsiClass psiObjectClass = psiManager.findClass("java.lang.Object");
     PsiMethod[] methods = psiObjectClass.getMethods();
     for (int i = 0; i < methods.length; i++) {
@@ -43,19 +40,19 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
     }
   }
 
-  public void runInspection(AnalysisScope scope) {
+  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     JOB_DESCRIPTOR.setTotalAmount(scope.getFileCount());
 
     scope.accept(new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
         if (file instanceof PsiJavaFile) {
-          getManager().incrementJobDoneAmount(JOB_DESCRIPTOR, file.getVirtualFile().getPresentableUrl());
+          getContext().incrementJobDoneAmount(JOB_DESCRIPTOR, file.getVirtualFile().getPresentableUrl());
           super.visitFile(file);
         }
       }
 
       public void visitClass(PsiClass aClass) {
-        if (!InspectionManagerEx.isToCheckMember(aClass, EqualsAndHashcode.this)) return;
+        if (!getContext().isToCheckMember(aClass, EqualsAndHashcode.this)) return;
         super.visitClass(aClass);
 
         boolean hasEquals = false;
@@ -71,13 +68,13 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
         }
 
         if (hasEquals != hasHashCode) {
-          addProblemElement(getManager().getRefManager().getReference(aClass),
-                            new ProblemDescriptor[]{getManager().createProblemDescriptor(aClass,
-                                                                                         hasEquals
-                                                                                         ? InspectionsBundle.message("inspection.equals.hashcode.only.one.defined.problem.descriptor", "<code>equals()</code>", "<code>hashCode()</code>")
-                                                                                         : InspectionsBundle.message("inspection.equals.hashcode.only.one.defined.problem.descriptor", "<code>hashCode()</code>", "<code>equals()</code>"),
-                                                                                         (LocalQuickFix [])null,
-                                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)});
+          addProblemElement(getContext().getRefManager().getReference(aClass),
+                            new ProblemDescriptor[]{manager.createProblemDescriptor(aClass,
+                                                                                    hasEquals
+                                                                                    ? InspectionsBundle.message("inspection.equals.hashcode.only.one.defined.problem.descriptor", "<code>equals()</code>", "<code>hashCode()</code>")
+                                                                                    : InspectionsBundle.message("inspection.equals.hashcode.only.one.defined.problem.descriptor", "<code>hashCode()</code>", "<code>equals()</code>"),
+                                                                                    (LocalQuickFix [])null,
+                                                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING)});
         }
       }
     });

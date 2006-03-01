@@ -1,6 +1,7 @@
 package com.intellij.analysis;
 
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.UIOptions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -51,7 +52,7 @@ public abstract class BaseAnalysisAction extends AnAction {
         return;
       }
       final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
-      final InspectionManagerEx.UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions();
+      final UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions();
       BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", myTitle),
                                                                   AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
                                                                   project,
@@ -97,7 +98,7 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   protected abstract void analyze(Project project, AnalysisScope scope);
 
-  private AnalysisScope getInspectionScope(final DataContext dataContext) {
+  private static AnalysisScope getInspectionScope(final DataContext dataContext) {
     if (dataContext.getData(DataConstants.PROJECT) == null) return null;
 
     AnalysisScope scope = getInspectionScopeImpl(dataContext);
@@ -105,7 +106,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     return scope != null && scope.getScopeType() != AnalysisScope.INVALID ? scope : null;
   }
 
-  private AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
+  private static AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
     //Possible scopes: file, directory, package, project, module.
     Project projectContext = (Project)dataContext.getData(DataConstantsEx.PROJECT_CONTEXT);
     if (projectContext != null) {
@@ -153,11 +154,11 @@ public abstract class BaseAnalysisAction extends AnAction {
     return getProjectScope(dataContext);
   }
 
-  private AnalysisScope getProjectScope(DataContext dataContext) {
+  private static AnalysisScope getProjectScope(DataContext dataContext) {
     return new AnalysisScope((Project)dataContext.getData(DataConstants.PROJECT));
   }
 
-  private AnalysisScope getModuleScope(DataContext dataContext) {
+  private static AnalysisScope getModuleScope(DataContext dataContext) {
     return new AnalysisScope((Module)dataContext.getData(DataConstants.MODULE));
   }
 

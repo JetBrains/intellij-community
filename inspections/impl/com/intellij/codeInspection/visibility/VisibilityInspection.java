@@ -10,6 +10,7 @@ package com.intellij.codeInspection.visibility;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
@@ -22,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -122,15 +124,15 @@ public class VisibilityInspection extends FilteringInspectionTool {
     myFilter = null;
   }
 
-  public void runInspection(AnalysisScope scope) {
-    for (SmartRefElementPointer entryPoint : EntryPointsManager.getInstance(getManager().getProject()).getEntryPoints()) {
+  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
+    for (SmartRefElementPointer entryPoint : EntryPointsManager.getInstance(getContext().getProject()).getEntryPoints()) {
       RefElement refElement = entryPoint.getRefElement();
       if (refElement != null) {
         getFilter().addIgnoreList(refElement);
       }
     }
 
-    final EjbRootElement[] newEjbModels = EjbModuleUtil.getEjbModels(getManager().getProject());
+    final EjbRootElement[] newEjbModels = EjbModuleUtil.getEjbModels(getContext().getProject());
     for (final EjbRootElement ejbRootElement : newEjbModels) {
       for (final EntityBean entityBean : ejbRootElement.getEnterpriseBeans().getEntities()) {
         PsiClass primaryKeyClass = entityBean.getPrimKeyClass().getValue();
@@ -155,7 +157,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
     }
   }
 
-  public boolean queryExternalUsagesRequests() {
+  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
@@ -163,7 +165,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
           refEntity.accept(new RefVisitor() {
             public void visitField(final RefField refField) {
               if (refField.getAccessModifier() != PsiModifier.PRIVATE) {
-                getManager().enqueueFieldUsagesProcessor(refField, new InspectionManagerEx.UsagesProcessor() {
+                getContext().enqueueFieldUsagesProcessor(refField, new GlobalInspectionContextImpl.UsagesProcessor() {
                   public boolean process(PsiReference psiReference) {
                     getFilter().addIgnoreList(refField);
                     return false;
@@ -178,14 +180,14 @@ public class VisibilityInspection extends FilteringInspectionTool {
               }
               else if (!refMethod.isExternalOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
                        !(refMethod instanceof RefImplicitConstructor)) {
-                getManager().enqueueDerivedMethodsProcessor(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
+                getContext().enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
                   public boolean process(PsiMethod derivedMethod) {
                     getFilter().addIgnoreList(refMethod);
                     return false;
                   }
                 });
 
-                getManager().enqueueMethodUsagesProcessor(refMethod, new InspectionManagerEx.UsagesProcessor() {
+                getContext().enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContextImpl.UsagesProcessor() {
                   public boolean process(PsiReference psiReference) {
                     getFilter().addIgnoreList(refMethod);
                     return false;
@@ -196,14 +198,14 @@ public class VisibilityInspection extends FilteringInspectionTool {
 
             public void visitClass(final RefClass refClass) {
               if (!refClass.isAnonymous()) {
-                getManager().enqueueDerivedClassesProcessor(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
+                getContext().enqueueDerivedClassesProcessor(refClass, new GlobalInspectionContextImpl.DerivedClassesProcessor() {
                   public boolean process(PsiClass inheritor) {
                     getFilter().addIgnoreList(refClass);
                     return false;
                   }
                 });
 
-                getManager().enqueueClassUsagesProcessor(refClass, new InspectionManagerEx.UsagesProcessor() {
+                getContext().enqueueClassUsagesProcessor(refClass, new GlobalInspectionContextImpl.UsagesProcessor() {
                   public boolean process(PsiReference psiReference) {
                     getFilter().addIgnoreList(refClass);
                     return false;
@@ -241,8 +243,9 @@ public class VisibilityInspection extends FilteringInspectionTool {
     return myQuickFixActions;
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[]{InspectionManagerEx.BUILD_GRAPH, InspectionManagerEx.FIND_EXTERNAL_USAGES};
+    return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
   private void changeAccessLevel(PsiModifierListOwner psiElement, RefElement refElement, String newAccess) {

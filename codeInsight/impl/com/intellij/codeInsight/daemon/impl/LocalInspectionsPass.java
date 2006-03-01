@@ -124,7 +124,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
               PsiMethod psiMethod = (PsiMethod)element;
               for (LocalInspectionTool tool : tools) {
                 currentTool = tool;
-                if (InspectionManagerEx.isToCheckMember(psiMethod, currentTool.getID())) {
+                if (GlobalInspectionContextImpl.isToCheckMember(psiMethod, currentTool.getID())) {
                   appendDescriptors(currentTool.checkMethod(psiMethod, iManager, true), currentTool);
                 }
               }
@@ -133,7 +133,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
               PsiClass psiClass = (PsiClass)element;
               for (LocalInspectionTool tool : tools) {
                 currentTool = tool;
-                if (InspectionManagerEx.isToCheckMember(psiClass, currentTool.getID())) {
+                if (GlobalInspectionContextImpl.isToCheckMember(psiClass, currentTool.getID())) {
                   appendDescriptors(currentTool.checkClass(psiClass, iManager, true), currentTool);
                 }
               }
@@ -142,7 +142,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
               PsiField psiField = (PsiField)element;
               for (LocalInspectionTool tool : tools) {
                 currentTool = tool;
-                if (InspectionManagerEx.isToCheckMember(psiField, currentTool.getID())) {
+                if (GlobalInspectionContextImpl.isToCheckMember(psiField, currentTool.getID())) {
                   appendDescriptors(currentTool.checkField(psiField, iManager, true), currentTool);
                 }
               }

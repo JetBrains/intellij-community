@@ -53,7 +53,7 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
 
-    getManager().RUN_WITH_EDITOR_PROFILE = true;
+    getManager().createNewGlobalContext(true).RUN_WITH_EDITOR_PROFILE = true;
     doTest();
   }
 

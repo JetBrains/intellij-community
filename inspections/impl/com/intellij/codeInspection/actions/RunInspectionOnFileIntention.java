@@ -9,10 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfile;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.ModifiableModel;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -55,12 +52,13 @@ public class RunInspectionOnFileIntention implements IntentionAction {
     }
     model.enableTool(myTool.getShortName());
     model.setEditable(myTool.getDisplayName());
-    managerEx.setExternalProfile((InspectionProfile)model);
-    managerEx.RUN_WITH_EDITOR_PROFILE = false;
-    managerEx.doInspections(new AnalysisScope(file));
+    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
+    inspectionContext.setExternalProfile((InspectionProfile)model);
+    inspectionContext.RUN_WITH_EDITOR_PROFILE = false;
+    inspectionContext.doInspections(new AnalysisScope(file), managerEx);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        managerEx.setExternalProfile(null);
+        inspectionContext.setExternalProfile(null);
       }
     });
   }

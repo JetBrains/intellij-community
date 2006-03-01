@@ -28,7 +28,7 @@ import java.util.*;
 public abstract class QuickFixAction extends AnAction {
   protected InspectionTool myTool;
 
-  public InspectionResultsView getInvoker(AnActionEvent e) {
+  public static InspectionResultsView getInvoker(AnActionEvent e) {
     return (InspectionResultsView)e.getDataContext().getData(DataConstantsEx.INSPECTION_VIEW);
   }
 
@@ -79,15 +79,15 @@ public abstract class QuickFixAction extends AnAction {
       final InspectionTree tree = view.getTree();
       final ProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
       if (descriptors.length > 0) {
-        doApplyFix(view.getProject(), (DescriptorProviderInspection)tree.getSelectedTool(), descriptors);
+        doApplyFix(view.getProject(), (DescriptorProviderInspection)tree.getSelectedTool(), descriptors, e);
         return;
       }
     }
 
-    doApplyFix(getSelectedElements(e));
+    doApplyFix(getSelectedElements(e), getInvoker(e));
   }
 
-  protected RefElement[] getSelectedElements(AnActionEvent e) {
+  protected static RefElement[] getSelectedElements(AnActionEvent e) {
     final InspectionResultsView invoker = getInvoker(e);
     if (invoker == null) return new RefElement[0];
     List<RefEntity> selection = new ArrayList<RefEntity>(Arrays.asList(invoker.getTree().getSelectedElements()));
@@ -118,7 +118,8 @@ public abstract class QuickFixAction extends AnAction {
 
   private void doApplyFix(final Project project,
                           final DescriptorProviderInspection tool,
-                          final CommonProblemDescriptor[] descriptors) {
+                          final CommonProblemDescriptor[] descriptors,
+                          final AnActionEvent e) {
     final Set<VirtualFile> readOnlyFiles = new com.intellij.util.containers.HashSet<VirtualFile>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
@@ -163,10 +164,23 @@ public abstract class QuickFixAction extends AnAction {
         });
       }
     }, getTemplatePresentation().getText(), null);
-    ((InspectionManagerEx)InspectionManager.getInstance(project)).refreshViews();
+
+    final RefElement[] selectedElements = getSelectedElements(e);
+    refreshViews(project, selectedElements, tool);
   }
 
-  public void doApplyFix(final RefElement[] refElements) {
+  private static void refreshViews(final Project project, final RefElement[] selectedElements, final InspectionTool tool) {
+    InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(project);
+    final Set<GlobalInspectionContextImpl> runningContexts = managerEx.getRunningContexts();
+    for (GlobalInspectionContextImpl context : runningContexts) {
+      for (RefElement element : selectedElements) {
+        context.ignoreElement(tool, element.getElement());
+      }
+      context.refreshViews();
+    }
+  }
+
+  public void doApplyFix(final RefElement[] refElements, InspectionResultsView view) {
     Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
     if (!readOnlyFiles.isEmpty()) {
       final Project project = refElements[0].getRefManager().getProject();
@@ -189,15 +203,15 @@ public abstract class QuickFixAction extends AnAction {
       }, getTemplatePresentation().getText(), null);
 
       if (refreshNeeded[0]) {
-        ((InspectionManagerEx)InspectionManager.getInstance(project)).refreshViews();
+        view.update();
       }
     }
+    refreshViews(view.getProject(), refElements, myTool);
   }
 
-  private Set<VirtualFile> getReadOnlyFiles(final RefElement[] refElements) {
+  private static Set<VirtualFile> getReadOnlyFiles(final RefElement[] refElements) {
     Set<VirtualFile> readOnlyFiles = new com.intellij.util.containers.HashSet<VirtualFile>();
-    for (int i = 0; i < refElements.length; i++) {
-      RefElement refElement = refElements[i];
+    for (RefElement refElement : refElements) {
       PsiElement psiElement = refElement.getElement();
       if (psiElement == null) continue;
       if (!psiElement.isWritable()) readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());

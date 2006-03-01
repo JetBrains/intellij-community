@@ -10,6 +10,8 @@ import com.intellij.codeInsight.daemon.impl.AddNoInspectionDocTagAction;
 import com.intellij.codeInsight.daemon.impl.AddSuppressWarningsAnnotationAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
@@ -73,6 +76,7 @@ class SuppressInspectionToolbarAction extends AnAction {
 
 
   private AnAction getSuppressAction(final InspectionTool tool, final TreePath[] selectionPaths, final String id) {
+    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(myView.getProject());
     final AnAction suppressAction = new AnAction(InspectionsBundle.message("inspection.quickfix.suppress", tool.getDisplayName())) {
       public void actionPerformed(AnActionEvent e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -100,6 +104,13 @@ class SuppressInspectionToolbarAction extends AnAction {
                   final List<RefEntity> elementsToIgnore = new ArrayList<RefEntity>();
                   InspectionResultsView.traverseRefElements(node, elementsToIgnore);
                   for (RefEntity element : elementsToIgnore) {
+                    if (element instanceof RefElement) {
+                      final Set<GlobalInspectionContextImpl> globalInspectionContexts = managerEx.getRunningContexts();
+                      for (GlobalInspectionContextImpl context : globalInspectionContexts) {
+                        context.ignoreElement(tool, ((RefElement)element).getElement());
+                        context.refreshViews();
+                      }
+                    }
                     tool.ignoreElement(element);
                   }
                 }
@@ -213,6 +224,7 @@ class SuppressInspectionToolbarAction extends AnAction {
                                             final InspectionTool tool,
                                             final List<RefEntity> elementsToSuppress,
                                             final InspectionResultsView view) {
+    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(view.getProject());
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -226,6 +238,14 @@ class SuppressInspectionToolbarAction extends AnAction {
                       action.invoke(view.getProject(), null, element.getElement().getContainingFile());
                       for (RefEntity refElement : elementsToSuppress) {
                         tool.ignoreElement(refElement);
+                        if (refElement instanceof RefElement) {
+                          final Set<GlobalInspectionContextImpl> globalInspectionContexts = managerEx.getRunningContexts();
+                          for (GlobalInspectionContextImpl context : globalInspectionContexts) {
+                            //if (view.getInspectionContext() == context) continue;
+                            context.ignoreElement(tool, ((RefElement)refElement).getElement());
+                            context.refreshViews();
+                          }
+                        }
                       }
                       view.update();
                     }

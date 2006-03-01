@@ -16,6 +16,7 @@
 package com.intellij.codeHighlighting;
 
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.ui.LightColors;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.EmptyIcon;
@@ -28,9 +29,9 @@ public class HighlightDisplayLevel {
   private static final Icon EMPTY = new EmptyIcon(12, 12);
   private static Map<String, HighlightDisplayLevel> ourMap = new HashMap<String, HighlightDisplayLevel>();
 
-  public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByMask(Color.red));
-  public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByMask(Color.yellow));
-  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(Color.green));
+  public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByMask(LightColors.RED));
+  public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByMask(LightColors.YELLOW));
+  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(LightColors.GREEN));
 
   private final Icon myIcon;
   private final HighlightSeverity mySeverity;

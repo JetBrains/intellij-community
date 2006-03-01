@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
@@ -120,7 +120,7 @@ public class JavaDocCompletionData extends CompletionData {
       final JavadocManager manager = context.file.getManager().getJavadocManager();
       final JavadocTagInfo[] infos = manager.getTagInfos(parent);
       for (JavadocTagInfo info : infos) {
-        if (info.getName().equals(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
+        if (info.getName().equals(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
         if (isInline != (info.isInline())) continue;
         ret.add(info.getName());
       }

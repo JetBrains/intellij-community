@@ -8,7 +8,6 @@
  */
 package com.intellij.codeInspection.deadCode;
 
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiDocCommentOwner;
@@ -24,7 +23,7 @@ public class RefUnreferencedFilter extends RefUnreachableFilter {
     if (refElement.isEntry() || !((RefElementImpl)refElement).isSuspicious() || refElement.isSyntheticJSP()) return 0;
 
     final PsiElement element = refElement.getElement();
-    if (!(element instanceof PsiDocCommentOwner) || !InspectionManagerEx.isToCheckMember((PsiDocCommentOwner)element, myTool)) return 0;
+    if (!(element instanceof PsiDocCommentOwner) || !myTool.getContext().isToCheckMember((PsiDocCommentOwner)element, myTool)) return 0;
 
     if (refElement instanceof RefField) {
       RefField refField = (RefField) refElement;

@@ -63,17 +63,17 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   public DuplicatePropertyInspection() {
   }
 
-  public void runInspection(AnalysisScope scope) {
+  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     scope.accept(new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
-        checkFile(file);
+        checkFile(file, manager);
       }
     });
   }
 
   public HTMLComposer getComposer() {
     return new DescriptorComposer(this) {
-      protected void composeDescription(final ProblemDescriptor description, int i, StringBuffer buf) {
+      protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf) {
         @NonNls String descriptionTemplate = description.getDescriptionTemplate();
         descriptionTemplate = descriptionTemplate.replaceAll("#end", " ");
         buf.append(descriptionTemplate);
@@ -145,9 +145,9 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     return new JobDescriptor[]{};
   }
 
-  public void checkFile(final PsiFile file) {
+  public void checkFile(final PsiFile file, final InspectionManager manager) {
     if (!(file instanceof PropertiesFile)) return;
-    if (getManager().RUN_WITH_EDITOR_PROFILE &&
+    if (getContext().RUN_WITH_EDITOR_PROFILE &&
         InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile((PsiElement)file).getInspectionTool(getShortName()) != this) {
       return;
     }
@@ -178,9 +178,9 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
 
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
         Map<String, Set<String> > keyToDifferentValues = new HashMap<String, Set<String>>();
-        if (CHECK_DUPLICATE_KEYS || CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) prepareDuplicateKeysByFile(processedKeyToFiles, getManager(), keyToDifferentValues, problemDescriptors, file, original);
-        if (CHECK_DUPLICATE_VALUES) prepareDuplicateValuesByFile(processedValueToFiles, getManager(), problemDescriptors, file, original);
-        if (CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) processDuplicateKeysWithDifferentValues(keyToDifferentValues, processedKeyToFiles, problemDescriptors, getManager(), file, original);
+        if (CHECK_DUPLICATE_KEYS || CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) prepareDuplicateKeysByFile(processedKeyToFiles, manager, keyToDifferentValues, problemDescriptors, file, original);
+        if (CHECK_DUPLICATE_VALUES) prepareDuplicateValuesByFile(processedValueToFiles, manager, problemDescriptors, file, original);
+        if (CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) processDuplicateKeysWithDifferentValues(keyToDifferentValues, processedKeyToFiles, problemDescriptors, manager, file, original);
         if (problemDescriptors.size() > 0) {
           addProblemElement(getRefManager().getReference(file), problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]));
         }

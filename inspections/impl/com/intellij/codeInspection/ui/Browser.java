@@ -194,7 +194,7 @@ public class Browser extends JPanel {
               else if (ref.startsWith("invoke:")) {
                 int actionNumber = Integer.parseInt(ref.substring("invoke:".length()));
                 getTool().getQuickFixes(new RefElement[]{(RefElement)myCurrentEntity})[actionNumber]
-                  .doApplyFix(new RefElement[]{(RefElement)myCurrentEntity});
+                  .doApplyFix(new RefElement[]{(RefElement)myCurrentEntity}, myView);
               }
               else if (ref.startsWith("invokelocal:")) {
                 int actionNumber = Integer.parseInt(ref.substring("invokelocal:".length()));
@@ -292,7 +292,7 @@ public class Browser extends JPanel {
   private InspectionTool getTool(final RefEntity refEntity) {
     InspectionTool tool = getTool();
     assert tool != null;
-    final InspectionManagerEx manager = tool.getManager();
+    final GlobalInspectionContextImpl manager = tool.getContext();
     if (manager.RUN_WITH_EDITOR_PROFILE && refEntity instanceof RefElement){
       PsiElement element = ((RefElement)refEntity).getElement();
       if (element == null) return tool;
@@ -339,6 +339,7 @@ public class Browser extends JPanel {
       myHTMLViewer.read(new StringReader("<html><body></body></html>"), null);
     }
     catch (IOException e) {
+      //can't be
     }
   }
 

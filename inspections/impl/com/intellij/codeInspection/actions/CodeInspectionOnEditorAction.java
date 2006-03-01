@@ -3,6 +3,7 @@ package com.intellij.codeInspection.actions;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -13,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
 public class CodeInspectionOnEditorAction extends AnAction {
@@ -33,14 +33,15 @@ public class CodeInspectionOnEditorAction extends AnAction {
     FileDocumentManager.getInstance().saveAllDocuments();
     final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final AnalysisScope scope = new AnalysisScope(psiFile);
-    inspectionManagerEx.setCurrentScope(scope);
+    final GlobalInspectionContextImpl inspectionContext = inspectionManagerEx.createNewGlobalContext(false);
+    inspectionContext.setCurrentScope(scope);
     final InspectionProfile inspectionProfile =
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile((PsiElement)psiFile);
-    inspectionManagerEx.setExternalProfile(inspectionProfile);
-    inspectionManagerEx.doInspections(scope);
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(psiFile);
+    inspectionContext.setExternalProfile(inspectionProfile);
+    inspectionContext.doInspections(scope, inspectionManagerEx);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        inspectionManagerEx.setExternalProfile(null);
+        inspectionContext.setExternalProfile(null);
       }
     });
   }

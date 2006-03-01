@@ -2,17 +2,15 @@ package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -20,16 +18,14 @@ import java.util.ArrayList;
  * @author max
  */
 public class SameParameterValueInspection extends DescriptorProviderInspection {
-  public SameParameterValueInspection() {
-  }
-
-  public void runInspection(AnalysisScope scope) {
+ 
+  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod) refEntity;
-          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameParameterValueInspection.this.getShortName())) return;
-          ProblemDescriptor[] descriptors = checkMethod(refMethod);
+          if (!GlobalInspectionContextImpl.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameParameterValueInspection.this.getShortName())) return;
+          ProblemDescriptor[] descriptors = checkMethod(refMethod, manager);
           if (descriptors != null) {
             addProblemElement(refMethod, descriptors);
           }
@@ -42,7 +38,7 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
     return true;
   }
 
-  private ProblemDescriptor[] checkMethod(RefMethod refMethod) {
+  private static ProblemDescriptor[] checkMethod(RefMethod refMethod, InspectionManager manager) {
     if (refMethod.hasSuperMethods()) return null;
 
     ArrayList<ProblemDescriptor> problems = null;
@@ -51,23 +47,23 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
       String value = refParameter.getActualValueIfSame();
       if (value != null) {
         if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
-        problems.add(getManager().createProblemDescriptor(refMethod.getElement(), InspectionsBundle.message(
+        problems.add(manager.createProblemDescriptor(refMethod.getElement(), InspectionsBundle.message(
           "inspection.same.parameter.problem.descriptor", "<code>" + refParameter.getName() + "</code>", "<code>" + value + "</code>"),
-                                                                                  (LocalQuickFix [])null,
-                                                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                     (LocalQuickFix [])null,
+                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
 
     return problems == null ? null : problems.toArray(new ProblemDescriptorImpl[problems.size()]);
   }
 
-  public boolean queryExternalUsagesRequests() {
+  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
-              getManager().enqueueMethodUsagesProcessor(refMethod, new InspectionManagerEx.UsagesProcessor() {
+              getContext().enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContextImpl.UsagesProcessor() {
                 public boolean process(PsiReference psiReference) {
                   ignoreElement(refMethod);
                   return false;
@@ -82,8 +78,9 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
     return false;
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[] {InspectionManagerEx.BUILD_GRAPH, InspectionManagerEx.FIND_EXTERNAL_USAGES};
+    return new JobDescriptor[] {GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
   public String getDisplayName() {

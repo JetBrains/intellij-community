@@ -3,12 +3,9 @@ package com.intellij.codeInspection.unneededThrows;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefElement;
@@ -35,13 +32,13 @@ public class UnneededThrows extends DescriptorProviderInspection {
   private QuickFix myQuickFix;
   @NonNls public static final String SHORT_NAME = "UnneededThrows";
 
-  public void runInspection(AnalysisScope scope) {
+  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod && !((RefMethod)refEntity).isSyntheticJSP()) {
           RefMethod refMethod = (RefMethod)refEntity;
-          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnneededThrows.this)) return;
-          ProblemDescriptorImpl[] descriptors = checkMethod(refMethod);
+          if (!getContext().isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnneededThrows.this)) return;
+          ProblemDescriptorImpl[] descriptors = checkMethod(refMethod, manager);
           if (descriptors != null) {
             addProblemElement(refMethod, descriptors);
           }
@@ -55,7 +52,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
   }
 
   @Nullable
-  private ProblemDescriptorImpl[] checkMethod(RefMethod refMethod) {
+  private ProblemDescriptorImpl[] checkMethod(RefMethod refMethod, InspectionManager manager) {
     if (refMethod.hasSuperMethods()) return null;
 
     PsiClassType[] unThrown = refMethod.getUnThrownExceptions();
@@ -77,20 +74,17 @@ public class UnneededThrows extends DescriptorProviderInspection {
           if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
 
           if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
-            problems.add(
-              getManager().createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor",
+            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor",
                                                                                         "<code>#ref</code>"), getFix(),
                                                                                                               ProblemHighlightType.LIKE_UNUSED_SYMBOL));
           }
           else if (refMethod.getDerivedMethods().size() > 0) {
-            problems.add(
-              getManager().createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor1",
+            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor1",
                                                                                         "<code>#ref</code>"), getFix(),
                                                                                                               ProblemHighlightType.LIKE_UNUSED_SYMBOL));
           }
           else {
-            problems.add(
-              getManager().createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor2",
+            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor2",
                                                                                         "<code>#ref</code>"), getFix(),
                                                                                                               ProblemHighlightType.LIKE_UNUSED_SYMBOL));
           }
@@ -107,13 +101,13 @@ public class UnneededThrows extends DescriptorProviderInspection {
     return null;
   }
 
-  public boolean queryExternalUsagesRequests() {
+  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
-              getManager().enqueueDerivedMethodsProcessor(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
+              getContext().enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   ignoreElement(refMethod);
                   return true;
@@ -129,7 +123,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
   }
 
   public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[]{InspectionManagerEx.BUILD_GRAPH, InspectionManagerEx.FIND_EXTERNAL_USAGES};
+    return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
   public String getDisplayName() {
@@ -173,7 +167,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
 
     private void removeExcessiveThrows(RefMethod refMethod) {
       try {
-        Project project = getManager().getProject();
+        Project project = getContext().getProject();
         ProblemDescriptor[] problems = (ProblemDescriptor[])getDescriptions(refMethod);
         if (problems == null) return;
         PsiManager psiManager = PsiManager.getInstance(project);

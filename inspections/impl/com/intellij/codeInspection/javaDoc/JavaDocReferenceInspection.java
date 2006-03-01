@@ -32,26 +32,25 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.javadoc.ref.display.name");
 
 
-  private ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template) {
-    return InspectionManager.getInstance(element.getProject())
-      .createProblemDescriptor(element, template, (LocalQuickFix [])null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+  private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, InspectionManager manager) {
+    return manager.createProblemDescriptor(element, template, (LocalQuickFix [])null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
   }
 
   @Nullable
   public ProblemDescriptor[] checkMethod(PsiMethod psiMethod, InspectionManager manager, boolean isOnTheFly) {
-    return checkMember(psiMethod);
+    return checkMember(psiMethod, manager);
   }
 
-  private ProblemDescriptor[] checkMember(final PsiDocCommentOwner docCommentOwner) {
+  private ProblemDescriptor[] checkMember(final PsiDocCommentOwner docCommentOwner, final InspectionManager manager) {
     ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     final PsiDocComment docComment = docCommentOwner.getDocComment();
     if (docComment == null) return null;
 
     final String[] refMessage = new String[]{null};
     final PsiJavaCodeReferenceElement[] references = new PsiJavaCodeReferenceElement[]{null};
-    docCommentOwner.accept(getVisitor(references, refMessage, docCommentOwner, problems));
+    docCommentOwner.accept(getVisitor(references, refMessage, docCommentOwner, problems, manager));
     if (refMessage[0] != null) {
-      problems.add(createDescriptor(references[0], refMessage[0]));
+      problems.add(createDescriptor(references[0], refMessage[0], manager));
     }
 
     return problems.isEmpty()
@@ -61,14 +60,15 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
   @Nullable
   public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
-    return checkMember(aClass);
+    return checkMember(aClass, manager);
   }
 
 
   private PsiElementVisitor getVisitor(final PsiJavaCodeReferenceElement[] references,
                                        final String[] refMessage,
                                        final PsiElement context,
-                                       final ArrayList<ProblemDescriptor> problems) {
+                                       final ArrayList<ProblemDescriptor> problems,
+                                       final InspectionManager manager) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
@@ -88,14 +88,14 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         final JavadocManager javadocManager = tag.getManager().getJavadocManager();
         final JavadocTagInfo info = javadocManager.getTagInfo(tag.getName());
         if (info == null || !info.isInline()) {
-          visitRefInDocTag(tag, javadocManager, context, problems);
+          visitRefInDocTag(tag, javadocManager, context, problems, manager);
         }
       }
 
       public void visitInlineDocTag(PsiInlineDocTag tag) {
         super.visitInlineDocTag(tag);
         final JavadocManager javadocManager = tag.getManager().getJavadocManager();
-        visitRefInDocTag(tag, javadocManager, context, problems);
+        visitRefInDocTag(tag, javadocManager, context, problems, manager);
       }
 
       public void visitElement(PsiElement element) {
@@ -118,10 +118,11 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     };
   }
 
-  public void visitRefInDocTag(final PsiDocTag tag,
+  public static void visitRefInDocTag(final PsiDocTag tag,
                                   final JavadocManager manager,
                                   final PsiElement context,
-                                  ArrayList<ProblemDescriptor> problems) {
+                                  ArrayList<ProblemDescriptor> problems,
+                                  InspectionManager inspectionManager) {
     String tagName = tag.getName();
     PsiDocTagValue value = tag.getValueElement();
     if (value == null) return;
@@ -129,7 +130,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     if (info != null && !info.isValidInContext(context)) return;
     String message = info == null || !info.isInline() ? null : info.checkTagValue(value);
     if (message != null){
-      problems.add(createDescriptor(value, message));
+      problems.add(createDescriptor(value, message, inspectionManager));
     }
     final PsiReference reference = value.getReference();
     if (reference != null) {
@@ -142,7 +143,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
           final PsiDocTagValue valueElement = tag.getValueElement();
           if (valueElement != null) {
             @NonNls String params = "<code>" + new String(value.getContainingFile().textToCharArray(), textOffset, value.getTextRange().getEndOffset() - textOffset) + "</code>";
-            problems.add(createDescriptor(valueElement, InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", params)));
+            problems.add(createDescriptor(valueElement, InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", params), inspectionManager));
           }
         }
       }

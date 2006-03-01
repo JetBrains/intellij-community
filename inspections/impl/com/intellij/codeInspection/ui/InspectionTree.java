@@ -124,7 +124,7 @@ public class InspectionTree extends Tree {
     return EMPTY_ELEMENTS_ARRAY;
   }
 
-  private void addElementsInNode(InspectionTreeNode node, Collection<RefEntity> out) {
+  private static void addElementsInNode(InspectionTreeNode node, Collection<RefEntity> out) {
     if (!node.isValid()) return;
     if (node instanceof RefElementNode) {
       out.add(((RefElementNode)node).getElement());
@@ -151,7 +151,7 @@ public class InspectionTree extends Tree {
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 
-  private void traverseDescriptors(InspectionTreeNode node, Set<CommonProblemDescriptor> descriptors){
+  private static void traverseDescriptors(InspectionTreeNode node, Set<CommonProblemDescriptor> descriptors){
     if (node instanceof ProblemDescriptionNode) {
       final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
       descriptors.add(problemNode.getDescriptor());
@@ -161,7 +161,7 @@ public class InspectionTree extends Tree {
     }
   }
 
-  public List<RefElement> getElementsToSuppressInSubTree(InspectionTreeNode node){
+  public static List<RefElement> getElementsToSuppressInSubTree(InspectionTreeNode node){
     List<RefElement> result = new ArrayList<RefElement>();
     if (node instanceof RefElementNode){
       result.add(((RefElementNode)node).getElement());
@@ -264,18 +264,10 @@ public class InspectionTree extends Tree {
         append(" " + InspectionsBundle.message("inspection.problem.descriptor.count", problemCount), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
 
-      setIcon(node.getIcon(expanded));
-      /* if (node instanceof InspectionNode){
-         final HighlightDisplayLevel level = myManager.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(((InspectionNode)node).getTool().getDisplayName()));
-         LayeredIcon icon = new LayeredIcon(2);
-         icon.setIcon(node.getIcon(expanded), 1);
-         icon.setIcon(level.getIcon(),
-                      0);
-         setIcon(icon);
-       }*/
+      setIcon(node.getIcon(expanded));     
     }
 
-    private SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
+    private static SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
       SimpleTextAttributes foreground = SimpleTextAttributes.REGULAR_ATTRIBUTES;
       if (node instanceof RefElementNode) {
         RefElement refElement = ((RefElementNode)node).getElement();
@@ -292,7 +284,7 @@ public class InspectionTree extends Tree {
       return foreground;
     }
 
-    private boolean appearsBold(Object node) {
+    private static boolean appearsBold(Object node) {
       return ((InspectionTreeNode)node).appearsBold();
     }
   }
@@ -301,7 +293,7 @@ public class InspectionTree extends Tree {
     sortChildren(getRoot());
   }
 
-  protected void sortChildren(InspectionTreeNode node) {
+  protected static void sortChildren(InspectionTreeNode node) {
     TreeUtil.sort(node, InspectionResultsViewComparator.getInstance());
   }
 

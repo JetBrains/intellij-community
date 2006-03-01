@@ -2,12 +2,9 @@ package com.intellij.codeInspection.sameReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -15,22 +12,20 @@ import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
 public class SameReturnValueInspection extends DescriptorProviderInspection {
-  public SameReturnValueInspection() {
-  }
-
-  public void runInspection(AnalysisScope scope) {
+  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod) refEntity;
-            if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameReturnValueInspection.this)) return;
-          ProblemDescriptor[] descriptors = checkMethod(refMethod);
+            if (!getContext().isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameReturnValueInspection.this)) return;
+          ProblemDescriptor[] descriptors = checkMethod(refMethod, manager);
           if (descriptors != null) {
             addProblemElement(refMethod, descriptors);
           }
@@ -44,7 +39,7 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
   }
 
   @Nullable
-  private ProblemDescriptor[] checkMethod(RefMethod refMethod) {
+  private static ProblemDescriptor[] checkMethod(RefMethod refMethod, final InspectionManager manager) {
     if (refMethod.isConstructor()) return null;
     if (refMethod.hasSuperMethods()) return null;
 
@@ -59,19 +54,19 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
         message = InspectionsBundle.message("inspection.same.return.value.problem.descriptor2", "<code>" + returnValue + "</code>");
       }
 
-      return new ProblemDescriptor[] {getManager().createProblemDescriptor(refMethod.getElement(), message, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+      return new ProblemDescriptor[] {manager.createProblemDescriptor(refMethod.getElement(), message, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 
     return null;
   }
 
-  public boolean queryExternalUsagesRequests() {
+  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
-              getManager().enqueueDerivedMethodsProcessor(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
+              getContext().enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   ignoreElement(refMethod);
                   return false;
@@ -86,8 +81,9 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
     return false;
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[] {InspectionManagerEx.BUILD_GRAPH, InspectionManagerEx.FIND_EXTERNAL_USAGES};
+    return new JobDescriptor[] {GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
   public String getDisplayName() {

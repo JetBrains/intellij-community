@@ -6,6 +6,7 @@ import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ui.InspectCodePanel;
@@ -22,10 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
-  private JRadioButton myRunWithEditorSettingsButton;
-  private JRadioButton myRunWithChoosenButton;
-  private ComboboxWithBrowseButton myBrowseProfilesCombo;
-  private JPanel myAdditionalPanel;
+  private GlobalInspectionContextImpl myGlobalInspectionContext = null;
 
   public CodeInspectionAction() {
     super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
@@ -34,13 +32,24 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   protected void analyze(Project project, AnalysisScope scope) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManager.getInstance(project));
-    inspectionManagerEx.setCurrentScope(scope);
-    inspectionManagerEx.doInspections(scope);
+    final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
+    inspectionContext.setCurrentScope(scope);
+    inspectionContext.doInspections(scope, inspectionManagerEx);
+    myGlobalInspectionContext = null;
+  }
+
+
+  public GlobalInspectionContextImpl getGlobalInspectionContext(Project project) {
+    if (myGlobalInspectionContext == null){
+      myGlobalInspectionContext = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).createNewGlobalContext(false);
+    }
+    return myGlobalInspectionContext;
   }
 
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
+    final AdditionalPanel panel = new AdditionalPanel();
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final JComboBox profiles = myBrowseProfilesCombo.getComboBox();
+    final JComboBox profiles = panel.myBrowseProfilesCombo.getComboBox();
     profiles.setRenderer(new DefaultListCellRenderer(){
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected,
@@ -54,7 +63,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
-    myBrowseProfilesCombo.addActionListener(new ActionListener() {
+    panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         InspectCodePanel inspectCodeDialog = new InspectCodePanel(manager, null, ((Profile)profiles.getSelectedItem()).getName(), true, projectProfileManager){
           protected void init() {
@@ -86,24 +95,27 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
     dialog.setOKActionEnabled(profile != null && profile.isExecutable());
 
-    myRunWithChoosenButton.setSelected(!manager.RUN_WITH_EDITOR_PROFILE);
-    myRunWithEditorSettingsButton.setSelected(manager.RUN_WITH_EDITOR_PROFILE);
-    myBrowseProfilesCombo.setEnabled(!manager.RUN_WITH_EDITOR_PROFILE);
+    panel.myRunWithChoosenButton.setSelected(!getGlobalInspectionContext(project).RUN_WITH_EDITOR_PROFILE);
+    panel.myRunWithEditorSettingsButton.setSelected(getGlobalInspectionContext(project).RUN_WITH_EDITOR_PROFILE);
+    panel.myBrowseProfilesCombo.setEnabled(!getGlobalInspectionContext(project).RUN_WITH_EDITOR_PROFILE);
 
     final ActionListener onChoose = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        manager.RUN_WITH_EDITOR_PROFILE = myRunWithEditorSettingsButton.isSelected();
-        myBrowseProfilesCombo.setEnabled(!manager.RUN_WITH_EDITOR_PROFILE);
+        getGlobalInspectionContext(project).RUN_WITH_EDITOR_PROFILE = panel.myRunWithEditorSettingsButton.isSelected();
+        panel.myBrowseProfilesCombo.setEnabled(!getGlobalInspectionContext(project).RUN_WITH_EDITOR_PROFILE);
       }
     };
-    myRunWithEditorSettingsButton.addActionListener(onChoose);
-    myRunWithChoosenButton.addActionListener(onChoose);
+    panel.myRunWithEditorSettingsButton.addActionListener(onChoose);
+    panel.myRunWithChoosenButton.addActionListener(onChoose);
 
-    return myAdditionalPanel;
+    return panel.myAdditionalPanel;
   }
 
-  private static void reloadProfiles(JComboBox profiles, InspectionProfileManager inspectionProfileManager, InspectionProjectProfileManager inspectionProjectProfileManager, InspectionManagerEx inspectionManager){
-    final InspectionProfile selectedProfile = inspectionManager.getCurrentProfile();
+  private void reloadProfiles(JComboBox profiles,
+                              InspectionProfileManager inspectionProfileManager,
+                              InspectionProjectProfileManager inspectionProjectProfileManager,
+                              InspectionManagerEx inspectionManager){
+    final InspectionProfile selectedProfile = getGlobalInspectionContext(inspectionManager.getProject()).getCurrentProfile();
     String[] avaliableProfileNames = inspectionProfileManager.getAvailableProfileNames();
     final DefaultComboBoxModel model = (DefaultComboBoxModel)profiles.getModel();
     model.removeAllElements();
@@ -117,5 +129,13 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       }
     }
     profiles.setSelectedItem(selectedProfile);
+  }
+
+
+  private static class AdditionalPanel {
+    public JRadioButton myRunWithEditorSettingsButton;
+    public JRadioButton myRunWithChoosenButton;
+    public ComboboxWithBrowseButton myBrowseProfilesCombo;
+    public JPanel myAdditionalPanel;
   }
 }

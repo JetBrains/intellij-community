@@ -2,12 +2,9 @@ package com.intellij.codeInspection.emptyMethod;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,13 +29,13 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   private QuickFix myQuickFix;
   @NonNls public static final String SHORT_NAME = "EmptyMethod";
 
-  public void runInspection(AnalysisScope scope) {
+  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;
-          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), EmptyMethodInspection.this)) return;
-          ProblemDescriptor[] descriptors = checkMethod(refMethod);
+          if (!getContext().isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), EmptyMethodInspection.this)) return;
+          ProblemDescriptor[] descriptors = checkMethod(refMethod, manager);
           if (descriptors != null) {
             addProblemElement(refMethod, descriptors);
           }
@@ -52,13 +49,13 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   }
 
   @Nullable
-  private ProblemDescriptor[] checkMethod(RefMethod refMethod) {
+  private ProblemDescriptor[] checkMethod(RefMethod refMethod, InspectionManager manager) {
     if (!refMethod.isBodyEmpty()) return null;
     if (refMethod.isConstructor()) return null;
     if (refMethod.isSyntheticJSP()) return null;
 
     for (RefMethod refSuper : refMethod.getSuperMethods()) {
-      if (checkMethod(refSuper) != null) return null;
+      if (checkMethod(refSuper, manager) != null) return null;
     }
 
     String message = null;
@@ -91,7 +88,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
 
     if (message != null) {
       return new ProblemDescriptor[]{
-        getManager().createProblemDescriptor(refMethod.getElement(), message, getFix(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+        manager.createProblemDescriptor(refMethod.getElement(), message, getFix(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 
     return null;
@@ -122,13 +119,13 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     return false;
   }
 
-  public boolean queryExternalUsagesRequests() {
+  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
-              getManager().enqueueDerivedMethodsProcessor(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
+              getContext().enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   PsiCodeBlock body = derivedMethod.getBody();
                   if (body == null) return true;
@@ -149,7 +146,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   }
 
   public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[]{InspectionManagerEx.BUILD_GRAPH, InspectionManagerEx.FIND_EXTERNAL_USAGES};
+    return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
   public String getDisplayName() {
@@ -215,7 +212,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            SafeDeleteHandler.invoke(getManager().getProject(),
+            SafeDeleteHandler.invoke(getContext().getProject(),
                                      psiElements.toArray(new PsiElement[psiElements.size()]), false);
           }
         });

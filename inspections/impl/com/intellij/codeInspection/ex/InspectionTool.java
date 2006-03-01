@@ -8,6 +8,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -27,21 +28,21 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class InspectionTool extends InspectionProfileEntry {
-  private InspectionManagerEx myManager;
+  private GlobalInspectionContextImpl myContext;
 
-  public void initialize(InspectionManagerEx manager) {
-    myManager = manager;
+  public void initialize(GlobalInspectionContextImpl context) {
+    myContext = context;
   }
 
-  public InspectionManagerEx getManager() {
-    return myManager;
+  public GlobalInspectionContextImpl getContext() {
+    return myContext;
   }
 
   public RefManager getRefManager() {
-    return myManager.getRefManager();
+    return myContext.getRefManager();
   }
 
-  public abstract void runInspection(AnalysisScope scope);
+  public abstract void runInspection(AnalysisScope scope, final InspectionManager manager);
 
   public abstract void exportResults(Element parentNode);
 
@@ -54,7 +55,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   @NotNull
   public abstract JobDescriptor[] getJobDescriptors();
 
-  public boolean queryExternalUsagesRequests() {
+  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
     return false;
   }
 

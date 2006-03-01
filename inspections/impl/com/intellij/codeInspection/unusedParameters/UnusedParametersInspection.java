@@ -10,6 +10,7 @@ package com.intellij.codeInspection.unusedParameters;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
@@ -40,7 +41,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
 
   private QuickFixAction[] myQuickFixActions;
 
-  public void runInspection(AnalysisScope scope) {
+  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     // Do additional search of problem elements outside the scope.
     final Runnable action = new Runnable() {
       public void run() {
@@ -48,7 +49,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
           ProgressManager.getInstance().runProcess(new Runnable() {
             public void run() {
               final UnusedParametersFilter filter = getFilter();
-              final PsiSearchHelper helper = PsiManager.getInstance(getManager().getProject()).getSearchHelper();
+              final PsiSearchHelper helper = PsiManager.getInstance(getContext().getProject()).getSearchHelper();
 
               getRefManager().iterate(new RefVisitor() {
                 public void visitElement(RefEntity refEntity) {
@@ -56,7 +57,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
                     RefMethod refMethod = (RefMethod) refEntity;
                     PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
                     if (!refMethod.isStatic() && !refMethod.isConstructor() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
-                      PsiMethod[] derived = helper.findOverridingMethods(psiMethod, GlobalSearchScope.projectScope(getManager().getProject()), true);
+                      PsiMethod[] derived = helper.findOverridingMethods(psiMethod, GlobalSearchScope.projectScope(getContext().getProject()), true);
                       ArrayList unusedParameters = filter.getUnusedParameters(refMethod);
                       for (Iterator paramIterator = unusedParameters.iterator(); paramIterator.hasNext();) {
                         final RefParameter refParameter = (RefParameter) paramIterator.next();
@@ -130,7 +131,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
   }
 
   public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[] {InspectionManagerEx.BUILD_GRAPH, InspectionManagerEx.FIND_EXTERNAL_USAGES};
+    return new JobDescriptor[] {GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
   private class AcceptSuggested extends QuickFixAction {
@@ -191,7 +192,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
 
     ParameterInfo[] parameterInfos = newParameters.toArray(new ParameterInfo[newParameters.size()]);
 
-    ChangeSignatureProcessor csp = new ChangeSignatureProcessor(getManager().getProject(),
+    ChangeSignatureProcessor csp = new ChangeSignatureProcessor(getContext().getProject(),
                                                                 psiMethod,
                                                                 false,
                                                                 null,

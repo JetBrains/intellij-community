@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -31,7 +32,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     myFilter = null;
   }
 
-  public void runInspection(AnalysisScope scope) {}
+  public void runInspection(AnalysisScope scope, final InspectionManager manager) {}
 
   public void exportResults(Element parentNode) {}
 
@@ -55,8 +56,8 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     return new DeadHTMLComposer(this);
   }
 
-  public InspectionManagerEx getManager() {
-    return myOwner.getManager();
+  public GlobalInspectionContextImpl getContext() {
+    return myOwner.getContext();
   }
 
   public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
@@ -74,7 +75,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     protected boolean applyFix(RefElement[] refElements) {
       for (int i = 0; i < refElements.length; i++) {
         RefElement refElement = refElements[i];
-        EntryPointsManager.getInstance(getManager().getProject()).removeEntryPoint(refElement);
+        EntryPointsManager.getInstance(getContext().getProject()).removeEntryPoint(refElement);
       }
 
       return true;

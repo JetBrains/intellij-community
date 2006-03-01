@@ -88,6 +88,7 @@ public class InspectionApplication {
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
       final AnalysisScope scope;
 
+      final GlobalInspectionContextImpl inspectionContext = im.createNewGlobalContext(true);
       im.setProfile(inspectionProfile.getName());
 
       if (mySourceDirectory == null) {
@@ -120,7 +121,7 @@ public class InspectionApplication {
 
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
-          im.launchInspectionsOffline(scope, outStream, myRunWithEditorSettings);
+          inspectionContext.launchInspectionsOffline(scope, outStream, myRunWithEditorSettings, im);
           logMessageLn(1, "\n" +
                           InspectionsBundle.message("inspection.capitalized.done") +
                           "\n");

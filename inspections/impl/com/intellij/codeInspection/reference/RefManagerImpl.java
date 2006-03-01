@@ -30,8 +30,8 @@ public class RefManagerImpl extends RefManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
 
   private final Project myProject;
-  private final AnalysisScope myScope;
-  private final RefProject myRefProject;
+  private AnalysisScope myScope;
+  private RefProject myRefProject;
   private HashMap<PsiElement, RefElement> myRefTable;
   private HashMap<String, RefPackage> myPackages;
   private HashMap<Module, RefModule> myModules;
@@ -94,6 +94,8 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void cleanup() {
+    myScope = null;
+    myRefProject = null;
     myRefTable = null;
     myPackages = null;
     myModules = null;
@@ -315,12 +317,15 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Nullable public RefElement getReference(PsiElement elem) {
-    LOG.assertTrue(isValidPointForReference(), "References may become invalid after process is finished");
     if (elem != null && !(elem instanceof PsiPackage) && RefUtil.getInstance().belongsToScope(elem, this)) {
       if (!elem.isValid()) return null;
 
       RefElement ref = getRefTable().get(elem);
       if (ref == null) {
+        if (!isValidPointForReference()){
+          //LOG.assertTrue(true, "References may become invalid after process is finished");
+          return null;
+        }
         if (elem instanceof PsiClass) {
           ref = new RefClassImpl((PsiClass)elem, this);
         }

@@ -13,9 +13,9 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,20 +33,20 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
     myTool = globalInspectionTool;
   }
 
-  public void initialize(InspectionManagerEx manager) {
-    super.initialize(manager);
+  public void initialize(GlobalInspectionContextImpl context) {
+    super.initialize(context);
     final RefGraphAnnotator annotator = myTool.getAnnotator(getRefManager());
     if (annotator != null) {
       ((RefManagerImpl)getRefManager()).registerGraphAnnotator(annotator);
     }
   }
 
-  public void runInspection(final AnalysisScope scope) {
-    myTool.runInspection(scope, getManager(), getManager(), this);
+  public void runInspection(final AnalysisScope scope, final InspectionManager manager) {
+    myTool.runInspection(scope, manager, getContext(), this);
   }
 
-  public boolean queryExternalUsagesRequests() {
-    return myTool.queryExternalUsagesRequests(getManager(), getManager(), this);
+  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
+    return myTool.queryExternalUsagesRequests(manager, getContext(), this);
   }
 
   @NotNull
@@ -99,10 +99,10 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
                           final InspectionManager manager,
                           final GlobalInspectionContext context,
                           final boolean filterSuppressed) {
-    ((GlobalInspectionContext)manager).getRefManager().iterate(new RefVisitor() {
+    context.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
-        if (filterSuppressed && ((GlobalInspectionContext)manager).isSuppressed(refEntity, myTool.getShortName())) return;
-        CommonProblemDescriptor[] descriptors = myTool.checkElement(refEntity, analysisScope, manager, (GlobalInspectionContext)manager);
+        if (filterSuppressed && context.isSuppressed(refEntity, myTool.getShortName())) return;
+        CommonProblemDescriptor[] descriptors = myTool.checkElement(refEntity, analysisScope, manager, context);
         if (descriptors != null) {
           addProblemElement(refEntity, descriptors);
         }

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -89,20 +89,20 @@ public class RemoveSuppressWarningAction implements IntentionAction, LocalQuickF
       comment.delete();
     }
     else {
-      PsiComment newComment = comment.getManager().getElementFactory().createCommentFromText("// " + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME+" "+newText, comment);
+      PsiComment newComment = comment.getManager().getElementFactory().createCommentFromText("// " + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME+" "+newText, comment);
       comment.replace(newComment);
     }
   }
 
   private void removeFromJavaDoc(PsiDocComment docComment) throws IncorrectOperationException {
-    PsiDocTag tag = docComment.findTagByName(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME);
+    PsiDocTag tag = docComment.findTagByName(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
     if (tag == null) return;
     String newText = removeFromElementText(tag.getValueElement());
     if (newText == null) {
       tag.delete();
     }
     else {
-      newText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + newText;
+      newText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + newText;
       PsiDocTag newTag = tag.getManager().getElementFactory().createDocTagFromText(newText, tag);
       tag.replace(newTag);
     }
@@ -111,7 +111,7 @@ public class RemoveSuppressWarningAction implements IntentionAction, LocalQuickF
   private String removeFromElementText(final PsiElement element) {
     String text = StringUtil.trimStart(element.getText(), "//").trim();
     text = StringUtil.trimStart(text, "@").trim();
-    text = StringUtil.trimStart(text, InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME).trim();
+    text = StringUtil.trimStart(text, GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME).trim();
     List<String> ids = StringUtil.split(text, ",");
     int i = ArrayUtil.find(ids.toArray(), myID);
     if (i==-1 || ids.size()==1) return null;

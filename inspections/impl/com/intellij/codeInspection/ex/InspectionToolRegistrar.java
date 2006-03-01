@@ -49,16 +49,20 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     myLocalInspectionTools = new ArrayList<Class>();
     myGlobalInspectionTools = new ArrayList<Class>();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      for (InspectionToolProvider provider : providers) {
-        Class[] classes = provider.getInspectionClasses();
-        for (Class aClass : classes) {
-          if (LocalInspectionTool.class.isAssignableFrom(aClass)) {
-            registerLocalInspection(aClass);
-          } else if (GlobalInspectionTool.class.isAssignableFrom(aClass)){
-            registerGlobalInspection(aClass);
-          } else {
-            registerInspectionTool(aClass);
-          }
+      registerTools(providers);
+    }
+  }
+
+  public void registerTools(final InspectionToolProvider[] providers) {
+    for (InspectionToolProvider provider : providers) {
+      Class[] classes = provider.getInspectionClasses();
+      for (Class aClass : classes) {
+        if (LocalInspectionTool.class.isAssignableFrom(aClass)) {
+          registerLocalInspection(aClass);
+        } else if (GlobalInspectionTool.class.isAssignableFrom(aClass)){
+          registerGlobalInspection(aClass);
+        } else {
+          registerInspectionTool(aClass);
         }
       }
     }

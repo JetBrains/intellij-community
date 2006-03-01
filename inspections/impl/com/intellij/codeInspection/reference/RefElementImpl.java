@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
@@ -45,8 +46,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private SmartPsiElementPointer myID;
   private final RefManager myManager;
 
-  private final ArrayList<RefElement> myOutReferences;
-  private final ArrayList<RefElement> myInReferences;
+  private ArrayList<RefElement> myOutReferences;
+  private ArrayList<RefElement> myInReferences;
 
   private boolean myIsDeleted ;
   private Module myModule;
@@ -57,9 +58,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     myID = null;
     myFlags = 0;
     myModule = ModuleUtil.findModuleForPsiElement(owner.getElement());
-
-    myOutReferences = new ArrayList<RefElement>(0);
-    myInReferences = new ArrayList<RefElement>(0);
 
     String am = owner.getAccessModifier();
     final int access_id;
@@ -91,9 +89,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(file);
     myFlags = 0;
     myModule = ModuleUtil.findModuleForPsiElement(file);
-
-    myOutReferences = new ArrayList<RefElement>(0);
-    myInReferences = new ArrayList<RefElement>(0);
   }
 
   protected RefElementImpl(PsiModifierListOwner elem, RefManager manager) {
@@ -110,9 +105,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     if (isSynth) {
       setSyntheticJSP(true);
     }
-
-    myOutReferences = new ArrayList<RefElement>(0);
-    myInReferences = new ArrayList<RefElement>(0);
 
     initialize(elem);
   }
@@ -236,23 +228,31 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     }
   }
 
+  @NotNull
   public Collection<RefElement> getOutReferences() {
+    if (myOutReferences == null){
+      myOutReferences = new ArrayList<RefElement>();
+    }
     return myOutReferences;
   }
 
+  @NotNull
   public Collection<RefElement> getInReferences() {
+    if (myInReferences == null){
+      myInReferences = new ArrayList<RefElement>();
+    }
     return myInReferences;
   }
 
   public void addInReference(RefElement refElement) {
-    if (!myInReferences.contains(refElement)) {
-      myInReferences.add(refElement);
+    if (!getInReferences().contains(refElement)) {
+      getInReferences().add(refElement);
     }
   }
 
   public void addOutReference(RefElement refElement) {
-    if (!myOutReferences.contains(refElement)) {
-      myOutReferences.add(refElement);
+    if (!getOutReferences().contains(refElement)) {
+      getOutReferences().add(refElement);
     }
   }
 

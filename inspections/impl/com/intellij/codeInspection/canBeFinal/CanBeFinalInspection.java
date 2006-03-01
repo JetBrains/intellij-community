@@ -10,6 +10,7 @@ package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
@@ -21,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -108,18 +110,18 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     return new OptionsPanel();
   }
 
-  public void runInspection(AnalysisScope scope) {
+  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
   }
 
-  public void initialize(InspectionManagerEx manager) {
-    super.initialize(manager);
+  public void initialize(GlobalInspectionContextImpl context) {
+    super.initialize(context);
     final RefManagerImpl refManager = (RefManagerImpl)getRefManager();
     final CanBeFinalAnnotator annotator = new CanBeFinalAnnotator(refManager);
     refManager.registerGraphAnnotator(annotator);
     annotator.setMask(refManager.getLastUsedMask());
   }
 
-  public boolean queryExternalUsagesRequests() {
+  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
     final CanBeFinalFilter filter = new CanBeFinalFilter(this);
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
@@ -129,7 +131,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
             public void visitMethod(final RefMethod refMethod) {
               if (!refMethod.isStatic() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
                   !(refMethod instanceof RefImplicitConstructor)) {
-                getManager().enqueueDerivedMethodsProcessor(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
+                getContext().enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
                   public boolean process(PsiMethod derivedMethod) {
                     ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                     return false;
@@ -140,7 +142,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
 
             public void visitClass(final RefClass refClass) {
               if (!refClass.isAnonymous()) {
-                getManager().enqueueDerivedClassesProcessor(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
+                getContext().enqueueDerivedClassesProcessor(refClass, new GlobalInspectionContextImpl.DerivedClassesProcessor() {
                   public boolean process(PsiClass inheritor) {
                     ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                     return false;
@@ -150,7 +152,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
             }
 
             public void visitField(final RefField refField) {
-              getManager().enqueueFieldUsagesProcessor(refField, new InspectionManagerEx.UsagesProcessor() {
+              getContext().enqueueFieldUsagesProcessor(refField, new GlobalInspectionContextImpl.UsagesProcessor() {
                 public boolean process(PsiReference psiReference) {
                   PsiElement expression = psiReference.getElement();
                   if (expression instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)expression)) {
@@ -211,8 +213,9 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     return myQuickFixActions;
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[]{InspectionManagerEx.BUILD_GRAPH, InspectionManagerEx.FIND_EXTERNAL_USAGES};
+    return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
   public String getDisplayName() {

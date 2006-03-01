@@ -17,6 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -60,6 +61,8 @@ public interface GlobalInspectionContext {
    * @return true if the inspection is suppressed, false otherwise.
    */
   boolean isSuppressed(PsiElement element, String inspectionToolId);
+
+  Project getProject();
 
   interface DerivedClassesProcessor extends Processor<PsiClass> {
   }

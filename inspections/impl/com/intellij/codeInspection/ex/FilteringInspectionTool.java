@@ -38,7 +38,7 @@ public abstract class FilteringInspectionTool extends InspectionTool {
   public void updateContent() {
     resetFilter();
     myPackageContents = new HashMap<String, Set<RefElement>>();
-    getManager().getRefManager().iterate(new RefVisitor() {
+    getContext().getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         RefElement refElement = (RefElement) refEntity;

@@ -429,7 +429,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (!myTools.isEmpty()) {
       for (final String key : myTools.keySet()) {
         final InspectionTool tool = myTools.get(key);
-        if (tool.getManager() != null) {
+        if (tool.getContext() != null) {
           tool.cleanup();
         }
       }
