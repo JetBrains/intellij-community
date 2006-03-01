@@ -427,7 +427,7 @@ public class GenerateEqualsHelper implements Runnable {
 
   @SuppressWarnings("HardCodedStringLiteral")
   private static void adjustHashCodeToArrays(StringBuilder buffer, final PsiField field, final String name) {
-    if (field.getType() instanceof PsiArrayType && LanguageLevel.JDK_1_5.compareTo(field.getManager().getEffectiveLanguageLevel()) >= 0) {
+    if (field.getType() instanceof PsiArrayType && LanguageLevel.JDK_1_5.compareTo(field.getManager().getEffectiveLanguageLevel()) <= 0) {
       buffer.append("Arrays.hashCode(");
       buffer.append(name);
       buffer.append(")");
