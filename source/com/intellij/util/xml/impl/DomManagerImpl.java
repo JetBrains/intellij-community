@@ -12,16 +12,17 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import net.sf.cglib.core.CodeGenerationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -317,7 +318,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return getCachedElement(tag);
   }
 
-  public <T extends DomElement> T createMockElement(final Class<T> aClass) {
-    return null;
+  public final <T extends DomElement> T createMockElement(final Class<T> aClass) {
+    final XmlFile file = (XmlFile)PsiManager.getInstance(myProject).getElementFactory().createFileFromText("a.xml", "<root/>");
+    return getFileElement(file, aClass, "root").getRootElement();
   }
 }

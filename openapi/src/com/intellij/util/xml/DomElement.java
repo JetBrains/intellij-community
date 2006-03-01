@@ -53,4 +53,6 @@ public interface DomElement {
   <T extends DomElement> T getParentOfType(Class<T> requiredClass, boolean strict);
 
   Module getModule();
+
+  void copyFrom(DomElement other);
 }

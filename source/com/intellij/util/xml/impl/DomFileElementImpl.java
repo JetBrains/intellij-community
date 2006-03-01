@@ -162,6 +162,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return ModuleUtil.findModuleForPsiElement(getFile());
   }
 
+  public void copyFrom(DomElement other) {
+    throw new UnsupportedOperationException("Method copyFrom is not yet implemented in " + getClass().getName());
+  }
+
   @NotNull
   public T getRootElement() {
     return (T)getRootHandler().getProxy();

@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
@@ -86,6 +87,38 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public final Type getDomElementType() {
     return myType;
+  }
+
+  public final void copyFrom(DomElement other) {
+    assert other.getDomElementType().equals(myType);
+    final boolean b = myManager.setChanging(true);
+    try {
+      synchronized (PsiLock.LOCK) {
+        final XmlTag tag = ensureTagExists();
+        for (final XmlAttribute attribute : tag.getAttributes()) {
+          attribute.delete();
+        }
+        for (final XmlTag xmlTag : tag.getSubTags()) {
+          xmlTag.delete();
+        }
+        final XmlTag hisTag = other.getXmlTag();
+        if (hisTag != null) {
+          for (final XmlAttribute attribute : hisTag.getAttributes()) {
+            tag.add(attribute);
+          }
+          for (final XmlTag xmlTag : hisTag.getSubTags()) {
+            tag.add(xmlTag);
+          }
+        }
+        myInitializedChildren.clear();
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    finally {
+      myManager.setChanging(b);
+    }
   }
 
   public final Module getModule() {
