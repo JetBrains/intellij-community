@@ -34,10 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.*;
@@ -204,6 +201,7 @@ public class ChangesListView extends Tree implements DataProvider {
     storeState();
 
     final DefaultTreeModel model = buildModel(changeLists, unversionedFiles);
+    setModel(model);
 
     TreeUtil.sort((DefaultTreeModel)getModel(), new Comparator() {
       public int compare(final Object n1, final Object n2) {
@@ -225,22 +223,40 @@ public class ChangesListView extends Tree implements DataProvider {
           return ((FilePath)o1).getPath().compareToIgnoreCase(((FilePath)o2).getPath());
         }
 
-        if (o1 instanceof FilePath) {
-          return -1;
-        }
-
-        if (o2 instanceof FilePath) {
-          return 1;
-        }
-
-        return 0;
+        return getNodeClassWeight(o1) - getNodeClassWeight(o2);
       }
     });
 
-    setModel(model);
-    expandPath(new TreePath(((DefaultMutableTreeNode)getModel().getRoot()).getPath()));
+    model.nodeStructureChanged((TreeNode)model.getRoot());
+
+    expandPath(new TreePath(((DefaultMutableTreeNode)model.getRoot()).getPath()));
 
     restoreState();
+  }
+
+  private int getNodeClassWeight(Object userObject) {
+    if (userObject instanceof ChangeList) {
+      if (((ChangeList)userObject).isDefault()) return 1;
+      return 2;
+    }
+
+    if (userObject instanceof Module) {
+      return 3;
+    }
+
+    if (userObject instanceof FilePath) {
+      return 4;
+    }
+
+    if (userObject instanceof Change) {
+      return 5;
+    }
+
+    if (userObject instanceof VirtualFile) {
+      return 6;
+    }
+
+    return 7;
   }
 
   private void restoreState() {
