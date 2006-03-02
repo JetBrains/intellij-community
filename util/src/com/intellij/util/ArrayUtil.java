@@ -21,6 +21,8 @@ import gnu.trove.Equality;
 import java.lang.reflect.Array;
 import java.util.Collection;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Author: msk
  */
@@ -97,11 +99,7 @@ public class ArrayUtil {
    * @param src array to which the <code>element</code> should be appended.
    * @param element object to be appended to the end of <code>src</code> array.
    */
-  public static <T> T[] append(final T[] src,final T element){
-    if (src == null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("src cannot be null");
-    }
+  public static <T> T[] append(@NotNull final T[] src,final T element){
     int length=src.length;
     T[] result=(T[])Array.newInstance(src.getClass().getComponentType(), length+ 1);
     System.arraycopy(src,0,result,0,length);
@@ -115,11 +113,7 @@ public class ArrayUtil {
    * @param idx index of element to be removed.
    * @return modified array.
    */
-  public static <T> T[] remove(final T[] src,int idx){
-    if (src == null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("src cannot be null");
-    }
+  public static <T> T[] remove(@NotNull final T[] src,int idx){
     int length=src.length;
     if (idx < 0 || idx >= length) {
       //noinspection HardCodedStringLiteral
@@ -139,11 +133,7 @@ public class ArrayUtil {
    * <code>equals</code> of arrays elements to compare <code>obj</code> with
    * these elements.
    */
-  public static <T> int find(final T[] src,final T obj){
-    if (src == null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("src cannot be null");
-    }
+  public static <T> int find(@NotNull final T[] src,final T obj){
     for(int i=0;i<src.length;i++){
       final T o=src[i];
       if(o==null){

@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.ArrayUtil;
 
 import java.util.*;
 
@@ -320,8 +321,8 @@ public class DuplicatesFinder {
     if (resolveResult1 instanceof PsiMethod && resolveResult2 instanceof PsiMethod) {
       final PsiMethod method1 = (PsiMethod)resolveResult1;
       final PsiMethod method2 = (PsiMethod)resolveResult2;
-      if (Arrays.asList(method1.findSuperMethods()).contains(method2)) return true;
-      if (Arrays.asList(method2.findSuperMethods()).contains(method1)) return true;
+      if (ArrayUtil.find(method1.findSuperMethods(), method2) >= 0) return true;
+      if (ArrayUtil.find(method2.findSuperMethods(), method1) >= 0) return true;
       return false;
     }
     else {
