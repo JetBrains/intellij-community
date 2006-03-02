@@ -23,7 +23,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 
 import java.util.*;
 
@@ -110,7 +109,22 @@ public class TypeConversionUtil {
       return false;
     } else if (toType instanceof PsiIntersectionType) return false;
 
-    if (fromType instanceof PsiWildcardType || toType instanceof PsiWildcardType) return false;
+    if (fromType instanceof PsiWildcardType) {
+      final PsiWildcardType fromWildcard = (PsiWildcardType)fromType;
+      final PsiType bound = fromWildcard.getBound();
+      if (bound == null) return true;
+      if (fromWildcard.isSuper()) {
+        return isAssignable(toType, bound);
+      }
+      return isNarrowingReferenceConversionAllowed(bound, toType);
+    }
+    if (toType instanceof PsiWildcardType) {
+      final PsiWildcardType toWildcard = (PsiWildcardType)toType;
+      if (toWildcard.isSuper()) return false;
+      final PsiType bound = toWildcard.getBound();
+      if (bound == null) return true;
+      return isNarrowingReferenceConversionAllowed(fromType, bound);
+    }
 
     if (toType instanceof PsiCapturedWildcardType) return false;
     if (fromType instanceof PsiCapturedWildcardType) {
