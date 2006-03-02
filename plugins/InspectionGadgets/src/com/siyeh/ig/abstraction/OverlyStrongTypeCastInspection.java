@@ -132,11 +132,9 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                     ClassUtils.isPrimitiveNumericType(expectedType)) {
                 return;
             }
-            final String typeText = type.getCanonicalText();
-            final String expectedTypeText = expectedType.getCanonicalText();
-            if (TypeConversionUtil.isPrimitiveWrapper(typeText) ||
-                    TypeConversionUtil.isPrimitiveWrapper(expectedTypeText)) {
-                return;
+            if (TypeConversionUtil.isPrimitiveWrapper(type) ||
+              TypeConversionUtil.isPrimitiveWrapper(expectedType)) {
+              return;
             }
             final PsiTypeElement castTypeElement = expression.getCastType();
             registerError(castTypeElement, expectedType);
