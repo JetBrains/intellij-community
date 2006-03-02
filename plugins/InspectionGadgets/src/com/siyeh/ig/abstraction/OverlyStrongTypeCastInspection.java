@@ -19,15 +19,15 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class OverlyStrongTypeCastInspection extends ExpressionInspection {
@@ -132,9 +132,11 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                     ClassUtils.isPrimitiveNumericType(expectedType)) {
                 return;
             }
-            if (TypeConversionUtil.isPrimitiveWrapper(type) ||
-              TypeConversionUtil.isPrimitiveWrapper(expectedType)) {
-              return;
+            final String typeText = type.getCanonicalText();
+            final String expectedTypeText = expectedType.getCanonicalText();
+            if (TypeConversionUtil.isPrimitiveWrapper(typeText) ||
+                    TypeConversionUtil.isPrimitiveWrapper(expectedTypeText)) {
+                return;
             }
             final PsiTypeElement castTypeElement = expression.getCastType();
             registerError(castTypeElement, expectedType);
