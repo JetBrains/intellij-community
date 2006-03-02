@@ -197,7 +197,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   }
 
 
-  protected PsiFile createFile(Language lang) {
-    return lang.getParserDefinition().createFile(this);
-  }
+  //protected PsiFile createFile(Language lang) {
+  //  return lang.getParserDefinition().createFile(this);
+  //}
 }
