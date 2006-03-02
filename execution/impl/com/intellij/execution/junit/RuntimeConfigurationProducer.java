@@ -1,8 +1,6 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -62,10 +60,8 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
     return (PsiMethod) element;
   }
 
-  private static class ProducerComparator implements Comparator {
-    public int compare(final Object o1, final Object o2) {
-      final RuntimeConfigurationProducer producer1 = (RuntimeConfigurationProducer)o1;
-      final RuntimeConfigurationProducer producer2 = (RuntimeConfigurationProducer)o2;
+  private static class ProducerComparator implements Comparator<RuntimeConfigurationProducer> {
+    public int compare(final RuntimeConfigurationProducer producer1, final RuntimeConfigurationProducer producer2) {
       final PsiElement psiElement1 = producer1.getSourceElement();
       final PsiElement psiElement2 = producer2.getSourceElement();
       if (doesContains(psiElement1, psiElement2)) return -PREFERED;
@@ -73,7 +69,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
       return producer1.compareTo(producer2);
     }
 
-    private boolean doesContains(final PsiElement container, PsiElement element) {
+    private static boolean doesContains(final PsiElement container, PsiElement element) {
       while ((element = element.getParent()) != null)
         if (container.equals(element)) return true;
       return false;
