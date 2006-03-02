@@ -124,11 +124,9 @@ public class PsiBasedFormattingModel implements FormattingModel {
     else {
       final ASTNode result = myASTNode.findLeafElementAt(offset);
       if (result == null) return null;
-      /*
-      if (result.getTextRange().getStartOffset() != offset) {
+      if (result.getTextRange().getStartOffset() != offset && result.getElementType() == ElementType.HOLDER_TEMPLATE_DATA) {
         return null;
       }      
-      */
       return result;
     }
   }

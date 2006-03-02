@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
-import com.intellij.formatting.FormatterEx;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.formatting.IndentInfo;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -21,6 +18,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
+import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -574,7 +573,19 @@ public class CodeEditUtil {
             final int startOffset = firstNonSpaceLeaf.getStartOffset();
             final int endOffset = first.getTextRange().getEndOffset();
             if (startOffset < endOffset) {
-              FormatterEx.getInstanceEx().adjustTextRange(builder.createModel(file, settings), settings,
+              
+              FormattingModel model = builder.createModel(file, settings);
+              
+              if (model instanceof PsiBasedFormattingModel) {
+                ((PsiBasedFormattingModel)model).doNotUseallTrees();
+              }
+              Block block = model.getRootBlock();
+              if (block instanceof XmlBlock && file.getLanguage() != StdLanguages.JAVA) {
+                ((XmlBlock)block).getPolicy().dontProcessJavaTree();
+              }
+
+              
+              FormatterEx.getInstanceEx().adjustTextRange(model, settings,
                                                           settings.getIndentOptions(file.getFileType()),
                                                           new TextRange(startOffset, endOffset), keepBlankLines, keepLineBreaks,
                                                           changeWSBeforeFirstElement, changeLineFeedsBeforeFirstElement,

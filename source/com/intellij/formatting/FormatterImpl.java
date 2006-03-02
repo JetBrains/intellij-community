@@ -2,13 +2,12 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
-import com.intellij.psi.formatter.xml.XmlBlock;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -338,14 +337,7 @@ public class FormatterImpl extends FormatterEx
                               @Nullable final IndentInfoStorage indentInfoStorage) {
     disableFormatting();
     try {
-      if (model instanceof PsiBasedFormattingModel) {
-        ((PsiBasedFormattingModel)model).doNotUseallTrees();
-      }
-      Block block = model.getRootBlock();
-      if (block instanceof XmlBlock) {
-        ((XmlBlock)block).getPolicy().dontProcessJavaTree();
-      }
-      final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), block, settings, indentOptions, affectedRange);
+      final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRange);
       LeafBlockWrapper current = processor.getFirstTokenBlock();
       while (current != null) {
         WhiteSpace whiteSpace = current.getWhiteSpace();
