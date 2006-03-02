@@ -9,7 +9,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class PreferredSizeProperty extends AbstractDimensionPropery{
+public final class PreferredSizeProperty extends AbstractDimensionProperty<RadComponent> {
   public PreferredSizeProperty(){
     super("Preferred Size");
   }

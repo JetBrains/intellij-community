@@ -19,11 +19,11 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class AbstractDimensionPropery extends Property {
+public abstract class AbstractDimensionProperty<T extends RadComponent> extends Property<T> {
   private final Property[] myChildren;
   private final DimensionRenderer myRenderer;
 
-  public AbstractDimensionPropery(@NonNls final String name){
+  public AbstractDimensionProperty(@NonNls final String name){
     super(null, name);
     myChildren=new Property[]{
       new MyWidthProperty(this),
@@ -49,18 +49,18 @@ public abstract class AbstractDimensionPropery extends Property {
     return null;
   }
 
-  public Object getValue(RadComponent component) {
+  public Object getValue(T component) {
     return getValueImpl(component.getConstraints());
   }
 
   protected abstract Dimension getValueImpl(final GridConstraints constraints);
 
-  @Override public boolean isModified(final RadComponent component) {
+  @Override public boolean isModified(final T component) {
     final Dimension defaultValue = getValueImpl(FormEditingUtil.getDefaultConstraints(component));
     return !getValueImpl(component.getConstraints()).equals(defaultValue);
   }
 
-  @Override public void resetValue(RadComponent component) throws Exception {
+  @Override public void resetValue(T component) throws Exception {
     setValueImpl(component, getValueImpl(FormEditingUtil.getDefaultConstraints(component)));
   }
 

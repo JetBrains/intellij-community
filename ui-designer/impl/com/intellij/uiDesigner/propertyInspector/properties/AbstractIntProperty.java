@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public abstract class AbstractIntProperty extends Property {
+public abstract class AbstractIntProperty<T extends RadComponent> extends Property<T> {
   private int myDefaultValue;
   private IntRenderer myRenderer = new IntRenderer();
   private IntEditor myEditor;
@@ -32,12 +32,12 @@ public abstract class AbstractIntProperty extends Property {
     return myEditor;
   }
 
-  @Override public boolean isModified(final RadComponent component) {
+  @Override public boolean isModified(final T component) {
     Integer intValue = (Integer) getValue(component);
     return intValue != null && intValue.intValue() != myDefaultValue;
   }
 
-  @Override public void resetValue(RadComponent component) throws Exception {
-    setValue(component, new Integer(myDefaultValue));
+  @Override public void resetValue(T component) throws Exception {
+    setValue(component, myDefaultValue);
   }
 }

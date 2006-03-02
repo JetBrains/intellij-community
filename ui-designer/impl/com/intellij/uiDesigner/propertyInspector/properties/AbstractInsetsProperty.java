@@ -16,7 +16,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class AbstractInsetsProperty extends Property{
+public abstract class AbstractInsetsProperty<T extends RadComponent> extends Property<T> {
   private final Property[] myChildren;
   private final InsetsPropertyRenderer myRenderer;
 

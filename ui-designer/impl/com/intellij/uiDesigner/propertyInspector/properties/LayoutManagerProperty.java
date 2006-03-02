@@ -16,7 +16,7 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public class LayoutManagerProperty extends Property {
+public class LayoutManagerProperty extends Property<RadContainer> {
   private PropertyRenderer myRenderer = new LabelPropertyRenderer() {
     protected void customize(Object value) {
       setText((String) value);
@@ -40,8 +40,8 @@ public class LayoutManagerProperty extends Property {
     super(null, "Layout Manager");
   }
 
-  public Object getValue(RadComponent component) {
-    RadContainer container = ((RadContainer)component);
+  public Object getValue(RadContainer component) {
+    RadContainer container = component;
     while(container != null) {
       final RadLayoutManager layoutManager = container.getLayoutManager();
       if (layoutManager != null) {
@@ -52,18 +52,17 @@ public class LayoutManagerProperty extends Property {
     return UIFormXmlConstants.LAYOUT_INTELLIJ;
   }
 
-  protected void setValueImpl(RadComponent component, Object value) throws Exception {
-    final RadContainer container = ((RadContainer)component);
-    if (container.getLayoutManager() != null && container.getLayoutManager().getName().equals(value)) {
+  protected void setValueImpl(RadContainer component, Object value) throws Exception {
+    if (component.getLayoutManager() != null && component.getLayoutManager().getName().equals(value)) {
       return;
     }
 
     RadLayoutManager newLayoutManager = RadLayoutManager.createLayoutManager((String) value);
-    if (!newLayoutManager.canChangeLayout(container)) {
+    if (!newLayoutManager.canChangeLayout(component)) {
       throw new Exception("It is not allowed to change layout for non-empty containers");
     }
 
-    container.setLayoutManager(newLayoutManager);
+    component.setLayoutManager(newLayoutManager);
   }
 
   @NotNull public PropertyRenderer getRenderer() {

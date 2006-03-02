@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class SizePolicyProperty extends Property{
+public abstract class SizePolicyProperty extends Property<RadComponent> {
   private final Property[] myChildren;
   private final SizePolicyRenderer myRenderer;
 
@@ -35,7 +35,7 @@ public abstract class SizePolicyProperty extends Property{
   protected abstract void setValueImpl(GridConstraints constraints,int policy);
 
   public final Object getValue(final RadComponent component){
-    return new Integer(getValueImpl(component.getConstraints()));
+    return getValueImpl(component.getConstraints());
   }
 
   protected final void setValueImpl(final RadComponent component,final Object value) throws Exception{
@@ -61,7 +61,7 @@ public abstract class SizePolicyProperty extends Property{
   }
 
   @Override public void resetValue(RadComponent component) throws Exception {
-    setValueImpl(component, new Integer(getValueImpl(FormEditingUtil.getDefaultConstraints(component))));
+    setValueImpl(component, getValueImpl(FormEditingUtil.getDefaultConstraints(component)));
   }
 
   /**

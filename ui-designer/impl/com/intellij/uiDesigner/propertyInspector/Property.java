@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class Property implements IProperty {
+public abstract class Property<T extends RadComponent> implements IProperty {
   protected static final Property[] EMPTY_ARRAY=new Property[]{};
 
   /**
@@ -37,7 +37,8 @@ public abstract class Property implements IProperty {
   }
 
   public Object getPropertyValue(final IComponent component) {
-    return getValue((RadComponent) component);
+    //noinspection unchecked
+    return getValue((T) component);
   }
 
   /**
@@ -45,7 +46,7 @@ public abstract class Property implements IProperty {
    * instance of the RadComponent. This value is passed to the
    * PropertyRenderer and PropertyEditor.
    */
-  public abstract Object getValue(RadComponent component);
+  public abstract Object getValue(T component);
 
   /**
    * Do not invoke this method outside Property class, bacuse
@@ -54,7 +55,7 @@ public abstract class Property implements IProperty {
    *
    * @see #setValue(RadComponent,Object)
    */
-  protected abstract void setValueImpl(RadComponent component, Object value) throws Exception;
+  protected abstract void setValueImpl(T component, Object value) throws Exception;
 
 
   /**
@@ -68,13 +69,13 @@ public abstract class Property implements IProperty {
    * be applied to the <code>component</code>. Note, the exception's
    * message will be shown to the user.
    */
-  public final void setValue(final RadComponent component, final Object value) throws Exception{
+  public final void setValue(final T component, final Object value) throws Exception{
     setValueImpl(component, value);
     markTopmostModified(component, true);
     component.getDelegee().invalidate();
   }
 
-  protected void markTopmostModified(final RadComponent component, final boolean modified) {
+  protected void markTopmostModified(final T component, final boolean modified) {
     Property topmostParent = this;
     while (topmostParent.getParent() != null) {
       topmostParent = topmostParent.getParent();
@@ -117,14 +118,14 @@ public abstract class Property implements IProperty {
   @Nullable
   public abstract PropertyEditor getEditor();
 
-  public boolean appliesTo(RadComponent component) {
+  public boolean appliesTo(T component) {
     return true;
   }
 
-  public boolean isModified(final RadComponent component) {
+  public boolean isModified(final T component) {
     return false;
   }
 
-  public void resetValue(RadComponent component) throws Exception {
+  public void resetValue(T component) throws Exception {
   }
 }

@@ -9,7 +9,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class MinimumSizeProperty extends AbstractDimensionPropery{
+public final class MinimumSizeProperty extends AbstractDimensionProperty<RadComponent> {
   public MinimumSizeProperty(){
     super("Minimum Size");
   }

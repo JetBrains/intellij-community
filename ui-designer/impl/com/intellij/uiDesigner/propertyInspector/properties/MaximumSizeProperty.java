@@ -9,7 +9,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class MaximumSizeProperty extends AbstractDimensionPropery{
+public final class MaximumSizeProperty extends AbstractDimensionProperty<RadComponent> {
   public MaximumSizeProperty(){
     super("Maximum Size");
   }

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class UseParentLayoutProperty extends Property {
+public class UseParentLayoutProperty extends Property<RadComponent> {
   private BooleanRenderer myRenderer = new BooleanRenderer();
   private BooleanEditor myEditor = new BooleanEditor();
 

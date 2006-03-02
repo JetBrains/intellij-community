@@ -34,7 +34,7 @@ import java.awt.event.ActionListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ClassToBindProperty extends Property {
+public final class ClassToBindProperty extends Property<RadRootContainer> {
   private final ClassToBindRenderer myRenderer;
   private final MyEditor myEditor;
 
@@ -53,18 +53,18 @@ public final class ClassToBindProperty extends Property {
     return myRenderer;
   }
 
-  public Object getValue(final RadComponent component){
-    return ((RadRootContainer)component).getClassToBind();
+  public Object getValue(final RadRootContainer component){
+    return component.getClassToBind();
   }
 
-  protected void setValueImpl(final RadComponent component, final Object value) throws Exception{
+  protected void setValueImpl(final RadRootContainer component, final Object value) throws Exception{
     String className = (String)value;
 
     if (className != null && className.length() == 0) {
       className = null;
     }
 
-    ((RadRootContainer)component).setClassToBind(className);
+    component.setClassToBind(className);
   }
 
   private final class MyEditor extends PropertyEditor{

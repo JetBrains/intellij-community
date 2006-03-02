@@ -22,7 +22,7 @@ import java.awt.event.ItemEvent;
 /**
  * @author yole
  */
-public class ButtonGroupProperty extends Property {
+public class ButtonGroupProperty extends Property<RadComponent> {
   private LabelPropertyRenderer myRenderer = new LabelPropertyRenderer() {
     protected void customize(Object value) {
       RadButtonGroup group = (RadButtonGroup) value;

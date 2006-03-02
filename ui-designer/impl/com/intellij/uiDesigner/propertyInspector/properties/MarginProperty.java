@@ -1,8 +1,8 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -16,45 +16,29 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class MarginProperty extends AbstractInsetsProperty{
+public final class MarginProperty extends AbstractInsetsProperty<RadContainer> {
   private static final Insets DEFAULT_INSETS = new Insets(0, 0, 0, 0);
 
   public MarginProperty(){
     super("margins");
   }
 
-  public Object getValue(final RadComponent component){
-    if(!(component instanceof RadContainer)){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("component must be an instance of RadContainer: "+component);
-    }
-    final RadContainer container=(RadContainer)component;
-
-    final AbstractLayout layoutManager=(AbstractLayout)container.getLayout();
+  public Object getValue(final RadContainer component) {
+    final AbstractLayout layoutManager=(AbstractLayout) component.getLayout();
     return layoutManager.getMargin();
   }
 
-  protected void setValueImpl(final RadComponent component,final Object value) throws Exception{
-    if(!(component instanceof RadContainer)){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("component must be an instance of RadContainer: "+component);
-    }
-    final RadContainer container=(RadContainer)component;
-    if(value==null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("value cannot be null");
-    }
-
+  protected void setValueImpl(final RadContainer component, @NotNull final Object value) throws Exception{
     final Insets insets=(Insets)value;
-    final AbstractLayout layoutManager=(AbstractLayout)container.getLayout();
+    final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
     layoutManager.setMargin(insets);
   }
 
-  @Override public boolean isModified(final RadComponent component) {
+  @Override public boolean isModified(final RadContainer component) {
     return !getValue(component).equals(DEFAULT_INSETS);
   }
 
-  @Override public void resetValue(RadComponent component) throws Exception {
+  @Override public void resetValue(RadContainer component) throws Exception {
     setValueImpl(component, DEFAULT_INSETS);
   }
 }

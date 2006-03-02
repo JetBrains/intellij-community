@@ -34,7 +34,7 @@ import java.text.MessageFormat;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class BindingProperty extends Property {
+public final class BindingProperty extends Property<RadComponent> {
   private final Project myProject;
 
   private final BindingRenderer myRenderer;

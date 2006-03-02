@@ -13,7 +13,7 @@ import java.lang.reflect.Constructor;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class IntrospectedProperty extends Property{
+public abstract class IntrospectedProperty extends Property<RadComponent> {
   private final static Object[] EMPTY_OBJECT_ARRAY=new Object[]{};
 
   /**

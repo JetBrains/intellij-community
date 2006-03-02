@@ -6,13 +6,13 @@ import com.intellij.uiDesigner.core.GridConstraints;
 /**
  * @author yole
  */
-public class IndentProperty extends AbstractIntProperty {
+public class IndentProperty extends AbstractIntProperty<RadComponent> {
   public IndentProperty() {
     super(null, "Indent", 0);
   }
 
   public Object getValue(RadComponent component) {
-    return new Integer(component.getConstraints().getIndent());
+    return component.getConstraints().getIndent();
   }
 
   protected void setValueImpl(RadComponent component, Object value) throws Exception {
