@@ -3,17 +3,18 @@ package com.intellij.uiDesigner.propertyInspector;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -29,14 +30,12 @@ import com.intellij.uiDesigner.Properties;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.actions.ShowJavadocAction;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
-import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.Table;
-import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +46,10 @@ import javax.swing.plaf.TableUI;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -99,11 +101,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final ClassToBindProperty myClassToBindProperty;
   private final BindingProperty myBindingProperty;
   private final BorderProperty myBorderProperty;
-  private final MarginProperty myMarginProperty;
-  private final HGapProperty myHGapProperty;
-  private final VGapProperty myVGapProperty;
-  private final SameSizeHorizontallyProperty mySameSizeHorizontallyProperty = new SameSizeHorizontallyProperty();
-  private final SameSizeVerticallyProperty mySameSizeVerticallyProperty = new SameSizeVerticallyProperty();
   private final HSizePolicyProperty myHSizePolicyProperty;
   private final VSizePolicyProperty myVSizePolicyProperty;
   private final FillProperty myFillProperty;
@@ -124,9 +121,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myClassToBindProperty = new ClassToBindProperty(project);
     myBindingProperty = new BindingProperty(project);
     myBorderProperty = new BorderProperty(project);
-    myMarginProperty = new MarginProperty();
-    myHGapProperty = new HGapProperty();
-    myVGapProperty = new VGapProperty();
     myHSizePolicyProperty = new HSizePolicyProperty();
     myVSizePolicyProperty = new VSizePolicyProperty();
     myFillProperty = new FillProperty();
@@ -435,19 +429,12 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if(component instanceof RadContainer){
         addProperty(result, myLayoutManagerProperty);
         addProperty(result, myBorderProperty);
-      }
-      if (component instanceof RadContainer && ((RadContainer)component).isGrid()) {
-        addProperty(result, myMarginProperty);
-      }
 
-      if (component instanceof RadContainer && ((RadContainer)component).getLayout() instanceof AbstractLayout){
-        addProperty(result, myHGapProperty);
-        addProperty(result, myVGapProperty);
-      }
-
-      if (component instanceof RadContainer && ((RadContainer)component).isGrid()) {
-        addProperty(result, mySameSizeHorizontallyProperty);
-        addProperty(result, mySameSizeVerticallyProperty);
+        RadContainer container = (RadContainer) component;
+        final Property[] containerProperties = container.getLayoutManager().getContainerProperties();
+        for(Property prop: containerProperties) {
+          addProperty(result, prop);
+        }
       }
 
       if (inGrid) {
@@ -1117,9 +1104,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     public void lookAndFeelChanged(final LafManager source) {
       updateUI(myBorderProperty);
-      updateUI(myMarginProperty);
-      updateUI(myHGapProperty);
-      updateUI(myVGapProperty);
+      updateUI(MarginProperty.INSTANCE);
+      updateUI(HGapProperty.INSTANCE);
+      updateUI(VGapProperty.INSTANCE);
       updateUI(myHSizePolicyProperty);
       updateUI(myVSizePolicyProperty);
       updateUI(myFillProperty);
@@ -1132,8 +1119,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       updateUI(myPreferredSizeProperty);
       updateUI(myMaximumSizeProperty);
       updateUI(myButtonGroupProperty);
-      updateUI(mySameSizeHorizontallyProperty);
-      updateUI(mySameSizeVerticallyProperty);
+      updateUI(SameSizeHorizontallyProperty.INSTANCE);
+      updateUI(SameSizeVerticallyProperty.INSTANCE);
     }
   }
 

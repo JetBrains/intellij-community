@@ -6,9 +6,11 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.propertyInspector.Property;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.LayoutManager;
+import java.awt.Point;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,4 +57,8 @@ public abstract class RadLayoutManager {
   }
 
   public abstract void addComponentToContainer(final RadContainer container, final RadComponent component, final int index);
+
+  public Property[] getContainerProperties() {
+    return Property.EMPTY_ARRAY;
+  }
 }

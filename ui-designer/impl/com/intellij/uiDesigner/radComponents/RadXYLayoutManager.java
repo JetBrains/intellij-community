@@ -4,17 +4,22 @@
 
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.designSurface.DropLocation;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
-import com.intellij.uiDesigner.designSurface.FeedbackLayer;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.FeedbackLayer;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Point;
 
 /**
  * @author yole
@@ -123,5 +128,9 @@ public class RadXYLayoutManager extends RadLayoutManager {
         }
       }
     }
+  }
+
+  @Override public Property[] getContainerProperties() {
+    return new Property[] { HGapProperty.INSTANCE, VGapProperty.INSTANCE };
   }
 }

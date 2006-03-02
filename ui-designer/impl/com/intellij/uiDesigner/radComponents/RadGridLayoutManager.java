@@ -4,12 +4,14 @@
 
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.propertyInspector.properties.*;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 
-import java.awt.*;
+import java.awt.LayoutManager;
 
 /**
  * @author yole
@@ -62,5 +64,11 @@ public class RadGridLayoutManager extends RadLayoutManager {
     } finally {
       writer.endElement(); // grid
     }
+  }
+
+  @Override public Property[] getContainerProperties() {
+    return new Property[] {
+      MarginProperty.INSTANCE, HGapProperty.INSTANCE, VGapProperty.INSTANCE,
+      SameSizeHorizontallyProperty.INSTANCE, SameSizeVerticallyProperty.INSTANCE };
   }
 }

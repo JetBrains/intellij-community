@@ -7,6 +7,8 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
  * @author Vladimir Kondratyev
  */
 public final class SameSizeHorizontallyProperty extends AbstractGridLayoutProperty {
+  public static final SameSizeHorizontallyProperty INSTANCE = new SameSizeHorizontallyProperty();
+
   public SameSizeHorizontallyProperty(){
     super(null,"Same Size Horizontally");
   }

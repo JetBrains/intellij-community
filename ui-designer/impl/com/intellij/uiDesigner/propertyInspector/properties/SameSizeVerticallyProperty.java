@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
  * @author Vladimir Kondratyev
  */
 public final class SameSizeVerticallyProperty extends AbstractGridLayoutProperty {
+  public static final SameSizeVerticallyProperty INSTANCE = new SameSizeVerticallyProperty();
 
   public SameSizeVerticallyProperty(){
     super(null,"Same Size Vertically");

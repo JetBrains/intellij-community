@@ -19,6 +19,8 @@ import java.awt.*;
 public final class MarginProperty extends AbstractInsetsProperty<RadContainer> {
   private static final Insets DEFAULT_INSETS = new Insets(0, 0, 0, 0);
 
+  public static final MarginProperty INSTANCE = new MarginProperty();
+
   public MarginProperty(){
     super("margins");
   }

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladimir Kondratyev
  */
 public abstract class Property<T extends RadComponent> implements IProperty {
-  protected static final Property[] EMPTY_ARRAY=new Property[]{};
+  public static final Property[] EMPTY_ARRAY=new Property[]{};
 
   /**
    * Parent property
