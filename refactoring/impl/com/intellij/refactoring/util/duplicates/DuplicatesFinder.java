@@ -9,6 +9,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.IntArrayList;
@@ -168,8 +169,10 @@ public class DuplicatesFinder {
     LOG.assertTrue(myPattern.length == candidates.size());
     if (myPattern.length == 1 && myPattern[0] instanceof PsiExpression) {
       if (candidates.get(0) instanceof PsiExpression) {
+        final PsiExpression candidateExpression = ((PsiExpression)candidates.get(0));
+        if (PsiUtil.isAccessedForWriting(candidateExpression)) return null;
         final PsiType patternType = ((PsiExpression)myPattern[0]).getType();
-        final PsiType candidateType = ((PsiExpression)candidates.get(0)).getType();
+        final PsiType candidateType = candidateExpression.getType();
         if (patternType != null && candidateType != null && !candidateType.isAssignableFrom(patternType)) {
           return null;
         }
