@@ -20,6 +20,7 @@ public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
 
 
   public void contentsSynchronized() {
+    super.contentsSynchronized();
     myRelevantLanguages = null;
   }
 
