@@ -16,28 +16,27 @@
 
 package com.intellij.uiDesigner.lw;
 
-import org.jdom.Element;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.FlowLayout;
 
 /**
  * @author yole
  */
-public class BorderLayoutSerializer extends LayoutSerializer {
-  public static final BorderLayoutSerializer INSTANCE = new BorderLayoutSerializer();
+public class FlowLayoutSerializer extends LayoutSerializer {
+  public static final FlowLayoutSerializer INSTANCE = new FlowLayoutSerializer();
 
-  private BorderLayoutSerializer() {
+  private FlowLayoutSerializer() {
   }
 
   void readLayout(Element element, LwContainer container) {
     final int hGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_HGAP, 0);
     final int vGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_VGAP, 0);
-    container.setLayout(new BorderLayout(hGap, vGap));
+    final int flowAlign = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_FLOW_ALIGN, 0);
+    container.setLayout(new FlowLayout(flowAlign, hGap, vGap));
   }
 
   void readChildConstraints(final Element constraintsElement, final LwComponent component) {
-    component.setCustomLayoutConstraints(LwXmlReader.getRequiredString(constraintsElement,
-                                                                       UIFormXmlConstants.ATTRIBUTE_BORDER_CONSTRAINT));
   }
 }

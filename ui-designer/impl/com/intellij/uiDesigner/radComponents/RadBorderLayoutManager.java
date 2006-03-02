@@ -22,7 +22,7 @@ import java.awt.*;
  */
 public class RadBorderLayoutManager extends RadLayoutManager {
   public String getName() {
-    return "BorderLayout";
+    return UIFormXmlConstants.LAYOUT_BORDER;
   }
 
   public LayoutManager createLayout() {

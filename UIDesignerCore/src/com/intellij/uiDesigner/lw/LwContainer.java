@@ -257,8 +257,11 @@ public class LwContainer extends LwComponent implements IContainer{
       myLayoutSerializer = XYLayoutSerializer.INSTANCE;
     }
     else if("grid".equals(element.getName())){
-      if ("BorderLayout".equals(myLayoutManager)) {
+      if (UIFormXmlConstants.LAYOUT_BORDER.equals(myLayoutManager)) {
         myLayoutSerializer = BorderLayoutSerializer.INSTANCE;
+      }
+      else if (UIFormXmlConstants.LAYOUT_FLOW.equals(myLayoutManager)) {
+        myLayoutSerializer = FlowLayoutSerializer.INSTANCE;
       }
       else {
         myLayoutSerializer = GridLayoutSerializer.INSTANCE;

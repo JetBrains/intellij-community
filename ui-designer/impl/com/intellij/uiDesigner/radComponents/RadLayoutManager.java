@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import org.jetbrains.annotations.NonNls;
@@ -23,9 +24,10 @@ public abstract class RadLayoutManager {
   @NonNls private static Map<String, Class<? extends RadLayoutManager>> ourLayoutManagerRegistry = new HashMap<String, Class<? extends RadLayoutManager>>();
 
   static {
-    ourLayoutManagerRegistry.put("GridLayoutManager", RadGridLayoutManager.class);
-    ourLayoutManagerRegistry.put("GridBagLayout", RadGridBagLayoutManager.class);
-    ourLayoutManagerRegistry.put("BorderLayout", RadBorderLayoutManager.class);
+    ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_INTELLIJ, RadGridLayoutManager.class);
+    ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_GRIDBAG, RadGridBagLayoutManager.class);
+    ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_BORDER, RadBorderLayoutManager.class);
+    ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_FLOW, RadFlowLayoutManager.class);
   }
 
   public static String[] getLayoutManagerNames() {
@@ -40,7 +42,7 @@ public abstract class RadLayoutManager {
     return cls.newInstance();
   }
 
-  public abstract @NonNls String getName();
+  public abstract String getName();
 
   public abstract LayoutManager createLayout();
 

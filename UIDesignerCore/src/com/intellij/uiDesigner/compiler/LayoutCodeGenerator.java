@@ -31,6 +31,7 @@ public abstract class LayoutCodeGenerator {
   protected static final Method ourSetLayoutMethod = Method.getMethod("void setLayout(java.awt.LayoutManager)");
   protected static final Type ourContainerType = Type.getType(Container.class);
   protected static final Method ourAddMethod = Method.getMethod("void add(java.awt.Component,java.lang.Object)");
+  protected static final Method ourAddNoConstraintMethod = Method.getMethod("java.awt.Component add(java.awt.Component)");
 
   public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
   }

@@ -4,6 +4,7 @@ import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 
 /**
  * @author Anton Katilin
@@ -21,6 +22,10 @@ public final class HGapProperty extends AbstractIntProperty<RadContainer> {
       BorderLayout layout = (BorderLayout) component.getLayout();
       return layout.getHgap();
     }
+    if (component.getLayout() instanceof FlowLayout) {
+      FlowLayout layout = (FlowLayout) component.getLayout();
+      return layout.getHgap();
+    }
     final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
     return layoutManager.getHGap();
   }
@@ -28,6 +33,10 @@ public final class HGapProperty extends AbstractIntProperty<RadContainer> {
   protected void setValueImpl(final RadContainer component,final Object value) throws Exception{
     if (component.getLayout() instanceof BorderLayout) {
       BorderLayout layout = (BorderLayout) component.getLayout();
+      layout.setHgap(((Integer) value).intValue());
+    }
+    else if (component.getLayout() instanceof FlowLayout) {
+      FlowLayout layout = (FlowLayout) component.getLayout();
       layout.setHgap(((Integer) value).intValue());
     }
     else {

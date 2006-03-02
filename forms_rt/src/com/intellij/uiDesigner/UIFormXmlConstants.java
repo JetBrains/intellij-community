@@ -45,7 +45,8 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_HGAP = "hgap";
   public static final String ATTRIBUTE_VGAP = "vgap";
   public static final String ATTRIBUTE_BORDER_CONSTRAINT = "border-constraint";
-  
+  public static final String ATTRIBUTE_FLOW_ALIGN = "flow-align";
+
   public static final String ELEMENT_BUTTON_GROUPS = "buttonGroups";
   public static final String ELEMENT_GROUP = "group";
   public static final String ELEMENT_MEMBER = "member";
@@ -55,6 +56,7 @@ public class UIFormXmlConstants {
   public static final String LAYOUT_INTELLIJ = "GridLayoutManager";
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";
   public static final String LAYOUT_BORDER = "BorderLayout";
+  public static final String LAYOUT_FLOW = "FlowLayout";
 
   private UIFormXmlConstants() {
   }

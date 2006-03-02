@@ -1,8 +1,9 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -17,9 +18,7 @@ public final class IntEnumEditor extends PropertyEditor {
 
   private final JComboBox myCbx;
 
-  public IntEnumEditor(final Pair[] pairs) {
-    LOG.assertTrue(pairs != null);
-
+  public IntEnumEditor(@NotNull final Pair[] pairs) {
     myCbx = new JComboBox(pairs);
     myCbx.setBorder(BorderFactory.createEmptyBorder());
     myCbx.addPopupMenuListener(new MyPopupMenuListener());
@@ -33,7 +32,7 @@ public final class IntEnumEditor extends PropertyEditor {
   public final Object getValue() throws Exception {
     final Object selectedItem = myCbx.getSelectedItem();
     final Pair pair = (Pair)selectedItem;
-    return new Integer(pair.myValue);
+    return pair.myValue;
   }
 
   public JComponent getComponent(final RadComponent ignored, final Object value, final boolean inplace) {
@@ -78,8 +77,7 @@ public final class IntEnumEditor extends PropertyEditor {
      */
     public final String myText;
 
-    public Pair(final int value, final String text) {
-      LOG.assertTrue(text != null);
+    public Pair(final int value, @NotNull final String text) {
       myValue = value;
       myText = text;
     }

@@ -15,7 +15,6 @@ import java.awt.*;
  */
 public class BorderLayoutSourceGenerator extends LayoutSourceGenerator {
 
-
   @Override public void generateContainerLayout(final LwContainer component, final FormSourceCodeGenerator generator, final String variable) {
     generator.startMethodCall(variable, "setLayout");
 

@@ -4,12 +4,14 @@
 
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.uiDesigner.UIFormXmlConstants;
+
 /**
  * @author yole
  */
 public class RadGridBagLayoutManager extends RadGridLayoutManager {
 
   @Override public String getName() {
-    return "GridBagLayout";
+    return UIFormXmlConstants.LAYOUT_GRIDBAG;
   }
 }

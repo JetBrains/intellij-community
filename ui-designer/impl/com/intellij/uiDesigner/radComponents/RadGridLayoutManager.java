@@ -18,7 +18,7 @@ import java.awt.LayoutManager;
  */
 public class RadGridLayoutManager extends RadLayoutManager {
   public String getName() {
-    return "GridLayoutManager";
+    return UIFormXmlConstants.LAYOUT_INTELLIJ;
   }
 
   public LayoutManager createLayout() {
