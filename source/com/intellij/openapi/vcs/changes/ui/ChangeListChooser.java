@@ -76,24 +76,20 @@ public class ChangeListChooser extends DialogWrapper {
   }
 
   private void updateEnabledItems() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (myRbExisting.isSelected()) {
-          myExisitingsCombo.setEnabled(true);
-          myNewListNameField.setEnabled(false);
-          myExisitingsCombo.requestFocus();
-        }
-        else {
-          myExisitingsCombo.setEnabled(false);
-          myNewListNameField.setEnabled(true);
-          myNewListNameField.requestFocus();
-        }
-      }
-    });
+    if (myRbExisting.isSelected()) {
+      myExisitingsCombo.setEnabled(true);
+      myNewListNameField.setEnabled(false);
+      myExisitingsCombo.requestFocus();
+    }
+    else {
+      myExisitingsCombo.setEnabled(false);
+      myNewListNameField.setEnabled(true);
+      myNewListNameField.requestFocus();
+    }
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myExistingLists.size() > 0 ? myExisitingsCombo : myNewListNameField;
+    return myRbExisting.isSelected() ? myExisitingsCombo : myNewListNameField;
   }
 
   protected void doOKAction() {

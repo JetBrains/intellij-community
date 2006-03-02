@@ -301,6 +301,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     final Runnable checkinAction = new Runnable() {
       public void run() {
         final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
+        final List<Change> changesFailedToCommit = new ArrayList<Change>();
+
         Runnable checkinAction = new Runnable() {
           public void run() {
             try {
@@ -330,8 +332,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
                   pathsToRefresh.addAll(paths);
 
-                  vcsExceptions
-                    .addAll(environment.commit(paths.toArray(new FilePath[paths.size()]), myProject, getCommitMessage()));
+                  final List<VcsException> exceptions = environment.commit(paths.toArray(new FilePath[paths.size()]), myProject, getCommitMessage());
+                  if (exceptions.size() > 0) {
+                    vcsExceptions.addAll(exceptions);
+                    changesFailedToCommit.addAll(vcsChanges);
+                  }
                 }
               }
 
@@ -348,10 +353,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
               AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, myActionName);
             }
             finally {
-              commitCompleted(vcsExceptions, VcsConfiguration.getInstance(myProject), myHandlers);
+              commitCompleted(vcsExceptions, changesFailedToCommit, VcsConfiguration.getInstance(myProject), myHandlers, getCommitMessage());
             }
           }
         };
+
         ProgressManager.getInstance().runProcessWithProgressSynchronously(checkinAction, myActionName, true, myProject);
       }
     };
@@ -360,9 +366,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                                             VcsConfiguration.getInstance(myProject), checkinAction, true);
   }
 
-  private static void commitCompleted(final List<VcsException> allExceptions,
-                                      VcsConfiguration config,
-                                      final List<CheckinHandler> checkinHandlers) {
+  private void commitCompleted(final List<VcsException> allExceptions,
+                               final List<Change> failedChanges,
+                               VcsConfiguration config,
+                               final List<CheckinHandler> checkinHandlers,
+                               String commitMessage) {
     final List<VcsException> errors = collectErrors(allExceptions);
     final int errorsSize = errors.size();
     final int warningsSize = allExceptions.size() - errorsSize;
@@ -376,6 +384,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       for (CheckinHandler handler : checkinHandlers) {
         handler.checkinFailed(errors);
       }
+
+      final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+      final ChangeList failedList = changeListManager.addChangeList("Failed commit: " + commitMessage);
+
+      changeListManager.moveChangesTo(failedList, failedChanges.toArray(new Change[failedChanges.size()]));
     }
 
     config.ERROR_OCCURED = errorsSize > 0;
