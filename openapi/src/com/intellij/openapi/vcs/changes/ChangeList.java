@@ -5,7 +5,6 @@ import com.intellij.openapi.vcs.FilePath;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -13,6 +12,7 @@ import java.util.List;
  */
 public class ChangeList {
   private Collection<Change> myChanges = new ArrayList<Change>();
+  private Collection<Change> myReadChangesCache = null;
   private String myDescription;
   private boolean myIsDefault = false;
   private List<Change> myOutdatedChanges;
@@ -26,14 +26,19 @@ public class ChangeList {
   }
 
   public Collection<Change> getChanges() {
-    return Collections.unmodifiableCollection(myChanges);
+    if (myReadChangesCache == null) {
+      myReadChangesCache = new ArrayList<Change>(myChanges);
+    }
+    return myReadChangesCache;
   }
 
   public void addChange(Change change) {
+    myReadChangesCache = null;
     myChanges.add(change);
   }
 
   public void removeChange(Change change) {
+    myReadChangesCache = null;
     myChanges.remove(change);
   }
 
@@ -58,6 +63,7 @@ public class ChangeList {
       final ContentRevision after = oldBoy.getAfterRevision();
       if (before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())) {
         myChanges.remove(oldBoy);
+        myReadChangesCache = null;
         myOutdatedChanges.add(oldBoy);
       }
     }
