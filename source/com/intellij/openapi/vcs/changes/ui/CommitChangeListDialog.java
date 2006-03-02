@@ -531,7 +531,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     bottomPanel.add(myCommitMessageArea, BorderLayout.CENTER);
 
     myRootPane.setSecondComponent(bottomPanel);
-    myRootPane.setProportion(1);
+    myRootPane.setProportion(0.5f);
     return myRootPane;
   }
 
