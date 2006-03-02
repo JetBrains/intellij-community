@@ -13,20 +13,13 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.xml.ClassChooser;
-import com.intellij.util.xml.ClassChooserManager;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.xml.ui.DomEditorManager;
-import com.intellij.util.xml.ui.DomUIControl;
-import com.intellij.util.xml.ui.CommitListener;
+import com.intellij.util.xml.ui.actions.DefaultAddAction;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -93,12 +86,12 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
   }
 
   public void addCommitListener(CommitListener listener) {
-      myDispatcher.addListener(listener);
-    }
+    myDispatcher.addListener(listener);
+  }
 
-    public void removeCommitListener(CommitListener listener) {
-      myDispatcher.removeListener(listener);
-    }
+  public void removeCommitListener(CommitListener listener) {
+    myDispatcher.removeListener(listener);
+  }
 
   protected void initialize(final DomCollectionPanel boundComponent) {
     if (boundComponent == null) {
@@ -305,18 +298,17 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     return (List<T>)myChildDescription.getValues(myParentDomElement);
   }
 
-  @NotNull
+  @Nullable
   protected AnAction[] createAdditionActions() {
-    final ClassChooser chooser = ClassChooserManager.getClassChooser(getCollectionElementClass());
-    return ContainerUtil.map2Array(chooser.getChooserClasses(), AnAction.class, new Function<Class, AnAction>() {
-      public AnAction fun(final Class s) {
-        return new DefaultAddAction(s.getSimpleName()) {
-          protected Class<? extends T> getElementClass() {
-            return s;
-          }
-        };
+    return null;
+  }
+
+  protected DefaultAddAction createDefaultAction(final String name, final Icon icon, final Class s) {
+    return new ControlAddAction(name, "", icon) {
+      protected Class getElementClass() {
+        return s;
       }
-    });
+    };
   }
 
   protected final Class<? extends T> getCollectionElementClass() {
@@ -337,51 +329,38 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     return (DomEditorManager)component;
   }
 
-  protected class DefaultAddAction extends AnAction {
+  public class ControlAddAction extends DefaultAddAction<DomElement> {
 
-    public DefaultAddAction() {
+    public ControlAddAction() {
     }
 
-    public DefaultAddAction(String text) {
+    public ControlAddAction(final String text) {
       super(text);
     }
 
-    public DefaultAddAction(String text, String description, Icon icon) {
+    public ControlAddAction(final String text, final String description, final Icon icon) {
       super(text, description, icon);
     }
 
-    protected Class<? extends T> getElementClass() {
-      return getCollectionElementClass();
+
+    protected DomCollectionChildDescription getDomCollectionChildDescription() {
+      return myChildDescription;
     }
 
-    protected T doAdd() {
-      return (T) myChildDescription.addValue(myParentDomElement, getElementClass());
+    protected DomElement getParentDomElement() {
+      return myParentDomElement;
     }
 
-    protected boolean beforeAddition() {
-      return true;
-    }
 
     protected void afterAddition(final JTable table, final int rowIndex) {
       table.setRowSelectionInterval(rowIndex, rowIndex);
     }
 
-    public void actionPerformed(AnActionEvent e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (beforeAddition()) {
-            final T newElement = new WriteCommandAction<T>(getProject()) {
-              protected void run(Result<T> result) throws Throwable {
-                result.setResult(doAdd());
-              }
-            }.execute().getResultObject();
-            if (newElement != null) {
-              reset();
-              afterAddition(myCollectionPanel.getTable(), myData.size() - 1);
-            }
-          }
-        }
-      });
+    protected void afterAddition(final AnActionEvent e, final DomElement newElement) {
+      if (newElement != null) {
+        reset();
+        afterAddition(myCollectionPanel.getTable(), myData.size() - 1);
+      }
     }
   }
 
