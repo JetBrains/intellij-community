@@ -40,6 +40,10 @@ final class HorizontalInfo extends DimensionInfo{
     return getMinimumSize(componentIndex).width;
   }
 
+  public DimensionInfo getDimensionInfo(GridLayoutManager grid) {
+    return grid.myHorizontalInfo;
+  }
+
   public int getCellCount(){
     return myLayoutState.getColumnCount();
   }

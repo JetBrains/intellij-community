@@ -40,6 +40,10 @@ final class VerticalInfo extends DimensionInfo {
     return getMinimumSize(componentIndex).height;
   }
 
+  public DimensionInfo getDimensionInfo(GridLayoutManager grid) {
+    return grid.myVerticalInfo;
+  }
+
   public int getCellCount(){
     return myLayoutState.getRowCount();
   }

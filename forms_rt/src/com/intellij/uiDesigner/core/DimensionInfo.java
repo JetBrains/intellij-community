@@ -82,6 +82,7 @@ public abstract class DimensionInfo {
 
   public abstract int getPreferredWidth(int componentIndex);
   public abstract int getMinimumWidth(int componentIndex);
+  public abstract DimensionInfo getDimensionInfo(GridLayoutManager grid);
 
   public final int getCell(final int componentIndex){
     return myCell[componentIndex];
@@ -106,7 +107,7 @@ public abstract class DimensionInfo {
     return myGap;
   }
 
-  private boolean componentBelongsCell(final int componentIndex, final int cellIndex) {
+  public boolean componentBelongsCell(final int componentIndex, final int cellIndex) {
     final int componentStartCell = getCell(componentIndex);
     final int span = getSpan(componentIndex);
     return componentStartCell <= cellIndex && cellIndex < componentStartCell + span;
@@ -182,41 +183,17 @@ public abstract class DimensionInfo {
       }
       Component child = getComponent(i);
       GridConstraints c = getConstraints(i);
-      if (c.isUseParentLayout() && child instanceof Container) {
-        Container container = (Container) child;
-        if (container.getLayout() instanceof GridLayoutManager) {
-          GridLayoutManager grid = (GridLayoutManager) container.getLayout();
-          grid.validateInfos(container);
-          DimensionInfo info = (this instanceof HorizontalInfo)
-                               ? grid.myHorizontalInfo
-                               : grid.myVerticalInfo;
-
-          final int policy = info.calcCellSizePolicy(cellIndex - getOriginalCell(c));
-          if (policyFromInheriting == -1) {
-            policyFromInheriting = policy;
-          }
-          else {
-            policyFromInheriting |= policy;
-          }
+      Container container = findAlignedChild(child, c);
+      if (container != null) {
+        GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+        grid.validateInfos(container);
+        DimensionInfo info = getDimensionInfo(grid);
+        final int policy = info.calcCellSizePolicy(cellIndex - getOriginalCell(c));
+        if (policyFromInheriting == -1) {
+          policyFromInheriting = policy;
         }
-        else if (container.getComponentCount() == 1 && container.getComponent(0) instanceof Container) {
-          // "use parent layout" also needs to work in cases where a grid is the only control in a non-grid panel
-          // which is contained in a grid
-          Container childContainer = (Container) container.getComponent(0);
-          if (childContainer.getLayout() instanceof GridLayoutManager) {
-            GridLayoutManager grid = (GridLayoutManager) childContainer.getLayout();
-            grid.validateInfos(childContainer);
-            DimensionInfo info = (this instanceof HorizontalInfo)
-                                 ? grid.myHorizontalInfo
-                                 : grid.myVerticalInfo;
-            final int policy = info.calcCellSizePolicy(cellIndex - getOriginalCell(c));
-            if (policyFromInheriting == -1) {
-              policyFromInheriting = policy;
-            }
-            else {
-              policyFromInheriting |= policy;
-            }
-          }
+        else {
+          policyFromInheriting |= policy;
         }
       }
       else if (getOriginalCell(c) == cellIndex && getOriginalSpan(c) == 1 && !(child instanceof Spacer)) {
@@ -227,6 +204,24 @@ public abstract class DimensionInfo {
       return -1;
     }
     return policyFromInheriting;
+  }
+
+  public static Container findAlignedChild(final Component child, final GridConstraints c) {
+    if (c.isUseParentLayout() && child instanceof Container) {
+      Container container = (Container) child;
+      if (container.getLayout() instanceof GridLayoutManager) {
+        return container;
+      }
+      else if (container.getComponentCount() == 1 && container.getComponent(0) instanceof Container) {
+        // "use parent layout" also needs to work in cases where a grid is the only control in a non-grid panel
+        // which is contained in a grid
+        Container childContainer = (Container) container.getComponent(0);
+        if (childContainer.getLayout() instanceof GridLayoutManager) {
+          return childContainer;
+        }
+      }
+    }
+    return null;
   }
 
   protected final Dimension getPreferredSize(final int componentIndex){

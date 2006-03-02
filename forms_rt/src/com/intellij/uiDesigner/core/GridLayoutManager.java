@@ -358,6 +358,11 @@ public final class GridLayoutManager extends AbstractLayout {
         continue;
       }
 
+      if (info.componentBelongsCell(i, cellIndex) &&
+          DimensionInfo.findAlignedChild(component, info.getConstraints(i)) != null) {
+        return true;
+      }
+
       if (info.getCell(i) == indexOfNextNotEmpty) {
         startsInNext = true;
       }
