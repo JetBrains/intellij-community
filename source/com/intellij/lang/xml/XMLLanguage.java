@@ -49,14 +49,12 @@ import java.util.ArrayList;
  * Time: 10:59:22 AM
  * To change this template use File | Settings | File Templates.
  */
-public class XMLLanguage extends Language {
+public class XMLLanguage extends CompositeLanguage {
   private FoldingBuilder myFoldingBuilder;
   protected static final CDATAOnAnyEncodedPolicy CDATA_ON_ANY_ENCODED_POLICY = new CDATAOnAnyEncodedPolicy();
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
   private final FormattingModelBuilder myFormattingModelBuilder;
   private XmlFindUsagesProvider myXmlFindUsagesProvider;
-
-  private List<LanguageExtension> myExtensions = new ArrayList<LanguageExtension>();
 
   public XMLLanguage() {
     this("XML", "text/xml");
@@ -139,23 +137,8 @@ public class XMLLanguage extends Language {
     return new XMLExternalAnnotator();
   }
 
-  public void registerLanguageExtension(LanguageExtension extension){
-    if(!myExtensions.contains(extension)) myExtensions.add(extension);
-  }
-
   public FileViewProvider createViewProvider(final VirtualFile file, final PsiManager manager, final boolean physical) {
     return new XmlFileViewProvider(manager, file, physical, this);
   }
 
-  public Language[] getLanguageExtensionsForFile(final PsiFile psi) {
-    final List<Language> extensions = new ArrayList<Language>();
-    for (LanguageExtension extension : myExtensions) {
-      if(extension.isRelevantForFile(psi)) extensions.add(extension.getLanguage());
-    }
-    return extensions.toArray(new Language[extensions.size()]);
-  }
-
-  public LanguageExtension[] getLanguageExtensions() {
-    return myExtensions.toArray(new LanguageExtension[myExtensions.size()]);
-  }
 }

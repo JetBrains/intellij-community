@@ -23,6 +23,10 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+
 public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
 
@@ -266,7 +270,12 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   @NotNull
   public PsiFile[] getPsiRoots() {
-    return new PsiFile[]{this};
+    final Set<Language> languages = getViewProvider().getRelevantLanguages();
+    final List<PsiFile> roots = new ArrayList<PsiFile>();
+    for (Language language : languages) {
+      roots.add(getViewProvider().getPsi(language));
+    }
+    return roots.toArray(new PsiFile[roots.size()]);
   }
 
   public <T> T getCopyableUserData(Key<T> key) {

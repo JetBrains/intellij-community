@@ -56,7 +56,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     if(psiRoots.length > 1){
       for (int i = 0; i < psiRoots.length; i++) {
         final PsiElement psiRoot = psiRoots[i];
-        checkResult(targetDataName + "." + i, toParseTreeText((PsiElement)psiRoot).trim());
+        checkResult(targetDataName + "." + i, toParseTreeText(psiRoot).trim());
       }
     }
     else{
