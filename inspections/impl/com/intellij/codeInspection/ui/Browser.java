@@ -215,7 +215,7 @@ public class Browser extends JPanel {
               }
             }
             catch (Throwable t) {
-              t.printStackTrace();
+              //???
             }
           }
         }
@@ -470,7 +470,7 @@ public class Browser extends JPanel {
               if (tool != null) {
                 tool.ignoreProblem(element, descriptor, idx);
               }
-              myView.update();
+              myView.updateView(false);
             }
           });
         }
@@ -490,7 +490,7 @@ public class Browser extends JPanel {
               if (tool != null) {
                 tool.ignoreProblem(element, descriptor, idx);
               }
-              myView.update();
+              myView.updateView(false);
             }
           });
       }

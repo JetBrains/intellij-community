@@ -859,7 +859,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public void refreshViews() {
-    myView.update();
+    myView.updateView(false);
   }
 
   public void incrementJobDoneAmount(JobDescriptor job, String message) {

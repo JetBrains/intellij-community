@@ -203,7 +203,7 @@ public abstract class QuickFixAction extends AnAction {
       }, getTemplatePresentation().getText(), null);
 
       if (refreshNeeded[0]) {
-        view.update();
+        view.updateView(false);
       }
     }
     refreshViews(view.getProject(), refElements, myTool);

@@ -2,6 +2,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.IconLoader;
@@ -20,12 +21,17 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   private RefEntity myElement;
   private CommonProblemDescriptor myDescriptor;
   private boolean myReplaceProblemDescriptorTemplateMessage;
+  private DescriptorProviderInspection myTool;
 
-  public ProblemDescriptionNode(RefEntity element, CommonProblemDescriptor descriptor, boolean isReplaceProblemDescriptorTemplateMessage) {
+  public ProblemDescriptionNode(RefEntity element,
+                                CommonProblemDescriptor descriptor,
+                                boolean isReplaceProblemDescriptorTemplateMessage,
+                                DescriptorProviderInspection descriptorProviderInspection) {
     super(descriptor);
     myElement = element;
     myDescriptor = descriptor;
     myReplaceProblemDescriptorTemplateMessage = isReplaceProblemDescriptorTemplateMessage;
+    myTool = descriptorProviderInspection;
   }
 
   public RefEntity getElement() { return myElement; }
@@ -46,6 +52,11 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
       return psiElement != null && psiElement.isValid();
     }
     return true;
+  }
+
+
+  public boolean isResolved() {
+    return myElement instanceof RefElement && myTool.isElementIgnored((RefElement)myElement);
   }
 
   public String toString() {

@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
@@ -19,9 +20,11 @@ public class RefElementNode extends InspectionTreeNode {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ui.RefElementNode");
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
+  private InspectionTool myTool;
 
-  public RefElementNode(RefElement element) {
+  public RefElementNode(RefElement element, final InspectionTool inspectionTool) {
     super(element);
+    myTool = inspectionTool;
     LOG.assertTrue(element != null);
   }
 
@@ -55,6 +58,10 @@ public class RefElementNode extends InspectionTreeNode {
 
   public boolean isValid() {
     return getElement().isValid();
+  }
+
+  public boolean isResolved() {
+    return myTool.isElementIgnored(getElement());
   }
 
   public void add(MutableTreeNode newChild) {
@@ -112,7 +119,7 @@ public class RefElementNode extends InspectionTreeNode {
     return newChildren;
   }
 
-  private boolean notInPath(TreeNode[] pathToRoot, RefElement refChild) {
+  private static boolean notInPath(TreeNode[] pathToRoot, RefElement refChild) {
     for (TreeNode aPathToRoot : pathToRoot) {
       InspectionTreeNode node = (InspectionTreeNode)aPathToRoot;
       if (node instanceof RefElementNode && ((RefElementNode)node).getElement() == refChild) return false;

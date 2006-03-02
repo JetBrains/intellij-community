@@ -258,6 +258,9 @@ public class InspectionTree extends Tree {
       if (!node.isValid()) {
         append(" " + InspectionsBundle.message("inspection.invalid.node.text"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
+      else if (node.isResolved()){
+        append(InspectionsBundle.message("inspection.resolved.node.text") , SimpleTextAttributes.DARK_TEXT);
+      }
 
       int problemCount = node.getProblemCount();
       if (problemCount > 0) {

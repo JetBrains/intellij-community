@@ -86,7 +86,7 @@ class SuppressInspectionToolbarAction extends AnAction {
               public void run() {
                 for (TreePath treePath : selectionPaths) {
                   final InspectionTreeNode node = (InspectionTreeNode)treePath.getLastPathComponent();
-                  final List<RefElement> elementsToSuppress = myView.getTree().getElementsToSuppressInSubTree(node);
+                  final List<RefElement> elementsToSuppress = InspectionTree.getElementsToSuppressInSubTree(node);
                   for (final RefElement refElement : elementsToSuppress) {
                     final PsiElement element = refElement.getElement();
                     final IntentionAction action = getCorrectIntentionAction(id, element);
@@ -114,7 +114,7 @@ class SuppressInspectionToolbarAction extends AnAction {
                     tool.ignoreElement(element);
                   }
                 }
-                myView.update();
+                myView.updateView(false);
               }
             }, InspectionsBundle.message("inspection.quickfix.suppress"), null);
           }
@@ -125,7 +125,7 @@ class SuppressInspectionToolbarAction extends AnAction {
         e.getPresentation().setEnabled(true);
         for (TreePath treePath : selectionPaths) {
           final InspectionTreeNode node = (InspectionTreeNode)treePath.getLastPathComponent();
-          final List<RefElement> elementsToSuppress = myView.getTree().getElementsToSuppressInSubTree(node);
+          final List<RefElement> elementsToSuppress = InspectionTree.getElementsToSuppressInSubTree(node);
           for (RefElement refElement : elementsToSuppress) {
             final PsiElement element = refElement.getElement();
             if (element instanceof PsiFile) continue;
@@ -241,13 +241,12 @@ class SuppressInspectionToolbarAction extends AnAction {
                         if (refElement instanceof RefElement) {
                           final Set<GlobalInspectionContextImpl> globalInspectionContexts = managerEx.getRunningContexts();
                           for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-                            //if (view.getInspectionContext() == context) continue;
                             context.ignoreElement(tool, ((RefElement)refElement).getElement());
                             context.refreshViews();
                           }
                         }
                       }
-                      view.update();
+                      view.updateView(false);
                     }
                     catch (IncorrectOperationException e1) {
                       LOG.error(e1);

@@ -70,7 +70,7 @@ public class DeadHTMLComposer extends HTMLComposer {
     }
   }
 
-  public void appendProblemSynopsis(final RefElement refElement, final StringBuffer buf) {
+  public static void appendProblemSynopsis(final RefElement refElement, final StringBuffer buf) {
     refElement.accept(new RefVisitor() {
       public void visitField(RefField field) {
         if (field.isUsedForReading() && !field.isUsedForWriting()) {
@@ -235,7 +235,7 @@ public class DeadHTMLComposer extends HTMLComposer {
     buf.append("</font>");
   }
 
-  private int getDerivedRefsCount(RefMethod refMethod) {
+  private static int getDerivedRefsCount(RefMethod refMethod) {
     int count = 0;
 
     for (Iterator<RefMethod> iterator = refMethod.getDerivedMethods().iterator(); iterator.hasNext();) {
@@ -246,7 +246,7 @@ public class DeadHTMLComposer extends HTMLComposer {
     return count;
   }
 
-  private int getSuperRefsCount(RefMethod refMethod) {
+  private static int getSuperRefsCount(RefMethod refMethod) {
     int count = 0;
 
     for (Iterator<RefMethod> iterator = refMethod.getSuperMethods().iterator(); iterator.hasNext();) {
@@ -318,7 +318,7 @@ public class DeadHTMLComposer extends HTMLComposer {
   }
 
   private void appendCallesList(RefElement element, StringBuffer buf, Set<RefElement> mentionedElements, boolean appendCallees){
-    final Set<RefElement> possibleChildren = new RefElementNode(element).getPossibleChildren(element);
+    final Set<RefElement> possibleChildren = new RefElementNode(element, myTool).getPossibleChildren(element);
     if (possibleChildren.size() > 0) {
       if (appendCallees){
         appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));

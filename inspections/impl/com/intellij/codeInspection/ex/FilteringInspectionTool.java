@@ -7,6 +7,7 @@ import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.InspectionPackageNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
@@ -72,9 +73,22 @@ public abstract class FilteringInspectionTool extends InspectionTool {
   public void cleanup() {
     super.cleanup();
     myPackageContents.clear();
+    myIgnoreElements.clear();
   }
 
   public boolean isGraphNeeded() {
     return true;
+  }
+
+  public boolean isElementIgnored(final RefElement element) {
+    for (RefEntity entity : myIgnoreElements) {
+      if (entity instanceof RefElement){
+        final RefElement refElement = (RefElement)entity;
+        if (Comparing.equal(refElement.getElement(), element.getElement())){
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

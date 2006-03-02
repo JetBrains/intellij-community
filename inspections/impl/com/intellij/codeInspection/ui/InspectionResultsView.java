@@ -225,6 +225,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
     DefaultActionGroup specialGroup = new DefaultActionGroup();
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
+    specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
     specialGroup.add(new EditSettingsAction());
     specialGroup.add(new InvokeQuickFixAction(this));
     specialGroup.add(new SuppressInspectionToolbarAction(this));
@@ -436,7 +437,12 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     return myInspectionProfile != null ? myInspectionProfile.getDisplayName() : null;
   }
 
-  public boolean update() {
+  public boolean update(){
+    return updateView(true);
+  }
+
+  public boolean updateView(boolean strict) {
+    if (!strict && !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) return false;
     clearTree();
     boolean resultsFound = false;
     final boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
@@ -664,7 +670,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     actions.add(new AnAction(InspectionsBundle.message("inspection.edit.tool.settings")) {
       public void actionPerformed(AnActionEvent e) {
         if (new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false)){
-          InspectionResultsView.this.update();
+          //InspectionResultsView.this.update();
         }
       }
 
@@ -728,7 +734,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
     public void actionPerformed(AnActionEvent e) {
       if (EditInspectionToolsSettingsAction.editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false, null, InspectionProjectProfileManager.getInstance(myProject))){
-        InspectionResultsView.this.update();
+        //InspectionResultsView.this.update();
       }
     }
 

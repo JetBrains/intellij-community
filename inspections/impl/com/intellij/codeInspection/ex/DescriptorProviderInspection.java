@@ -5,6 +5,7 @@ import com.intellij.codeInspection.duplicatePropertyInspection.DuplicateProperty
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -23,12 +24,14 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   private HashMap<CommonProblemDescriptor,RefEntity> myProblemToElements;
   private DescriptorComposer myComposer;
   private HashMap<RefEntity, Set<QuickFix>> myQuickFixActions;
+  private Set<RefEntity> myIgnoredElements;
 
 
   protected DescriptorProviderInspection() {
     myProblemElements = new HashMap<RefEntity, CommonProblemDescriptor[]>();
     myProblemToElements = new HashMap<CommonProblemDescriptor, RefEntity>();
     myQuickFixActions = new HashMap<RefEntity, Set<QuickFix>>();
+    myIgnoredElements = new HashSet<RefEntity>();
   }
 
   public void addProblemElement(RefEntity refElement, CommonProblemDescriptor[] descriptions) {
@@ -58,7 +61,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
 
   public void ignoreElement(RefEntity refEntity) {
     if (refEntity == null) return;
-    myProblemElements.remove(refEntity);
+    ignoreProblemElement(refEntity);
     myQuickFixActions.remove(refEntity);
   }
 
@@ -85,10 +88,15 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
           }
         }
         else {
-          myProblemElements.remove(refEntity);
+          ignoreProblemElement(refEntity);
         }
       }
     }
+  }
+
+  private void ignoreProblemElement(RefEntity refEntity){
+    myProblemElements.remove(refEntity);
+    myIgnoredElements.add(refEntity);
   }
 
   private static boolean isIgnoreProblem(QuickFix[] problemFixes, Set<QuickFix> fixes, int idx){
@@ -111,6 +119,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     myProblemElements.clear();
     myProblemToElements.clear();
     myQuickFixActions.clear();
+    myIgnoredElements.clear();
     myPackageContents = null;
     myModulesProblems = null;
   }
@@ -200,7 +209,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         final RefElementNode elemNode = addNodeToParent(refElement, pNode);
         final CommonProblemDescriptor[] problems = myProblemElements.get(refElement);
         for (CommonProblemDescriptor problem : problems) {
-          elemNode.add(new ProblemDescriptionNode(refElement, problem, !(this instanceof DuplicatePropertyInspection)));
+          elemNode.add(new ProblemDescriptionNode(refElement, problem, !(this instanceof DuplicatePropertyInspection), this));
         }
         if (problems.length == 1){
           elemNode.setProblem(problems[0]);
@@ -212,7 +221,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       InspectionModuleNode moduleNode = new InspectionModuleNode(refModule.getModule());
       final CommonProblemDescriptor[] problems = myProblemElements.get(refModule);
       for (CommonProblemDescriptor problem : problems) {
-        moduleNode.add(new ProblemDescriptionNode(refModule, problem, !(this instanceof DuplicatePropertyInspection)));
+        moduleNode.add(new ProblemDescriptionNode(refModule, problem, !(this instanceof DuplicatePropertyInspection), this));
       }
       content.add(moduleNode);
     }
@@ -256,7 +265,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return result.values().isEmpty() ? null : result.values().toArray(new QuickFixAction[result.size()]);
   }
 
-  protected RefEntity getElement(ProblemDescriptor descriptor) {
+  public RefEntity getElement(CommonProblemDescriptor descriptor) {
     return myProblemToElements.get(descriptor);
   }
 
@@ -271,5 +280,19 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         }
       }
     }
+  }
+
+
+  public boolean isElementIgnored(final RefElement element) {
+    if (myIgnoredElements == null) return false;
+    for (RefEntity entity : myIgnoredElements) {
+      if (entity instanceof RefElement){
+        final RefElement refElement = (RefElement)entity;
+        if (Comparing.equal(refElement.getElement(), element.getElement())){
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

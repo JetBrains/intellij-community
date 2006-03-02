@@ -96,7 +96,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
 
   public abstract void ignoreElement(RefEntity refElement);
 
-  protected static RefElementNode addNodeToParent(RefElement refElement, InspectionPackageNode packageNode){
+  protected RefElementNode addNodeToParent(RefElement refElement, InspectionPackageNode packageNode){
     final Set<InspectionTreeNode> children = new HashSet<InspectionTreeNode>();
     TreeUtil.traverseDepth(packageNode, new TreeUtil.Traverse() {
       public boolean accept(Object node) {
@@ -104,11 +104,11 @@ public abstract class InspectionTool extends InspectionProfileEntry {
         return true;
       }
     });
-    RefElementNode nodeToAdd = new RefElementNode(refElement);
+    RefElementNode nodeToAdd = new RefElementNode(refElement, this);
     boolean firstLevel = true;
     RefElementNode prevNode = null;
     while (true) {
-      RefElementNode currentNode = firstLevel ? nodeToAdd : new RefElementNode(refElement);
+      RefElementNode currentNode = firstLevel ? nodeToAdd : new RefElementNode(refElement, this);
       for (InspectionTreeNode node : children) {
         if (node instanceof RefElementNode){
           final RefElementNode refElementNode = (RefElementNode)node;
@@ -135,4 +135,6 @@ public abstract class InspectionTool extends InspectionProfileEntry {
       firstLevel = false;
     }
   }
+
+  public abstract boolean isElementIgnored(final RefElement element);
 }

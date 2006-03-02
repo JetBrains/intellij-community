@@ -28,6 +28,10 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return true;
   }
 
+  public boolean isResolved(){
+    return false;
+  }
+
   public boolean appearsBold() {
     return false;
   }

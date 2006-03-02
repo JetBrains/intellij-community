@@ -22,6 +22,7 @@ public class UIOptions implements JDOMExternalizable {
   public boolean AUTOSCROLL_TO_SOURCE = false;
   public float SPLITTER_PROPORTION = 0.5f;
   public boolean GROUP_BY_SEVERITY = false;
+  public boolean FILTER_RESOLVED_ITEMS = true;
   public boolean ANALYZE_TEST_SOURCES = true;
   public int SCOPE_TYPE = 1;
   public String CUSTOM_SCOPE_NAME = "";
@@ -85,6 +86,23 @@ public class UIOptions implements JDOMExternalizable {
 
       public void setSelected(AnActionEvent e, boolean state) {
         GROUP_BY_SEVERITY = state;
+        view.update();
+      }
+    };
+  }
+
+  public AnAction createFilterResolvedItemsAction(final InspectionResultsView view){
+    return new ToggleAction(InspectionsBundle.message("inspection.filter.resolved.node.text"),
+                            InspectionsBundle.message("inspection.filter.resolved.node.text"),
+                            IconLoader.getIcon("/ant/filter.png")) {
+
+
+      public boolean isSelected(AnActionEvent e) {
+        return FILTER_RESOLVED_ITEMS;
+      }
+
+      public void setSelected(AnActionEvent e, boolean state) {
+        FILTER_RESOLVED_ITEMS = state;
         view.update();
       }
     };
