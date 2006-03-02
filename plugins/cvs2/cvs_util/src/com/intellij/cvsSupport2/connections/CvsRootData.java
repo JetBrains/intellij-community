@@ -27,7 +27,7 @@ public class CvsRootData implements CvsSettings{
   }
 
   public boolean equals(Object object) {
-    if (object instanceof CvsRootData) return false;
+    if (!(object instanceof CvsRootData)) return false;
     CvsRootData other = (CvsRootData)object;
 
     return Comparing.equal(METHOD, other.METHOD)
