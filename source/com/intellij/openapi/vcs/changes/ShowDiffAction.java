@@ -6,7 +6,11 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
@@ -19,7 +23,7 @@ public class ShowDiffAction extends AnAction {
   public void update(AnActionEvent e) {
     Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    e.getPresentation().setEnabled(project != null && changes != null && changes.length == 1);
+    e.getPresentation().setEnabled(project != null && changes != null && changes.length > 0);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -27,27 +31,114 @@ public class ShowDiffAction extends AnAction {
     Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
     if (project == null || changes == null) return;
 
-    Change change = changes[0];
-
-    showDiffForChange(change, project);
+    showDiffForChange(changes, 0, project);
   }
 
-  public static void showDiffForChange(final Change change, final Project project) {
+  public static void showDiffForChange(final Change[] changes, final int index, final Project project) {
+    showDiffForChange(changes, index, project, new ArrayList<AnAction>());
+  }
+
+  public static void showDiffForChange(final Change[] changes, final int index, final Project project, List<AnAction> additionalActions) {
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
+
+    final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, additionalActions);
+    if (diffReq != null) {
+      tool.show(diffReq);
+    }
+  }
+
+  private static void showDiffForChange(AnActionEvent e,
+                                        final Change[] changes,
+                                        final int index,
+                                        final Project project,
+                                        List<AnAction> additionalActions) {
+    DiffViewer diffViewer = (DiffViewer)e.getDataContext().getData(DataConstants.DIFF_VIEWER);
+    if (diffViewer != null) {
+      final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, additionalActions);
+      if (diffReq != null) {
+        diffViewer.setDiffRequest(diffReq);
+      }
+    }
+  }
+
+  private static SimpleDiffRequest createDiffRequest(final Change[] changes,
+                                                     final int index,
+                                                     final Project project,
+                                                     final List<AnAction> additionalActions) {
+    Change change = changes[index];
 
     final ContentRevision bRev = change.getBeforeRevision();
     final ContentRevision aRev = change.getAfterRevision();
 
     if (bRev != null && bRev.getFile().getFileType().isBinary() || aRev != null && aRev.getFile().getFileType().isBinary()) {
-      return;
+      return null;
     }
 
     String title = bRev != null ? bRev.getFile().getPath() : aRev != null ? aRev.getFile().getPath() : "Unknown diff";
     final SimpleDiffRequest diffReq = new SimpleDiffRequest(project, title);
 
+    if (changes.length > 1) {
+      diffReq.setToolbarAddons(new DiffRequest.ToolbarAddons() {
+        public void customize(DiffToolbar toolbar) {
+          toolbar.addAction(new ShowPrevChangeAction(changes, index, project, additionalActions));
+          toolbar.addAction(new ShowNextChangeAction(changes, index, project, additionalActions));
+          toolbar.addSeparator();
+          for (AnAction action : additionalActions) {
+            toolbar.addAction(action);
+          }
+        }
+      });
+    }
+
     diffReq.setContents(createContent(project, bRev), createContent(project, aRev));
     diffReq.setContentTitles("Base version", "Your version");
-    tool.show(diffReq);
+    return diffReq;
+  }
+
+  private static class ShowNextChangeAction extends AnAction {
+    private Change[] myChanges;
+    private int myIndex;
+    private Project myProject;
+    private List<AnAction> myAdditionalActions;
+
+    public ShowNextChangeAction(final Change[] changes, final int index, final Project project, final List<AnAction> additionalActions) {
+      super(VcsBundle.message("action.name.compare.next.file"), "", IconLoader.findIcon("/actions/nextfile.png"));
+      myAdditionalActions = additionalActions;
+      myChanges = changes;
+      myIndex = index;
+      myProject = project;
+    }
+
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myIndex < myChanges.length - 1);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      showDiffForChange(e, myChanges, myIndex + 1, myProject, myAdditionalActions);
+    }
+  }
+
+  private static class ShowPrevChangeAction extends AnAction {
+    private Change[] myChanges;
+    private int myIndex;
+    private Project myProject;
+    private List<AnAction> myAdditionalActions;
+
+    public ShowPrevChangeAction(final Change[] changes, final int index, final Project project, final List<AnAction> additionalActions) {
+      super(VcsBundle.message("action.name.compare.prev.file"), "", IconLoader.findIcon("/actions/prevfile.png"));
+      myAdditionalActions = additionalActions;
+      myChanges = changes;
+      myIndex = index;
+      myProject = project;
+    }
+
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myIndex > 0);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      showDiffForChange(e, myChanges, myIndex - 1, myProject, myAdditionalActions);
+    }
   }
 
   private static DiffContent createContent(Project project, ContentRevision revision) {

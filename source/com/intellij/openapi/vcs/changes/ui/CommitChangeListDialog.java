@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.localVcs.LocalVcs;
@@ -223,10 +224,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           final Rectangle baseRect = myChangesList.getCellBounds(idx, idx);
           baseRect.setSize(checkboxWidth, baseRect.height);
           if (baseRect.contains(e.getPoint())) {
-            toggleChange((Change)myChangesList.getModel().getElementAt(idx));
+            final Change currentSelection = (Change)myChangesList.getModel().getElementAt(idx);
+            toggleChange(currentSelection);
           }
           else if (e.getClickCount() == 2) {
-            ShowDiffAction.showDiffForChange((Change)myChangesList.getModel().getElementAt(idx), project);
+            showDiff();
           }
         }
       }
@@ -240,6 +242,48 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     init();
   }
+
+  private class ToggleChangeAction extends CheckboxAction {
+    public ToggleChangeAction() {
+      super("Include into commit");
+    }
+
+    //TODO
+    boolean selected;
+    public boolean isSelected(AnActionEvent e) {
+      return selected;
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      selected = state;
+    }
+  }
+
+  private void showDiff() {
+    final int leadSelectionIndex = myChangesList.getLeadSelectionIndex();
+    final Change leadSelection = (Change)myChangesList.getModel().getElementAt(leadSelectionIndex);
+
+    Change[] changes = getSelectedChanges();
+
+    if (changes.length < 2) {
+      final Collection<Change> displayedChanges = getCurrentDisplayedChanges();
+      changes = displayedChanges.toArray(new Change[displayedChanges.size()]);
+    }
+
+    int indexInSelection = Arrays.asList(changes).indexOf(leadSelection);
+    if (indexInSelection >= 0) {
+      ShowDiffAction.showDiffForChange(changes, indexInSelection, myProject, createAdditionalActions());
+    }
+    else {
+      ShowDiffAction.showDiffForChange(new Change[] {leadSelection}, 0, myProject, createAdditionalActions());
+    }
+  }
+
+  private List<AnAction> createAdditionalActions() {
+    return Collections.emptyList();
+    // TODO: return Arrays.asList((AnAction)new ToggleChangeAction());
+  }
+
 
   private void rebuildList() {
     final DefaultListModel listModel = (DefaultListModel)myChangesList.getModel();
