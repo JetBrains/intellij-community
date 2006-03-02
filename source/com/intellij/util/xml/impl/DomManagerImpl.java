@@ -319,7 +319,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public final <T extends DomElement> T createMockElement(final Class<T> aClass) {
-    final XmlFile file = (XmlFile)PsiManager.getInstance(myProject).getElementFactory().createFileFromText("a.xml", "<root/>");
+    final XmlFile file = (XmlFile)PsiManager.getInstance(myProject).getElementFactory().createFileFromText("a.xml", "");
     return getFileElement(file, aClass, "root").getRootElement();
   }
 }
