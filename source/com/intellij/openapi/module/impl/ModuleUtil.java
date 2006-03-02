@@ -24,6 +24,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,11 +171,6 @@ public class ModuleUtil {
       final String fullPath = sourceRoot.getPath() + "/" + relPath;
       final VirtualFile fileByPath = LocalFileSystem.getInstance().findFileByPath(fullPath);
       if (fileByPath != null) {
-        //final PsiFile psiFile = PsiManager.getInstance(inModule.getProject()).findFile(fileByPath);
-        //if (aClass.isInstance(psiFile)) {
-        //  //noinspection unchecked
-        //  return (T)psiFile;
-        //}
         return fileByPath;
       }
     }
@@ -183,24 +179,25 @@ public class ModuleUtil {
 
   @Nullable
   public static VirtualFile findResourceFileInDependents(final Module searchFromModule, final String fileName) {
-    final Set<Module> dependentModules = new com.intellij.util.containers.HashSet<Module>();
-    getDependencies(searchFromModule, dependentModules);
-    for(Module m: dependentModules) {
-      final VirtualFile file = findResourceFile(fileName, m);
-      if (file != null) {
-        return file;
-      }
-    }
-    return null;
+    return findResourceFileInScope(fileName, searchFromModule.getProject(), searchFromModule.getModuleWithDependenciesScope());
   }
 
   @Nullable
-  public static VirtualFile findResourceFileInProject(final Project project,final String fileName) {
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for(Module module: modules) {
-      final VirtualFile file = findResourceFile(fileName, module);
-      if (file != null) {
-        return file;
+  public static VirtualFile findResourceFileInProject(final Project project, final String resourceName) {
+    return findResourceFileInScope(resourceName, project, GlobalSearchScope.projectScope(project));
+  }
+
+  private static VirtualFile findResourceFileInScope(final String resourceName,
+                                                     final Project project,
+                                                     final GlobalSearchScope scope) {
+    int index = resourceName.lastIndexOf('/');
+    String packageName = (index >= 0) ? resourceName.substring(0, index).replace('/', '.') : "";
+    String fileName = (index >= 0) ? resourceName.substring(index+1) : resourceName;
+    final VirtualFile[] files = ProjectRootManager.getInstance(project).getFileIndex().getDirectoriesByPackageName(packageName, false);
+    for(VirtualFile file: files) {
+      final VirtualFile child = file.findChild(fileName);
+      if (child != null && scope.contains(child)) {
+        return child;
       }
     }
     return null;

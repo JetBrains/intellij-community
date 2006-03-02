@@ -31,6 +31,7 @@ public interface ProjectFileIndex extends FileIndex {
   /**
    * Returns module to which the specified file belongs.
    *
+   * @param file the file for which the module is requested.
    * @return the module instance or null if the file does not belong to content of any module.
    */
   @Nullable
@@ -39,6 +40,7 @@ public interface ProjectFileIndex extends FileIndex {
   /**
    * Returns the order entries which contain the specified file (either in CLASSES or SOURCES).
    *
+   * @param file the file for which the order entries are requested.
    * @return the array of order entries containing the file.
    */
   @NotNull
