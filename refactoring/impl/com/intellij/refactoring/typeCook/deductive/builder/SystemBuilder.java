@@ -93,7 +93,7 @@ public class SystemBuilder {
         parameter == null ? superMethod : superMethod.getParameterList().getParameters()[index];
 
       if (!victims.contains(e)) {
-        myMethodCache.put(superMethod, new Boolean(false));
+        myMethodCache.put(superMethod, Boolean.FALSE);
         return false;
       }
 
@@ -130,7 +130,7 @@ public class SystemBuilder {
       final PsiElement e = parameter != null ? overrider.getParameterList().getParameters()[index] : overrider;
 
       if (!victims.contains(e)) {
-        myMethodCache.put(keyMethod, new Boolean(false));
+        myMethodCache.put(keyMethod, Boolean.FALSE);
         return false;
       }
     }
@@ -152,7 +152,7 @@ public class SystemBuilder {
       myParameters.put(parameter, keyParameter);
     }
 
-    myMethodCache.put(keyMethod, new Boolean(true));
+    myMethodCache.put(keyMethod, Boolean.TRUE);
 
     return true;
   }
@@ -353,7 +353,6 @@ public class SystemBuilder {
           } else {
             LOG.assertTrue(expr instanceof PsiMethodCallExpression); //either this(); or super();
             final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
-            LOG.assertTrue(methodExpression instanceof PsiReferenceExpression);
             if (PsiKeyword.THIS.equals(methodExpression.getText())){
               aType = myManager.getElementFactory().createType(aClass);
             } else {
@@ -793,7 +792,7 @@ public class SystemBuilder {
     }
   }
 
-  private SearchScope getScope(final PsiSearchHelper helper, final PsiElement element) {
+  private static SearchScope getScope(final PsiSearchHelper helper, final PsiElement element) {
     SearchScope scope = helper.getUseScope(element);
     if (scope instanceof GlobalSearchScope) {
       scope = GlobalSearchScope.getScopeRestrictedByFileTypes(((GlobalSearchScope)scope), StdFileTypes.JAVA, StdFileTypes.JSP, StdFileTypes.JSPX);
