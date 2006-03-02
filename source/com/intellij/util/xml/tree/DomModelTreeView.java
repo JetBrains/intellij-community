@@ -9,10 +9,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventListener;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.events.DomEvent;
-import jetbrains.fabrique.ui.treeStructure.SimpleTree;
-import jetbrains.fabrique.ui.treeStructure.SimpleTreeBuilder;
-import jetbrains.fabrique.ui.treeStructure.SimpleTreeStructure;
-import jetbrains.fabrique.ui.treeStructure.WeightBasedComparator;
+import jetbrains.fabrique.ui.treeStructure.*;
 import jetbrains.fabrique.ui.treeStructure.actions.CollapseAllAction;
 import jetbrains.fabrique.ui.treeStructure.actions.ExpandAllAction;
 
@@ -21,11 +18,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.Map;
+import java.util.ArrayList;
 
 import org.jetbrains.annotations.Nullable;
 
 public class DomModelTreeView extends Wrapper implements DataProvider {
   public static String DOM_MODEL_TREE_VIEW_KEY = "DOM_MODEL_TREE_VIEW_KEY";
+  public static String DOM_MODEL_TREE_VIEW_POPUP = "DOM_MODEL_TREE_VIEW_POPUP";
 
   private final SimpleTree myTree;
   private final SimpleTreeBuilder myBuilder;
@@ -66,7 +65,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     myDomManager = rootElement.getManager();
     myDomManager.addDomEventListener(myDomEventListener);
 
-    myTree.setPopupGroup(getPopupActions(), ActionPlaces.UNKNOWN);
+    myTree.setPopupGroup(getPopupActions(), DOM_MODEL_TREE_VIEW_POPUP);
   }
 
   public DomElement getRootElement() {
@@ -108,5 +107,38 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     }
     return null;
   }
+
+  public void setSelectedDomElement(final DomElement domElement) {
+    if(domElement == null) return;
+
+    final java.util.List<SimpleNode> parentsNodes = new ArrayList<SimpleNode>();
+
+    SimpleNodeVisitor visitor = new SimpleNodeVisitor() {
+      public boolean accept(SimpleNode simpleNode) {
+        if(simpleNode instanceof BaseDomElementNode) {
+          final DomElement nodeElement = ((AbstractDomElementNode)simpleNode).getDomElement();
+          if(isParent(nodeElement, domElement)) {
+             parentsNodes.add(simpleNode);
+          }
+        }
+        return false;
+      }
+
+      private boolean isParent(final DomElement potentialParent, final DomElement domElement) {
+        DomElement currParent = domElement;
+        while(currParent != null) {
+          if(currParent.equals(potentialParent)) return true;
+
+          currParent = currParent.getParent();
+        }
+        return false;
+      }
+    };
+
+    getTree().accept(getBuilder(), visitor);
+    if(parentsNodes.size() > 0) {
+        getTree().setSelectedNode(getBuilder(), parentsNodes.get(parentsNodes.size()-1), true);
+    }
+  };
 }
 

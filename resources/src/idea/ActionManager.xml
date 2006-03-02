@@ -1514,11 +1514,11 @@
       <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
     </action>
 
-    <group id="DomElementsTreeView.TreePopup">
+    <group id="DomElementsTreeView.TreePopup" >
         <reference ref="DomElementsTreeView.GotoDomElementDeclarationAction"/>
 
         <separator/>
-        <reference ref="DomElementsTreeView.AddElement"/>
+        <reference ref="DomElementsTreeView.AddElement" popup="true"/>
         <reference ref="DomElementsTreeView.DeleteElement"/>
     </group>
 

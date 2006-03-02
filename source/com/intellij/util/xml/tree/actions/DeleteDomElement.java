@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Icons;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
@@ -57,6 +58,6 @@ public class DeleteDomElement extends BaseDomTreeAction {
       e.getPresentation().setText("Delete");
     }
 
-    e.getPresentation().setIcon(Icons.DELETE_ICON);
+    e.getPresentation().setIcon(IconLoader.getIcon("/general/remove.png"));
   }
 }
