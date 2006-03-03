@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 
@@ -10,7 +11,9 @@ import java.util.List;
 /**
  * @author max
  */
-public class ChangeList {
+public class ChangeList implements Cloneable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeList");
+
   private Collection<Change> myChanges = new ArrayList<Change>();
   private Collection<Change> myReadChangesCache = null;
   private String myDescription;
@@ -62,8 +65,7 @@ public class ChangeList {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
       if (before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())) {
-        myChanges.remove(oldBoy);
-        myReadChangesCache = null;
+        removeChange(oldBoy);
         myOutdatedChanges.add(oldBoy);
       }
     }
@@ -71,13 +73,13 @@ public class ChangeList {
 
   public boolean processChange(Change change) {
     if (myIsDefault) {
-      myChanges.add(change);
+      addChange(change);
       return true;
     }
 
     for (Change oldChange : myOutdatedChanges) {
       if (changesEqual(oldChange, change)) {
-        myChanges.add(change);
+        addChange(change);
         return true;
       }
     }
@@ -114,5 +116,15 @@ public class ChangeList {
 
   public int hashCode() {
     return myDescription.hashCode();
+  }
+
+  public ChangeList clone() {
+    try {
+      return (ChangeList)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 }

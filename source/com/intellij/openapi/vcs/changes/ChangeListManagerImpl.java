@@ -189,9 +189,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
         for (final VcsDirtyScope scope : scopes) {
           updateProgressText(" Updating: " + scope.getScopeRoot().getPresentableUrl());
-          for (ChangeList list : getChangeLists()) {
-            if (myDisposed) return;
-            list.removeChangesInScope(scope);
+          synchronized (myChangeLists) {
+            for (ChangeList list : getChangeLists()) {
+              if (myDisposed) return;
+              list.removeChangesInScope(scope);
+            }
           }
           myUnversionedFilesHolder.cleanScope(scope);
           myView.freezeState();
@@ -255,8 +257,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private void refreshView() {
     if (myDisposed) return;
+    myView.updateModel(getChangeListsCopy(), new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()));
+  }
+
+  private List<ChangeList> getChangeListsCopy() {
     synchronized (myChangeLists) {
-      myView.updateModel(getChangeLists(), new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()));
+      List<ChangeList> copy = new ArrayList<ChangeList>(myChangeLists.size());
+      for (ChangeList list : myChangeLists) {
+        copy.add(list.clone());
+      }
+      return copy;
     }
   }
 
@@ -440,14 +450,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
 
     private String getUniqueName() {
-      int unnamedcount = 0;
-      for (ChangeList list : getChangeLists()) {
-        if (list.getDescription().startsWith("Unnamed")) {
-          unnamedcount++;
+      synchronized (myChangeLists) {
+        int unnamedcount = 0;
+        for (ChangeList list : getChangeLists()) {
+          if (list.getDescription().startsWith("Unnamed")) {
+            unnamedcount++;
+          }
         }
-      }
 
-      return unnamedcount == 0 ? "Unnamed" : "Unnamed (" + unnamedcount + ")";
+        return unnamedcount == 0 ? "Unnamed" : "Unnamed (" + unnamedcount + ")";
+      }
     }
   }
 
@@ -533,14 +545,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void moveChangesTo(final ChangeList list, final Change[] changes) {
-    for (ChangeList existingList : getChangeLists()) {
-      for (Change change : changes) {
-        existingList.removeChange(change);
+    synchronized (myChangeLists) {
+      for (ChangeList existingList : getChangeLists()) {
+        for (Change change : changes) {
+          existingList.removeChange(change);
+        }
       }
-    }
 
-    for (Change change : changes) {
-      list.addChange(change);
+      for (Change change : changes) {
+        list.addChange(change);
+      }
     }
 
     scheduleRefresh();
