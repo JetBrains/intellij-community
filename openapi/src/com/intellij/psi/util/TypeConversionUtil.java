@@ -21,10 +21,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import gnu.trove.TObjectIntHashMap;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectIntHashMap;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 public class TypeConversionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.TypeConversionUtil");
@@ -243,7 +246,7 @@ public class TypeConversionUtil {
     return true;
   }
 
-  public static final boolean areDistinctParameterTypes(PsiClassType type1, PsiClassType type2) {
+  public static boolean areDistinctParameterTypes(PsiClassType type1, PsiClassType type2) {
     PsiClassType.ClassResolveResult resolveResult1 = type1.resolveGenerics();
     PsiClassType.ClassResolveResult resolveResult2 = type2.resolveGenerics();
     if (resolveResult1.getElement() == null || resolveResult2.getElement() == null) return true;
@@ -447,7 +450,6 @@ public class TypeConversionUtil {
    * @return true if expression can be the left part of assignment operator
    */
   public static boolean isLValue(PsiExpression element) {
-    if (element instanceof PsiIdentifier) return true;
     if (element instanceof PsiReferenceExpression) {
       final PsiReferenceExpression expression = (PsiReferenceExpression)element;
       final PsiElement resolved = expression.resolve();
@@ -483,7 +485,7 @@ public class TypeConversionUtil {
         lType = PsiPrimitiveType.getUnboxedType(lType);
         if (lType == null) return false;
     }
-      
+
     final int rTypeRank = getTypeRank(rType);
     if (lType instanceof PsiPrimitiveType
         && rType instanceof PsiPrimitiveType
@@ -753,7 +755,7 @@ public class TypeConversionUtil {
       }
 
       if (typeRight instanceof PsiWildcardType) {
-        final PsiWildcardType rightWildcard = ((PsiWildcardType)typeRight);
+        final PsiWildcardType rightWildcard = (PsiWildcardType)typeRight;
         if (leftWildcard.isExtends()) {
           return rightWildcard.isExtends() && isAssignable(leftBound, rightWildcard.getBound(), false);
         }
@@ -957,6 +959,11 @@ public class TypeConversionUtil {
   public static boolean isPrimitiveWrapper(String typeName) {
     return PRIMITIVE_WRAPPER_TYPES.contains(typeName);
   }
+  public static boolean isPrimitiveWrapper(final PsiType type) {
+     if (type==null) return false;
+     return isPrimitiveWrapper(type.getCanonicalText());
+   }
+
 
   public static PsiClassType typeParameterErasure(final PsiTypeParameter typeParameter) {
     final PsiClassType[] extendsList = typeParameter.getExtendsList().getReferencedTypes();

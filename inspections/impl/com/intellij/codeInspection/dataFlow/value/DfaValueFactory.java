@@ -26,6 +26,7 @@ public class DfaValueFactory {
 
     myVarFactory = new DfaVariableValue.Factory(this);
     myConstFactory = new DfaConstValue.Factory(this);
+    myBoxedFactory = new DfaBoxedValue.Factory(this);
     myNotNullFactory = new DfaNotNullValue.Factory(this);
     myTypeFactory = new DfaTypeValue.Factory(this);
     myRelationFactory = new DfaRelationValue.Factory(this);
@@ -96,6 +97,7 @@ public class DfaValueFactory {
 
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;
+  private final DfaBoxedValue.Factory myBoxedFactory;
   private final DfaNotNullValue.Factory myNotNullFactory;
   private final DfaTypeValue.Factory myTypeFactory;
   private final DfaRelationValue.Factory myRelationFactory;
@@ -107,6 +109,9 @@ public class DfaValueFactory {
 
   public DfaConstValue.Factory getConstFactory() {
     return myConstFactory;
+  }
+  public DfaBoxedValue.Factory getBoxedFactory() {
+    return myBoxedFactory;
   }
 
   public DfaNotNullValue.Factory getNotNullFactory() {

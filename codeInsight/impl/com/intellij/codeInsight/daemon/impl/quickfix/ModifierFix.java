@@ -105,10 +105,9 @@ public class ModifierFix implements IntentionAction {
       final int accessLevel = PsiUtil.getAccessLevel(copy);
 
       helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
-        public boolean execute(PsiMethod element) {
-          PsiMethod inheritor = element;
+        public boolean execute(PsiMethod inheritor) {
           PsiModifierList list = inheritor.getModifierList();
-          if (element.getManager().isInProject(element) && PsiUtil.getAccessLevel(list) < accessLevel) {
+          if (inheritor.getManager().isInProject(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
             modifierLists.add(list);
           }
           return true;

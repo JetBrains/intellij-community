@@ -10,6 +10,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class BranchingInstruction extends Instruction {
   protected boolean myIsTrueReachable;
@@ -47,15 +48,14 @@ public abstract class BranchingInstruction extends Instruction {
     return !isConstTrue && myIsTrueReachable != myIsFalseReachable;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean isBoolConst(PsiElement condition) {
     if (!(condition instanceof PsiLiteralExpression)) return false;
-    String text = condition.getText();
+    @NonNls String text = condition.getText();
     return "true".equals(text) || "false".equals(text);
   }
 
   protected void setPsiAnchor(PsiElement psiAcnchor) {
     myExpression = psiAcnchor;
-    isConstTrue = psiAcnchor != null ? isBoolConst(psiAcnchor) : false;
+    isConstTrue = psiAcnchor != null && isBoolConst(psiAcnchor);
   }
 }

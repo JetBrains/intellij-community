@@ -9,6 +9,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
@@ -35,8 +36,9 @@ public class DfaRelationValue extends DfaValue {
     public DfaRelationValue create(DfaValue dfaLeft, DfaValue dfaRight, @NonNls String relation, boolean negated) {
       if (dfaRight instanceof DfaTypeValue && !"instanceof".equals(relation)) return null;
 
-      if (dfaLeft instanceof DfaVariableValue || dfaRight instanceof DfaVariableValue) {
-        if (!(dfaLeft instanceof DfaVariableValue)) {
+      if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
+          || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue || dfaRight instanceof DfaUnboxedValue) {
+        if (!(dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue)) {
           return create(dfaRight, dfaLeft, getSymmetricOperation(relation), negated);
         }
 
@@ -83,8 +85,7 @@ public class DfaRelationValue extends DfaValue {
         myStringToObject.put(id, conditions);
       }
       else {
-        for (int i = 0; i < conditions.size(); i++) {
-          DfaRelationValue rel = conditions.get(i);
+        for (DfaRelationValue rel : conditions) {
           if (rel.hardEquals(mySharedInstance)) return rel;
         }
       }
@@ -142,7 +143,8 @@ public class DfaRelationValue extends DfaValue {
   }
 
   private boolean hardEquals(DfaRelationValue rel) {
-    return rel.myLeftOperand.equals(myLeftOperand) && rel.myRightOperand.equals(myRightOperand) &&
+    return Comparing.equal(rel.myLeftOperand,myLeftOperand)
+           && Comparing.equal(rel.myRightOperand,myRightOperand) &&
            rel.myRelation.equals(myRelation) &&
            rel.myIsNegated == myIsNegated;
   }

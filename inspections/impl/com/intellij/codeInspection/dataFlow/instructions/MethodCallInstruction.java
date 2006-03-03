@@ -12,10 +12,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,10 +29,17 @@ public class MethodCallInstruction extends Instruction {
   private @NotNull PsiExpression[] myArgs;
   private boolean myShouldFlushFields;
   @NotNull private final PsiExpression myContext;
+  private final MethodType myMethodType;
+  public static enum MethodType {
+    BOXING, UNBOXING, REGULAR_METHOD_CALL
+  }
 
-  public MethodCallInstruction(@NotNull("!(context instanceof PsiCallExpression) means (implicit) xxxvalue() unboxing method call") 
-                               PsiExpression context, DfaValueFactory factory) {
+  public MethodCallInstruction(@NotNull PsiCallExpression callExpression, DfaValueFactory factory) {
+    this(callExpression, factory, MethodType.REGULAR_METHOD_CALL);
+  }
+  public MethodCallInstruction(@NotNull PsiExpression context, DfaValueFactory factory, MethodType methodType) {
     myContext = context;
+    myMethodType = methodType;
     myCall = context instanceof PsiCallExpression ? (PsiCallExpression)context : null;
     myFactory = factory;
     final PsiMethod callee = myCall == null ? null : myCall.resolveMethod();
@@ -89,7 +93,7 @@ public class MethodCallInstruction extends Instruction {
     final @NotNull DfaValue qualifier = memState.pop();
     try {
       if (!memState.applyNotNull(qualifier)) {
-        if (myCall == null) {
+        if (myMethodType == MethodType.UNBOXING) {
           runner.onUnboxingNullable(myContext);
         }
         else {
@@ -110,14 +114,16 @@ public class MethodCallInstruction extends Instruction {
     }
   }
 
-  private void pushResult(DfaMemoryState state, final DfaValue qualifier) {
+  private void pushResult(DfaMemoryState state, final DfaValue oldValue) {
     final DfaValue dfaValue;
     if (myType != null && (myType instanceof PsiClassType || myType.getArrayDimensions() > 0)) {
       dfaValue = myIsNotNull ? myFactory.getNotNullFactory().create(myType) : myFactory.getTypeFactory().create(myType, myIsNullable);
     }
-    else if (myCall == null){
-      // unboxing
-      dfaValue = qualifier;
+    else if (myMethodType == MethodType.UNBOXING) {
+      dfaValue = myFactory.getBoxedFactory().createUnboxed(oldValue);
+    }
+    else if (myMethodType == MethodType.BOXING) {
+      dfaValue = myFactory.getBoxedFactory().createBoxed(oldValue);
     }
     else {
       dfaValue = DfaUnknownValue.getInstance();
@@ -131,6 +137,6 @@ public class MethodCallInstruction extends Instruction {
   }
 
   public String toString() {
-    return myCall == null ? "Unboxing" : "CALL_METHOD: " + myCall.getText();
+    return myMethodType == MethodType.UNBOXING ? "UNBOX" : myMethodType == MethodType.BOXING ? "BOX" : "CALL_METHOD: " + myCall.getText();
   }
 }

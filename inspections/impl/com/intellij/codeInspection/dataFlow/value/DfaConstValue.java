@@ -70,7 +70,7 @@ public class DfaConstValue extends DfaValue {
 
   private Object myValue;
 
-  private DfaConstValue(Object value, DfaValueFactory factory) {
+  DfaConstValue(Object value, DfaValueFactory factory) {
     super(factory);
     myValue = value;
   }
@@ -79,6 +79,10 @@ public class DfaConstValue extends DfaValue {
   public String toString() {
     if (myValue == null) return "null";
     return myValue.toString();
+  }
+
+  public Object getValue() {
+    return myValue;
   }
 
   public DfaValue createNegated() {

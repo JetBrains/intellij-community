@@ -119,40 +119,37 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
       IElementType op = expression.getOperationSign().getTokenType();
       PsiType type = expression.getType();
-      boolean shouldUnboxArgs = TypeConversionUtil.isPrimitiveAndNotNull(type);
       boolean isBoolean = type == PsiType.BOOLEAN;
       if (op == JavaTokenType.EQ) {
         rExpr.accept(this);
-        if (shouldUnboxArgs) {
-          generateUnboxingInstructionFor(rExpr);
-        }
+        generateBoxingUnboxingInstructionFor(rExpr, type);
       }
       else if (op == JavaTokenType.ANDEQ) {
         if (isBoolean) {
-          generateAndExpression(lExpr, rExpr, shouldUnboxArgs);
+          generateAndExpression(lExpr, rExpr, type);
         }
         else {
-          generateDefaultBinop(lExpr, rExpr, shouldUnboxArgs);
+          generateDefaultBinop(lExpr, rExpr, type);
         }
       }
       else if (op == JavaTokenType.OREQ) {
         if (isBoolean) {
-          generateOrExpression(lExpr, rExpr, shouldUnboxArgs);
+          generateOrExpression(lExpr, rExpr, type);
         }
         else {
-          generateDefaultBinop(lExpr, rExpr, shouldUnboxArgs);
+          generateDefaultBinop(lExpr, rExpr, type);
         }
       }
       else if (op == JavaTokenType.XOREQ) {
         if (isBoolean) {
-          generateXorExpression(expression, lExpr, rExpr, shouldUnboxArgs);
+          generateXorExpression(expression, lExpr, rExpr, type);
         }
         else {
-          generateDefaultBinop(lExpr, rExpr, shouldUnboxArgs);
+          generateDefaultBinop(lExpr, rExpr, type);
         }
       }
       else {
-        generateDefaultBinop(lExpr, rExpr, shouldUnboxArgs);
+        generateDefaultBinop(lExpr, rExpr, type);
       }
 
       addInstruction(new AssignInstruction(rExpr));
@@ -162,15 +159,11 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
   }
 
-  private void generateDefaultBinop(PsiExpression lExpr, PsiExpression rExpr, final boolean shouldUnboxArgs) {
+  private void generateDefaultBinop(PsiExpression lExpr, PsiExpression rExpr, final PsiType exprType) {
     lExpr.accept(this);
-    if (shouldUnboxArgs) {
-      generateUnboxingInstructionFor(lExpr);
-    }
+    generateBoxingUnboxingInstructionFor(lExpr,exprType);
     rExpr.accept(this);
-    if (shouldUnboxArgs) {
-      generateUnboxingInstructionFor(rExpr);
-    }
+    generateBoxingUnboxingInstructionFor(rExpr,exprType);
     addInstruction(new BinopInstruction(null, null));
   }
 
@@ -213,6 +206,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     DfaVariableValue dfaVariable = myFactory.getVarFactory().create(variable, false);
     addInstruction(new PushInstruction(dfaVariable));
     initializer.accept(this);
+    generateBoxingUnboxingInstructionFor(initializer, variable.getType());
     addInstruction(new AssignInstruction(initializer));
     addInstruction(new PopInstruction());
   }
@@ -461,8 +455,8 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     if (returnValue != null) {
       returnValue.accept(this);
       PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiMember.class);
-      if (method != null && TypeConversionUtil.isPrimitiveAndNotNull(method.getReturnType())) {
-        generateUnboxingInstructionFor(returnValue);
+      if (method != null) {
+        generateBoxingUnboxingInstructionFor(returnValue, method.getReturnType());
       }
       addInstruction(new CheckReturnValueInstruction(statement));
     }
@@ -487,7 +481,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
     if (caseExpression != null /*&& !(caseExpression instanceof PsiReferenceExpression)*/) {
       caseExpression.accept(this);
-      generateUnboxingInstructionFor(caseExpression);
+      generateBoxingUnboxingInstructionFor(caseExpression, PsiType.INT);
       addInstruction(new PopInstruction());
     }
 
@@ -782,7 +776,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     PsiExpression indexExpression = expression.getIndexExpression();
     if (indexExpression != null) {
       indexExpression.accept(this);
-      generateUnboxingInstructionFor(indexExpression);
+      generateBoxingUnboxingInstructionFor(indexExpression, PsiType.INT);
       addInstruction(new PopInstruction());
     }
 
@@ -794,12 +788,11 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     //TODO:::
     startElement(expression);
     PsiType type = expression.getType();
-    boolean shouldUnboxArgs = type instanceof PsiArrayType && TypeConversionUtil.isPrimitiveAndNotNull(((PsiArrayType)type).getComponentType());
     PsiExpression[] initializers = expression.getInitializers();
     for (PsiExpression initializer : initializers) {
       initializer.accept(this);
-      if (shouldUnboxArgs) {
-        generateUnboxingInstructionFor(initializer);
+      if (type instanceof PsiArrayType) {
+        generateBoxingUnboxingInstructionFor(initializer, ((PsiArrayType)type).getComponentType());
       }
       addInstruction(new PopInstruction());
     }
@@ -816,7 +809,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
         addInstruction(new PushInstruction(dfaValue));
       }
       else {
-        String op = expression.getOperationSign().getText();
+        IElementType op = expression.getOperationSign().getTokenType();
         PsiExpression lExpr = expression.getLOperand();
         PsiExpression rExpr = expression.getROperand();
 
@@ -825,26 +818,28 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
           return;
         }
         PsiType type = expression.getType();
-        boolean shouldUnboxArgs = TypeConversionUtil.isPrimitiveAndNotNull(type);
-        if ("&&".equals(op)) {
-          generateAndExpression(lExpr, rExpr, shouldUnboxArgs);
+        if (op == JavaTokenType.ANDAND) {
+          generateAndExpression(lExpr, rExpr, type);
         }
-        else if ("||".equals(op)) {
-          generateOrExpression(lExpr, rExpr, shouldUnboxArgs);
+        else if (op == JavaTokenType.OROR) {
+          generateOrExpression(lExpr, rExpr, type);
         }
-        else if ("^".equals(op) && type == PsiType.BOOLEAN) {
-          generateXorExpression(expression, lExpr, rExpr, shouldUnboxArgs);
+        else if (op == JavaTokenType.XOR && type == PsiType.BOOLEAN) {
+          generateXorExpression(expression, lExpr, rExpr, type);
         }
         else {
           lExpr.accept(this);
-          if (shouldUnboxArgs) {
-            generateUnboxingInstructionFor(lExpr);
+          boolean comparingRef = (op == JavaTokenType.EQEQ || op == JavaTokenType.NE)
+                                 && !TypeConversionUtil.isPrimitiveAndNotNull(lExpr.getType())
+                                 && !TypeConversionUtil.isPrimitiveAndNotNull(rExpr.getType());
+          if (!comparingRef) {
+            generateBoxingUnboxingInstructionFor(lExpr,type);
           }
           rExpr.accept(this);
-          if (shouldUnboxArgs) {
-            generateUnboxingInstructionFor(rExpr);
+          if (!comparingRef) {
+            generateBoxingUnboxingInstructionFor(rExpr,type);
           }
-          addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null));
+          addInstruction(new BinopInstruction(expression.getOperationSign().getText(), expression.isPhysical() ? expression : null));
         }
       }
     }
@@ -853,50 +848,42 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
   }
 
-  private void generateUnboxingInstructionFor(PsiExpression expression) {
-    PsiType type = expression.getType();
-    if (type != null && TypeConversionUtil.isPrimitiveWrapper(type.getCanonicalText())) {
-      addInstruction(new MethodCallInstruction(expression, myFactory));
+  private void generateBoxingUnboxingInstructionFor(PsiExpression expression, PsiType expectedType) {
+    PsiType exprType = expression.getType();
+
+    if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(exprType)) {
+      addInstruction(new MethodCallInstruction(expression, myFactory, MethodCallInstruction.MethodType.UNBOXING));
+    }
+    if (TypeConversionUtil.isPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(exprType)) {
+      addInstruction(new MethodCallInstruction(expression, myFactory, MethodCallInstruction.MethodType.BOXING));
     }
   }
 
-  private void generateXorExpression(PsiExpression expression, PsiExpression lExpr, PsiExpression rExpr, final boolean shouldUnboxArgs) {
+  private void generateXorExpression(PsiExpression expression, PsiExpression lExpr, PsiExpression rExpr, final PsiType exprType) {
     lExpr.accept(this);
-    if (shouldUnboxArgs) {
-      generateUnboxingInstructionFor(lExpr);
-    }
+    generateBoxingUnboxingInstructionFor(lExpr,exprType);
     rExpr.accept(this);
-    if (shouldUnboxArgs) {
-      generateUnboxingInstructionFor(rExpr);
-    }
+    generateBoxingUnboxingInstructionFor(rExpr,exprType);
     addInstruction(new BinopInstruction("!=", expression.isPhysical() ? expression : null));
   }
 
-  private void generateOrExpression(PsiExpression lExpr, PsiExpression rExpr, final boolean shouldUnboxArgs) {
+  private void generateOrExpression(PsiExpression lExpr, PsiExpression rExpr, final PsiType exprType) {
     lExpr.accept(this);
-    if (shouldUnboxArgs) {
-      generateUnboxingInstructionFor(lExpr);
-    }
+    generateBoxingUnboxingInstructionFor(lExpr,exprType);
     addInstruction(new ConditionalGotoInstruction(getStartOffset(rExpr), true, lExpr));
     addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue()));
     addInstruction(new GotoInstruction(getEndOffset(rExpr)));
     rExpr.accept(this);
-    if (shouldUnboxArgs) {
-      generateUnboxingInstructionFor(rExpr);
-    }
+    generateBoxingUnboxingInstructionFor(rExpr,exprType);
   }
 
-  private void generateAndExpression(PsiExpression lExpr, PsiExpression rExpr, final boolean shouldUnboxArgs) {
+  private void generateAndExpression(PsiExpression lExpr, PsiExpression rExpr, final PsiType exprType) {
     lExpr.accept(this);
-    if (shouldUnboxArgs) {
-      generateUnboxingInstructionFor(lExpr);
-    }
+    generateBoxingUnboxingInstructionFor(lExpr, exprType);
     ConditionalGotoInstruction firstTrueGoto = new ConditionalGotoInstruction(-1, true, lExpr);
     addInstruction(firstTrueGoto);
     rExpr.accept(this);
-    if (shouldUnboxArgs) {
-      generateUnboxingInstructionFor(rExpr);
-    }
+    generateBoxingUnboxingInstructionFor(rExpr, exprType);
 
     GotoInstruction overPushFalse = new GotoInstruction(-1);
     addInstruction(overPushFalse);
@@ -932,20 +919,15 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
       if (thenExpression != null && elseExpression != null) {
         condition.accept(this);
-        generateUnboxingInstructionFor(condition);
+        generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
         PsiType type = expression.getType();
-        boolean shouldUnboxArgs = TypeConversionUtil.isPrimitiveAndNotNull(type);
         addInstruction(new ConditionalGotoInstruction(getStartOffset(elseExpression), true, condition));
         thenExpression.accept(this);
-        if (shouldUnboxArgs) {
-          generateUnboxingInstructionFor(thenExpression);
-        }
+        generateBoxingUnboxingInstructionFor(thenExpression,type);
 
         addInstruction(new GotoInstruction(getEndOffset(expression)));
         elseExpression.accept(this);
-        if (shouldUnboxArgs) {
-          generateUnboxingInstructionFor(elseExpression);
-        }
+        generateBoxingUnboxingInstructionFor(elseExpression,type);
       }
       else {
         pushUnknown();
@@ -1018,8 +1000,8 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       for (int i = 0; i < paramExprs.length; i++) {
         PsiExpression paramExpr = paramExprs[i];
         paramExpr.accept(this);
-        if (parameters != null && i < parameters.length && TypeConversionUtil.isPrimitiveAndNotNull(parameters[i].getType())) {
-          generateUnboxingInstructionFor(paramExpr);
+        if (parameters != null && i < parameters.length) {
+          generateBoxingUnboxingInstructionFor(paramExpr, parameters[i].getType());
         }
       }
 
@@ -1165,8 +1147,8 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       for (int i = 0; i < params.length; i++) {
         PsiExpression param = params[i];
         param.accept(this);
-        if (parameters != null && i < parameters.length && TypeConversionUtil.isPrimitiveAndNotNull(parameters[i].getType())) {
-          generateUnboxingInstructionFor(param);
+        if (parameters != null && i < parameters.length) {
+          generateBoxingUnboxingInstructionFor(param, parameters[i].getType());
         }
       }
     }
@@ -1197,7 +1179,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
     PsiExpression operand = expression.getOperand();
     operand.accept(this);
-    generateUnboxingInstructionFor(operand);
+    generateBoxingUnboxingInstructionFor(operand, PsiType.INT);
 
     addInstruction(new PopInstruction());
     pushUnknown();
@@ -1225,7 +1207,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       }
       else {
         operand.accept(this);
-        generateUnboxingInstructionFor(operand);
+        generateBoxingUnboxingInstructionFor(operand, PsiType.INT);
         if (expression.getOperationSign().getTokenType() == JavaTokenType.EXCL) {
           addInstruction(new NotInstruction());
         }
@@ -1311,9 +1293,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
     if (operand != null) {
       operand.accept(this);
-      if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType())) {
-        generateUnboxingInstructionFor(operand);
-      }
+      generateBoxingUnboxingInstructionFor(operand, expression.getType());
     }
     else {
       pushTypeOrUnknown(expression);
