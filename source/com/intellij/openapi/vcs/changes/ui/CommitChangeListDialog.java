@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -136,6 +137,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myCommitMessageArea = new CommitMessage();
 
     myChangesList = new JList(new DefaultListModel());
+
+    new ListSpeedSearch(myChangesList) {
+      protected String getElementText(Object element) {
+        if (element instanceof Change) {
+          return getFilePath((Change)element).getName();
+        }
+        return super.getElementText(element);
+      }
+    };
 
     setSelectedList(initalListSelection);
 

@@ -23,10 +23,12 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -72,63 +74,8 @@ public class ChangesListView extends Tree implements DataProvider {
 
     setShowsRootHandles(true);
     setRootVisible(false);
-    setCellRenderer(new ColoredTreeCellRenderer() {
-      public void customizeCellRenderer(JTree tree,
-                                        Object value,
-                                        boolean selected,
-                                        boolean expanded,
-                                        boolean leaf,
-                                        int row,
-                                        boolean hasFocus) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-        Object object = node.getUserObject();
-        if (object instanceof ChangeList) {
-          final ChangeList list = ((ChangeList)object);
-          append(list.getDescription(), list.isDefault()
-                                        ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
-                                        : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-        }
-        else if (object instanceof Change) {
-          final Change change = (Change)object;
-          final FilePath filePath = getFilePath(change);
-          append(filePath.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
-          if (isShowFlatten()) {
-            append(" (" + filePath.getVirtualFileParent().getPresentableUrl() + ", " + getChangeStatus(change).getText() + ")",
-                   SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
-          setIcon(filePath.getFileType().getIcon());
-        }
-        else if (object instanceof VirtualFile) {
-          final VirtualFile file = (VirtualFile)object;
-          append(file.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.COLOR_UNKNOWN));
-          if (isShowFlatten()) {
-            final VirtualFile parentFile = file.getParent();
-            assert parentFile != null;
-            append(" (" + parentFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
-          setIcon(file.getFileType().getIcon());
-        }
-        else if (object instanceof FilePath) {
-          final FilePath path = (FilePath)object;
-          append(getRelativePath(safeCastToFilePath(((DefaultMutableTreeNode)node.getParent()).getUserObject()), path),
-                 SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
-        }
-        else if (object instanceof Module) {
-          final Module module = (Module)object;
-
-          append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          setIcon(module.getModuleType().getNodeIcon(expanded));
-        }
-        else {
-          append(object.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-      }
-
-      private Color getColor(final Change change) {
-        return getChangeStatus(change).getColor();
-      }
-    });
+    setCellRenderer(new MyColoredTreeCellRenderer());
+    new TreeSpeedSearch(this, new NodeToTextConvertor());
 
     myFileStatusManager = new FileStatusListener() {
       public void fileStatusesChanged() {
@@ -346,7 +293,7 @@ public class ChangesListView extends Tree implements DataProvider {
     if (rootFolder == null) {
       return rootNode;
     }
-    
+
     if (path.getVirtualFile() == rootFolder) {
       Module module = index.getModuleForFile(rootFolder);
       return getNodeForModule(module, moduleNodesCache, rootNode);
@@ -703,6 +650,94 @@ public class ChangesListView extends Tree implements DataProvider {
     }
 
     public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+    }
+  }
+
+  private class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
+    public void customizeCellRenderer(JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+      Object object = node.getUserObject();
+      if (object instanceof ChangeList) {
+        final ChangeList list = ((ChangeList)object);
+        append(list.getDescription(), list.isDefault()
+                                      ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+                                      : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      }
+      else if (object instanceof Change) {
+        final Change change = (Change)object;
+        final FilePath filePath = getFilePath(change);
+        append(filePath.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
+        if (isShowFlatten()) {
+          append(" (" + filePath.getVirtualFileParent().getPresentableUrl() + ", " + getChangeStatus(change).getText() + ")",
+                 SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+        setIcon(filePath.getFileType().getIcon());
+      }
+      else if (object instanceof VirtualFile) {
+        final VirtualFile file = (VirtualFile)object;
+        append(file.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.COLOR_UNKNOWN));
+        if (isShowFlatten()) {
+          final VirtualFile parentFile = file.getParent();
+          assert parentFile != null;
+          append(" (" + parentFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+        setIcon(file.getFileType().getIcon());
+      }
+      else if (object instanceof FilePath) {
+        final FilePath path = (FilePath)object;
+        append(getRelativePath(safeCastToFilePath(((DefaultMutableTreeNode)node.getParent()).getUserObject()), path),
+               SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
+      }
+      else if (object instanceof Module) {
+        final Module module = (Module)object;
+
+        append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        setIcon(module.getModuleType().getNodeIcon(expanded));
+      }
+      else {
+        append(object.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+    }
+
+    private Color getColor(final Change change) {
+      return getChangeStatus(change).getColor();
+    }
+  }
+
+  private static class NodeToTextConvertor implements Convertor<TreePath, String> {
+    public String convert(final TreePath path) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      final Object object = node.getUserObject();
+      if (object instanceof ChangeList) {
+        final ChangeList list = ((ChangeList)object);
+        return list.getDescription();
+      }
+      else if (object instanceof Change) {
+        final Change change = (Change)object;
+        final FilePath filePath = getFilePath(change);
+        return filePath.getName();
+      }
+      else if (object instanceof VirtualFile) {
+        final VirtualFile file = (VirtualFile)object;
+        return file.getName();
+      }
+      else if (object instanceof FilePath) {
+        final FilePath filePath = (FilePath)object;
+        return filePath.getName();
+      }
+      else if (object instanceof Module) {
+        final Module module = (Module)object;
+        return module.getName();
+      }
+
+      return node.toString();
     }
   }
 }
