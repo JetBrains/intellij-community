@@ -89,6 +89,7 @@ public class ShowDiffAction extends AnAction {
     if (changes.length > 1) {
       diffReq.setToolbarAddons(new DiffRequest.ToolbarAddons() {
         public void customize(DiffToolbar toolbar) {
+          toolbar.addSeparator();
           toolbar.addAction(new ShowPrevChangeAction(changes, index, project, actionsFactory));
           toolbar.addAction(new ShowNextChangeAction(changes, index, project, actionsFactory));
           toolbar.addSeparator();

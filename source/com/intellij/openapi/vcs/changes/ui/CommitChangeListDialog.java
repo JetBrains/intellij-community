@@ -243,6 +243,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     init();
   }
 
+  private class MoveAction extends MoveChangesToAnotherListAction {
+    private final Change myChange;
+
+
+    public MoveAction(final Change change) {
+      myChange = change;
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      askAndMove(myProject, new Change[] {myChange});
+    }
+  }
+
   private class ToggleChangeAction extends CheckboxAction {
     private final Change myChange;
 
@@ -288,13 +301,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private class DiffToolbarActionsFactory implements ShowDiffAction.AdditionalToolbarActionsFactory {
     public List<? extends AnAction> createActions(Change change) {
-      return Arrays.asList(new ToggleChangeAction(change));
+      return Arrays.asList(new MoveAction(change), new ToggleChangeAction(change));
     }
-  }
-
-  private List<AnAction> createAdditionalActions() {
-    return Collections.emptyList();
-    // TODO: return Arrays.asList((AnAction)new ToggleChangeAction());
   }
 
 
@@ -544,7 +552,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         showDiff();
       }
     };
-    
+
     final MoveChangesToAnotherListAction moveAction = new MoveChangesToAnotherListAction() {
       public void actionPerformed(AnActionEvent e) {
         super.actionPerformed(e);

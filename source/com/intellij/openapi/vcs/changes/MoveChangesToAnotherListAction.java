@@ -26,6 +26,10 @@ public class MoveChangesToAnotherListAction extends AnAction {
     Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
     if (changes == null) return;
 
+    askAndMove(project, changes);
+  }
+
+  public static void askAndMove(final Project project, final Change[] changes) {
     final ChangeListManager listManager = ChangeListManager.getInstance(project);
     ChangeListChooser chooser = new ChangeListChooser(project, listManager.getChangeLists(), null);
     chooser.show();
