@@ -100,7 +100,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private ButtonPanel myButtonPanel = new ButtonPanel();
 
   private boolean myChangesDetected = false;
-  private List<Usage> myUsagesToFlush = new ArrayList<Usage>();
+  private final List<Usage> myUsagesToFlush = new ArrayList<Usage>();
   private Factory<ProgressIndicator> myIndicatorFactory;
   private List<Disposable> myDisposables = new ArrayList<Disposable>();
 
@@ -475,7 +475,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           public boolean process(final Usage usage) {
             appendUsageLater(usage);
             ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-            return indicator != null ? !indicator.isCanceled() : true;
+            return indicator == null || !indicator.isCanceled();
           }
         });
 
@@ -822,7 +822,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myUsages;
   }
 
-  private void collectUsages(DefaultMutableTreeNode node, Set<Usage> usages) {
+  private static void collectUsages(DefaultMutableTreeNode node, Set<Usage> usages) {
     if (node instanceof UsageNode) {
       UsageNode usageNode = (UsageNode)node;
       final Usage usage = usageNode.getUsage();
@@ -869,7 +869,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return null;
   }
 
-  /** nodes with non-valid data are not included */
+  /* nodes with non-valid data are not included */
   private static Navigatable[] getNavigatablesForNodes(Node[] nodes) {
     if (nodes == null) {
       return null;
