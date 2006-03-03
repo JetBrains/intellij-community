@@ -469,7 +469,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public class CommitAction extends AnAction {
     public CommitAction() {
-      super("Commit Change List", "Commit selected changelists", IconLoader.getIcon("/actions/execute.png"));
+      super("Commit Change List", "Commit selected changelist", IconLoader.getIcon("/actions/execute.png"));
     }
 
     @Nullable
