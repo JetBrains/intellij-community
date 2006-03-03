@@ -129,7 +129,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       initalListSelection = changeLists.get(0);
     }
 
-    myIncludedChanges = new ArrayList<Change>(changes);
+    myIncludedChanges = new HashSet<Change>(changes);
     myActionName = "Commit Changes"; // TODO: should be customizable?
 
     myAdditionalOptionsPanel = new JPanel();
@@ -244,18 +244,25 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private class ToggleChangeAction extends CheckboxAction {
-    public ToggleChangeAction() {
+    private final Change myChange;
+
+    public ToggleChangeAction(final Change change) {
       super("Include into commit");
+      myChange = change;
     }
 
-    //TODO
-    boolean selected;
     public boolean isSelected(AnActionEvent e) {
-      return selected;
+      return myIncludedChanges.contains(myChange);
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      selected = state;
+      if (state) {
+        myIncludedChanges.add(myChange);
+      }
+      else {
+        myIncludedChanges.remove(myChange);
+      }
+      myChangesList.repaint();
     }
   }
 
@@ -272,10 +279,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     int indexInSelection = Arrays.asList(changes).indexOf(leadSelection);
     if (indexInSelection >= 0) {
-      ShowDiffAction.showDiffForChange(changes, indexInSelection, myProject, createAdditionalActions());
+      ShowDiffAction.showDiffForChange(changes, indexInSelection, myProject, new DiffToolbarActionsFactory());
     }
     else {
-      ShowDiffAction.showDiffForChange(new Change[] {leadSelection}, 0, myProject, createAdditionalActions());
+      ShowDiffAction.showDiffForChange(new Change[] {leadSelection}, 0, myProject, new DiffToolbarActionsFactory());
+    }
+  }
+
+  private class DiffToolbarActionsFactory implements ShowDiffAction.AdditionalToolbarActionsFactory {
+    public List<? extends AnAction> createActions(Change change) {
+      return Arrays.asList(new ToggleChangeAction(change));
     }
   }
 
@@ -526,7 +539,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private JComponent createToolbar() {
     DefaultActionGroup toolBarGroup = new DefaultActionGroup();
-    final ShowDiffAction diffAction = new ShowDiffAction();
+    final ShowDiffAction diffAction = new ShowDiffAction() {
+      public void actionPerformed(AnActionEvent e) {
+        showDiff();
+      }
+    };
+    
     final MoveChangesToAnotherListAction moveAction = new MoveChangesToAnotherListAction() {
       public void actionPerformed(AnActionEvent e) {
         super.actionPerformed(e);

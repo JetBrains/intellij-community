@@ -9,7 +9,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,13 +35,22 @@ public class ShowDiffAction extends AnAction {
   }
 
   public static void showDiffForChange(final Change[] changes, final int index, final Project project) {
-    showDiffForChange(changes, index, project, new ArrayList<AnAction>());
+    showDiffForChange(changes, index, project, AdditionalToolbarActionsFactory.NONE);
   }
 
-  public static void showDiffForChange(final Change[] changes, final int index, final Project project, List<AnAction> additionalActions) {
+  public interface AdditionalToolbarActionsFactory {
+    AdditionalToolbarActionsFactory NONE = new AdditionalToolbarActionsFactory() {
+      public List<? extends AnAction> createActions(Change change) {
+        return Collections.emptyList();
+      }
+    };
+    List<? extends AnAction> createActions(Change change);
+  }
+
+  public static void showDiffForChange(final Change[] changes, final int index, final Project project, AdditionalToolbarActionsFactory actionsFactory) {
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
 
-    final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, additionalActions);
+    final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, actionsFactory);
     if (diffReq != null) {
       tool.show(diffReq);
     }
@@ -51,10 +60,10 @@ public class ShowDiffAction extends AnAction {
                                         final Change[] changes,
                                         final int index,
                                         final Project project,
-                                        List<AnAction> additionalActions) {
+                                        AdditionalToolbarActionsFactory actionsFactory) {
     DiffViewer diffViewer = (DiffViewer)e.getDataContext().getData(DataConstants.DIFF_VIEWER);
     if (diffViewer != null) {
-      final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, additionalActions);
+      final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, actionsFactory);
       if (diffReq != null) {
         diffViewer.setDiffRequest(diffReq);
       }
@@ -64,8 +73,8 @@ public class ShowDiffAction extends AnAction {
   private static SimpleDiffRequest createDiffRequest(final Change[] changes,
                                                      final int index,
                                                      final Project project,
-                                                     final List<AnAction> additionalActions) {
-    Change change = changes[index];
+                                                     final AdditionalToolbarActionsFactory actionsFactory) {
+    final Change change = changes[index];
 
     final ContentRevision bRev = change.getBeforeRevision();
     final ContentRevision aRev = change.getAfterRevision();
@@ -80,10 +89,10 @@ public class ShowDiffAction extends AnAction {
     if (changes.length > 1) {
       diffReq.setToolbarAddons(new DiffRequest.ToolbarAddons() {
         public void customize(DiffToolbar toolbar) {
-          toolbar.addAction(new ShowPrevChangeAction(changes, index, project, additionalActions));
-          toolbar.addAction(new ShowNextChangeAction(changes, index, project, additionalActions));
+          toolbar.addAction(new ShowPrevChangeAction(changes, index, project, actionsFactory));
+          toolbar.addAction(new ShowNextChangeAction(changes, index, project, actionsFactory));
           toolbar.addSeparator();
-          for (AnAction action : additionalActions) {
+          for (AnAction action : actionsFactory.createActions(change)) {
             toolbar.addAction(action);
           }
         }
@@ -99,11 +108,11 @@ public class ShowDiffAction extends AnAction {
     private Change[] myChanges;
     private int myIndex;
     private Project myProject;
-    private List<AnAction> myAdditionalActions;
+    private AdditionalToolbarActionsFactory myAdditionalActions;
 
-    public ShowNextChangeAction(final Change[] changes, final int index, final Project project, final List<AnAction> additionalActions) {
+    public ShowNextChangeAction(final Change[] changes, final int index, final Project project, final AdditionalToolbarActionsFactory actionsFactory) {
       super(VcsBundle.message("action.name.compare.next.file"), "", IconLoader.findIcon("/actions/nextfile.png"));
-      myAdditionalActions = additionalActions;
+      myAdditionalActions = actionsFactory;
       myChanges = changes;
       myIndex = index;
       myProject = project;
@@ -122,11 +131,11 @@ public class ShowDiffAction extends AnAction {
     private Change[] myChanges;
     private int myIndex;
     private Project myProject;
-    private List<AnAction> myAdditionalActions;
+    private AdditionalToolbarActionsFactory myAdditionalActions;
 
-    public ShowPrevChangeAction(final Change[] changes, final int index, final Project project, final List<AnAction> additionalActions) {
+    public ShowPrevChangeAction(final Change[] changes, final int index, final Project project, final AdditionalToolbarActionsFactory actionsFactory) {
       super(VcsBundle.message("action.name.compare.prev.file"), "", IconLoader.findIcon("/actions/prevfile.png"));
-      myAdditionalActions = additionalActions;
+      myAdditionalActions = actionsFactory;
       myChanges = changes;
       myIndex = index;
       myProject = project;
