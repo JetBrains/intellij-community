@@ -196,14 +196,10 @@ public class CodeInsightUtil {
       }
     };
     commonParent.accept(visitor);
-    list.add(commonParent);
-
-    if (includeAllParents) {
-      PsiElement parent = commonParent;
-      while (parent != null && parent != root) {
-        parent = parent.getParent();
-        list.add(parent);
-      }
+    PsiElement parent = commonParent;
+    while (parent != null && parent != root) {
+      list.add(parent);
+      parent = includeAllParents ? parent.getParent() : null;
     }
 
     return Collections.unmodifiableList(list);
