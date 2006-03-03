@@ -101,35 +101,17 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final ClassToBindProperty myClassToBindProperty;
   private final BindingProperty myBindingProperty;
   private final BorderProperty myBorderProperty;
-  private final HSizePolicyProperty myHSizePolicyProperty;
-  private final VSizePolicyProperty myVSizePolicyProperty;
-  private final FillProperty myFillProperty;
-  private final AnchorProperty myAnchorProperty;
-  private final RowSpanProperty myRowSpanProperty;
-  private final ColumnSpanProperty myColumnSpanProperty;
-  private final IndentProperty myIndentProperty = new IndentProperty();
-  private final UseParentLayoutProperty myUseParentLayoutProperty = new UseParentLayoutProperty();
-  private final MinimumSizeProperty myMinimumSizeProperty;
-  private final PreferredSizeProperty myPreferredSizeProperty;
-  private final MaximumSizeProperty myMaximumSizeProperty;
   private final LayoutManagerProperty myLayoutManagerProperty = new LayoutManagerProperty();
   private final ButtonGroupProperty myButtonGroupProperty = new ButtonGroupProperty();
 
   private boolean myInsideSynch;
+  private final Project myProject;
 
   PropertyInspectorTable(Project project, @NotNull final ComponentTree componentTree) {
+    myProject = project;
     myClassToBindProperty = new ClassToBindProperty(project);
     myBindingProperty = new BindingProperty(project);
     myBorderProperty = new BorderProperty(project);
-    myHSizePolicyProperty = new HSizePolicyProperty();
-    myVSizePolicyProperty = new VSizePolicyProperty();
-    myFillProperty = new FillProperty();
-    myAnchorProperty = new AnchorProperty();
-    myRowSpanProperty = new RowSpanProperty();
-    myColumnSpanProperty = new ColumnSpanProperty();
-    myMinimumSizeProperty = new MinimumSizeProperty();
-    myPreferredSizeProperty = new PreferredSizeProperty();
-    myMaximumSizeProperty = new MaximumSizeProperty();
 
     myPropertyEditorListener = new MyPropertyEditorListener();
     myLafManagerListener = new MyLafManagerListener();
@@ -415,55 +397,25 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       addProperty(result, myClassToBindProperty);
     }
     else {
-      final boolean isVSpacer = component instanceof RadVSpacer;
-      final boolean isHSpacer = component instanceof RadHSpacer;
-      final boolean isSpacer = isVSpacer || isHSpacer;
-
-      if (!isSpacer){
+      if (!(component instanceof RadVSpacer || component instanceof RadHSpacer)){
         addProperty(result, myBindingProperty);
       }
-
-      final RadContainer parent = component.getParent();
-      final boolean inGrid = parent != null && parent.isGrid();
 
       if(component instanceof RadContainer){
         addProperty(result, myLayoutManagerProperty);
         addProperty(result, myBorderProperty);
 
         RadContainer container = (RadContainer) component;
-        final Property[] containerProperties = container.getLayoutManager().getContainerProperties();
-        for(Property prop: containerProperties) {
-          addProperty(result, prop);
-        }
+        final Property[] containerProperties = container.getLayoutManager().getContainerProperties(myProject);
+        addApplicableProperties(containerProperties, container, result);
       }
 
-      if (inGrid) {
-        if (!isVSpacer){
-          addProperty(result, myHSizePolicyProperty);
-        }
-        if (!isHSpacer){
-          addProperty(result, myVSizePolicyProperty);
-        }
-        if (!isSpacer){
-          addProperty(result, myFillProperty);
-          addProperty(result, myAnchorProperty);
-        }
-        if (myRowSpanProperty.appliesTo(component)){
-          addProperty(result, myRowSpanProperty);
-        }
-        if (myColumnSpanProperty.appliesTo(component)){
-          addProperty(result, myColumnSpanProperty);
-        }
-        if (myIndentProperty.appliesTo(component)) {
-          addProperty(result, myIndentProperty);
-        }
-        if (myUseParentLayoutProperty.appliesTo(component)) {
-          addProperty(result, myUseParentLayoutProperty);
-        }
-        addProperty(result, myMinimumSizeProperty);
-        addProperty(result, myPreferredSizeProperty);
-        addProperty(result, myMaximumSizeProperty);
+      final RadContainer parent = component.getParent();
+      if (parent != null) {
+        final Property[] properties = parent.getLayoutManager().getComponentProperties(myProject);
+        addApplicableProperties(properties, component, result);
       }
+
       if (component.getDelegee() instanceof AbstractButton &&
           !(component.getDelegee() instanceof JButton)) {
         addProperty(result, myButtonGroupProperty);
@@ -480,6 +432,16 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           }
           addProperty(result, property);
         }
+      }
+    }
+  }
+
+  private void addApplicableProperties(final Property[] containerProperties,
+                                       final RadComponent component,
+                                       final ArrayList<Property> result) {
+    for(Property prop: containerProperties) {
+      if (prop.appliesTo(component)) {
+        addProperty(result, prop);
       }
     }
   }
@@ -1104,23 +1066,23 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     public void lookAndFeelChanged(final LafManager source) {
       updateUI(myBorderProperty);
-      updateUI(MarginProperty.INSTANCE);
-      updateUI(HGapProperty.INSTANCE);
-      updateUI(VGapProperty.INSTANCE);
-      updateUI(myHSizePolicyProperty);
-      updateUI(myVSizePolicyProperty);
-      updateUI(myFillProperty);
-      updateUI(myAnchorProperty);
-      updateUI(myRowSpanProperty);
-      updateUI(myColumnSpanProperty);
-      updateUI(myIndentProperty);
-      updateUI(myUseParentLayoutProperty);
-      updateUI(myMinimumSizeProperty);
-      updateUI(myPreferredSizeProperty);
-      updateUI(myMaximumSizeProperty);
+      updateUI(MarginProperty.getInstance(myProject));
+      updateUI(HGapProperty.getInstance(myProject));
+      updateUI(VGapProperty.getInstance(myProject));
+      updateUI(HSizePolicyProperty.getInstance(myProject));
+      updateUI(VSizePolicyProperty.getInstance(myProject));
+      updateUI(FillProperty.getInstance(myProject));
+      updateUI(AnchorProperty.getInstance(myProject));
+      updateUI(RowSpanProperty.getInstance(myProject));
+      updateUI(ColumnSpanProperty.getInstance(myProject));
+      updateUI(IndentProperty.getInstance(myProject));
+      updateUI(UseParentLayoutProperty.getInstance(myProject));
+      updateUI(MinimumSizeProperty.getInstance(myProject));
+      updateUI(PreferredSizeProperty.getInstance(myProject));
+      updateUI(MaximumSizeProperty.getInstance(myProject));
       updateUI(myButtonGroupProperty);
-      updateUI(SameSizeHorizontallyProperty.INSTANCE);
-      updateUI(SameSizeVerticallyProperty.INSTANCE);
+      updateUI(SameSizeHorizontallyProperty.getInstance(myProject));
+      updateUI(SameSizeVerticallyProperty.getInstance(myProject));
     }
   }
 
