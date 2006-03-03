@@ -132,7 +132,7 @@ public class StringUtil {
   }
 
   public static boolean charsEqualIgnoreCase(char a, char b) {
-    return (Character.toUpperCase(a) == Character.toUpperCase(b)) && (Character.toLowerCase(a) == Character.toLowerCase(b));
+    return a == b || Character.toUpperCase(a) == Character.toUpperCase(b);
   }
 
   public static String getShortName(String fqName, char separator) {
