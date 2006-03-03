@@ -53,6 +53,7 @@ public class ChangesListView extends Tree implements DataProvider {
   private boolean myTreeStateFrozen = false;
   private boolean myShowFlatten = false;
 
+
   private static FilePath getFilePath(final Change change) {
     ContentRevision revision = change.getAfterRevision();
     if (revision == null) revision = change.getBeforeRevision();
@@ -529,7 +530,7 @@ public class ChangesListView extends Tree implements DataProvider {
     }
 
     public static Image createImage(final JTable table, int column) {
-      final int height = Math.min(100, table.getSelectedRowCount() * table.getRowHeight());
+      final int height = Math.max(20, Math.min(100, table.getSelectedRowCount() * table.getRowHeight()));
       final int width = table.getColumnModel().getColumn(column).getWidth();
 
       final BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -542,7 +543,7 @@ public class ChangesListView extends Tree implements DataProvider {
     }
 
     public static Image createImage(final JTree tree) {
-      final int height = Math.min(100, tree.getSelectionCount() * tree.getRowHeight());
+      final int height = Math.max(20, Math.min(100, tree.getSelectionCount() * tree.getRowHeight()));
       final int width = tree.getWidth();
 
       final BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
