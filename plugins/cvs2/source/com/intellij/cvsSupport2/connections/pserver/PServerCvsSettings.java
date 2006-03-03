@@ -46,5 +46,5 @@ public class PServerCvsSettings extends CvsConnectionSettings {
 
   public CommandException processException(CommandException t) {
     return t;
-  }
+  }  
 }

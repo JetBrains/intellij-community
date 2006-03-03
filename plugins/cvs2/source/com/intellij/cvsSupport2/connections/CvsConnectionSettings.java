@@ -68,4 +68,18 @@ public abstract class CvsConnectionSettings extends CvsRootData implements CvsEn
   public ProxySettings getProxySettings(){
     return myCvsRootConfiguration.PROXY_SETTINGS;
   }
+  
+  public void setUseProxy(String proxyHost, String proxyPort) {
+    super.setUseProxy(proxyHost, proxyPort);
+    final ProxySettings settings = myCvsRootConfiguration.PROXY_SETTINGS;
+    settings.PROXY_HOST = proxyHost;
+    try {
+      settings.PROXY_PORT = Integer.parseInt(proxyPort);
+    }
+    catch (NumberFormatException e) {
+      //ignore
+    }
+    settings.USE_PROXY = true;
+  }  
+  
 }

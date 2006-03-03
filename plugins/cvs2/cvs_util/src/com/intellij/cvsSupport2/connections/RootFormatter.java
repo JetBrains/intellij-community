@@ -85,7 +85,7 @@ public class RootFormatter<Settings extends CvsSettings> {
     settings.setUser(userAndPassword[0]);
 
     if (root.PROXY_HOST != null) {
-      settings.setUseProxy(root.PROXY_HOST, Integer.parseInt(root.PROXY_PORT));
+      settings.setUseProxy(root.PROXY_HOST, root.PROXY_PORT);
     }    
   }
 

@@ -39,7 +39,7 @@ public final class StreamUtilities {
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
     for (; ;) {
       int value = reader.read();
-      if ((char) value == '\n') {
+      if ((char) value == '\n' || value == -1) {
         break;
       }
 

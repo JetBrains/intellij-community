@@ -10,5 +10,5 @@ public interface CvsSettings {
   void setPort(int port);
   void setUser(String user);
   void setRepository(String repository);
-  void setUseProxy(String proxyHost, int proxyPort);    
+  void setUseProxy(String proxyHost, String proxyPort);    
 }

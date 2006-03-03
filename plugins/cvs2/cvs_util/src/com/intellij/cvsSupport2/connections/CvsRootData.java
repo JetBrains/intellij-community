@@ -63,11 +63,9 @@ public class CvsRootData implements CvsSettings{
     REPOSITORY = repository;
   }
 
-  public void setUseProxy(String proxyHost, int proxyPort) {
+  public void setUseProxy(String proxyHost, String proxyPort) {
     CONTAINS_PROXY_INFO = true;
     PROXY_HOST = proxyHost;
-    if (proxyPort > 0) {
-      PROXY_PORT = String.valueOf(proxyPort);
-    }
+    PROXY_PORT = proxyPort;
   }
 }
