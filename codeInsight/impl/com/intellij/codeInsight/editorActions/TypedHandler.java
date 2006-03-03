@@ -418,7 +418,7 @@ public class TypedHandler implements TypedActionHandler {
                                 fileType == StdFileTypes.JAVA &&
                                 CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
                                 PsiManager.getInstance(project).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 &&
-                                BraceMatchingUtil.isAfterClassLikeIdentifier(offsetBefore, editor);
+                                BraceMatchingUtil.isAfterClassLikeIdentifierOrDot(offsetBefore, editor);
 
     myOriginalHandler.execute(editor, charTyped, dataContext);
 
@@ -805,7 +805,7 @@ public class TypedHandler implements TypedActionHandler {
     int lparenthOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceMatcher.getTokenType(leftParen, iterator),  editor.getDocument().getCharsSequence(),fileType);
     if (lparenthOffset < 0) return false;
 
-    if (leftParen == '<' && !BraceMatchingUtil.isAfterClassLikeIdentifier(lparenthOffset, editor)) return false;
+    if (leftParen == '<' && !BraceMatchingUtil.isAfterClassLikeIdentifierOrDot(lparenthOffset, editor)) return false;
 
     iterator = ((EditorEx) editor).getHighlighter().createIterator(lparenthOffset);
     boolean matched = BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true);

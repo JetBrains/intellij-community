@@ -38,10 +38,11 @@ public class BraceMatchingUtil {
   private static final int PAIRED_TOKEN_GROUP = 4;
   private static final int DOC_TOKEN_GROUP = 5;
 
-  public static boolean isAfterClassLikeIdentifier(final int offset, final Editor editor) {
+  public static boolean isAfterClassLikeIdentifierOrDot(final int offset, final Editor editor) {
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
     if (iterator.getStart() > 0) iterator.retreat();
     final IElementType tokenType = iterator.getTokenType();
+    if (tokenType == JavaTokenType.DOT) return true;
     if (tokenType == JavaTokenType.IDENTIFIER && iterator.getEnd() == offset) {
       final CharSequence chars = editor.getDocument().getCharsSequence();
       final char startChar = chars.charAt(iterator.getStart());

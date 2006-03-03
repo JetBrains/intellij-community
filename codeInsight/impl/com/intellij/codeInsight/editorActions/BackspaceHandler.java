@@ -51,7 +51,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     boolean toDeleteGt = c =='<' &&
                         fileType == StdFileTypes.JAVA &&
                         PsiManager.getInstance(project).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0
-                        && BraceMatchingUtil.isAfterClassLikeIdentifier(offset, editor);
+                        && BraceMatchingUtil.isAfterClassLikeIdentifierOrDot(offset, editor);
     myOriginalHandler.execute(editor, dataContext);
 
     if (offset >= editor.getDocument().getTextLength()) return true;
