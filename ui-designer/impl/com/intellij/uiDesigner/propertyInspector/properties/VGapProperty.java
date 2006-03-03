@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.openapi.project.Project;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -11,7 +12,9 @@ import java.awt.FlowLayout;
  * @author Vladimir Kondratyev
  */
 public final class VGapProperty extends AbstractIntProperty<RadContainer> {
-  public static final VGapProperty INSTANCE = new VGapProperty();
+  public static VGapProperty getInstance(Project project) {
+    return project.getComponent(VGapProperty.class);
+  }
 
   public VGapProperty(){
     super(null," Vertical Gap", -1);

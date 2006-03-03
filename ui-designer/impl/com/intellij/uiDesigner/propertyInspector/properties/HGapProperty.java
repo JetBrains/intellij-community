@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.openapi.project.Project;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -11,7 +12,9 @@ import java.awt.FlowLayout;
  * @author Vladimir Kondratyev
  */
 public final class HGapProperty extends AbstractIntProperty<RadContainer> {
-  public static final HGapProperty INSTANCE = new HGapProperty();
+  public static HGapProperty getInstance(Project project) {
+    return project.getComponent(HGapProperty.class);
+  }
 
   public HGapProperty(){
     super(null, "Horizontal Gap", -1);

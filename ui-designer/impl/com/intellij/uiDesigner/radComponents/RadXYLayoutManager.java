@@ -15,6 +15,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.Insets;
@@ -130,7 +131,10 @@ public class RadXYLayoutManager extends RadLayoutManager {
     }
   }
 
-  @Override public Property[] getContainerProperties() {
-    return new Property[] { HGapProperty.INSTANCE, VGapProperty.INSTANCE };
+  @Override public Property[] getContainerProperties(final Project project) {
+    return new Property[] {
+      HGapProperty.getInstance(project),
+      VGapProperty.getInstance(project)
+    };
   }
 }

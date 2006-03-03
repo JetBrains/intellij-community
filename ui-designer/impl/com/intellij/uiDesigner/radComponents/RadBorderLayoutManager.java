@@ -14,6 +14,7 @@ import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.openapi.project.Project;
 
 import java.awt.*;
 
@@ -73,8 +74,11 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     return container.getComponentCount() == 0;
   }
 
-  @Override public Property[] getContainerProperties() {
-    return new Property[] { HGapProperty.INSTANCE, VGapProperty.INSTANCE };
+  @Override public Property[] getContainerProperties(final Project project) {
+    return new Property[] {
+      HGapProperty.getInstance(project),
+      VGapProperty.getInstance(project)
+    };
   }
 
   private static class MyDropLocation implements DropLocation {

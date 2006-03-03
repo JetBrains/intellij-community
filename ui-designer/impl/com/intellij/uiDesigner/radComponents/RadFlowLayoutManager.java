@@ -15,6 +15,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.FlowLayout;
@@ -58,8 +59,11 @@ public class RadFlowLayoutManager extends RadLayoutManager {
     return new FlowDropLocation(container, location, (flowLayout.getHgap()+1)/2, (flowLayout.getVgap()+1)/2, false);
   }
 
-  @Override public Property[] getContainerProperties() {
-    return new Property[] { ALIGN_PROPERTY, HGapProperty.INSTANCE, VGapProperty.INSTANCE };
+  @Override public Property[] getContainerProperties(final Project project) {
+    return new Property[] {
+      ALIGN_PROPERTY,
+      HGapProperty.getInstance(project),
+      VGapProperty.getInstance(project) };
   }
 
   private static class MyAlignProperty extends Property<RadContainer> {

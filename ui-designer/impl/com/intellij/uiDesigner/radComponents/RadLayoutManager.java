@@ -8,6 +8,7 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.LayoutManager;
@@ -60,7 +61,11 @@ public abstract class RadLayoutManager {
 
   public abstract void addComponentToContainer(final RadContainer container, final RadComponent component, final int index);
 
-  public Property[] getContainerProperties() {
+  public Property[] getContainerProperties(final Project project) {
+    return Property.EMPTY_ARRAY;
+  }
+
+  public Property[] getComponentProperties(final Project project) {
     return Property.EMPTY_ARRAY;
   }
 }

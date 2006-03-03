@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.openapi.project.Project;
 
 import java.awt.*;
 
@@ -10,6 +11,10 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class MinimumSizeProperty extends AbstractDimensionProperty<RadComponent> {
+  public static MinimumSizeProperty getInstance(Project project) {
+    return project.getComponent(MinimumSizeProperty.class);
+  }
+
   public MinimumSizeProperty(){
     super("Minimum Size");
   }

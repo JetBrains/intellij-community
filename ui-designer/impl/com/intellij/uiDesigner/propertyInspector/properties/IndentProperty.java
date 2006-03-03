@@ -2,11 +2,16 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.openapi.project.Project;
 
 /**
  * @author yole
  */
 public class IndentProperty extends AbstractIntProperty<RadComponent> {
+  public static IndentProperty getInstance(Project project) {
+    return project.getComponent(IndentProperty.class);
+  }
+
   public IndentProperty() {
     super(null, "Indent", 0);
   }

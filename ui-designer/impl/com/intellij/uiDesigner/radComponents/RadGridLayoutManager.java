@@ -10,6 +10,7 @@ import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.openapi.project.Project;
 
 import java.awt.LayoutManager;
 
@@ -66,9 +67,30 @@ public class RadGridLayoutManager extends RadLayoutManager {
     }
   }
 
-  @Override public Property[] getContainerProperties() {
+  @Override public Property[] getContainerProperties(final Project project) {
     return new Property[] {
-      MarginProperty.INSTANCE, HGapProperty.INSTANCE, VGapProperty.INSTANCE,
-      SameSizeHorizontallyProperty.INSTANCE, SameSizeVerticallyProperty.INSTANCE };
+      MarginProperty.getInstance(project),
+      HGapProperty.getInstance(project),
+      VGapProperty.getInstance(project),
+      SameSizeHorizontallyProperty.getInstance(project),
+      SameSizeVerticallyProperty.getInstance(project)
+    };
+  }
+
+
+  @Override public Property[] getComponentProperties(final Project project) {
+    return new Property[] {
+      HSizePolicyProperty.getInstance(project),
+      VSizePolicyProperty.getInstance(project),
+      FillProperty.getInstance(project),
+      AnchorProperty.getInstance(project),
+      RowSpanProperty.getInstance(project),
+      ColumnSpanProperty.getInstance(project),
+      IndentProperty.getInstance(project),
+      UseParentLayoutProperty.getInstance(project),
+      MinimumSizeProperty.getInstance(project),
+      PreferredSizeProperty.getInstance(project),
+      MaximumSizeProperty.getInstance(project)
+    };
   }
 }

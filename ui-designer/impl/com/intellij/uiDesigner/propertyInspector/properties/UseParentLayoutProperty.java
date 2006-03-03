@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.BooleanRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,10 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class UseParentLayoutProperty extends Property<RadComponent> {
+  public static UseParentLayoutProperty getInstance(Project project) {
+    return project.getComponent(UseParentLayoutProperty.class);
+  }
+
   private BooleanRenderer myRenderer = new BooleanRenderer();
   private BooleanEditor myEditor = new BooleanEditor();
 
