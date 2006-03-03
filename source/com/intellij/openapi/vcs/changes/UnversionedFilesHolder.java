@@ -34,4 +34,10 @@ public class UnversionedFilesHolder {
   public synchronized List<VirtualFile> getFiles() {
     return Collections.unmodifiableList(myFiles);
   }
+
+  public UnversionedFilesHolder copy() {
+    final UnversionedFilesHolder copyHolder = new UnversionedFilesHolder();
+    copyHolder.myFiles.addAll(myFiles);
+    return copyHolder;
+  }
 }

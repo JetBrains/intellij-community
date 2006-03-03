@@ -20,6 +20,7 @@ public class ChangeList implements Cloneable {
   private String myDescription;
   private boolean myIsDefault = false;
   private List<Change> myOutdatedChanges;
+  private boolean myIsInUpdate = false;
 
   public static ChangeList createEmptyChangeList(String description) {
     return new ChangeList(description);
@@ -71,8 +72,17 @@ public class ChangeList implements Cloneable {
       if (before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())) {
         removeChange(oldBoy);
         myOutdatedChanges.add(oldBoy);
+        myIsInUpdate = true;
       }
     }
+    if (isDefault()) {
+      myIsInUpdate = true;
+    }
+  }
+
+
+  public boolean isInUpdate() {
+    return myIsInUpdate;
   }
 
   public boolean processChange(Change change) {
@@ -93,6 +103,7 @@ public class ChangeList implements Cloneable {
   public void doneProcessingChanges() {
     myOutdatedChanges = null;
     myReadChangesCache = null;
+    myIsInUpdate = false;
   }
 
   public static boolean changesEqual(Change c1, Change c2) {

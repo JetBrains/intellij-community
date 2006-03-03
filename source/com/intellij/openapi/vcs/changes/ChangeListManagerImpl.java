@@ -54,7 +54,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private boolean SHOW_FLATTEN_MODE = true;
 
-  private final UnversionedFilesHolder myUnversionedFilesHolder = new UnversionedFilesHolder();
+  private UnversionedFilesHolder myUnversionedFilesHolder = new UnversionedFilesHolder();
   private final List<ChangeList> myChangeLists = new ArrayList<ChangeList>();
   private ChangeList myDefaultChangelist;
   private ChangesListView myView;
@@ -174,7 +174,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     panel.add(toolbarPanel, BorderLayout.WEST);
     panel.add(new JScrollPane(myView), BorderLayout.CENTER);
-    panel.add(myProgressLabel, BorderLayout.NORTH);
+    panel.add(myProgressLabel, BorderLayout.SOUTH);
 
     myView.installDndSupport(this);
     return panel;
@@ -230,9 +230,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               list.removeChangesInScope(scope);
             }
           }
-          myUnversionedFilesHolder.cleanScope(scope);
-          myView.freezeState();
-          scheduleRefresh();
+
+          final UnversionedFilesHolder workingHolderCopy = myUnversionedFilesHolder.copy();
+          workingHolderCopy.cleanScope(scope);
 
           final AbstractVcs vcs = myVcsManager.getVcsFor(scope.getScopeRoot());
           if (vcs != null) {
@@ -260,7 +260,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
                 public void processUnversionedFile(VirtualFile file) {
                   if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-                    myUnversionedFilesHolder.addFile(file);
+                    workingHolderCopy.addFile(file);
                     scheduleRefresh();
                   }
                 }
@@ -274,7 +274,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
             }
           }
 
-          myView.unfeezeState();
+          myUnversionedFilesHolder = workingHolderCopy;
+          scheduleRefresh();
         }
 
         updateProgressText("");

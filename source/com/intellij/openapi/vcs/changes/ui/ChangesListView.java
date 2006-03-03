@@ -47,7 +47,6 @@ public class ChangesListView extends Tree implements DataProvider {
   private final Project myProject;
   private FileStatusListener myFileStatusManager;
   private TreeState myTreeState;
-  private boolean myTreeStateFrozen = false;
   private boolean myShowFlatten = false;
 
 
@@ -126,15 +125,11 @@ public class ChangesListView extends Tree implements DataProvider {
   }
 
   private void storeState() {
-    if (!myTreeStateFrozen) {
-      myTreeState = TreeState.createOn(this, (DefaultMutableTreeNode)getModel().getRoot());
-    }
+    myTreeState = TreeState.createOn(this, (DefaultMutableTreeNode)getModel().getRoot());
   }
 
   private void restoreState() {
-    if (myTreeState != null) {
-      myTreeState.applyTo(this, (DefaultMutableTreeNode)getModel().getRoot());
-    }
+    myTreeState.applyTo(this, (DefaultMutableTreeNode)getModel().getRoot());
   }
 
   public boolean isShowFlatten() {
@@ -447,15 +442,6 @@ public class ChangesListView extends Tree implements DataProvider {
     EditSourceOnDoubleClickHandler.install(this);
   }
 
-  public void freezeState() {
-    storeState();
-    myTreeStateFrozen = true;
-  }
-
-  public void unfeezeState() {
-    myTreeStateFrozen = false;
-  }
-
   public class DragSource implements DnDSource {
     public boolean canStartDragging(DnDAction action, Point dragOrigin) {
       if (action != DnDAction.MOVE) return false;
@@ -668,6 +654,9 @@ public class ChangesListView extends Tree implements DataProvider {
         append(list.getDescription(), list.isDefault()
                                       ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
                                       : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        if (list.isInUpdate()) {
+          append(" (updating...)", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
       }
       else if (object instanceof Change) {
         final Change change = (Change)object;
