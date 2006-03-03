@@ -16,10 +16,6 @@ public class RadAtomicComponent extends RadComponent {
     super(module, aClass, id);
   }
 
-  @Override public final boolean canDrop(@Nullable Point location, final ComponentDragObject dragObject) {
-    return false;
-  }
-
   public void write(final XmlWriter writer) {
     writer.startElement("component");
     try{

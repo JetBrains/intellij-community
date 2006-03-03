@@ -475,11 +475,9 @@ public final class ComponentTree extends Tree implements DataProvider {
         final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
                                                  (int) dtde.getLocation().getY());
         final RadComponent targetComponent = getComponentFromPath(path);
-        if (path != null && targetComponent != null) {
-          DropLocation dropLocation = targetComponent.getDropLocation(null);
-          canDrop = (dropLocation != null)
-                    ? dropLocation.canDrop(dragObject)
-                    : targetComponent.canDrop(null, dragObject);
+        if (path != null && targetComponent instanceof RadContainer) {
+          DropLocation dropLocation = ((RadContainer) targetComponent).getDropLocation(null);
+          canDrop = dropLocation.canDrop(dragObject);
           if (canDrop) {
             dropTargetComponent = targetComponent;
             dtde.acceptDrag(dtde.getDropAction());
@@ -504,25 +502,13 @@ public final class ComponentTree extends Tree implements DataProvider {
                                                  (int) dtde.getLocation().getY());
         final RadComponent targetComponent = getComponentFromPath(path);
         if (targetComponent instanceof RadContainer) {
-          RadContainer container = (RadContainer)targetComponent;
-          DropLocation dropLocation = targetComponent.getDropLocation(null);
-          if (dropLocation != null) {
-            if (dcl != null) {
-              RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
-              dropLocation.processDrop(myEditor, components, null, dcl);
-            }
-            else {
-              new InsertComponentProcessor(myEditor).processComponentInsert(componentItem, dropLocation);
-            }
+          DropLocation dropLocation = ((RadContainer) targetComponent).getDropLocation(null);
+          if (dcl != null) {
+            RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
+            dropLocation.processDrop(myEditor, components, null, dcl);
           }
           else {
-            if (dcl != null) {
-              RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
-              container.drop(null, components, dcl);
-            }
-            else {
-              new InsertComponentProcessor(myEditor).processComponentInsert(null, container, componentItem);
-            }
+            new InsertComponentProcessor(myEditor).processComponentInsert(componentItem, dropLocation);
           }
         }
       }

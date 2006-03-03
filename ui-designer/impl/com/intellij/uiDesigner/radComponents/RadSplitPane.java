@@ -23,7 +23,7 @@ public final class RadSplitPane extends RadContainer {
   }
 
   @Override protected RadLayoutManager createInitialLayoutManager() {
-    return null;
+    return new DummyLayoutManager();
   }
 
   @Override @Nullable

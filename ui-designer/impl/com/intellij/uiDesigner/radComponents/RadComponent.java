@@ -6,8 +6,6 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
-import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.lw.ComponentVisitor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
@@ -22,7 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -317,7 +317,7 @@ public abstract class RadComponent implements IComponent {
   public void setSelected(final boolean selected){
     if (mySelected != selected) {
       mySelected = selected;
-      firePropertyChanged(PROP_SELECTED,Boolean.valueOf(!mySelected),Boolean.valueOf(mySelected));
+      firePropertyChanged(PROP_SELECTED, !mySelected, mySelected);
       GuiEditor.repaintLayeredPane(this);
     }
   }
@@ -434,12 +434,6 @@ public abstract class RadComponent implements IComponent {
   public RadComponent getComponentToDrag(final Point pnt) {
     return this;
   }
-
-  @Nullable public DropLocation getDropLocation(@Nullable Point location) {
-    return null;
-  }
-
-  public abstract boolean canDrop(@Nullable Point location, ComponentDragObject dragObject);
 
   public void processMouseEvent(final MouseEvent event) {}
 

@@ -26,7 +26,7 @@ public final class RadScrollPane extends RadContainer {
 
   @Nullable @Override
   protected RadLayoutManager createInitialLayoutManager() {
-    return null;
+    return new DummyLayoutManager();
   }
 
   @Override @Nullable

@@ -1,48 +1,35 @@
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 /**
  * @author yole
  */
-class GridDropLocation implements DropLocation {
+public class GridDropLocation implements DropLocation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridDropLocation");
 
   protected RadContainer myContainer;
   protected int myRow;
   private int myColumn;
-  protected Point myTargetPoint;
-  protected Rectangle myCellRect;
   private boolean myDropAllowed;
 
   public GridDropLocation(final boolean dropAllowed) {
     myDropAllowed = dropAllowed;
   }
 
-
-  public GridDropLocation(final RadContainer container, final Point targetPoint, final boolean dropAllowed) {
-    myContainer = container;
-    myTargetPoint = targetPoint;
-    myDropAllowed = dropAllowed;
-  }
-
   public GridDropLocation(final RadContainer container,
                           final int row,
-                          final int column,
-                          final Point targetPoint,
-                          final Rectangle cellRect) {
+                          final int column) {
     myContainer = container;
     myRow = row;
     myColumn = column;
-    myTargetPoint = targetPoint;
-    myCellRect = cellRect;
     myDropAllowed = true;
   }
 
@@ -58,14 +45,6 @@ class GridDropLocation implements DropLocation {
     return myContainer;
   }
 
-  public Rectangle getCellRect() {
-    return myCellRect;
-  }
-
-  public Point getTargetPoint() {
-    return myTargetPoint;
-  }
-
   public void rejectDrop() {
     myDropAllowed = false;
   }
@@ -75,7 +54,42 @@ class GridDropLocation implements DropLocation {
       LOG.debug("drop not allowed");
       return false;
     }
-    return myContainer.canDrop(myTargetPoint, dragObject);
+
+    final GridLayoutManager gridLayout = (GridLayoutManager)myContainer.getLayout();
+
+    // If target point doesn't belong to any cell and column then do not allow drop.
+    if (myRow == -1 || myColumn == -1) {
+      LOG.debug("RadContainer.canDrop=false because no cell at mouse position");
+      return false;
+    }
+
+    for(int i=0; i<dragObject.getComponentCount(); i++) {
+      int relativeCol = dragObject.getRelativeCol(i);
+      int relativeRow = dragObject.getRelativeRow(i);
+      int colSpan = dragObject.getColSpan(i);
+      int rowSpan = dragObject.getRowSpan(i);
+
+      LOG.debug("checking component: relativeRow" + relativeRow + ", relativeCol" + relativeCol + ", colSpan=" + colSpan + ", rowSpan=" + rowSpan);
+
+      if (myRow + relativeRow < 0 ||
+          myColumn + relativeCol < 0 ||
+          myRow + relativeRow + rowSpan > gridLayout.getRowCount() ||
+          myColumn + relativeCol + colSpan > gridLayout.getColumnCount()) {
+        LOG.debug("RadContainer.canDrop=false because range is outside grid: row=" + (myRow +relativeRow) +
+                  ", col=" + (myColumn +relativeCol) + ", colSpan=" + colSpan + ", rowSpan=" + rowSpan);
+        return false;
+      }
+
+      final RadComponent componentInRect = myContainer.findComponentInRect(myRow + relativeRow, myColumn + relativeCol, rowSpan, colSpan);
+      if (componentInRect != null) {
+        LOG.debug("GridDropLocation.canDrop=false because found component " + componentInRect.getId() +
+                  " in rect (row=" + (myRow +relativeRow) + ", col=" + (myColumn +relativeCol) +
+                  ", rowSpan=" + rowSpan + ", colSpan=" + colSpan + ")");
+        return false;
+      }
+    }
+    LOG.debug("canDrop=true");
+    return true;
   }
 
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
@@ -133,7 +147,7 @@ class GridDropLocation implements DropLocation {
                           final RadComponent[] components,
                           final GridConstraints[] constraintsToAdjust,
                           final ComponentDragObject dragObject) {
-    myContainer.drop(myTargetPoint, components, dragObject);
+    myContainer.dropIntoGrid(components, myRow, myColumn, dragObject);
   }
 
   @NonNls @Override public String toString() {

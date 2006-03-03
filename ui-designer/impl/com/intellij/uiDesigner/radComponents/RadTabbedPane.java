@@ -45,7 +45,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   }
 
   @Override protected RadLayoutManager createInitialLayoutManager() {
-    return null;
+    return new DummyLayoutManager();
   }
 
   @Override public RadComponent getComponentToDrag(final Point pnt) {
@@ -69,7 +69,8 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return c;
   }
 
-  @Override public DropLocation getDropLocation(@Nullable Point location) {
+  @NotNull @Override
+  public DropLocation getDropLocation(@Nullable Point location) {
     final JTabbedPane tabbedPane = getTabbedPane();
     final TabbedPaneUI ui = tabbedPane.getUI();
     if (location != null && tabbedPane.getTabCount() > 0) {
@@ -107,8 +108,8 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
     component.setCustomLayoutConstraints(null);
     final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(this);
-    tabbedPane.insertTab(calcTabName(titleDescriptor), null, component.getDelegee(), null, index);
     id2Descriptor.put(component.getId(), titleDescriptor);
+    tabbedPane.insertTab(calcTabName(titleDescriptor), null, component.getDelegee(), null, index);
   }
 
   private String calcTabName(final StringDescriptor titleDescriptor) {
@@ -399,7 +400,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
         Palette palette = Palette.getInstance(editor.getProject());
         RadContainer panel = (RadContainer) InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
         addComponent(panel);
-        panel.drop(null, new RadComponent[] { componentToAdd }, palette.getPanelItem());
+        panel.getDropLocation(null).processDrop(editor, new RadComponent[] { componentToAdd }, null, palette.getPanelItem());
       }
       getTabbedPane().setSelectedIndex(myInsertIndex);
     }

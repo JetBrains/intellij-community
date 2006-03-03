@@ -1,14 +1,17 @@
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
-import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.GuiDesignerConfiguration;
+import com.intellij.uiDesigner.ReferenceUtil;
+import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.lw.ComponentVisitor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
@@ -69,7 +72,10 @@ public class RadContainer extends RadComponent implements IContainer {
 
     myLayoutManager = createInitialLayoutManager();
     if (myLayoutManager != null) {
-      setLayout(myLayoutManager.createLayout());
+      final LayoutManager layoutManager = myLayoutManager.createLayout();
+      if (layoutManager != null) {
+        setLayout(layoutManager);
+      }
     }
   }
 
@@ -238,63 +244,12 @@ public class RadContainer extends RadComponent implements IContainer {
     return myComponents.toArray(new RadComponent[myComponents.size()]);
   }
 
-  @Override @Nullable
+  @NotNull
   public DropLocation getDropLocation(@Nullable Point location) {
     return getLayoutManager().getDropLocation(this, location);
   }
 
-  @Override public boolean canDrop(@Nullable Point location, final ComponentDragObject dragObject) {
-    if (location == null) {
-      if (dragObject.getComponentCount() > 1) {
-        return false;
-      }
-      return getComponentAtGrid(0, 0) == null;
-    }
-
-    if (isGrid()) {
-      final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
-      final int row = gridLayout.getRowAt(location.y);
-      final int column = gridLayout.getColumnAt(location.x);
-
-      // If target point doesn't belong to any cell and column then do not allow drop. 
-      if (row == -1 || column == -1) {
-        LOG.debug("RadContainer.canDrop=false because no cell at mouse position");
-        return false;
-      }
-
-      for(int i=0; i<dragObject.getComponentCount(); i++) {
-        int relativeCol = dragObject.getRelativeCol(i);
-        int relativeRow = dragObject.getRelativeRow(i);
-        int colSpan = dragObject.getColSpan(i);
-        int rowSpan = dragObject.getRowSpan(i);
-
-        if (row + relativeRow < 0 ||
-            column + relativeCol < 0 ||
-            relativeRow + rowSpan > gridLayout.getRowCount() ||
-            relativeCol + colSpan > gridLayout.getColumnCount()) {
-          LOG.debug("RadContainer.canDrop=false because range is outside grid: row=" + (row+relativeRow) +
-                    ", col=" + (column+relativeCol) + ", colSpan=" + colSpan + ", rowSpan=" + rowSpan);
-          return false;
-        }
-
-        final RadComponent componentInRect = findComponentInRect(row + relativeRow, column + relativeCol, rowSpan, colSpan);
-        if (componentInRect != null) {
-          LOG.debug("RadContainer.canDrop=false because found component " + componentInRect.getId() +
-                    " in rect (row=" + (row+relativeRow) + ", col=" + (column+relativeCol) +
-                    ", rowSpan=" + rowSpan + ", colSpan=" + colSpan + ")");
-          return false;
-        }
-      }
-
-      return true;
-    }
-    else {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalStateException("unknown layout:" + getLayout());
-    }
-  }
-
-  private RadComponent findComponentInRect(final int startRow, final int startCol, final int rowSpan, final int colSpan) {
+  public RadComponent findComponentInRect(final int startRow, final int startCol, final int rowSpan, final int colSpan) {
     for(int r=startRow; r < startRow + rowSpan; r++) {
       for(int c=startCol; c < startCol + colSpan; c++) {
         final RadComponent result = getComponentAtGrid(r, c);
@@ -328,36 +283,6 @@ public class RadContainer extends RadComponent implements IContainer {
       }
     }
     return null;
-  }
-
-  /**
-   * @param location in delegee coordinates
-   * @param components components to be dropped; length is always > 0. Location
-   */
-  public void drop(@Nullable Point location, RadComponent[] components, ComponentDragObject dragObject) {
-    if (location == null) {
-      assert isGrid() && components.length == 1;
-      assert getComponentAtGrid(0, 0) == null;
-      dropIntoGrid(components, 0, 0, dragObject);
-      return;
-    }
-
-    if (isGrid()) {
-
-      // If target point doesn't belong to any cell and column
-      // then cancel drop. If the target cell is not empty
-      // then also cancel drop.
-
-      final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
-      final int row = gridLayout.getRowAt(location.y);
-      final int column = gridLayout.getColumnAt(location.x);
-
-      dropIntoGrid(components, row, column, dragObject);
-    }
-    else {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalStateException("unknown layout: " + getLayout());
-    }
   }
 
   public final void dropIntoGrid(final RadComponent[] components, int row, int column, final ComponentDragObject dragObject) {
@@ -394,8 +319,8 @@ public class RadContainer extends RadComponent implements IContainer {
       final GridConstraints constraints = c.getConstraints();
       constraints.setRow(row + relativeRow);
       constraints.setColumn(column + relativeCol);
-      constraints.setRowSpan(colSpan);
-      constraints.setColSpan(rowSpan);
+      constraints.setRowSpan(rowSpan);
+      constraints.setColSpan(colSpan);
       addComponent(c);
 
       // Fill DropInfo

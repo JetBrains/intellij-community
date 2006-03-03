@@ -402,10 +402,12 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
 
       if(component instanceof RadContainer){
-        addProperty(result, myLayoutManagerProperty);
+        RadContainer container = (RadContainer) component;
+        if (container.getLayoutManager().getName() != null) {
+          addProperty(result, myLayoutManagerProperty);
+        }
         addProperty(result, myBorderProperty);
 
-        RadContainer container = (RadContainer) component;
         final Property[] containerProperties = container.getLayoutManager().getContainerProperties(myProject);
         addApplicableProperties(containerProperties, container, result);
       }

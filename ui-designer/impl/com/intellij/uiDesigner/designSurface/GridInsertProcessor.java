@@ -1,14 +1,16 @@
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,7 +28,7 @@ public class GridInsertProcessor {
     myEditor = editor;
   }
 
-  static DropLocation getDropLocation(RadRootContainer rootContainer, Point aPoint, ComponentDragObject dragObject) {
+  @NotNull static DropLocation getDropLocation(RadRootContainer rootContainer, Point aPoint, ComponentDragObject dragObject) {
     int EPSILON = 4;
     RadContainer container = FormEditingUtil.getRadContainerAt(rootContainer, aPoint.x, aPoint.y, EPSILON);
     // to facilitate initial component adding, increase stickiness if there is one container at top level
@@ -47,99 +49,7 @@ public class GridInsertProcessor {
     }
 
     final Point targetPoint = SwingUtilities.convertPoint(rootContainer.getDelegee(), aPoint, container.getDelegee());
-    DropLocation containerDropLocation = container.getDropLocation(targetPoint);
-    if (containerDropLocation != null) {
-      return containerDropLocation;
-    }
-
-    if (!container.isGrid()) {
-      return new GridDropLocation(container, targetPoint, container.canDrop(targetPoint, dragObject));
-    }
-
-    final GridLayoutManager grid = (GridLayoutManager) container.getLayout();
-    if (grid.getRowCount() == 1 && grid.getColumnCount() == 1 &&
-      container.getComponentAtGrid(0, 0) == null) {
-      final Rectangle rc = grid.getCellRangeRect(0, 0, 0, 0);
-      return new FirstComponentInsertLocation(container, 0, 0, targetPoint, rc);
-    }
-
-    int[] xs = grid.getXs();
-    int[] ys = grid.getYs();
-    int[] widths = grid.getWidths();
-    int[] heights = grid.getHeights();
-
-    int[] horzGridLines = grid.getHorizontalGridLines();
-    int[] vertGridLines = grid.getVerticalGridLines();
-
-    int row=ys.length-1;
-    int col=xs.length-1;
-    for(int i=0; i<xs.length; i++) {
-      if (targetPoint.x < xs[i] + widths[i]) {
-        col=i;
-        break;
-      }
-    }
-    for(int i=0; i<ys.length; i++) {
-      if (targetPoint.getY() < ys [i]+heights [i]) {
-        row=i;
-        break;
-      }
-    }
-
-    GridInsertMode mode = GridInsertMode.InCell;
-
-    int dy = (int)(targetPoint.getY() - ys [row]);
-    if (dy < EPSILON) {
-      mode = GridInsertMode.RowBefore;
-    }
-    else if (heights [row] - dy < EPSILON) {
-      mode = GridInsertMode.RowAfter;
-    }
-
-    int dx = targetPoint.x - xs[col];
-    if (dx < EPSILON) {
-      mode = GridInsertMode.ColumnBefore;
-    }
-    else if (widths [col] - dx < EPSILON) {
-      mode = GridInsertMode.ColumnAfter;
-    }
-
-    final int cellWidth = vertGridLines[col + 1] - vertGridLines[col];
-    final int cellHeight = horzGridLines[row + 1] - horzGridLines[row];
-    if (mode == GridInsertMode.InCell) {
-      RadComponent component = container.getComponentAtGrid(row, col);
-      if (component != null) {
-        Rectangle rc = component.getBounds();
-        rc.translate(-xs [col], -ys [row]);
-
-        int right = rc.x + rc.width + GridInsertLocation.INSERT_RECT_MIN_SIZE;
-        int bottom = rc.y + rc.height + GridInsertLocation.INSERT_RECT_MIN_SIZE;
-
-        if (dy < rc.y - GridInsertLocation.INSERT_RECT_MIN_SIZE) {
-          mode = GridInsertMode.RowBefore;
-        }
-        else if (dy > bottom && dy < cellHeight) {
-          mode = GridInsertMode.RowAfter;
-        }
-        if (dx < rc.x - GridInsertLocation.INSERT_RECT_MIN_SIZE) {
-          mode = GridInsertMode.ColumnBefore;
-        }
-        else if (dx > right && dx < cellWidth) {
-          mode = GridInsertMode.ColumnAfter;
-        }
-      }
-    }
-
-    Rectangle cellRect = new Rectangle(vertGridLines [col],
-                                       horzGridLines [row],
-                                       cellWidth,
-                                       cellHeight);
-
-    if (mode == GridInsertMode.RowBefore || mode == GridInsertMode.RowAfter ||
-        mode == GridInsertMode.ColumnBefore || mode == GridInsertMode.ColumnAfter) {
-      return new GridInsertLocation(container, row, col, targetPoint, cellRect, mode);
-    }
-    return new GridDropLocation(container, row, col, targetPoint, cellRect);
+    return container.getDropLocation(targetPoint);
   }
 
   public DropLocation processDragEvent(Point pnt, ComponentDragObject dragObject) {

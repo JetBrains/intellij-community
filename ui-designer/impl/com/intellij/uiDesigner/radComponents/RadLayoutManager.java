@@ -7,9 +7,12 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.NoDropLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.LayoutManager;
 import java.awt.Point;
@@ -43,9 +46,17 @@ public abstract class RadLayoutManager {
     return cls.newInstance();
   }
 
-  public abstract String getName();
+  /**
+   * Returns the name of the layout manager. If null is returned, the layout manager property is not
+   * shown by the user.
+   *
+   * @return the layout manager name.
+   */
+  @Nullable public abstract String getName();
 
-  public abstract LayoutManager createLayout();
+  @Nullable public LayoutManager createLayout() {
+    return null;
+  }
 
   public boolean canChangeLayout(final RadContainer container) {
     return true;
@@ -53,10 +64,11 @@ public abstract class RadLayoutManager {
 
   public abstract void writeChildConstraints(final XmlWriter writer, final RadComponent child);
 
-  public abstract void writeLayout(final XmlWriter writer, final RadContainer radContainer);
+  public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
+  }
 
-  public DropLocation getDropLocation(RadContainer container, final Point location) {
-    return null;
+  @NotNull public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+    return new NoDropLocation();
   }
 
   public abstract void addComponentToContainer(final RadContainer container, final RadComponent component, final int index);

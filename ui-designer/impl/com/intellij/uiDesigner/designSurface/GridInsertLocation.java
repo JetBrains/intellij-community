@@ -18,7 +18,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-class GridInsertLocation extends GridDropLocation {
+public class GridInsertLocation extends GridDropLocation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridInsertLocation");
 
   public static final int INSERT_ARROW_SIZE = 3;
@@ -29,10 +29,8 @@ class GridInsertLocation extends GridDropLocation {
   public GridInsertLocation(@NotNull final RadContainer container,
                             final int row,
                             final int column,
-                            final Point targetPoint,
-                            final Rectangle cellRect,
                             final GridInsertMode mode) {
-    super(container, row, column, targetPoint, cellRect);
+    super(container, row, column);
     myMode = mode;
     assert container.isGrid();
   }

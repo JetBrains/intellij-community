@@ -4,26 +4,33 @@
 
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.HSpacer;
 import com.intellij.uiDesigner.VSpacer;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * @author yole
  */
 public class FirstComponentInsertLocation extends GridDropLocation {
+  private Point myTargetPoint;
+  private Rectangle myCellRect;
+
   public FirstComponentInsertLocation(final RadContainer container,
                                       final int row,
                                       final int column,
                                       final Point targetPoint,
-                                      final Rectangle cellRect) {
-    super(container, row, column, targetPoint, cellRect);
+                                      @NotNull final Rectangle cellRect) {
+    super(container, row, column);
+    myTargetPoint = targetPoint;
+    myCellRect = cellRect;
   }
 
   @Override public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
@@ -100,7 +107,7 @@ public class FirstComponentInsertLocation extends GridDropLocation {
       insertSpacer(icp, hSpacerItem, GridInsertMode.ColumnAfter);
     }
     if (myTargetPoint.x > midX2 ||
-      (myTargetPoint.x > midX1 && (hSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) == 0)) {
+        (myTargetPoint.x > midX1 && (hSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) == 0)) {
       insertSpacer(icp, hSpacerItem, GridInsertMode.ColumnBefore);
     }
 
@@ -109,13 +116,13 @@ public class FirstComponentInsertLocation extends GridDropLocation {
       insertSpacer(icp, vSpacerItem, GridInsertMode.RowAfter);
     }
     if (myTargetPoint.y > midY2 ||
-      (myTargetPoint.y > midY1 && (vSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) == 0)) {
+        (myTargetPoint.y > midY1 && (vSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) == 0)) {
       insertSpacer(icp, vSpacerItem, GridInsertMode.RowBefore);
     }
   }
 
   private void insertSpacer(InsertComponentProcessor icp, ComponentItem spacerItem, GridInsertMode mode) {
-    GridInsertLocation location = new GridInsertLocation(myContainer, 0, 0, null, null, mode);
+    GridInsertLocation location = new GridInsertLocation(myContainer, 0, 0, mode);
     icp.processComponentInsert(spacerItem, location);
   }
 

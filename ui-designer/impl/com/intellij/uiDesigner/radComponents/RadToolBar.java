@@ -23,7 +23,7 @@ public class RadToolBar extends RadContainer {
 
   @Override @Nullable
   protected RadLayoutManager createInitialLayoutManager() {
-    return null;
+    return new DummyLayoutManager();
   }
 
   @Override @Nullable

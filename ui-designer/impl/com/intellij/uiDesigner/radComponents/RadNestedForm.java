@@ -11,15 +11,14 @@ import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlReader;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 
 /**
  * @author yole
@@ -53,10 +52,6 @@ public class RadNestedForm extends RadComponent {
         setRadComponentRecursive((JComponent) child);
       }
     }
-  }
-
-  @Override public boolean canDrop(@Nullable Point location, ComponentDragObject dragObject) {
-    return false;
   }
 
   public void write(XmlWriter writer) {
