@@ -519,7 +519,7 @@ public class CvsUtil {
     String revision = entry.getRevision();
     LOG.assertTrue(StringUtil.startsWithChar(revision, '-'));
     String originalRevision = revision.substring(1);
-    String date = Entry.formatLastModifiedDate(CvsStatusProvider.createDateDiffersTo(new Date().getTime()));
+    String date = Entry.formatLastModifiedDate(CvsStatusProvider.createDateDiffersTo(file.getTimeStamp()));
     String kwdSubstitution = entry.getOptions() == null ? "" : entry.getOptions();
     String stickyDataString = entry.getStickyData();
     Entry newEntry = Entry.createEntryForLine("/" + file.getName() + "/" + originalRevision + "/" + date + "/" + kwdSubstitution + "/" + stickyDataString);
