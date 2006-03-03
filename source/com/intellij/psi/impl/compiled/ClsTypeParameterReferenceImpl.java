@@ -58,7 +58,7 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
       if (parameterList != null) {
         PsiTypeParameter[] parameters = parameterList.getTypeParameters();
         for (PsiTypeParameter parameter : parameters) {
-          if (parameter.getName().equals(myName)) return parameter;
+          if (myName.equals(parameter.getName())) return parameter;
         }
       }
       parent = parent.getParent();
