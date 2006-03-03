@@ -27,7 +27,6 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
   private List<PsiElement> myFinallyBlocks = new ArrayList<PsiElement>();
   private List<PsiElement> myUnhandledExceptionCatchBlocks = new ArrayList<PsiElement>();
-  private List<PsiClassType> myCheckedExceptions = new ArrayList<PsiClassType>();
   private Map<PsiElement, ControlFlow> myRegisteredSubControlFlows = new THashMap<PsiElement, ControlFlow>();
 
   // element to jump to from inner (sub)expression in "jump to begin" situation.
@@ -272,13 +271,12 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
   private void generateCheckedExceptionJumps(PsiElement element) {
     //generate jumps to all handled exception handlers
-    if (myCatchBlocks.size() != 0) {
-      final PsiClassType[] unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, element.getParent());
-      if (unhandledExceptions != null) {
-        for (PsiClassType unhandledException : unhandledExceptions) {
-          myCheckedExceptions.add(unhandledException);
-          generateThrow(unhandledException, element);
-        }
+    //if (myCatchBlocks.size() != 0) {
+    //}
+    final PsiClassType[] unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, element.getParent());
+    if (unhandledExceptions != null) {
+      for (PsiClassType unhandledException : unhandledExceptions) {
+        generateThrow(unhandledException, element);
       }
     }
   }
@@ -556,12 +554,12 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     final PsiExpression expression = statement.getExpression();
     expression.accept(this);
 
-    for (int i = myCheckedExceptions.size() - 1; i >= 0; i--) {
-      PsiClassType exception = myCheckedExceptions.get(i);
-      generateThrow(exception, statement);
+    for (PsiParameter catchParameter : myCatchParameters) {
+      PsiType type = catchParameter.getType();
+      if (type instanceof PsiClassType) {
+        generateThrow((PsiClassType)type, statement);
+      }
     }
-    myCheckedExceptions.clear();
-
     finishElement(statement);
   }
 
@@ -1232,8 +1230,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
           }
           generateWriteInstruction(variable);
 
-          if (myAssignmentTargetsAreElements)
-            finishElement(lExpr);
+          if (myAssignmentTargetsAreElements) finishElement(lExpr);
         }
 
       }
