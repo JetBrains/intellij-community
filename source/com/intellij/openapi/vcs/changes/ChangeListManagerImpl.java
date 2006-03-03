@@ -203,6 +203,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
             if (changeProvider != null) {
               changeProvider.getChanges(scope, new ChangelistBuilder() {
                 public void processChange(Change change) {
+                  if (myDisposed) return;
                   if (isUnder(change, scope)) {
                     try {
                       synchronized (myChangeLists) {

@@ -343,6 +343,10 @@ public class ChangesListView extends Tree implements DataProvider {
     final FilePath path = getPathForObject(node.getUserObject());
 
     final VirtualFile rootFolder = VcsDirtyScope.getRootFor(index, path);
+    if (rootFolder == null) {
+      return rootNode;
+    }
+    
     if (path.getVirtualFile() == rootFolder) {
       Module module = index.getModuleForFile(rootFolder);
       return getNodeForModule(module, moduleNodesCache, rootNode);
