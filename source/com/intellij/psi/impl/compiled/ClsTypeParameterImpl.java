@@ -154,7 +154,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
   }
 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place, false);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet<PsiClass>(), lastParent, place, false);
   }
 
   public String getName() {
@@ -282,7 +282,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return "PsiTypeParameter";
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, @NonNls final StringBuffer buffer) {
     buffer.append(myName);
     PsiJavaCodeReferenceElement[] bounds = myBoundsList.getReferenceElements();
     if (bounds.length > 0) {
@@ -318,6 +318,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
       final PsiElement parent = myParent.getParent();
       if (parent instanceof PsiTypeParameterListOwner) return (PsiTypeParameterListOwner)parent;
     }
+    LOG.error("Invalid parent for type parameter: " + myParent);
     return null;
   }
 
@@ -328,21 +329,6 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
 
   public String getSignature() {
     return mySignature;
-    /*
-    StringBuffer buf = new StringBuffer();
-    buf.append(myName);
-    buf.append(":");
-    PsiJavaCodeReferenceElement[] bounds = myBoundsList.getReferenceElements();
-    if (bounds.length > 0) {
-      for (int i = 0; i < bounds.length; i++) {
-        buf.append(((ClsElementWithSignature)bounds[i]).getSignature());
-        if (i < bounds.length - 1) {
-          buf.append(":");
-        }
-      }
-    }
-    return buf.toString();
-    */
   }
 
   public PsiMetaData getMetaData() {
