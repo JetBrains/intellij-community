@@ -33,6 +33,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -92,7 +93,7 @@ public class ChangesListView extends Tree implements DataProvider {
 
   public String getRelativePath(FilePath parent, FilePath child) {
     if (parent == null) return child.getPath();
-    return child.getPath().substring(parent.getPath().length() + 1);
+    return child.getPath().substring(parent.getPath().length() + 1).replace('/', File.separatorChar);
   }
 
   public void installDndSupport(ChangeListOwner owner) {
