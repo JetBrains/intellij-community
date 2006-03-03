@@ -8,14 +8,14 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
-import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
-import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
+import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
+import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -25,8 +25,10 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.ArrayUtil;
@@ -164,12 +166,27 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     }
   }
 
-  public final void selectModule(Module module, boolean requestFocus) {
-    myTreeBuilder.selectInWidth(module, requestFocus, new Condition<AbstractTreeNode>(){
-      public boolean value(final AbstractTreeNode node) {
-        return node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode;
+  public final void selectModule(final Module module, final boolean requestFocus) {
+    ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        ProjectView projectView = ProjectView.getInstance(myProject);
+        if (requestFocus) {
+          projectView.changeView(getId(), getSubId());
+        }
+        myTreeBuilder.selectInWidth(module, requestFocus, new Condition<AbstractTreeNode>(){
+          public boolean value(final AbstractTreeNode node) {
+            return node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode;
+          }
+        });
       }
-    });
+    };
+    if (requestFocus) {
+      windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable);
+    }
+    else {
+      runnable.run();
+    }
   }
 
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {

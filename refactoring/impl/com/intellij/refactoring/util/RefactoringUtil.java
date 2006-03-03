@@ -697,13 +697,11 @@ public class RefactoringUtil {
     throws IncorrectOperationException {
     // Remove final parameters
     PsiParameterList paramList = method.getParameterList();
-    if (paramList != null) {
-      PsiParameter[] params = paramList.getParameters();
+    PsiParameter[] params = paramList.getParameters();
 
-      for (PsiParameter param : params) {
-        if (param.hasModifierProperty(PsiModifier.FINAL)) {
-          param.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
-        }
+    for (PsiParameter param : params) {
+      if (param.hasModifierProperty(PsiModifier.FINAL)) {
+        param.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
       }
     }
   }
