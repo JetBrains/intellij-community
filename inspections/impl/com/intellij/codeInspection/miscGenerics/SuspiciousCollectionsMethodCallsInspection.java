@@ -5,10 +5,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.IntArrayList;
 
@@ -21,7 +18,7 @@ import java.util.List;
 public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection");
 
-  private void setupPatternMethods(PsiManager manager,
+  private static void setupPatternMethods(PsiManager manager,
                                    GlobalSearchScope searchScope,
                                    List<PsiMethod> patternMethods,
                                    IntArrayList indices) throws IncorrectOperationException {
@@ -64,7 +61,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
     patternMethods.remove(null);
   }
 
-  private void addMethod(final PsiMethod patternMethod, int typeParamIndex, List<PsiMethod> patternMethods, IntArrayList indices) {
+  private static void addMethod(final PsiMethod patternMethod, int typeParamIndex, List<PsiMethod> patternMethods, IntArrayList indices) {
     if (patternMethod != null) {
       patternMethods.add(patternMethod);
       indices.add(typeParamIndex);
@@ -98,15 +95,20 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
         if (!(argType instanceof PsiClassType)) return;
 
         final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
-        final PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
-        if (psiMethod == null) return;
+        final PsiMethod calleeMethod = (PsiMethod)resolveResult.getElement();
+        if (calleeMethod == null) return;
+        PsiMethod contextMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
 
         for (int i = 0; i < patternMethods.size(); i++) {
           PsiMethod patternMethod = patternMethods.get(i);
           int index = indices.get(i);
           if (!patternMethod.getName().equals(methodExpression.getReferenceName())) continue;
-          if (isInheritorOrSelf(psiMethod, patternMethod)) {
-            PsiTypeParameter[] typeParameters = psiMethod.getContainingClass().getTypeParameters();
+
+          //we are in collections method implementation
+          if (contextMethod != null && isInheritorOrSelf(contextMethod, patternMethod)) return;
+
+          if (isInheritorOrSelf(calleeMethod, patternMethod)) {
+            PsiTypeParameter[] typeParameters = calleeMethod.getContainingClass().getTypeParameters();
             if (typeParameters.length <= index) return;
             final PsiTypeParameter typeParameter = typeParameters[index];
             PsiType typeParamMapping = resolveResult.getSubstitutor().substitute(typeParameter);
@@ -123,7 +125,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
                       );
                 } else {
                   message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor1",
-                      PsiFormatUtil.formatMethod(psiMethod, resolveResult.getSubstitutor(),
+                      PsiFormatUtil.formatMethod(calleeMethod, resolveResult.getSubstitutor(),
                           PsiFormatUtil.SHOW_NAME |
                               PsiFormatUtil.SHOW_CONTAINING_CLASS,
                           PsiFormatUtil.SHOW_TYPE));
