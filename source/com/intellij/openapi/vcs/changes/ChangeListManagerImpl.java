@@ -1,5 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -21,6 +23,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -100,17 +103,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private JComponent createChangeViewComponent() {
     JPanel panel = new JPanel(new BorderLayout());
-    DefaultActionGroup toolBarGroup = new DefaultActionGroup();
+    DefaultActionGroup modelActionsGroup = new DefaultActionGroup();
 
     RefreshAction refreshAction = new RefreshAction();
     refreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
-
-    ToggleShowFlattenAction showFlattenAction = new ToggleShowFlattenAction();
-    showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P,
-                                                                                             SystemInfo.isMac
-                                                                                             ? KeyEvent.META_DOWN_MASK
-                                                                                             : KeyEvent.CTRL_DOWN_MASK)),
-                                                panel);
 
     AddChangeListAction newChangeListAction = new AddChangeListAction();
     newChangeListAction.registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
@@ -131,18 +127,31 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     final SetDefaultChangeListAction setDefaultChangeListAction = new SetDefaultChangeListAction();
     final CommitAction commitAction = new CommitAction();
 
-    toolBarGroup.add(refreshAction);
-    toolBarGroup.add(commitAction);
-    toolBarGroup.add(showFlattenAction);
-    toolBarGroup.add(newChangeListAction);
-    toolBarGroup.add(removeChangeListAction);
-    toolBarGroup.add(setDefaultChangeListAction);
-    toolBarGroup.add(toAnotherListAction);
-    toolBarGroup.add(diffAction);
+    modelActionsGroup.add(refreshAction);
+    modelActionsGroup.add(commitAction);
+    modelActionsGroup.add(newChangeListAction);
+    modelActionsGroup.add(removeChangeListAction);
+    modelActionsGroup.add(setDefaultChangeListAction);
+    modelActionsGroup.add(toAnotherListAction);
+    modelActionsGroup.add(diffAction);
 
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW, toolBarGroup, false);
-    panel.add(toolbar.getComponent(), BorderLayout.WEST);
-    panel.add(new JScrollPane(myView), BorderLayout.CENTER);
+    JPanel toolbarPanel = new JPanel(new BorderLayout());
+    toolbarPanel.add(createToolbarComponent(modelActionsGroup), BorderLayout.WEST);
+
+    DefaultActionGroup visualActionsGroup = new DefaultActionGroup();
+    final Expander expander = new Expander();
+    visualActionsGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(expander));
+    visualActionsGroup.add(CommonActionsManager.getInstance().createExpandAllAction(expander));
+
+    ToggleShowFlattenAction showFlattenAction = new ToggleShowFlattenAction();
+    showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P,
+                                                                                             SystemInfo.isMac
+                                                                                             ? KeyEvent.META_DOWN_MASK
+                                                                                             : KeyEvent.CTRL_DOWN_MASK)),
+                                                panel);
+    visualActionsGroup.add(showFlattenAction);
+    toolbarPanel.add(createToolbarComponent(visualActionsGroup), BorderLayout.CENTER);
+
 
     DefaultActionGroup menuGroup = new DefaultActionGroup();
     menuGroup.add(refreshAction);
@@ -162,10 +171,36 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myView.setShowFlatten(SHOW_FLATTEN_MODE);
 
     myProgressLabel = new JLabel();
+
+    panel.add(toolbarPanel, BorderLayout.WEST);
+    panel.add(new JScrollPane(myView), BorderLayout.CENTER);
     panel.add(myProgressLabel, BorderLayout.NORTH);
 
     myView.installDndSupport(this);
     return panel;
+  }
+
+  private static JComponent createToolbarComponent(final DefaultActionGroup group) {
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW, group, false).getComponent();
+  }
+
+  private class Expander implements TreeExpander {
+    public void expandAll() {
+      TreeUtil.expandAll(myView);
+    }
+
+    public boolean canExpand() {
+      return true;
+    }
+
+    public void collapseAll() {
+      TreeUtil.collapseAll(myView, 2);
+      TreeUtil.expand(myView, 1);
+    }
+
+    public boolean canCollapse() {
+      return true;
+    }
   }
 
   private void updateProgressText(final String text) {
