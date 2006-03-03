@@ -144,7 +144,7 @@ public class LineMarkerInfo {
     if (type == SUBCLASSED_CLASS) {
       PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5);
       GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
-      helper.processInheritors(processor, aClass, scope, false);
+      helper.processInheritors(processor, aClass, scope, true);
 
       if (processor.isOverflow()) {
         return aClass.isInterface()
