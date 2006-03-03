@@ -132,7 +132,16 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
     if (isArray()) {
       createComponentTypeChild();
-      return ((PsiTypeElement)myChild).getType().createArrayType();
+      if (myVariance == VARIANCE_NONE) return ((PsiTypeElement)myChild).getType().createArrayType();
+      switch(myVariance) {
+        case VARIANCE_EXTENDS:
+          return PsiWildcardType.createExtends(getManager(), ((PsiTypeElement) myChild).getType());
+        case VARIANCE_SUPER:
+          return PsiWildcardType.createSuper(getManager(), ((PsiTypeElement) myChild).getType());
+        default:
+          LOG.assertTrue(false);
+          return null;
+      }
     } else if (isVarArgs()) {
       createComponentTypeChild();
       return new PsiEllipsisType(((PsiTypeElement)myChild).getType());
@@ -170,14 +179,17 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
         }
         myChildSet = true;
       }
-      ;
     }
   }
 
   private void createComponentTypeChild() {
     if (!myChildSet) {
       if (isArray()) {
-        myChild = new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 2), myVariance);
+        if (myVariance == VARIANCE_NONE) {
+          myChild = new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 2), myVariance);
+        } else {
+          myChild = new ClsTypeElementImpl(this, myTypeText, VARIANCE_NONE);
+        }
       } else if (isVarArgs()) {
         myChild = new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 3), myVariance);
       } else {
