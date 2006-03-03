@@ -1,5 +1,7 @@
 package com.intellij.codeInspection.ui;
 
+import com.intellij.openapi.vcs.FileStatus;
+
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Enumeration;
@@ -38,5 +40,9 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
 
   public boolean isWritable() {
     return true;
+  }
+
+  public FileStatus getNodeStatus(){
+    return FileStatus.NOT_CHANGED;
   }
 }

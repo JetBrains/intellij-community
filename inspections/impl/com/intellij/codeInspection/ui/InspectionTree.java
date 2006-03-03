@@ -17,6 +17,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -283,6 +284,10 @@ public class InspectionTree extends Tree {
         if (refElement.isEntry() && refElement.isPermanentEntry()) {
           foreground = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.blue);
         }
+      }
+      final FileStatus nodeStatus = node.getNodeStatus();
+      if (nodeStatus != FileStatus.NOT_CHANGED){
+        foreground = new SimpleTextAttributes(foreground.getBgColor(), nodeStatus.getColor(), foreground.getWaveColor(), foreground.getStyle());
       }
       return foreground;
     }

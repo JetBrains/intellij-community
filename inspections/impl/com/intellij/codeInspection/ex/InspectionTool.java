@@ -18,11 +18,13 @@ import com.intellij.codeInspection.ui.InspectionPackageNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -77,6 +79,10 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   }
 
   public void cleanup() {
+  }
+
+  public void finalCleanup(){
+    cleanup();
   }
 
   public abstract HTMLComposer getComposer();
@@ -137,4 +143,29 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   }
 
   public abstract boolean isElementIgnored(final RefElement element);
+
+
+  public abstract FileStatus getElementStatus(final RefElement element);
+
+  protected static FileStatus calcStatus(boolean old, boolean current) {
+    if (old) {
+      if (!current) {
+        return FileStatus.DELETED;
+      }
+    }
+    else if (current) {
+      return FileStatus.ADDED;
+    }
+    return FileStatus.NOT_CHANGED;
+  }
+
+  protected static boolean contains(RefElement element, Collection<RefEntity> entities){
+    for (RefEntity refEntity : entities) {
+      if (!(refEntity instanceof RefElement)) continue;
+      if (Comparing.equal(((RefElement)refEntity).getElement(), element.getElement())){
+        return true;
+      }
+    }
+    return false;
+  }
 }

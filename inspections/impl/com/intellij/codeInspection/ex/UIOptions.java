@@ -24,10 +24,10 @@ public class UIOptions implements JDOMExternalizable {
   public boolean GROUP_BY_SEVERITY = false;
   public boolean FILTER_RESOLVED_ITEMS = true;
   public boolean ANALYZE_TEST_SOURCES = true;
+  public boolean SHOW_DIFF_WITH_PREVIOUS_RUN = false;
   public int SCOPE_TYPE = 1;
   public String CUSTOM_SCOPE_NAME = "";
   public final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
-  public ToggleAction myGroupBySeverityAction;
 
   public UIOptions() {
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
@@ -92,8 +92,8 @@ public class UIOptions implements JDOMExternalizable {
   }
 
   public AnAction createFilterResolvedItemsAction(final InspectionResultsView view){
-    return new ToggleAction(InspectionsBundle.message("inspection.filter.resolved.node.text"),
-                            InspectionsBundle.message("inspection.filter.resolved.node.text"),
+    return new ToggleAction(InspectionsBundle.message("inspection.filter.resolved.action.text"),
+                            InspectionsBundle.message("inspection.filter.resolved.action.text"),
                             IconLoader.getIcon("/ant/filter.png")) {
 
 
@@ -107,4 +107,22 @@ public class UIOptions implements JDOMExternalizable {
       }
     };
   }
+
+  public AnAction createShowOutdatedProblemsAction(final InspectionResultsView view) {
+    return new ToggleAction(InspectionsBundle.message("inspection.filter.show.diff.action.text"),
+                            InspectionsBundle.message("inspection.filter.show.diff.action.text"),
+                            IconLoader.getIcon("/actions/diff.png")) {
+
+
+      public boolean isSelected(AnActionEvent e) {
+        return SHOW_DIFF_WITH_PREVIOUS_RUN;
+      }
+
+      public void setSelected(AnActionEvent e, boolean state) {
+        SHOW_DIFF_WITH_PREVIOUS_RUN = state;
+        view.update();
+      }
+    };
+  }
+
 }

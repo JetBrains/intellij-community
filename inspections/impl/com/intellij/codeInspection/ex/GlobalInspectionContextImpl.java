@@ -235,7 +235,18 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     myClassUsagesRequests = null;
 
     myTools.clear();
-    getCurrentProfile().cleanup();
+    final InspectionProfile profile = myExternalProfile;
+    if (profile == null) {
+      if (myCurrentScope != null) {
+        final Set<String> profiles = myCurrentScope.getActiveInspectionProfiles();
+        InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
+        for (String profileName : profiles) {
+          ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();
+        }
+      }
+    } else {
+      InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(profile.getName()).getInspectionProfile().cleanup();
+    }
 
     EntryPointsManager.getInstance(getProject()).cleanup();
 
@@ -644,8 +655,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   private void launchInspections(final AnalysisScope scope, final InspectionManager manager) {
-    cleanup();
-
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -847,10 +856,16 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public void close() {
+    if (myView == null || myView.isRerun()) return;
     final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
     managerEx.closeRunningContext(this);
     managerEx.getUIOptions().save(myUIOptions);
     getContentManager().removeContent(myContent);
+    for (Set<InspectionTool> tools : myTools.values()) {
+      for (InspectionTool tool : tools) {
+        tool.finalCleanup();
+      }
+    }
     cleanup();
     if (myView != null) {
       myView.dispose();

@@ -124,7 +124,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
             errorTreeView.addMessage(MessageCategory.ERROR, new String[]{smellInfo.getDescription()}, file, smellInfo.getStartLine(),
                                      smellInfo.getStartColumn(), null);
           }
-          else if (smellInfo.getSeverity() == HighlightSeverity.WARNING) {
+          else {//if (smellInfo.getSeverity() == HighlightSeverity.WARNING) {
             errorTreeView.addMessage(MessageCategory.WARNING, new String[]{smellInfo.getDescription()}, file, smellInfo.getStartLine(),
                                      smellInfo.getStartColumn(), null);
           }
@@ -622,7 +622,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
                                         final Document document) {
     for (HighlightInfo highlightInfo : highlights) {
       final HighlightSeverity severity = highlightInfo.getSeverity();
-      if (severity == HighlightSeverity.ERROR || severity == HighlightSeverity.WARNING) {
+      if (severity.compareTo(HighlightSeverity.WARNING) >= 0) {
         result.add(new CodeSmellInfo(document, getDescription(highlightInfo),
                                      new TextRange(highlightInfo.startOffset, highlightInfo.endOffset), severity));
       }

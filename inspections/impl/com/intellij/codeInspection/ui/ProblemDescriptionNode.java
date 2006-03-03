@@ -7,6 +7,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -57,6 +58,14 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
 
   public boolean isResolved() {
     return myElement instanceof RefElement && myTool.isElementIgnored((RefElement)myElement);
+  }
+
+
+  public FileStatus getNodeStatus() {
+    if (myElement instanceof RefElement){
+      return myTool.getProblemStatus(myDescriptor);
+    }
+    return FileStatus.NOT_CHANGED;
   }
 
   public String toString() {

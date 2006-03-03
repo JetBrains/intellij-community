@@ -20,6 +20,7 @@ import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -64,6 +65,8 @@ import java.util.List;
  * @author max
  */
 public class InspectionResultsView extends JPanel implements OccurenceNavigator, DataProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ui.InspectionResultsView");
+
   public static final RefElement[] EMPTY_ELEMENTS_ARRAY = new RefElement[0];
   public static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
   private Project myProject;
@@ -79,6 +82,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
   private Splitter mySplitter;
   private GlobalInspectionContextImpl myGlobalInspectionContext;
+  private boolean myRerun = false;
 
   public InspectionResultsView(final Project project, InspectionProfile inspectionProfile, AnalysisScope scope, GlobalInspectionContextImpl globalInspectionContext) {
     setLayout(new BorderLayout());
@@ -226,7 +230,9 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     DefaultActionGroup specialGroup = new DefaultActionGroup();
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
+    specialGroup.add(myGlobalInspectionContext.getUIOptions().createShowOutdatedProblemsAction(this));
     specialGroup.add(new EditSettingsAction());
+    specialGroup.add(new DisableInspectionAction());
     specialGroup.add(new InvokeQuickFixAction(this));
     specialGroup.add(new SuppressInspectionToolbarAction(this));
     westPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false).getComponent(), BorderLayout.EAST);
@@ -707,6 +713,10 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     return myTree.getSelectedTool() != null;
   }
 
+  public boolean isRerun() {
+    return myRerun;
+  }
+
   private class CloseAction extends AnAction {
     private CloseAction() {
       super(CommonBundle.message("action.close"), null, IconLoader.getIcon("/actions/cancel.png"));
@@ -714,16 +724,6 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
     public void actionPerformed(AnActionEvent e) {
       myGlobalInspectionContext.close();
-      //may differ from CurrentProfile in case of editor set up
-      if (myInspectionProfile != null) {
-        myInspectionProfile.cleanup();
-      } else {
-        final Set<String> profiles = myScope.getActiveInspectionProfiles();
-        InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
-        for (String profileName : profiles) {
-          ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();
-        }
-      }
     }
   }
 
@@ -740,6 +740,28 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(myInspectionProfile != null && myInspectionProfile.isEditable());
+    }
+  }
+
+
+
+  private class DisableInspectionAction extends AnAction {
+    private DisableInspectionAction() {
+      super(InspectionsBundle.message("disable.inspection.action.name"), InspectionsBundle.message("disable.inspection.action.name"), IconLoader.getIcon("/actions/exclude.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      InspectionProfile inspectionProfile = myInspectionProfile;
+      LOG.assertTrue(inspectionProfile != null);
+      ModifiableModel model = inspectionProfile.getModifiableModel();
+      final InspectionTool tool = myTree.getSelectedTool();
+      LOG.assertTrue(tool != null);
+      model.disableTool(tool.getShortName());
+      model.commit(InspectionProjectProfileManager.getInstance(myProject));
+    }
+
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myInspectionProfile != null && myInspectionProfile.isEditable() && myTree.getSelectedTool() != null);
     }
   }
 
@@ -767,22 +789,15 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       rerun();
     }
     private void rerun() {
+      myRerun = true;
       if (myScope.isValid()) {
         final InspectionProfile profile = myInspectionProfile;
-        if (profile == null) {
-          final Set<String> profiles = myScope.getActiveInspectionProfiles();
-          InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
-          for (String profileName : profiles) {
-            ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();
-          }
-        } else {
-          InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(profile.getName()).getInspectionProfile().cleanup();
-        }
         myGlobalInspectionContext.setExternalProfile(profile);
         myGlobalInspectionContext.doInspections(myScope, InspectionManager.getInstance(myProject));
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             myGlobalInspectionContext.setExternalProfile(null);
+            myRerun = false;
           }
         });
       }

@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 
 import javax.swing.*;
@@ -62,6 +63,11 @@ public class RefElementNode extends InspectionTreeNode {
 
   public boolean isResolved() {
     return myTool.isElementIgnored(getElement());
+  }
+
+
+  public FileStatus getNodeStatus() {
+    return  myTool.getElementStatus(getElement());    
   }
 
   public void add(MutableTreeNode newChild) {
