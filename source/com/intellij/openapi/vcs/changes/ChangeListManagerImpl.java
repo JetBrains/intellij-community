@@ -267,6 +267,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               }, null); // TODO: make real indicator
             }
           }
+
+          synchronized (myChangeLists) {
+            for (ChangeList list : myChangeLists) {
+              list.doneProcessingChanges();
+            }
+          }
+
           myView.unfeezeState();
         }
 

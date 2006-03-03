@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.FilePath;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -30,7 +31,10 @@ public class ChangeList implements Cloneable {
 
   public Collection<Change> getChanges() {
     if (myReadChangesCache == null) {
-      myReadChangesCache = new ArrayList<Change>(myChanges);
+      myReadChangesCache = new HashSet<Change>(myChanges);
+      if (myOutdatedChanges != null) {
+        myReadChangesCache.addAll(myOutdatedChanges);
+      }
     }
     return myReadChangesCache;
   }
@@ -84,6 +88,11 @@ public class ChangeList implements Cloneable {
       }
     }
     return false;
+  }
+
+  public void doneProcessingChanges() {
+    myOutdatedChanges = null;
+    myReadChangesCache = null;
   }
 
   public static boolean changesEqual(Change c1, Change c2) {
