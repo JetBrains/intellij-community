@@ -221,7 +221,9 @@ public class LibraryLinkImpl extends LibraryLink {
     else {
       element.setAttribute(NAME_ATTRIBUTE_NAME, name);
     }
-    element.setAttribute(LEVEL_ATTRIBUTE_NAME, getLevel());
+    if (getLevel() != null) {
+      element.setAttribute(LEVEL_ATTRIBUTE_NAME, getLevel());
+    }
   }
 
   public boolean resolveElement(ModulesProvider provider) {
