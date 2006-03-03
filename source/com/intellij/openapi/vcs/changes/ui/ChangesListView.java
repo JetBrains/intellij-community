@@ -510,7 +510,7 @@ public class ChangesListView extends Tree implements DataProvider {
         if (value == null) continue;
         final Component component = renderer.getTreeCellRendererComponent(tree, value, false, false, false, row, false);
         if (component.getFont() == null) {
-          component.setFont(new JLabel().getFont()); // TODO: ??? Something strange happens here. When painted renderer's component has null font
+          component.setFont(tree.getFont());
         }
         g.translate(0, y);
         component.setBounds(0, 0, width, height);
