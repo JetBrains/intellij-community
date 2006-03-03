@@ -140,7 +140,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     toolBarGroup.add(toAnotherListAction);
     toolBarGroup.add(diffAction);
 
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ChangeView", toolBarGroup, false);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW, toolBarGroup, false);
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
     panel.add(new JScrollPane(myView), BorderLayout.CENTER);
 

@@ -2,10 +2,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -443,7 +440,7 @@ public class ChangesListView extends Tree implements DataProvider {
   }
 
   public void setMenuActions(final ActionGroup menuGroup) {
-    PopupHandler.installUnknownPopupHandler(this, menuGroup, ActionManager.getInstance());
+    PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(this);
   }
 
