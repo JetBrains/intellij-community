@@ -60,6 +60,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private List<CheckinHandler> myHandlers = new ArrayList<CheckinHandler>();
   private String myActionName;
   private List<ChangeList> myChangeLists;
+  private FileStatusListener myFileStatusListener;
 
   private static void commit(Project project, List<ChangeList> list, final List<Change> changes) {
     new CommitChangeListDialog(project, list, changes).show();
@@ -234,6 +235,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     });
 
+    myFileStatusListener = new FileStatusListener() {
+      public void fileStatusesChanged() {
+        myChangesList.repaint();
+      }
+
+      public void fileStatusChanged(VirtualFile virtualFile) {
+        myChangesList.repaint();
+      }
+    };
+
+    FileStatusManager.getInstance(project).addFileStatusListener(myFileStatusListener);
+
     setOKButtonText(getCommitActionName());
 
     setTitle(myActionName);
@@ -241,6 +254,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     restoreState();
 
     init();
+  }
+
+
+  @Override
+  protected void dispose() {
+    super.dispose();
+    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
   }
 
   private String getCommitActionName() {
