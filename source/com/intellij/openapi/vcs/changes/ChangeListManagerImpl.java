@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,7 +46,7 @@ import java.util.List;
 public class ChangeListManagerImpl extends ChangeListManager implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
   private Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
-  private static final String TOOLWINDOW_ID = "Changes";
+  private static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
   private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
   private Alarm myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -63,6 +64,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
 
+  @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
+  @NonNls private static final String NODE_LIST = "list";
+  @NonNls private static final String ATT_NAME = "name";
+  @NonNls private static final String NODE_CHANGE = "change";
+  @NonNls private static final String ATT_DEFAULT = "default";
+  @NonNls private static final String ATT_VALUE_TRUE = "true";
+  @NonNls private static final String ATT_CHANGE_TYPE = "type";
+  @NonNls private static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
+  @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
+
   public ChangeListManagerImpl(final Project project, ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
@@ -71,7 +82,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public void projectOpened() {
     if (myChangeLists.isEmpty()) {
-      final ChangeList list = ChangeList.createEmptyChangeList("Default");
+      final ChangeList list = ChangeList.createEmptyChangeList(VcsBundle.message("changes.default.changlist.name"));
       myChangeLists.add(list);
       setDefaultChangeList(list);
     }
@@ -226,7 +237,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
         final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
         for (final VcsDirtyScope scope : scopes) {
-          updateProgressText(" Updating: " + scope.getScopeRoot().getPresentableUrl());
+          updateProgressText(VcsBundle.message("changes.update.progress.message", scope.getScopeRoot().getPresentableUrl()));
           synchronized (myChangeLists) {
             for (ChangeList list : getChangeLists()) {
               if (myDisposed) return;
@@ -472,7 +483,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public class ToggleShowFlattenAction extends ToggleAction {
     public ToggleShowFlattenAction() {
-      super("Show Directories", "Group changes by directories and modules", Icons.DIRECTORY_CLOSED_ICON);
+      super(VcsBundle.message("changes.action.show.directories.text"),
+            VcsBundle.message("changes.action.show.directories.description"),
+            Icons.DIRECTORY_CLOSED_ICON);
     }
 
     public boolean isSelected(AnActionEvent e) {
@@ -488,7 +501,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public class RefreshAction extends AnAction {
     public RefreshAction() {
-      super("Refresh", "Refresh VCS changes", IconLoader.getIcon("/actions/sync.png"));
+      super(VcsBundle.message("changes.action.refresh.text"),
+            VcsBundle.message("changes.action.refresh.description"),
+            IconLoader.getIcon("/actions/sync.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -498,11 +513,14 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public class AddChangeListAction extends AnAction {
     public AddChangeListAction() {
-      super("New ChangeList", "Create new changelist", IconLoader.getIcon("/actions/include.png"));
+      super(VcsBundle.message("changes.action.new.changelist.text"),
+            VcsBundle.message("changes.action.new.changelist.description"),
+            IconLoader.getIcon("/actions/include.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
-      String rc = Messages.showInputDialog(myProject, "Enter new changelist name", "New ChangeList", Messages.getQuestionIcon());
+      String rc = Messages.showInputDialog(myProject, VcsBundle.message("changes.dialog.newchangelist.text"),
+                                           VcsBundle.message("changes.dialog.newchangelist.title"), Messages.getQuestionIcon());
       if (rc != null) {
         if (rc.length() == 0) {
           rc = getUniqueName();
@@ -512,6 +530,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       }
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private String getUniqueName() {
       synchronized (myChangeLists) {
         int unnamedcount = 0;
@@ -528,7 +547,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public class SetDefaultChangeListAction extends AnAction {
     public SetDefaultChangeListAction() {
-      super("Set Default", "Set default changelist", IconLoader.getIcon("/actions/submit1.png"));
+      super(VcsBundle.message("changes.action.setdefaultchangelist.text"),
+            VcsBundle.message("changes.action.setdefaultchangelist.description"), IconLoader.getIcon("/actions/submit1.png"));
     }
 
 
@@ -538,13 +558,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
 
     public void actionPerformed(AnActionEvent e) {
-      setDefaultChangeList(((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS))[0]);
+      final ChangeList[] lists = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
+      assert lists != null;
+      setDefaultChangeList(lists[0]);
     }
   }
 
   public class CommitAction extends AnAction {
     public CommitAction() {
-      super("Commit Change List", "Commit selected changelist", IconLoader.getIcon("/actions/execute.png"));
+      super(VcsBundle.message("changes.action.commit.text"), VcsBundle.message("changes.action.commit.description"),
+            IconLoader.getIcon("/actions/execute.png"));
     }
 
     @Nullable
@@ -582,7 +605,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public static class RemoveChangeListAction extends AnAction {
     public RemoveChangeListAction() {
-      super("Remove Changelist", "Remove changelist and move all changes to default", IconLoader.getIcon("/actions/exclude.png"));
+      super(VcsBundle.message("changes.action.removechangelist.text"), VcsBundle.message("changes.action.removechangelist.description"), IconLoader.getIcon("/actions/exclude.png"));
     }
 
     public void update(AnActionEvent e) {
@@ -593,12 +616,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     public void actionPerformed(AnActionEvent e) {
       Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-      final ChangeList list = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS))[0];
+      final ChangeList[] lists = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
+      assert lists != null;
+      final ChangeList list = lists[0];
       int rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
                Messages.showYesNoDialog(project,
-                                        "Are you sure want to remove changelist '" + list.getDescription() + "'?\n" +
-                                        "All changes will be moved to default changelist.",
-                                        "Remove Change List",
+                                        VcsBundle.message("changes.removechangelist.warning.text", list.getDescription()),
+                                        VcsBundle.message("changes.removechangelist.warning.title"),
                                         Messages.getQuestionIcon());
 
       if (rc == DialogWrapper.OK_EXIT_CODE) {
@@ -634,12 +658,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   @SuppressWarnings({"unchecked"})
   public void readExternal(Element element) throws InvalidDataException {
-    SHOW_FLATTEN_MODE = Boolean.valueOf(element.getAttributeValue("flattened_view")).booleanValue();
+    SHOW_FLATTEN_MODE = Boolean.valueOf(element.getAttributeValue(ATT_FLATTENED_VIEW)).booleanValue();
 
-    final List<Element> listNodes = (List<Element>)element.getChildren("list");
+    final List<Element> listNodes = (List<Element>)element.getChildren(NODE_LIST);
     for (Element listNode : listNodes) {
-      ChangeList list = addChangeList(listNode.getAttributeValue("name"));
-      final List<Element> changeNodes = (List<Element>)listNode.getChildren("change");
+      ChangeList list = addChangeList(listNode.getAttributeValue(ATT_NAME));
+      final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
       for (Element changeNode : changeNodes) {
         try {
           addChangeToList(readChange(changeNode), list);
@@ -649,7 +673,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         }
       }
 
-      if ("true".equals(listNode.getAttributeValue("default"))) {
+      if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT))) {
         setDefaultChangeList(list);
       }
     }
@@ -660,17 +684,17 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute("flattened_view", String.valueOf(SHOW_FLATTEN_MODE));
+    element.setAttribute(ATT_FLATTENED_VIEW, String.valueOf(SHOW_FLATTEN_MODE));
 
     synchronized (myChangeLists) {
       for (ChangeList list : myChangeLists) {
-        Element listNode = new Element("list");
+        Element listNode = new Element(NODE_LIST);
         element.addContent(listNode);
         if (list.isDefault()) {
-          listNode.setAttribute("default", "true");
+          listNode.setAttribute(ATT_DEFAULT, ATT_VALUE_TRUE);
         }
 
-        listNode.setAttribute("name", list.getDescription());
+        listNode.setAttribute(ATT_NAME, list.getDescription());
         for (Change change : list.getChanges()) {
           writeChange(listNode, change);
         }
@@ -679,20 +703,20 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   private static void writeChange(final Element listNode, final Change change) {
-    Element changeNode = new Element("change");
+    Element changeNode = new Element(NODE_CHANGE);
     listNode.addContent(changeNode);
-    changeNode.setAttribute("type", change.getType().name());
+    changeNode.setAttribute(ATT_CHANGE_TYPE, change.getType().name());
 
     final ContentRevision bRev = change.getBeforeRevision();
     final ContentRevision aRev = change.getAfterRevision();
 
-    changeNode.setAttribute("beforePath", bRev != null ? bRev.getFile().getPath() : "");
-    changeNode.setAttribute("afterPath", aRev != null ? aRev.getFile().getPath() : "");
+    changeNode.setAttribute(ATT_CHANGE_BEFORE_PATH, bRev != null ? bRev.getFile().getPath() : "");
+    changeNode.setAttribute(ATT_CHANGE_AFTER_PATH, aRev != null ? aRev.getFile().getPath() : "");
   }
 
   private static Change readChange(Element changeNode) throws OutdatedFakeRevisionException {
-    String bRev = changeNode.getAttributeValue("beforePath");
-    String aRev = changeNode.getAttributeValue("afterPath");
+    String bRev = changeNode.getAttributeValue(ATT_CHANGE_BEFORE_PATH);
+    String aRev = changeNode.getAttributeValue(ATT_CHANGE_AFTER_PATH);
     return new Change(StringUtil.isEmpty(bRev) ? null : new FakeRevision(bRev), StringUtil.isEmpty(aRev) ? null : new FakeRevision(aRev));
   }
 

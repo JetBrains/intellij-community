@@ -65,17 +65,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     new CommitChangeListDialog(project, list, changes).show();
   }
 
-  public static void commitFile(Project project, VirtualFile file) {
-    final ChangeListManager manager = ChangeListManager.getInstance(project);
-    final Change change = manager.getChange(file);
-    if (change == null) {
-      Messages.showWarningDialog(project, "No changes for file: '" + file.getPresentableUrl() + "'.", "No Changes Detected");
-      return;
-    }
-
-    commit(project, Arrays.asList(manager.getChangeList(change)), Arrays.asList(change));
-  }
-
   public static void commitFiles(final Project project, Collection<VirtualFile> directoriesOrFiles) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     final Collection<Change> changes = new HashSet<Change>();
@@ -100,7 +89,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     final ChangeListManager manager = ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
-      Messages.showWarningDialog(project, "No changes detected." , "No Changes Detected");
+      Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
+                                 VcsBundle.message("commit.dialog.no.changes.detected.title"));
       return;
     }
 
@@ -131,7 +121,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     myIncludedChanges = new HashSet<Change>(changes);
-    myActionName = "Commit Changes"; // TODO: should be customizable?
+    myActionName = VcsBundle.message("commit.dialog.title");
 
     myAdditionalOptionsPanel = new JPanel();
     myCommitMessageArea = new CommitMessage();
@@ -244,13 +234,29 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     });
 
-    setOKButtonText("Commit");
+    setOKButtonText(getCommitActionName());
 
     setTitle(myActionName);
 
     restoreState();
 
     init();
+  }
+
+  private String getCommitActionName() {
+    String name = null;
+    for (AbstractVcs vcs : getAffectedVcses()) {
+      final CheckinEnvironment env = vcs.getCheckinEnvironment();
+      if (env != null) {
+        if (name == null) {
+          name = env.getCheckinOperationName();
+        }
+        else {
+          name = VcsBundle.message("commit.dialog.default.commit.operation.name");
+        }
+      }
+    }
+    return name != null ? name : VcsBundle.message("commit.dialog.default.commit.operation.name");
   }
 
   private class MoveAction extends MoveChangesToAnotherListAction {
@@ -270,7 +276,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     private final Change myChange;
 
     public ToggleChangeAction(final Change change) {
-      super("Include into commit");
+      super(VcsBundle.message("commit.dialog.include.action.name"));
       myChange = change;
     }
 
@@ -461,7 +467,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
 
       final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-      final ChangeList failedList = changeListManager.addChangeList("Failed commit: " + commitMessage);
+      final ChangeList failedList =
+        changeListManager.addChangeList(VcsBundle.message("commit.dialog.failed.commit.template", commitMessage));
 
       changeListManager.moveChangesTo(failedList, failedChanges.toArray(new Change[failedChanges.size()]));
     }
@@ -543,7 +550,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       chooser.setEnabled(lists.size() > 1);
       add(chooser, BorderLayout.EAST);
 
-      JLabel label = new JLabel("Change list: ");
+      JLabel label = new JLabel(VcsBundle.message("commit.dialog.changelist.label"));
       label.setDisplayedMnemonic('l');
       label.setLabelFor(chooser);
       add(label, BorderLayout.CENTER);
@@ -596,7 +603,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     JPanel listPanel = new JPanel(new BorderLayout());
     listPanel.add(pane);
-    listPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder("Changed Files"));
+    listPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("commit.dialog.changed.files.label")));
     topPanel.add(listPanel, BorderLayout.CENTER);
 
     JPanel headerPanel = new JPanel(new BorderLayout());

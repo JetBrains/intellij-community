@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class ShowDiffAction extends AnAction {
   public ShowDiffAction() {
-    super("Show Diff", "Show diff for selected change", IconLoader.getIcon("/actions/diff.png"));
+    super(VcsBundle.message("show.diff.action.text"), VcsBundle.message("show.diff.action.description"), IconLoader.getIcon("/actions/diff.png"));
   }
 
   public void update(AnActionEvent e) {

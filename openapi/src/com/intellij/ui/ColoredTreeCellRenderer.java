@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -71,7 +72,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.
    */
-  public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes){
+  public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes){
     if(mySelected && myFocused){
       super.append(
         fragment,

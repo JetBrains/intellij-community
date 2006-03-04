@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -70,7 +71,7 @@ public class ChangeListChooser extends DialogWrapper {
 
     updateEnabledItems();
 
-    setTitle("Choose Changelist");
+    setTitle(VcsBundle.message("changes.changelist.chooser.title"));
 
     init();
   }
@@ -97,7 +98,9 @@ public class ChangeListChooser extends DialogWrapper {
       String newText = myNewListNameField.getText();
       for (ChangeList list : myExistingLists) {
         if (newText.equals(list.getDescription())) {
-          Messages.showErrorDialog(myProject, "Changelist '" + newText + "' already exists.", "Wrong Changelist Name");
+          Messages.showErrorDialog(myProject,
+                                   VcsBundle.message("changes.newchangelist.warning.already.exists.text", newText),
+                                   VcsBundle.message("changes.newchangelist.warning.already.exists.title"));
           return;
         }
       }

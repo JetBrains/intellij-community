@@ -1,42 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.vcs.changes.ui.ChangeListChooser">
-  <grid id="84622" binding="myPanel" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="84622" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="5" left="5" bottom="5" right="5"/>
     <constraints>
       <xy x="214" y="106" width="345" height="88"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <component id="cde9d" class="javax.swing.JRadioButton" binding="myRbExisting">
         <constraints>
-          <xy x="7" y="9" width="148" height="22"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="E&amp;xisting Changelist"/>
+          <text resource-bundle="messages/VcsBundle" key="changes.changelist.chooser.existing.changelist"/>
         </properties>
       </component>
       <component id="e9094" class="javax.swing.JRadioButton" binding="myRbNew">
         <constraints>
-          <xy x="7" y="39" width="124" height="22"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Ne&amp;w Changelist"/>
+          <text resource-bundle="messages/VcsBundle" key="changes.changelist.chooser.new.changelist"/>
         </properties>
       </component>
       <component id="6e64e" class="javax.swing.JComboBox" binding="myExisitingsCombo">
         <constraints>
-          <xy x="165" y="7" width="152" height="27"/>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
       </component>
       <component id="5549a" class="javax.swing.JTextField" binding="myNewListNameField">
         <constraints>
-          <xy x="165" y="39" width="152" height="22"/>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="150" height="-1"/>
           </grid>
@@ -45,13 +40,11 @@
       </component>
       <vspacer id="f457f">
         <constraints>
-          <xy x="75" y="61" width="11" height="20"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
       <hspacer id="8c9a8">
         <constraints>
-          <xy x="317" y="15" width="21" height="11"/>
           <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
       </hspacer>

@@ -35,7 +35,7 @@ public class UnversionedFilesHolder {
     return Collections.unmodifiableList(myFiles);
   }
 
-  public UnversionedFilesHolder copy() {
+  public synchronized UnversionedFilesHolder copy() {
     final UnversionedFilesHolder copyHolder = new UnversionedFilesHolder();
     copyHolder.myFiles.addAll(myFiles);
     return copyHolder;

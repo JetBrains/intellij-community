@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 
 /**
@@ -12,7 +13,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
  */
 public class MoveChangesToAnotherListAction extends AnAction {
   public MoveChangesToAnotherListAction() {
-    super("Move to another list", "Move selected changes to another changelist", IconLoader.getIcon("/actions/fileStatus.png"));
+    super(VcsBundle.message("move.to.another.list.action.text"), VcsBundle.message("move.to.another.list.action.description"),
+          IconLoader.getIcon("/actions/fileStatus.png"));
   }
 
   public void update(AnActionEvent e) {
