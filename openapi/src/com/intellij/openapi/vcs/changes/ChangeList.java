@@ -2,12 +2,11 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.FilePath;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -15,12 +14,13 @@ import java.util.List;
 public class ChangeList implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeList");
 
-  private Collection<Change> myChanges = new ArrayList<Change>();
+  private Collection<Change> myChanges = new HashSet<Change>();
   private Collection<Change> myReadChangesCache = null;
   private String myDescription;
   private boolean myIsDefault = false;
-  private List<Change> myOutdatedChanges;
+  private Collection<Change> myOutdatedChanges;
   private boolean myIsInUpdate = false;
+  private Set<Change> myChangesBeforeUpdate;
 
   public static ChangeList createEmptyChangeList(String description) {
     return new ChangeList(description);
@@ -40,33 +40,36 @@ public class ChangeList implements Cloneable {
     return myReadChangesCache;
   }
 
-  public void addChange(Change change) {
-    myReadChangesCache = null;
-    myChanges.add(change);
-  }
-
-  public void removeChange(Change change) {
-    myReadChangesCache = null;
-    myChanges.remove(change);
-  }
-
   public String getDescription() {
     return myDescription;
   }
-
 
   public boolean isDefault() {
     return myIsDefault;
   }
 
-  public void setDefault(final boolean isDefault) {
+  public boolean isInUpdate() {
+    return myIsInUpdate;
+  }
+
+  void setDefault(final boolean isDefault) {
     myIsDefault = isDefault;
   }
 
-  public void removeChangesInScope(final VcsDirtyScope scope) {
+  void addChange(Change change) {
+    myReadChangesCache = null;
+    myChanges.add(change);
+  }
+
+  void removeChange(Change change) {
+    myReadChangesCache = null;
+    myChanges.remove(change);
+  }
+
+  void startProcessingChanges(final VcsDirtyScope scope) {
+    myChangesBeforeUpdate = new HashSet<Change>(myChanges);
     myOutdatedChanges = new ArrayList<Change>();
-    final Collection<Change> currentChanges = new ArrayList<Change>(myChanges);
-    for (Change oldBoy : currentChanges) {
+    for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
       if (before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())) {
@@ -80,19 +83,14 @@ public class ChangeList implements Cloneable {
     }
   }
 
-
-  public boolean isInUpdate() {
-    return myIsInUpdate;
-  }
-
-  public boolean processChange(Change change) {
+  boolean processChange(Change change) {
     if (myIsDefault) {
       addChange(change);
       return true;
     }
 
     for (Change oldChange : myOutdatedChanges) {
-      if (changesEqual(oldChange, change)) {
+      if (Comparing.equal(oldChange, change)) {
         addChange(change);
         return true;
       }
@@ -100,25 +98,12 @@ public class ChangeList implements Cloneable {
     return false;
   }
 
-  public void doneProcessingChanges() {
+  boolean doneProcessingChanges() {
+    boolean changesDetected = !Comparing.equal(myChanges, myChangesBeforeUpdate);
     myOutdatedChanges = null;
     myReadChangesCache = null;
     myIsInUpdate = false;
-  }
-
-  public static boolean changesEqual(Change c1, Change c2) {
-    final ContentRevision br1 = c1.getBeforeRevision();
-    final ContentRevision br2 = c2.getBeforeRevision();
-    final ContentRevision ar1 = c1.getAfterRevision();
-    final ContentRevision ar2 = c2.getAfterRevision();
-
-    FilePath fbr1 = br1 != null ? br1.getFile() : null;
-    FilePath fbr2 = br2 != null ? br2.getFile() : null;
-
-    FilePath far1 = ar1 != null ? ar1.getFile() : null;
-    FilePath far2 = ar2 != null ? ar2.getFile() : null;
-
-    return Comparing.equal(fbr1, fbr2) && Comparing.equal(far1, far2);
+    return changesDetected;
   }
 
   public boolean equals(final Object o) {

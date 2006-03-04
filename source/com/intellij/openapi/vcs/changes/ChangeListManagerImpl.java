@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Alarm;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -59,6 +60,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private ChangeList myDefaultChangelist;
   private ChangesListView myView;
   private JLabel myProgressLabel;
+
+  private EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
 
   public ChangeListManagerImpl(final Project project, ProjectLevelVcsManager vcsManager) {
     myProject = project;
@@ -227,50 +230,55 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           synchronized (myChangeLists) {
             for (ChangeList list : getChangeLists()) {
               if (myDisposed) return;
-              list.removeChangesInScope(scope);
+              list.startProcessingChanges(scope);
             }
           }
 
           final UnversionedFilesHolder workingHolderCopy = myUnversionedFilesHolder.copy();
           workingHolderCopy.cleanScope(scope);
 
-          final AbstractVcs vcs = myVcsManager.getVcsFor(scope.getScopeRoot());
-          if (vcs != null) {
-            final ChangeProvider changeProvider = vcs.getChangeProvider();
-            if (changeProvider != null) {
-              changeProvider.getChanges(scope, new ChangelistBuilder() {
-                public void processChange(Change change) {
-                  if (myDisposed) return;
-                  if (isUnder(change, scope)) {
-                    try {
-                      synchronized (myChangeLists) {
-                        for (ChangeList list : myChangeLists) {
-                          if (list == myDefaultChangelist) continue;
-                          if (list.processChange(change)) return;
-                        }
+          try {
+            final AbstractVcs vcs = myVcsManager.getVcsFor(scope.getScopeRoot());
+            if (vcs != null) {
+              final ChangeProvider changeProvider = vcs.getChangeProvider();
+              if (changeProvider != null) {
+                changeProvider.getChanges(scope, new ChangelistBuilder() {
+                  public void processChange(Change change) {
+                    if (myDisposed) return;
+                    if (isUnder(change, scope)) {
+                      try {
+                        synchronized (myChangeLists) {
+                          for (ChangeList list : myChangeLists) {
+                            if (list == myDefaultChangelist) continue;
+                            if (list.processChange(change)) return;
+                          }
 
-                        myDefaultChangelist.processChange(change);
+                          myDefaultChangelist.processChange(change);
+                        }
+                      }
+                      finally {
+                        scheduleRefresh();
                       }
                     }
-                    finally {
+                  }
+
+                  public void processUnversionedFile(VirtualFile file) {
+                    if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                      workingHolderCopy.addFile(file);
                       scheduleRefresh();
                     }
                   }
-                }
-
-                public void processUnversionedFile(VirtualFile file) {
-                  if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-                    workingHolderCopy.addFile(file);
-                    scheduleRefresh();
-                  }
-                }
-              }, null); // TODO: make real indicator
+                }, null); // TODO: make real indicator
+              }
             }
           }
-
-          synchronized (myChangeLists) {
-            for (ChangeList list : myChangeLists) {
-              list.doneProcessingChanges();
+          finally {
+            synchronized (myChangeLists) {
+              for (ChangeList list : myChangeLists) {
+                if (list.doneProcessingChanges()) {
+                  myListeners.getMulticaster().changeListChanged(list);
+                }
+              }
             }
           }
 
@@ -370,6 +378,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     synchronized (myChangeLists) {
       final ChangeList list = ChangeList.createEmptyChangeList(name);
       myChangeLists.add(list);
+      myListeners.getMulticaster().changeListAdded(list);
       scheduleRefresh();
       return list;
     }
@@ -381,12 +390,23 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
       final Collection<Change> changes = list.getChanges();
       for (Change change : changes) {
-        myDefaultChangelist.addChange(change);
+        addChangeToList(change, myDefaultChangelist);
       }
       myChangeLists.remove(list);
+      myListeners.getMulticaster().changeListRemoved(list);
 
       scheduleRefresh();
     }
+  }
+
+  private void addChangeToList(final Change change, final ChangeList list) {
+    list.addChange(change);
+    myListeners.getMulticaster().changeListChanged(list);
+  }
+
+  private void removeChangeFromList(final Change change, final ChangeList list) {
+    list.removeChange(change);
+    myListeners.getMulticaster().changeListChanged(list);
   }
 
   public void setDefaultChangeList(ChangeList list) {
@@ -394,6 +414,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       if (myDefaultChangelist != null) myDefaultChangelist.setDefault(false);
       list.setDefault(true);
       myDefaultChangelist = list;
+      myListeners.getMulticaster().defaultListChanged(list);
       scheduleRefresh();
     }
   }
@@ -420,7 +441,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       return null;
     }
   }
-
 
   @NotNull
   public Collection<Change> getChangesIn(VirtualFile dir) {
@@ -591,18 +611,26 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     synchronized (myChangeLists) {
       for (ChangeList existingList : getChangeLists()) {
         for (Change change : changes) {
-          existingList.removeChange(change);
+          removeChangeFromList(change, existingList);
         }
       }
 
       for (Change change : changes) {
-        list.addChange(change);
+        addChangeToList(change, list);
       }
     }
 
     scheduleRefresh();
   }
 
+  public void addChangeListListner(ChangeListListener listener) {
+    myListeners.addListener(listener);
+  }
+
+
+  public void removeChangeListListner(ChangeListListener listener) {
+    myListeners.removeListener(listener);
+  }
 
   @SuppressWarnings({"unchecked"})
   public void readExternal(Element element) throws InvalidDataException {
@@ -614,7 +642,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final List<Element> changeNodes = (List<Element>)listNode.getChildren("change");
       for (Element changeNode : changeNodes) {
         try {
-          list.addChange(readChange(changeNode));
+          addChangeToList(readChange(changeNode), list);
         }
         catch (OutdatedFakeRevisionException e) {
           // Do nothing. Just skip adding outdated revisions to the list.
@@ -650,7 +678,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  private void writeChange(final Element listNode, final Change change) {
+  private static void writeChange(final Element listNode, final Change change) {
     Element changeNode = new Element("change");
     listNode.addContent(changeNode);
     changeNode.setAttribute("type", change.getType().name());
@@ -662,7 +690,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     changeNode.setAttribute("afterPath", aRev != null ? aRev.getFile().getPath() : "");
   }
 
-  private Change readChange(Element changeNode) throws OutdatedFakeRevisionException {
+  private static Change readChange(Element changeNode) throws OutdatedFakeRevisionException {
     String bRev = changeNode.getAttributeValue("beforePath");
     String aRev = changeNode.getAttributeValue("afterPath");
     return new Change(StringUtil.isEmpty(bRev) ? null : new FakeRevision(bRev), StringUtil.isEmpty(aRev) ? null : new FakeRevision(aRev));

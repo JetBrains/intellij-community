@@ -43,4 +43,7 @@ public abstract class ChangeListManager {
   public abstract void removeChangeList(final ChangeList list);
 
   public abstract void moveChangesTo(final ChangeList list, final Change[] changes);
+
+  public abstract void addChangeListListner(ChangeListListener listener);
+  public abstract void removeChangeListListner(ChangeListListener listener);
 }
