@@ -21,7 +21,6 @@ import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PendingEventDispatcher;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
 
@@ -217,11 +216,26 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     if (progress != null) {
       progress.setText2(ProjectBundle.message("project.index.building.exclude.roots.progress"));
     }
+    Map<VirtualFile, Set<VirtualFile>> excludeRootsMap = new THashMap<VirtualFile, Set<VirtualFile>>();
+    for (Module module : modules) {
+      ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      ContentEntry[] contentEntries = rootManager.getContentEntries();
+      for (ContentEntry contentEntry : contentEntries) {
+        VirtualFile contentRoot = contentEntry.getFile();
+        if (contentRoot == null) continue;
 
-    Set<VirtualFile> excludeRoots = new THashSet<VirtualFile>();
-    for (Module module1 : modules) {
-      ModuleRootManager rootManager = ModuleRootManager.getInstance(module1);
-      excludeRoots.addAll(Arrays.asList(rootManager.getExcludeRoots()));
+        VirtualFile[] excludeRoots = contentEntry.getExcludeFolderFiles();
+        for (VirtualFile excludeRoot : excludeRoots) {
+          // Output paths should be exluded (if marked as such) regardless if they're under corresponding module's content root
+          if (!VfsUtil.isAncestor(contentRoot, excludeRoot, false)) {
+            if (rootManager.getCompilerOutputPath() == excludeRoot || rootManager.getCompilerOutputPathForTests() == excludeRoot) {
+              putForFileAndAllAncestors(excludeRootsMap, excludeRoot, excludeRoot);
+            }
+          }
+
+          putForFileAndAllAncestors(excludeRootsMap, contentRoot, excludeRoot);
+        }
+      }
     }
 
     // fill module content's
@@ -237,7 +251,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
 
       for (final VirtualFile contentRoot : contentRoots) {
-        fillMapWithModuleContent(contentRoot, module, contentRoot, excludeRoots, forDir);
+        Set<VirtualFile> excludeRootsSet = excludeRootsMap.get(contentRoot);
+        fillMapWithModuleContent(contentRoot, module, contentRoot, excludeRootsSet, forDir);
       }
     }
 
@@ -359,6 +374,20 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
+  private static void putForFileAndAllAncestors(Map<VirtualFile, Set<VirtualFile>> map, VirtualFile file, VirtualFile value) {
+    while (true) {
+      Set<VirtualFile> set = map.get(file);
+      if (set == null) {
+        set = new HashSet<VirtualFile>();
+        map.put(file, set);
+      }
+      set.add(value);
+
+      file = file.getParent();
+      if (file == null) break;
+    }
+  }
+
   public DirectoryInfo getInfoForDirectory(VirtualFile dir) {
     LOG.assertTrue(myInitialized);
     LOG.assertTrue(!myDisposed);
@@ -445,7 +474,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
-    return list.toArray(new VirtualFile[list.size()]);
+    VirtualFile[] result = list.toArray(new VirtualFile[list.size()]);
+    return result;
   }
 
   private void dispatchPendingEvents() {
