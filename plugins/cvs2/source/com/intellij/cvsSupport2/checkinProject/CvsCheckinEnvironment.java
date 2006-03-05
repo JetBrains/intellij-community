@@ -66,7 +66,9 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   public RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(final Refreshable panel) {
-    return new CvsProjectAdditionalPanel(panel, myProject);
+    return null;
+    // TODO: shall these options be available elsewhere?
+    /*return new CvsProjectAdditionalPanel(panel, myProject);*/
   }
 
   public RefreshableOnComponent createAdditionalOptionsPanel(Refreshable panel, final boolean checkinProject) {
