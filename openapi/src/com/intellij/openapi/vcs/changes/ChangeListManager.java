@@ -19,6 +19,7 @@ public abstract class ChangeListManager {
   }
 
   public abstract void scheduleUpdate();
+  public abstract boolean ensureUpToDate(boolean canBeCanceled);
 
   @NotNull
   public abstract List<ChangeList> getChangeLists();

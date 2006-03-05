@@ -40,6 +40,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
@@ -91,7 +92,9 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       oldActionPerformed(roots, project, context);
     }
     else {
-      CommitChangeListDialog.commitPaths(project, Arrays.asList(roots));
+      if (ChangeListManager.getInstance(project).ensureUpToDate(true)) {
+        CommitChangeListDialog.commitPaths(project, Arrays.asList(roots));
+      }
     }
   }
 

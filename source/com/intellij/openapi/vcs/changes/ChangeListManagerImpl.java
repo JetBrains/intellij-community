@@ -5,6 +5,7 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -63,6 +64,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private JLabel myProgressLabel;
 
   private EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
+
+  private final Object myPendingUpdatesLock = new Object();
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   @NonNls private static final String NODE_LIST = "list";
@@ -225,7 +228,32 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     });
   }
 
-  public void scheduleUpdate() {
+  public boolean ensureUpToDate(boolean canBeCanceled) {
+    final boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        ProgressManager.getInstance().getProgressIndicator().setText("Please wait until VCS synchronization is finished.");
+        scheduleUpdate(0);
+        while (myUpdateAlarm.getActiveRequestCount() > 0) {
+          synchronized (myPendingUpdatesLock) {
+            try {
+              myPendingUpdatesLock.wait();
+            }
+            catch (InterruptedException e) {
+              break;
+            }
+          }
+        }
+      }
+    }, "Finishing VCS refresh", canBeCanceled, myProject);
+
+    if (ok) {
+      refreshView();
+    }
+
+    return ok;
+  }
+
+  private void scheduleUpdate(int millis) {
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
@@ -234,6 +262,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           scheduleUpdate();
           return;
         }
+
+        updateImmediately();
+      }
+
+      private void updateImmediately() {
+        if (myDisposed) return;
 
         final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
         for (final VcsDirtyScope scope : scopes) {
@@ -298,6 +332,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         }
 
         updateProgressText("");
+        synchronized (myPendingUpdatesLock) {
+          myPendingUpdatesLock.notifyAll();
+        }
       }
 
       private boolean isUnder(final Change change, final VcsDirtyScope scope) {
@@ -305,7 +342,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         final ContentRevision after = change.getAfterRevision();
         return before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile());
       }
-    }, 300);
+    }, millis);
+  }
+
+  public void scheduleUpdate() {
+    scheduleUpdate(300);
   }
 
   private void scheduleRefresh() {
