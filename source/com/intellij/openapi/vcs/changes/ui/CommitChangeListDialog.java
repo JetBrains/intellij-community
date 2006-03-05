@@ -141,6 +141,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     setSelectedList(initalListSelection);
 
     setCommitMessage(CheckinDialog.getInitialMessage(getPaths(), project));
+    myCommitMessageArea.init();
 
     myChangesList.setCellRenderer(new MyListCellRenderer());
 
