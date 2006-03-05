@@ -153,9 +153,12 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
    * this method overrides or implements.
    *
    * @return the overridden or implemented method, or null if this method does not override
-   * or implement any other method. 
+   * or implement any other method.
+   * @deprecated use {@link #findDeepestSuperMethods()} insted
    */
   @Nullable PsiMethod findDeepestSuperMethod();
+
+  @NotNull PsiMethod[] findDeepestSuperMethods();
 
   /**
    * Returns the {@link com.intellij.pom.java.PomMethod} representation of the method.

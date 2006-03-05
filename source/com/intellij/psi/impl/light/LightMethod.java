@@ -2,6 +2,7 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -129,6 +130,11 @@ public class LightMethod extends LightElement implements PsiMethod {
 
   public PsiMethod findDeepestSuperMethod() {
     return myMethod.findDeepestSuperMethod();
+  }
+
+  @NotNull
+  public PsiMethod[] findDeepestSuperMethods() {
+    return myMethod.findDeepestSuperMethods();
   }
 
   public PomMethod getPom() {

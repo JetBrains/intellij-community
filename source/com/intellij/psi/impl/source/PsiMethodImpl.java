@@ -130,6 +130,11 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return PsiSuperMethodImplUtil.findDeepestSuperMethod(this);
   }
 
+  @NotNull
+  public PsiMethod[] findDeepestSuperMethods() {
+    return PsiSuperMethodImplUtil.findDeepestSuperMethods(this);
+  }
+
   public PomMethod getPom() {
     //TODO:
     return null;

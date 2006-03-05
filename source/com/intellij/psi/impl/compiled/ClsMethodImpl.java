@@ -161,6 +161,10 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return PsiSuperMethodImplUtil.findDeepestSuperMethod(this);
   }
 
+  public PsiMethod[] findDeepestSuperMethods() {
+    return PsiSuperMethodImplUtil.findDeepestSuperMethods(this);
+  }
+
   public PomMethod getPom() {
     //TODO:
     return null;

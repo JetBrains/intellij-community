@@ -66,6 +66,12 @@ public class PsiSuperMethodImplUtil {
     return DeepestSuperMethodsSearch.search(method).findFirst();
   }
 
+  public static PsiMethod[] findDeepestSuperMethods(PsiMethod method) {
+    if (!canHaveSuperMethod(method, true, false)) return null;
+    Collection<PsiMethod> collection = DeepestSuperMethodsSearch.search(method).findAll();
+    return collection.toArray(new PsiMethod[collection.size()]);
+  }
+
   private static void buildMethodHierarchy(PsiClass aClass,
                                            PsiSubstitutor substitutor,
                                            Set<PsiClass> visited,
