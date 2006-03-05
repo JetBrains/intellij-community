@@ -67,7 +67,7 @@ public class PsiSuperMethodImplUtil {
   }
 
   public static PsiMethod[] findDeepestSuperMethods(PsiMethod method) {
-    if (!canHaveSuperMethod(method, true, false)) return null;
+    if (!canHaveSuperMethod(method, true, false)) return PsiMethod.EMPTY_ARRAY;
     Collection<PsiMethod> collection = DeepestSuperMethodsSearch.search(method).findAll();
     return collection.toArray(new PsiMethod[collection.size()]);
   }
