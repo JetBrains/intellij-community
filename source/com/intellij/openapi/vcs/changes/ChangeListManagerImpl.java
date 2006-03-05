@@ -231,7 +231,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public boolean ensureUpToDate(boolean canBeCanceled) {
     final boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        ProgressManager.getInstance().getProgressIndicator().setText("Please wait until VCS synchronization is finished.");
+        ProgressManager.getInstance().getProgressIndicator().setText(VcsBundle.message("commit.wait.util.synced.message"));
         scheduleUpdate(0);
         while (myUpdateAlarm.getActiveRequestCount() > 0) {
           synchronized (myPendingUpdatesLock) {
@@ -244,7 +244,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           }
         }
       }
-    }, "Finishing VCS refresh", canBeCanceled, myProject);
+    }, VcsBundle.message("commit.wait.util.synced.title"), canBeCanceled, myProject);
 
     if (ok) {
       refreshView();
