@@ -147,9 +147,10 @@ public class ForCanBeForeachInspection extends StatementInspection{
                                     iterableClass, listClass,
                                     resolveResult.getSubstitutor());
                     if (substitutor != null) {
-                        componentType =
-                                substitutor.substitute(
-                                        iterableClass.getTypeParameters()[0]);
+                        componentType = substitutor.substitute(iterableClass.getTypeParameters()[0]);
+                        if (componentType instanceof PsiWildcardType) {
+                            componentType = ((PsiWildcardType) componentType).getExtendsBound();
+                        }
                     }
                 }
             }
