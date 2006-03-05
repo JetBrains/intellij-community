@@ -32,7 +32,10 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -367,28 +370,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   public final void readExternal(final Element element) throws InvalidDataException {
     final Element frameElement = element.getChild(FRAME_ELEMENT);
     if (frameElement != null) {
-// load frame bounds
-      myFrameBounds = new Rectangle();
-      try {
-        myFrameBounds.x = Integer.parseInt(frameElement.getAttributeValue(X_ATTR));
-      }
-      catch (NumberFormatException ignored) {
-      }
-      try {
-        myFrameBounds.y = Integer.parseInt(frameElement.getAttributeValue(Y_ATTR));
-      }
-      catch (NumberFormatException ignored) {
-      }
-      try {
-        myFrameBounds.width = Integer.parseInt(frameElement.getAttributeValue(WIDTH_ATTR));
-      }
-      catch (NumberFormatException ignored) {
-      }
-      try {
-        myFrameBounds.height = Integer.parseInt(frameElement.getAttributeValue(HEIGHT_ATTR));
-      }
-      catch (NumberFormatException ignored) {
-      }
+      myFrameBounds = loadFrameBounds(frameElement);
       try {
         myFrameExtendedState = Integer.parseInt(frameElement.getAttributeValue(EXTENDED_STATE_ATTR));
         if ((myFrameExtendedState & Frame.ICONIFIED) > 0) {
@@ -396,6 +378,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         }
       }
       catch (NumberFormatException ignored) {
+        myFrameExtendedState = Frame.NORMAL;
       }
     }
 
@@ -403,6 +386,35 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     if (desktopElement != null) {
       myLayout.readExternal(desktopElement);
     }
+  }
+
+  private Rectangle loadFrameBounds(final Element frameElement) {
+    Rectangle bounds = new Rectangle();
+    try {
+      bounds.x = Integer.parseInt(frameElement.getAttributeValue(X_ATTR));
+    }
+    catch (NumberFormatException ignored) {
+      return null;
+    }
+    try {
+      bounds.y = Integer.parseInt(frameElement.getAttributeValue(Y_ATTR));
+    }
+    catch (NumberFormatException ignored) {
+      return null;
+    }
+    try {
+      bounds.width = Integer.parseInt(frameElement.getAttributeValue(WIDTH_ATTR));
+    }
+    catch (NumberFormatException ignored) {
+      return null;
+    }
+    try {
+      bounds.height = Integer.parseInt(frameElement.getAttributeValue(HEIGHT_ATTR));
+    }
+    catch (NumberFormatException ignored) {
+      return null;
+    }
+    return bounds;
   }
 
   public final void writeExternal(final Element element) throws WriteExternalException {
