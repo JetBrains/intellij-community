@@ -45,13 +45,13 @@ import java.util.Set;
 public final class WindowManagerImpl extends WindowManagerEx implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
   private static boolean ourAlphaModeLibraryLoaded;
-  @NonNls protected static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
-  @NonNls protected static final String X_ATTR = "x";
-  @NonNls protected static final String FRAME_ELEMENT = "frame";
-  @NonNls protected static final String Y_ATTR = "y";
-  @NonNls protected static final String WIDTH_ATTR = "width";
-  @NonNls protected static final String HEIGHT_ATTR = "height";
-  @NonNls protected static final String EXTENDED_STATE_ATTR = "extended-state";
+  @NonNls private static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
+  @NonNls private static final String X_ATTR = "x";
+  @NonNls private static final String FRAME_ELEMENT = "frame";
+  @NonNls private static final String Y_ATTR = "y";
+  @NonNls private static final String WIDTH_ATTR = "width";
+  @NonNls private static final String HEIGHT_ATTR = "height";
+  @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
 
   static {
     initialize();
@@ -72,14 +72,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   /**
    * Union of bounds of all available default screen devices.
    */
-  protected Rectangle myScreenBounds;
+  private Rectangle myScreenBounds;
 
   private final CommandProcessor myCommandProcessor;
   private final WindowWatcher myWindowWatcher;
   /**
    * That is the default layout.
    */
-  protected DesktopLayout myLayout;
+  private DesktopLayout myLayout;
 
   private final HashMap<Project, IdeFrame> myProject2Frame;
 
@@ -89,8 +89,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
    * This members is needed to read frame's bounds from XML.
    * <code>myFrameBounds</code> can be <code>null</code>.
    */
-  protected Rectangle myFrameBounds;
-  protected int myFrameExtendedState;
+  private Rectangle myFrameBounds;
+  private int myFrameExtendedState;
   private WindowAdapter myActivationListener;
   private final ApplicationInfoEx myApplicationInfoEx;
   private final DataManager myDataManager;
@@ -106,7 +106,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
    * @param uiSettings
    * @param keymapManager
    */
-  protected WindowManagerImpl(DataManager dataManager,
+  public WindowManagerImpl(DataManager dataManager,
                               ApplicationInfoEx applicationInfoEx,
                               ActionManager actionManager,
                               UISettings uiSettings,
@@ -388,7 +388,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
-  private Rectangle loadFrameBounds(final Element frameElement) {
+  private static Rectangle loadFrameBounds(final Element frameElement) {
     Rectangle bounds = new Rectangle();
     try {
       bounds.x = Integer.parseInt(frameElement.getAttributeValue(X_ATTR));
