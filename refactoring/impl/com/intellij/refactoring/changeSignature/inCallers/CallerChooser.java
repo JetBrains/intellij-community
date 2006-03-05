@@ -17,13 +17,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.Tree;
-import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -121,12 +122,11 @@ public abstract class CallerChooser extends DialogWrapper {
     final PsiMethod caller = node.getMethod();
     final PsiMethod callee = parentNode != null ? parentNode.getMethod() : null;
     if (caller != null && callee != null) {
-      final PsiReference[] refs = myMethod.getManager().getSearchHelper().findReferences(callee, new LocalSearchScope(caller), false);
       HighlightManager highlighter = HighlightManager.getInstance(myProject);
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
       int start = getStartOffset(caller);
-      for (PsiReference ref : refs) {
+      for (PsiReference ref : ReferencesSearch.search(callee, new LocalSearchScope(caller), false).findAll()) {
         final PsiElement element = ref.getElement();
         if (element != null) {
           highlighter.addRangeHighlight(myCallerEditor, element.getTextRange().getStartOffset() - start,
@@ -220,7 +220,7 @@ public abstract class CallerChooser extends DialogWrapper {
     return tree;
   }
 
-  private void uncheckChildren(final CheckedTreeNode node) {
+  private static void uncheckChildren(final CheckedTreeNode node) {
     final Enumeration children = node.children();
     while (children.hasMoreElements()) {
       MethodNode child = (MethodNode)children.nextElement();
@@ -235,7 +235,7 @@ public abstract class CallerChooser extends DialogWrapper {
     methods.remove(node.getMethod());
   }
 
-  private void getSelectedMethodsInner(final MethodNode node, final Set<PsiMethod> allMethods) {
+  private static void getSelectedMethodsInner(final MethodNode node, final Set<PsiMethod> allMethods) {
     if (node.isChecked()) {
       PsiMethod method = node.getMethod();
       final PsiMethod superMethod = method.findDeepestSuperMethod();
