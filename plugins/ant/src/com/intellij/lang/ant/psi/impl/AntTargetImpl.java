@@ -3,6 +3,7 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public class AntTargetImpl extends AntElementImpl implements AntTarget {
@@ -16,10 +17,15 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
 
   @Nullable
   public String getElementName() {
+    parseTag();
     return myName;
   }
 
-  void parseTag() {
+  @NonNls public String toString() {
+    return "AntTarget: " + getElementName();
+  }
+
+  private void parseTag() {
     if (myName == null) {
       final XmlTag tag = getSourceTag();
       final String name = tag.getName();

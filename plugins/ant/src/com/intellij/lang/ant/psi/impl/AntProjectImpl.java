@@ -5,6 +5,7 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     super(parent, tag);
   }
 
-  public String toString() {
+  @NonNls public String toString() {
     return "AntProject: " + getElementName();
   }
 

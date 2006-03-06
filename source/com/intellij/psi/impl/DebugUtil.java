@@ -33,6 +33,7 @@ public class DebugUtil {
     treeToBuffer(buffer, root, 0, skipWhitespaces, false, false);
     return buffer.toString();
   }
+
   public static String treeToString(ASTNode root, boolean skipWhitespaces, boolean showRanges) {
     StringBuffer buffer = new StringBuffer();
     treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges, false);
@@ -97,7 +98,7 @@ public class DebugUtil {
       text = StringUtil.replace(text, "\t", "\\t");
       buffer.append(root.toString() + "('" + text + "')");
     }
-    if(showRanges) buffer.append(root.getTextRange());
+    if (showRanges) buffer.append(root.getTextRange());
     buffer.append("\n");
     if (root instanceof CompositeElement) {
       ChameleonTransforming.transformChildren(root);
@@ -192,9 +193,9 @@ public class DebugUtil {
       root = root.getTreeParent();
     }
     if (root instanceof CompositeElement) {
-    synchronized (PsiLock.LOCK) {
-      checkSubtree(root);
-    }
+      synchronized (PsiLock.LOCK) {
+        checkSubtree(root);
+      }
     }
   }
 
@@ -252,10 +253,12 @@ public class DebugUtil {
 
   public static String psiToString(final PsiElement file, final boolean skipWhitespaces) {
     final StringBuffer stringBuffer = new StringBuffer(file.getTextLength() * 5);
-    if(file.getNode() == null)
+    if (file.getNode() == null) {
       psiToBuffer(stringBuffer, file, 0, skipWhitespaces, false, false);
-    else
+    }
+    else {
       treeToBuffer(stringBuffer, file.getNode(), 0, skipWhitespaces, false, false);
+    }
     return stringBuffer.toString();
   }
 
@@ -270,17 +273,20 @@ public class DebugUtil {
     for (int i = 0; i < indent; i++) {
       buffer.append(' ');
     }
-    buffer.append(root.toString());
+    final String rootStr = root.toString();
+    buffer.append(rootStr);
     PsiElement child = root.getFirstChild();
     if (child == null) {
       String text = root.getText();
       text = StringUtil.replace(text, "\n", "\\n");
       text = StringUtil.replace(text, "\r", "\\r");
       text = StringUtil.replace(text, "\t", "\\t");
-      buffer.append(root.toString() + "('" + text + "')");
+      buffer.append("('");
+      buffer.append(text);
+      buffer.append("')");
     }
 
-    if(showRanges) buffer.append(root.getTextRange());
+    if (showRanges) buffer.append(root.getTextRange());
     buffer.append("\n");
     while (child != null) {
       psiToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges);
