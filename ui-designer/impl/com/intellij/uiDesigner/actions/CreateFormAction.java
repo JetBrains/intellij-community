@@ -8,6 +8,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -24,6 +25,8 @@ import javax.swing.event.DocumentEvent;
  * @author yole
  */
 public class CreateFormAction extends AbstractCreateFormAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.CreateFormAction");
+
   private String myLastClassName = null;
 
   public CreateFormAction() {
@@ -58,16 +61,27 @@ public class CreateFormAction extends AbstractCreateFormAction {
 
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
-    final PsiPackage aPackage = directory.getPackage();
-    assert aPackage != null;
-    final String packageName = aPackage.getQualifiedName();
-    final String fqClassName = packageName.length() == 0 ? newName : packageName + "." + myLastClassName;
+    PsiElement createdFile;
+    PsiClass newClass;
+    try {
+      final PsiPackage aPackage = directory.getPackage();
+      assert aPackage != null;
+      final String packageName = aPackage.getQualifiedName();
+      final String fqClassName = packageName.length() == 0 ? newName : packageName + "." + myLastClassName;
 
-    final String formBody = createFormBody(fqClassName, "/com/intellij/uiDesigner/NewForm.xml");
-    final PsiFile formFile = directory.getManager().getElementFactory().createFileFromText(newName + ".form", formBody);
-    PsiElement createdFile = directory.add(formFile);
+      final String formBody = createFormBody(fqClassName, "/com/intellij/uiDesigner/NewForm.xml");
+      final PsiFile formFile = directory.getManager().getElementFactory().createFileFromText(newName + ".form", formBody);
+      createdFile = directory.add(formFile);
 
-    PsiClass newClass = directory.createClass(myLastClassName);
+      newClass = directory.createClass(myLastClassName);
+    }
+    catch(IncorrectOperationException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return PsiElement.EMPTY_ARRAY;
+    }
 
     return new PsiElement[] { newClass, createdFile };
   }
