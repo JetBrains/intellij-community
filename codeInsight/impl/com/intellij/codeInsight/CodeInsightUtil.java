@@ -55,7 +55,9 @@ public class CodeInsightUtil {
     final PsiExpression expression = commonParent instanceof PsiExpression ?
                                      (PsiExpression)commonParent :
                                      PsiTreeUtil.getParentOfType(commonParent, PsiExpression.class);
-    if (expression == null || expression.getTextRange().getEndOffset() != endOffset) return null;
+    if (expression == null ||
+        expression.getTextRange().getStartOffset() != startOffset ||
+        expression.getTextRange().getEndOffset() != endOffset) return null;
     if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) return null;
     return expression;
   }
