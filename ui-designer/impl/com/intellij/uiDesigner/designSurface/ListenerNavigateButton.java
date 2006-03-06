@@ -54,13 +54,20 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
   }
 
   public void actionPerformed(ActionEvent e) {
-    final DefaultActionGroup actionGroup = prepareActionGroup(myComponent);
+    showNavigatePopup(myComponent, false);
+  }
+
+  public static void showNavigatePopup(final RadComponent component, final boolean showIfEmpty) {
+    final DefaultActionGroup actionGroup = prepareActionGroup(component);
+    if (actionGroup != null && actionGroup.getChildrenCount() == 0 && showIfEmpty) {
+      actionGroup.add(new MyNavigateAction(UIDesignerBundle.message("navigate.to.listener.empty"), null));
+    }
     if (actionGroup != null && actionGroup.getChildrenCount() > 0) {
-      final DataContext context = DataManager.getInstance().getDataContext(myComponent.getDelegee());
+      final DataContext context = DataManager.getInstance().getDataContext(component.getDelegee());
       final JBPopupFactory factory = JBPopupFactory.getInstance();
-      final ListPopup popup = factory.createActionGroupPopup(UIDesignerBundle.message("title.navigate.to.listener"), actionGroup, context,
+      final ListPopup popup = factory.createActionGroupPopup(UIDesignerBundle.message("navigate.to.listener.title"), actionGroup, context,
                                                              JBPopupFactory.ActionSelectionAid.NUMBERING, true);
-      popup.showUnderneathOf(myComponent.getDelegee());
+      popup.showUnderneathOf(component.getDelegee());
     }
   }
 
