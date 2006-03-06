@@ -81,4 +81,6 @@ public interface PsiFile extends PsiFileSystemItem {
   FileViewProvider getViewProvider();
 
   ASTNode getNode();
+
+  void subtreeChanged();
 }

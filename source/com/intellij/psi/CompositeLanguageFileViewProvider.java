@@ -1,34 +1,32 @@
 package com.intellij.psi;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.jsp.JspxFileViewProviderImpl;
-import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.jsp.jspJava.JspWhileStatement;
+import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.jsp.CompositeLanguageParsingUtil;
 import com.intellij.psi.impl.source.jsp.JspImplUtil;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.jsp.jspJava.JspWhileStatement;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
-import com.intellij.psi.xml.XmlText;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.xml.util.XmlUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
 
-import java.util.*;
 import java.lang.ref.WeakReference;
+import java.util.*;
 
 public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvider{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.CompositeLanguageFileViewProvider");
@@ -139,10 +137,10 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
   protected void reparseRoot(final Language lang, final PsiFile cachedRoot) {
     LOG.debug("JspxFile: reparseRoot "+getVirtualFile().getName());
-    final PsiFileImpl psiFileImpl = ((PsiFileImpl)cachedRoot);
-    final ASTNode oldFileTree = psiFileImpl.getTreeElement();
+    final PsiFile psiFileImpl = cachedRoot;
+    final ASTNode oldFileTree = psiFileImpl.getNode();
     if(oldFileTree == null || oldFileTree.getFirstChildNode() instanceof ChameleonElement){
-      psiFileImpl.setTreeElementPointer(null);
+      if(psiFileImpl instanceof PsiFileImpl) ((PsiFileImpl)psiFileImpl).setTreeElementPointer(null);
       psiFileImpl.subtreeChanged();
       return;
     }

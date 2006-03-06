@@ -219,4 +219,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   public ASTNode getNode() {
     return null; // TODO throw new InsupportedOperationException()
   }
+
+  public void subtreeChanged() {
+  }
 }
