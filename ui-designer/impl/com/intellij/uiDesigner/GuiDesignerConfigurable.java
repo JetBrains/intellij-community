@@ -11,11 +11,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.DispatchThreadProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
+import com.intellij.uiDesigner.radComponents.RadLayoutManager;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -84,6 +86,10 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
       return true;
     }
 
+    if (!Comparing.equal(configuration.DEFAULT_LAYOUT_MANAGER, myGeneralUI.myLayoutManagerCombo.getSelectedItem())) {
+      return true;
+    }
+
     if (configuration.INSTRUMENT_CLASSES != myGeneralUI.myRbInstrumentClasses.isSelected()) {
       return true;
     }
@@ -96,8 +102,10 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     progressWindow.setTitle(UIDesignerBundle.message("title.converting.project"));
     progressWindow.start();
 
-    GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT = myGeneralUI.myChkCopyFormsRuntime.isSelected();
-    GuiDesignerConfiguration.getInstance(myProject).IRIDA_LAYOUT_MODE = myGeneralUI.myIridaCompatibleLayout.isSelected();
+    final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
+    configuration.COPY_FORMS_RUNTIME_TO_OUTPUT = myGeneralUI.myChkCopyFormsRuntime.isSelected();
+    configuration.IRIDA_LAYOUT_MODE = myGeneralUI.myIridaCompatibleLayout.isSelected();
+    configuration.DEFAULT_LAYOUT_MANAGER = (String)myGeneralUI.myLayoutManagerCombo.getSelectedItem();
 
     // We have to store value of the radio button here because myGeneralUI will be cleared
     // just after apply is invoked (applyImpl is invoked later)
@@ -119,6 +127,9 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     }
     myGeneralUI.myChkCopyFormsRuntime.setSelected(configuration.COPY_FORMS_RUNTIME_TO_OUTPUT);
     myGeneralUI.myIridaCompatibleLayout.setSelected(configuration.IRIDA_LAYOUT_MODE);
+
+    myGeneralUI.myLayoutManagerCombo.setModel(new DefaultComboBoxModel(RadLayoutManager.getLayoutManagerNames()));
+    myGeneralUI.myLayoutManagerCombo.setSelectedItem(configuration.DEFAULT_LAYOUT_MANAGER);
   }
 
   public void disposeUIResources() {
@@ -131,12 +142,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     public JRadioButton myRbInstrumentSources;
     public JCheckBox myChkCopyFormsRuntime;
     private JCheckBox myIridaCompatibleLayout;
-
-    public MyGeneralUI() {
-      final ButtonGroup group = new ButtonGroup();
-      group.add(myRbInstrumentClasses);
-      group.add(myRbInstrumentSources);
-    }
+    private JComboBox myLayoutManagerCombo;
   }
 
   private final class MyApplyRunnable implements Runnable {

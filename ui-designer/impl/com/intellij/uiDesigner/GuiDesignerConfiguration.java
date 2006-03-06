@@ -26,6 +26,8 @@ public final class GuiDesignerConfiguration implements ProjectComponent, JDOMExt
 
   public boolean IRIDA_LAYOUT_MODE = false;
 
+  public String DEFAULT_LAYOUT_MANAGER = UIFormXmlConstants.LAYOUT_INTELLIJ;
+
   public void projectOpened() {}
 
   public void projectClosed() {}

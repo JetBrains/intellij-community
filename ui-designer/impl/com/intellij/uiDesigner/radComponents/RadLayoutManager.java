@@ -18,6 +18,7 @@ import java.awt.LayoutManager;
 import java.awt.Point;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Arrays;
 
 /**
  * Design-time support for a layout manager.
@@ -35,7 +36,9 @@ public abstract class RadLayoutManager {
   }
 
   public static String[] getLayoutManagerNames() {
-    return ourLayoutManagerRegistry.keySet().toArray(new String[0]);
+    final String[] layoutManagerNames = ourLayoutManagerRegistry.keySet().toArray(new String[0]);
+    Arrays.sort(layoutManagerNames);
+    return layoutManagerNames;
   }
 
   public static RadLayoutManager createLayoutManager(String name) throws IllegalAccessException, InstantiationException {

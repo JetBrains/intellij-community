@@ -80,10 +80,17 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
   @Nullable protected RadLayoutManager createInitialLayoutManager() {
-    if (GuiDesignerConfiguration.getInstance(getModule().getProject()).IRIDA_LAYOUT_MODE) {
+    final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(getModule().getProject());
+    if (configuration.IRIDA_LAYOUT_MODE) {
       return new RadXYLayoutManager();
     }
-    return new RadGridLayoutManager();
+    try {
+      return RadLayoutManager.createLayoutManager(configuration.DEFAULT_LAYOUT_MANAGER);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return new RadGridLayoutManager();
+    }
   }
 
   public Property getInplaceProperty(final int x, final int y) {
