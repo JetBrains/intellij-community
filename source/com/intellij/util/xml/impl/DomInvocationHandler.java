@@ -11,10 +11,10 @@ import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
@@ -90,28 +90,35 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final void copyFrom(DomElement other) {
+    if (other == getProxy()) return;
     assert other.getDomElementType().equals(myType);
+    final XmlTag otherTag = other.getXmlTag();
+    if (otherTag == null) {
+      if (getXmlTag() != null) {
+        undefine();
+      }
+      return;
+    }
+
     final boolean b = myManager.setChanging(true);
     try {
+      final XmlTag tag = ensureTagExists();
+      detach(false);
       synchronized (PsiLock.LOCK) {
-        final XmlTag tag = ensureTagExists();
         for (final XmlAttribute attribute : tag.getAttributes()) {
           attribute.delete();
         }
         for (final XmlTag xmlTag : tag.getSubTags()) {
           xmlTag.delete();
         }
-        final XmlTag hisTag = other.getXmlTag();
-        if (hisTag != null) {
-          for (final XmlAttribute attribute : hisTag.getAttributes()) {
-            tag.add(attribute);
-          }
-          for (final XmlTag xmlTag : hisTag.getSubTags()) {
-            tag.add(xmlTag);
-          }
+        for (final XmlAttribute attribute : otherTag.getAttributes()) {
+          tag.add(attribute);
         }
-        myInitializedChildren.clear();
+        for (final XmlTag xmlTag : otherTag.getSubTags()) {
+          tag.add(xmlTag);
+        }
       }
+      attach(tag);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -121,8 +128,16 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
+  public final DomElement createMockCopy() {
+    final DomElement copy = myManager.createMockElement((Class<? extends DomElement>)DomUtil.getRawType(myType), getModule());
+    copy.copyFrom(getProxy());
+    return copy;
+  }
+
   public final Module getModule() {
-    return ModuleUtil.findModuleForPsiElement(getFile());
+    final Module module = ModuleUtil.findModuleForPsiElement(getFile());
+    if (module != null) return module;
+    return (Module)getRoot().getUserData(DomManagerImpl.MODULE);
   }
 
   public XmlTag ensureTagExists() {

@@ -86,7 +86,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
     final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
-    
+
     if (endTagName != null){
       final PsiReference[] psiReferences = new PsiReference[referencesFromProviders.length + 2];
       psiReferences[0] = new TagNameReference(startTagName, true);
@@ -229,23 +229,23 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   public XmlElementDescriptor getDescriptor() {
     final String namespace = getNamespace();
     XmlElementDescriptor elementDescriptor;
-    
+
     if (XmlUtil.EMPTY_URI.equals(namespace)) { //nonqualified items
       final PsiElement parent = getParent();
-      
+
       if (parent instanceof XmlTag) {
         final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
-        
+
         if (descriptor != null) {
           elementDescriptor = descriptor.getElementDescriptor(this);
-          
+
           if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
             return elementDescriptor;
           }
         }
       }
     }
-    
+
     final XmlNSDescriptor nsDescriptor = getNSDescriptor(namespace, false);
     elementDescriptor = (nsDescriptor != null) ? nsDescriptor.getElementDescriptor(this) : null;
 
@@ -478,13 +478,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     if(myNamespaceMap == null && hasNamespaceDeclarations()){
       final BidirectionalMap<String, String> namespaceMap = new BidirectionalMap<String, String>();
       final XmlAttribute[] attributes = getAttributes();
-      
+
       for (final XmlAttribute attribute : attributes) {
         if (attribute.isNamespaceDeclaration()) {
           final String name = attribute.getName();
           int splitIndex = name.indexOf(':');
           final String value = attribute.getValue();
-          
+
           if (value != null) {
             if (splitIndex < 0) {
               namespaceMap.put("", value);
@@ -505,7 +505,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       for (final String[] prefix2ns : defaultNamespace) {
         namespaceMap.put(prefix2ns[0], prefix2ns[1]);
       }
-      
+
       myNamespaceMap = namespaceMap; // assign to field should be as last statement, to prevent incomplete initialization due to ProcessCancelledException
     }
   }
@@ -745,7 +745,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         // compute where to insert tag according to DTD or XSD
         final XmlElementDescriptor parentDescriptor = getDescriptor();
         final XmlTag[] subTags = getSubTags();
-        if (parentDescriptor != null && subTags.length > 0){
+        if ((parentDescriptor != null && parentDescriptor.getDeclaration().getContainingFile().isPhysical()) // filtring out generated dtds
+            && subTags.length > 0){
           final XmlElementDescriptor[] childElementDescriptors = parentDescriptor.getElementsDescriptors(XmlTagImpl.this);
           int subTagNum = -1;
           for (final XmlElementDescriptor childElementDescriptor : childElementDescriptors) {
@@ -773,6 +774,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
               return null;
             }
           }
+        }
+        else {
+          final ASTNode child = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(XmlTagImpl.this);
+          myNewElement = XmlTagImpl.super.addInternal(myChild, myChild, child, Boolean.TRUE);
+          return null;
         }
       }
       myNewElement = XmlTagImpl.super.addInternal(myChild, myChild, anchor, Boolean.TRUE);

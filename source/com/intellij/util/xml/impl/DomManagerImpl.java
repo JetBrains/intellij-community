@@ -4,6 +4,8 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.PomModel;
@@ -36,6 +38,8 @@ import java.util.*;
  * @author peter
  */
 public class DomManagerImpl extends DomManager implements ProjectComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomManagerImpl");
+  static final Key<Module> MODULE = Key.create("NameStrategy");
   private static final Key<DomNameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
@@ -318,8 +322,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return getCachedElement(tag);
   }
 
-  public final <T extends DomElement> T createMockElement(final Class<T> aClass) {
+  public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module) {
     final XmlFile file = (XmlFile)PsiManager.getInstance(myProject).getElementFactory().createFileFromText("a.xml", "");
-    return getFileElement(file, aClass, "root").getRootElement();
+    final DomFileElementImpl<T> fileElement = getFileElement(file, aClass, "root");
+    fileElement.putUserData(MODULE, module);
+    return fileElement.getRootElement();
   }
 }

@@ -10,10 +10,10 @@ import java.awt.event.ActionListener;
 /**
  * @author peter
  */
-public class BooleanControl extends com.intellij.util.xml.ui.BaseControl<JCheckBox, Boolean> {
+public class BooleanControl extends BaseControl<JCheckBox, Boolean> {
   private boolean myUndefined;
 
-  public BooleanControl(final com.intellij.util.xml.ui.DomWrapper<Boolean> domWrapper) {
+  public BooleanControl(final DomWrapper<Boolean> domWrapper) {
     super(domWrapper);
   }
 

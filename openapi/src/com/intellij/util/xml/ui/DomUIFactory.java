@@ -3,9 +3,9 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
@@ -43,12 +43,16 @@ public abstract class DomUIFactory implements ApplicationComponent {
     return createGenericValueControl(DomUtil.getGenericValueType(element.getDomElementType()), element);
   }
 
+  public static DomUIControl createDescriptionControl(DomElement parent) {
+    return new BigStringControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")));
+  }
+
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element) {
     if (type.equals(PsiClass.class)) {
       return new PsiClassControl(new DomStringWrapper(element));
     }
     if (type instanceof Class && Enum.class.isAssignableFrom((Class)type)) {
-      return new EnumControl(new DomStringWrapper(element), (Class)type);
+      return new ComboControl(new DomStringWrapper(element), (Class)type);
     }
 
     final DomFixedWrapper wrapper = new DomFixedWrapper(element);
@@ -85,7 +89,7 @@ public abstract class DomUIFactory implements ApplicationComponent {
   }
 
   public ColumnInfo createColumnInfo(final DomCollectionChildDescription description,
-                                             final DomElement element) {
+                                     final DomElement element) {
     final String presentableName = description.getCommonPresentableName(element);
     final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());
     if (aClass != null) {

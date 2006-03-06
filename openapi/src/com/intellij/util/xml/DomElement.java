@@ -55,4 +55,6 @@ public interface DomElement {
   Module getModule();
 
   void copyFrom(DomElement other);
+
+  DomElement createMockCopy();
 }

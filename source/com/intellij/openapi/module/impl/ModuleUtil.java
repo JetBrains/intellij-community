@@ -85,6 +85,7 @@ public class ModuleUtil {
 
   @Nullable
   public static Module getParentModuleOfType(ModuleType expectedModuleType, Module module) {
+    if (module == null) return null;
     if (expectedModuleType.equals(module.getModuleType())) return module;
     final List<Module> parents = getParentModulesOfType(expectedModuleType, module);
     return parents.size() == 0 ? null : parents.get(0);

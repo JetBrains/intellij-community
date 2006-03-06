@@ -25,7 +25,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
     }
 
     if (Enum.class.isAssignableFrom(type)) {
-      return new DefaultCellEditor(removeBorder(EnumControl.createEnumComboBox(type)));
+      return new DefaultCellEditor(removeBorder(ComboControl.createEnumComboBox(type)));
     }
 
     assert false : "Type not supported: " + type;

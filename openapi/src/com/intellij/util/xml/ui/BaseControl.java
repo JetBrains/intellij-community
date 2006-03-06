@@ -8,10 +8,8 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.ui.DomUIControl;
-import com.intellij.util.xml.ui.CommitListener;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -106,18 +104,20 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
     }
   }
 
-  protected boolean valuesAreEqual(final T valueInXml, final T valueInControl) {
-    if ("".equals(valueInControl) && null == valueInXml) return true;
-
-    return Comparing.equal(valueInXml, valueInControl);
+  private static boolean valuesAreEqual(final Object valueInXml, final Object valueInControl) {
+    return "".equals(valueInControl) && null == valueInXml || Comparing.equal(valueInXml, valueInControl);
   }
 
   public final void reset() {
     if (!myCommitting) {
-      final T t = getValueFromXml();
-      if (!valuesAreEqual(t, getValue(getBoundComponent()))) {
-        setValue(getBoundComponent(), t);
-      }
+      doReset();
+    }
+  }
+
+  protected void doReset() {
+    final T t = getValueFromXml();
+    if (!valuesAreEqual(t, getValue(getBoundComponent()))) {
+      setValue(getBoundComponent(), t);
     }
   }
 
