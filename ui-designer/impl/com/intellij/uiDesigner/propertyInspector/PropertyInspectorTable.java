@@ -414,7 +414,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
       final RadContainer parent = component.getParent();
       if (parent != null) {
-        final Property[] properties = parent.getLayoutManager().getComponentProperties(myProject);
+        final Property[] properties = parent.getLayoutManager().getComponentProperties(myProject, component);
         addApplicableProperties(properties, component, result);
       }
 

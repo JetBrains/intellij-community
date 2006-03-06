@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
@@ -18,6 +19,7 @@ import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
+import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.TabbedPaneUI;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 /**
@@ -33,7 +37,7 @@ import java.awt.event.MouseEvent;
  * @author Vladimir Kondratyev
  */
 public final class RadTabbedPane extends RadContainer implements ITabbedPane {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.RadTabbedPane");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadTabbedPane");
   /**
    * value: HashMap<String, StringDescriptor>
    */
@@ -45,7 +49,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   }
 
   @Override protected RadLayoutManager createInitialLayoutManager() {
-    return new DummyLayoutManager();
+    return new RadTabbedPaneLayoutManager();
   }
 
   @Override public RadComponent getComponentToDrag(final Point pnt) {
@@ -69,21 +73,6 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return c;
   }
 
-  @NotNull @Override
-  public DropLocation getDropLocation(@Nullable Point location) {
-    final JTabbedPane tabbedPane = getTabbedPane();
-    final TabbedPaneUI ui = tabbedPane.getUI();
-    if (location != null && tabbedPane.getTabCount() > 0) {
-      for(int i=0; i<tabbedPane.getTabCount(); i++) {
-        Rectangle rc = ui.getTabBounds(tabbedPane, i);
-        if (location.x < rc.getCenterX()) {
-          return new InsertTabDropLocation(i, new Rectangle(rc.x-4, rc.y, 8, rc.height));
-        }
-      }
-    }
-    return new InsertTabDropLocation(tabbedPane.getTabCount(), null);
-  }
-
   @Override public void init(final GuiEditor editor, @NotNull final ComponentItem item) {
     super.init(editor, item);
     // add one tab by default
@@ -97,21 +86,6 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return (JTabbedPane)getDelegee();
   }
 
-  @Override protected void addToDelegee(final int index, final RadComponent component) {
-    final JTabbedPane tabbedPane = getTabbedPane();
-    final StringDescriptor titleDescriptor;
-    if (component.getCustomLayoutConstraints() instanceof LwTabbedPane.Constraints) {
-      titleDescriptor = ((LwTabbedPane.Constraints)component.getCustomLayoutConstraints()).myTitle;
-    }
-    else {
-      titleDescriptor = null;
-    }
-    component.setCustomLayoutConstraints(null);
-    final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(this);
-    id2Descriptor.put(component.getId(), titleDescriptor);
-    tabbedPane.insertTab(calcTabName(titleDescriptor), null, component.getDelegee(), null, index);
-  }
-
   private String calcTabName(final StringDescriptor titleDescriptor) {
     if (titleDescriptor == null) {
       return UIDesignerBundle.message("tab.untitled");
@@ -123,25 +97,6 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return value;
   }
 
-  protected void removeFromDelegee(final RadComponent component){
-    final JTabbedPane tabbedPane = getTabbedPane();
-
-    final JComponent delegee = component.getDelegee();
-    final int i = tabbedPane.indexOfComponent(delegee);
-    if (i == -1) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("cannot find tab for " + component);
-    }
-    final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(this);
-    StringDescriptor titleDescriptor = id2Descriptor.get(component.getId());
-    if (titleDescriptor == null) {
-      titleDescriptor = StringDescriptor.create(tabbedPane.getTitleAt(i));
-    }
-    component.setCustomLayoutConstraints(new LwTabbedPane.Constraints(titleDescriptor));
-    id2Descriptor.remove(component.getId());
-    tabbedPane.removeTabAt(i);
-  }
-
   /**
    * @return inplace property for editing of the title of the clicked tab
    */
@@ -150,14 +105,14 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     final TabbedPaneUI ui = tabbedPane.getUI();
     LOG.assertTrue(ui != null);
     final int index = ui.tabForCoordinate(tabbedPane, x, y);
-    return index != -1 ? new MyTitleProperty(index) : null;
+    return index != -1 ? new MyTitleProperty(true, index) : null;
   }
 
   @Override @Nullable
   public Property getDefaultInplaceProperty() {
     final int index = getTabbedPane().getSelectedIndex();
     if (index >= 0) {
-      return new MyTitleProperty(index);
+      return new MyTitleProperty(true, index);
     }
     return null;
   }
@@ -192,7 +147,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     final JTabbedPane tabbedPane = getTabbedPane();
     int index = tabbedPane.indexOfComponent(delegee);
     if (index >= 0) {
-      new MyTitleProperty(index).setValue(this, title);
+      new MyTitleProperty(true, index).setValue(this, title);
     }
   }
 
@@ -216,35 +171,6 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       writeBorder(writer);
       writeChildren(writer);
     }finally{
-      writer.endElement();
-    }
-  }
-
-  public void writeConstraints(final XmlWriter writer, final RadComponent child) {
-    writer.startElement("tabbedpane");
-    try{
-      final JComponent delegee = child.getDelegee();
-      final JTabbedPane tabbedPane = getTabbedPane();
-      final int i = tabbedPane.indexOfComponent(delegee);
-      if (i == -1) {
-        //noinspection HardCodedStringLiteral
-        throw new IllegalArgumentException("cannot find tab for " + child);
-      }
-
-      final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(this);
-      final StringDescriptor tabTitleDescriptor = id2Descriptor.get(child.getId());
-      if (tabTitleDescriptor != null) {
-        writer.writeStringDescriptor(tabTitleDescriptor,
-                                     UIFormXmlConstants.ATTRIBUTE_TITLE,
-                                     UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE,
-                                     UIFormXmlConstants.ATTRIBUTE_TITLE_KEY);
-      }
-      else {
-        final String title = tabbedPane.getTitleAt(i);
-        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE, title != null ? title : "");
-      }
-    }
-    finally{
       writer.endElement();
     }
   }
@@ -291,18 +217,25 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     /**
      * Index of tab which title should be edited
      */
+    private final boolean myInPlace;
     private final int myIndex;
     private final StringEditor myEditor;
+    private final StringRenderer myRenderer;
 
-    public MyTitleProperty(final int index) {
-      super(null, "Title");
+    public MyTitleProperty(final boolean inPlace, final int index) {
+      super(null, "Tab Title");
+      myInPlace = inPlace;
       myIndex = index;
       myEditor = new StringEditor(getModule().getProject());
+      myRenderer = new StringRenderer();
     }
 
     public Object getValue(final RadComponent component) {
+      final RadComponent tabComponent = myInPlace ? component : getRadComponent(myIndex);
       // 1. resource bundle
-      final StringDescriptor descriptor = getId2Descriptor(component).get(component.getId());
+      final StringDescriptor descriptor = getId2Descriptor(RadTabbedPane.this).get(tabComponent.getId());
+      LOG.debug("MyTitleProperty: getting value " + (descriptor == null ? "<null>" : descriptor.toString()) +
+        " for component ID=" + tabComponent.getId());
       if(descriptor != null){
         return descriptor;
       }
@@ -312,14 +245,17 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
 
     protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
+      final RadComponent tabComponent = myInPlace ? component : getRadComponent(myIndex);
       // 1. Put value into map
       final StringDescriptor descriptor = (StringDescriptor)value;
-      final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(component);
+      LOG.debug("MyTitleProperty: setting value " + (descriptor == null ? "<null>" : descriptor.toString()) +
+        " for component ID=" + tabComponent.getId());
+      final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(RadTabbedPane.this);
       if(descriptor == null){
-        id2Descriptor.remove(component.getId());
+        id2Descriptor.remove(tabComponent.getId());
       }
       else{
-        id2Descriptor.put(component.getId(), descriptor);
+        id2Descriptor.put(tabComponent.getId(), descriptor);
       }
 
       // 2. Apply real string value to JComponent peer
@@ -328,11 +264,113 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
     @NotNull
     public PropertyRenderer getRenderer() {
-      throw new UnsupportedOperationException();
+      return myRenderer;
     }
 
     public PropertyEditor getEditor() {
       return myEditor;
+    }
+  }
+
+  private class RadTabbedPaneLayoutManager extends RadLayoutManager {
+
+    @Nullable public String getName() {
+      return null;
+    }
+
+    @Override @NotNull
+    public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+      final JTabbedPane tabbedPane = getTabbedPane();
+      final TabbedPaneUI ui = tabbedPane.getUI();
+      if (location != null && tabbedPane.getTabCount() > 0) {
+        for(int i=0; i<tabbedPane.getTabCount(); i++) {
+          Rectangle rc = ui.getTabBounds(tabbedPane, i);
+          if (location.x < rc.getCenterX()) {
+            return new InsertTabDropLocation(i, new Rectangle(rc.x-4, rc.y, 8, rc.height));
+          }
+        }
+      }
+      return new InsertTabDropLocation(tabbedPane.getTabCount(), null);
+    }
+
+    public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
+      writer.startElement("tabbedpane");
+      try{
+        final JComponent delegee = child.getDelegee();
+        final JTabbedPane tabbedPane = getTabbedPane();
+        final int i = tabbedPane.indexOfComponent(delegee);
+        if (i == -1) {
+          //noinspection HardCodedStringLiteral
+          throw new IllegalArgumentException("cannot find tab for " + child);
+        }
+
+        final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(RadTabbedPane.this);
+        final StringDescriptor tabTitleDescriptor = id2Descriptor.get(child.getId());
+        if (tabTitleDescriptor != null) {
+          writer.writeStringDescriptor(tabTitleDescriptor,
+                                       UIFormXmlConstants.ATTRIBUTE_TITLE,
+                                       UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE,
+                                       UIFormXmlConstants.ATTRIBUTE_TITLE_KEY);
+        }
+        else {
+          final String title = tabbedPane.getTitleAt(i);
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE, title != null ? title : "");
+        }
+      }
+      finally{
+        writer.endElement();
+      }
+    }
+
+    public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
+      final JTabbedPane tabbedPane = getTabbedPane();
+      final StringDescriptor titleDescriptor;
+      if (component.getCustomLayoutConstraints() instanceof LwTabbedPane.Constraints) {
+        titleDescriptor = ((LwTabbedPane.Constraints)component.getCustomLayoutConstraints()).myTitle;
+      }
+      else {
+        titleDescriptor = null;
+      }
+      component.setCustomLayoutConstraints(null);
+      final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(RadTabbedPane.this);
+      LOG.debug("Added component with ID " + component.getId() + ", title " + (titleDescriptor == null ? "<null>" : titleDescriptor.toString()));
+      id2Descriptor.put(component.getId(), titleDescriptor);
+      tabbedPane.insertTab(calcTabName(titleDescriptor), null, component.getDelegee(), null, index);
+    }
+
+
+    @Override public void removeComponentFromContainer(final RadContainer container, final RadComponent component) {
+      LOG.debug("Removing component with ID " + component.getId());
+      final JTabbedPane tabbedPane = getTabbedPane();
+
+      final JComponent delegee = component.getDelegee();
+      final int i = tabbedPane.indexOfComponent(delegee);
+      if (i == -1) {
+        //noinspection HardCodedStringLiteral
+        throw new IllegalArgumentException("cannot find tab for " + component);
+      }
+      final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(RadTabbedPane.this);
+      StringDescriptor titleDescriptor = id2Descriptor.get(component.getId());
+      if (titleDescriptor == null) {
+        LOG.debug("title of removed component is null");
+        titleDescriptor = StringDescriptor.create(tabbedPane.getTitleAt(i));
+      }
+      else {
+        LOG.debug("title of removed component is " + titleDescriptor.toString());
+      }
+      component.setCustomLayoutConstraints(new LwTabbedPane.Constraints(titleDescriptor));
+      id2Descriptor.remove(component.getId());
+      tabbedPane.removeTabAt(i);
+    }
+
+    @Override public Property[] getComponentProperties(final Project project, final RadComponent component) {
+      final JComponent delegee = component.getDelegee();
+      final JTabbedPane tabbedPane = getTabbedPane();
+      int index = tabbedPane.indexOfComponent(delegee);
+      if (index >= 0) {
+        return new Property[] { new MyTitleProperty(false, index) };
+      }
+      return Property.EMPTY_ARRAY;
     }
   }
 

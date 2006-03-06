@@ -221,7 +221,8 @@ public class RadContainer extends RadComponent implements IContainer {
     firePropertyChanged(PROP_CHILDREN, oldChildren, newChildren);
   }
 
-  protected void removeFromDelegee(final RadComponent component){
+  protected void removeFromDelegee(final RadComponent component) {
+    myLayoutManager.removeComponentFromContainer(this, component);
     getDelegee().remove(component.getDelegee());
   }
 

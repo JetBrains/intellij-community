@@ -83,7 +83,7 @@ public class RadGridLayoutManager extends RadLayoutManager {
   }
 
 
-  @Override public Property[] getComponentProperties(final Project project) {
+  @Override public Property[] getComponentProperties(final Project project, final RadComponent component) {
     return new Property[] {
       HSizePolicyProperty.getInstance(project),
       VSizePolicyProperty.getInstance(project),

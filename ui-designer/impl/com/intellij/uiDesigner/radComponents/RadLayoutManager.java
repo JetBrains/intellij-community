@@ -73,11 +73,15 @@ public abstract class RadLayoutManager {
 
   public abstract void addComponentToContainer(final RadContainer container, final RadComponent component, final int index);
 
+  public void removeComponentFromContainer(final RadContainer container, final RadComponent component) {
+    container.getDelegee().remove(component.getDelegee());
+  }
+
   public Property[] getContainerProperties(final Project project) {
     return Property.EMPTY_ARRAY;
   }
 
-  public Property[] getComponentProperties(final Project project) {
+  public Property[] getComponentProperties(final Project project, final RadComponent component) {
     return Property.EMPTY_ARRAY;
   }
 }

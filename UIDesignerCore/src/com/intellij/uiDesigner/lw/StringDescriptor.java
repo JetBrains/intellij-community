@@ -140,4 +140,11 @@ public final class StringDescriptor {
     result = 29 * result + (myValue != null ? myValue.hashCode() : 0);
     return result;
   }
+
+  public String toString() {
+    if (myValue != null) {
+      return "[StringDescriptor:" + myValue + "]";
+    }
+    return "[StringDescriptor" + myBundleName + ":" + myKey + "]";
+  }
 }
