@@ -8,6 +8,7 @@ import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,7 +19,6 @@ import java.awt.*;
  */
 public final class RadScrollPane extends RadContainer {
   public static final Class COMPONENT_CLASS = JScrollPane.class;
-  private MyDropLocation myDropLocation = null;
 
   public RadScrollPane(final Module module, final String id){
     super(module, COMPONENT_CLASS, id);
@@ -26,27 +26,7 @@ public final class RadScrollPane extends RadContainer {
 
   @Nullable @Override
   protected RadLayoutManager createInitialLayoutManager() {
-    return new DummyLayoutManager();
-  }
-
-  @Override @Nullable
-  public DropLocation getDropLocation(@Nullable Point location) {
-    if (myDropLocation == null) {
-      myDropLocation = new MyDropLocation();
-    }
-    return myDropLocation;
-  }
-
-  @Override protected void addToDelegee(final int index, final RadComponent component){
-    final JScrollPane scrollPane = (JScrollPane)getDelegee();
-    final JComponent delegee = component.getDelegee();
-    delegee.setLocation(0,0);
-    scrollPane.setViewportView(delegee);
-  }
-
-  protected void removeFromDelegee(final RadComponent component){
-    final JScrollPane scrollPane = (JScrollPane)getDelegee();
-    scrollPane.setViewportView(null);
+    return new RadScrollPaneLayoutManager();
   }
 
   public void write(final XmlWriter writer) {
@@ -58,7 +38,36 @@ public final class RadScrollPane extends RadContainer {
     }
   }
 
-  public void writeConstraints(final XmlWriter writer, final RadComponent child) {}
+  private class RadScrollPaneLayoutManager extends RadLayoutManager {
+    private MyDropLocation myDropLocation = null;
+
+    @Nullable public String getName() {
+      return null;
+    }
+
+    public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
+    }
+
+    @Override @NotNull
+    public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+      if (myDropLocation == null) {
+        myDropLocation = new MyDropLocation();
+      }
+      return myDropLocation;
+    }
+
+    public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
+      final JScrollPane scrollPane = (JScrollPane)container.getDelegee();
+      final JComponent delegee = component.getDelegee();
+      delegee.setLocation(0,0);
+      scrollPane.setViewportView(delegee);
+    }
+
+    @Override public void removeComponentFromContainer(final RadContainer container, final RadComponent component) {
+      final JScrollPane scrollPane = (JScrollPane)container.getDelegee();
+      scrollPane.setViewportView(null);
+    }
+  }
 
   private class MyDropLocation implements DropLocation {
     public RadContainer getContainer() {
