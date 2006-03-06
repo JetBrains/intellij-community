@@ -65,7 +65,8 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     if (myHighlighter.isErrorAnalyzingFinished(myFile)) {
       status.errorAnalyzingFinished = true;
       for (int i = 0; i < status.errorCount.length; i++) {
-        HighlightInfo[] infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, SeverityRegistrar.getSeverityByIndex(i), myProject);
+        final HighlightSeverity minSeverity = SeverityRegistrar.getSeverityByIndex(i);
+        HighlightInfo[] infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, minSeverity, myProject);
         status.errorCount[i] = infos.length;
       }
       status.inspectionFinished = myHighlighter.isInspectionCompleted(myFile);
@@ -113,8 +114,8 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
             } else {
               text += DaemonBundle.message("errors.found", count, (count > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase()));
             }
+            currentSeverityErrors += count;
           }
-          currentSeverityErrors += status.errorCount[i];
         }
       }
 

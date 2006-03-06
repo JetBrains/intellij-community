@@ -16,6 +16,7 @@
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
@@ -33,6 +34,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * User: anna
@@ -50,7 +52,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
   @NonNls private static final String CONFIG_FILE_EXTENSION = ".xml";
 
   public InspectionProfileManager() {
-    super(Profile.INSPECTION, 
+    super(Profile.INSPECTION,
           new Computable<Profile>() {
             public Profile compute() {
               return new InspectionProfileImpl("Default");
@@ -64,6 +66,10 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
   }
 
   public void disposeComponent() {
+    final Collection<Profile> profiles = getProfiles();
+    for (Profile profile : profiles) {
+      ((InspectionProfile)profile).save();
+    }
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileManager");

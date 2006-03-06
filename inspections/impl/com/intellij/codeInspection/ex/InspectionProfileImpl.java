@@ -186,7 +186,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey) {
-    return getToolState(inspectionToolKey).getLevel();
+    HighlightDisplayLevel level = getToolState(inspectionToolKey).getLevel();
+    if (!SeverityRegistrar.isSeverityValid(level.getSeverity())){
+      level = HighlightDisplayLevel.WARNING;
+      setErrorLevel(inspectionToolKey, level);
+    }
+    return level;
   }
 
   private ToolState getToolState(HighlightDisplayKey key) {

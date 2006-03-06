@@ -298,7 +298,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private static HighlightInfo createUnusedSymbolInfo(PsiElement element, String message) {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
-    return HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, element.getTextRange(), message, attributes);
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, element, message, attributes);
   }
 
   private HighlightInfo processField(PsiField field, final List<IntentionAction> options, final String displayName) {

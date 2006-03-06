@@ -8,6 +8,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -24,7 +25,7 @@ import java.util.List;
  */
 public class SeverityRegistrar implements JDOMExternalizable, ApplicationComponent {
   @NonNls private static final String INFO = "info";
-  private static final Map<HighlightSeverity, HighlightInfoType.HighlightInfoTypeImpl> ourMap = new HashMap<HighlightSeverity, HighlightInfoType.HighlightInfoTypeImpl>();
+  private static final Map<HighlightSeverity, HighlightInfoType.HighlightInfoTypeImpl> ourMap = new TreeMap<HighlightSeverity, HighlightInfoType.HighlightInfoTypeImpl>();
   private static final Map<HighlightSeverity, Color> ourRendererColors = new HashMap<HighlightSeverity, Color>();
   @NonNls private static final String ERROR = "error";
   @NonNls private static final String WARNING = "warning";
@@ -59,7 +60,8 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     if (severity == HighlightSeverity.INFORMATION){
       return (HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.INFORMATION;
     }
-    return ourMap.get(severity);
+    final HighlightInfoType.HighlightInfoTypeImpl infoType = ourMap.get(severity);
+    return (HighlightInfoType.HighlightInfoTypeImpl)(infoType != null ? infoType : HighlightInfoType.WARNING);
   }
 
 
@@ -81,7 +83,7 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
         registerSeverity(info, color);
       }
     }
-    
+
     final Element error = element.getChild(ERROR);
     if (error != null) {
       HighlightSeverity.ERROR.readExternal(error);
@@ -126,14 +128,11 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
   }
 
   public static int getSeveritiesCount() {
-    return ourMap.keySet().size() + 2;
+    return createCurrentSeveritiesSet().size();
   }
 
   public static HighlightSeverity getSeverityByIndex(final int i) {
-    TreeSet<HighlightSeverity> set = new TreeSet<HighlightSeverity>();
-    set.add(HighlightSeverity.ERROR);
-    set.add(HighlightSeverity.WARNING);
-    set.addAll(ourMap.keySet());
+    TreeSet<HighlightSeverity> set = createCurrentSeveritiesSet();
     int index = 0;
     for (HighlightSeverity severity : set) {
       if (index == i) return severity;
@@ -142,14 +141,26 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     return null; 
   }
 
+  private static TreeSet<HighlightSeverity> createCurrentSeveritiesSet() {
+    TreeSet<HighlightSeverity> set = new TreeSet<HighlightSeverity>();
+    set.add(HighlightSeverity.ERROR);
+    set.add(HighlightSeverity.WARNING);
+    set.addAll(ourMap.keySet());
+    return set;
+  }
+
   public static Color getRendererColorByIndex(final int i) {
     final HighlightSeverity severity = getSeverityByIndex(i);
     if (severity == HighlightSeverity.ERROR){
-      return Color.RED;
+      return CodeInsightColors.ERRORS_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor();
     }
     if (severity == HighlightSeverity.WARNING){
-      return Color.YELLOW;
+      return CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor();
     }
     return ourRendererColors.get(severity);
+  }
+
+  public static boolean isSeverityValid(final HighlightSeverity severity) {
+    return createCurrentSeveritiesSet().contains(severity);
   }
 }

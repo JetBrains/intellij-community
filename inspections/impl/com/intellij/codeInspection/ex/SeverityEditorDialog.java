@@ -165,7 +165,7 @@ public class SeverityEditorDialog extends DialogWrapper {
         if (name == null) return null;
         final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
         HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, 0),
-                                                                                                   TextAttributesKey.createTextAttributesKey(name, textAttributes.clone()));
+                                                                                                   TextAttributesKey.createTextAttributesKey(name));
         return new MyHighlightInfoTypeWithAtrributesDescription(textAttributes.clone(), info);
       }
     }, true);

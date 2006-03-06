@@ -241,4 +241,15 @@ public class HighlightInfo {
   public void setGutterIconRenderer(final GutterIconRenderer gutterIconRenderer) {
     this.gutterIconRenderer = gutterIconRenderer;
   }
+
+  public static HighlightInfo createHighlightInfo(final HighlightInfoType type,
+                                                  final PsiElement element,
+                                                  final String message,
+                                                  final TextAttributes attributes) {
+    TextRange textRange = element.getTextRange();
+    // do not use HighlightInfoFilter
+    HighlightInfo highlightInfo = new HighlightInfo(type.getAttributesKey(), type, textRange.getStartOffset(), textRange.getEndOffset(), message, htmlEscapeToolTip(message), type.getSeverity(element), false, false);
+    highlightInfo.forcedTextAttributes = attributes;
+    return highlightInfo;
+  }
 }
