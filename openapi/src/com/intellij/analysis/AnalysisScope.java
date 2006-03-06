@@ -512,10 +512,14 @@ public class AnalysisScope {
       for (Module module : myModules) {
         processModule(result, module);
       }
-    } else if (myType == FILE || myType == DIRECTORY){
+    } else if (myType == FILE){
       final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
       LOG.assertTrue(profileManager != null);
       result.add(profileManager.getProfileName((PsiFile)myElement));
+    } else if (myType == DIRECTORY) {
+      final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
+      LOG.assertTrue(profileManager != null);
+      processDirectories(new PsiDirectory[]{(PsiDirectory)myElement}, result, profileManager);
     } else if (myType == PACKAGE){
       final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
       LOG.assertTrue(profileManager != null);
