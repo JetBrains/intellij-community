@@ -228,6 +228,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testNoShortCircuit() throws Exception {
+    doTest();
+  }
+
 
   private void doExitPointsTest(boolean shouldSucceed) throws Exception {
     String fileName = getTestName(false) + ".java";

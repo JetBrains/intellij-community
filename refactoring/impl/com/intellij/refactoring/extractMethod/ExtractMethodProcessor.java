@@ -182,7 +182,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myCodeFragementMember = codeFragment.getParent();
 
     try {
-      myControlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
+      myControlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
     }
     catch (AnalysisCanceledException e) {
       throw new PrepareFailedException(RefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.getErrorElement());

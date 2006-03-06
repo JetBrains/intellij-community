@@ -18,6 +18,8 @@ public class ControlFlowFactory {
 
   private static final Key<SoftReference<ControlFlowContext>> CONTROL_FLOW_KEY = Key.create("CONTROL_FLOW_KEY");
 
+  private ControlFlowFactory() {}
+
   private static class ControlFlowContext {
     private final ControlFlowPolicy policy;
     private final boolean evaluateConstantIfCondition;
@@ -35,10 +37,17 @@ public class ControlFlowFactory {
   }
 
   public static ControlFlow getControlFlow(PsiElement element, ControlFlowPolicy policy) throws AnalysisCanceledException {
-    return getControlFlow(element, policy, true);
+    return getControlFlow(element, policy, true, true);
   }
 
   public static ControlFlow getControlFlow(PsiElement element, ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
+    return getControlFlow(element, policy, true, evaluateConstantIfCondition);
+  }
+
+  public static ControlFlow getControlFlow(PsiElement element,
+                                           ControlFlowPolicy policy,
+                                           boolean enableShortCircuit,
+                                           boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
     SoftReference<ControlFlowContext> ref = element.getUserData(CONTROL_FLOW_KEY);
     ControlFlowContext currentFlow = ref == null ? null : ref.get();
     final long modificationCount = element.getManager().getModificationTracker().getModificationCount();
@@ -57,7 +66,7 @@ public class ControlFlowFactory {
       currentFlow = currentFlow.next;
     }
     if (flow == null) {
-      flow = new ControlFlowAnalyzer(element, policy, true, evaluateConstantIfCondition).buildControlFlow();
+      flow = new ControlFlowAnalyzer(element, policy, enableShortCircuit, evaluateConstantIfCondition).buildControlFlow();
       registerControlFlow(element, flow, evaluateConstantIfCondition, policy);
     }
     if (flow instanceof ControlFlowSubRange && LOG.isDebugEnabled()) {
