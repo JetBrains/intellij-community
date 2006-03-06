@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,15 +24,7 @@ public final class RadSplitPane extends RadContainer {
   }
 
   @Override protected RadLayoutManager createInitialLayoutManager() {
-    return new DummyLayoutManager();
-  }
-
-  @Override @Nullable
-  public DropLocation getDropLocation(@Nullable Point location) {
-    if (location == null) {
-      return new MyDropLocation(isEmptySplitComponent(getSplitPane().getLeftComponent()));
-    }
-    return new MyDropLocation(isLeft(location));
+    return new RadSplitPaneLayoutManager();
   }
 
   private static boolean isEmptySplitComponent(final Component component) {
@@ -63,20 +56,6 @@ public final class RadSplitPane extends RadContainer {
     return (JSplitPane)getDelegee();
   }
 
-  @Override protected void addToDelegee(final int index, final RadComponent component) {
-    final JSplitPane splitPane = getSplitPane();
-    final JComponent delegee = component.getDelegee();
-    if (LwSplitPane.POSITION_LEFT.equals(component.getCustomLayoutConstraints())) {
-      splitPane.setLeftComponent(delegee);
-    }
-    else if (LwSplitPane.POSITION_RIGHT.equals(component.getCustomLayoutConstraints())) {
-      splitPane.setRightComponent(delegee);
-    }
-    else {
-      throw new IllegalStateException("invalid layout constraints on component added to RadSplitPane");
-    }
-  }
-
   public void write(final XmlWriter writer) {
     writer.startElement("splitpane");
     try {
@@ -96,18 +75,47 @@ public final class RadSplitPane extends RadContainer {
     }
   }
 
-  public void writeConstraints(final XmlWriter writer, final RadComponent child) {
-    writer.startElement("splitpane");
-    try {
-      final String position = (String)child.getCustomLayoutConstraints();
-      if (!LwSplitPane.POSITION_LEFT.equals(position) && !LwSplitPane.POSITION_RIGHT.equals(position)) {
-        //noinspection HardCodedStringLiteral
-        throw new IllegalStateException("invalid position: " + position);
-      }
-      writer.addAttribute("position", position);
+  private class RadSplitPaneLayoutManager extends RadLayoutManager {
+
+    @Nullable public String getName() {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
-    finally {
-      writer.endElement();
+
+    public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
+      writer.startElement("splitpane");
+      try {
+        final String position = (String)child.getCustomLayoutConstraints();
+        if (!LwSplitPane.POSITION_LEFT.equals(position) && !LwSplitPane.POSITION_RIGHT.equals(position)) {
+          //noinspection HardCodedStringLiteral
+          throw new IllegalStateException("invalid position: " + position);
+        }
+        writer.addAttribute("position", position);
+      }
+      finally {
+        writer.endElement();
+      }
+    }
+
+    public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
+      final JSplitPane splitPane = (JSplitPane) container.getDelegee();
+      final JComponent delegee = component.getDelegee();
+      if (LwSplitPane.POSITION_LEFT.equals(component.getCustomLayoutConstraints())) {
+        splitPane.setLeftComponent(delegee);
+      }
+      else if (LwSplitPane.POSITION_RIGHT.equals(component.getCustomLayoutConstraints())) {
+        splitPane.setRightComponent(delegee);
+      }
+      else {
+        throw new IllegalStateException("invalid layout constraints on component added to RadSplitPane");
+      }
+    }
+
+    @Override @NotNull
+    public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+      if (location == null) {
+        return new MyDropLocation(isEmptySplitComponent(getSplitPane().getLeftComponent()));
+      }
+      return new MyDropLocation(isLeft(location));
     }
   }
 
