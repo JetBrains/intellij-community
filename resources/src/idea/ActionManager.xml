@@ -1408,6 +1408,11 @@
     </group>
 
      <!-- ***** java server faces actions *************************************** -->
+    <action id="Faces.EnableSupport" class="com.intellij.jsf.actions.AddFacesSupportAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
+
+
     <action id="Faces.Navigation.Graph.OpenInEditorAction" class="com.intellij.jsf.graph.actions.OpenInEditorAction"
             text="_Jump to source" use-shortcut-of="EditSource" keymap="$default">
     </action>

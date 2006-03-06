@@ -83,9 +83,10 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
     myBrowseButton.addActionListener(listener);
   }
 
-  public void addBrowseFolderListener
-    (String title, String description, Project project, FileChooserDescriptor fileChooserDescriptor, TextComponentAccessor<Comp> accessor) {
-    addActionListener(new BrowseFolderActionListener(title, description, this, project, fileChooserDescriptor, accessor));
+  public void addBrowseFolderListener(String title, String description, Project project,
+                                      FileChooserDescriptor fileChooserDescriptor,
+                                      TextComponentAccessor<Comp> accessor) {
+    addActionListener(new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor));
   }
 
   public FixedSizeButton getButton() {

@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.io.UrlConnectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.SAXException;
 
@@ -41,28 +42,6 @@ public class RepositoryHelper {
 
   @NonNls private static final String FILENAME = "filename=";
   @NonNls public static final String extPluginsFile = "availables.xml";
-
-  private static class InputStreamGetter implements Runnable {
-    private InputStream is;
-    private URLConnection urlConnection;
-
-    public InputStream getIs() {
-      return is;
-    }
-
-    public InputStreamGetter(URLConnection urlConnection) {
-      this.urlConnection = urlConnection;
-    }
-
-    public void run() {
-      try {
-        is = urlConnection.getInputStream();
-      }
-      catch (IOException e) {
-        is = null;
-      }
-    }
-  }
 
   public static ArrayList<IdeaPluginDescriptor> Process( JLabel label )
     throws IOException, ParserConfigurationException, SAXException
@@ -116,7 +95,7 @@ public class RepositoryHelper {
       final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
       pi.setText(IdeBundle.message("progress.connecting"));
 
-      InputStream is = getConnectionInputStream(connection, pi);
+      InputStream is = UrlConnectionUtil.getConnectionInputStream(connection, pi);
 
       if (is == null)
         return null;
@@ -211,28 +190,6 @@ public class RepositoryHelper {
     finally {
       connection.disconnect();
     }
-  }
-
-  public static InputStream getConnectionInputStream (URLConnection connection, ProgressIndicator pi)
-  {
-    InputStreamGetter getter = new InputStreamGetter(connection);
-    //noinspection HardCodedStringLiteral
-    final Thread thread = new Thread (getter, "InputStreamGetter");
-    thread.start();
-
-    while (! pi.isCanceled()) {
-      try {
-        thread.join(50);
-        pi.setFraction(System.currentTimeMillis());
-        if (! thread.isAlive())
-          break;
-      }
-      catch (InterruptedException e) {
-        return null;
-      }
-    }
-
-    return getter.getIs();
   }
 
   public static InputStream getConnectionInputStream (URLConnection connection )

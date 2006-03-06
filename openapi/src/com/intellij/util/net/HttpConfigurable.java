@@ -105,8 +105,19 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
    * @param url URL for HTTP connection
    * @throws IOException
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void prepareURL (String url) throws IOException {
+    setAuthenticator();
+
+    URLConnection connection = new URL (url).openConnection();
+    connection.connect();
+    connection.getInputStream();
+    if (connection instanceof HttpURLConnection) {
+      ((HttpURLConnection)connection).disconnect();
+    }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public void setAuthenticator() {
     if (USE_HTTP_PROXY) {
       System.setProperty("proxySet", "true");
       System.setProperty("http.proxyHost", PROXY_HOST);
@@ -115,13 +126,6 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
     } else {
       System.setProperty("proxySet", "false");
       Authenticator.setDefault(null);
-    }
-
-    URLConnection connection = new URL (url).openConnection();
-    connection.connect();
-    connection.getInputStream();
-    if (connection instanceof HttpURLConnection) {
-      ((HttpURLConnection)connection).disconnect();
     }
   }
 }

@@ -184,7 +184,7 @@ public class NameLocationStep extends ModuleWizardStep {
     myNamePathComponent.setSyncEnabled(isSyncEnabled);
   }
 
-  private String getModuleFileDirectory() {
+  public String getModuleFileDirectory() {
     return myTfModuleFilePath.getText().trim().replace(File.separatorChar, '/');
   }
 
