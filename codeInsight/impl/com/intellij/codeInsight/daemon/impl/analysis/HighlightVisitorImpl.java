@@ -316,7 +316,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
 
     final PsiElement prevLeaf = PsiTreeUtil.prevLeaf(element, true);
-    if (prevLeaf instanceof OuterLanguageElement) {
+    if (prevLeaf instanceof OuterLanguageElement &&
+        prevLeaf.getTextRange().getEndOffset() != element.getContainingFile().getTextLength()
+       ) {
       return true;
     }
 
