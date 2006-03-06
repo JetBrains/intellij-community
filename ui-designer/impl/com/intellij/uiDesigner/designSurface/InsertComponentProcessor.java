@@ -18,6 +18,7 @@ import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.make.PsiNestedFormLoader;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.palette.ComponentItemDialog;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import com.intellij.uiDesigner.radComponents.*;
 import org.jetbrains.annotations.NotNull;
@@ -159,6 +160,9 @@ public final class InsertComponentProcessor extends EventProcessor {
     }
 
     myInsertedComponent = createInsertedComponent(myEditor, item);
+    if (myInsertedComponent == null) {
+      return;
+    }
 
     if (location.canDrop(item)) {
       CommandProcessor.getInstance().executeCommand(
@@ -217,7 +221,20 @@ public final class InsertComponentProcessor extends EventProcessor {
     return true;
   }
 
+  @Nullable
   public static RadComponent createInsertedComponent(GuiEditor editor, ComponentItem item) {
+    if (item.isAnyComponent()) {
+      ComponentItem newItem = item.clone();
+      ComponentItemDialog dlg = new ComponentItemDialog(editor.getProject(), editor, newItem, true);
+      dlg.setTitle(UIDesignerBundle.message("palette.non.palette.component.title"));
+      dlg.show();
+      if(!dlg.isOK()) {
+        return null;
+      }
+
+      item = newItem;
+    }
+
     RadComponent result;
     final String id = editor.generateId();
 

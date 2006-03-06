@@ -19,6 +19,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,12 +60,13 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
 
   private boolean myAutoCreateBinding;
   private boolean myCanAttachLabel;
+  private boolean myAnyComponent;
 
   @NotNull private Project myProject;
 
   public ComponentItem(
     @NotNull Project project,
-    final String className,
+    @NotNull final String className,
     @Nullable final String iconPath,
     @Nullable final String toolTipText,
     @NotNull final GridConstraints defaultConstraints,
@@ -302,8 +304,14 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
 
   public void customizeCellRenderer(ColoredListCellRenderer cellRenderer, boolean selected, boolean hasFocus) {
     cellRenderer.setIcon(getSmallIcon());
-    cellRenderer.append(getClassShortName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    cellRenderer.setToolTipText(getToolTipText());
+    if (myAnyComponent) {
+      cellRenderer.append(UIDesignerBundle.message("palette.non.palette.component"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      cellRenderer.setToolTipText(UIDesignerBundle.message("palette.non.palette.component.tooltip"));
+    }
+    else {
+      cellRenderer.append(getClassShortName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      cellRenderer.setToolTipText(getToolTipText());
+    }
   }
 
   @Nullable public DnDDragStartBean startDragging() {
@@ -365,6 +373,18 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
 
   public Point getDelta(int componentIndex) {
     return null;
+  }
+
+  public static ComponentItem createAnyComponentItem(final Project project) {
+    ComponentItem result = new ComponentItem(project, "", null, null,
+                                             new GridConstraints(), new HashMap<String, StringDescriptor>(),
+                                             false, false, false);
+    result.myAnyComponent = true;
+    return result;
+  }
+
+  public boolean isAnyComponent() {
+    return myAnyComponent;
   }
 
   private static final class MySmallIcon implements Icon{

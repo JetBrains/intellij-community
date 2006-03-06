@@ -38,7 +38,7 @@ public class AddComponentAction extends AnAction {
       false
     );
     Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
-    final ComponentItemDialog dialog = new ComponentItemDialog(project, parentWindow, itemToBeAdded);
+    final ComponentItemDialog dialog = new ComponentItemDialog(project, parentWindow, itemToBeAdded, false);
     dialog.setTitle(UIDesignerBundle.message("title.add.component"));
     dialog.show();
     if(!dialog.isOK()){
@@ -55,5 +55,11 @@ public class AddComponentAction extends AnAction {
     final Palette palette = Palette.getInstance(project);
     palette.addItem(groupItem, itemToBeAdded);
     palette.fireGroupsChanged();
+  }
+
+  @Override public void update(AnActionEvent e) {
+    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
+    e.getPresentation().setEnabled(project != null && groupItem != null && !groupItem.isReadOnly());
   }
 }

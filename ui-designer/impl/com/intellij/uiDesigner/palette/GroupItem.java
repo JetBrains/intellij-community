@@ -6,11 +6,9 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.uiDesigner.SimpleTransferable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 
 /**
@@ -21,6 +19,7 @@ public final class GroupItem implements Cloneable, PaletteGroup {
 
   @NotNull private String myName;
   @NotNull private final ArrayList<ComponentItem> myItems;
+  private boolean myReadOnly = false;
 
   public GroupItem(@NotNull final String name) {
     setName(name);
@@ -38,6 +37,14 @@ public final class GroupItem implements Cloneable, PaletteGroup {
     }
 
     return result;
+  }
+
+  public boolean isReadOnly() {
+    return myReadOnly;
+  }
+
+  public void setReadOnly(final boolean readOnly) {
+    myReadOnly = readOnly;
   }
 
   @NotNull public String getName() {

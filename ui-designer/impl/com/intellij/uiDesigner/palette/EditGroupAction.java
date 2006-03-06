@@ -49,4 +49,10 @@ public class EditGroupAction extends AnAction {
     groupToBeEdited.setName(groupName);
     palette.fireGroupsChanged();
   }
+
+  @Override public void update(AnActionEvent e) {
+    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
+    e.getPresentation().setEnabled(project != null && groupItem != null && !groupItem.isReadOnly());
+  }
 }

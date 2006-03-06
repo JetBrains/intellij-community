@@ -21,11 +21,11 @@ public class EditComponentAction extends AnAction {
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
     ComponentItem selectedItem = (ComponentItem) e.getDataContext().getData(ComponentItem.class.getName());
     GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
-    if (project == null || selectedItem == null || groupItem == null) return;
+    if (project == null || selectedItem == null || groupItem == null || selectedItem.isAnyComponent()) return;
 
     final ComponentItem itemToBeEdited = selectedItem.clone(); /*"Cancel" should work, so we need edit copy*/
     Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
-    final ComponentItemDialog dialog = new ComponentItemDialog(project, parentWindow, itemToBeEdited);
+    final ComponentItemDialog dialog = new ComponentItemDialog(project, parentWindow, itemToBeEdited, false);
     dialog.setTitle(UIDesignerBundle.message("title.edit.component"));
     dialog.show();
     if(!dialog.isOK()) {
@@ -42,5 +42,12 @@ public class EditComponentAction extends AnAction {
 
     palette.replaceItem(groupItem, selectedItem, itemToBeEdited);
     palette.fireGroupsChanged();
+  }
+
+  @Override public void update(AnActionEvent e) {
+    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    ComponentItem selectedItem = (ComponentItem) e.getDataContext().getData(ComponentItem.class.getName());
+    GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
+    e.getPresentation().setEnabled(project != null && selectedItem != null && groupItem != null && !selectedItem.isAnyComponent());
   }
 }

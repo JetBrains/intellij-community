@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
 
 /**
  * @author yole
@@ -49,8 +48,7 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectCo
 
   public PaletteGroup[] getActiveGroups(VirtualFile vFile) {
     if (vFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
-      final ArrayList<GroupItem> groups = myPalette.getGroups();
-      return groups.toArray(new PaletteGroup[groups.size()]);
+      return myPalette.getToolWindowGroups();
     }
     return PaletteGroup.EMPTY_ARRAY;
   }

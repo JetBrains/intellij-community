@@ -58,6 +58,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   /*Listeners, etc*/
   private final ArrayList<Listener> myListeners;
   private Project myProject;
+  private GroupItem mySpecialGroup = new GroupItem(UIDesignerBundle.message("palette.special.group"));
 
   /**
    * Predefined item for javax.swing.JPanel
@@ -100,6 +101,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     myClassName2Item = new HashMap<String, ComponentItem>();
     myGroups = new ArrayList<GroupItem>();
     myListeners = new ArrayList<Listener>();
+
+    mySpecialGroup.setReadOnly(true);
+    mySpecialGroup.addItem(ComponentItem.createAnyComponentItem(project));
   }
 
   /**Adds specified listener.*/
@@ -228,6 +232,15 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    */
   public ArrayList<GroupItem> getGroups(){
     return myGroups;
+  }
+
+  public GroupItem[] getToolWindowGroups() {
+    GroupItem[] groups = new GroupItem[myGroups.size()+1];
+    groups [0] = mySpecialGroup;
+    for(int i=0; i<myGroups.size(); i++) {
+      groups [i+1] = myGroups.get(i);
+    }
+    return groups;
   }
 
   /**

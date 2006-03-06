@@ -35,4 +35,12 @@ public class DeleteComponentAction extends AnAction {
     palette.removeItem(groupItem, selectedItem);
     palette.fireGroupsChanged();
   }
+
+  @Override public void update(AnActionEvent e) {
+    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    ComponentItem selectedItem = (ComponentItem) e.getDataContext().getData(ComponentItem.class.getName());
+    GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
+    e.getPresentation().setEnabled(project != null && selectedItem != null && groupItem != null &&
+                                   !selectedItem.isAnyComponent() && selectedItem.isRemovable());
+  }
 }

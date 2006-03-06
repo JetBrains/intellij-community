@@ -16,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.ImageFileFilter;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,11 +37,12 @@ import java.awt.event.ActionListener;
 /**
  * @author Vladimir Kondratyev
  */
-public final class ComponentItemDialog extends DialogWrapper{
+public final class ComponentItemDialog extends DialogWrapper {
   private JPanel myPanel;
   private ComponentWithBrowseButton<EditorTextField> myTfClassName;
   private Project myProject;
   private final ComponentItem myItemToBeEdited;
+  private final boolean myOneOff;
   private JLabel myLblIcon;
   private TextFieldWithBrowseButton myTfIconPath;
   private JCheckBox myChkHorCanShrink;
@@ -54,17 +57,21 @@ public final class ComponentItemDialog extends DialogWrapper{
   private TextFieldWithBrowseButton myTfNestedForm;
   private JCheckBox myAutoCreateBindingCheckbox;
   private JCheckBox myCanAttachLabelCheckbox;
+  private JPanel myHSizePolicyPanel;
+  private JPanel myVSizePolicyPanel;
   private EditorTextField myEditorTextField;
   private Document myDocument;
 
   /**
    * @param itemToBeEdited item to be edited. If user closes dialog by "OK" button then
+   * @param oneOff
    */
-  public ComponentItemDialog(final Project project, final Component parent, @NotNull ComponentItem itemToBeEdited) {
+  public ComponentItemDialog(final Project project, final Component parent, @NotNull ComponentItem itemToBeEdited, final boolean oneOff) {
     super(parent, false);
     myProject = project;
 
     myItemToBeEdited = itemToBeEdited;
+    myOneOff = oneOff;
 
     myEditorTextField = new EditorTextField("", project, StdFileTypes.JAVA);
     myEditorTextField.setFontInheritedFromLAF(true);
@@ -81,6 +88,12 @@ public final class ComponentItemDialog extends DialogWrapper{
     }
     updateEnabledTextField();
 
+    myTfClassName.getChildComponent().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        updateOKAction();
+      }
+    });
+
     myTfClassName.getButton().setEnabled(!project.isDefault()); // chooser should not work in default project
     myClassNamePlaceholder.setLayout(new BorderLayout());
     myClassNamePlaceholder.add(myTfClassName, BorderLayout.CENTER);
@@ -94,6 +107,11 @@ public final class ComponentItemDialog extends DialogWrapper{
       }
     }, myTfNestedForm));
 
+    myTfNestedForm.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        updateOKAction();
+      }
+    });
 
     final GridConstraints defaultConstraints = myItemToBeEdited.getDefaultConstraints();
 
@@ -120,6 +138,16 @@ public final class ComponentItemDialog extends DialogWrapper{
     myClassRadioButton.addChangeListener(new MyRadioChangeListener());
     myNestedFormRadioButton.addChangeListener(new MyRadioChangeListener());
 
+    if (oneOff) {
+      myLblIcon.setVisible(false);
+      myTfIconPath.setVisible(false);
+      myCanAttachLabelCheckbox.setVisible(false);
+      myHSizePolicyPanel.setVisible(false);
+      myVSizePolicyPanel.setVisible(false);
+    }
+
+    updateOKAction();
+
     init();
   }
 
@@ -130,8 +158,8 @@ public final class ComponentItemDialog extends DialogWrapper{
     final PsiCodeFragment fragment = factory.createReferenceCodeFragment(className, defaultPackage, true, true);
     myDocument = PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
     myEditorTextField.setDocument(myDocument);
+    updateOKAction();
   }
-
 
   protected void doOKAction() {
     // TODO[vova] implement validation
@@ -213,6 +241,9 @@ public final class ComponentItemDialog extends DialogWrapper{
   }
 
   protected String getDimensionServiceKey() {
+    if (myOneOff) {
+      return "#com.intellij.uiDesigner.palette.ComponentItemDialog.OneOff";
+    }
     return "#com.intellij.uiDesigner.palette.ComponentItemDialog";
   }
 
@@ -227,6 +258,16 @@ public final class ComponentItemDialog extends DialogWrapper{
   private void updateEnabledTextField() {
     myEditorTextField.setEnabled(myClassRadioButton.isSelected());
     myTfNestedForm.setEnabled(myNestedFormRadioButton.isSelected());
+    updateOKAction();
+  }
+
+  private void updateOKAction() {
+    if (myClassRadioButton.isSelected()) {
+      setOKActionEnabled(myDocument.getTextLength() > 0);
+    }
+    else {
+      setOKActionEnabled(myTfNestedForm.getText().length() > 0);
+    }
   }
 
   private static String getClassOrInnerName(final PsiClass aClass) {
