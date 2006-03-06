@@ -57,6 +57,7 @@ public class UIFormXmlConstants {
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";
   public static final String LAYOUT_BORDER = "BorderLayout";
   public static final String LAYOUT_FLOW = "FlowLayout";
+  public static final String LAYOUT_XY = "XYLayout";
 
   private UIFormXmlConstants() {
   }

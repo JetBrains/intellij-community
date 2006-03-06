@@ -257,20 +257,32 @@ public class LwContainer extends LwComponent implements IContainer{
       myLayoutSerializer = XYLayoutSerializer.INSTANCE;
     }
     else if("grid".equals(element.getName())){
-      if (UIFormXmlConstants.LAYOUT_BORDER.equals(myLayoutManager)) {
-        myLayoutSerializer = BorderLayoutSerializer.INSTANCE;
-      }
-      else if (UIFormXmlConstants.LAYOUT_FLOW.equals(myLayoutManager)) {
-        myLayoutSerializer = FlowLayoutSerializer.INSTANCE;
-      }
-      else {
-        myLayoutSerializer = GridLayoutSerializer.INSTANCE;
-      }
+      createLayoutSerializer();
     }
     else{
       throw new IllegalArgumentException("unexpected element: "+element);
     }
     myLayoutSerializer.readLayout(element, this);
+  }
+
+  public void setLayoutManager(final String layoutManager) {
+    myLayoutManager = layoutManager;
+    createLayoutSerializer();
+  }
+
+  private void createLayoutSerializer() {
+    if (UIFormXmlConstants.LAYOUT_BORDER.equals(myLayoutManager)) {
+      myLayoutSerializer = BorderLayoutSerializer.INSTANCE;
+    }
+    else if (UIFormXmlConstants.LAYOUT_FLOW.equals(myLayoutManager)) {
+      myLayoutSerializer = FlowLayoutSerializer.INSTANCE;
+    }
+    else if (UIFormXmlConstants.LAYOUT_XY.equals(myLayoutManager)) {
+      myLayoutSerializer = XYLayoutSerializer.INSTANCE;
+    }
+    else {
+      myLayoutSerializer = GridLayoutSerializer.INSTANCE;
+    }
   }
 
   public void read(final Element element, final PropertiesProvider provider) throws Exception {

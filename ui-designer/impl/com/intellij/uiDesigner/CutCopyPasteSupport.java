@@ -41,6 +41,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   @NonNls private static final String ELEMENT_SERIALIZED = "serialized";
   @NonNls private static final String ATTRIBUTE_X = "x";
   @NonNls private static final String ATTRIBUTE_Y = "y";
+  private static final String ATTRIBUTE_PARENT_LAYOUT = "parent-layout";
 
   public CutCopyPasteSupport(final GuiEditor uiEditor) {
     myEditor = uiEditor;
@@ -136,13 +137,18 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
         return false;
       }
 
-      // we need to add component to a container in order to read them
-      final LwContainer container = new LwContainer(JPanel.class.getName());
-
-      final java.util.List children = rootElement.getChildren();
+      final List children = rootElement.getChildren();
       for (final Object aChildren : children) {
         final Element e = (Element)aChildren;
 
+        // we need to add component to a container in order to read them
+        final LwContainer container = new LwContainer(JPanel.class.getName());
+
+        final String parentLayout = e.getAttributeValue(ATTRIBUTE_PARENT_LAYOUT);
+        if (parentLayout != null) {
+          container.setLayoutManager(parentLayout);
+        }
+        
         final int x = Integer.parseInt(e.getAttributeValue(ATTRIBUTE_X));
         final int y = Integer.parseInt(e.getAttributeValue(ATTRIBUTE_Y));
 
@@ -260,6 +266,12 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
       writer.startElement("item");
       writer.addAttribute(ATTRIBUTE_X, shift.x);
       writer.addAttribute(ATTRIBUTE_Y, shift.y);
+      if (component.getParent() != null) {
+        final String parentLayout = component.getParent().getLayoutManager().getName();
+        if (parentLayout != null) {
+          writer.addAttribute(ATTRIBUTE_PARENT_LAYOUT, parentLayout);
+        }
+      }
       component.write(writer);
 
       writer.endElement();

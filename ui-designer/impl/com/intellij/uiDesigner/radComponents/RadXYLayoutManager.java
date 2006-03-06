@@ -17,6 +17,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.Insets;
 import java.awt.LayoutManager;
@@ -29,7 +30,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
   public static RadXYLayoutManager INSTANCE = new RadXYLayoutManager();
 
   public @NonNls String getName() {
-    return "XYLayout";
+    return UIFormXmlConstants.LAYOUT_XY;
   }
 
   public LayoutManager createLayout() {
@@ -71,7 +72,8 @@ public class RadXYLayoutManager extends RadLayoutManager {
     }
   }
 
-  @Override public DropLocation getDropLocation(RadContainer container, final Point location) {
+  @NotNull @Override
+  public DropLocation getDropLocation(RadContainer container, final Point location) {
     return new MyDropLocation(container, location);
   }
 
