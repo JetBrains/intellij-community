@@ -62,7 +62,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     PsiElement createdFile;
-    PsiClass newClass;
+    PsiClass newClass = null;
     try {
       final PsiPackage aPackage = directory.getPackage();
       assert aPackage != null;
@@ -73,7 +73,9 @@ public class CreateFormAction extends AbstractCreateFormAction {
       final PsiFile formFile = directory.getManager().getElementFactory().createFileFromText(newName + ".form", formBody);
       createdFile = directory.add(formFile);
 
-      newClass = directory.createClass(myLastClassName);
+      if (myLastClassName != null) {
+        newClass = directory.createClass(myLastClassName);
+      }
     }
     catch(IncorrectOperationException e) {
       throw e;
@@ -83,7 +85,10 @@ public class CreateFormAction extends AbstractCreateFormAction {
       return PsiElement.EMPTY_ARRAY;
     }
 
-    return new PsiElement[] { newClass, createdFile };
+    if (newClass != null) {
+      return new PsiElement[] { newClass, createdFile };
+    }
+    return new PsiElement[] { createdFile };
   }
 
   protected String getErrorTitle() {
