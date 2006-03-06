@@ -149,7 +149,8 @@ public class IntentionHintComponent extends JPanel {
       return new IntentionListStep(quickFixes, intentions){
         @SuppressWarnings({"HardCodedStringLiteral"})
         public String getTitle() {
-          return action.getToolName().replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+          final String name = action.getToolName();
+          return name != null ? name.replaceAll("<", "&lt;").replaceAll(">", "&gt;") : null;
         }
       };
     }
