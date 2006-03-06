@@ -106,11 +106,11 @@ public class DataFlowRunner {
       }
 
       queue.add(new DfaInstructionState(myInstructions[0], initialState));
-
+      long timeLimit = ourTimeLimit;
       final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       final long before = System.currentTimeMillis();
       while (queue.size() > 0) {
-        if (!unitTestMode && System.currentTimeMillis() - before > ourTimeLimit) return false;
+        if (!unitTestMode && System.currentTimeMillis() - before > timeLimit) return false;
         ProgressManager.getInstance().checkCanceled();
 
         DfaInstructionState instructionState = queue.remove(0);

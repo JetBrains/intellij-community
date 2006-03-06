@@ -27,7 +27,9 @@ public abstract class Instruction {
 
   public boolean isMemoryStateProcessed(DfaMemoryState dfaMemState) {
     for (DfaMemoryState state : myProcessedStates) {
-      if (dfaMemState.equals(state)) return true;
+      if (dfaMemState.equals(state)) {
+        return true;
+      }
     }
 
     return false;

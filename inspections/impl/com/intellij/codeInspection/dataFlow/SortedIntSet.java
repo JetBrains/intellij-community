@@ -30,13 +30,16 @@ public class SortedIntSet extends TIntArrayList implements Comparable<SortedIntS
   }
 
   public void add(int[] vals) {
-    for (int i = 0; i < vals.length; i++) {
-      add(vals[i]);
+    for (int val : vals) {
+      add(val);
     }
   }
 
   public void removeValue(int val) {
-    remove(indexOf(val));
+    int offset = indexOf(val);
+    if (offset != -1) {
+      remove(offset);
+    }
   }
 
   public int compareTo(SortedIntSet t) {

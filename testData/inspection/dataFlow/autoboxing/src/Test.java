@@ -73,4 +73,25 @@ class aaa {
     if (a == 5) {
     }
   }
+
+
+    void f(int p) {
+        {
+            int i = 1;
+            Integer i1 = i;
+            Integer i2 = i;
+            if (i1 == i2) {
+
+            }
+        }
+        {
+            int i = p;
+            Integer i1 = i;
+            Integer i2 = i;
+            if (i1 == i2) {
+
+            }
+        }
+    }
+
 }

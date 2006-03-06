@@ -32,23 +32,19 @@ public class DfaBoxedValue extends DfaValue {
       myFactory = factory;
     }
 
-    public DfaBoxedValue createBoxed(DfaValue valueToWrap) {
-      DfaBoxedValue boxedValue;
-      if (isValueTooLargeToCacheInPrimitiveWrapper(valueToWrap)) {
+    public DfaValue createBoxed(DfaValue valueToWrap) {
+      Object o = valueToWrap instanceof DfaConstValue
+                 ? ((DfaConstValue)valueToWrap).getValue()
+                 : valueToWrap instanceof DfaVariableValue ? ((DfaVariableValue)valueToWrap).getPsiVariable() : null;
+      if (o == null) return null;
+      DfaBoxedValue boxedValue = cachedValues.get(o);
+      if (boxedValue == null) {
         boxedValue = new DfaBoxedValue(valueToWrap, myFactory);
-      }
-      else {
-        Object o = valueToWrap instanceof DfaConstValue ? ((DfaConstValue)valueToWrap).getValue()
-                   : valueToWrap instanceof DfaVariableValue ? ((DfaVariableValue)valueToWrap).getPsiVariable() : null;
-        if (o == null) return null;
-        boxedValue = cachedValues.get(o);
-        if (boxedValue == null) {
-          boxedValue = new DfaBoxedValue(valueToWrap, myFactory);
-          cachedValues.put(o, boxedValue);
-        }
+        cachedValues.put(o, boxedValue);
       }
       return boxedValue;
     }
+
     private final Map<PsiVariable, DfaUnboxedValue> cachedUnboxedValues = new THashMap<PsiVariable, DfaUnboxedValue>();
 
     public DfaValue createUnboxed(DfaValue valueToWrap) {
@@ -68,23 +64,6 @@ public class DfaBoxedValue extends DfaValue {
         result = DfaUnknownValue.getInstance();
       }
       return result;
-    }
-
-    private static boolean isValueTooLargeToCacheInPrimitiveWrapper(final DfaValue dfaValue) {
-      if (!(dfaValue instanceof DfaConstValue)) return false;
-      Object value = ((DfaConstValue)dfaValue).getValue();
-      return box(value) != box(value);
-    }
-
-    private static Object box(final Object value) {
-      Object newBoxedValue = null;
-      if (value instanceof Integer) newBoxedValue = Integer.valueOf(((Integer)value).intValue());
-      if (value instanceof Byte) newBoxedValue = Byte.valueOf(((Byte)value).byteValue());
-      if (value instanceof Short) newBoxedValue = Short.valueOf(((Short)value).shortValue());
-      if (value instanceof Long) newBoxedValue = Long.valueOf(((Long)value).longValue());
-      if (value instanceof Boolean) newBoxedValue = Boolean.valueOf(((Boolean)value).booleanValue());
-      if (value instanceof Character) newBoxedValue = Character.valueOf(((Character)value).charValue());
-      return newBoxedValue;
     }
 
   }

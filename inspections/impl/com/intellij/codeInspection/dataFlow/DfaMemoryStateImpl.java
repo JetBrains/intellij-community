@@ -18,10 +18,7 @@ import gnu.trove.TLongArrayList;
 import gnu.trove.TLongHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 public class DfaMemoryStateImpl implements DfaMemoryState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl");
@@ -276,13 +273,59 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myEqClasses.size() - 1;
   }
 
+  public DfaValue[] getEqClassesFor(DfaValue dfaValue) {
+    int index = getEqClassIndex(dfaValue);
+    List<DfaValue> result = new ArrayList<DfaValue>();
+    SortedIntSet set = index == -1 ? null : myEqClasses.get(index);
+    if (set != null) {
+      int[] ints = set.toNativeArray();
+      for (int cl : ints) {
+        DfaValue value = myFactory.getValue(cl);
+        result.add(value);
+      }
+    }
+    return result.toArray(new DfaValue[result.size()]);
+  }
+
   private int getEqClassIndex(@NotNull DfaValue dfaValue) {
     for (int i = 0; i < myEqClasses.size(); i++) {
       SortedIntSet aClass = myEqClasses.get(i);
-      if (aClass != null && aClass.contains(dfaValue.getID())) return i;
+      if (aClass != null && aClass.contains(dfaValue.getID())) {
+        if (dfaValue instanceof DfaBoxedValue && !canBeReused(((DfaBoxedValue)dfaValue).getWrappedValue(), this) && aClass.size() > 1) return -1;
+        return i;
+      }
     }
-
     return -1;
+  }
+  private static boolean canBeReused(final DfaValue valueToWrap, final DfaMemoryState memoryState) {
+    if (valueToWrap instanceof DfaConstValue) {
+      return cacheable((DfaConstValue)valueToWrap);
+    }
+    else if (valueToWrap instanceof DfaVariableValue) {
+      DfaValue[] values = ((DfaMemoryStateImpl)memoryState).getEqClassesFor(valueToWrap);
+      for (DfaValue value : values) {
+        if (value instanceof DfaConstValue && cacheable((DfaConstValue)value)) return true;
+      }
+      return false;
+    }
+    return false;
+    //throw new IllegalArgumentException(""+valueToWrap);
+  }
+
+  private static boolean cacheable(DfaConstValue dfaConstValue) {
+    Object value = dfaConstValue.getValue();
+    return box(value) == box(value);
+  }
+
+  private static Object box(final Object value) {
+    Object newBoxedValue = null;
+    if (value instanceof Integer) newBoxedValue = Integer.valueOf(((Integer)value).intValue());
+    if (value instanceof Byte) newBoxedValue = Byte.valueOf(((Byte)value).byteValue());
+    if (value instanceof Short) newBoxedValue = Short.valueOf(((Short)value).shortValue());
+    if (value instanceof Long) newBoxedValue = Long.valueOf(((Long)value).longValue());
+    if (value instanceof Boolean) newBoxedValue = Boolean.valueOf(((Boolean)value).booleanValue());
+    if (value instanceof Character) newBoxedValue = Character.valueOf(((Character)value).charValue());
+    return newBoxedValue;
   }
 
   private boolean uniteClasses(int c1Index, int c2Index) {
@@ -535,34 +578,34 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
   }
 
-  public void flushVariable(DfaVariableValue variable) {
-    removeFrom(variable);
-    DfaValue unboxed = myFactory.getBoxedFactory().createUnboxed(variable);
-    removeFrom(unboxed);
-    DfaBoxedValue boxed = myFactory.getBoxedFactory().createBoxed(variable);
-    removeFrom(boxed);
-
-    myVariableStates.remove(variable);
-  }
-
-  private void removeFrom(final DfaValue value) {
-    if (value != null) {
-      int varClassIndex = getEqClassIndex(value);
-      if (varClassIndex != -1) {
-        SortedIntSet varClass = myEqClasses.get(varClassIndex);
-        varClass.removeValue(value.getID());
-
-        if (varClass.size() == 0) {
-          myEqClasses.set(varClassIndex, null);
-          myStateSize--;
-          long[] pairs = myDistinctClasses.toArray();
-          for (long pair : pairs) {
-            if (low(pair) == varClassIndex || high(pair) == varClassIndex) {
-              myDistinctClasses.remove(pair);
-            }
+  public void flushVariable(@NotNull DfaVariableValue variable) {
+    int id = variable.getID();
+    for (int varClassIndex = 0; varClassIndex < myEqClasses.size(); varClassIndex++) {
+      SortedIntSet varClass = myEqClasses.get(varClassIndex);
+      if (varClass == null) continue;
+      int[] cls = varClass.toNativeArray();
+      for (int i = 0; i < cls.length; i++) {
+        int cl = cls[i];
+        DfaValue value = myFactory.getValue(cl);
+        if (value != null && id == value.getID()
+            || value instanceof DfaBoxedValue && ((DfaBoxedValue)value).getWrappedValue().getID() == id
+            || value instanceof DfaUnboxedValue && ((DfaUnboxedValue)value).getVariable().getID() == id) {
+          varClass.remove(i);
+          break;
+        }
+      }
+      if (varClass.size() == 0) {
+        myEqClasses.set(varClassIndex, null);
+        myStateSize--;
+        long[] pairs = myDistinctClasses.toArray();
+        for (long pair : pairs) {
+          if (low(pair) == varClassIndex || high(pair) == varClassIndex) {
+            myDistinctClasses.remove(pair);
           }
         }
       }
     }
+
+    myVariableStates.remove(variable);
   }
 }
