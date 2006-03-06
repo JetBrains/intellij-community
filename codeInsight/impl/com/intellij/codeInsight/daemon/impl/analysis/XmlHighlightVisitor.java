@@ -59,6 +59,7 @@ import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.text.MessageFormat;
@@ -652,6 +653,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     final HighlightInfoType tagProblemInfoType;
     IntentionAction[] quickFixes;
 
+    final RemoveAttributeIntentionAction removeAttributeIntention = new RemoveAttributeIntentionAction(localName,attribute);
+
     if (tag instanceof HtmlTag) {
       final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
       LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME);
@@ -662,12 +665,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       quickFixes = new IntentionAction[] {
         inspection.getIntentionAction(tag, localName, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
+        removeAttributeIntention,
         new EditInspectionToolsSettingsAction(key)
       };
 
       tagProblemInfoType = SeverityRegistrar.getHighlightInfoTypeBySeverity(inspectionProfile.getErrorLevel(key).getSeverity());
     } else {
-      tagProblemInfoType = HighlightInfoType.WRONG_REF; quickFixes = null;
+      tagProblemInfoType = HighlightInfoType.WRONG_REF; quickFixes = new IntentionAction[] { removeAttributeIntention };
     }
 
     final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
@@ -701,7 +705,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           XmlErrorMessages.message("duplicate.attribute", localName));
         addToResults(highlightInfo);
 
-        IntentionAction intentionAction = new RemoveDuplicatedAttributeIntentionAction(localName, attribute);
+        IntentionAction intentionAction = new RemoveAttributeIntentionAction(localName, attribute);
 
         QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction);
       }
@@ -988,21 +992,21 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     parent.putUserData(DO_NOT_VALIDATE_KEY, "");
   }
 
-  private static class RemoveDuplicatedAttributeIntentionAction implements IntentionAction {
+  private static class RemoveAttributeIntentionAction implements IntentionAction {
     private final String myLocalName;
     private final XmlAttribute myAttribute;
 
-    public RemoveDuplicatedAttributeIntentionAction(final String localName, final XmlAttribute attribute) {
+    public RemoveAttributeIntentionAction(final String localName, final XmlAttribute attribute) {
       myLocalName = localName;
       myAttribute = attribute;
     }
 
     public String getText() {
-      return XmlErrorMessages.message("remove.duplicated.attribute.quickfix.text", myLocalName);
+      return XmlErrorMessages.message("remove.attribute.quickfix.text", myLocalName);
     }
 
     public String getFamilyName() {
-      return XmlErrorMessages.message("remove.duplicated.attribute.quickfix.family");
+      return XmlErrorMessages.message("remove.attribute.quickfix.family");
     }
 
     public boolean isAvailable(Project project, Editor editor, PsiFile file) {
