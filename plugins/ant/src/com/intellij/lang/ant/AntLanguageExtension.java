@@ -16,10 +16,8 @@ public class AntLanguageExtension implements LanguageExtension {
       final XmlFile xmlFile = (XmlFile)psi;
       final XmlTag tag = xmlFile.getDocument().getRootTag();
       if(tag == null) return false;
-      if ("project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
-        if (tag.getAttributeValue("default") != null) {
-          return true;
-        }
+      if ("project".equalsIgnoreCase(tag.getName()) && tag.getContext() instanceof XmlDocument) {
+        return true;
       }
       return false;
     }

@@ -12,8 +12,14 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
-  public AntElementImpl(final PsiElement sourceElement) {
+  private static final PsiElement[] EMPTY_CHILDREN = new PsiElement[0];
+  private final PsiElement myParent;
+
+  protected PsiElement[] myChildren;
+
+  public AntElementImpl(final PsiElement parent, final PsiElement sourceElement) {
     super(sourceElement);
+    myParent = parent;
   }
 
   @NotNull
@@ -26,33 +32,63 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
     return (XmlTag)getSourceElement();
   }
 
-  @NotNull
-  public PsiElement[] getChildren() {
-    return new PsiElement[0];
-  }
 
   public PsiElement getParent() {
-    return null;
+    return myParent;
+  }
+
+  @NotNull
+  public PsiElement[] getChildren() {
+    if( myChildren != null ) {
+      return myChildren;
+    }
+    return EMPTY_CHILDREN;
   }
 
   @Nullable
   public PsiElement getFirstChild() {
-    return null;
+    final PsiElement[] children = getChildren();
+    return (children.length == 0) ? null : children[0];
   }
 
   @Nullable
   public PsiElement getLastChild() {
-    return null;
+    final PsiElement[] children = getChildren();
+    return (children.length == 0) ? null : children[children.length - 1];
   }
 
   @Nullable
   public PsiElement getNextSibling() {
+    final PsiElement parent = getParent();
+    if (parent != null) {
+      final PsiElement[] thisLevelElements = parent.getChildren();
+      PsiElement thisElement = null;
+      for (PsiElement element : thisLevelElements) {
+        if (thisElement != null) {
+          return element;
+        }
+        if (element == this) {
+          thisElement = element;
+        }
+      }
+    }
     return null;
   }
 
   @Nullable
   public PsiElement getPrevSibling() {
-    return null;
+    PsiElement prev = null;
+    final PsiElement parent = getParent();
+    if (parent != null) {
+      final PsiElement[] thisLevelElements = parent.getChildren();
+      for (PsiElement element : thisLevelElements) {
+        if (element == this) {
+          break;
+        }
+        prev = element;
+      }
+    }
+    return prev;
   }
 
   public PsiElement findElementAt(int offset) {

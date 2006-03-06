@@ -58,7 +58,7 @@ public class AntFile extends LightPsiFileBase {
       final FileViewProvider viewProvider = getViewProvider();
       final XmlFile baseFile = (XmlFile)viewProvider.getPsi(viewProvider.getBaseLanguage());
       final XmlTag tag = baseFile.getDocument().getRootTag();
-      myProject = new AntProjectImpl(tag);
+      myProject = new AntProjectImpl(this, tag);
     }
   }
 }

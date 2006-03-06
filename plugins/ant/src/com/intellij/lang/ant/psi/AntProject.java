@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 public interface AntProject extends AntElement {
 
   @Nullable
-  String getDefaultTarget();
+  AntTarget getDefaultTarget();
 
   @Nullable
   String getBaseDir();

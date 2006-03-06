@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
@@ -9,8 +10,8 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
   private String myName;
   private String myDepends;
 
-  public AntTargetImpl(final XmlTag tag) {
-    super(tag);
+  public AntTargetImpl(AntProject parent, final XmlTag tag) {
+    super(parent, tag);
   }
 
   @Nullable
