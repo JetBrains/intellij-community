@@ -5,6 +5,8 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -12,7 +14,10 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -21,10 +26,10 @@ import com.intellij.util.IncorrectOperationException;
  * User: anna
  * Date: 21-Feb-2006
  */
-public class RunInspectionOnFileIntention implements IntentionAction {
+public class RunInspectionIntention implements IntentionAction {
   private LocalInspectionTool myTool;
 
-  public RunInspectionOnFileIntention(final LocalInspectionTool tool) {
+  public RunInspectionIntention(final LocalInspectionTool tool) {
     myTool = tool;
   }
 
@@ -52,10 +57,24 @@ public class RunInspectionOnFileIntention implements IntentionAction {
     }
     model.enableTool(myTool.getShortName());
     model.setEditable(myTool.getDisplayName());
+    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
+                                                                      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
+                                                                      project, AnalysisScopeBundle.message("scope.file",
+                                                                                                           VfsUtil.calcRelativeToProjectPath(
+                                                                                                             file.getVirtualFile(),
+                                                                                                             file.getProject())),
+                                                                      module != null ? module.getName() : null,
+                                                                      true);
+    AnalysisScope scope = new AnalysisScope(file);
+    dlg.show();
+    if (!dlg.isOK()) return;
+    final UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions();
+    scope = dlg.getScope(uiOptions, scope, project, module);
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile((InspectionProfile)model);
     inspectionContext.RUN_WITH_EDITOR_PROFILE = false;
-    inspectionContext.doInspections(new AnalysisScope(file), managerEx);
+    inspectionContext.doInspections(scope, managerEx);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         inspectionContext.setExternalProfile(null);

@@ -4,9 +4,11 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.UIOptions;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +18,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Enumeration;
+import java.util.HashSet;
 
 /**
  * User: anna
@@ -24,7 +27,6 @@ import java.util.Enumeration;
 public class BaseAnalysisActionDialog extends DialogWrapper {
   private String myFileName;
   private String myModuleName;
-  private JRadioButton myFileButton;
   private JRadioButton myProjectButton;
   private JRadioButton myModuleButton;
   private JRadioButton myUncommitedFiles;
@@ -40,7 +42,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
                                   Project project,
                                   String fileName,
                                   String moduleName,
-                                  boolean isProjectScope,
                                   boolean rememberScope) {
     super(true);
     myProject = project;
@@ -50,10 +51,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myAnalysisNoon = analysisNoon;
     init();
     setTitle(title);
-    if (isProjectScope){
-      myFileButton.setVisible(false);
-      myProjectButton.setSelected(true);
-    }
   }
 
   public void setOKActionEnabled(boolean isEnabled) {
@@ -100,10 +97,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     }
 
     //file/package/directory/module scope
-    myFileButton = new JRadioButton(myFileName);
-    myFileButton.setMnemonic(myFileName.charAt(0));
-    group.add(myFileButton);
-    panel.add(myFileButton, gc);
+    final JRadioButton fileButton = new JRadioButton(myFileName);
+    fileButton.setMnemonic(myFileName.charAt(0));
+    group.add(fileButton);
+    panel.add(fileButton, gc);
 
     //custom scope
     myCustomScopeButton = new JRadioButton(AnalysisScopeBundle.message("scope.option.custom"));
@@ -122,7 +119,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     //correct selection
     myProjectButton.setSelected(myRememberScope && uiOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
-    myFileButton.setSelected(!myRememberScope || (uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && uiOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles));
+    fileButton.setSelected(!myRememberScope || (uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && uiOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles));
 
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
     final ActionListener customScopeUpdateAction = new ActionListener() {
@@ -176,5 +173,31 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
   public boolean isInspectTestSources(){
     return myInspectTestSource.isSelected();
+  }
+
+  public AnalysisScope getScope(UIOptions uiOptions, AnalysisScope scope, Project project, Module module){
+    if (isProjectScopeSelected()) {
+      scope = new AnalysisScope(project);
+      uiOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
+    }
+    else {
+      final SearchScope customScope = getCustomScope();
+      if (customScope != null){
+        scope = new AnalysisScope(customScope, project);
+        uiOptions.SCOPE_TYPE = AnalysisScope.CUSTOM;
+        uiOptions.CUSTOM_SCOPE_NAME = customScope.getDisplayName();
+      } else if (isModuleScopeSelected()) {
+        scope = new AnalysisScope(module);
+        uiOptions.SCOPE_TYPE = AnalysisScope.MODULE;
+      } else if (isUncommitedFilesSelected()) {
+        scope = new AnalysisScope(project, new HashSet<VirtualFile>(ChangeListManager.getInstance(project).getAffectedFiles()));
+        uiOptions.SCOPE_TYPE = AnalysisScope.UNCOMMITED_FILES;
+      } else {
+        uiOptions.SCOPE_TYPE = AnalysisScope.FILE;//just not project scope
+      }
+    }
+    uiOptions.ANALYZE_TEST_SOURCES = isInspectTestSources();
+    scope.setIncludeTestSource(isInspectTestSources());
+    return scope;
   }
 }

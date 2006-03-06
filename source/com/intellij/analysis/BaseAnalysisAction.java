@@ -8,11 +8,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,7 +39,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     if (project != null) {
       AnalysisScope scope;
       PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-      if (psiFile != null && !(psiFile instanceof PsiJavaFile)) {
+      if (psiFile != null) {
         scope = new AnalysisScope(psiFile);
       }
       else {
@@ -59,7 +57,6 @@ public abstract class BaseAnalysisAction extends AnAction {
                                                                   project,
                                                                   scope.getShortenName(),
                                                                   module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil.getModuleNameInReadAction(module) : null,
-                                                                  scope.getScopeType() == AnalysisScope.PROJECT,
                                                                   rememberScope){
         @Nullable
         protected JComponent getAdditionalActionSettings(final Project project) {
@@ -69,26 +66,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       dlg.show();
       if (!dlg.isOK()) return;
       final int oldScopeType = uiOptions.SCOPE_TYPE;
-      if (dlg.isProjectScopeSelected()) {
-        scope = getProjectScope(dataContext);
-        uiOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
-      }
-      else {
-        final SearchScope customScope = dlg.getCustomScope();
-        if (customScope != null){
-          scope = new AnalysisScope(customScope, project);
-          uiOptions.SCOPE_TYPE = AnalysisScope.CUSTOM;
-          uiOptions.CUSTOM_SCOPE_NAME = customScope.getDisplayName();
-        } else if (dlg.isModuleScopeSelected()) {
-          scope = getModuleScope(dataContext);
-          uiOptions.SCOPE_TYPE = AnalysisScope.MODULE;
-        } else if (dlg.isUncommitedFilesSelected()) {
-          scope = new AnalysisScope(project, new HashSet<VirtualFile>(ChangeListManager.getInstance(project).getAffectedFiles()));
-          uiOptions.SCOPE_TYPE = AnalysisScope.UNCOMMITED_FILES;
-        } else {
-          uiOptions.SCOPE_TYPE = AnalysisScope.FILE;//just not project scope
-        }
-      }
+      scope = dlg.getScope(uiOptions, scope, project, module);
       if (!rememberScope){
         uiOptions.SCOPE_TYPE = oldScopeType;
       }
@@ -160,10 +138,6 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   private static AnalysisScope getProjectScope(DataContext dataContext) {
     return new AnalysisScope((Project)dataContext.getData(DataConstants.PROJECT));
-  }
-
-  private static AnalysisScope getModuleScope(DataContext dataContext) {
-    return new AnalysisScope((Module)dataContext.getData(DataConstants.MODULE));
   }
 
   @Nullable
