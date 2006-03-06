@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.designSurface.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,16 +24,7 @@ public class RadToolBar extends RadContainer {
 
   @Override @Nullable
   protected RadLayoutManager createInitialLayoutManager() {
-    return new DummyLayoutManager();
-  }
-
-  @Override @Nullable
-  public DropLocation getDropLocation(@Nullable Point location) {
-    return new FlowDropLocation(this, location, 0, 0, true);
-  }
-
-  protected void addToDelegee(final int index, final RadComponent component) {
-    getDelegee().add(component.getDelegee(), component.getConstraints(), index);
+    return new RadToolBarLayoutManager();
   }
 
   public void write(final XmlWriter writer) {
@@ -44,4 +36,22 @@ public class RadToolBar extends RadContainer {
     }
   }
 
+  private class RadToolBarLayoutManager extends RadLayoutManager {
+
+    @Nullable public String getName() {
+      return null;
+    }
+
+    public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
+    }
+
+    public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
+      getDelegee().add(component.getDelegee(), component.getConstraints(), index);
+    }
+
+    @Override @NotNull
+    public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+      return new FlowDropLocation(RadToolBar.this, location, 0, 0, true);
+    }
+  }
 }
