@@ -467,7 +467,7 @@ public abstract class RadComponent implements IComponent {
     writer.startElement("constraints");
     try {
       if (getParent() != null) {
-        getParent().writeConstraints(writer, this);
+        getParent().getLayoutManager().writeChildConstraints(writer, this);
       }
     } finally {
       writer.endElement(); // constraints

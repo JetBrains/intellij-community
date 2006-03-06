@@ -184,7 +184,7 @@ public class RadContainer extends RadComponent implements IContainer {
     // Attach to new parent
     myComponents.add(index, component);
     component.setParent(this);
-    addToDelegee(index, component);
+    myLayoutManager.addComponentToContainer(this, component, index);
 
     final RadComponent[] newChildren = myComponents.toArray(new RadComponent[myComponents.size()]);
     firePropertyChanged(PROP_CHILDREN, oldChildren, newChildren);
@@ -192,10 +192,6 @@ public class RadContainer extends RadComponent implements IContainer {
 
   public final void addComponent(@NotNull final RadComponent component) {
     addComponent(component, myComponents.size());
-  }
-
-  protected void addToDelegee(final int index, final RadComponent component) {
-    myLayoutManager.addComponentToContainer(this, component, index);
   }
 
   /**
@@ -222,15 +218,10 @@ public class RadContainer extends RadComponent implements IContainer {
     // Remove child
     component.setParent(null);
     myComponents.remove(component);
-    removeFromDelegee(component);
+    myLayoutManager.removeComponentFromContainer(this, component);
 
     final RadComponent[] newChildren = myComponents.toArray(new RadComponent[myComponents.size()]);
     firePropertyChanged(PROP_CHILDREN, oldChildren, newChildren);
-  }
-
-  protected void removeFromDelegee(final RadComponent component) {
-    myLayoutManager.removeComponentFromContainer(this, component);
-    getDelegee().remove(component.getDelegee());
   }
 
   public final RadComponent getComponent(final int index) {
@@ -355,11 +346,6 @@ public class RadContainer extends RadComponent implements IContainer {
    * is <code>null</code>
    */
   public final void setBorderType(@NotNull final BorderType type){
-    //noinspection ConstantConditions
-    if(type==null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("type cannot be null");
-    }
     if(myBorderType==type){
       return;
     }
@@ -478,17 +464,6 @@ public class RadContainer extends RadComponent implements IContainer {
     }finally{
       writer.endElement(); // xy/grid
     }
-  }
-
-  /**
-   * Serializes child constraints into the currently opened "constraints" tag
-   */
-  public void writeConstraints(final XmlWriter writer, @NotNull final RadComponent child){
-    if(child.getParent() != this){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("parent mismatch: "+child.getParent());
-    }
-    getLayoutManager().writeChildConstraints(writer, child);
   }
 
   public boolean accept(ComponentVisitor visitor) {
