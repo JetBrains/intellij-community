@@ -291,6 +291,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                                                                                    patternType, constrType);
         if (res != null) return res;
       }
+      else if (paramBound instanceof PsiArrayType && arg instanceof PsiArrayType) {
+        Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(((PsiArrayType) paramBound).getComponentType(),
+                                                                                 ((PsiArrayType) arg).getComponentType(),
+                                                                                 patternType, constrType);
+        if (res != null) return res;
+      }
       else if (paramBound instanceof PsiClassType && arg instanceof PsiClassType) {
         final PsiClassType.ClassResolveResult boundResult = ((PsiClassType)paramBound).resolveGenerics();
         final PsiClass boundClass = boundResult.getElement();

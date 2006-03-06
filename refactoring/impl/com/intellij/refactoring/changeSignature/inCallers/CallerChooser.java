@@ -238,9 +238,15 @@ public abstract class CallerChooser extends DialogWrapper {
   private static void getSelectedMethodsInner(final MethodNode node, final Set<PsiMethod> allMethods) {
     if (node.isChecked()) {
       PsiMethod method = node.getMethod();
-      final PsiMethod superMethod = method.findDeepestSuperMethod();
-      if (superMethod != null) method = superMethod;
-      allMethods.add(method);
+      final PsiMethod[] superMethods = method.findDeepestSuperMethods();
+      if (superMethods.length == 0) {
+        allMethods.add(method);
+      } else {
+        for (PsiMethod superMethod : superMethods) {
+          allMethods.add(superMethod);
+        }
+      }
+
       final Enumeration children = node.children();
       while (children.hasMoreElements()) {
         getSelectedMethodsInner((MethodNode)children.nextElement(), allMethods);
