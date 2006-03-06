@@ -47,19 +47,26 @@ public class SurroundAction extends AbstractGuiEditorAction {
       editor.getProject(),
       new Runnable() {
         public void run() {
+          RadContainer newContainer = (RadContainer)InsertComponentProcessor.createInsertedComponent(editor, cItem);
+          if (newContainer == null) {
+            return;
+          }
+
           Rectangle rc = getSelectionBounds(selection);
 
           for(RadComponent c: selection) {
             selectionParent.removeComponent(c);
           }
 
-          RadContainer newContainer = (RadContainer)InsertComponentProcessor.createInsertedComponent(editor, cItem);
-
           final GridConstraints newConstraints = newContainer.getConstraints();
           newConstraints.setRow(rc.y);
           newConstraints.setColumn(rc.x);
           newConstraints.setRowSpan(rc.height);
           newConstraints.setColSpan(rc.width);
+
+          if (selection.size() == 1) {
+            newContainer.setCustomLayoutConstraints(selection.get(0).getCustomLayoutConstraints());
+          }
           selectionParent.addComponent(newContainer);
 
           if (newContainer instanceof RadTabbedPane ||
