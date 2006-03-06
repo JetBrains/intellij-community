@@ -56,6 +56,8 @@ public class AnalysisScope {
   public static final int CUSTOM = 8;
   public static final int VIRTUAL_FILES = 9;
 
+  public static int UNCOMMITED_FILES = 10;
+
   private final Project myProject;
   private final List<Module> myModules;
   private final Module myModule;
@@ -288,7 +290,7 @@ public class AnalysisScope {
     return result;
   }
 
-  private HashSet<Module> getAllInterstingModules(final ProjectFileIndex fileIndex, final VirtualFile vFile) {
+  private static HashSet<Module> getAllInterstingModules(final ProjectFileIndex fileIndex, final VirtualFile vFile) {
     final HashSet<Module> modules = new HashSet<Module>();
     if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
       for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(vFile)) {

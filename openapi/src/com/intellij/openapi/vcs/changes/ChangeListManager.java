@@ -25,6 +25,7 @@ public abstract class ChangeListManager {
   public abstract List<ChangeList> getChangeLists();
 
   public abstract List<File> getAffectedPaths();
+  @NotNull
   public abstract List<VirtualFile> getAffectedFiles();
 
   public abstract ChangeList addChangeList(@NotNull String name);

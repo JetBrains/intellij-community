@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -81,6 +82,9 @@ public abstract class BaseAnalysisAction extends AnAction {
         } else if (dlg.isModuleScopeSelected()) {
           scope = getModuleScope(dataContext);
           uiOptions.SCOPE_TYPE = AnalysisScope.MODULE;
+        } else if (dlg.isUncommitedFilesSelected()) {
+          scope = new AnalysisScope(project, new HashSet<VirtualFile>(ChangeListManager.getInstance(project).getAffectedFiles()));
+          uiOptions.SCOPE_TYPE = AnalysisScope.UNCOMMITED_FILES;
         } else {
           uiOptions.SCOPE_TYPE = AnalysisScope.FILE;//just not project scope
         }

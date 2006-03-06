@@ -6,6 +6,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private JRadioButton myFileButton;
   private JRadioButton myProjectButton;
   private JRadioButton myModuleButton;
+  private JRadioButton myUncommitedFiles;
   private JRadioButton myCustomScopeButton;
   private ScopeChooserCombo myScopeCombo;
   private JCheckBox myInspectTestSource;
@@ -88,6 +90,15 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       panel.add(myModuleButton, gc);
     }
 
+    boolean useUncommitedFiles = false;
+    if (ChangeListManager.getInstance(myProject).getAffectedFiles().size() > 0){
+      myUncommitedFiles = new JRadioButton(AnalysisScopeBundle.message("scope.option.uncommited.files"));
+      group.add(myUncommitedFiles);
+      useUncommitedFiles = uiOptions.SCOPE_TYPE == AnalysisScope.UNCOMMITED_FILES;
+      myUncommitedFiles.setSelected(myRememberScope && useUncommitedFiles);
+      panel.add(myUncommitedFiles, gc);
+    }
+
     //file/package/directory/module scope
     myFileButton = new JRadioButton(myFileName);
     myFileButton.setMnemonic(myFileName.charAt(0));
@@ -111,7 +122,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     //correct selection
     myProjectButton.setSelected(myRememberScope && uiOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
-    myFileButton.setSelected(!myRememberScope || (uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && uiOptions.SCOPE_TYPE != AnalysisScope.CUSTOM));
+    myFileButton.setSelected(!myRememberScope || (uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && uiOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles));
 
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
     final ActionListener customScopeUpdateAction = new ActionListener() {
@@ -145,6 +156,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
   public boolean isModuleScopeSelected() {
     return myModuleButton != null && myModuleButton.isSelected();
+  }
+
+  public boolean isUncommitedFilesSelected(){
+    return myUncommitedFiles != null && myUncommitedFiles.isSelected();
   }
 
   public SearchScope getCustomScope(){
