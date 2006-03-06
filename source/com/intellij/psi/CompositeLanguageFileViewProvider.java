@@ -28,7 +28,7 @@ import com.intellij.xml.util.XmlUtil;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvider{
+public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.CompositeLanguageFileViewProvider");
   private final Map<Language, PsiFile> myRoots = new HashMap<Language, PsiFile>();
   private final Map<PsiFile, Set<WeakReference<OuterLanguageElement>>> myOuterLanguageElements =
@@ -54,30 +54,27 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
     final XmlText[] xmlTexts = JspImplUtil.gatherTexts((XmlFile)psiFile);
     for (Map.Entry<Language, PsiFile> entry : myRoots.entrySet()) {
-      if(entry.getValue() != psiFile){
+      final PsiFile root = entry.getValue();
+      if (root instanceof PsiFileImpl && root != psiFile) {
         final PsiFileImpl copy = (PsiFileImpl)viewProvider.getPsi(entry.getKey());
-        JspImplUtil.copyRoot((PsiFileImpl)entry.getValue(), xmlTexts, copy);
+        JspImplUtil.copyRoot((PsiFileImpl)root, xmlTexts, copy);
       }
     }
     return viewProvider;
   }
 
   protected CompositeLanguageFileViewProvider cloneInner() {
-    final CompositeLanguageFileViewProvider viewProvider =
-      new CompositeLanguageFileViewProvider(getManager(), new MockVirtualFile(getVirtualFile().getName(),
-                                                                              getVirtualFile().getFileType(),
-                                                                              getContents(),
-                                                                              getModificationStamp()),
-                                   false);
+    final CompositeLanguageFileViewProvider viewProvider = new CompositeLanguageFileViewProvider(getManager(), new MockVirtualFile(
+      getVirtualFile().getName(), getVirtualFile().getFileType(), getContents(), getModificationStamp()), false);
     return viewProvider;
   }
 
   protected PsiFile getPsiInner(Language target) {
     PsiFile file = super.getPsiInner(target);
-    if(file != null) return file;
+    if (file != null) return file;
     file = myRoots.get(target);
-    if(file == null) {
-      synchronized(PsiLock.LOCK){
+    if (file == null) {
+      synchronized (PsiLock.LOCK) {
         file = createFile(target);
         myRoots.put(target, file);
       }
@@ -86,7 +83,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   }
 
   public synchronized PsiFile getCachedPsi(Language target) {
-    if(target == getBaseLanguage()) return super.getCachedPsi(target);
+    if (target == getBaseLanguage()) return super.getCachedPsi(target);
     return myRoots.get(target);
   }
 
@@ -99,17 +96,17 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     }
   }
 
-  public void registerOuterLanguageElement(OuterLanguageElement element, PsiFile root){
+  public void registerOuterLanguageElement(OuterLanguageElement element, PsiFile root) {
     Set<WeakReference<OuterLanguageElement>> outerLanguageElements = myOuterLanguageElements.get(root);
-    if(outerLanguageElements == null){
+    if (outerLanguageElements == null) {
       outerLanguageElements = new TreeSet<WeakReference<OuterLanguageElement>>(new Comparator<WeakReference<OuterLanguageElement>>() {
         public int compare(final WeakReference<OuterLanguageElement> o1, final WeakReference<OuterLanguageElement> o2) {
           final OuterLanguageElement languageElement1 = o1.get();
           final OuterLanguageElement languageElement2 = o2.get();
-          if(languageElement1 == null && languageElement2 == null) return 0;
-          if(languageElement1 == null) return -1;
-          if(languageElement1.equals(languageElement2)) return 0;
-          if(languageElement2 == null) return 1;
+          if (languageElement1 == null && languageElement2 == null) return 0;
+          if (languageElement1 == null) return -1;
+          if (languageElement1.equals(languageElement2)) return 0;
+          if (languageElement2 == null) return 1;
           final int result = languageElement1.getTextRange().getStartOffset() - languageElement2.getTextRange().getStartOffset();
           return result != 0 ? result : 1;
         }
@@ -122,13 +119,13 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   public void reparseRoots(final Set<Language> rootsToReparse) {
     for (final Language lang : rootsToReparse) {
       final PsiFile cachedRoot = myRoots.get(lang);
-      if(cachedRoot != null){
-        if(myRootsInUpdate.contains(cachedRoot)) continue;
+      if (cachedRoot != null) {
+        if (myRootsInUpdate.contains(cachedRoot)) continue;
         try {
           myRootsInUpdate.add(cachedRoot);
           reparseRoot(lang, cachedRoot);
         }
-        finally{
+        finally {
           myRootsInUpdate.remove(cachedRoot);
         }
       }
@@ -136,11 +133,11 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   }
 
   protected void reparseRoot(final Language lang, final PsiFile cachedRoot) {
-    LOG.debug("JspxFile: reparseRoot "+getVirtualFile().getName());
+    LOG.debug("JspxFile: reparseRoot " + getVirtualFile().getName());
     final PsiFile psiFileImpl = cachedRoot;
     final ASTNode oldFileTree = psiFileImpl.getNode();
-    if(oldFileTree == null || oldFileTree.getFirstChildNode() instanceof ChameleonElement){
-      if(psiFileImpl instanceof PsiFileImpl) ((PsiFileImpl)psiFileImpl).setTreeElementPointer(null);
+    if (oldFileTree == null || oldFileTree.getFirstChildNode() instanceof ChameleonElement) {
+      if (psiFileImpl instanceof PsiFileImpl) ((PsiFileImpl)psiFileImpl).setTreeElementPointer(null);
       psiFileImpl.subtreeChanged();
       return;
     }
@@ -148,7 +145,8 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     final ASTNode newFileTree = fileForNewText.getNode();
     ChameleonTransforming.transformChildren(newFileTree, true);
     ChameleonTransforming.transformChildren(oldFileTree, true);
-    CompositeLanguageParsingUtil.mergeTreeElements((TreeElement)newFileTree.getFirstChildNode(), (TreeElement)oldFileTree.getFirstChildNode(), (CompositeElement)oldFileTree);
+    CompositeLanguageParsingUtil.mergeTreeElements((TreeElement)newFileTree.getFirstChildNode(),
+                                                   (TreeElement)oldFileTree.getFirstChildNode(), (CompositeElement)oldFileTree);
     checkConsistensy(cachedRoot);
   }
 
@@ -156,23 +154,25 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     for (Map.Entry<Language, PsiFile> entry : myRoots.entrySet()) {
       final PsiFile psiFile = entry.getValue();
       final Language updatedLanguage = entry.getKey();
-      if(reparsedRoots.contains(updatedLanguage)) continue;
+      if (reparsedRoots.contains(updatedLanguage)) continue;
       final Set<WeakReference<OuterLanguageElement>> list = myOuterLanguageElements.get(psiFile);
-      if(list == null) // not parsed yet
+      if (list == null) // not parsed yet
+      {
         continue;
-      try{
+      }
+      try {
         myRootsInUpdate.add(psiFile);
         final Iterator<WeakReference<OuterLanguageElement>> iterator = list.iterator();
         XmlText prevText = null;
-        while(iterator.hasNext()) {
+        while (iterator.hasNext()) {
           WeakReference<OuterLanguageElement> reference = iterator.next();
           final OuterLanguageElement outerElement = reference.get();
-          if (outerElement == null){
+          if (outerElement == null) {
             iterator.remove();
             continue;
           }
           final FileElement file = TreeUtil.getFileElement(outerElement);
-          if(file == null || file.getPsi() != psiFile) {
+          if (file == null || file.getPsi() != psiFile) {
             iterator.remove();
             continue;
           }
@@ -199,8 +199,8 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
       final PsiFile psiRoot = getPsi(language);
       final PsiElement psiElement;
       psiElement = findElementAt(psiRoot, offset);
-      if(psiElement == null || psiElement instanceof OuterLanguageElement) continue;
-      if(ret == null || psiRoot != mainRoot) {
+      if (psiElement == null || psiElement instanceof OuterLanguageElement) continue;
+      if (ret == null || psiRoot != mainRoot) {
         ret = psiElement;
       }
     }
@@ -234,34 +234,33 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
   protected PsiFile createFile(Language lang) {
     final PsiFile psiFile = super.createFile(lang);
-    if(psiFile != null) return psiFile;
-    if(getRelevantLanguages().contains(lang))
-      return lang.getParserDefinition().createFile(this);
+    if (psiFile != null) return psiFile;
+    if (getRelevantLanguages().contains(lang)) return lang.getParserDefinition().createFile(this);
     return null;
   }
 
   public void rootChanged(PsiFile psiFile) {
-    if(myRootsInUpdate.contains(psiFile)) return;
+    if (myRootsInUpdate.contains(psiFile)) return;
     if (psiFile.getLanguage() == getBaseLanguage()) {
       super.rootChanged(psiFile);
       // rest of sync mechanism is now handeled by JspxAspect
     }
-    else if(!myRootsInUpdate.contains(getPsi(getBaseLanguage())))
-      doHolderToXmlChanges(psiFile);
+    else if (!myRootsInUpdate.contains(getPsi(getBaseLanguage()))) doHolderToXmlChanges(psiFile);
   }
 
   private void doHolderToXmlChanges(final PsiFile psiFile) {
     final Language language = getBaseLanguage();
-    final List<Pair<OuterLanguageElement, Pair<StringBuffer, StringBuffer>>> javaFragments = new ArrayList<Pair<OuterLanguageElement, Pair<StringBuffer, StringBuffer>>>();
+    final List<Pair<OuterLanguageElement, Pair<StringBuffer, StringBuffer>>> javaFragments =
+      new ArrayList<Pair<OuterLanguageElement, Pair<StringBuffer, StringBuffer>>>();
     try {
       StringBuffer currentBuffer = null;
       StringBuffer currentDecodedBuffer = null;
       LeafElement element = TreeUtil.findFirstLeaf(psiFile.getNode());
-      if(element == null) return;
+      if (element == null) return;
       do {
         if (element instanceof OuterLanguageElement) {
-          javaFragments.add(Pair.create((OuterLanguageElement)element, Pair.create(currentBuffer = new StringBuffer(),
-                                                                                   currentDecodedBuffer = new StringBuffer())));
+          javaFragments.add(Pair.create((OuterLanguageElement)element,
+                                        Pair.create(currentBuffer = new StringBuffer(), currentDecodedBuffer = new StringBuffer())));
         }
         else {
           final String text = element.getText();
@@ -287,20 +286,22 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
   public void normalizeOuterLanguageElements(PsiFile root) {
     if (!myRootsInUpdate.contains(root)) {
-      try{
+      try {
         myRootsInUpdate.add(root);
         normalizeOuterLanguageElementsInner(root);
       }
-      finally{
+      finally {
         myRootsInUpdate.remove(root);
       }
     }
-    else normalizeOuterLanguageElementsInner(root);
+    else {
+      normalizeOuterLanguageElementsInner(root);
+    }
   }
 
   private void normalizeOuterLanguageElementsInner(final PsiFile lang) {
     final Set<WeakReference<OuterLanguageElement>> outerElements = myOuterLanguageElements.get(lang);
-    if(outerElements == null) return;
+    if (outerElements == null) return;
     final Iterator<WeakReference<OuterLanguageElement>> iterator = outerElements.iterator();
     OuterLanguageElement prev = null;
     while (iterator.hasNext()) {
@@ -312,15 +313,19 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
         continue;
       }
 
-      if(prev != null && prev.getFollowingText() == null &&
-         outer.getTextRange().getStartOffset() == prev.getTextRange().getEndOffset()) {
+      if (prev != null && prev.getFollowingText() == null && outer.getTextRange().getStartOffset() == prev.getTextRange().getEndOffset()) {
         final CompositeElement prevParent = prev.getTreeParent();
         if (prevParent != null && prevParent.getElementType() == JspElementType.JSP_TEMPLATE_EXPRESSION ||
-            PsiTreeUtil.getParentOfType(outer, JspWhileStatement.class) != null)
+            PsiTreeUtil.getParentOfType(outer, JspWhileStatement.class) != null) {
           prev = mergeOuterLanguageElements(outer, prev);
-        else prev = mergeOuterLanguageElements(prev, outer);
+        }
+        else {
+          prev = mergeOuterLanguageElements(prev, outer);
+        }
       }
-      else prev = outer;
+      else {
+        prev = outer;
+      }
     }
   }
 
@@ -328,12 +333,12 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     final TextRange textRange = new TextRange(Math.min(prev.getTextRange().getStartOffset(), outer.getTextRange().getStartOffset()),
                                               Math.max(prev.getTextRange().getEndOffset(), outer.getTextRange().getEndOffset()));
     prev.setRange(textRange);
-    if(prev.getFollowingText() == null) prev.setFollowingText(outer.getFollowingText());
+    if (prev.getFollowingText() == null) prev.setFollowingText(outer.getFollowingText());
     final CompositeElement parent = prev.getTreeParent();
-    if(parent != null) parent.subtreeChanged();
+    if (parent != null) parent.subtreeChanged();
     final CompositeElement removedParent = outer.getTreeParent();
     TreeUtil.remove(outer);
-    if(removedParent != null) removedParent.subtreeChanged();
+    if (removedParent != null) removedParent.subtreeChanged();
     return prev;
   }
 }
