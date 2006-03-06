@@ -28,16 +28,14 @@ import gnu.trove.TIntObjectHashMap;
 import javax.swing.*;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
-  private static IconProvider[] ourIconProviders = null;
 
   public Icon getIcon(int flags) {
     if (!(this instanceof PsiElement)) return null;
 
     final PsiElement element = (PsiElement)this;
-    for (final IconProvider iconProvider : getIconProviders()) {
-      final Icon icon = iconProvider.getIcon(element, flags);
-      if (icon != null) return icon;
-    }
+
+    final Icon providersIcon = IconUtil.getProvidersIcon(element, flags);
+    if(providersIcon != null) return providersIcon;
 
     RowIcon baseIcon;
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
@@ -107,13 +105,6 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       IconUtilEx.setVisibilityIcon(modifierList, baseIcon);
     }
     return baseIcon;
-  }
-
-  private static IconProvider[] getIconProviders() {
-    if (ourIconProviders == null) {
-      ourIconProviders = ApplicationManager.getApplication().getComponents(IconProvider.class);
-    }
-    return ourIconProviders;
   }
 
   private static boolean isExcluded(final VirtualFile vFile, final Project project) {

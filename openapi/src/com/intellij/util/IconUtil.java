@@ -25,20 +25,22 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ide.IconProvider;
 
 import javax.swing.*;
 
 
 public class IconUtil {
+  private static IconProvider[] ourIconProviders = null;
+
   public static Icon getIcon(VirtualFile file, int flags, Project project) {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
 
-    Icon icon = file.getIcon();
+    Icon providersIcon = getProvidersIcon(file, flags, project);
+    Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
 
     Icon excludedIcon = null;
     Icon lockedIcon = null;
@@ -88,5 +90,28 @@ public class IconUtil {
     }
 
     return icon;
+  }
+
+  public static Icon getProvidersIcon(VirtualFile file, int flags, Project project) {
+    if(project == null) return null;
+
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+
+    return psiFile == null ? null : getProvidersIcon(psiFile, flags);
+  }
+
+  public static Icon getProvidersIcon(PsiElement element, int flags) {
+    for (final IconProvider iconProvider : getIconProviders()) {
+      final Icon icon = iconProvider.getIcon(element, flags);
+      if (icon != null) return icon;
+    }
+    return null;
+  }
+
+  private static IconProvider[] getIconProviders() {
+    if (ourIconProviders == null) {
+      ourIconProviders = ApplicationManager.getApplication().getComponents(IconProvider.class);
+    }
+    return ourIconProviders;
   }
 }
