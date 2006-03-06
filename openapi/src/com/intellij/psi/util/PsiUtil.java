@@ -456,15 +456,7 @@ public final class PsiUtil {
 
   public static boolean isVariableNameUnique(String name, PsiElement place) {
     PsiResolveHelper helper = place.getManager().getResolveHelper();
-    PsiVariable refVar = helper.resolveReferencedVariable(name, place);
-    return refVar == null;
-  }
-
-  /**
-   * @deprecated Use {@link PsiManager#isInProject(PsiElement)}
-   */
-  public static boolean isInProject(PsiElement element) {
-    return element.getManager().isInProject(element);
+    return helper.resolveReferencedVariable(name, place) == null;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

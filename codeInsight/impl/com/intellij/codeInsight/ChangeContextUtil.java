@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -19,7 +20,9 @@ public class ChangeContextUtil {
   private static final Key<PsiMember> REF_MEMBER_KEY = Key.create("REF_MEMBER_KEY");
   private static final Key<Boolean> CAN_REMOVE_QUALIFIER_KEY = Key.create("CAN_REMOVE_QUALIFIER_KEY");
   private static final Key<PsiClass> REF_CLASS_KEY = Key.create("REF_CLASS_KEY");
-  private static final Key<PsiClass> REF_MEMBER_THIS_CLASS_KEY = Key.create("REF_MEMBER_THIS_CLASS_KEY");;
+  private static final Key<PsiClass> REF_MEMBER_THIS_CLASS_KEY = Key.create("REF_MEMBER_THIS_CLASS_KEY");
+
+  private ChangeContextUtil() {}
 
   public static void encodeContextInfo(PsiElement scope, boolean includeRefClasses) {
     if (scope instanceof PsiThisExpression){
@@ -174,7 +177,7 @@ public class ChangeContextUtil {
           final PsiClass realParentClass = refExpr.getCopyableUserData(REF_MEMBER_THIS_CLASS_KEY);
           refExpr.putCopyableUserData(REF_MEMBER_THIS_CLASS_KEY, null);
           if (thisClass != null && realParentClass != null &&
-              (thisClass.equals(realParentClass) || thisClass.isInheritor(realParentClass, true))){
+              InheritanceUtil.isInheritorOrSelf(thisClass, realParentClass, true)) {
             boolean needQualifier = true;
             PsiElement refElement = refExpr.resolve();
             if (refMember.equals(refElement)){

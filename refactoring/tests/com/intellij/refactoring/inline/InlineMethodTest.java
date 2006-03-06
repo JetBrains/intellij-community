@@ -90,7 +90,6 @@ public class InlineMethodTest extends CodeInsightTestCase {
     PsiMethod method = (PsiMethod)element;
     InlineOptions options = new MockInlineMethodOptions();
     final InlineMethodProcessor processor = new InlineMethodProcessor(myProject, method, null, myEditor, options.isInlineThisOnly());
-    //new InlineMethodDialog(myProject, method, false, processor);
     processor.run();
   }
 }
