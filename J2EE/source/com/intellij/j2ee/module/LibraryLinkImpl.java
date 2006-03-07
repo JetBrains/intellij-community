@@ -244,16 +244,16 @@ public class LibraryLinkImpl extends LibraryLink {
     return libraryLink;
   }
 
-  private static @Nullable Library findModuleLibrary(Module module, @Nullable ModulesProvider provider, String url) {
-    if (url == null) return null;
+  private static @Nullable Library findModuleLibrary(Module module, @Nullable ModulesProvider provider, @Nullable String name, String url) {
+    if (url == null && name == null) return null;
     if (provider == null) {
       provider = new DefaultModulesProvider(module.getProject());
     }
-    return findModuleLibrary(module, provider, url, new HashSet<Module>());
+    return findModuleLibrary(module, provider, url, name, new HashSet<Module>());
   }
 
   private static @Nullable Library findModuleLibrary(Module module, final @NotNull ModulesProvider provider,
-                                                     @NotNull String url, Set<Module> visited) {
+                                                     String url, @Nullable String name, Set<Module> visited) {
     if (!visited.add(module)) {
       return null;
     }
@@ -261,22 +261,27 @@ public class LibraryLinkImpl extends LibraryLink {
     ModuleRootModel rootModel = provider.getRootModel(module);
     OrderEntry[] orderEntries = rootModel.getOrderEntries();
     for (OrderEntry orderEntry : orderEntries) {
-      if (orderEntry instanceof LibraryOrderEntry) {
+      if (orderEntry instanceof ModuleOrderEntry) {
+        final Module dependency = ((ModuleOrderEntry)orderEntry).getModule();
+        if (dependency != null) {
+          final Library library = findModuleLibrary(dependency, provider, url, name, visited);
+          if (library != null) {
+            return library;
+          }
+        }
+      }
+      else if (orderEntry instanceof LibraryOrderEntry) {
         LibraryOrderEntry libraryOrderEntry = ((LibraryOrderEntry)orderEntry);
         Library library = libraryOrderEntry.getLibrary();
         if (library == null) continue;
-        String[] urls = library.getUrls(OrderRootType.CLASSES);
-        if (urls.length != 1) continue;
-        if (Comparing.strEqual(urls[0], url)) return library;
-      }
-      else if (orderEntry instanceof ModuleOrderEntry) {
-        final Module dependency = ((ModuleOrderEntry)orderEntry).getModule();
-        if (dependency == null) {
-          continue;
-        }
-        final Library library = findModuleLibrary(dependency, provider, url, visited);
-        if (library != null) {
+
+        if (name != null && library.getTable()==null && name.equals(library.getName())) {
           return library;
+        }
+
+        if (name == null) {
+          String[] urls = library.getUrls(OrderRootType.CLASSES);
+          if (urls.length == 1 && Comparing.strEqual(urls[0], url)) return library;
         }
       }
     }
@@ -323,8 +328,8 @@ public class LibraryLinkImpl extends LibraryLink {
       if (module == null) return null;
 
       if (MODULE_LEVEL.equals(myLevel)) {
-        if (myUrls.size() != 1) return null;
-        return findModuleLibrary(module, provider, myUrls.get(0));
+        String url = myUrls.size() == 1 ? myUrls.get(0) : null;
+        return findModuleLibrary(module, provider, myName, url);
       }
       else {
         return LibraryLink.findLibrary(myName, myLevel, module.getProject());
