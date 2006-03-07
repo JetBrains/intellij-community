@@ -5,9 +5,10 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,19 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
   private boolean mySuggestSearchInLibs;
   private boolean myPrevSearchFiles;
 
+
+  public ScopeChooserCombo() {
+  }
+
   public ScopeChooserCombo(final Project project, boolean suggestSearchInLibs, boolean prevSearchWholeFiles, String preselect) {
+    init(project, suggestSearchInLibs, prevSearchWholeFiles,  preselect);
+  }
+
+  public void init(final Project project, final String preselect){
+    init(project, false, true, preselect);    
+  }
+
+  private void init(final Project project, final boolean suggestSearchInLibs, final boolean prevSearchWholeFiles,  final String preselect) {
     mySuggestSearchInLibs = suggestSearchInLibs;
     myPrevSearchFiles = prevSearchWholeFiles;
     final JComboBox combo = getComboBox();
@@ -127,16 +140,17 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     model.addElement(new ScopeDescriptor(GlobalSearchScope.projectTestScope(myProject, true)));
 
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(getProject());
-    if (fileEditorManager.getSelectedTextEditor() != null) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(fileEditorManager.getSelectedTextEditor().getDocument());
+    final Editor selectedTextEditor = fileEditorManager.getSelectedTextEditor();
+    if (selectedTextEditor != null) {
+      final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(selectedTextEditor.getDocument());
       if (psiFile != null) {
         model.addElement(new ScopeDescriptor(new LocalSearchScope(psiFile, IdeBundle.message("scope.current.file"))));
 
-        if (fileEditorManager.getSelectedTextEditor().getSelectionModel().hasSelection()) {
+        if (selectedTextEditor.getSelectionModel().hasSelection()) {
           PsiElement[] elements = CodeInsightUtil.findStatementsInRange(
             psiFile,
-            fileEditorManager.getSelectedTextEditor().getSelectionModel().getSelectionStart(),
-            fileEditorManager.getSelectedTextEditor().getSelectionModel().getSelectionEnd()
+            selectedTextEditor.getSelectionModel().getSelectionStart(),
+            selectedTextEditor.getSelectionModel().getSelectionEnd()
           );
 
           if (elements.length != 0) {
