@@ -20,6 +20,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -254,12 +255,10 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       return getName();
     }
 
-    private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock, PsiElement firstElement) {
-      LOG.assertTrue(firstElement != null);
-      while (firstElement.getParent() != anchorBlock) {
+    private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock, @NotNull PsiElement firstElement) {
+      while (firstElement != null && firstElement.getParent() != anchorBlock) {
         firstElement = firstElement.getParent();
       }
-
       return firstElement;
     }
 
