@@ -27,6 +27,7 @@ public class MethodThrowsFix implements IntentionAction {
   }
 
   public String getText() {
+    if (!myThrowsClassType.isValid() || !myMethod.isValid()) return null;
     String methodName = PsiFormatUtil.formatMethod(myMethod,
                                                    PsiSubstitutor.EMPTY,
                                                    PsiFormatUtil.SHOW_NAME | (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS: 0),
