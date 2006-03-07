@@ -8,6 +8,8 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -229,7 +231,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    if (isAfterJavaDoc(newChildIndex)) {
+    if (isAfter(newChildIndex, new IElementType[]{JavaDocElementType.DOC_COMMENT, JavaElementType.MODIFIER_LIST})) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
     else {

@@ -1021,7 +1021,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (myUseChildAttributes) {
       return new ChildAttributes(myChildIndent, myChildAlignment);
     }
-    else if (isAfterJavaDoc(newChildIndex)) {
+    else if (isAfter(newChildIndex, new IElementType[]{JavaDocElementType.DOC_COMMENT})) {
       return new ChildAttributes(Indent.getNoneIndent(), myChildAlignment);
     }
     else {
@@ -1038,12 +1038,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return mySettings;
   }
 
-  protected boolean isAfterJavaDoc(final int newChildIndex) {
+  protected boolean isAfter(final int newChildIndex, final IElementType[] elementTypes) {
     if (newChildIndex == 0) return false;
     final Block previousBlock = getSubBlocks().get(newChildIndex - 1);
     if (!(previousBlock instanceof AbstractBlock)) return false;
     final IElementType previousElementType = ((AbstractBlock)previousBlock).getNode().getElementType();
-    return previousElementType == JavaDocElementType.DOC_COMMENT;
+    for (IElementType elementType : elementTypes) {
+      if (previousElementType == elementType) return true;
+    }
+    return false;
   }
 
   protected Alignment getUsedAlignment(final int newChildIndex) {

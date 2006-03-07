@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -162,7 +163,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    if (isAfterJavaDoc(newChildIndex)) {
+    if (isAfter(newChildIndex, new IElementType[]{JavaDocElementType.DOC_COMMENT})) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
 
