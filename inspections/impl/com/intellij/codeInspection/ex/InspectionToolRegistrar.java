@@ -5,7 +5,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ui.InspectCodePanel;
-import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,9 +42,11 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   private static HashMap<String, ArrayList<String>> myWords2InspectionToolNameMap = null;
 
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
+  private SearchableOptionsRegistrar mySearchableOptionsRegistrar;
 
   @SuppressWarnings({"UNUSED_SYMBOL"})
-  public InspectionToolRegistrar(InspectionToolProvider[] providers, SearchUtil searchUtil) {
+  public InspectionToolRegistrar(InspectionToolProvider[] providers, SearchableOptionsRegistrar searchableOptionsRegistrar) {
+    mySearchableOptionsRegistrar = searchableOptionsRegistrar;
     myInspectionTools = new ArrayList<Class>();
     myLocalInspectionTools = new ArrayList<Class>();
     myGlobalInspectionTools = new ArrayList<Class>();
@@ -163,7 +165,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     return null;
   }
 
-  private synchronized static void buildInspectionIndex(final InspectionTool[] tools) {
+  private synchronized void buildInspectionIndex(final InspectionTool[] tools) {
     if (myWords2InspectionToolNameMap == null) {
       myWords2InspectionToolNameMap = new HashMap<String, ArrayList<String>>();
       new Thread(){
@@ -189,8 +191,8 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     }
   }
 
-  private static void processText(final @NonNls @NotNull String descriptionText, final InspectionTool tool) {
-    final Set<String> words = SearchUtil.getProcessedWordsWithoutStemming(descriptionText);
+  private void processText(final @NonNls @NotNull String descriptionText, final InspectionTool tool) {
+    final Set<String> words = mySearchableOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
     for (String word : words) {
       ArrayList<String> descriptors = myWords2InspectionToolNameMap.get(word);
       if (descriptors == null) {

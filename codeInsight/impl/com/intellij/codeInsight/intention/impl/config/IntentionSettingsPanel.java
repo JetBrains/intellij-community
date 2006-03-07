@@ -43,7 +43,7 @@ public class IntentionSettingsPanel {
             result.add(metaData);
           }
         }
-        final Set<String> filters = SearchUtil.getProcessedWords(filter);
+        final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
         if (force && result.isEmpty()){
           if (filters.size() > 1){
             filterModel(filter, false);
@@ -118,7 +118,7 @@ public class IntentionSettingsPanel {
 
     boolean highlight = false;
 
-    final Set<String> filters = SearchUtil.getProcessedWords(filter);
+    final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
     for (String filtString : filters) {
       final ArrayList<String> descriptors = IntentionManagerSettings.getInstance().getIntentionNames(filtString);
       if (descriptors != null && descriptors.contains(metaData.myFamily)){

@@ -45,5 +45,13 @@ public abstract class SearchableOptionsRegistrar{
 
   public abstract String getSynonym(final String option, @NotNull final SearchableConfigurable configurable);
 
+  public abstract Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable);
+
   public abstract List<String> findPossibleExtension(@NotNull String prefix);
+
+
+  public abstract Set<String> getProcessedWordsWithoutStemming(@NotNull String text);
+
+  public abstract Set<String> getProcessedWords(@NotNull String text);
+
 }

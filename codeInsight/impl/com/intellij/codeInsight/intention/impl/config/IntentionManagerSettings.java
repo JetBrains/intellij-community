@@ -9,7 +9,7 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +37,12 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   private HashMap<String, ArrayList<String>> myWords2DescriptorsMap = new HashMap<String, ArrayList<String>>();
 
   static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
+
+  private SearchableOptionsRegistrar mySearchableOptionsRegistrar;
+
+  public IntentionManagerSettings(final SearchableOptionsRegistrar searchableOptionsRegistrar) {
+    mySearchableOptionsRegistrar = searchableOptionsRegistrar;
+  }
 
   public String getExternalFileName() {
     return "intentionSettings";
@@ -137,8 +143,8 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     if (description != null) {
       @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
       descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
-      final Set<String> words = SearchUtil.getProcessedWordsWithoutStemming(descriptionText);
-      words.addAll(SearchUtil.getProcessedWords(metaData.myFamily));      
+      final Set<String> words = mySearchableOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
+      words.addAll(mySearchableOptionsRegistrar.getProcessedWords(metaData.myFamily));
       for (String word : words) {
         ArrayList<String> descriptors = myWords2DescriptorsMap.get(word);
         if (descriptors == null) {

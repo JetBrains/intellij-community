@@ -5,8 +5,6 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
@@ -30,14 +28,8 @@ import java.util.regex.Pattern;
  * User: anna
  * Date: 07-Feb-2006
  */
-public class SearchUtil implements ApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.search.SearchUtil");
-  private static SearchableOptionsRegistrar ourSearchableOptionsRegistrar;
-
-
-  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
-  public SearchUtil(SearchableOptionsRegistrar searchableOptionsRegistrar) {
-    ourSearchableOptionsRegistrar = searchableOptionsRegistrar;
+public class SearchUtil {
+  private SearchUtil() {
   }
 
   public static void processProjectConfigurables(Project project, HashMap<SearchableConfigurable,Set<Pair<String,String>>> options) {
@@ -117,7 +109,7 @@ public class SearchUtil implements ApplicationComponent {
   private static void processUILabel(@NonNls final String title,
                                      final Set<Pair<String, String>> configurableOptions,
                                      String path) {
-    final Set<String> words = getProcessedWordsWithoutStemming(title);
+    final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(title);
     for (String option : words) {
       configurableOptions.add(Pair.create(option, path));
     }
@@ -165,10 +157,11 @@ public class SearchUtil implements ApplicationComponent {
   }
 
   public static int getSelection(String tabIdx, final TabbedPaneWrapper tabbedPane) {
+    SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     for (int i = 0; i < tabbedPane.getTabCount(); i ++) {
-      final Set<String> pathWords = getProcessedWords(tabIdx);
+      final Set<String> pathWords = searchableOptionsRegistrar.getProcessedWords(tabIdx);
       final String title = tabbedPane.getTitleAt(i);
-      final Set<String> titleWords = getProcessedWords(title);
+      final Set<String> titleWords = searchableOptionsRegistrar.getProcessedWords(title);
       pathWords.removeAll(titleWords);
       if (pathWords.isEmpty()) return i;
     }
@@ -220,8 +213,9 @@ public class SearchUtil implements ApplicationComponent {
   }
 
   public static boolean isComponentHighlighted(@NotNull String text, @NotNull String option, final boolean force, final SearchableConfigurable configurable){
-    final Set<String> options = replaceSynonyms(getProcessedWords(option), configurable);
-    final Set<String> tokens = getProcessedWords(text);
+    SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
+    final Set<String> options = searchableOptionsRegistrar.replaceSynonyms(searchableOptionsRegistrar.getProcessedWords(option), configurable);
+    final Set<String> tokens = searchableOptionsRegistrar.getProcessedWords(text);
     if (!force) {
       options.retainAll(tokens);
       return !options.isEmpty();
@@ -230,48 +224,6 @@ public class SearchUtil implements ApplicationComponent {
       options.removeAll(tokens);
       return options.isEmpty();
     }
-  }
-
-  public static Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable){
-    final Set<String> result = new HashSet<String>(options);
-    for (String option : options) {
-      final String synonym = ourSearchableOptionsRegistrar.getSynonym(option, configurable);
-      if (synonym != null) {
-        result.add(synonym);
-      } else {
-        result.add(option);
-      }
-    }
-    return result;
-  }
-
-  public static Set<String> getProcessedWordsWithoutStemming(@NotNull String text){
-    Set<String> result = new HashSet<String>();
-    @NonNls final String toLowerCase = text.toLowerCase();
-    final String[] options = toLowerCase.split("[\\W&&[^_-]]");
-    if (options != null) {
-      for (String opt : options) {
-        if (opt == null) continue;
-        if (ourSearchableOptionsRegistrar.isStopWord(opt)) continue;
-        result.add(opt);
-      }
-    }
-    return result;
-  }
-
-  public static Set<String> getProcessedWords(@NotNull String text){
-    Set<String> result = new HashSet<String>();
-    @NonNls final String toLowerCase = text.toLowerCase();
-    final String[] options = toLowerCase.split("[\\W&&[^_-]]");
-    if (options != null) {
-      for (String opt : options) {
-        if (ourSearchableOptionsRegistrar.isStopWord(opt)) continue;
-        opt = PorterStemmerUtil.stem(opt);
-        if (opt == null) continue;
-        result.add(opt);
-      }
-    }
-    return result;
   }
 
   public static Runnable lightOptions(final SearchableConfigurable configurable,
@@ -291,7 +243,7 @@ public class SearchUtil implements ApplicationComponent {
       return textToMarkup;
     }
     final Pattern insideHtmlTagPattern = Pattern.compile("[<[^<>]*>]*<[^<>]*");
-    final Set<String> options = getProcessedWords(filter);
+    final Set<String> options = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
     final String[] words = textToMarkup.split("[\\W&&[^_-]]");
     for (String word : words) {
       if (options.contains(PorterStemmerUtil.stem(word.toLowerCase()))){
@@ -324,7 +276,7 @@ public class SearchUtil implements ApplicationComponent {
     if (filter == null || filter.length() == 0){
        textRenderer.append(text, new SimpleTextAttributes(style, foreground));
     } else { //markup
-       final Set<String> filters = getProcessedWords(filter);
+       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
        String [] words = text.split("[\\W&&[^_-]]");
        List<String> selectedWords = new ArrayList<String>();
        for (String word : words) {
@@ -337,20 +289,9 @@ public class SearchUtil implements ApplicationComponent {
          text = text.substring(idx);
          textRenderer.append(text.substring(0, text.indexOf(word)), new SimpleTextAttributes(background, foreground, null, style));
          idx = text.indexOf(word) + word.length();
-         textRenderer.append(text.substring(idx - word.length(), idx), new SimpleTextAttributes(UIUtil.getTreeSelectionBackground(), foreground, null, style));
+         textRenderer.append(text.substring(idx - word.length(), idx), new SimpleTextAttributes(UIUtil.getTreeSelectionBackground(), UIUtil.getTreeSelectionForeground(), null, style));
        }
        textRenderer.append(text.substring(idx, text.length()), new SimpleTextAttributes(background, foreground, null, style));
      }
    }
-
-  @NonNls
-  public String getComponentName() {
-    return "SearchUtil";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
 }

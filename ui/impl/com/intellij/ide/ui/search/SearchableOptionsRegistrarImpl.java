@@ -106,7 +106,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
 
   @NotNull
   public Set<Configurable> getConfigurables(ConfigurableGroup[] configurables, String option, boolean showProjectCodeStyle) {
-    Set<String> options = SearchUtil.getProcessedWords(option);
+    Set<String> options = getProcessedWords(option);
     Set<Configurable> result = new HashSet<Configurable>();
     Set<String> helpIds = null;
     for (String opt : options) {
@@ -174,5 +174,47 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
   }
 
   public void disposeComponent() {
+  }
+
+  public Set<String> getProcessedWordsWithoutStemming(@NotNull String text){
+    Set<String> result = new HashSet<String>();
+    @NonNls final String toLowerCase = text.toLowerCase();
+    final String[] options = toLowerCase.split("[\\W&&[^_-]]");
+    if (options != null) {
+      for (String opt : options) {
+        if (opt == null) continue;
+        if (isStopWord(opt)) continue;
+        result.add(opt);
+      }
+    }
+    return result;
+  }
+
+  public Set<String> getProcessedWords(@NotNull String text){
+    Set<String> result = new HashSet<String>();
+    @NonNls final String toLowerCase = text.toLowerCase();
+    final String[] options = toLowerCase.split("[\\W&&[^_-]]");
+    if (options != null) {
+      for (String opt : options) {
+        if (isStopWord(opt)) continue;
+        opt = PorterStemmerUtil.stem(opt);
+        if (opt == null) continue;
+        result.add(opt);
+      }
+    }
+    return result;
+  }
+
+  public Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable){
+    final Set<String> result = new HashSet<String>(options);
+    for (String option : options) {
+      final String synonym = getSynonym(option, configurable);
+      if (synonym != null) {
+        result.add(synonym);
+      } else {
+        result.add(option);
+      }
+    }
+    return result;
   }
 }

@@ -127,11 +127,12 @@ public class TraverseUIStarter implements ApplicationStarter {
   }
 
   private static void processColorAndFontsSettings(final ColorAndFontOptions configurable, final Element configurableElement) {
+    SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Map<String, String> optionsPath = configurable.processListOptions();
     final Map<String, String> result = new TreeMap<String, String>();
     for (String opt : optionsPath.keySet()) {
       final String path = optionsPath.get(opt);
-      final Set<String> words = SearchUtil.getProcessedWordsWithoutStemming(opt);
+      final Set<String> words = searchableOptionsRegistrar.getProcessedWordsWithoutStemming(opt);
       for (String word : words) {
         if (word != null){
           result.put(word, path);
@@ -149,17 +150,18 @@ public class TraverseUIStarter implements ApplicationStarter {
 
   private static void processKeymap(final Element configurableElement){
     final ActionManager actionManager = ActionManager.getInstance();
+    final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> ids = ((ActionManagerImpl)actionManager).getActionIds();
     final TreeSet<String> options = new TreeSet<String>();
     for (String id : ids) {
       final AnAction anAction = actionManager.getAction(id);
       final String text = anAction.getTemplatePresentation().getText();
       if (text != null) {
-        options.addAll(SearchUtil.getProcessedWordsWithoutStemming(text));
+        options.addAll(searchableOptionsRegistrar.getProcessedWordsWithoutStemming(text));
       }
       final String description = anAction.getTemplatePresentation().getDescription();
       if (description != null) {
-        options.addAll(SearchUtil.getProcessedWordsWithoutStemming(description));
+        options.addAll(searchableOptionsRegistrar.getProcessedWordsWithoutStemming(description));
       }
     }
     for (String opt : options) {
