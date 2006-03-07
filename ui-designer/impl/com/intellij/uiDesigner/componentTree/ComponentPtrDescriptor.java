@@ -18,16 +18,8 @@ final class ComponentPtrDescriptor extends NodeDescriptor{
   private String myBinding;
   private String myTitle;
 
-  public ComponentPtrDescriptor(@NotNull final NodeDescriptor parentDescriptor, @NotNull final ComponentPtr ptr){
+  public ComponentPtrDescriptor(@NotNull final NodeDescriptor parentDescriptor, @NotNull final ComponentPtr ptr) {
     super(null,parentDescriptor);
-    //noinspection ConstantConditions
-    if(parentDescriptor==null){
-      throw new IllegalArgumentException("parentDescriptor cannot be null");
-    }
-    //noinspection ConstantConditions
-    if(ptr==null){
-      throw new IllegalArgumentException("ptr cannot be null");
-    }
 
     myPtr=ptr;
   }

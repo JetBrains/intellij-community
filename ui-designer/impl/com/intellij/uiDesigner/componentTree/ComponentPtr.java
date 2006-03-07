@@ -4,6 +4,7 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -17,17 +18,7 @@ public final class ComponentPtr{
   /**
    * @param component
    */
-  public ComponentPtr(final GuiEditor editor,final RadComponent component){
-    // Check args
-    if(editor==null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("editor cannot be null");
-    }
-    if(component==null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("component cannot be null");
-    }
-
+  public ComponentPtr(@NotNull final GuiEditor editor, @NotNull final RadComponent component){
     myEditor=editor;
     myId=component.getId();
 

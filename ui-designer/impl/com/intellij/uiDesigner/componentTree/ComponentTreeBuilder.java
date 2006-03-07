@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.SelectionWatcher;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -37,13 +38,8 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
   private ComponentTreeBuilder.MyHierarchyChangeListener myHierarchyChangeListener;
   private ComponentTreeBuilder.MyTreeSelectionListener myTreeSelectionListener;
 
-  public ComponentTreeBuilder(final ComponentTree tree, final GuiEditor editor){
+  public ComponentTreeBuilder(final ComponentTree tree, @NotNull final GuiEditor editor){
     super(tree,(DefaultTreeModel)tree.getModel(),null,MyComparator.ourComparator);
-
-    if(editor==null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("editor cannot be null");
-    }
 
     myEditor = editor;
     mySelectionWatcher = new MySelectionWatcher(editor);

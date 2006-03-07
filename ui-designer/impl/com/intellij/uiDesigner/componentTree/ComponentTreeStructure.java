@@ -20,12 +20,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
   private final Object myRootElement;
   private final GuiEditor myEditor;
 
-  public ComponentTreeStructure(final GuiEditor editor){
-    if(editor==null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("editor cannot be null");
-    }
-
+  public ComponentTreeStructure(@NotNull final GuiEditor editor){
     myRootElement=new Object();
     myEditor=editor;
   }
