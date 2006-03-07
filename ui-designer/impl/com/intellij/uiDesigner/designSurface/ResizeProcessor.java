@@ -31,8 +31,6 @@ public final class ResizeProcessor extends EventProcessor {
   private Rectangle myOriginalBounds;
   private RadContainer myOriginalParent;
   private final GuiEditor myEditor;
-  private boolean doResize = false;
-  private static final int EPSILON = 5;
   private GridConstraints myOriginalConstraints;
   private RadComponent myResizedCopy;
 
@@ -90,7 +88,6 @@ public final class ResizeProcessor extends EventProcessor {
 
       if ((Math.abs(e.getX() - myPressPoint.getX()) > DragSelectionProcessor.TREMOR ||
            Math.abs(e.getY() - myPressPoint.getY()) > DragSelectionProcessor.TREMOR)) {
-        doResize = true;
       }
 
       final GridConstraints constraints = myComponent.getConstraints();

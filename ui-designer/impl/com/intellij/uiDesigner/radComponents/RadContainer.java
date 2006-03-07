@@ -398,6 +398,10 @@ public class RadContainer extends RadComponent implements IContainer {
     setLayout(myLayoutManager.createLayout());
   }
 
+  public RadComponent getComponentToResize(RadComponent child) {
+    return child;
+  }
+
   /**
    * Serializes container's border
    */

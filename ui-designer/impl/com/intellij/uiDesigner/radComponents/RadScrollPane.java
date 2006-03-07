@@ -38,6 +38,10 @@ public final class RadScrollPane extends RadContainer {
     }
   }
 
+  @Override public RadComponent getComponentToResize(RadComponent child) {
+    return this;
+  }
+
   private class RadScrollPaneLayoutManager extends RadLayoutManager {
     private MyDropLocation myDropLocation = null;
 

@@ -271,8 +271,12 @@ public final class MainProcessor extends EventProcessor{
 
     final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), component.getDelegee());
     final int resizeMask = Painter.getResizeMask(component, point.x, point.y);
+    LOG.debug("MainProcessor.processMousePressed: resizeMask at (" + point.x + "," + point.y + ") is " + resizeMask);
 
     if (resizeMask != 0) {
+      if (component.getParent() != null) {
+        component = component.getParent().getComponentToResize(component);
+      }
       myCurrentProcessor = new ResizeProcessor(myEditor, component, resizeMask);
     }
     else if (component instanceof RadRootContainer || ((component instanceof RadContainer) && e.isShiftDown())) {
