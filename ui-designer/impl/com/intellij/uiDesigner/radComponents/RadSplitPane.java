@@ -1,24 +1,26 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
-import com.intellij.uiDesigner.designSurface.DropLocation;
-import com.intellij.uiDesigner.designSurface.FeedbackLayer;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public final class RadSplitPane extends RadContainer {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadSplitPane");
+
   public RadSplitPane(final Module module, final String id) {
     super(module, JSplitPane.class, id);
   }
@@ -54,6 +56,19 @@ public final class RadSplitPane extends RadContainer {
 
   private JSplitPane getSplitPane() {
     return (JSplitPane)getDelegee();
+  }
+
+  @Override @Nullable
+  public EventProcessor getEventProcessor(final MouseEvent event) {
+    final JSplitPane splitPane = getSplitPane();
+    Point pnt = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), splitPane);
+    int pos = (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) ? pnt.y : pnt.x;
+    if (event.getID() == MouseEvent.MOUSE_PRESSED &&
+        pos >= splitPane.getDividerLocation() &&
+        pos < splitPane.getDividerLocation() + splitPane.getDividerSize()) {
+      return new DividerDragProcessor();
+    }
+    return null;
   }
 
   public void write(final XmlWriter writer) {
@@ -150,13 +165,13 @@ public final class RadSplitPane extends RadContainer {
       Rectangle rc;
       if (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
         rc = myLeft
-               ? new Rectangle(0, 0, getWidth(), dividerLeftPos)
-               : new Rectangle(0, dividerRightPos, getWidth(), getHeight() - dividerRightPos);
+             ? new Rectangle(0, 0, getWidth(), dividerLeftPos)
+             : new Rectangle(0, dividerRightPos, getWidth(), getHeight() - dividerRightPos);
       }
       else {
         rc = myLeft
-               ? new Rectangle(0, 0, dividerLeftPos, getHeight())
-               : new Rectangle(dividerRightPos, 0, getWidth() - dividerRightPos, getHeight());
+             ? new Rectangle(0, 0, dividerLeftPos, getHeight())
+             : new Rectangle(dividerRightPos, 0, getWidth() - dividerRightPos, getHeight());
       }
       feedbackLayer.putFeedback(getDelegee(), rc);
     }
@@ -167,6 +182,26 @@ public final class RadSplitPane extends RadContainer {
                             ComponentDragObject dragObject) {
       components[0].setCustomLayoutConstraints(myLeft ? LwSplitPane.POSITION_LEFT : LwSplitPane.POSITION_RIGHT);
       addComponent(components[0]);
+    }
+  }
+
+  private class DividerDragProcessor extends EventProcessor {
+    protected void processKeyEvent(KeyEvent e) {
+    }
+
+    protected void processMouseEvent(MouseEvent event) {
+      JSplitPane splitPane = getSplitPane();
+      Point pnt = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), splitPane);
+      splitPane.dispatchEvent(new MouseEvent(splitPane, event.getID(), event.getWhen(), event.getModifiers(), pnt.x, pnt.y,
+                                             event.getClickCount(), event.isPopupTrigger(), event.getButton()));
+    }
+
+    @Override public boolean needMousePressed() {
+      return true;
+    }
+
+    protected boolean cancelOperation() {
+      return false;
     }
   }
 }

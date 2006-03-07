@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.EventProcessor;
 import com.intellij.uiDesigner.lw.ComponentVisitor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
@@ -450,6 +451,10 @@ public abstract class RadComponent implements IComponent {
   }
 
   public void processMouseEvent(final MouseEvent event) {}
+
+  @Nullable public EventProcessor getEventProcessor(final MouseEvent event) {
+    return null;
+  }
 
   /**
    * Serializes component into the passed <code>writer</code>

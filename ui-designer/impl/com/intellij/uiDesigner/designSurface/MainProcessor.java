@@ -109,17 +109,23 @@ public final class MainProcessor extends EventProcessor{
       final Component deepestComponentAt = SwingUtilities.getDeepestComponentAt(componentAt.getDelegee(), p1.x, p1.y);
       final Point p2 = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), deepestComponentAt);
 
-      componentAt.processMouseEvent(new MouseEvent(
-        deepestComponentAt,
-        id,
-        e.getWhen(),
-        e.getModifiers(),
-        p2.x,
-        p2.y,
-        e.getClickCount(),
-        e.isPopupTrigger(),
-        e.getButton()
-      ));
+      EventProcessor processor = componentAt.getEventProcessor(e);
+      if (processor != null) {
+        myCurrentProcessor = processor;
+      }
+      else {
+        componentAt.processMouseEvent(new MouseEvent(
+          deepestComponentAt,
+          id,
+          e.getWhen(),
+          e.getModifiers(),
+          p2.x,
+          p2.y,
+          e.getClickCount(),
+          e.isPopupTrigger(),
+          e.getButton()
+        ));
+      }
     }
 
     Cursor cursor = Cursor.getDefaultCursor();
