@@ -22,8 +22,10 @@ public class VcsDirtyScope {
   private final Set<FilePath> myDirtyFiles = new THashSet<FilePath>();
   private final Set<FilePath> myDirtyDirectoriesRecursively = new THashSet<FilePath>();
   private final ProjectFileIndex myIndex;
+  private Project myProject;
 
   public VcsDirtyScope(final VirtualFile root, final Project project) {
+    myProject = project;
     myScopeRoot = root;
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
@@ -74,6 +76,7 @@ public class VcsDirtyScope {
   }
 
   public Module getScopeModule() {
+    if (myProject.isDisposed()) return null;
     return myIndex.getModuleForFile(myScopeRoot);
   }
 
@@ -86,6 +89,7 @@ public class VcsDirtyScope {
   }
 
   public void iterate(ContentIterator iterator) {
+    if (myProject.isDisposed()) return;
     final Module module = myIndex.getModuleForFile(myScopeRoot);
     final ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
 
@@ -110,6 +114,7 @@ public class VcsDirtyScope {
   }
 
   public boolean belongsTo(FilePath path) {
+    if (myProject.isDisposed()) return false;
     if (getRootFor(myIndex, path) != myScopeRoot) return false;
 
     for (FilePath filePath : myDirtyDirectoriesRecursively) {
