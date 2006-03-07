@@ -746,7 +746,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         final XmlElementDescriptor parentDescriptor = getDescriptor();
         final XmlTag[] subTags = getSubTags();
         final PsiElement declaration = parentDescriptor != null ? parentDescriptor.getDeclaration() : null;
-        if ((declaration != null && declaration.getContainingFile().isPhysical()) // filtring out generated dtds
+        if ((declaration != null && declaration.getContainingFile() != null && declaration.getContainingFile().isPhysical()) // filtring out generated dtds
             && subTags.length > 0){
           final XmlElementDescriptor[] childElementDescriptors = parentDescriptor.getElementsDescriptors(XmlTagImpl.this);
           int subTagNum = -1;
