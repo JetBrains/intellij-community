@@ -3,8 +3,8 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.Converter;
 
@@ -22,7 +22,7 @@ public abstract class SetInvocation implements Invocation {
     assert handler.isValid();
     final VirtualFile virtualFile = handler.getFile().getVirtualFile();
     if (virtualFile != null && !virtualFile.isWritable()) {
-      throw new ReadOnlyDeploymentDescriptorModificationException(virtualFile);
+      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(virtualFile);
     }
 
     final DomManagerImpl manager = handler.getManager();
