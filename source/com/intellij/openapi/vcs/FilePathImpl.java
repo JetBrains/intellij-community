@@ -16,7 +16,7 @@ import java.nio.charset.Charset;
 
 public class FilePathImpl implements FilePath {
   private VirtualFile myVirtualFile;
-  private final VirtualFile myVirtualParent;
+  private VirtualFile myVirtualParent;
   private final String myName;
   private final File myFile;
 
@@ -92,10 +92,16 @@ public class FilePathImpl implements FilePath {
   }
 
   public VirtualFile getVirtualFile() {
+    if (myVirtualFile != null && !myVirtualFile.isValid()) {
+      myVirtualFile = null;
+    }
     return myVirtualFile;
   }
 
   public VirtualFile getVirtualFileParent() {
+    if (myVirtualParent != null && !myVirtualParent.isValid()) {
+      myVirtualParent = null;
+    }
     return myVirtualParent;
   }
 
