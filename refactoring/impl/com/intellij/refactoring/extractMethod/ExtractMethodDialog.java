@@ -4,6 +4,8 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -156,8 +158,8 @@ class ExtractMethodDialog extends DialogWrapper {
 
     panel.add(myNameField);
 
-    myNameField.getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      public void documentChanged(DocumentEvent e) {
         update();
       }
     });
@@ -228,7 +230,7 @@ class ExtractMethodDialog extends DialogWrapper {
     panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("signature.preview.border.title")));
 
     mySignatureArea.setEditable(false);
-    mySignatureArea.setBackground(this.getContentPane().getBackground());
+    mySignatureArea.setBackground(getContentPane().getBackground());
     panel.add(mySignatureArea, BorderLayout.CENTER);
 
     updateSignature();
