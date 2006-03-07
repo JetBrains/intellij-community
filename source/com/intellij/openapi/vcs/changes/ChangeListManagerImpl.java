@@ -5,6 +5,7 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -66,6 +67,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
 
   private final Object myPendingUpdatesLock = new Object();
+  private boolean myUpdateInProgress = false;
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   @NonNls private static final String NODE_LIST = "list";
@@ -231,12 +233,15 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public boolean ensureUpToDate(boolean canBeCanceled) {
     final boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        ProgressManager.getInstance().getProgressIndicator().setText(VcsBundle.message("commit.wait.util.synced.message"));
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        indicator.setText(VcsBundle.message("commit.wait.util.synced.message"));
         synchronized (myPendingUpdatesLock) {
           scheduleUpdate(0);
-          while (myUpdateAlarm.getActiveRequestCount() > 0) {
+          while (myUpdateAlarm.getActiveRequestCount() > 0 || myUpdateInProgress) {
+            if (indicator.isCanceled()) break;
+
             try {
-              myPendingUpdatesLock.wait();
+              myPendingUpdatesLock.wait(100);
             }
             catch (InterruptedException e) {
               break;
@@ -267,73 +272,81 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       }
 
       private void updateImmediately() {
-        if (myDisposed) return;
-
-        final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
-        for (final VcsDirtyScope scope : scopes) {
-          updateProgressText(VcsBundle.message("changes.update.progress.message", scope.getScopeRoot().getPresentableUrl()));
-          synchronized (myChangeLists) {
-            for (ChangeList list : getChangeLists()) {
-              if (myDisposed) return;
-              list.startProcessingChanges(scope);
-            }
+        try {
+          synchronized (myPendingUpdatesLock) {
+            myUpdateInProgress = true;
           }
 
-          final UnversionedFilesHolder workingHolderCopy = myUnversionedFilesHolder.copy();
-          workingHolderCopy.cleanScope(scope);
+          if (myDisposed) return;
 
-          try {
-            final AbstractVcs vcs = myVcsManager.getVcsFor(scope.getScopeRoot());
-            if (vcs != null) {
-              final ChangeProvider changeProvider = vcs.getChangeProvider();
-              if (changeProvider != null) {
-                changeProvider.getChanges(scope, new ChangelistBuilder() {
-                  public void processChange(Change change) {
-                    if (myDisposed) return;
-                    if (isUnder(change, scope)) {
-                      try {
-                        synchronized (myChangeLists) {
-                          for (ChangeList list : myChangeLists) {
-                            if (list == myDefaultChangelist) continue;
-                            if (list.processChange(change)) return;
+          final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
+          for (final VcsDirtyScope scope : scopes) {
+            updateProgressText(VcsBundle.message("changes.update.progress.message", scope.getScopeRoot().getPresentableUrl()));
+            synchronized (myChangeLists) {
+              for (ChangeList list : getChangeLists()) {
+                if (myDisposed) return;
+                list.startProcessingChanges(scope);
+              }
+            }
+
+            final UnversionedFilesHolder workingHolderCopy = myUnversionedFilesHolder.copy();
+            workingHolderCopy.cleanScope(scope);
+
+            try {
+              final AbstractVcs vcs = myVcsManager.getVcsFor(scope.getScopeRoot());
+              if (vcs != null) {
+                final ChangeProvider changeProvider = vcs.getChangeProvider();
+                if (changeProvider != null) {
+                  changeProvider.getChanges(scope, new ChangelistBuilder() {
+                    public void processChange(Change change) {
+                      if (myDisposed) return;
+                      if (isUnder(change, scope)) {
+                        try {
+                          synchronized (myChangeLists) {
+                            for (ChangeList list : myChangeLists) {
+                              if (list == myDefaultChangelist) continue;
+                              if (list.processChange(change)) return;
+                            }
+
+                            myDefaultChangelist.processChange(change);
                           }
-
-                          myDefaultChangelist.processChange(change);
+                        }
+                        finally {
+                          scheduleRefresh();
                         }
                       }
-                      finally {
+                    }
+
+                    public void processUnversionedFile(VirtualFile file) {
+                      if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                        workingHolderCopy.addFile(file);
                         scheduleRefresh();
                       }
                     }
-                  }
-
-                  public void processUnversionedFile(VirtualFile file) {
-                    if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-                      workingHolderCopy.addFile(file);
-                      scheduleRefresh();
-                    }
-                  }
-                }, null); // TODO: make real indicator
-              }
-            }
-          }
-          finally {
-            synchronized (myChangeLists) {
-              for (ChangeList list : myChangeLists) {
-                if (list.doneProcessingChanges()) {
-                  myListeners.getMulticaster().changeListChanged(list);
+                  }, null); // TODO: make real indicator
                 }
               }
             }
+            finally {
+              synchronized (myChangeLists) {
+                for (ChangeList list : myChangeLists) {
+                  if (list.doneProcessingChanges()) {
+                    myListeners.getMulticaster().changeListChanged(list);
+                  }
+                }
+              }
+            }
+
+            myUnversionedFilesHolder = workingHolderCopy;
+            scheduleRefresh();
           }
-
-          myUnversionedFilesHolder = workingHolderCopy;
-          scheduleRefresh();
         }
-
-        updateProgressText("");
-        synchronized (myPendingUpdatesLock) {
-          myPendingUpdatesLock.notifyAll();
+        finally {
+          updateProgressText("");
+          synchronized (myPendingUpdatesLock) {
+            myUpdateInProgress = false;
+            myPendingUpdatesLock.notifyAll();
+          }
         }
       }
 
