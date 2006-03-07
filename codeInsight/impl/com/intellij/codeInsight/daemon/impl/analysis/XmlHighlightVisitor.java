@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -58,6 +59,7 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.idea.LoggerFactory;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -68,6 +70,9 @@ import java.util.*;
  * @author Mike
  */
 public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.ValidationHost {
+  private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance(
+    "com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor"
+  );
   public static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
   private List<HighlightInfo> myResult;
   private RefCountHolder myRefCountHolder;
@@ -855,11 +860,21 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               message = XmlErrorMessages.message("cannot.resolve.symbol");
             }
 
+            String description;
+            try {
+              description = MessageFormat.format(message, reference.getCanonicalText());
+            } catch(IllegalArgumentException ex) {
+              // unresolvedMessage provided by third-party reference contains wrong format string (e.g. {}), tolerate it
+              description = message;
+              LOG.warn(XmlErrorMessages.message("plugin.reference.message.problem",reference.getClass().getName(),message));
+            }
+
             HighlightInfo info = HighlightInfo.createHighlightInfo(
               getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class)),
               reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset(),
               reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset(),
-              MessageFormat.format(message, reference.getCanonicalText()));
+              description
+            );
             addToResults(info);
             quickFixProvider.registerQuickfix(info, reference);
             if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
