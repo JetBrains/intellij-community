@@ -85,6 +85,24 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
       g.setColor(getCaptionColor(i));
       g.fillRect(rc.x, rc.y, rc.width, rc.height);
+
+      int sizePolicy = layout.getCellSizePolicy(myIsRow, i);
+      if ((sizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) {
+        Graphics2D g2d = (Graphics2D) g;
+        Stroke oldStroke = g2d.getStroke();
+        g2d.setStroke(new BasicStroke(2.0f));
+        g.setColor(Color.BLUE);
+        if (myIsRow) {
+          int midPoint = (int) rc.getCenterX();
+          g.drawLine(midPoint+1, rc.y+1, midPoint+1, rc.y+rc.height-1);
+        }
+        else {
+          int midPoint = (int) rc.getCenterY();
+          g.drawLine(rc.x+1, midPoint+1, rc.x+rc.width-1, midPoint+1);
+        }
+        g2d.setStroke(oldStroke);
+      }
+
       g.setColor(Color.DARK_GRAY);
       g.drawRect(rc.x, rc.y, rc.width, rc.height);
     }

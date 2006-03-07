@@ -996,7 +996,13 @@ public final class GridLayoutManager extends AbstractLayout {
                          horzGridLines [endRow+1] - horzGridLines [startRow]);
 
   }
+
   public int getCellCount(final boolean isRow) {
     return isRow ? getRowCount() : getColumnCount();
+  }
+
+  public int getCellSizePolicy(final boolean isRow, final int cellIndex) {
+    DimensionInfo info = isRow ? myVerticalInfo : myHorizontalInfo;
+    return info.getCellSizePolicy(cellIndex);
   }
 }
