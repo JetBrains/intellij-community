@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -443,9 +444,9 @@ public class FileUtil {
     return StringUtil.replace(urlString, "%20", " ");
   }
 
-  public static boolean isFilePathAcceptable(File file, FileFilter fileFilter) {
+  public static boolean isFilePathAcceptable(File file, @Nullable FileFilter fileFilter) {
     do {
-      if (!fileFilter.accept(file)) return false;
+      if (fileFilter != null && !fileFilter.accept(file)) return false;
       file = file.getParentFile();
     }
     while (file != null);
