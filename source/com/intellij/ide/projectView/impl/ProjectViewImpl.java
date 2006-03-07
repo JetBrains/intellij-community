@@ -753,6 +753,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   public void changeView(@NotNull String viewId, @Nullable String subId) {
+    int i = 0;
     AbstractProjectViewPane pane = getProjectViewPaneById(viewId);
     if (!viewId.equals(getCurrentViewId())
         || subId != null && !subId.equals(pane.getSubId()) ||
@@ -1082,6 +1083,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     if (navigatorElement != null) {
       mySavedPaneId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_VIEW);
       mySavedPaneSubId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_SUBVIEW);
+      if (mySavedPaneId == null) {
+        mySavedPaneId = ProjectViewPane.ID;
+        mySavedPaneSubId = null;
+      }
       readOption(navigatorElement.getChild(ELEMENT_FLATTEN_PACKAGES), myFlattenPackages);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_MEMBERS), myShowMembers);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_MODULES), myShowModules);
