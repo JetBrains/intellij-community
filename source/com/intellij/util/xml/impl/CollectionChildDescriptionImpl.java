@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
@@ -92,6 +93,9 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   public List<? extends DomElement> getValues(final DomElement element) {
     try {
       return (List<DomElement>)myGetterMethod.invoke(element);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       throw new RuntimeException(e);
