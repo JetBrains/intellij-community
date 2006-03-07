@@ -59,7 +59,6 @@ import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.text.MessageFormat;
@@ -850,7 +849,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           if(hasBadResolve) {
             String message;
             if (reference instanceof EmptyResolveMessageProvider) {
-              message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessage();
+              message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
             }
             else {
               message = XmlErrorMessages.message("cannot.resolve.symbol");
