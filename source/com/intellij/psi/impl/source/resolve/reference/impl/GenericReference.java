@@ -98,7 +98,7 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
     return ReferenceProvidersRegistry.getInstance(currentElement.getProject()).getManipulator(currentElement);
   }
 
-  public String getUnresolvedMessage(){
+  public String getUnresolvedMessagePattern(){
     return getType().getUnresolvedMessage();
   }
 

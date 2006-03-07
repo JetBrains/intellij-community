@@ -143,7 +143,7 @@ public class PropertyReference implements PsiPolyVariantReference, EmptyResolveM
     return false;
   }
 
-  public String getUnresolvedMessage() {
+  public String getUnresolvedMessagePattern() {
     return PropertiesBundle.message("unresolved.property.key");
   }
 
