@@ -154,7 +154,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
    *
    * @return the overridden or implemented method, or null if this method does not override
    * or implement any other method.
-   * @deprecated use {@link #findDeepestSuperMethods()} insted
+   * @deprecated use {@link #findDeepestSuperMethods()} instead
    */
   @Nullable PsiMethod findDeepestSuperMethod();
 
