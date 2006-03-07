@@ -179,7 +179,7 @@ public final class Javac2 extends Javac{
       final String name = file.getName();
       if (name.endsWith(".class")) {
         final String path = file.getPath();
-        log("Adding @NotNull assertions to " + path);
+        log("Adding @NotNull assertions to " + path, Project.MSG_VERBOSE);
         try {
           final FileInputStream inputStream = new FileInputStream(file);
           ClassReader reader = new ClassReader(inputStream);
@@ -192,7 +192,7 @@ public final class Javac2 extends Javac{
           }
         }
         catch (IOException e) {
-          log("Failed to instrument @NotNull assertion: " + e.getMessage());
+          log("Failed to instrument @NotNull assertion: " + e.getMessage(), Project.MSG_WARN);
         }
       } else if (file.isDirectory()) {
         instrumentNotNull(file);
