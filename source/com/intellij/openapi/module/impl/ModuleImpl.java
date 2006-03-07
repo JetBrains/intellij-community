@@ -22,14 +22,13 @@ import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.BaseFileConfigurable;
+import com.intellij.openapi.project.impl.ConfigurationFile;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModule;
 import com.intellij.pom.core.impl.PomModuleImpl;
@@ -53,7 +52,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleImpl");
 
   @NotNull private final Project myProject;
-  private VirtualFilePointer myFilePointer;
+  private ConfigurationFile myFile;
   private ModuleType myModuleType = null;
   private boolean myIsDisposed = false;
   private MyVirtualFileListener myVirtualFileListener;
@@ -97,8 +96,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
       }
     });
 
-    String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path);
-    myFilePointer = VirtualFilePointerManager.getInstance().create(url, null);
+    myFile = new ConfigurationFile(path);
     myVirtualFileListener = new MyVirtualFileListener();
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
   }
@@ -180,11 +178,11 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   }
 
   public VirtualFile getModuleFile() {
-    return myFilePointer.getFile();
+    return myFile.getVirtualFile();
   }
 
   void rename(String newName) {
-    final VirtualFile file = myFilePointer.getFile();
+    final VirtualFile file = myFile.getVirtualFile();
     try {
       if (file != null) {
         file.rename(ModuleUtil.MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
@@ -197,13 +195,12 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     final File oldFile = new File(getModuleFilePath());
     final File parentFile = oldFile.getParentFile();
     final File newFile = new File(parentFile, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    final String newUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, newFile.getPath().replace(File.separatorChar, '/'));
-    myFilePointer = VirtualFilePointerManager.getInstance().create(newUrl, null);
+    myFile = new ConfigurationFile(newFile.getPath());
   }
 
   @NotNull
   public String getModuleFilePath() {
-    String url = myFilePointer.getUrl();
+    String url = myFile.getURL();
     String protocol = VirtualFileManager.extractProtocol(url);
     LOG.assertTrue(LocalFileSystem.PROTOCOL.equals(protocol));
     String path = VirtualFileManager.extractPath(url);
@@ -218,9 +215,8 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     Extensions.disposeArea(this);
   }
 
-  public VirtualFile[] getConfigurationFiles() {
-    final VirtualFile moduleFile = getModuleFile();
-    return moduleFile == null? VirtualFile.EMPTY_ARRAY : new VirtualFile[]{moduleFile};
+  public ConfigurationFile[] getConfigurationFiles() {
+    return new ConfigurationFile[]{myFile};
   }
 
   public String[] getConfigurationFilePaths() {
@@ -382,7 +378,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
 
   @NotNull
   public String getName() {
-    final String fileName = myFilePointer.getFileName();
+    final String fileName = myFile.getFileName();
     String moduleName = myFileToModuleName.get(fileName);
     if (moduleName == null) {
       moduleName = ModuleUtil.moduleNameByFileName(fileName);

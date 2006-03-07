@@ -18,10 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
-import org.jdom.Attribute;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -53,10 +50,43 @@ public class JDOMUtil {
   public static final String ENCODING = "UTF-8";
 
   public static boolean areElementsEqual(Element e1, Element e2) {
-    Document d1 = new Document((Element)e1.clone());
-    Document d2 = new Document((Element)e2.clone());
+    if (!attListsEqual(e1.getAttributes(), e2.getAttributes())) return false;
+    if (!contentListsEqual(e1.getContent(), e2.getContent())) return false;
 
-    return areDocumentsEqual(d1, d2);
+    return true;
+  }
+
+  private static boolean contentListsEqual(final List c1, final List c2) {
+    if (c1.size() != c2.size()) return false;
+
+    for (int i = 0; i < c1.size(); i++) {
+      if (!contentsEqual((Content)c1.get(i), (Content)c2.get(i))) return false;
+    }
+    return true;
+  }
+
+  private static boolean contentsEqual(Content c1, Content c2) {
+    if (!(c1 instanceof Element) && !(c2 instanceof Element)) {
+      return c1.getValue().equals(c2.getValue());
+    }
+
+    if (c1 instanceof Element && c2 instanceof Element) {
+      return areElementsEqual((Element)c1, (Element)c2);
+    }
+
+    return false;
+  }
+
+  private static boolean attListsEqual(List a1, List a2) {
+    if (a1.size() != a2.size()) return false;
+    for (int i = 0; i < a1.size(); i++) {
+      if (!attEqual((Attribute)a1.get(i), (Attribute)a2.get(i))) return false;
+    }
+    return true;
+  }
+
+  private static boolean attEqual(Attribute a1, Attribute a2) {
+    return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
   }
 
   public static boolean areDocumentsEqual(Document d1, Document d2) {
@@ -149,6 +179,18 @@ public class JDOMUtil {
     writeDocument(document, writer, lineSeparator);
 
     return new String(writer.toCharArray()).getBytes(ENCODING);
+  }
+
+  public static String writeDocument(Document document, String lineSeparator) {
+    try {
+      final StringWriter writer = new StringWriter();
+      writeDocument(document, writer, lineSeparator);
+      return writer.toString();
+    }
+    catch (IOException e) {
+      // Can't be
+      return "";
+    }
   }
 
   public static void writeDocument(Document document, Writer writer, String lineSeparator) throws IOException {

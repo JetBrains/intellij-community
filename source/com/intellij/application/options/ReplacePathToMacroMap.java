@@ -12,8 +12,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Dec 6, 2004
  */
-public class ReplacePathToMacroMap extends PathMacroMap{
-
+public class ReplacePathToMacroMap extends PathMacroMap {
   final Set<String> myUsedMacros = new HashSet<String>();
   List<String> myPathsIndex = null;
   private static final Comparator<String> PATHS_COMPARATOR = new Comparator<String>() {
@@ -22,18 +21,13 @@ public class ReplacePathToMacroMap extends PathMacroMap{
     }
   };
 
-  public ReplacePathToMacroMap() {
-  }
-
   public void addMacroReplacement(String path, String macroName) {
     put(quotePath(path), "$" + macroName + "$");
   }
 
   public String substitute(String text, boolean caseSensitive) {
-    final List<String> index = getPathIndex();
-    for (Iterator i = index.iterator(); i.hasNext();) {
-      final String path = (String)i.next();
-      final String macro = myMacroMap.get(path);
+    for (final String path : getPathIndex()) {
+      final String macro = get(path);
       text = replacePathMacro(text, path, macro, caseSensitive);
     }
     return text;
@@ -85,10 +79,6 @@ public class ReplacePathToMacroMap extends PathMacroMap{
     myUsedMacros.add(macroReplacement);
   }
 
-  public int size() {
-    return myMacroMap.size();
-  }
-
   public Set<String> getUsedMacroNames() {
     final Set<String> userMacroNames = PathMacrosImpl.getInstanceEx().getUserMacroNames();
     final Set<String> used = new HashSet<String>(myUsedMacros);
@@ -97,12 +87,23 @@ public class ReplacePathToMacroMap extends PathMacroMap{
   }
 
   private List<String> getPathIndex() {
-    if (myPathsIndex == null || myPathsIndex.size() != myMacroMap.size()) {
-      myPathsIndex = new ArrayList<String>(myMacroMap.keySet());
+    if (myPathsIndex == null || myPathsIndex.size() != size()) {
+      myPathsIndex = new ArrayList<String>(keySet());
       // sort so that lenthy paths are traversed first
       // so from the 2 strings such that one is a substring of another the one that dominates is substituted first
       Collections.sort(myPathsIndex, PATHS_COMPARATOR);
     }
     return myPathsIndex;
+  }
+
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    if (!(obj instanceof ReplacePathToMacroMap)) return false;
+
+    return myMacroMap.equals(((ReplacePathToMacroMap)obj).myMacroMap);
+  }
+
+  public int hashCode() {
+    return myMacroMap.hashCode();
   }
 }

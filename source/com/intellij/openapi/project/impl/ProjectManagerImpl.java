@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TObjectLongHashMap;
@@ -165,11 +164,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     ProjectImpl project = createProject(filePath, false, false, false);
 
     // http://www.jetbrains.net/jira/browse/IDEA-1556. Enforce refresh. Project files may potentially reside in non-yet valid vfs paths.
-    final String[] paths = project.getConfigurationFilePaths();
+    final ConfigurationFile[] files = project.getConfigurationFiles();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        for (String path : paths) {
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
+        for (ConfigurationFile file : files) {
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getFilePath().replace(File.separatorChar, '/'));
         }
       }
     });

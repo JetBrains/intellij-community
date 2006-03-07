@@ -33,11 +33,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.PsiBundle;
@@ -61,7 +59,8 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
 
   private ProjectManagerImpl myManager;
-  private VirtualFilePointer myFilePointer;
+  private ConfigurationFile myProjectFile;
+  private ConfigurationFile myWorkspaceFile;
 
   private MyProjectManagerListener myProjectManagerListener;
   private boolean myDummy;
@@ -102,12 +101,18 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
 
     myManager = manager;
     if (filePath != null) {
-      String path = filePath.replace(File.separatorChar, '/');
-      String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path);
-      myFilePointer = filePointerManager.create(url, null);
+      myProjectFile = new ConfigurationFile(filePath);
+      if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+        String workspacePath = filePath.substring(0, filePath.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length()) + WORKSPACE_EXTENSION;
+        myWorkspaceFile = new ConfigurationFile(workspacePath);
+      }
+      else {
+        myWorkspaceFile = null;
+      }
     }
     else {
-      myFilePointer = null;
+      myProjectFile = null;
+      myWorkspaceFile = null;
     }
   }
 
@@ -258,54 +263,27 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     }
   }
 
-  public VirtualFile[] getConfigurationFiles() {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>(2);
+  public ConfigurationFile[] getConfigurationFiles() {
+    final List<ConfigurationFile> files = new ArrayList<ConfigurationFile>(2);
 
-    final VirtualFile projectFile = getProjectFile();
-    if (projectFile != null) {
-      files.add(projectFile);
+    if (myProjectFile != null) {
+      files.add(myProjectFile);
     }
 
-    final VirtualFile workspaceFile = getWorkspaceFile();
-    if (workspaceFile != null) {
-      files.add(workspaceFile);
+    if (myWorkspaceFile != null) {
+      files.add(myWorkspaceFile);
     }
-    return files.toArray(new VirtualFile[files.size()]);
-  }
-
-  public String[] getConfigurationFilePaths() {
-    if (myFilePointer == null) return null;
-    String iprPath = getProjectFilePath();
-
-    int dotIdx = iprPath.lastIndexOf('.');
-    if (dotIdx < 0) dotIdx = iprPath.length();
-    String iwsPath = iprPath.substring(0, dotIdx) + WORKSPACE_EXTENSION;
-
-    return new String[]{iprPath, iwsPath};
+    return files.toArray(new ConfigurationFile[files.size()]);
   }
 
   public String getProjectFilePath() {
-    if (myFilePointer == null) return null;
-    String iprUrl = myFilePointer.getUrl();
-    String iprProtocol = VirtualFileManager.extractProtocol(iprUrl);
-    LOG.assertTrue(LocalFileSystem.PROTOCOL.equals(iprProtocol));
-    return VirtualFileManager.extractPath(iprUrl).replace('/', File.separatorChar);
+    if (myProjectFile == null) return null;
+    return myProjectFile.getFilePath();
   }
 
   public VirtualFile getProjectFile() {
-    if (myFilePointer == null) return null;
-    VirtualFile file = myFilePointer.getFile();
-    /* commented out to fix # 25591
-    if (file == null){
-      //???
-      return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-        public VirtualFile compute() {
-          return VirtualFileManager.getInstance().refreshAndFindFileByUrl(myFilePointer.getUrl());
-        }
-      });
-    }
-    */
-    return file;
+    if (myProjectFile == null) return null;
+    return myProjectFile.getVirtualFile();
   }
 
   public String getName() {
@@ -435,8 +413,8 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   }
 
   private String getProjectDir() {
-    if (myFilePointer == null) return null;
-    String url = myFilePointer.getUrl();
+    if (myProjectFile == null) return null;
+    String url = myProjectFile.getURL();
     String path = VirtualFileManager.extractPath(url).replace('/', File.separatorChar);
     String projectDir = new File(path).getParent();
     if (projectDir == null) return null;
