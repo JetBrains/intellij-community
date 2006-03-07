@@ -17,8 +17,10 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
 import org.jdom.*;
+import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -53,22 +55,39 @@ public class JDOMUtil {
     if (e1 == null && e2 == null) return true;
     if (e1 == null) return false;
 
-    if (!attListsEqual(e1.getAttributes(), e2.getAttributes())) return false;
-    if (!contentListsEqual(e1.getContent(), e2.getContent())) return false;
+    if (!attListsEqual(e1.getAttributes(), e2.getAttributes())) {
+      return false;
+    }
+    if (!contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER))) return false;
 
     return true;
+  }
+
+  private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
+
+  private static class EmptyTextFilter implements Filter {
+    public boolean matches(Object obj) {
+      if (obj instanceof Text) {
+        final Text t = (Text)obj;
+        return !CharArrayUtil.containsOnlyWhiteSpaces(t.getText());
+      }
+      return true;
+    }
   }
 
   private static boolean contentListsEqual(final List c1, final List c2) {
     if (c1 == null && c2 == null) return true;
     if (c1 == null) return false;
 
-    if (c1.size() != c2.size()) return false;
-
-    for (int i = 0; i < c1.size(); i++) {
-      if (!contentsEqual((Content)c1.get(i), (Content)c2.get(i))) return false;
+    Iterator l1 = c1.listIterator();
+    Iterator l2 = c2.listIterator();
+    while (l1.hasNext() && l2.hasNext()) {
+      if (!contentsEqual((Content)l1.next(), (Content)l2.next())) {
+        return false;
+      }
     }
-    return true;
+
+    return l1.hasNext() == l2.hasNext();
   }
 
   private static boolean contentsEqual(Content c1, Content c2) {
