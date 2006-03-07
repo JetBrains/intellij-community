@@ -14,7 +14,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -212,7 +211,8 @@ public class SearchUtil {
     return highlight;
   }
 
-  public static boolean isComponentHighlighted(@NotNull String text, @NotNull String option, final boolean force, final SearchableConfigurable configurable){
+  public static boolean isComponentHighlighted(String text, String option, final boolean force, final SearchableConfigurable configurable){
+    if (text == null || option == null) return false;
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> options = searchableOptionsRegistrar.replaceSynonyms(searchableOptionsRegistrar.getProcessedWords(option), configurable);
     final Set<String> tokens = searchableOptionsRegistrar.getProcessedWords(text);
