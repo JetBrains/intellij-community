@@ -232,9 +232,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     final boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         ProgressManager.getInstance().getProgressIndicator().setText(VcsBundle.message("commit.wait.util.synced.message"));
-        scheduleUpdate(0);
-        while (myUpdateAlarm.getActiveRequestCount() > 0) {
-          synchronized (myPendingUpdatesLock) {
+        synchronized (myPendingUpdatesLock) {
+          scheduleUpdate(0);
+          while (myUpdateAlarm.getActiveRequestCount() > 0) {
             try {
               myPendingUpdatesLock.wait();
             }
