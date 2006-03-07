@@ -14,8 +14,11 @@ import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.text.SimpleDateFormat;
 
 public class LoadHistoryOperation extends LocalPathIndifferentOperation {
+
+  @NonNls private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
   private static final Collection<String> ourDoNotSupportingSOptionServers = new HashSet<String>();
 
@@ -37,8 +40,8 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     command.setModuleName(myModule);
     command.setHeadersOnly(false);
     command.setNoTags(true);
-    command.setDateFrom(myDateFrom);
-    command.setDateTo(myDateTo);
+    command.setDateFrom(DATE_FORMAT.format(myDateFrom));
+    command.setDateTo(DATE_FORMAT.format(myDateTo));
 
     if (ourDoNotSupportingSOptionServers.contains(root.getCvsRootAsString())) {
       command.setSuppressEmptyHeaders(false);
