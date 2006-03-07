@@ -169,8 +169,11 @@ public final class Javac2 extends Javac{
     }
 
     //NotNull instrumentation
-    final File destdir = getDestdir();
-    final File[] files = destdir.listFiles();
+    instrumentNotNull(getDestdir());
+  }
+
+  private void instrumentNotNull(File dir) {
+    final File[] files = dir.listFiles();
     for (int i = 0; i < files.length; i++) {
       File file = files[i];
       final String name = file.getName();
@@ -191,6 +194,8 @@ public final class Javac2 extends Javac{
         catch (IOException e) {
           log("Failed to instrument @NotNull assertion: " + e.getMessage());
         }
+      } else if (file.isDirectory()) {
+        instrumentNotNull(file);
       }
     }
   }
