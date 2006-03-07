@@ -319,7 +319,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return true;
   }
 
-  private void removeParametersUsedInExitsOnly(PsiElement codeFragment,
+  private static void removeParametersUsedInExitsOnly(PsiElement codeFragment,
                                                List<PsiStatement> exitStatements,
                                                ControlFlow controlFlow,
                                                int startOffset,
@@ -341,7 +341,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  private boolean isInExitStatements(PsiElement element, List<PsiStatement> exitStatements) {
+  private static boolean isInExitStatements(PsiElement element, List<PsiStatement> exitStatements) {
     for (PsiStatement exitStatement : exitStatements) {
       if (PsiTreeUtil.isAncestor(exitStatement, element, false)) return true;
     }
@@ -367,7 +367,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (!dialog.isOK()) return false;
     myMethodName = dialog.getChoosenMethodName();
     myVariableDatum = dialog.getChoosenParameters();
-    myStatic = myStatic || dialog.isMakeStatic();
+    myStatic |= dialog.isMakeStatic();
     myMethodVisibility = dialog.getVisibility();
 
     return true;
@@ -717,6 +717,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       newMethod.getTypeParameterList().replace(myTypeParameterList);
     }
     PsiCodeBlock body = newMethod.getBody();
+    LOG.assertTrue(body != null);
 
     boolean isFinal = CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS;
     PsiParameterList list = newMethod.getParameterList();
@@ -745,6 +746,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         declaration = (PsiDeclarationStatement)body.add(declaration);
 
         PsiExpression initializer = ((PsiVariable)declaration.getDeclaredElements()[0]).getInitializer();
+        LOG.assertTrue(initializer != null);
         TextRange range = initializer.getTextRange();
         BlockSupport blockSupport = myProject.getComponent(BlockSupport.class);
         blockSupport.reparseRange(body.getContainingFile(), range.getStartOffset(), range.getEndOffset(), "...");
@@ -805,7 +807,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     PsiMethodCallExpression expr = (PsiMethodCallExpression)myElementFactory.createExpressionFromText(text, null);
     expr = (PsiMethodCallExpression)myStyleManager.reformat(expr);
     if (!skipInstanceQualifier) {
-      expr.getMethodExpression().getQualifierExpression().replace(instanceQualifier);
+      PsiExpression qualifierExpression = expr.getMethodExpression().getQualifierExpression();
+      LOG.assertTrue(qualifierExpression != null);
+      qualifierExpression.replace(instanceQualifier);
     }
     return expr;
   }
@@ -838,7 +842,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (variable instanceof ImplicitVariable) return false;
     int startOffset = myElements[0].getTextRange().getStartOffset();
     int endOffset = myElements[myElements.length - 1].getTextRange().getEndOffset();
-    final TextRange range = variable.getNameIdentifier().getTextRange();
+    PsiIdentifier nameIdentifier = variable.getNameIdentifier();
+    if (nameIdentifier == null) return false;
+    final TextRange range = nameIdentifier.getTextRange();
     if (range == null) return false;
     int offset = range.getStartOffset();
     return startOffset <= offset && offset <= endOffset;
