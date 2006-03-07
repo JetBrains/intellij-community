@@ -25,6 +25,9 @@ public class SocketLock {
   private static final int SOCKET_NUMBER_START = 6942;
   private static final int SOCKET_NUMBER_END = SOCKET_NUMBER_START + 50;
 
+  // IMPORTANT: Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
+  private static final int[] FORBIDDEN_PORTS = new int[]{6969, 6970};
+
   private ServerSocket mySocket;
   private List myLockedPaths = new ArrayList();
   private boolean myIsDialogShown = false;
@@ -69,7 +72,7 @@ public class SocketLock {
     }
 
     for (int i = SOCKET_NUMBER_START; i < SOCKET_NUMBER_END; i++) {
-      if (i == mySocket.getLocalPort()) continue;
+      if (isPortForbidden(i) || i == mySocket.getLocalPort()) continue;
       List lockedList = readLockedList(i);
       if (lockedList.contains(path)) return false;
     }
@@ -77,6 +80,13 @@ public class SocketLock {
     myLockedPaths.add(path);
 
     return true;
+  }
+
+  private static boolean isPortForbidden(int port) {
+    for (int forbiddenPort : FORBIDDEN_PORTS) {
+      if (port == forbiddenPort) return true;
+    }
+    return false;
   }
 
   public synchronized void unlock(String path) {
@@ -123,6 +133,8 @@ public class SocketLock {
 
     for (int i = SOCKET_NUMBER_START; i < SOCKET_NUMBER_END; i++) {
       try {
+        if (isPortForbidden(i)) continue;
+
         mySocket = new ServerSocket(i);
         break;
       }
