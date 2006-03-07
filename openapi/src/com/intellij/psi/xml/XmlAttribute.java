@@ -19,6 +19,8 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
@@ -26,10 +28,11 @@ import org.jetbrains.annotations.NonNls;
 public interface XmlAttribute extends XmlElement, PsiNamedElement {
   XmlAttribute[] EMPTY_ARRAY = new XmlAttribute[0];
 
-  @NonNls
-  String getName();
-  String getLocalName();
-  String getNamespace();
+  @NonNls @NotNull String getName();
+
+  @NonNls @NotNull String getLocalName();
+
+  @NonNls @NotNull String getNamespace();
 
   XmlTag getParent();
 
@@ -37,7 +40,7 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
 
   boolean isNamespaceDeclaration();
 
-  XmlAttributeDescriptor getDescriptor();
+  @Nullable XmlAttributeDescriptor getDescriptor();
 
   // Tree functions
 

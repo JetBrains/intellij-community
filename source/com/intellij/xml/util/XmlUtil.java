@@ -84,7 +84,7 @@ public class XmlUtil {
   
   private static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
   private static final String SPRING_CORE_URI2 = "http://www.springframework.org/schema/beans";
-  public static final String SPRING_CORE_URIS[] = new String[] { SPRING_CORE_URI, SPRING_CORE_URI2 };
+  public static final String[] SPRING_CORE_URIS = new String[] { SPRING_CORE_URI, SPRING_CORE_URI2 };
 
   public static final String[] HIBERNATE_URIS = {
     "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd",
@@ -169,8 +169,7 @@ public class XmlUtil {
 
     List<String> result = new ArrayList<String>();
 
-    for (int i = 0; i < attributes.length; i++) {
-      XmlAttribute attribute = attributes[i];
+    for (XmlAttribute attribute : attributes) {
       if (attribute.getName().startsWith("xmlns:") &&
           attribute.getValue().equals(uri)) {
         result.add(attribute.getName().substring("xmlns:".length()));
@@ -191,8 +190,11 @@ public class XmlUtil {
       final JspFile jspFile = PsiUtil.getJspFile(base);
       String data = jspFile != null ? jspFile.getUserData(TEST_PATH) : base.getUserData(TEST_PATH);
 
-      if (data == null && base.getOriginalFile() != null) {
-        data = base.getOriginalFile().getUserData(TEST_PATH);
+      if (data == null) {
+        PsiFile originalFile = base.getOriginalFile();
+        if (originalFile != null) {
+          data = originalFile.getUserData(TEST_PATH);
+        }
       }
       if (data != null) {
         String filePath = data + "/" + uri;
@@ -211,8 +213,7 @@ public class XmlUtil {
     }
 
     if (result instanceof XmlFile) {
-      XmlFile xmlFile = (XmlFile)result;
-      return xmlFile;
+      return (XmlFile)result;
     }
     if (PsiUtil.isInJspFile(base)) return JspManager.getInstance(base.getProject()).getTldFileByUri(uri, PsiUtil.getJspFile(base));
     return null;
@@ -225,11 +226,9 @@ public class XmlUtil {
 
     PsiElement[] children = element.getChildren();
 
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-
+    for (PsiElement child : children) {
       if (child instanceof XmlToken) {
-        XmlToken token = (XmlToken)child;
+        XmlToken token = (XmlToken) child;
 
         if (token.getTokenType() == type) {
           return token;
@@ -331,7 +330,7 @@ public class XmlUtil {
     PsiElement e = ref;
     while (e != null) {
       if (e.getUserData(XmlElement.ORIGINAL_ELEMENT) != null) {
-        e = (PsiElement)e.getUserData(XmlElement.ORIGINAL_ELEMENT);
+        e = e.getUserData(XmlElement.ORIGINAL_ELEMENT);
         final PsiFile f = e.getContainingFile();
         if (f != null) {
           final XmlEntityDecl entityDecl = ref.resolve(targetFile);
@@ -403,9 +402,9 @@ public class XmlUtil {
       value = entityDecl.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiElement>() {
         public CachedValueProvider.Result<PsiElement> compute() {
           final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
-          if (res == null) return new Result<PsiElement>(res, new Object[]{targetFile});
+          if (res == null) return new Result<PsiElement>(res, targetFile);
           if (!entityDecl.isInternalReference()) XmlEntityRefImpl.copyEntityCaches(res.getContainingFile(), targetFile);
-          return new CachedValueProvider.Result<PsiElement>(res, new Object[]{res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef});
+          return new CachedValueProvider.Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
         }
       }, false);
       entityRef.putUserData(PARSED_DECL_KEY, value);
@@ -631,17 +630,16 @@ public class XmlUtil {
       if (list == null) {
         list = new ArrayList<MyAttributeInfo>();
         final XmlAttribute[] attributes = tag.getAttributes();
-        for (int i = 0; i < attributes.length; i++) {
-          final XmlAttribute attribute = attributes[i];
+        for (final XmlAttribute attribute : attributes) {
           list.add(new MyAttributeInfo(attribute.getName()));
         }
       }
       else {
         final XmlAttribute[] attributes = tag.getAttributes();
-        Collections.sort((List)list);
-        Arrays.sort(attributes, new Comparator() {
-          public int compare(Object o1, Object o2) {
-            return ((XmlAttribute)o1).getName().compareTo(((XmlAttribute)o2).getName());
+        Collections.sort(list);
+        Arrays.sort(attributes, new Comparator<XmlAttribute>() {
+          public int compare(XmlAttribute attr1, XmlAttribute attr2) {
+            return attr1.getName().compareTo(attr2.getName());
           }
         });
 
@@ -704,8 +702,7 @@ public class XmlUtil {
 
       if(typeDecr instanceof XmlNSDescriptorImpl){
         final XmlNSDescriptorImpl schemaDescriptor = ((XmlNSDescriptorImpl)typeDecr);
-        final XmlElementDescriptor descriptorByType = schemaDescriptor.getDescriptorByType(type, xmlTag);
-        elementDescriptor = descriptorByType;
+        elementDescriptor = schemaDescriptor.getDescriptorByType(type, xmlTag);
       }
     }
 
@@ -832,14 +829,14 @@ public class XmlUtil {
     return true;
   }
 
-  public static final boolean toCode(String str) {
+  public static boolean toCode(String str) {
     for (int i = 0; i < str.length(); i++) {
       if (toCode(str.charAt(i))) return true;
     }
     return false;
   }
 
-  public static final boolean toCode(char ch) {
+  public static boolean toCode(char ch) {
     return "<&>\u00a0".indexOf(ch) >= 0;
   }
 
@@ -917,10 +914,8 @@ public class XmlUtil {
         computeTag((XmlTag)element, tags, attributes);
       }
     }
-    
-    final Iterator<String> iter = tags.keySet().iterator();
-    while (iter.hasNext()) {
-      final String tagName = iter.next();
+
+    for (final String tagName : tags.keySet()) {
       buffer.append(generateElementDTD(tagName, tags.get(tagName), attributes.get(tagName)));
     }
     return buffer.toString();
@@ -932,7 +927,7 @@ public class XmlUtil {
 
     final StringBuffer buffer = new StringBuffer();
     {
-      buffer.append("<!ELEMENT " + name + " ");
+      buffer.append("<!ELEMENT ").append(name).append(" ");
       if (tags.isEmpty()) {
         buffer.append("(#PCDATA)>\n");
       }
@@ -954,11 +949,9 @@ public class XmlUtil {
     }
     {
       if (!attributes.isEmpty()) {
-        buffer.append("<!ATTLIST " + name);
-        final Iterator<MyAttributeInfo> iter = attributes.iterator();
-        while (iter.hasNext()) {
-          final MyAttributeInfo info = iter.next();
-          buffer.append("\n    " + generateAttributeDTD(info));
+        buffer.append("<!ATTLIST ").append(name);
+        for (final MyAttributeInfo info : attributes) {
+          buffer.append("\n    ").append(generateAttributeDTD(info));
         }
         buffer.append(">\n");
       }
@@ -969,7 +962,7 @@ public class XmlUtil {
   private static String generateAttributeDTD(MyAttributeInfo info) {
     if (info.myName.endsWith(CompletionUtil.DUMMY_IDENTIFIER.trim())) return "";
     final StringBuffer buffer = new StringBuffer();
-    buffer.append(info.myName + " ");
+    buffer.append(info.myName).append(" ");
     //if ("id".equals(info.myName)) {
     //  buffer.append("ID");
     //}
@@ -992,12 +985,10 @@ public class XmlUtil {
   }
 
   public static String findNamespaceByPrefix(final String prefix, XmlTag contextTag) {
-    final String s = contextTag.getNamespaceByPrefix(prefix);
-    if (s != null) return s;
-    return EMPTY_URI;
+    return contextTag.getNamespaceByPrefix(prefix);
   }
 
-  public static final String findPrefixByQualifiedName(String name) {
+  public static String findPrefixByQualifiedName(String name) {
     final int prefixEnd = name.indexOf(':');
     if (prefixEnd > 0) {
       return name.substring(0, prefixEnd);
@@ -1005,7 +996,7 @@ public class XmlUtil {
     return "";
   }
 
-  public static final String findLocalNameByQualifiedName(String name) {
+  public static String findLocalNameByQualifiedName(String name) {
     return name.substring(name.indexOf(':') + 1);
   }
 

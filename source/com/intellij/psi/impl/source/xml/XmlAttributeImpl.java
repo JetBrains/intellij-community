@@ -23,6 +23,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,22 +78,21 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return (XmlElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
   }
 
+  @NotNull
   public String getNamespace() {
     final String name = getName();
-    if(name != null){
-      final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(name);
-      if(prefixByQualifiedName.length() == 0) return getParent().getNamespace();
-      return getParent().getNamespaceByPrefix(prefixByQualifiedName);
-    }
-    return XmlUtil.EMPTY_URI;
+    final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(name);
+    if(prefixByQualifiedName.length() == 0) return getParent().getNamespace();
+    return getParent().getNamespaceByPrefix(prefixByQualifiedName);
   }
 
   public XmlTag getParent(){
     return (XmlTag)super.getParent();
   }
 
+  @NotNull
   public String getLocalName() {
-    return getName() != null ? XmlUtil.findLocalNameByQualifiedName(getName()) : "";
+    return XmlUtil.findLocalNameByQualifiedName(getName());
   }
 
   public void accept(PsiElementVisitor visitor) {
@@ -104,6 +104,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return valueElement != null ? valueElement.getValue() : null;
   }
 
+  @NotNull
   public String getName() {
     XmlElement element = getNameElement();
     return element != null ? element.getText() : "";
@@ -137,27 +138,26 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
   public PsiReference getReference() {
     final PsiReference[] refs = getReferences();
-    if (refs != null && refs.length > 0){
-      return refs[0];
-    }
+    if (refs.length > 0) return refs[0];
     return null;
   }
 
   @NotNull
   public PsiReference[] getReferences() {
-    final PsiElement parent = getParent();
-    if (!(parent instanceof XmlTag)) return PsiReference.EMPTY_ARRAY;
-    final XmlElementDescriptor descr = ((XmlTag)parent).getDescriptor();
+    final PsiElement parentElement = getParent();
+    if (!(parentElement instanceof XmlTag)) return PsiReference.EMPTY_ARRAY;
+    final XmlElementDescriptor descr = ((XmlTag)parentElement).getDescriptor();
     if (descr != null){
       return new PsiReference[]{new MyPsiReference(descr)};
     }
     return PsiReference.EMPTY_ARRAY;
   }
 
+  @Nullable
   public XmlAttributeDescriptor getDescriptor() {
-    final PsiElement parent = getParent();
-    if (parent instanceof XmlDecl) return null;
-    final XmlElementDescriptor descr = ((XmlTag)parent).getDescriptor();
+    final PsiElement parentElement = getParent();
+    if (parentElement instanceof XmlDecl) return null;
+    final XmlElementDescriptor descr = ((XmlTag)parentElement).getDescriptor();
     if (descr == null) return null;
     final XmlAttributeDescriptor attributeDescr = descr.getAttributeDescriptor(this);
     return attributeDescr == null ? descr.getAttributeDescriptor(getName()) : attributeDescr;
@@ -219,13 +219,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
         final XmlAttribute[] attributes = declarationTag.getAttributes();
         final XmlAttributeDescriptor[] descriptors = parentDescriptor.getAttributesDescriptors();
         outer:
-        for (XmlAttributeDescriptor descriptor1 : descriptors) {
+        for (XmlAttributeDescriptor descriptor : descriptors) {
           for (final XmlAttribute attribute : attributes) {
             if (attribute == XmlAttributeImpl.this) continue;
             final String name = attribute.getName();
-            if (name != null && name.equals(descriptor1.getName())) continue outer;
+            if (name.equals(descriptor.getName())) continue outer;
           }
-          final XmlAttributeDescriptor descriptor = descriptor1;
           variants.add(descriptor.getName());
         }
       }
