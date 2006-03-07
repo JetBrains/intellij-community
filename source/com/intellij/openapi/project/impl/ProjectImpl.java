@@ -35,7 +35,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.PsiBundle;
@@ -287,9 +286,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   }
 
   public String getName() {
-    final VirtualFile projectFile = getProjectFile();
-    if (projectFile != null) return projectFile.getNameWithoutExtension();
-    String temp = getProjectFilePath();
+    String temp = myProjectFile.getFileName();
     if (temp.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
       temp = temp.substring(temp.length() - 4);
     }
@@ -301,14 +298,8 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   }
 
   public VirtualFile getWorkspaceFile() {
-    final VirtualFile projectFile = getProjectFile();
-    if (projectFile == null) return null;
-
-    final VirtualFile parent = projectFile.getParent();
-    if (parent == null) return null;
-    final String name = projectFile.getNameWithoutExtension() + WORKSPACE_EXTENSION;
-
-    return parent.findChild(name);
+    if (myWorkspaceFile == null) return null;
+    return myWorkspaceFile.getVirtualFile();
   }
 
   protected Element getDefaults(BaseComponent component) throws IOException, JDOMException, InvalidDataException {
@@ -414,8 +405,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
 
   private String getProjectDir() {
     if (myProjectFile == null) return null;
-    String url = myProjectFile.getURL();
-    String path = VirtualFileManager.extractPath(url).replace('/', File.separatorChar);
+    String path = myProjectFile.getFilePath();
     String projectDir = new File(path).getParent();
     if (projectDir == null) return null;
     projectDir = projectDir.replace(File.separatorChar, '/');

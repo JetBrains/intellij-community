@@ -50,6 +50,9 @@ public class JDOMUtil {
   public static final String ENCODING = "UTF-8";
 
   public static boolean areElementsEqual(Element e1, Element e2) {
+    if (e1 == null && e2 == null) return true;
+    if (e1 == null) return false;
+
     if (!attListsEqual(e1.getAttributes(), e2.getAttributes())) return false;
     if (!contentListsEqual(e1.getContent(), e2.getContent())) return false;
 
@@ -57,6 +60,9 @@ public class JDOMUtil {
   }
 
   private static boolean contentListsEqual(final List c1, final List c2) {
+    if (c1 == null && c2 == null) return true;
+    if (c1 == null) return false;
+
     if (c1.size() != c2.size()) return false;
 
     for (int i = 0; i < c1.size(); i++) {

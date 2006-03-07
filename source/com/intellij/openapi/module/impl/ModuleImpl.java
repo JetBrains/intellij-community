@@ -200,11 +200,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
 
   @NotNull
   public String getModuleFilePath() {
-    String url = myFile.getURL();
-    String protocol = VirtualFileManager.extractProtocol(url);
-    LOG.assertTrue(LocalFileSystem.PROTOCOL.equals(protocol));
-    String path = VirtualFileManager.extractPath(url);
-    return path.replace('/', File.separatorChar);
+    return myFile.getFilePath();
   }
 
   public void dispose() {
