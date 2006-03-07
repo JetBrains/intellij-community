@@ -23,6 +23,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -350,8 +351,8 @@ public class TypeConversionUtil {
     else if (tokenType == JavaTokenType.EQEQ || tokenType == JavaTokenType.NE) {
       if (isPrimitiveAndNotNullOrWrapper(ltype) && isPrimitiveAndNotNullOrWrapper(rtype) &&
           (isPrimitiveAndNotNull(ltype) || isPrimitiveAndNotNull(rtype))) {
-        isApplicable = (ltypeRank <= MAX_NUMERIC_RANK && rtypeRank <= MAX_NUMERIC_RANK)
-                       || (ltypeRank == BOOL_RANK && rtypeRank == BOOL_RANK);
+        isApplicable = ltypeRank <= MAX_NUMERIC_RANK && rtypeRank <= MAX_NUMERIC_RANK
+                       || ltypeRank == BOOL_RANK && rtypeRank == BOOL_RANK;
       }
       else {
         isApplicable = areTypesConvertible(ltype, rtype) || areTypesConvertible(rtype, ltype);
@@ -393,8 +394,8 @@ public class TypeConversionUtil {
     }
     else if (tokenType == JavaTokenType.AND || tokenType == JavaTokenType.OR || tokenType == JavaTokenType.XOR) {
       if (isPrimitiveAndNotNullOrWrapper(ltype) && isPrimitiveAndNotNullOrWrapper(rtype)) {
-        isApplicable = (ltypeRank <= LONG_RANK && rtypeRank <= LONG_RANK)
-                       || (isBooleanType(ltype) && isBooleanType(rtype));
+        isApplicable = ltypeRank <= LONG_RANK && rtypeRank <= LONG_RANK
+                       || isBooleanType(ltype) && isBooleanType(rtype);
         resultTypeRank = ltypeRank <= LONG_RANK ? INT_RANK : BOOL_RANK;
       }
     }
@@ -526,14 +527,12 @@ public class TypeConversionUtil {
    * @return true if value of type <code>right</code> can be assigned to an l-value of
    *         type <code>left</code>
    */
-  public static boolean isAssignable(PsiType left, PsiType right) {
+  public static boolean isAssignable(@NotNull PsiType left, @NotNull PsiType right) {
     return isAssignable(left, right, true);
   }
 
 
-  public static boolean isAssignable(PsiType left, PsiType right, boolean allowUncheckedConversion) {
-    LOG.assertTrue(left != null, "left is null");
-    LOG.assertTrue(right != null, "right is null");
+  public static boolean isAssignable(@NotNull PsiType left, @NotNull PsiType right, boolean allowUncheckedConversion) {
     if (isNullType(right)) {
       return !(left instanceof PsiPrimitiveType) || isNullType(left);
     }

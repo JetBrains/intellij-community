@@ -471,9 +471,9 @@ public class HighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkAssignability(PsiType lType, PsiType rType, PsiExpression expression, TextRange textRange) {
+  public static HighlightInfo checkAssignability(@Nullable PsiType lType, @Nullable PsiType rType, PsiExpression expression, TextRange textRange) {
     if (expression == null) {
-      if (TypeConversionUtil.isAssignable(lType, rType)) return null;
+      if (rType == null || lType == null || TypeConversionUtil.isAssignable(lType, rType)) return null;
     }
     else if (TypeConversionUtil.areTypesAssignmentCompatible(lType, expression)) {
       return GenericsHighlightUtil.checkRawToGenericAssignment(lType, rType, expression);
