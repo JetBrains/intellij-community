@@ -862,6 +862,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
    }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
+      if (myTag == null || !myTag.isValid()) return;
       if (myAdditionalJavadocTags.length() > 0) {
         myAdditionalJavadocTags += "," + myTag.getName();
       }
