@@ -118,7 +118,29 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
   private void addAttributeSelection(List<TextRange> result, HighlighterIterator i) {
     result.add(new TextRange(i.getStart(), i.getEnd()));
     if (i.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
-      result.add(new TextRange(i.getStart() - 1, i.getEnd() + 1));
+      boolean hasQuotes=true;
+
+      // Check quote before value
+      i.retreat();
+      if (!i.atEnd()) {
+        final IElementType tokenType = i.getTokenType();
+        if (tokenType != XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
+          hasQuotes = false;
+        }
+      }
+      i.advance();
+
+      // Check quote after value
+      i.advance();
+      if (!i.atEnd()) {
+        final IElementType tokenType = i.getTokenType();
+        if (tokenType != XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
+          hasQuotes = false;
+        }
+      }
+      i.retreat();
+
+      if (hasQuotes) result.add(new TextRange(i.getStart() - 1, i.getEnd() + 1));
     }
 
     while (!i.atEnd() && i.getTokenType() != XmlTokenType.XML_NAME) { i.retreat(); }
@@ -132,11 +154,16 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
     }
     int start = i.getStart();
 
-    while (!i.atEnd() && i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) { i.advance(); }
+    while (!i.atEnd() && i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) { i.advance(); }
     if (i.atEnd()) return;
 
     int end = i.getEnd();
 
+    i.advance();
+    if (!i.atEnd() && i.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
+      end = i.getEnd();
+    }
+    
     result.add(new TextRange(start, end));
   }
 }
