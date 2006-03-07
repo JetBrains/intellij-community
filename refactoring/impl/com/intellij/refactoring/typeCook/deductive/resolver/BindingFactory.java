@@ -20,9 +20,13 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.*;
 
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectProcedure;
+
 /**
  * @author db
  */
+@SuppressWarnings({"SuspiciousNameCombination"})
 public class BindingFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.resolver.BindingFactory");
 
@@ -61,41 +65,41 @@ public class BindingFactory {
   }
 
   private class BindingImpl extends Binding {
-    private HashMap<Integer, PsiType> myBindings;
+    private TIntObjectHashMap<PsiType> myBindings;
     private boolean myCyclic;
 
     BindingImpl(final PsiTypeVariable var, final PsiType type) {
-      myBindings = new HashMap<Integer, PsiType>();
+      myBindings = new TIntObjectHashMap<PsiType>();
       myCyclic = type instanceof PsiTypeVariable;
 
-      myBindings.put(new Integer(var.getIndex()), type);
+      myBindings.put(var.getIndex(), type);
     }
 
     BindingImpl(final int index, final PsiType type) {
-      myBindings = new HashMap<Integer, PsiType>();
+      myBindings = new TIntObjectHashMap<PsiType>();
       myCyclic = type instanceof PsiTypeVariable;
 
-      myBindings.put(new Integer(index), type);
+      myBindings.put(index, type);
 
       if (type instanceof Bottom) {
         final HashSet<PsiTypeVariable> cluster = myFactory.getClusterOf(index);
 
         if (cluster != null) {
           for (PsiTypeVariable var : cluster) {
-            myBindings.put(new Integer(var.getIndex()), type);
+            myBindings.put(var.getIndex(), type);
           }
         }
       }
     }
 
     BindingImpl() {
-      myBindings = new HashMap<Integer, PsiType>();
+      myBindings = new TIntObjectHashMap<PsiType>();
       myCyclic = false;
     }
 
     public PsiType apply(final PsiType type) {
       if (type instanceof PsiTypeVariable) {
-        final PsiType t = myBindings.get(new Integer(((PsiTypeVariable)type).getIndex()));
+        final PsiType t = myBindings.get(((PsiTypeVariable) type).getIndex());
         return t == null ? type : t;
       }
       else if (type instanceof PsiArrayType) {
@@ -167,7 +171,7 @@ public class BindingFactory {
       final BindingImpl b3 = new BindingImpl();
 
       for (PsiTypeVariable boundVariable : myBoundVariables) {
-        final Integer i = new Integer(boundVariable.getIndex());
+        final int i = boundVariable.getIndex();
 
         final PsiType b1i = b1.myBindings.get(i);
         final PsiType b2i = b2.myBindings.get(i);
@@ -217,13 +221,11 @@ public class BindingFactory {
               return null;
             }
 
-            final PsiType type1 = type;//b2.apply(type);
-
-            if (type1 == null) {
+            if (type == null) {
               return null;
             }
 
-            b3.myBindings.put(i, type1);
+            b3.myBindings.put(i, type);
             b3.myCyclic = type instanceof PsiTypeVariable;
           }
         }
@@ -236,11 +238,11 @@ public class BindingFactory {
       final StringBuffer buffer = new StringBuffer();
 
       for (PsiTypeVariable boundVariable : myBoundVariables) {
-        final Integer i = new Integer(boundVariable.getIndex());
+        final int i = boundVariable.getIndex();
         final PsiType binding = myBindings.get(i);
 
         if (binding != null) {
-          buffer.append("#" + i + " -> " + binding.getPresentableText() + "; ");
+          buffer.append("#").append(i).append(" -> ").append(binding.getPresentableText()).append("; ");
         }
       }
 
@@ -267,7 +269,7 @@ public class BindingFactory {
       boolean first = true;
 
       for (PsiTypeVariable boundVariable : myBoundVariables) {
-        final Integer index = new Integer(boundVariable.getIndex());
+        final int index = boundVariable.getIndex();
 
         final PsiType x = normalize(b1.myBindings.get(index));
         final PsiType y = normalize(b2.myBindings.get(index));
@@ -275,20 +277,20 @@ public class BindingFactory {
         final int comp = new Object() {
           int compare(final PsiType x, final PsiType y) {
             final int[] kinds = new Object() {
-              private int classify(final PsiType x) {
-                if (x == null) {
+              private int classify(final PsiType type) {
+                if (type == null) {
                   return 0;
                 }
 
-                if (x instanceof PsiPrimitiveType) {
+                if (type instanceof PsiPrimitiveType) {
                   return 1;
                 }
 
-                if (x instanceof PsiArrayType) {
+                if (type instanceof PsiArrayType) {
                   return 2;
                 }
 
-                if (x instanceof PsiClassType) {
+                if (type instanceof PsiClassType) {
                   return 3;
                 }
 
@@ -459,15 +461,15 @@ public class BindingFactory {
       final BindingImpl binding = (BindingImpl)create();
 
       for (final PsiTypeVariable var : myBoundVariables) {
-        final Integer index = new Integer(var.getIndex());
+        final int index = var.getIndex();
         final PsiType type = myBindings.get(index);
 
         if (type != null) {
-          class Verifier extends PsiExtendedTypeVisitor {
+          class Verifier extends PsiExtendedTypeVisitor<Void> {
             boolean myFlag = false;
 
-            public Object visitTypeVariable(final PsiTypeVariable var) {
-              if (var.getIndex() == index.intValue()) {
+            public Void visitTypeVariable(final PsiTypeVariable var) {
+              if (var.getIndex() == index) {
                 myFlag = true;
               }
 
@@ -493,7 +495,7 @@ public class BindingFactory {
       }
 
       for (final PsiTypeVariable var : myBoundVariables) {
-        final Integer index = new Integer(var.getIndex());
+        final int index = var.getIndex();
         final PsiType type = myBindings.get(index);
 
         if (type != null) {
@@ -505,12 +507,12 @@ public class BindingFactory {
     }
 
     public boolean binds(final PsiTypeVariable var) {
-      return myBindings.get(new Integer(var.getIndex())) != null;
+      return myBindings.get(var.getIndex()) != null;
     }
 
     public void merge(final Binding b, final boolean removeObject) {
       for (final PsiTypeVariable var : b.getBoundVariables()) {
-        final Integer index = new Integer(var.getIndex());
+        final int index = var.getIndex();
 
         if (myBindings.get(index) != null) {
           LOG.error("Oops... Binding conflict...");
@@ -547,17 +549,21 @@ public class BindingFactory {
     }
 
     public int getWidth() {
-      int w = 0;
+      class MyProcecure implements TObjectProcedure<PsiType> {
+        int width = 0;
+        public boolean execute(PsiType type) {
+          if (substitute(type)  != null) width++;
+          return true;
+        }
 
-      for (PsiType type1 : myBindings.values()) {
-        final PsiType type = substitute(type1);
-
-        if (type != null) {
-          w++;
+        public int getWidth() {
+          return width;
         }
       }
 
-      return w;
+      MyProcecure procedure = new MyProcecure();
+      myBindings.forEachValue(procedure);
+      return procedure.getWidth();
     }
 
     public boolean isValid() {
