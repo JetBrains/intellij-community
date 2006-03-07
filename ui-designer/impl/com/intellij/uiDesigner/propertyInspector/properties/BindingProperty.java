@@ -229,6 +229,21 @@ public final class BindingProperty extends Property<RadComponent> {
     if (boundField == null || !isFieldUnreferenced(boundField)) {
       return;
     }
+
+    String binding = suggestBindingFromText(component, text);
+    if (binding != null) {
+      try {
+        new BindingProperty(component.getProject()).setValue(component, binding);
+        // keep the binding marked as default
+        component.setDefaultBinding(true);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  public static String suggestBindingFromText(final RadComponent component, final String text) {
     List<String> words = StringUtil.getWordsIn(text);
     if (words.size() > 0) {
       StringBuilder nameBuilder = new StringBuilder(StringUtil.decapitalize(words.get(0)));
@@ -243,15 +258,8 @@ public final class BindingProperty extends Property<RadComponent> {
       if (FormEditingUtil.bindingExists(root, binding, component)) {
         binding = InsertComponentProcessor.getUniqueBinding(root, nameBuilder.toString());
       }
-
-      try {
-        new BindingProperty(project).setValue(component, binding);
-        // keep the binding marked as default
-        component.setDefaultBinding(true);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+      return binding;
     }
+    return null;
   }
 }

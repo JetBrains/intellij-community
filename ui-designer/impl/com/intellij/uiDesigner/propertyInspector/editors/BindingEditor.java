@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadErrorComponent;
 import com.intellij.uiDesigner.radComponents.RadHSpacer;
@@ -14,6 +15,7 @@ import com.intellij.uiDesigner.radComponents.RadVSpacer;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -112,15 +114,19 @@ public final class BindingEditor extends ComboBoxPropertyEditor{
       }
 
       final PsiType fieldType = field.getType();
-      if (fieldType == null) {
-        continue;
-      }
-
       if (!fieldType.isAssignableFrom(componentType)) {
         continue;
       }
 
       result.add(fieldName);
+    }
+
+    String text = FormInspectionUtil.getText(component.getModule(), component);
+    if (text != null) {
+      String binding = BindingProperty.suggestBindingFromText(component, text);
+      if (binding != null && !result.contains(binding)) {
+        result.add(binding);        
+      }
     }
 
     final String[] names = result.toArray(new String[result.size()]);

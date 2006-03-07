@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.RevalidateInfo;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -132,6 +133,10 @@ public abstract class RadComponent implements IComponent {
   @NotNull
   public final Module getModule() {
     return myModule;
+  }
+
+  @NotNull public final Project getProject() {
+    return myModule.getProject();
   }
 
   /**
