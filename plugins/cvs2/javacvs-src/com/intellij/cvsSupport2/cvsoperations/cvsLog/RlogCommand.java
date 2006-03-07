@@ -1,6 +1,5 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsLog;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
@@ -17,19 +16,15 @@ import org.netbeans.lib.cvsclient.progress.sending.DummyRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 public class RlogCommand extends AbstractCommand {
 
   private String myModuleName = ".";
 
   private boolean myHeadersOnly = true;
   private boolean myNoTags = false;
-  private Date myDateTo;
-  private Date myDateFrom;
-  private boolean mySuppressEmptyHeaders = true;
-  @NonNls private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+  private String myDateTo;
+  private String myDateFrom;
+  private boolean mySuppressEmptyHeaders = true;  
 
   // Implemented ============================================================
 
@@ -68,16 +63,16 @@ public class RlogCommand extends AbstractCommand {
 
     if (myDateFrom == null) {
       result.append('<');
-      result.append(DATE_FORMAT.format(myDateTo));
+      result.append(myDateTo);
     }
     else if (myDateTo == null) {
       result.append('>');
-      result.append(DATE_FORMAT.format(myDateFrom));
+      result.append(myDateFrom);
     }
     else {
-      result.append(DATE_FORMAT.format(myDateFrom));
+      result.append(myDateFrom);
       result.append('<');
-      result.append(DATE_FORMAT.format(myDateTo));
+      result.append(myDateTo);
     }
 
     return result.toString();
@@ -130,11 +125,11 @@ public class RlogCommand extends AbstractCommand {
     requests.addIsModifiedRequest(fileObject);
   }
 
-  public void setDateFrom(final Date dateFrom) {
+  public void setDateFrom(final String dateFrom) {
     myDateFrom = dateFrom;
   }
 
-  public void setDateTo(final Date dateTo) {
+  public void setDateTo(final String dateTo) {
     myDateTo = dateTo;
   }
 
