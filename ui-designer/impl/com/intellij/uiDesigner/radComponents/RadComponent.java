@@ -95,6 +95,7 @@ public abstract class RadComponent implements IComponent {
   private boolean myResizing;
   private boolean myDragging;
   private boolean myDragBorder;
+  private boolean myDefaultBinding;
 
   /**
    * Creates new <code>RadComponent</code> with the specified
@@ -272,6 +273,14 @@ public abstract class RadComponent implements IComponent {
 
   public boolean isDragBorder() {
     return myDragBorder;
+  }
+
+  public boolean isDefaultBinding() {
+    return myDefaultBinding;
+  }
+
+  public void setDefaultBinding(final boolean defaultBinding) {
+    myDefaultBinding = defaultBinding;
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l){

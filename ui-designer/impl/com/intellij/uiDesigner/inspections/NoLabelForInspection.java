@@ -46,7 +46,7 @@ public class NoLabelForInspection extends BaseFormInspection {
       FormEditingUtil.iterate(root, new FormEditingUtil.ComponentVisitor() {
         public boolean visit(final IComponent c2) {
           if (FormInspectionUtil.isComponentClass(module, c2, JLabel.class)) {
-            IProperty prop = DuplicateMnemonicInspection.findProperty(c2, SwingProperties.LABEL_FOR);
+            IProperty prop = FormInspectionUtil.findProperty(c2, SwingProperties.LABEL_FOR);
             if (prop != null && component.getId().equals(prop.getPropertyValue(c2))) {
               found.set(Boolean.TRUE);
               return false;

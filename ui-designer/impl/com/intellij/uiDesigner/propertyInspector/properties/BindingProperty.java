@@ -4,7 +4,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -15,6 +19,7 @@ import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -27,14 +32,18 @@ import com.intellij.util.Processor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public final class BindingProperty extends Property<RadComponent> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.properties.BindingProperty");
+
   private final Project myProject;
 
   private final BindingRenderer myRenderer;
@@ -64,7 +73,7 @@ public final class BindingProperty extends Property<RadComponent> {
     final String newBinding = (String)value;
 
     if (newBinding.length() == 0) {
-      checkRemoveUnusedField(myProject, component);
+      checkRemoveUnusedField(component);
       component.setBinding(null);
       return;
     }
@@ -88,6 +97,7 @@ public final class BindingProperty extends Property<RadComponent> {
     final String oldBinding = (String)getValue(component);
 
     component.setBinding(newBinding);
+    component.setDefaultBinding(false);
 
     final String classToBind = root.getClassToBind();
     if(classToBind == null){
@@ -145,7 +155,9 @@ public final class BindingProperty extends Property<RadComponent> {
     processor.run();
   }
 
-  public static void checkRemoveUnusedField(final Project project, final RadComponent component) {
+  @Nullable
+  public static PsiField findBoundField(final RadComponent component) {
+    final Project project = component.getModule().getProject();
     final RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
     final String classToBind = root.getClassToBind();
     if (classToBind != null) {
@@ -154,36 +166,46 @@ public final class BindingProperty extends Property<RadComponent> {
       if (aClass != null) {
         final PsiField oldBindingField = aClass.findFieldByName(component.getBinding(), false);
         if (oldBindingField != null) {
-          if (isFieldUnreferenced(oldBindingField)) {
-            if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) {
-              return;
-            }
-            ApplicationManager.getApplication().runWriteAction(
-              new Runnable() {
-                public void run() {
-                  CommandProcessor.getInstance().executeCommand(
-                    project,
-                    new Runnable() {
-                      public void run() {
-                        try {
-                          oldBindingField.delete();
-                        }
-                        catch (IncorrectOperationException e) {
-                          Messages.showErrorDialog(project, UIDesignerBundle.message("error.cannot.delete.unused.field", e.getMessage()),
-                                                   CommonBundle.getErrorTitle());
-                        }
-                      }
-                    },
-                    UIDesignerBundle.message("command.delete.unused.field"), null
-                  );
-                }
-              }
-            );
-          }
+          return oldBindingField;
         }
       }
     }
+    return null;
+  }
 
+  public static void checkRemoveUnusedField(final RadComponent component) {
+    final PsiField oldBindingField = findBoundField(component);
+    if (oldBindingField == null) {
+      return;
+    }
+    final Project project = oldBindingField.getProject();
+    final PsiClass aClass = oldBindingField.getContainingClass();
+    if (isFieldUnreferenced(oldBindingField)) {
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) {
+        return;
+      }
+      ApplicationManager.getApplication().runWriteAction(
+        new Runnable() {
+          public void run() {
+            CommandProcessor.getInstance().executeCommand(
+              project,
+              new Runnable() {
+                public void run() {
+                  try {
+                    oldBindingField.delete();
+                  }
+                  catch (IncorrectOperationException e) {
+                    Messages.showErrorDialog(project, UIDesignerBundle.message("error.cannot.delete.unused.field", e.getMessage()),
+                                             CommonBundle.getErrorTitle());
+                  }
+                }
+              },
+              UIDesignerBundle.message("command.delete.unused.field"), null
+            );
+          }
+        }
+      );
+    }
   }
 
   private static boolean isFieldUnreferenced(final PsiField field) {
@@ -197,5 +219,39 @@ public final class BindingProperty extends Property<RadComponent> {
         return false;
       }
     });
+  }
+
+  public static void checkCreateBindingFromText(final RadComponent component, final String text) {
+    if (!component.isDefaultBinding()) {
+      return;
+    }
+    PsiField boundField = findBoundField(component);
+    if (boundField == null || !isFieldUnreferenced(boundField)) {
+      return;
+    }
+    List<String> words = StringUtil.getWordsIn(text);
+    if (words.size() > 0) {
+      StringBuilder nameBuilder = new StringBuilder(StringUtil.decapitalize(words.get(0)));
+      for(int i=1; i<words.size(); i++) {
+        nameBuilder.append(StringUtil.capitalize(words.get(i)));
+      }
+      nameBuilder.append(StringUtil.capitalize(InsertComponentProcessor.getShortClassName(component.getComponentClassName())));
+
+      RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
+      Project project = root.getModule().getProject();
+      String binding = CodeStyleManager.getInstance(project).propertyNameToVariableName(nameBuilder.toString(), VariableKind.FIELD);
+      if (FormEditingUtil.bindingExists(root, binding, component)) {
+        binding = InsertComponentProcessor.getUniqueBinding(root, nameBuilder.toString());
+      }
+
+      try {
+        new BindingProperty(project).setValue(component, binding);
+        // keep the binding marked as default
+        component.setDefaultBinding(true);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
   }
 }

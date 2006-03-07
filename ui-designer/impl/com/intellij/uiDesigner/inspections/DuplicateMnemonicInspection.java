@@ -49,7 +49,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
 
   @Nullable
   public static SupportCode.TextWithMnemonic getTextWithMnemonic(final Module module, final IComponent component) {
-    IProperty prop = findProperty(component, SwingProperties.TEXT);
+    IProperty prop = FormInspectionUtil.findProperty(component, SwingProperties.TEXT);
     if (prop != null) {
       Object propValue = prop.getPropertyValue(component);
       if (propValue instanceof StringDescriptor) {
@@ -76,12 +76,12 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
                                      final SupportCode.TextWithMnemonic twm,
                                      final FormErrorCollector collector) {
     if (myMnemonicToComponentMap.containsKey(new Character(twm.getMnemonicChar()))) {
-      IProperty prop = findProperty(component, SwingProperties.TEXT);
+      IProperty prop = FormInspectionUtil.findProperty(component, SwingProperties.TEXT);
       IComponent oldComponent = myMnemonicToComponentMap.get(new Character(twm.getMnemonicChar()));
       collector.addError(getID(), prop,
                          UIDesignerBundle.message("inspection.duplicate.mnemonics.message",
-                                                  getText(module, oldComponent),
-                                                  getText(module, component)),
+                                                  FormInspectionUtil.getText(module, oldComponent),
+                                                  FormInspectionUtil.getText(module, component)),
                          new EditorQuickFixProvider() {
                            public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
                              return new AssignMnemonicFix(editor, component,
@@ -92,23 +92,6 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     else {
       myMnemonicToComponentMap.put(new Character(twm.getMnemonicChar()), component);
     }
-  }
-
-  @Nullable private static String getText(final Module module, final IComponent component) {
-    IProperty prop = findProperty(component, SwingProperties.TEXT);
-    StringDescriptor descriptor = (StringDescriptor) prop.getPropertyValue(component);
-    if (component instanceof RadComponent) {
-      return ReferenceUtil.resolve((RadComponent) component, descriptor);
-    }
-    return ReferenceUtil.resolve(module, descriptor, null);
-  }
-
-  public static IProperty findProperty(final IComponent component, final String name) {
-    IProperty[] props = component.getModifiedProperties();
-    for(IProperty prop: props) {
-      if (prop.getName().equals(name)) return prop;
-    }
-    return null;
   }
 
 }

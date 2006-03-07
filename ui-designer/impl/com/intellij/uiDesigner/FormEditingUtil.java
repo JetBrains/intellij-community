@@ -75,7 +75,7 @@ public final class FormEditingUtil {
       FormEditingUtil.iterate(component, new ComponentVisitor() {
         public boolean visit(final IComponent c) {
           RadComponent rc = (RadComponent) c;
-          BindingProperty.checkRemoveUnusedField(editor.getProject(), rc);
+          BindingProperty.checkRemoveUnusedField(rc);
           deletedComponentIds.add(rc.getId());
           return true;
         }
@@ -314,13 +314,17 @@ public final class FormEditingUtil {
   }
 
   public static boolean bindingExists(IComponent component, final String binding) {
+    return bindingExists(component, binding, null);
+  }
+
+  public static boolean bindingExists(IComponent component, final String binding, @Nullable final IComponent exceptComponent) {
     // Check that binding is unique
     final Ref<Boolean> bindingExists = new Ref<Boolean>(Boolean.FALSE);
     iterate(
       component,
       new ComponentVisitor() {
         public boolean visit(final IComponent component) {
-          if(binding.equals(component.getBinding())){
+          if(component != exceptComponent && binding.equals(component.getBinding())) {
             bindingExists.set(Boolean.TRUE);
             return false;
           }

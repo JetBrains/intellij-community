@@ -2,6 +2,9 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.SwingProperties;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -46,6 +49,15 @@ public class IntroComponentProperty extends IntrospectedProperty {
 
   @Override protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
+    if (getName().equals(SwingProperties.LABEL_FOR)) {
+      String text = FormInspectionUtil.getText(component.getModule(), component);
+      if (text != null) {
+        RadComponent valueComponent = FormEditingUtil.findComponentAnywhere(component, (String) value);
+        if (valueComponent != null) {
+          BindingProperty.checkCreateBindingFromText(valueComponent, text);
+        }
+      }
+    }
   }
 
   @Override public void resetValue(RadComponent component) throws Exception {

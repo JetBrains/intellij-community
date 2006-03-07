@@ -51,8 +51,8 @@ public final class IntroStringProperty extends IntrospectedProperty{
 
   /**
    * @return per RadComponent map between string property name and its StringDescriptor value.
-   * Method never returns <code>null</code>.
    */
+  @NotNull
   private static HashMap<String, StringDescriptor> getName2Descriptor(final RadComponent component){
     HashMap<String, StringDescriptor> name2Descriptor = (HashMap<String, StringDescriptor>)component.getClientProperty(CLIENT_PROP_NAME_2_DESCRIPTOR);
     if(name2Descriptor == null){
@@ -153,28 +153,33 @@ public final class IntroStringProperty extends IntrospectedProperty{
       descriptor.setResolvedValue(resolvedValue);
     }
 
-    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof JLabel)){
-      final JLabel label = (JLabel)delegee;
+    if(SwingProperties.TEXT.equals(getName())) {
       final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(resolvedValue);
-      label.setText(textWithMnemonic.myText);
-      if(textWithMnemonic.myMnemonicIndex != -1){
-        label.setDisplayedMnemonic(textWithMnemonic.getMnemonicChar());
-        label.setDisplayedMnemonicIndex(textWithMnemonic.myMnemonicIndex);
+      BindingProperty.checkCreateBindingFromText(component, textWithMnemonic.myText);
+      if (delegee instanceof JLabel) {
+        final JLabel label = (JLabel)delegee;
+        label.setText(textWithMnemonic.myText);
+        if(textWithMnemonic.myMnemonicIndex != -1){
+          label.setDisplayedMnemonic(textWithMnemonic.getMnemonicChar());
+          label.setDisplayedMnemonicIndex(textWithMnemonic.myMnemonicIndex);
+        }
+        else{
+          label.setDisplayedMnemonic(0);
+        }
       }
-      else{
-        label.setDisplayedMnemonic(0);
+      else if (delegee instanceof AbstractButton) {
+        final AbstractButton button = (AbstractButton)delegee;
+        button.setText(textWithMnemonic.myText);
+        if(textWithMnemonic.myMnemonicIndex != -1){
+          button.setMnemonic(textWithMnemonic.getMnemonicChar());
+          button.setDisplayedMnemonicIndex(textWithMnemonic.myMnemonicIndex);
+        }
+        else{
+          button.setMnemonic(0);
+        }
       }
-    }
-    else if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof AbstractButton)){
-      final AbstractButton button = (AbstractButton)delegee;
-      final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(resolvedValue);
-      button.setText(textWithMnemonic.myText);
-      if(textWithMnemonic.myMnemonicIndex != -1){
-        button.setMnemonic(textWithMnemonic.getMnemonicChar());
-        button.setDisplayedMnemonicIndex(textWithMnemonic.myMnemonicIndex);
-      }
-      else{
-        button.setMnemonic(0);
+      else {
+        super.setValueImpl(component, resolvedValue);
       }
     }
     else{

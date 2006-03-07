@@ -60,6 +60,14 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   @NotNull
   private static String suggestBinding(final GuiEditor editor, @NotNull final String componentClassName){
+    String shortClassName = getShortClassName(componentClassName);
+
+    LOG.assertTrue(shortClassName.length() > 0);
+
+    return getUniqueBinding(editor.getRootContainer(), shortClassName);
+  }
+
+  public static String getShortClassName(final String componentClassName) {
     final int lastDotIndex = componentClassName.lastIndexOf('.');
     String shortClassName = componentClassName.substring(lastDotIndex + 1);
 
@@ -74,19 +82,20 @@ public final class InsertComponentProcessor extends EventProcessor {
       shortClassName = shortClassName.substring(1);
     }
     shortClassName = StringUtil.decapitalize(shortClassName);
+    return shortClassName;
+  }
 
-    LOG.assertTrue(shortClassName.length() > 0);
-
+  public static String getUniqueBinding(RadRootContainer root, final String baseName) {
     // Generate member name based on current code style
     //noinspection ForLoopThatDoesntUseLoopVariable
     for(int i = 0; true; i++){
-      final String nameCandidate = shortClassName + (i + 1);
-      final String binding = CodeStyleManager.getInstance(editor.getProject()).propertyNameToVariableName(
+      final String nameCandidate = baseName + (i + 1);
+      final String binding = CodeStyleManager.getInstance(root.getModule().getProject()).propertyNameToVariableName(
         nameCandidate,
         VariableKind.FIELD
       );
 
-      if (!FormEditingUtil.bindingExists(editor.getRootContainer(), binding)) {
+      if (!FormEditingUtil.bindingExists(root, binding)) {
         return binding;
       }
     }
@@ -108,6 +117,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     // Now if the inserted component is a input control, we need to automatically create binding
     final String binding = suggestBinding(editor, insertedComponent.getComponentClassName());
     insertedComponent.setBinding(binding);
+    insertedComponent.setDefaultBinding(true);
 
     // Try to create field in the corresponding bound class
     final String classToBind = editor.getRootContainer().getClassToBind();
