@@ -34,7 +34,7 @@ public class MoveInitializerToConstructorAction extends BaseIntentionAction {
     if (element == null) return false;
     if (element instanceof PsiCompiledElement) return false;
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class);
-    if (field == null) return false;
+    if (field == null || field.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!field.hasInitializer()) return false;
     PsiClass psiClass = field.getContainingClass();
     
@@ -111,7 +111,7 @@ public class MoveInitializerToConstructorAction extends BaseIntentionAction {
         super.visitReferenceExpression(expression);
       }
     });
-    return result.get();
+    return result.get().booleanValue();
   }
 
   private static void replaceWithQualifiedReferences(final PsiElement expression) throws IncorrectOperationException {
