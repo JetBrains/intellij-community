@@ -1,0 +1,6 @@
+AntFile:ProjectWithDependentTargets.ant
+  AntProject: Project
+    AntTarget: target1('<target name="target1"/>')
+    AntTarget: target2('<target name="target2"/>')
+    AntTarget: target3('<target name="target3"/>')
+    AntTarget: defaultTarget -> [ target1 target2 target3 ]('<target name="defaultTarget" depends="target1,target2,target3"/>')

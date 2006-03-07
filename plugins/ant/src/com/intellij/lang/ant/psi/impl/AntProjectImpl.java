@@ -5,6 +5,7 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,11 +14,12 @@ import java.util.ArrayList;
 
 public class AntProjectImpl extends AntElementImpl implements AntProject {
 
-  private final static AntTarget[] EMPTY_TARGETS = new AntTarget[0];
+  final static AntTarget[] EMPTY_TARGETS = new AntTarget[0];
 
   private String myName;
   private String myDefaultTargetName;
   private String myBaseDir;
+  private String myDescription;
   private AntTarget[] myTargets;
   private AntTarget myDefaultTarget;
 
@@ -25,14 +27,22 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     super(parent, tag);
   }
 
-  @NonNls public String toString() {
-    return "AntProject: " + getElementName();
-  }
-
-  @Nullable
-  public String getElementName() {
-    parseTag();
-    return myName;
+  @NonNls
+  public String toString() {
+    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append("AntProject: ");
+      builder.append(getElementName());
+      if (myDescription != null) {
+        builder.append(" [");
+        builder.append(myDescription);
+        builder.append("]");
+      }
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   @NotNull
@@ -58,6 +68,24 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
       }
     }
     return super.getChildren();
+  }
+
+  @Nullable
+  public String getElementName() {
+    parseTag();
+    return myName;
+  }
+
+  @Nullable
+  public String getBaseDir() {
+    parseTag();
+    return myBaseDir;
+  }
+
+  @Nullable
+  public String getDescription() {
+    parseTag();
+    return myDescription;
   }
 
   @NotNull
@@ -102,9 +130,14 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
   }
 
   @Nullable
-  public String getBaseDir() {
-    parseTag();
-    return myBaseDir;
+  public AntTarget getTarget(final String name) {
+    AntTarget[] targets = getAllTargets();
+    for (AntTarget target : targets) {
+      if (name.compareToIgnoreCase(target.getElementName()) == 0) {
+        return target;
+      }
+    }
+    return null;
   }
 
   private void parseTag() {
@@ -115,6 +148,10 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
         myName = tag.getAttributeValue("name");
         myDefaultTargetName = tag.getAttributeValue("default");
         myBaseDir = tag.getAttributeValue("basedir");
+        final XmlTag descTag = tag.findFirstSubTag("description");
+        if (descTag != null) {
+          myDescription = descTag.getValue().getText();
+        }
       }
     }
   }
