@@ -1,10 +1,10 @@
 package com.intellij.idea;
 
-import com.intellij.diagnostic.ReportMessages;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.DataInputStream;
@@ -16,8 +16,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author mike
@@ -98,6 +96,8 @@ public class SocketLock {
       }
 
       Socket socket = new Socket(LOCALHOST, i);
+      socket.setSoTimeout(300);
+
       DataInputStream in = new DataInputStream(socket.getInputStream());
 
       while (true) {
