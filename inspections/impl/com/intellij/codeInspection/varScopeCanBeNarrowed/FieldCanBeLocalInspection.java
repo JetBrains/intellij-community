@@ -256,8 +256,9 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     }
 
     private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock, @NotNull PsiElement firstElement) {
-      while (firstElement != null && firstElement.getParent() != anchorBlock) {
-        firstElement = firstElement.getParent();
+      PsiElement element = firstElement;
+      while (element != null && element.getParent() != anchorBlock) {
+        element = element.getParent();
       }
       return firstElement;
     }
