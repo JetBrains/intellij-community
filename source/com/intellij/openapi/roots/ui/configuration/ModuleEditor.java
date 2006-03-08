@@ -1,6 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.j2ee.ex.J2EEModulePropertiesEx;
+import com.intellij.javaee.ex.J2EEModulePropertiesEx;
 import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
