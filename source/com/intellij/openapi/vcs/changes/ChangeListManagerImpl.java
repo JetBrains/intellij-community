@@ -477,11 +477,21 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void setDefaultChangeList(ChangeList list) {
     synchronized (myChangeLists) {
       if (myDefaultChangelist != null) myDefaultChangelist.setDefault(false);
+      list = findRealByCopy(list);
       list.setDefault(true);
       myDefaultChangelist = list;
       myListeners.getMulticaster().defaultListChanged(list);
       scheduleRefresh();
     }
+  }
+
+  private ChangeList findRealByCopy(ChangeList list) {
+    for (ChangeList changeList : myChangeLists) {
+      if (changeList.equals(list)) {
+        return changeList;
+      }
+    }
+    return list;
   }
 
   public ChangeList getChangeList(Change change) {
