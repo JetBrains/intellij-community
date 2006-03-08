@@ -1,4 +1,4 @@
-package com.intellij.j2ee.run.localRun;
+package com.intellij.javaee.run.localRun;
 
 import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.actionSystem.*;
