@@ -7,7 +7,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.pointers.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakList;
@@ -69,7 +68,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   public void kill(VirtualFilePointer pointer) {
     if (pointer == null) return;
     if (((VirtualFilePointerImpl)pointer).isDead()) return;
-    myPointers.remove(pointer);
+    // No need to explicitly delete element from the weak least. It's cheaper to collect on GC
+    // myPointers.remove(pointer);
     ((VirtualFilePointerImpl)pointer).die();
   }
 
@@ -111,7 +111,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       new HashMap<VirtualFilePointerListener,ArrayList<VirtualFilePointer>>();
     while (iterator.hasNext()) {
       VirtualFilePointerImpl pointer = iterator.next();
-      if (pointer != null) {
+      if (pointer != null && !pointer.isDead()) {
         if (listenerNotifier.processPointer(pointer)) {
           VirtualFilePointerListener listener = pointer.getListener();
           if (listener != null) {
