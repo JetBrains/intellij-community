@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.devkit.build;
 
-import com.intellij.j2ee.make.ManifestBuilder;
-import com.intellij.j2ee.make.ModuleBuildProperties;
+import com.intellij.javaee.make.ManifestBuilder;
+import com.intellij.javaee.make.ModuleBuildProperties;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;

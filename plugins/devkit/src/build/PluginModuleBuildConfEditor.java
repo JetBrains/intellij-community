@@ -16,7 +16,7 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.j2ee.make.ModuleBuildProperties;
+import com.intellij.javaee.make.ModuleBuildProperties;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
