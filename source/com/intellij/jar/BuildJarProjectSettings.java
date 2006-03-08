@@ -2,9 +2,9 @@ package com.intellij.jar;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.javaee.make.*;
-import com.intellij.j2ee.module.LibraryLink;
-import com.intellij.j2ee.module.ModuleContainer;
-import com.intellij.j2ee.module.ModuleLink;
+import com.intellij.javaee.module.LibraryLink;
+import com.intellij.javaee.module.ModuleContainer;
+import com.intellij.javaee.module.ModuleLink;
 import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ProjectComponent;

@@ -12,7 +12,7 @@ import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.compiler.progress.CompilerProgressIndicator;
-import com.intellij.j2ee.module.J2EEModuleUtilEx;
+import com.intellij.javaee.module.J2EEModuleUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;

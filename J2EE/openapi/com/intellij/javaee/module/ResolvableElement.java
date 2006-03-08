@@ -29,7 +29,7 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.j2ee.module;
+package com.intellij.javaee.module;
 
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 

@@ -29,7 +29,7 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.j2ee.module;
+package com.intellij.javaee.module;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,7 +49,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class ModuleLinkImpl extends ModuleLink {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.module.ModuleLink");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.module.ModuleLink");
   @NonNls private static final String NAME_ATTRIBUTE_NAME = "name";
   @NonNls private static final String TEMP_ELEMENT_NAME = "temp";
   private Module myModule;

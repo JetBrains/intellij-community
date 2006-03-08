@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.j2ee.module;
+package com.intellij.javaee.module;
 
 import com.intellij.openapi.module.Module;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
 

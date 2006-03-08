@@ -1,7 +1,7 @@
 package com.intellij.jar;
 
-import com.intellij.j2ee.module.ModuleContainer;
-import com.intellij.j2ee.module.ModuleLink;
+import com.intellij.javaee.module.ModuleContainer;
+import com.intellij.javaee.module.ModuleLink;
 import com.intellij.javaee.make.BuildRecipe;
 import com.intellij.javaee.make.BuildInstructionVisitor;
 import com.intellij.javaee.make.FileCopyInstruction;

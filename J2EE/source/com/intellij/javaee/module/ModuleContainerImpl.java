@@ -1,4 +1,4 @@
-package com.intellij.j2ee.module;
+package com.intellij.javaee.module;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -21,7 +21,7 @@ import java.util.*;
  * @author Alexey Kudravtsev
  */
 public class ModuleContainerImpl implements ModuleContainer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.module.J2EEModuleContainerImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.module.J2EEModuleContainerImpl");
   private ModulesProvider myDefaultModulesProvider;
   private ModuleContainerImpl myModifiableModel;
   protected final Module myParentModule;

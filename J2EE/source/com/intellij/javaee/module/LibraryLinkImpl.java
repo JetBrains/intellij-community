@@ -29,7 +29,7 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.j2ee.module;
+package com.intellij.javaee.module;
 
 import com.intellij.javaee.make.MakeUtil;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
@@ -76,7 +76,7 @@ public class LibraryLinkImpl extends LibraryLink {
     methodToDescriptionForFiles.put(J2EEPackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST, J2EEBundle.message("packaging.method.description.copy.files.and.link.via.manifest"));
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.module.LibraryLink");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.module.LibraryLink");
   private LibraryInfo myLibraryInfo;
 
   public LibraryLinkImpl(Library library, Module parentModule) {

@@ -4,7 +4,7 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ToolbarPanel;
-import com.intellij.j2ee.module.J2EEModuleUtilEx;
+import com.intellij.javaee.module.J2EEModuleUtilEx;
 import com.intellij.javaee.J2EEModuleUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
