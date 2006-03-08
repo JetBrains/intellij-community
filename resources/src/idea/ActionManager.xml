@@ -559,7 +559,7 @@
         <separator/>
         <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup"/>
         <separator/>
-        <action id="DataSources" class="com.intellij.j2ee.dataSource.DataSourcesManagementAction"/>
+        <action id="DataSources" class="com.intellij.javaee.dataSource.DataSourcesManagementAction"/>
         <separator/>
 
         <group text="Internal Actions" internal="true" popup="true">
