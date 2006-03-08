@@ -21,7 +21,7 @@ import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.j2ee.deployment.JspDeploymentManager;
+import com.intellij.javaee.deployment.JspDeploymentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;

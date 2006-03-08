@@ -22,7 +22,7 @@
       <implementation-class>com.intellij.debugger.settings.DebuggerSettings</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.j2ee.deployment.JspDeploymentManager</interface-class>
+      <interface-class>com.intellij.javaee.deployment.JspDeploymentManager</interface-class>
       <implementation-class>com.intellij.debugger.impl.JspDeploymentManagerImpl</implementation-class>
     </component>
     <!--standard breakpoint factories -->
