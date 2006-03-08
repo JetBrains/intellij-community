@@ -511,7 +511,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   protected final void detach(boolean invalidate) {
     synchronized (PsiLock.LOCK) {
-      if (myXmlTag == null) return;
       myInvalidated = invalidate;
       if (!myInitializedChildren.isEmpty()) {
         Set<DomInvocationHandler> fixedChildren = new HashSet<DomInvocationHandler>(myFixedChildren.values());
