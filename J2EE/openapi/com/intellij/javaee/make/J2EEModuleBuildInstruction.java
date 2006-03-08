@@ -1,6 +1,3 @@
-/**
- * @author cdr
- */
 /*
  * Copyright 2000-2005 JetBrains s.r.o.
  *
@@ -16,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.j2ee.make;
+package com.intellij.javaee.make;
 
-import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import com.intellij.openapi.compiler.CompileContext;
 
-public interface FileCopyInstruction extends BuildInstruction {
-  File getFile();
-  void setFile(@NotNull File file, boolean isDirectory);
+public interface J2EEModuleBuildInstruction extends BuildInstruction {
+  ModuleBuildProperties getBuildProperties();
 
-  boolean isDirectory();
+  BuildRecipe getChildInstructions(CompileContext context);
 }

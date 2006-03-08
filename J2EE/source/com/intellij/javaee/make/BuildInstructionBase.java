@@ -1,7 +1,7 @@
 /**
  * @author cdr
  */
-package com.intellij.j2ee.make;
+package com.intellij.javaee.make;
 
 import com.intellij.openapi.module.Module;
 import gnu.trove.THashSet;

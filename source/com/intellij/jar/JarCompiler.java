@@ -2,9 +2,9 @@ package com.intellij.jar;
 
 import com.intellij.j2ee.module.ModuleContainer;
 import com.intellij.j2ee.module.ModuleLink;
-import com.intellij.j2ee.make.BuildRecipe;
-import com.intellij.j2ee.make.BuildInstructionVisitor;
-import com.intellij.j2ee.make.FileCopyInstruction;
+import com.intellij.javaee.make.BuildRecipe;
+import com.intellij.javaee.make.BuildInstructionVisitor;
+import com.intellij.javaee.make.FileCopyInstruction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;

@@ -1,4 +1,4 @@
-package com.intellij.j2ee.make;
+package com.intellij.javaee.make;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.module.Module;

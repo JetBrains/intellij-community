@@ -31,7 +31,7 @@
  */
 package com.intellij.j2ee.module;
 
-import com.intellij.j2ee.make.MakeUtil;
+import com.intellij.javaee.make.MakeUtil;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.diagnostic.Logger;

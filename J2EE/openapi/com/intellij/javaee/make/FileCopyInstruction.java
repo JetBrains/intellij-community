@@ -16,19 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.j2ee.make;
+package com.intellij.javaee.make;
 
-import com.intellij.openapi.compiler.CompileContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
 
-public interface JarAndCopyBuildInstruction extends FileCopyInstruction {
-  void makeJar(@NotNull CompileContext context,
-               @NotNull File jarFile,
-               @Nullable FileFilter fileFilter) throws IOException;
-  File getJarFile();
+public interface FileCopyInstruction extends BuildInstruction {
+  File getFile();
+  void setFile(@NotNull File file, boolean isDirectory);
+
+  boolean isDirectory();
 }

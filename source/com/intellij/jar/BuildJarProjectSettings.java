@@ -1,7 +1,7 @@
 package com.intellij.jar;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.j2ee.make.*;
+import com.intellij.javaee.make.*;
 import com.intellij.j2ee.module.LibraryLink;
 import com.intellij.j2ee.module.ModuleContainer;
 import com.intellij.j2ee.module.ModuleLink;

@@ -1,6 +1,6 @@
 package com.intellij.jar;
 
-import com.intellij.j2ee.make.MakeUtil;
+import com.intellij.javaee.make.MakeUtil;
 import com.intellij.j2ee.module.ModuleContainer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;

@@ -224,7 +224,7 @@ public class CompileDriver {
       final VirtualFile outputDir = myGenerationCompilerModuleToOutputDirMap.get(pair);
       scope = new CompositeScope(scope, new FileSetCompileScope(new VirtualFile[]{outputDir}, new Module[]{pair.getSecond()}));
     }
-    CompileScope additionalJ2eeScope = com.intellij.j2ee.make.MakeUtil.getInstance().getOutOfSourceJ2eeCompileScope(scope);
+    CompileScope additionalJ2eeScope = com.intellij.javaee.make.MakeUtil.getInstance().getOutOfSourceJ2eeCompileScope(scope);
     if (additionalJ2eeScope != null) {
       scope = new CompositeScope(scope, additionalJ2eeScope);
     }

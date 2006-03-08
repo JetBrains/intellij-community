@@ -1,6 +1,6 @@
-package com.intellij.j2ee.make;
+package com.intellij.javaee.make;
 
-import com.intellij.j2ee.make.impl.MakeUtilImpl;
+import com.intellij.javaee.make.impl.MakeUtilImpl;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase implements J2EEModuleBuildInstruction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.make.J2EEModuleBuildInstructionImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.make.J2EEModuleBuildInstructionImpl");
 
   private final ModuleBuildProperties myBuildProperties;
   @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";

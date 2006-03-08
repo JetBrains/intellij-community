@@ -1,8 +1,8 @@
 package com.intellij.testFramework;
 
 import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
-import com.intellij.j2ee.make.ModuleBuildProperties;
-import com.intellij.j2ee.make.ModuleBuildPropertiesEx;
+import com.intellij.javaee.make.ModuleBuildProperties;
+import com.intellij.javaee.make.ModuleBuildPropertiesEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
