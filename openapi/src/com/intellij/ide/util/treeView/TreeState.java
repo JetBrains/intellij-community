@@ -32,13 +32,14 @@ import java.util.List;
 public class TreeState implements JDOMExternalizable {
   @NonNls private static final String PATH = "PATH";
   @NonNls private static final String PATH_ELEMENT = "PATH_ELEMENT";
+  @NonNls private static final String USER_OBJECT = "USER_OBJECT";
 
   static class PathElement implements JDOMExternalizable {
     public String myItemId;
     public String myItemType;
 
     private final int myItemIndex;
-    private final Object myUserObject;
+    private Object myUserObject;
 
     public PathElement(final String itemId, final String itemType, final int itemIndex, Object userObject) {
       myItemId = itemId;
@@ -68,10 +69,14 @@ public class TreeState implements JDOMExternalizable {
 
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
+      myUserObject = element.getAttributeValue(USER_OBJECT);
     }
 
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element);
+      if (myUserObject instanceof String){
+        element.setAttribute(USER_OBJECT, (String)myUserObject);
+      }
     }
   }
 
