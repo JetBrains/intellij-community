@@ -676,7 +676,7 @@ public class ChangesListView extends Tree implements DataProvider {
       else if (object instanceof VirtualFile) {
         final VirtualFile file = (VirtualFile)object;
         append(file.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.COLOR_UNKNOWN));
-        if (isShowFlatten()) {
+        if (isShowFlatten() && file.isValid()) {
           final VirtualFile parentFile = file.getParent();
           assert parentFile != null;
           append(" (" + parentFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
