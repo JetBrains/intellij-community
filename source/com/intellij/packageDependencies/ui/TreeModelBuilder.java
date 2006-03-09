@@ -304,7 +304,10 @@ public class TreeModelBuilder {
     if (indicator != null) {
       indicator.setIndeterminate(false);
       indicator.setText(AnalysisScopeBundle.message("package.dependencies.build.progress.text"));
-      indicator.setText2(file.getVirtualFile().getPresentableUrl());
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        indicator.setText2(virtualFile.getPresentableUrl());
+      }
       indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
     }
 
@@ -551,8 +554,7 @@ public class TreeModelBuilder {
     final PsiDirectory directory = psiDirectory.getParentDirectory();
     LOG.assertTrue(directory != null);
     final PsiDirectory parentDirectory = directory.getParentDirectory();
-    final VirtualFile contentRoot = parentDirectory != null ? ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(parentDirectory.getVirtualFile()) : null;
-    if (contentRoot != null) {
+    if (parentDirectory != null && ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(parentDirectory.getVirtualFile()) == module) {
       DirectoryNode parentDirectoryNode = getMap(myModuleDirNodes, scopeType).get(directory);
       if (parentDirectoryNode != null || !myCompactEmptyMiddlePackages){
         getModuleDirNode(directory, module, scopeType, (DirectoryNode)directoryNode).add(directoryNode);

@@ -12,10 +12,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeWillExpandListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.ExpandVetoException;
-import javax.swing.tree.TreeNode;
+import javax.swing.tree.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,7 +29,9 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
   }
 
   public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
-    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)event.getPath().getLastPathComponent();
+    final TreePath path = myTree.getPathForRow(myTree.getRowForPath(event.getPath()));
+    if (path == null) return;
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     if (node instanceof DirectoryNode) {
       Set<ClassNode> classNodes = null;
       for (int i = node.getChildCount() - 1; i >= 0; i--) {
@@ -65,7 +64,9 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
   }
 
   public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
-    final DefaultMutableTreeNode node = (PackageDependenciesNode)event.getPath().getLastPathComponent();
+    final TreePath path = myTree.getPathForRow(myTree.getRowForPath(event.getPath()));
+    if (path == null) return;
+    final DefaultMutableTreeNode node = (PackageDependenciesNode)path.getLastPathComponent();
     if (node instanceof DirectoryNode){
       Set<FileNode> fileNodes = null;
       for (int i = node.getChildCount() - 1; i >= 0; i--) {
