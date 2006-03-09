@@ -32,33 +32,39 @@ public final class LoadTextUtil {
 
   private LoadTextUtil() {}
 
-  public static Pair<CharSequence,String> loadText(byte[] bytes, final VirtualFile virtualFile) {
+  private static Pair<CharSequence,String> loadText(byte[] bytes, final VirtualFile virtualFile) {
     try {
-      return loadText(getReader(virtualFile, new ByteArrayInputStream(bytes)), bytes.length);
-    } catch (IOException e) {
+      Reader reader = getReader(virtualFile, new ByteArrayInputStream(bytes));
+      return loadTextAndClose(reader, bytes.length);
+    }
+    catch (IOException e) {
       LOG.error(e);
     }
-
     return null;
   }
 
-  private static Pair<CharSequence,String> loadText(Reader reader, int fileLength) throws IOException {
+  private static Pair<CharSequence,String> loadTextAndClose(Reader reader, int fileLength) throws IOException {
     char[] buffer = ourSharedBuffer.length >= fileLength ? ourSharedBuffer : new char[fileLength];
 
     int offset = 0;
-    do {
-      int read = reader.read(buffer, offset, buffer.length - offset);
-      if (read < 0) break;
-      offset += read;
+    try {
+      do {
+        int read = reader.read(buffer, offset, buffer.length - offset);
+        if (read < 0) break;
+        offset += read;
 
-      if (offset >= buffer.length) {
-        // Number of characters read might exceed fileLength if the encoding being used is capable to
-        // produce more than one character from a single byte. Need to reallocate in this case.
-        char[] newBuffer = new char[buffer.length * 2];
-        System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
-        buffer = newBuffer;
-      }
-    } while(true);
+        if (offset >= buffer.length) {
+          // Number of characters read might exceed fileLength if the encoding being used is capable to
+          // produce more than one character from a single byte. Need to reallocate in this case.
+          char[] newBuffer = new char[buffer.length * 2];
+          System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+          buffer = newBuffer;
+        }
+      } while(true);
+    }
+    finally {
+      reader.close();
+    }
 
     final int LF = 1;
     final int CR = 2;
@@ -66,19 +72,21 @@ public final class LoadTextUtil {
 
     int dst = 0;
     char prev = ' ';
-    for( int src = 0; src < offset; src++ ) {
+    for (int src = 0; src < offset; src++) {
       char c = buffer[src];
-      switch( c ) {
+      switch (c) {
         case '\r':
           buffer[dst++] = '\n';
           line_separator = CR;
           break;
         case '\n':
-          if( prev != '\r' ) {
+          if (prev == '\r') {
+            line_separator = CR + LF;
+          }
+          else {
             buffer[dst++] = '\n';
             line_separator = LF;
           }
-          else line_separator = CR + LF;
           break;
         default:
           buffer[dst++] = c;
@@ -100,7 +108,7 @@ public final class LoadTextUtil {
   }
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public static Reader getReader(final VirtualFile virtualFile, InputStream stream) throws IOException {
+  private static Reader getReader(final VirtualFile virtualFile, InputStream stream) throws IOException {
     if (virtualFile instanceof MockVirtualFile) {
       return new CharSequenceReader(((MockVirtualFile)virtualFile).getContent());
     }
@@ -124,7 +132,6 @@ public final class LoadTextUtil {
                                                                    true);
       virtualFile.setCharset(seis.getEncoding());
       reader = seis.getReader();
-      //noinspection ConstantConditions
       if (Patches.SUN_BUG_ID_4508058) {
         virtualFile.setBOM(seis.detectUTF8_BOM());
       }
@@ -136,7 +143,7 @@ public final class LoadTextUtil {
         skipUTF8BOM(virtualFile, reader);
       }
       else {
-        reader = new BufferedReader(new InputStreamReader(stream));
+        reader = new InputStreamReader(stream);
       }
     }
 
@@ -144,7 +151,6 @@ public final class LoadTextUtil {
   }
 
   private static void skipUTF8BOM(final VirtualFile virtualFile, final Reader reader) throws IOException {
-    //noinspection ConstantConditions
     if (Patches.SUN_BUG_ID_4508058) {
       //noinspection HardCodedStringLiteral
       if (virtualFile.getCharset() != null && virtualFile.getCharset().name().contains("UTF-8")) {
@@ -190,18 +196,15 @@ public final class LoadTextUtil {
     if (fileType.equals(StdFileTypes.CLASS)){
       return new CharArrayCharSequence(decompile(file));
     }
-
     if (fileType.isBinary()) return null;
-    if(file.isDirectory()) return ArrayUtil.EMPTY_CHAR_SEQUENCE;
 
-    final byte[] bytes;
     try {
-      bytes = file.contentsToByteArray();
+      final byte[] bytes = file.contentsToByteArray();
+      return getTextByBinaryPresentation(bytes, file);
     }
     catch (IOException e) {
       return ArrayUtil.EMPTY_CHAR_SEQUENCE;
     }
-    return getTextByBinaryPresentation(bytes, file);
   }
 
   static char[] decompile(VirtualFile file) {
@@ -228,7 +231,7 @@ public final class LoadTextUtil {
     //}
   }
 
-  public static CharSequence getTextByBinaryPresentation(final byte[] content, final VirtualFile virtualFile) {
+  private static CharSequence getTextByBinaryPresentation(final byte[] content, final VirtualFile virtualFile) {
     final Pair<CharSequence, String> result = loadText(content, virtualFile);
     virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
     return result.getFirst();

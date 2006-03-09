@@ -136,10 +136,12 @@ public class ShowImplementationsAction extends AnAction {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             final ImplementationViewComponent component = new ImplementationViewComponent(implsFinal);
-            final JBPopup popup = JBPopupFactory.getInstance().createComponentPopup(component, component.getPrefferedFocusableComponent(),
-                                                                                    true);
-            popup.show(hintPosition);
-            component.setHint(popup);
+            if (component.hasElementsToShow()) {
+              final JBPopup popup = JBPopupFactory.getInstance().createComponentPopup(component, component.getPrefferedFocusableComponent(),
+                                                                                      true);
+              popup.show(hintPosition);
+              component.setHint(popup);
+            }
           }
         });
       }

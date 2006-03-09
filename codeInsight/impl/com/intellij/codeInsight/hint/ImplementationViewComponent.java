@@ -66,6 +66,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ImplementationViewComponent extends JPanel {
   private final PsiElement[] myElements;
@@ -88,6 +90,10 @@ public class ImplementationViewComponent extends JPanel {
     myHint = hint;
   }
 
+  public boolean hasElementsToShow() {
+    return myElements.length > 0;
+  }
+
   private static class FileDescriptor {
     public VirtualFile myFile;
 
@@ -98,16 +104,20 @@ public class ImplementationViewComponent extends JPanel {
 
   public ImplementationViewComponent(PsiElement[] elements) {
     super(new BorderLayout());
-    myElements = new PsiElement[elements.length];
+    List<PsiElement> candidates = new ArrayList<PsiElement>(elements.length);
     myIndex = 0;
 
-    FileDescriptor[] files = new FileDescriptor[myElements.length];
-    for (int i = 0; i < elements.length; i++) {
-      myElements[i] = elements[i].getNavigationElement();
-      files[i] = new FileDescriptor(getContainingFile(myElements[i]).getVirtualFile());
+    List<FileDescriptor> files = new ArrayList<FileDescriptor>(elements.length);
+    for (PsiElement element : elements) {
+      PsiFile file = getContainingFile(element);
+      if (file == null) continue;
+      files.add(new FileDescriptor(file.getVirtualFile()));
+      candidates.add(element.getNavigationElement());
     }
+    myElements = candidates.toArray(new PsiElement[candidates.size()]);
+    if (myElements.length == 0) return;
 
-    final Project project = myElements[0].getProject();
+    final Project project = elements[0].getProject();
     EditorFactory factory = EditorFactory.getInstance();
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
@@ -150,7 +160,7 @@ public class ImplementationViewComponent extends JPanel {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     if (myElements.length > 1) {
-      myFileChooser = new JComboBox(files);
+      myFileChooser = new JComboBox(files.toArray(new PsiElement[files.size()]));
       myFileChooser.setRenderer(new DefaultListCellRenderer() {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
           super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -227,7 +237,7 @@ public class ImplementationViewComponent extends JPanel {
         myBinarySwitch.show(myViewingPanel, TEXT_PAGE_KEY);
         break;
       }
-      else if (provider.accept(project, vFile)) {
+      else if (vFile != null && provider.accept(project, vFile)) {
         myCurrentNonTextEditorProvider = provider;
         myNonTextEditor = myCurrentNonTextEditorProvider.createEditor(project, vFile);
         myBinaryPanel.removeAll();
@@ -276,7 +286,7 @@ public class ImplementationViewComponent extends JPanel {
     });
   }
 
-  private PsiFile getContainingFile(final PsiElement elt) {
+  private static PsiFile getContainingFile(final PsiElement elt) {
     PsiFile psiFile = elt.getContainingFile();
     if (psiFile == null) return null;
     PsiFile originalFile = psiFile.getOriginalFile();
@@ -294,7 +304,7 @@ public class ImplementationViewComponent extends JPanel {
     //TODO: Move from JavaDoc to somewhere more appropriate place.
     JavaDocInfoComponent.customizeElementLabel(myElements[myIndex], myLocationLabel);
     //noinspection AutoBoxing
-    myCountLabel.setText(CodeInsightBundle.message("n.of.m", (myIndex + 1), myElements.length));
+    myCountLabel.setText(CodeInsightBundle.message("n.of.m", myIndex + 1, myElements.length));
   }
 
   private ActionToolbar createToolbar() {
@@ -405,6 +415,7 @@ public class ImplementationViewComponent extends JPanel {
       PsiElement element = myElements[myIndex];
       PsiElement navigationElement = element.getNavigationElement();
       PsiFile file = getContainingFile(navigationElement);
+      if (file == null) return;
       Project project = element.getProject();
       FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file.getVirtualFile(), navigationElement.getTextOffset());

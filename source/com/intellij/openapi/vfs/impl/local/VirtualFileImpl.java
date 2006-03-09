@@ -307,7 +307,7 @@ public class VirtualFileImpl extends VirtualFile {
     final ProvidedContent content = getProvidedContent();
     InputStream in = content.getInputStream();
     try {
-      return FileUtil.loadBytes(in, (int)content.getLength());
+      return FileUtil.loadBytes(in, content.getLength());
     }
     finally {
       in.close();

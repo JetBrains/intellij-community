@@ -130,7 +130,7 @@ public class LineMarkerInfo {
       Arrays.sort(overridings, comparator);
 
       String start = isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");
-      @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
+      @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
       return composeText(overridings, start, pattern);
     }
     else{
@@ -189,7 +189,7 @@ public class LineMarkerInfo {
       else if (element instanceof PsiMethod) {
         String methodName = ((PsiMethod)element).getName();
         String className = ClassPresentationUtil.getNameForClass(((PsiMethod)element).getContainingClass(), true);
-        descr = MessageFormat.format(formatPattern, methodName, className);
+        descr = MessageFormat.format(formatPattern, className, methodName);
       }
       else if (element instanceof PsiFile) {
         descr = MessageFormat.format(formatPattern, ((PsiFile)element).getName());
