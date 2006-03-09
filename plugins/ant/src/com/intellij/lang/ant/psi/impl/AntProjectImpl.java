@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
@@ -32,7 +33,7 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntProject: ");
-      builder.append(getElementName());
+      builder.append(getName());
       if (myDescription != null) {
         builder.append(" [");
         builder.append(myDescription);
@@ -45,33 +46,8 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     }
   }
 
-  @NotNull
-  public PsiElement[] getChildren() {
-    if (myChildren == null) {
-      ArrayList<PsiElement> children = null;
-      final XmlTag tag = getSourceTag();
-      final XmlTag[] tags = tag.getSubTags();
-      for (XmlTag subtag : tags) {
-        PsiElement child = null;
-        if ("target".equalsIgnoreCase(subtag.getName())) {
-          child = new AntTargetImpl(this, subtag);
-        }
-        if (child != null) {
-          if (children == null) {
-            children = new ArrayList<PsiElement>();
-          }
-          children.add(child);
-        }
-      }
-      if (children != null) {
-        myChildren = children.toArray(new PsiElement[children.size()]);
-      }
-    }
-    return super.getChildren();
-  }
-
   @Nullable
-  public String getElementName() {
+  public String getName() {
     parseTag();
     return myName;
   }
@@ -120,7 +96,7 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
         return null;
       }
       for (AntTarget target : getAllTargets()) {
-        if (defaultTarget.equals(target.getElementName())) {
+        if (defaultTarget.equals(target.getName())) {
           myDefaultTarget = target;
           break;
         }
@@ -133,18 +109,30 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
   public AntTarget getTarget(final String name) {
     AntTarget[] targets = getAllTargets();
     for (AntTarget target : targets) {
-      if (name.compareToIgnoreCase(target.getElementName()) == 0) {
+      if (name.compareToIgnoreCase(target.getName()) == 0) {
         return target;
       }
     }
     return null;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
+  protected AntElement parseSubTag(final XmlTag tag) {
+    if ("target".equalsIgnoreCase(tag.getName())) {
+      return new AntTargetImpl(this, tag);
+    }
+    else if ("property".equalsIgnoreCase(tag.getName())) {
+      return new AntPropertySetImpl(this, tag);
+    }
+    return null;
+  }
+
+  @SuppressWarnings("HardCodedStringLiteral")
   private void parseTag() {
     if (myName == null) {
       final XmlTag tag = getSourceTag();
       final String name = tag.getName();
-      if ("project".compareToIgnoreCase(name) == 0) {
+      if ("project".equalsIgnoreCase(name)) {
         myName = tag.getAttributeValue("name");
         myDefaultTargetName = tag.getAttributeValue("default");
         myBaseDir = tag.getAttributeValue("basedir");

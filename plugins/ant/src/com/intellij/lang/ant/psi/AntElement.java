@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface AntElement extends PsiElement {
   @Nullable
-  String getElementName();
+  String getName();
 
   @NotNull
   XmlTag getSourceTag();

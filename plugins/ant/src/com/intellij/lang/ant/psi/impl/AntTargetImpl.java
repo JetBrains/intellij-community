@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.psi.xml.XmlTag;
@@ -26,7 +27,7 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntTarget: ");
-      builder.append(getElementName());
+      builder.append(getName());
       if (myDescription != null) {
         builder.append(" [");
         builder.append(myDescription);
@@ -37,7 +38,7 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
         builder.append(" -> [");
         for (AntTarget target : targets) {
           builder.append(' ');
-          builder.append(target.getElementName());
+          builder.append(target.getName());
         }
         builder.append(" ]");
       }
@@ -49,7 +50,7 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
   }
 
   @Nullable
-  public String getElementName() {
+  public String getName() {
     parseTag();
     return myName;
   }
@@ -86,12 +87,16 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
     return myDependsTargets;
   }
 
+  protected AntElement parseSubTag(final XmlTag tag) {
+    return null;
+  }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   private void parseTag() {
     if (myName == null) {
       final XmlTag tag = getSourceTag();
       final String name = tag.getName();
-      if ("target".compareToIgnoreCase(name) == 0) {
+      if ("target".equalsIgnoreCase(name)) {
         myName = tag.getAttributeValue("name");
         myDepends = tag.getAttributeValue("depends");
         myDescription = tag.getAttributeValue("description");
