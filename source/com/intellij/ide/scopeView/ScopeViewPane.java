@@ -20,9 +20,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,7 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
   private final ProjectView myProjectView;
   private ScopeTreeViewPanel myViewPanel;
   private final DependencyValidationManager myDependencyValidationManager;
+  private final NamedScopeManager myNamedScopeManager;
   private NamedScopesHolder.ScopeListener myScopeListener;
   public static final Icon ICON = IconLoader.getIcon("/general/ideOptions.png");
 
@@ -49,10 +52,11 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
     return project.getComponent(ScopeViewPane.class);
   }
 
-  protected ScopeViewPane(final Project project, ProjectView projectView, DependencyValidationManager dependencyValidationManager) {
+  protected ScopeViewPane(final Project project, ProjectView projectView, DependencyValidationManager dependencyValidationManager, NamedScopeManager namedScopeManager) {
     super(project);
     myProjectView = projectView;
     myDependencyValidationManager = dependencyValidationManager;
+    myNamedScopeManager = namedScopeManager;
     myScopeListener = new NamedScopesHolder.ScopeListener() {
       Alarm refreshProjectViewAlarm = new Alarm();
       public void scopesChanged() {
@@ -67,6 +71,7 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
       }
     };
     myDependencyValidationManager.addScopeListener(myScopeListener);
+    myNamedScopeManager.addScopeListener(myScopeListener);
   }
 
   public String getTitle() {
@@ -102,7 +107,8 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
 
   @NotNull
   public String[] getSubIds() {
-    final NamedScope[] scopes = myDependencyValidationManager.getScopes();
+    NamedScope[] scopes = myDependencyValidationManager.getScopes();
+    scopes = ArrayUtil.mergeArrays(scopes, myNamedScopeManager.getScopes(), NamedScope.class);
     String[] ids = new String[scopes.length];
     for (int i = 0; i < scopes.length; i++) {
       final NamedScope scope = scopes[i];
@@ -121,7 +127,11 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
   }
 
   public void updateFromRoot(boolean restoreExpandedPaths) {
-    NamedScope scope = myDependencyValidationManager.getScope(getSubId());
+    final String subId = getSubId();
+    NamedScope scope = myDependencyValidationManager.getScope(subId);
+    if (scope == null){
+      scope = myNamedScopeManager.getScope(subId);
+    }
     myViewPanel.selectScope(scope);
   }
 
@@ -131,6 +141,7 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
 
     List<NamedScope> allScopes = new ArrayList<NamedScope>();
     allScopes.addAll(Arrays.asList(myDependencyValidationManager.getScopes()));
+    allScopes.addAll(Arrays.asList(myNamedScopeManager.getScopes()));
     for (int i = 0; i < allScopes.size(); i++) {
       final NamedScope scope = allScopes.get(i);
       String name = scope.getName();
@@ -143,26 +154,32 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
     for (NamedScope scope : allScopes) {
       String name = scope.getName();
       PackageSet packageSet = scope.getValue();
-      if (packageSet.contains(psiFile, myDependencyValidationManager)) {
-        if (!name.equals(getSubId())) {
-          myProjectView.changeView(getId(), name);
-        }
-        PackageDependenciesNode node = myViewPanel.findNode(psiFile);
-        if (node != null) {
-          TreePath path = new TreePath(node.getPath());
-          // hack: as soon as file path gets expanded, file node replaced with class node on the fly
-          if (node instanceof FileNode && psiFile instanceof PsiJavaFile) {
-            PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-            if (classes.length != 0) {
-              ClassNode classNode = new ClassNode(classes[0]);
-              path = path.getParentPath().pathByAddingChild(classNode);
-            }
-          }
-          TreeUtil.selectPath(myTree, path);
-        }
-        break;
-      }
+      if (changeView(packageSet, psiFile, name, myNamedScopeManager)) break;
+      if (changeView(packageSet, psiFile, name, myDependencyValidationManager)) break;
     }
+  }
+
+  private boolean changeView(final PackageSet packageSet, final PsiFile psiFile, final String name, final NamedScopesHolder holder) {
+    if (packageSet.contains(psiFile, holder)) {
+      if (!name.equals(getSubId())) {
+        myProjectView.changeView(getId(), name);
+      }
+      PackageDependenciesNode node = myViewPanel.findNode(psiFile);
+      if (node != null) {
+        TreePath path = new TreePath(node.getPath());
+        // hack: as soon as file path gets expanded, file node replaced with class node on the fly
+        if (node instanceof FileNode && psiFile instanceof PsiJavaFile) {
+          PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
+          if (classes.length != 0) {
+            ClassNode classNode = new ClassNode(classes[0]);
+            path = path.getParentPath().pathByAddingChild(classNode);
+          }
+        }
+        TreeUtil.selectPath(myTree, path);
+      }
+      return true;
+    }
+    return false;
   }
 
   public int getWeight() {
@@ -192,6 +209,7 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
 
   public void disposeComponent() {
     myDependencyValidationManager.removeScopeListener(myScopeListener);
+    myNamedScopeManager.removeScopeListener(myScopeListener);
   }
 
   protected Object exhumeElementFromNode(final DefaultMutableTreeNode node) {

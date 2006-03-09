@@ -8,9 +8,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.util.ArrayUtil;
 
 /**
  * @author cdr
@@ -27,6 +29,7 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   public boolean canSelect(PsiFile file) {
     NamedScopesHolder scopesHolder = DependencyValidationManager.getInstance(myProject);
     NamedScope[] allScopes = scopesHolder.getScopes();
+    allScopes = ArrayUtil.mergeArrays(allScopes, NamedScopeManager.getInstance(myProject).getScopes(), NamedScope.class);
     for (NamedScope scope : allScopes) {
       PackageSet packageSet = scope.getValue();
       if (packageSet.contains(file, scopesHolder)) return true;
@@ -47,8 +50,12 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   public boolean isSubIdSelectable(String subId, VirtualFile file) {
-    NamedScopesHolder scopesHolder = DependencyValidationManager.getInstance(myProject);
+    NamedScopesHolder scopesHolder = NamedScopeManager.getInstance(myProject);
     NamedScope scope = scopesHolder.getScope(subId);
+    if (scope == null){
+      scope = DependencyValidationManager.getInstance(myProject).getScope(subId);
+    }
+    if (scope == null) return false;
     PackageSet packageSet = scope.getValue();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile == null) return false;
