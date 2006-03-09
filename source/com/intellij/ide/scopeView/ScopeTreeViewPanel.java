@@ -173,7 +173,9 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     settings.UI_GROUP_BY_SCOPE_TYPE = false;
     settings.UI_SHOW_FILES = true;
     settings.UI_GROUP_BY_FILES = true;
-    settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = ProjectView.getInstance(myProject).isHideEmptyMiddlePackages(ScopeViewPane.ID);
+    final ProjectView projectView = ProjectView.getInstance(myProject);
+    settings.UI_FLATTEN_PACKAGES = projectView.isFlattenPackages(ScopeViewPane.ID);
+    settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = projectView.isHideEmptyMiddlePackages(ScopeViewPane.ID);
     myBuilder = new TreeModelBuilder(myProject, false, new TreeModelBuilder.Marker() {
       public boolean isMarked(PsiFile file) {
         return packageSet.contains(file, holder);

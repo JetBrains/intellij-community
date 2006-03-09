@@ -72,7 +72,7 @@ public class ScopeEditorPanel {
 
     myTreeMarker = new TreeModelBuilder.Marker() {
       public boolean isMarked(PsiFile file) {
-        return myCurrentScope == null ? false : myCurrentScope.contains(file, holder);
+        return myCurrentScope != null && myCurrentScope.contains(file, holder);
       }
     };
 
@@ -459,11 +459,6 @@ public class ScopeEditorPanel {
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES = flag;
       rebuild(true);
-    }
-
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(!DependencyUISettings.getInstance().UI_GROUP_BY_FILES);
     }
   }
 

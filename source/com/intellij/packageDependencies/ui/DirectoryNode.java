@@ -1,6 +1,7 @@
 
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Set;
 
 public class DirectoryNode extends PackageDependenciesNode {
@@ -21,11 +23,20 @@ public class DirectoryNode extends PackageDependenciesNode {
   private DirectoryNode myWrapper;
 
   private boolean myCompactPackages = true;
+  private String myFQName = null;
 
-  public DirectoryNode(PsiDirectory aDirectory, boolean compactPackages) {
+  public DirectoryNode(PsiDirectory aDirectory, boolean compactPackages, boolean showFQName) {
     myDirectory = aDirectory;
     myDirName = aDirectory.getName();
     myCompactPackages = compactPackages;
+    if (showFQName) {
+      final ProjectFileIndex index = ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex();
+      final VirtualFile directory = myDirectory.getVirtualFile();
+      final VirtualFile contentRoot = index.getContentRootForFile(directory);
+      if (contentRoot != null) {
+        myFQName = VfsUtil.getRelativePath(directory, contentRoot.getParent(), File.separatorChar);
+      }
+    }
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
@@ -40,6 +51,7 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public String toString() {
+    if (myFQName != null) return myFQName;
     if (myCompactPackages && myCompactedDirNode != null){
       return myDirName + "/" + myCompactedDirNode.toString();
     }
@@ -74,14 +86,14 @@ public class DirectoryNode extends PackageDependenciesNode {
 
     final DirectoryNode packageNode = (DirectoryNode)o;
 
-    if (!myDirName.equals(packageNode.myDirName)) return false;
+    if (!toString().equals(packageNode.toString())) return false;
 
     return true;
   }
 
   public int hashCode() {
     int result;
-    result = myDirName.hashCode();
+    result = toString().hashCode();
     return result;
   }
 

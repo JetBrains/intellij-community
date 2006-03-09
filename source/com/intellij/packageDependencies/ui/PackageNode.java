@@ -23,7 +23,7 @@ public class PackageNode extends PackageDependenciesNode {
       myPackageName = CyclicDependenciesPanel.DEFAULT_PACKAGE_ABBREVIATION;
     }
     myPackageQName = aPackage.getQualifiedName();
-    if (myPackageQName != null && myPackageQName.length() == 0) {
+    if (myPackageQName.length() == 0) {
       myPackageQName = null;
     }
   }

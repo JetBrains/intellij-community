@@ -547,19 +547,23 @@ public class TreeModelBuilder {
       return directoryNode;
     }
 
-    directoryNode = new DirectoryNode(psiDirectory, myCompactEmptyMiddlePackages);
+    directoryNode = new DirectoryNode(psiDirectory, myCompactEmptyMiddlePackages, myFlattenPackages);
     ((DirectoryNode)directoryNode).setCompactedDirNode(childNode); //compact
     getMap(myModuleDirNodes, scopeType).put(psiDirectory, (DirectoryNode)directoryNode);
 
-    final PsiDirectory directory = psiDirectory.getParentDirectory();
-    LOG.assertTrue(directory != null);
-    final PsiDirectory parentDirectory = directory.getParentDirectory();
-    if (parentDirectory != null && ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(parentDirectory.getVirtualFile()) == module) {
-      DirectoryNode parentDirectoryNode = getMap(myModuleDirNodes, scopeType).get(directory);
-      if (parentDirectoryNode != null || !myCompactEmptyMiddlePackages){
-        getModuleDirNode(directory, module, scopeType, (DirectoryNode)directoryNode).add(directoryNode);
+    if (!myFlattenPackages) {
+      final PsiDirectory directory = psiDirectory.getParentDirectory();
+      LOG.assertTrue(directory != null);
+      final PsiDirectory parentDirectory = directory.getParentDirectory();
+      if (parentDirectory != null && ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(parentDirectory.getVirtualFile()) == module) {
+        DirectoryNode parentDirectoryNode = getMap(myModuleDirNodes, scopeType).get(directory);
+        if (parentDirectoryNode != null || !myCompactEmptyMiddlePackages){
+          getModuleDirNode(directory, module, scopeType, (DirectoryNode)directoryNode).add(directoryNode);
+        } else {
+          directoryNode = getModuleDirNode(directory, module, scopeType, (DirectoryNode)directoryNode);
+        }
       } else {
-        directoryNode = getModuleDirNode(directory, module, scopeType, (DirectoryNode)directoryNode);
+        getModuleNode(module, scopeType).add(directoryNode);
       }
     } else {
       getModuleNode(module, scopeType).add(directoryNode);
