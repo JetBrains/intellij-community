@@ -1,19 +1,22 @@
 package com.intellij.ide.scopeView;
 
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.PsiClassChildrenSource;
+import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.DependencyNodeComparator;
 import com.intellij.packageDependencies.ui.DirectoryNode;
 import com.intellij.packageDependencies.ui.FileNode;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -23,12 +26,15 @@ import java.util.Set;
 public class ScopeTreeViewExpander implements TreeWillExpandListener {
 
   private JTree myTree;
+  private Project myProject;
 
-  public ScopeTreeViewExpander(final JTree tree) {
+  public ScopeTreeViewExpander(final JTree tree, final Project project) {
     myTree = tree;
+    myProject = project;
   }
 
   public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+    ProjectView projectView = ProjectView.getInstance(myProject);
     final TreePath path = myTree.getPathForRow(myTree.getRowForPath(event.getPath()));
     if (path == null) return;
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -44,9 +50,33 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
             if (classNodes == null) {
               classNodes = new HashSet<ClassNode>();
             }
-            for (PsiClass psiClass : psiClasses) {
+            for (final PsiClass psiClass : psiClasses) {
               if (psiClass != null && psiClass.isValid()) {
-                classNodes.add(new ClassNode(psiClass));
+                final ClassNode classNode = new ClassNode(psiClass);
+                classNodes.add(classNode);
+                if (projectView.isShowMembers(ScopeViewPane.ID)){
+                  final List<PsiElement> result = new ArrayList<PsiElement>();
+                  PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(psiClass, result);
+                  for (PsiElement psiElement : result) {
+                    psiElement.accept(new PsiElementVisitor() {
+                      public void visitClass(PsiClass aClass) {
+                        classNode.add(new ClassNode(aClass));
+                      }
+
+                      public void visitMethod(PsiMethod method) {
+                        classNode.add(new MethodNode(method));
+                      }
+
+                      public void visitField(PsiField field) {
+                        classNode.add(new FieldNode(field));
+                      }
+
+                      public void visitReferenceExpression(PsiReferenceExpression expression) {
+                      }
+
+                    });
+                  }
+                }
               }
             }
             node.remove(fileNode);

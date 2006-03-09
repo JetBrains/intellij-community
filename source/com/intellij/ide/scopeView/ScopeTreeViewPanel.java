@@ -17,6 +17,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
@@ -141,7 +143,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
       }
     };
     myTreeExpansionMonitor = TreeExpansionMonitor.install(myTree, myProject);
-    myTree.addTreeWillExpandListener(new ScopeTreeViewExpander(myTree));
+    myTree.addTreeWillExpandListener(new ScopeTreeViewExpander(myTree, myProject));
   }
 
   private PsiElement[] getSelectedPsiElements() {
@@ -296,10 +298,17 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           setIcon(node.getClosedIcon());
         }
         final SimpleTextAttributes regularAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-        final TextAttributes textAttributes = regularAttributes.toTextAttributes();
-        textAttributes.setForegroundColor(node.getStatus().getColor());
+        TextAttributes textAttributes = null;
         final String text = node.toString();
         if (text != null) {
+          final PsiElement psiElement = node.getPsiElement();
+          if (psiElement instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)psiElement).isDeprecated()){
+            textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES).clone();
+          }
+          if (textAttributes == null){
+            textAttributes = regularAttributes.toTextAttributes();
+          }
+          textAttributes.setForegroundColor(node.getStatus().getColor());
           append(text, SimpleTextAttributes.fromTextAttributes(textAttributes));
         }
       }
@@ -312,6 +321,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
         public void run() {
           if (myProject.isDisposed()) return;
           final PsiElement element = event.getParent();
+          myTreeExpansionMonitor.freeze();
           if (element instanceof PsiDirectory || element instanceof PsiPackage) {
             final PsiElement child = event.getChild();
             if (child instanceof PsiFile) {
@@ -320,12 +330,15 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
               if (rootToReload != null) {
                 TreeUtil.sort(rootToReload, new DependencyNodeComparator());
                 treeModel.reload(rootToReload);
+                collapseExpand(rootToReload);
               } else {
                 TreeUtil.sort(treeModel, new DependencyNodeComparator());
                 treeModel.reload();
+                selectCurrentScope();
               }
             }
           }
+          myTreeExpansionMonitor.restore();
         }
       }, ModalityState.NON_MMODAL);
     }
@@ -336,12 +349,15 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           if (myProject.isDisposed()) return;
           final PsiElement child = event.getChild();
           final PsiElement parent = event.getParent();
+          myTreeExpansionMonitor.freeze();
           if (parent instanceof PsiDirectory && (child instanceof PsiFile || child instanceof PsiDirectory)) {
             final PackageDependenciesNode node = myBuilder.removeNode(child, (PsiDirectory)parent);
             if (node != null) {
               ((DefaultTreeModel)myTree.getModel()).reload(node);
             }
+            collapseExpand(node);
           }
+          myTreeExpansionMonitor.restore();
         }
       }, ModalityState.NON_MMODAL);
     }
@@ -353,12 +369,14 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           final PsiElement oldParent = event.getOldParent();
           final PsiElement newParent = event.getNewParent();
           PsiElement child = event.getChild();
+          myTreeExpansionMonitor.freeze();
           if (oldParent instanceof PsiDirectory && newParent instanceof PsiDirectory) {
             if (child instanceof PsiFile) {
-              myBuilder.removeNode(child, (PsiDirectory)oldParent);
-              myBuilder.addFileNode((PsiFile)child);
+              collapseExpand(myBuilder.removeNode(child, (PsiDirectory)oldParent));
+              collapseExpand(myBuilder.addFileNode((PsiFile)child));
             }
           }
+          myTreeExpansionMonitor.restore();
         }
       }, ModalityState.NON_MMODAL);
     }
@@ -369,18 +387,25 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           if (myProject.isDisposed()) return;
           final PsiElement parent = event.getParent();
           PsiJavaFile file = PsiTreeUtil.getParentOfType(parent, PsiJavaFile.class, false);
+          myTreeExpansionMonitor.freeze();
           if (file != null) {
-            final PackageDependenciesNode parentNode = myBuilder.getFileParentNode(file);
-            final TreePath treePath = new TreePath(parentNode.getPath());
-            if (!myTree.isCollapsed(treePath)) {
-              myTree.collapsePath(treePath);
-              myTree.expandPath(treePath);
-              TreeUtil.sort(parentNode, new DependencyNodeComparator());
-            }
+            collapseExpand(myBuilder.getFileParentNode(file));
           }
+          myTreeExpansionMonitor.restore();
         }
       }, ModalityState.NON_MMODAL);
     }
+
+    private void collapseExpand(PackageDependenciesNode node){
+      if (node == null) return;
+      TreePath path = new TreePath(node.getPath());
+      if (!myTree.isCollapsed(path)){
+        myTree.collapsePath(path);
+        myTree.expandPath(path);
+        TreeUtil.sort(node, new DependencyNodeComparator());
+      }
+    }
+
   }
 
   private class MyModuleRootListener implements ModuleRootListener {
