@@ -16,6 +16,6 @@
 package com.intellij.openapi.localVcs;
 
 public interface LvcsLabelListener {
-  public void labelAdded(LvcsLabel label);
-  public void labelDeleted(LvcsLabel label);
+  void labelAdded(LvcsLabel label);
+  void labelDeleted(LvcsLabel label);
 }
