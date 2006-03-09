@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
@@ -34,8 +35,10 @@ import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -149,8 +152,7 @@ public class XmlUtil {
     for (XmlAttribute attribute : tag.getAttributes()) {
       if (attribute.getName().startsWith("xmlns:") &&
           attribute.getValue().equals(uri)) {
-        String ns = attribute.getName().substring("xmlns:".length());
-        return ns;
+        return attribute.getName().substring("xmlns:".length());
       }
       if ("xmlns".equals(attribute.getName()) && attribute.getValue().equals(uri)) return "";
     }
@@ -282,7 +284,7 @@ public class XmlUtil {
 
           return true;
         } else if (element instanceof XmlConditionalSection) {
-          XmlConditionalSection xmlConditionalSection = ((XmlConditionalSection)element);
+          XmlConditionalSection xmlConditionalSection = (XmlConditionalSection)element;
           if (!xmlConditionalSection.isIncluded(targetFile)) return true;
           startFrom = xmlConditionalSection.getBodyStart();
         }
@@ -493,27 +495,10 @@ public class XmlUtil {
     return null;
   }
 
-  public static XmlTag findSubTagWithValueOnAnyLevel(XmlTag baseTag, String tagName, String tagValue) {
-    final String baseValue = baseTag.getValue().getTrimmedText();
-    if (baseValue != null && baseValue.equals(tagValue)) {
-      return baseTag;
-    }
-    else {
-      final XmlTag[] subTags = baseTag.getSubTags();
-      for (XmlTag subTag : subTags) {
-        // It will return the first entry of subtag in the tree
-        final XmlTag subTagFound = findSubTagWithValueOnAnyLevel(subTag, tagName, tagValue);
-        if (subTagFound != null) return subTagFound;
-
-      }
-    }
-    return null;
-  }
-
   // Read the function name and parameter names to find out what this function does... :-)
   public static XmlTag find(String subTag, String withValue, String forTag, XmlTag insideRoot) {
     final XmlTag[] forTags = insideRoot.findSubTags(forTag);
-    
+
     for (XmlTag tag : forTags) {
       final XmlTag[] allTags = tag.findSubTags(subTag);
 
@@ -561,7 +546,7 @@ public class XmlUtil {
   }
 
   public static String[][] getDefaultNamespaces(final XmlDocument document) {
-    final XmlFile file = XmlUtil.getContainingFile(document);
+    final XmlFile file = getContainingFile(document);
     if (file != null && file.getCopyableUserData(XmlFile.ANT_BUILD_FILE) != null) {
       return new String[][]{new String[]{"", ANT_URI}};
     }
@@ -592,7 +577,7 @@ public class XmlUtil {
       else if (fileType == StdFileTypes.JSPX || fileType == StdFileTypes.JSP){
         String baseLanguageNameSpace = EMPTY_URI;
         if (PsiUtil.isInJspFile(file)) {
-          final Language baseLanguage = (PsiUtil.getJspFile(file)).getViewProvider().getTemplateDataLanguage();
+          final Language baseLanguage = PsiUtil.getJspFile(file).getViewProvider().getTemplateDataLanguage();
           if (baseLanguage == StdLanguages.HTML || baseLanguage == StdLanguages.XHTML) {
             baseLanguageNameSpace = XHTML_URI;
           }
@@ -625,71 +610,67 @@ public class XmlUtil {
     }
     final String tagName = tag.getName();
 
-    {
-      List<MyAttributeInfo> list = attributesMap.get(tagName);
-      if (list == null) {
-        list = new ArrayList<MyAttributeInfo>();
-        final XmlAttribute[] attributes = tag.getAttributes();
-        for (final XmlAttribute attribute : attributes) {
-          list.add(new MyAttributeInfo(attribute.getName()));
-        }
+    List<MyAttributeInfo> list = attributesMap.get(tagName);
+    if (list == null) {
+      list = new ArrayList<MyAttributeInfo>();
+      final XmlAttribute[] attributes = tag.getAttributes();
+      for (final XmlAttribute attribute : attributes) {
+        list.add(new MyAttributeInfo(attribute.getName()));
       }
-      else {
-        final XmlAttribute[] attributes = tag.getAttributes();
-        Collections.sort(list);
-        Arrays.sort(attributes, new Comparator<XmlAttribute>() {
-          public int compare(XmlAttribute attr1, XmlAttribute attr2) {
-            return attr1.getName().compareTo(attr2.getName());
-          }
-        });
+    }
+    else {
+      final XmlAttribute[] attributes = tag.getAttributes();
+      Collections.sort(list);
+      Arrays.sort(attributes, new Comparator<XmlAttribute>() {
+        public int compare(XmlAttribute attr1, XmlAttribute attr2) {
+          return attr1.getName().compareTo(attr2.getName());
+        }
+      });
 
-        final Iterator<MyAttributeInfo> iter = list.iterator();
-        int index = 0;
-        list = new ArrayList<MyAttributeInfo>();
-        while (iter.hasNext()) {
-          final MyAttributeInfo info = iter.next();
-          boolean requiredFlag = false;
-          while (attributes.length > index) {
-            if (info.compareTo(attributes[index]) != 0) {
-              if (info.compareTo(attributes[index]) < 0) {
-                break;
-              }
-              if (attributes[index].getValue() != null) list.add(new MyAttributeInfo(attributes[index].getName(), false));
-              index++;
-            }
-            else {
-              requiredFlag = true;
-              index++;
+      final Iterator<MyAttributeInfo> iter = list.iterator();
+      list = new ArrayList<MyAttributeInfo>();
+      int index = 0;
+      while (iter.hasNext()) {
+        final MyAttributeInfo info = iter.next();
+        boolean requiredFlag = false;
+        while (attributes.length > index) {
+          if (info.compareTo(attributes[index]) != 0) {
+            if (info.compareTo(attributes[index]) < 0) {
               break;
             }
-          }
-          info.myRequired &= requiredFlag;
-          list.add(info);
-        }
-        while (attributes.length > index) {
-          if (attributes[index].getValue() != null) {
-            list.add(new MyAttributeInfo(attributes[index++].getName(), false));
-          }
-          else {
+            if (attributes[index].getValue() != null) list.add(new MyAttributeInfo(attributes[index].getName(), false));
             index++;
           }
+          else {
+            requiredFlag = true;
+            index++;
+            break;
+          }
+        }
+        info.myRequired &= requiredFlag;
+        list.add(info);
+      }
+      while (attributes.length > index) {
+        if (attributes[index].getValue() != null) {
+          list.add(new MyAttributeInfo(attributes[index++].getName(), false));
+        }
+        else {
+          index++;
         }
       }
-      attributesMap.put(tagName, list);
     }
-    {
-      final List<String> tags = tagsMap.get(tagName) != null ? tagsMap.get(tagName) : new ArrayList<String>();
-      tagsMap.put(tagName, tags);
-      tag.processElements(new FilterElementProcessor(new ClassFilter(XmlTag.class)) {
-        public void add(PsiElement element) {
-          XmlTag tag = (XmlTag)element;
-          if (!tags.contains(tag.getName())) {
-            tags.add(tag.getName());
-          }
-          computeTag(tag, tagsMap, attributesMap);
+    attributesMap.put(tagName, list);
+    final List<String> tags = tagsMap.get(tagName) != null ? tagsMap.get(tagName) : new ArrayList<String>();
+    tagsMap.put(tagName, tags);
+    tag.processElements(new FilterElementProcessor(new ClassFilter(XmlTag.class)) {
+      public void add(PsiElement element) {
+        XmlTag tag = (XmlTag)element;
+        if (!tags.contains(tag.getName())) {
+          tags.add(tag.getName());
         }
-      }, tag);
-    }
+        computeTag(tag, tagsMap, attributesMap);
+      }
+    }, tag);
   }
 
   public static XmlElementDescriptor findXmlDescriptorByType(final XmlTag xmlTag) {
@@ -701,7 +682,7 @@ public class XmlUtil {
       final XmlNSDescriptor typeDecr = xmlTag.getNSDescriptor(namespaceByPrefix, true);
 
       if(typeDecr instanceof XmlNSDescriptorImpl){
-        final XmlNSDescriptorImpl schemaDescriptor = ((XmlNSDescriptorImpl)typeDecr);
+        final XmlNSDescriptorImpl schemaDescriptor = (XmlNSDescriptorImpl)typeDecr;
         elementDescriptor = schemaDescriptor.getDescriptorByType(type, xmlTag);
       }
     }
@@ -749,7 +730,7 @@ public class XmlUtil {
           retTag.acceptChildren(new PsiRecursiveElementVisitor() {
             public void visitXmlTag(XmlTag tag) {
               final String namespacePrefix = tag.getNamespacePrefix();
-              if (namespacePrefix.length() == 0 || xmlTag.getNamespaceByPrefix(namespacePrefix) == null) {
+              if (namespacePrefix.length() == 0) {
                 String qname;
                 if (prefix != null && prefix.length() > 0) {
                   qname = prefix + ":" + tag.getLocalName();
@@ -856,7 +837,7 @@ public class XmlUtil {
 
       final PsiNamedElement[] result = new PsiNamedElement[1];
 
-      XmlUtil.processXmlElements((XmlFile)userData,new PsiElementProcessor() {
+      processXmlElements((XmlFile)userData,new PsiElementProcessor() {
         public boolean execute(final PsiElement element) {
           if (element instanceof PsiNamedElement &&
               name.equals(((PsiNamedElement)element).getName()) &&
@@ -926,35 +907,31 @@ public class XmlUtil {
     if (name.endsWith(CompletionUtil.DUMMY_IDENTIFIER.trim())) return "";
 
     final StringBuffer buffer = new StringBuffer();
-    {
-      buffer.append("<!ELEMENT ").append(name).append(" ");
-      if (tags.isEmpty()) {
-        buffer.append("(#PCDATA)>\n");
-      }
-      else {
-        buffer.append("(");
-        final Iterator<String> iter = tags.iterator();
-        while (iter.hasNext()) {
-          final String tagName = iter.next();
-          buffer.append(tagName);
-          if (iter.hasNext()) {
-            buffer.append("|");
-          }
-          else {
-            buffer.append(")*");
-          }
-        }
-        buffer.append(">\n");
-      }
+    buffer.append("<!ELEMENT ").append(name).append(" ");
+    if (tags.isEmpty()) {
+      buffer.append("(#PCDATA)>\n");
     }
-    {
-      if (!attributes.isEmpty()) {
-        buffer.append("<!ATTLIST ").append(name);
-        for (final MyAttributeInfo info : attributes) {
-          buffer.append("\n    ").append(generateAttributeDTD(info));
+    else {
+      buffer.append("(");
+      final Iterator<String> iter = tags.iterator();
+      while (iter.hasNext()) {
+        final String tagName = iter.next();
+        buffer.append(tagName);
+        if (iter.hasNext()) {
+          buffer.append("|");
         }
-        buffer.append(">\n");
+        else {
+          buffer.append(")*");
+        }
       }
+      buffer.append(">\n");
+    }
+    if (!attributes.isEmpty()) {
+      buffer.append("<!ATTLIST ").append(name);
+      for (final MyAttributeInfo info : attributes) {
+        buffer.append("\n    ").append(generateAttributeDTD(info));
+      }
+      buffer.append(">\n");
     }
     return buffer.toString();
   }
@@ -1126,7 +1103,7 @@ public class XmlUtil {
     if(text.startsWith("&#")) {
       text.substring(3, text.length() - 1);
       try{
-        return "" + ((char)Integer.parseInt(text));
+        return String.valueOf((char)Integer.parseInt(text));
       }
       catch(NumberFormatException e){}
     }
@@ -1160,5 +1137,39 @@ public class XmlUtil {
       result.append(text.charAt(i));
     }
     return result.toString();
+  }
+
+  private static final byte[] ENCODING_XML_PROLOG = "<?xml version=\"1.0\" encoding=\"".getBytes();
+  @Nullable public static String extractXmlEncodingFromProlog(VirtualFile file) {
+    byte[] bytes;
+    try {
+      bytes = file.contentsToByteArray();
+    }
+    catch (IOException e) {
+      return null;
+    }
+    int start = 0;
+    if (CharsetToolkit.hasUTF8Bom(bytes)) {
+      start = CharsetToolkit.UTF8_BOM.length;
+    }
+
+    if (start >= bytes.length) return null;
+    int i;
+    for (i = 0; i < ENCODING_XML_PROLOG.length; i++) {
+      if (bytes[start+i] != ENCODING_XML_PROLOG[i]) {
+        return null;
+      }
+    }
+    StringBuffer encoding = new StringBuffer();
+    while (true) {
+      if (start+i>=bytes.length) return null;
+      byte b = bytes[start+i];
+      if (b == '\"') {
+        break;
+      }
+      encoding.append((char)b);
+      i++;
+    }
+    return encoding.toString();
   }
 }

@@ -35,6 +35,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,5 +68,9 @@ public class XmlFileType extends LanguageFileType {
 
   public Icon getIcon() {
     return ICON;
+  }
+
+  public String getCharset(VirtualFile file) {
+    return XmlUtil.extractXmlEncodingFromProlog(file);
   }
 }
