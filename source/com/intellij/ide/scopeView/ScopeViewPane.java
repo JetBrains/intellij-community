@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +38,7 @@ import java.util.List;
  * @author cdr
  */
 public class ScopeViewPane extends AbstractProjectViewPane implements ProjectComponent {
-  @NonNls static final String ID = "Scope";
+  @NonNls public static final String ID = "Scope";
   private final ProjectView myProjectView;
   private ScopeTreeViewPanel myViewPanel;
   private final DependencyValidationManager myDependencyValidationManager;

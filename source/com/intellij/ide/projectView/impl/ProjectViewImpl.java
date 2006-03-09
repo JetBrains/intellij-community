@@ -2,13 +2,14 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
-import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
+import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.*;
+import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsData;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
@@ -17,8 +18,8 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -505,6 +506,14 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
                                                           ourAbbreviatePackagesDefaults) {
       public boolean isSelected(AnActionEvent event) {
         return super.isSelected(event) && isAbbreviatePackageNames(myCurrentViewId);
+      }
+
+
+      public void update(AnActionEvent e) {
+        super.update(e);
+        if (myCurrentViewId == ScopeViewPane.ID) {
+          e.getPresentation().setEnabled(false);
+        }
       }
     });
     myActionGroup.add(new PaneOptionAction(myShowMembers,
