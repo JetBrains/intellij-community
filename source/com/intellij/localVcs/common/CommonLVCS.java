@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.ex.FileContentProvider;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.testFramework.MockVirtualFile;
-import com.intellij.util.io.ByteBufferUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -155,6 +154,10 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   public synchronized LvcsFile findFile(final String filePath, final boolean ignoreDeleted) {
     return myImplementation.findFile(filePath, ignoreDeleted);
+  }
+
+  public synchronized LvcsFile findFileByDate(final String filePath, long date) {
+    return myImplementation.findFileByDate(filePath, date);
   }
 
   public synchronized LvcsFileRevision findFileRevision(final String filePath, final LvcsLabel label) {
