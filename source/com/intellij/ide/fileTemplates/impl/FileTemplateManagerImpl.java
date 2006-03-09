@@ -542,7 +542,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     LOG.assertTrue(templatesManager != null);
     String name = templateName;
     String extension = myTypeManager.getExtension(name);
-    name = name.substring(0, name.length() - extension.length() - 1);
+    if (extension.length() > 0) {
+      name = name.substring(0, name.length() - extension.length() - 1);
+    }
     FileTemplate template = templatesManager.getTemplate(name);
     if (template != null) {
       if (extension.equals(template.getExtension())) {
@@ -550,6 +552,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       }
     }
     else {
+      if (ApplicationManager.getApplication().isUnitTestMode() && templateName.endsWith("ForTest")) return null;
+
       VirtualFile[] defaultTemplates = templatesManager.getDefaultTemplates();
       @NonNls String message = "Unable to find " + templateType + " Template '" + templateName + "'! Default " + templateType +
                                " Templates are: ";
