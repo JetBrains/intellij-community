@@ -22,14 +22,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Represents some data that probably can be compared with some other.
  * @see com.intellij.openapi.diff.DiffRequest
  */
 public abstract class DiffContent {
-  private final ArrayList<Listener> myListeners = new ArrayList<Listener>();
+  private final List<Listener> myListeners = new CopyOnWriteArrayList<Listener>();
 
   public void addListener(Listener listener) { myListeners.add(listener); }
   public void removeListener(Listener listener) { myListeners.remove(listener); }
@@ -38,9 +39,7 @@ public abstract class DiffContent {
    * This content becomes invalid for some reason. Diff tool should stop show it.
    */
   protected void fireContentInvalid() {
-    Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      Listener listener = listeners[i];
+    for (Listener listener : myListeners) {
       listener.contentInvalid();
     }
   }
@@ -48,6 +47,7 @@ public abstract class DiffContent {
   /**
    * Means this content represents binary data. It should be used only for byte by byte comparison.
    * E.g. directories aren't binary (in spite of they aren't text)
+   * @return true if this content represents binary data
    */
   public boolean isBinary() { return false; }
 
@@ -63,6 +63,7 @@ public abstract class DiffContent {
   /**
    * Represents this content as Document
    * null means content has no text representation
+   * @return document associated with this content
    */
   public abstract Document getDocument();
 
@@ -70,6 +71,7 @@ public abstract class DiffContent {
    * Provides a way to open given text place in editor
    * null means given offset can't be opened in editor
    * @param offset in document returned by {@link #getDocument()}
+   * @return {@link OpenFileDescriptor} to open this content in editor
    */
   public abstract OpenFileDescriptor getOpenFileDescriptor(int offset);
 
@@ -98,20 +100,20 @@ public abstract class DiffContent {
   /**
    * Creates DiffContent associated with given file.
    * @param project
-   * @return {@link FileContent} iff file not null, or null;
    * @param file
+   * @return content associated with file
    */
-  public static DiffContent fromFile(Project project, VirtualFile file) {
+  public static FileContent fromFile(Project project, VirtualFile file) {
     return file != null ? new FileContent(project, file) : null;
   }
 
   /**
    * Creates DiffContent associated with given document
    * @param project
-   * @return
    * @param document
+   * @return content associated with document
    */
-  public static DiffContent fromDocument(Project project, Document document) {
+  public static DocumentContent fromDocument(Project project, Document document) {
     return new DocumentContent(project, document);
   }
 
