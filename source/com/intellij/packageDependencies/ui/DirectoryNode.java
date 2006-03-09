@@ -37,6 +37,7 @@ public class DirectoryNode extends PackageDependenciesNode {
         myFQName = VfsUtil.getRelativePath(directory, contentRoot.getParent(), File.separatorChar);
       }
     }
+    setUserObject(toString());
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
