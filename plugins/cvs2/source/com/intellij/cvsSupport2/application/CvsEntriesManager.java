@@ -40,7 +40,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   private Collection<CvsEntriesListener> myEntriesListeners = new ArrayList<CvsEntriesListener>();
   private int myIsActive = 0;
-  private Collection<String> myFilesToRefresh = new HashSet<String>();
+  private final Collection<String> myFilesToRefresh = new HashSet<String>();
   private int mySynchronizationActionLocks = 0;
 
   private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new HashMap<String, CvsConnectionSettings>();
@@ -286,11 +286,15 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     }
   }
 
-  public void watchForCvsAdminFiles(VirtualFile parent) {
+  public void watchForCvsAdminFiles(final VirtualFile parent) {
     if (parent == null) return;
-    synchronized (myFilesToRefresh) {
-      myFilesToRefresh.add(CvsVfsUtil.getPathFor(parent) + "/" + CVS_ADMIN_DIRECTORY_NAME);
-    }
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        synchronized (myFilesToRefresh) {
+          myFilesToRefresh.add(CvsVfsUtil.getPathFor(parent) + "/" + CVS_ADMIN_DIRECTORY_NAME);
+        }
+      }
+    });
   }
 
 
