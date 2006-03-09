@@ -14,6 +14,7 @@ import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
@@ -65,7 +66,9 @@ public class LibraryDownloader {
           for (LibraryInfo info : myLibraryInfos) {
             indicator.checkCanceled();
             final File file = download(info);
-            downloadedFiles.add(Pair.create(info, file));
+            if (file != null) {
+              downloadedFiles.add(Pair.create(info, file));
+            }
           }
         }
         catch (ProcessCanceledException e) {
@@ -126,7 +129,8 @@ public class LibraryDownloader {
       FileUtil.rename(pair.getSecond(), toFile);
       files.add(new WriteAction<VirtualFile>() {
         protected void run(final Result<VirtualFile> result) {
-          result.setResult(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(toFile));
+          final String url = VfsUtil.getUrlForLibraryRoot(toFile);
+          result.setResult(VirtualFileManager.getInstance().refreshAndFindFileByUrl(url));
         }
       }.execute().getResultObject());
     }
@@ -153,11 +157,14 @@ public class LibraryDownloader {
     pairs.clear();
   }
 
-  private static File download(final LibraryInfo libraryInfo) throws IOException {
+  private static @Nullable File download(final LibraryInfo libraryInfo) throws IOException {
+    final String url = libraryInfo.getDownloadingUrl();
+    if (url == null) return null;
+
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setText(J2EEBundle.message("progress.download.jar.text", libraryInfo.getExpectedJarName()));
     final File tempFile = FileUtil.createTempFile("downloaded", "jar");
-    HttpURLConnection connection = (HttpURLConnection)new URL(libraryInfo.getDownloadingUrl()).openConnection();
+    HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
 
     InputStream input = null;
     BufferedOutputStream output = null;

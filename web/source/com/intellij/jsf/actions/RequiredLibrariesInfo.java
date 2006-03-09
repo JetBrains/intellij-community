@@ -20,7 +20,7 @@ public class RequiredLibrariesInfo {
   private List<LibraryInfo> myLibraryInfos = new ArrayList<LibraryInfo>();
 
   public void addLibraryInfo(@NonNls String expectedJarName, @Nullable @NonNls String downloadingUrl, @NonNls String... requiredClasses) {
-    myLibraryInfos.add(new LibraryInfo(expectedJarName, requiredClasses, downloadingUrl));
+    myLibraryInfos.add(new LibraryInfo(expectedJarName, downloadingUrl, requiredClasses));
   }
 
   public @Nullable RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles) {
