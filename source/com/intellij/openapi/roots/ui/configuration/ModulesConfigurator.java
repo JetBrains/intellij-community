@@ -4,8 +4,8 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ToolbarPanel;
-import com.intellij.javaee.module.J2EEModuleUtilEx;
 import com.intellij.javaee.J2EEModuleUtil;
+import com.intellij.javaee.module.J2EEModuleUtilEx;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
@@ -392,7 +393,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         myModuleContentsPanel.add(moduleEditor.getPanel(), id);
         myShownModuleEditors.add(id);
       }
-      myModuleEditorsList.setSelectedIndex(myModuleEditors.indexOf(moduleEditor));
+      ListScrollingUtil.selectItem(myModuleEditorsList, myModuleEditors.indexOf(moduleEditor));
       moduleEditor.setSelectedTabName(tabNameToSelect);
     }
     else {
