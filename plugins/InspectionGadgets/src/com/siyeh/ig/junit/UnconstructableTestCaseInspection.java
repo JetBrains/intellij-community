@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,69 +21,73 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnconstructableTestCaseInspection extends ClassInspection {
 
-  public String getID() {
-    return "UnconstructableJUnitTestCase";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.JUNIT_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnconstructableTestCaseVisitor();
-  }
-
-  private static class UnconstructableTestCaseVisitor
-    extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType() ||
-          aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (aClass instanceof PsiTypeParameter ||
-          aClass instanceof PsiAnonymousClass) {
-        return;
-      }
-      if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
-        return;
-      }
-
-      final PsiMethod[] constructors = aClass.getConstructors();
-      boolean hasStringConstructor = false;
-      boolean hasNoArgConstructor = false;
-      boolean hasConstructor = false;
-      for (final PsiMethod constructor : constructors) {
-        hasConstructor = true;
-        if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
-          continue;
-        }
-        final PsiParameterList parameterList =
-          constructor.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length == 0) {
-          hasNoArgConstructor = true;
-        }
-        if (parameters.length == 1) {
-          final PsiType type = parameters[0].getType();
-          if (TypeUtils.typeEquals("java.lang.String", type)) {
-            hasStringConstructor = true;
-          }
-        }
-      }
-
-      if (!hasConstructor) {
-        return;
-      }
-      if (hasNoArgConstructor || hasStringConstructor) {
-        return;
-      }
-      registerClassError(aClass);
+    public String getID() {
+        return "UnconstructableJUnitTestCase";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.JUNIT_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "unconstructable.test.case.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnconstructableTestCaseVisitor();
+    }
+
+    private static class UnconstructableTestCaseVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            if (aClass.isInterface() || aClass.isEnum() ||
+                    aClass.isAnnotationType() ||
+                    aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            if (aClass instanceof PsiTypeParameter) {
+                return;
+            }
+            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+                return;
+            }
+            final PsiMethod[] constructors = aClass.getConstructors();
+            boolean hasStringConstructor = false;
+            boolean hasNoArgConstructor = false;
+            boolean hasConstructor = false;
+            for (final PsiMethod constructor : constructors) {
+                hasConstructor = true;
+                if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+                    continue;
+                }
+                final PsiParameterList parameterList =
+                        constructor.getParameterList();
+                final PsiParameter[] parameters = parameterList.getParameters();
+                if (parameters.length == 0) {
+                    hasNoArgConstructor = true;
+                }
+                if (parameters.length == 1) {
+                    final PsiType type = parameters[0].getType();
+                    if (TypeUtils.typeEquals("java.lang.String", type)) {
+                        hasStringConstructor = true;
+                    }
+                }
+            }
+            if (!hasConstructor) {
+                return;
+            }
+            if (hasNoArgConstructor || hasStringConstructor) {
+                return;
+            }
+            registerClassError(aClass);
+        }
+    }
 }

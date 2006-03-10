@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,12 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class MultipleDeclarationInspection extends VariableInspection {
 
@@ -40,8 +39,8 @@ public class MultipleDeclarationInspection extends VariableInspection {
         return GroupNames.STYLE_GROUP_NAME;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "multiple.declaration.problem.descriptor");
     }

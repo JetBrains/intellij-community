@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 
@@ -50,25 +51,27 @@ public abstract class BaseInspection extends LocalInspectionTool {
     protected BaseInspectionVisitor createVisitor(
             InspectionManager inspectionManager, boolean onTheFly) {
         final BaseInspectionVisitor visitor = buildVisitor();
-        visitor.setInspectionManager(inspectionManager);
         visitor.setOnTheFly(onTheFly);
         visitor.setInspection(this);
         return visitor;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
-        @NonNls final String problemDescriptor = ".problem.descriptor";
-        return InspectionGadgetsBundle.message(getPrefix(getShortName()) +
-                                               problemDescriptor);
-    }
+    //@Nullable
+    //protected final String buildErrorString(PsiElement location) {
+    //    @NonNls final String problemDescriptor = ".problem.descriptor";
+    //    return InspectionGadgetsBundle.message(getPrefix(getShortName()) +
+    //                                           problemDescriptor);
+    //}
+    //
+    //@Nullable
+    //protected final  String buildErrorString(Object... infos) {
+    //    @NonNls final String problemDescriptor = ".problem.descriptor";
+    //    return InspectionGadgetsBundle.message(getPrefix(getShortName()) +
+    //                                           problemDescriptor);
+    //}
 
-    @Nullable
-    protected String buildErrorString(Object arg) {
-        @NonNls final String problemDescriptor = ".problem.descriptor";
-        return InspectionGadgetsBundle.message(getPrefix(getShortName()) +
-                                               problemDescriptor);
-    }
+    @NotNull
+    protected abstract String buildErrorString(Object... infos);
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return false;
@@ -264,7 +267,8 @@ public abstract class BaseInspection extends LocalInspectionTool {
 
     public abstract BaseInspectionVisitor buildVisitor();
 
-    public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    public PsiElementVisitor buildVisitor(ProblemsHolder holder,
+                                          boolean isOnTheFly) {
         final BaseInspectionVisitor visitor = buildVisitor();
         visitor.setProblemsHolder(holder);
         visitor.setOnTheFly(isOnTheFly);

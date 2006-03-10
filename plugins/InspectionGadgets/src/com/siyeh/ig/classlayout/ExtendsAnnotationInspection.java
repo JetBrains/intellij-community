@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,9 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtendsAnnotationInspection extends ClassInspection {
@@ -38,10 +37,11 @@ public class ExtendsAnnotationInspection extends ClassInspection {
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiClass containingClass = ClassUtils.getContainingClass(location);
-        assert containingClass != null;
-        return InspectionGadgetsBundle.message("extends.annotation.problem.descriptor",
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiClass containingClass = (PsiClass)infos[0];
+        return InspectionGadgetsBundle.message(
+                "extends.annotation.problem.descriptor",
                 containingClass.getName());
     }
 
@@ -49,7 +49,8 @@ public class ExtendsAnnotationInspection extends ClassInspection {
         return new ExtendsAnnotationVisitor();
     }
 
-    private static class ExtendsAnnotationVisitor extends BaseInspectionVisitor {
+    private static class ExtendsAnnotationVisitor
+            extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             final PsiManager manager = aClass.getManager();
@@ -62,12 +63,13 @@ public class ExtendsAnnotationInspection extends ClassInspection {
                 return;
             }
             final PsiReferenceList extendsList = aClass.getExtendsList();
-            checkReferenceList(extendsList);
+            checkReferenceList(extendsList, aClass);
             final PsiReferenceList implementsList = aClass.getImplementsList();
-            checkReferenceList(implementsList);
+            checkReferenceList(implementsList, aClass);
         }
 
-        private void checkReferenceList(PsiReferenceList referenceList) {
+        private void checkReferenceList(PsiReferenceList referenceList,
+                                        PsiClass containingClass) {
             if (referenceList == null) {
                 return;
             }
@@ -79,7 +81,7 @@ public class ExtendsAnnotationInspection extends ClassInspection {
                     final PsiClass psiClass = (PsiClass) referent;
                     psiClass.isAnnotationType();
                     if(psiClass.isAnnotationType()){
-                        registerError(element);
+                        registerError(element, containingClass);
                     }
                 }
             }

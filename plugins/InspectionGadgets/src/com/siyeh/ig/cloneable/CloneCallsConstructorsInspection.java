@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,34 +27,41 @@ import org.jetbrains.annotations.NotNull;
 public class CloneCallsConstructorsInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("clone.instantiates.objects.with.constructor.display.name");
+        return InspectionGadgetsBundle.message(
+                "clone.instantiates.objects.with.constructor.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.CLONEABLE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("clone.instantiates.objects.with.constructor.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "clone.instantiates.objects.with.constructor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new CloneCallsConstructorVisitor();
     }
 
-    private static class CloneCallsConstructorVisitor extends BaseInspectionVisitor {
+    private static class CloneCallsConstructorVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             final String methodName = method.getName();
             final PsiParameterList parameterList = method.getParameterList();
-            final boolean isClone = HardcodedMethodConstants.CLONE.equals(methodName) &&
-                    parameterList.getParameters().length == 0;
+            final boolean isClone =
+                    HardcodedMethodConstants.CLONE.equals(methodName) &&
+                            parameterList.getParameters().length == 0;
             if (isClone) {
                 method.accept(new PsiRecursiveElementVisitor() {
-                    public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
-                        super.visitNewExpression(newExpression);
 
-                        final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
+                    public void visitNewExpression(
+                            @NotNull PsiNewExpression newExpression) {
+                        super.visitNewExpression(newExpression);
+                        final PsiExpression[] arrayDimensions =
+                                newExpression.getArrayDimensions();
                         if (arrayDimensions.length != 0) {
                             return;
                         }
@@ -64,22 +71,16 @@ public class CloneCallsConstructorsInspection extends ExpressionInspection {
                         if (newExpression.getAnonymousClass() != null) {
                             return;
                         }
-                        if (isPartOfThrowStatement(newExpression)) {
+                        if (PsiTreeUtil.getParentOfType(newExpression,
+                                PsiThrowStatement.class) != null) {
                             return;
                         }
-
-                        final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+                        final PsiJavaCodeReferenceElement classReference =
+                                newExpression.getClassReference();
                         registerError(classReference);
                     }
                 });
             }
         }
-
-
-        private static boolean isPartOfThrowStatement(PsiElement element) {
-            return PsiTreeUtil.getParentOfType(element, PsiThrowStatement.class) != null;
-        }
-
     }
-
 }

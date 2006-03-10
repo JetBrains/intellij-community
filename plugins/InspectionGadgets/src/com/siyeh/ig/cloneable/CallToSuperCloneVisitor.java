@@ -20,24 +20,24 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 class CallToSuperCloneVisitor extends PsiRecursiveElementVisitor{
+
     private boolean callToSuperCloneFound = false;
 
     public void visitElement(@NotNull PsiElement element){
-        if(!callToSuperCloneFound){
-            super.visitElement(element);
+        if (callToSuperCloneFound) {
+            return;
         }
+        super.visitElement(element);
     }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+    public void visitMethodCallExpression(
+            @NotNull PsiMethodCallExpression expression){
         if(callToSuperCloneFound){
             return;
         }
         super.visitMethodCallExpression(expression);
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        if(methodExpression == null){
-            return;
-        }
         final PsiExpression target = methodExpression.getQualifierExpression();
         if(!(target instanceof PsiSuperExpression)){
             return;

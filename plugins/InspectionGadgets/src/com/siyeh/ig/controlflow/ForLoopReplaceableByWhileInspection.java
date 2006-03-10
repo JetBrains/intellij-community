@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
      * @noinspection PublicField
      */
     public boolean m_ignoreLoopsWithoutConditions = false;
-    private final ReplaceForByWhileFix fix = new ReplaceForByWhileFix();
 
     public String getID() {
         return "ForLoopReplaceableByWhile";
@@ -47,6 +46,12 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "for.loop.replaceable.by.while.problem.descriptor");
+    }
+
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
                 "for.loop.replaceable.by.while.ignore.option"),
@@ -54,7 +59,7 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new ReplaceForByWhileFix();
     }
 
     private static class ReplaceForByWhileFix extends InspectionGadgetsFix {

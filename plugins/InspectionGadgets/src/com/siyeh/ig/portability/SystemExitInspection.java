@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class SystemExitInspection extends ExpressionInspection {
-    public String getID(){
+
+    public String getID() {
         return "CallToSystemExit";
     }
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("system.exit.call.display.name");
     }
@@ -35,15 +37,11 @@ public class SystemExitInspection extends ExpressionInspection {
         return GroupNames.PORTABILITY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiIdentifier methodNameIdentifier = (PsiIdentifier) location;
-        final PsiReference methodExpression = (PsiReference) methodNameIdentifier.getParent();
-        assert methodExpression != null;
-        final PsiMethod method = (PsiMethod) methodExpression.resolve();
-        assert method != null;
-        final PsiClass containingClass = method.getContainingClass();
-        assert containingClass != null;
-        return InspectionGadgetsBundle.message("system.exit.call.problem.descriptor", containingClass.getName());
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final String className = (String)infos[0];
+        return InspectionGadgetsBundle.message(
+                "system.exit.call.problem.descriptor", className);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -52,56 +50,44 @@ public class SystemExitInspection extends ExpressionInspection {
 
     private static class SystemExitVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
-                return;
-            }
-            if (!isSystemExit(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-
-        private static boolean isSystemExit(PsiMethodCallExpression expression) {
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
             @NonNls final String exit = "exit";
             @NonNls final String halt = "halt";
             if (!exit.equals(methodName) && !halt.equals(methodName)) {
-                return false;
+                return;
             }
             final PsiMethod method = expression.resolveMethod();
             if (method == null) {
-                return false;
+                return;
             }
 
             final PsiParameterList paramList = method.getParameterList();
-            if (paramList == null) {
-                return false;
-            }
             final PsiParameter[] parameters = paramList.getParameters();
             if (parameters.length != 1) {
-                return false;
+                return;
             }
             final PsiType parameterType = parameters[0].getType();
             if (!parameterType.equals(PsiType.INT)) {
-                return false;
+                return;
             }
             final PsiClass aClass = method.getContainingClass();
             if (aClass == null) {
-                return false;
+                return;
             }
             final String className = aClass.getQualifiedName();
             if (className == null) {
-                return false;
+                return;
             }
-            return !(!"java.lang.System".equals(className) &&
-                     !"java.lang.Runtime".equals(className));
+            if ("java.lang.System".equals(className)) {
+                registerMethodCallError(expression, "System");
+            } else if ("java.lang.Runtime".equals(className)) {
+                registerMethodCallError(expression, "Runtime");
+            }
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,22 +28,24 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class PackageVisibleInnerClassInspection extends ClassInspection {
-    private final MoveClassFix fix = new MoveClassFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("package.visible.inner.class.display.name");
+        return InspectionGadgetsBundle.message(
+                "package.visible.inner.class.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.ENCAPSULATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("package.visible.inner.class.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "package.visible.inner.class.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new MoveClassFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -54,7 +56,9 @@ public class PackageVisibleInnerClassInspection extends ClassInspection {
         return new PackageVisibleInnerClassVisitor();
     }
 
-    private static class PackageVisibleInnerClassVisitor extends BaseInspectionVisitor {
+    private static class PackageVisibleInnerClassVisitor
+            extends BaseInspectionVisitor {
+
         public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.hasModifierProperty(PsiModifier.PUBLIC) ||
                     aClass.hasModifierProperty(PsiModifier.PROTECTED) ||
@@ -70,7 +74,5 @@ public class PackageVisibleInnerClassInspection extends ClassInspection {
             }
             registerClassError(aClass);
         }
-
     }
-
 }

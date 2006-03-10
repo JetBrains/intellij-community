@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,6 @@ public class AutoBoxingInspection extends ExpressionInspection {
     @NonNls static final Map<String,String> s_boxingClasses =
             new HashMap<String, String>(8);
 
-    private final AutoBoxingFix fix = new AutoBoxingFix();
-
     static {
         s_boxingClasses.put("byte", "java.lang.Byte");
         s_boxingClasses.put("short", "java.lang.Short");
@@ -61,8 +59,10 @@ public class AutoBoxingInspection extends ExpressionInspection {
         return GroupNames.JDK_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("auto.boxing.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "auto.boxing.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -70,7 +70,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new AutoBoxingFix();
     }
 
     private static class AutoBoxingFix extends InspectionGadgetsFix {

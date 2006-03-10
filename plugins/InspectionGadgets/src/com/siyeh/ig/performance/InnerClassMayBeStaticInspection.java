@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,17 +30,22 @@ import org.jetbrains.annotations.NotNull;
 
 public class InnerClassMayBeStaticInspection extends ClassInspection {
 
-    private final InnerClassMayBeStaticFix fix = new InnerClassMayBeStaticFix();
-
     public String getGroupDisplayName() {
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "inner.class.may.be.static.problem.descriptor");
+    }
+
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new InnerClassMayBeStaticFix();
     }
 
     private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix {
+        
         public String getName() {
             return InspectionGadgetsBundle.message("make.static.quickfix");
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,23 +26,28 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class ChannelResourceInspection extends ExpressionInspection{
+
     public String getID(){
         return "ChannelOpenedButNotSafelyClosed";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("channel.opened.not.closed.display.name");
+        return InspectionGadgetsBundle.message(
+                "channel.opened.not.closed.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.RESOURCE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiExpression expression = (PsiExpression) location;
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final PsiExpression expression = (PsiExpression) infos[0];
         final PsiType type = expression.getType();
+        assert type != null;
         final String text = type.getPresentableText();
-        return InspectionGadgetsBundle.message("channel.opened.not.closed.problem.descriptor", text);
+        return InspectionGadgetsBundle.message(
+                "channel.opened.not.closed.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -51,14 +56,15 @@ public class ChannelResourceInspection extends ExpressionInspection{
 
     private static class ChannelResourceVisitor extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isChannelFactoryMethod(expression)) {
                 return;
             }
             final PsiElement parent = expression.getParent();
             if(!(parent instanceof PsiAssignmentExpression)) {
-                registerError(expression);
+                registerError(expression, expression);
                 return;
             }
             final PsiAssignmentExpression assignment =
@@ -78,24 +84,50 @@ public class ChannelResourceInspection extends ExpressionInspection{
             while(true){
                 final PsiTryStatement tryStatement =
                         PsiTreeUtil.getParentOfType(currentContext,
-                                                                      PsiTryStatement.class);
+                                PsiTryStatement.class);
                 if(tryStatement == null) {
-                    registerError(expression);
+                    registerError(expression, expression);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
-                                                           expression,
-                                                           boundVariable)) {
+                        expression,
+                        boundVariable)) {
                     return;
                 }
                 currentContext = tryStatement;
             }
         }
 
+        private static boolean isChannelFactoryMethod(
+                PsiMethodCallExpression expression){
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if(!HardcodedMethodConstants.GET_CHANNEL.equals(methodName)) {
+                return false;
+            }
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if(qualifier == null) {
+                return false;
+            }
+            return TypeUtils.expressionHasTypeOrSubtype(
+                    "java.net.Socket", qualifier) ||
+                    TypeUtils.expressionHasTypeOrSubtype(
+                            "java.net.DatagramSocket", qualifier) ||
+                    TypeUtils.expressionHasTypeOrSubtype(
+                            "java.net.ServerSocket", qualifier) ||
+                    TypeUtils.expressionHasTypeOrSubtype(
+                            "java.io.FileInputStream", qualifier) ||
+                    TypeUtils.expressionHasTypeOrSubtype(
+                            "java.io.FileOutputStream", qualifier) ||
+                    TypeUtils.expressionHasTypeOrSubtype(
+                            "java.io.RandomAccessFile", qualifier);
+        }
 
-        private static boolean resourceIsOpenedInTryAndClosedInFinally(PsiTryStatement tryStatement,
-                                                                       PsiExpression lhs,
-                                                                       PsiVariable boundVariable){
+        private static boolean resourceIsOpenedInTryAndClosedInFinally(
+                PsiTryStatement tryStatement, PsiExpression lhs,
+                PsiVariable boundVariable){
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if(finallyBlock == null){
                 return false;
@@ -134,16 +166,14 @@ public class ChannelResourceInspection extends ExpressionInspection{
             }
         }
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
             if(containsClose){
                 return;
             }
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
             final String methodName = methodExpression.getReferenceName();
             if(!HardcodedMethodConstants.CLOSE.equals(methodName)){
                 return;
@@ -168,32 +198,4 @@ public class ChannelResourceInspection extends ExpressionInspection{
             return containsClose;
         }
     }
-
-    private static boolean isChannelFactoryMethod(PsiMethodCallExpression expression){
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        if(methodExpression == null) {
-            return false;
-        }
-        final String methodName = methodExpression.getReferenceName();
-        if(!HardcodedMethodConstants.GET_CHANNEL.equals(methodName)) {
-            return false;
-        }
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if(qualifier == null) {
-            return false;
-        }
-        return TypeUtils.expressionHasTypeOrSubtype("java.net.Socket",
-                                                    qualifier)||
-                TypeUtils.expressionHasTypeOrSubtype("java.net.DatagramSocket",
-                                                    qualifier)||
-                TypeUtils.expressionHasTypeOrSubtype("java.net.ServerSocket",
-                                                    qualifier)||
-                TypeUtils.expressionHasTypeOrSubtype("java.io.FileInputStream",
-                                                    qualifier)||
-                TypeUtils.expressionHasTypeOrSubtype("java.io.FileOutputStream",
-                                                    qualifier)||
-                TypeUtils.expressionHasTypeOrSubtype("java.io.RandomAccessFile",
-                                                    qualifier);
-    }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class PublicFieldInspection extends FieldInspection {
-    private final EncapsulateVariableFix fix = new EncapsulateVariableFix();
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("public.field.display.name");
@@ -37,12 +36,13 @@ public class PublicFieldInspection extends FieldInspection {
         return GroupNames.ENCAPSULATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message("public.field.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new EncapsulateVariableFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -65,7 +65,5 @@ public class PublicFieldInspection extends FieldInspection {
             }
             registerFieldError(field);
         }
-
     }
-
 }

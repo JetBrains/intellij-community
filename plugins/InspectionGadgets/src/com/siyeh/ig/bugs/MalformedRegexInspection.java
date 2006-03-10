@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,32 +32,36 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class MalformedRegexInspection extends ExpressionInspection{
-    /** @noinspection StaticCollection*/
-    @NonNls private static final Set<String> regexMethodNames = new HashSet<String>(5);
 
-    static
-    {
-      regexMethodNames.add("compile");
-      regexMethodNames.add("matches");
-      regexMethodNames.add("replaceFirst");
-      regexMethodNames.add("replaceAll");
-      regexMethodNames.add("split");
+    /** @noinspection StaticCollection*/
+    @NonNls private static final Set<String> regexMethodNames =
+            new HashSet<String>(5);
+
+    static{
+        regexMethodNames.add("compile");
+        regexMethodNames.add("matches");
+        regexMethodNames.add("replaceFirst");
+        regexMethodNames.add("replaceAll");
+        regexMethodNames.add("split");
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("malformed.regular.expression.display.name");
+        return InspectionGadgetsBundle.message(
+                "malformed.regular.expression.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "malformed.regular.expression.problem.descriptor");
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("malformed.regular.expression.problem.descriptor");
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -66,22 +70,19 @@ public class MalformedRegexInspection extends ExpressionInspection{
 
     private static class MalformedRegexVisitor extends BaseInspectionVisitor{
 
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiExpressionList argList = expression.getArgumentList();
             if(argList == null){
                 return;
             }
             final PsiExpression[] args = argList.getExpressions();
-            if(args.length == 0)
-            {
+            if(args.length == 0){
                 return;
             }
-
             final PsiExpression regexArg = args[0];
-            if(!TypeUtils.expressionHasType("java.lang.String", regexArg))
-            {
+            if(!TypeUtils.expressionHasType("java.lang.String", regexArg)){
                 return;
             }
             if(!PsiUtil.isConstantExpression(regexArg)){
@@ -89,9 +90,9 @@ public class MalformedRegexInspection extends ExpressionInspection{
             }
             final PsiType regexType = regexArg.getType();
             final String value =
-                    (String) ConstantExpressionUtil.computeCastTo(regexArg, regexType);
-            if(value == null)
-            {
+                    (String) ConstantExpressionUtil.computeCastTo(regexArg,
+                            regexType);
+            if(value == null){
                 return;
             }
             if(!callTakesRegex(expression)){
@@ -103,29 +104,24 @@ public class MalformedRegexInspection extends ExpressionInspection{
             } catch(PatternSyntaxException e){
                 registerError(regexArg);
             } catch(NullPointerException e){
-                registerError(regexArg);     // due to a bug in the sun regex code
+                registerError(regexArg); // due to a bug in the sun regex code
             }
         }
 
-        private static boolean callTakesRegex(PsiMethodCallExpression expression){
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if(methodExpression == null)
-            {
-                return false;
-            }
+        private static boolean callTakesRegex(
+                PsiMethodCallExpression expression){
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
             final String name = methodExpression.getReferenceName();
-            if(!regexMethodNames.contains(name))
-            {
+            if(!regexMethodNames.contains(name)){
                 return false;
             }
             final PsiMethod method = expression.resolveMethod();
-            if(method == null)
-            {
+            if(method == null){
                 return false;
             }
             final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null)
-            {
+            if(containingClass == null){
                 return false;
             }
             final String className = containingClass.getQualifiedName();

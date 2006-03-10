@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,34 +19,41 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassInitializerInspection extends ClassInspection {
 
-  public String getID() {
-    return "NonStaticInitializer";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.CLASSLAYOUT_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ClassInitializerVisitor();
-  }
-
-  private static class ClassInitializerVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so that it doesn't drill down to inner classes
-      final PsiClassInitializer[] initializers = aClass.getInitializers();
-      for (final PsiClassInitializer initializer : initializers) {
-        if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
-          final PsiCodeBlock body = initializer.getBody();
-          final PsiJavaToken leftBrace = body.getLBrace();
-          registerError(leftBrace);
-        }
-      }
+    public String getID() {
+        return "NonStaticInitializer";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.CLASSLAYOUT_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "class.initializer.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassInitializerVisitor();
+    }
+
+    private static class ClassInitializerVisitor extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so that it doesn't drill down to inner classes
+            final PsiClassInitializer[] initializers = aClass.getInitializers();
+            for (final PsiClassInitializer initializer : initializers) {
+                if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
+                    final PsiCodeBlock body = initializer.getBody();
+                    final PsiJavaToken leftBrace = body.getLBrace();
+                    registerError(leftBrace);
+                }
+            }
+        }
+    }
 }

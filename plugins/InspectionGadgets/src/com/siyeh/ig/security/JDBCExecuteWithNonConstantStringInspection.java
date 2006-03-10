@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,81 +21,85 @@ import com.intellij.psi.util.ConstantExpressionUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class JDBCExecuteWithNonConstantStringInspection extends ExpressionInspection {
+public class JDBCExecuteWithNonConstantStringInspection
+        extends ExpressionInspection {
 
-  /**
-   * @noinspection StaticCollection
-   */
-  @NonNls private static final Set<String> s_execMethodNames = new HashSet<String>(4);
+    /**
+     * @noinspection StaticCollection
+     */
+    @NonNls private static final Set<String> s_execMethodNames =
+            new HashSet<String>(4);
 
-  static {
-    s_execMethodNames.add("execute");
-    s_execMethodNames.add("executeQuery");
-    s_execMethodNames.add("executeUpdate");
-    s_execMethodNames.add("addBatch");
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.SECURITY_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new RuntimeExecVisitor();
-  }
-
-  private static class RuntimeExecVisitor extends BaseInspectionVisitor {
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression
-        .getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      final String methodName = methodExpression.getReferenceName();
-      if (!s_execMethodNames.contains(methodName)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      if (!ClassUtils.isSubclass(aClass, "java.sql.Statement")) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList == null) {
-        return;
-      }
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args == null || args.length == 0) {
-        return;
-      }
-      final PsiExpression arg = args[0];
-      final PsiType type = arg.getType();
-      if (type == null) {
-        return;
-      }
-      final String typeText = type.getCanonicalText();
-      if (!"java.lang.String".equals(typeText)) {
-        return;
-      }
-      final String stringValue =
-        (String)ConstantExpressionUtil.computeCastTo(arg, type);
-      if (stringValue != null) {
-        return;
-      }
-      registerMethodCallError(expression);
+    static {
+        s_execMethodNames.add("execute");
+        s_execMethodNames.add("executeQuery");
+        s_execMethodNames.add("executeUpdate");
+        s_execMethodNames.add("addBatch");
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.SECURITY_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "j.d.b.c.execute.with.non.constant.string.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new RuntimeExecVisitor();
+    }
+
+    private static class RuntimeExecVisitor extends BaseInspectionVisitor {
+        
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression methodExpression = expression
+                    .getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if (!s_execMethodNames.contains(methodName)) {
+                return;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return;
+            }
+            if (!ClassUtils.isSubclass(aClass, "java.sql.Statement")) {
+                return;
+            }
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] args = argumentList.getExpressions();
+            if (args.length == 0) {
+                return;
+            }
+            final PsiExpression arg = args[0];
+            final PsiType type = arg.getType();
+            if (type == null) {
+                return;
+            }
+            final String typeText = type.getCanonicalText();
+            if (!"java.lang.String".equals(typeText)) {
+                return;
+            }
+            final String stringValue =
+                    (String)ConstantExpressionUtil.computeCastTo(arg, type);
+            if (stringValue != null) {
+                return;
+            }
+            registerMethodCallError(expression);
+        }
+    }
 }

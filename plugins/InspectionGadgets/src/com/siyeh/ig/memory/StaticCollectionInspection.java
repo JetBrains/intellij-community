@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,17 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class StaticCollectionInspection extends VariableInspection {
 
@@ -35,27 +34,31 @@ public class StaticCollectionInspection extends VariableInspection {
     public boolean m_ignoreWeakCollections = false;
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("static.collection.display.name");
+        return InspectionGadgetsBundle.message(
+                "static.collection.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.MEMORY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("static.collection.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "static.collection.problem.descriptor");
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("static.collection.ignore.option"),
-                                              this, "m_ignoreWeakCollections");
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "static.collection.ignore.option"),
+                this, "m_ignoreWeakCollections");
     }
+    
     public BaseInspectionVisitor buildVisitor() {
         return new StaticCollectionVisitor();
     }
 
     private class StaticCollectionVisitor extends BaseInspectionVisitor {
-
 
         public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.STATIC)) {
@@ -65,11 +68,11 @@ public class StaticCollectionInspection extends VariableInspection {
             if (!CollectionUtils.isCollectionClassOrInterface(type)) {
                 return;
             }
-            if(m_ignoreWeakCollections &&
-                    !CollectionUtils.isWeakCollectionClass(type))
+            if (!m_ignoreWeakCollections ||
+                    CollectionUtils.isWeakCollectionClass(type)) {
+                return;
+            }
             registerFieldError(field);
         }
-
     }
-
 }

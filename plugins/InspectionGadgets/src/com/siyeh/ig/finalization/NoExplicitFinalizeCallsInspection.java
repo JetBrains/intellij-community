@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,20 +25,24 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class NoExplicitFinalizeCallsInspection extends ExpressionInspection{
+
     public String getID(){
         return "FinalizeCalledExplicitly";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("finalize.called.explicitly.display.name");
+        return InspectionGadgetsBundle.message(
+                "finalize.called.explicitly.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.FINALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("finalize.called.explicitly.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "finalize.called.explicitly.problem.descriptor");
     }
 
     public boolean isEnabledByDefault(){
@@ -51,22 +55,17 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection{
 
     private static class NoExplicitFinalizeCallsVisitor
             extends BaseInspectionVisitor{
+
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression
-                    .getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
             if(!HardcodedMethodConstants.FINALIZE.equals(methodName)) {
-              return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            if(argumentList == null){
                 return;
             }
+            final PsiExpressionList argumentList = expression.getArgumentList();
             if(argumentList.getExpressions().length != 0){
                 return;
             }
@@ -76,10 +75,10 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection{
                 return;
             }
             final String containingMethodName = containingMethod.getName();
-            final PsiParameterList parameterList = containingMethod
-                    .getParameterList();
+            final PsiParameterList parameterList =
+                    containingMethod.getParameterList();
             if(HardcodedMethodConstants.FINALIZE.equals(containingMethodName)
-               && parameterList.getParameters().length == 0){
+                    && parameterList.getParameters().length == 0){
                 return;
             }
             registerMethodCallError(expression);

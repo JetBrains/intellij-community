@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class MethodOverloadsParentMethodInspection extends MethodInspection{
-    private final RenameFix fix = new RenameFix();
 
     public String getID(){
         return "MethodOverloadsMethodOfSuperclass";
@@ -43,15 +42,17 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("method.overloads.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "method.overloads.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -71,7 +72,7 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
             }
 
           final PsiMethod[] superMethods = method.findSuperMethods();
-            if(superMethods != null && superMethods.length != 0){
+            if(superMethods.length != 0){
                 return;
             }
             PsiClass ancestorClass = aClass.getSuperClass();
@@ -121,8 +122,10 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
                                                    PsiClass aClass){
             final PsiMethod[] methods = aClass.getMethods();
             for(PsiMethod testMethod : methods){
-                if(testMethod.getName().equals(method.getName())){
-                  final PsiMethod[] superMethods = testMethod.findSuperMethods(true);
+                final String testMethodName = testMethod.getName();
+                if(testMethodName.equals(method.getName())){
+                  final PsiMethod[] superMethods =
+                          testMethod.findSuperMethods(true);
                     for(final PsiMethod superMethod : superMethods){
                         if(superMethod .equals(method)){
                             return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,43 +17,52 @@ package com.siyeh.ig.security;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class DeserializableClassInSecureContextInspection extends ClassInspection {
+public class DeserializableClassInSecureContextInspection
+        extends ClassInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.SECURITY_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new DeserializableClassInSecureContextVisitor();
-  }
-
-  private static class DeserializableClassInSecureContextVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
-        return;
-      }
-      if (!SerializationUtils.isSerializable(aClass)) {
-        return;
-      }
-      final PsiMethod[] methods = aClass.getMethods();
-      for (final PsiMethod method : methods) {
-        if (SerializationUtils.isReadObject(method)) {
-          if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
-            return;
-          }
-        }
-      }
-      registerClassError(aClass);
+    public String getGroupDisplayName() {
+        return GroupNames.SECURITY_GROUP_NAME;
     }
-  }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "deserializable.class.in.secure.context.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new DeserializableClassInSecureContextVisitor();
+    }
+
+    private static class DeserializableClassInSecureContextVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so it doesn't drill down
+            if (aClass.isInterface() || aClass.isAnnotationType() ||
+                    aClass.isEnum()) {
+                return;
+            }
+            if (!SerializationUtils.isSerializable(aClass)) {
+                return;
+            }
+            final PsiMethod[] methods = aClass.getMethods();
+            for (final PsiMethod method : methods) {
+                if (SerializationUtils.isReadObject(method)) {
+                    if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
+                        return;
+                    }
+                }
+            }
+            registerClassError(aClass);
+        }
+    }
 }

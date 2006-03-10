@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReferenceList;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class ThrownExceptionsPerMethodInspection
@@ -40,14 +39,12 @@ public class ThrownExceptionsPerMethodInspection
         return GroupNames.METHODMETRICS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiMethod method = (PsiMethod)location.getParent();
-        assert method != null;
-        final PsiReferenceList throwsList = method.getThrowsList();
-        final int numThrows = throwsList.getReferenceElements().length;
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final Integer exceptionCount = (Integer)infos[0];
         return InspectionGadgetsBundle.message(
                 "thrown.exceptions.per.method.problem.descriptor",
-                Integer.valueOf(numThrows));
+                exceptionCount);
     }
 
     protected int getDefaultLimit() {
@@ -63,17 +60,19 @@ public class ThrownExceptionsPerMethodInspection
         return new ThrownExceptionsPerMethodVisitor();
     }
 
-    private class ThrownExceptionsPerMethodVisitor extends BaseInspectionVisitor {
+    private class ThrownExceptionsPerMethodVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final PsiReferenceList throwList = method.getThrowsList();
             final PsiJavaCodeReferenceElement[] thrownExceptions =
                     throwList.getReferenceElements();
-            if (thrownExceptions.length <= getLimit()) {
+            final int exceptionCount = thrownExceptions.length;
+            if (exceptionCount <= getLimit()) {
                 return;
             }
-            registerMethodError(method);
+            registerMethodError(method, Integer.valueOf(exceptionCount));
         }
     }
 }

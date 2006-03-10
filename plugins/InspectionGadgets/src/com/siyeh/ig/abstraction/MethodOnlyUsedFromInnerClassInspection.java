@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Bas Leijdekkers
+ * Copyright 2005-2006 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,6 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
     /** @noinspection PublicField*/
     public boolean ignoreMethodsAccessedFromAnonymousClass = false;
 
-    String text = null;
-    boolean anonymousClass = false;
-    boolean anonymousExtends = false;
-
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "method.only.used.from.inner.class.display.name");
@@ -50,28 +46,31 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        final PsiNamedElement element = (PsiNamedElement)infos[0];
+        final String name = element.getName();
+        if (infos.length > 1) {
+            if (Boolean.TRUE.equals(infos[1])) {
+                return InspectionGadgetsBundle.message(
+                        "method.only.used.from.inner.class.problem.descriptor.anonymous.extending",
+                        name);
+            }
+            return InspectionGadgetsBundle.message(
+                    "method.only.used.from.inner.class.problem.descriptor.anonymous.implementing",
+                    name);
+        }
+
+        return InspectionGadgetsBundle.message(
+                "method.only.used.from.inner.class.problem.descriptor", name);
+    }
+
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
                         "method.only.used.from.inner.class.ignore.option.name"),
                 this, "ignoreMethodsAccessedFromAnonymousClass");
-    }
-
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
-        if (anonymousClass) {
-          if (anonymousExtends) {
-            return InspectionGadgetsBundle.message(
-                    "method.only.used.from.inner.class.problem.descriptor.anonymous.extending",
-                    text);
-          }
-          return InspectionGadgetsBundle.message(
-                  "method.only.used.from.inner.class.problem.descriptor.anonymous.implementing",
-                  text);
-        }
-        return InspectionGadgetsBundle.message(
-                "method.only.used.from.inner.class.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -99,27 +98,23 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
                 final PsiClass superClass;
                 if (interfaces.length == 1) {
                     superClass = interfaces[0];
-                    anonymousExtends = false;
-                    text = superClass.getName();
+                    registerMethodError(method, superClass,
+                            Boolean.valueOf(false));
                 } else {
                     superClass = containingClass.getSuperClass();
                     if (superClass == null) {
                         return;
                     }
-                    anonymousExtends = true;
-                    text = superClass.getName();
+                    registerMethodError(method, superClass,
+                            Boolean.valueOf(true));
                 }
-                anonymousClass = true;
             } else {
-                anonymousClass = false;
-                text = containingClass.getName();
+                registerMethodError(method, containingClass);
             }
-            registerMethodError(method);
         }
     }
 
-    private class MethodReferenceFinder
-            implements PsiReferenceProcessor {
+    private class MethodReferenceFinder implements PsiReferenceProcessor {
 
         private final PsiClass methodClass;
         private final PsiMethod method;

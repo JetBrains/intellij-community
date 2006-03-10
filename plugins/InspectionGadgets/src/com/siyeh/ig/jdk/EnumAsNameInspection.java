@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,8 @@ public class EnumAsNameInspection extends BaseInspection{
         return GroupNames.JDK_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "use.enum.as.identifier.problem.descriptor");
     }
@@ -52,9 +53,6 @@ public class EnumAsNameInspection extends BaseInspection{
 
     public ProblemDescriptor[] doCheckClass(
             PsiClass aClass, InspectionManager manager, boolean isOnTheFly){
-        if(aClass instanceof PsiAnonymousClass){
-            return super.doCheckClass(aClass, manager, isOnTheFly);
-        }
         final BaseInspectionVisitor visitor = createVisitor(manager,
                                                             isOnTheFly);
         aClass.accept(visitor);
@@ -69,10 +67,6 @@ public class EnumAsNameInspection extends BaseInspection{
         }
         if(!containingClass.isPhysical()){
             return super.doCheckMethod(method, manager, isOnTheFly);
-        }
-
-        if(containingClass instanceof PsiAnonymousClass){
-            return super.doCheckClass(containingClass, manager, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(manager,
                                                             isOnTheFly);
@@ -89,10 +83,6 @@ public class EnumAsNameInspection extends BaseInspection{
         if(!containingClass.isPhysical()){
             return super.doCheckField(field, manager, isOnTheFly);
         }
-        if(containingClass instanceof PsiAnonymousClass){
-            return super.doCheckClass(containingClass, manager, isOnTheFly);
-        }
-
         final BaseInspectionVisitor visitor = createVisitor(manager,
                                                             isOnTheFly);
         field.accept(visitor);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToStaticFieldFromInstanceMethodInspection
         extends ExpressionInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("assignment.to.static.field.from.instance.method.display.name");
+        return InspectionGadgetsBundle.message(
+                "assignment.to.static.field.from.instance.method.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("assignment.to.static.field.from.instance.method.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "assignment.to.static.field.from.instance.method.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -45,7 +49,9 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
 
     private static class AssignmentToStaticFieldFromInstanceMethod
             extends BaseInspectionVisitor{
-        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression){
+
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression expression){
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
             }
@@ -53,7 +59,8 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             checkForStaticFieldAccess(lhs);
         }
 
-        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
+        public void visitPrefixExpression(
+                @NotNull PsiPrefixExpression expression){
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
@@ -67,7 +74,8 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             checkForStaticFieldAccess(operand);
         }
 
-        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
+        public void visitPostfixExpression(
+                @NotNull PsiPostfixExpression expression){
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
@@ -82,11 +90,9 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             if(!(expression instanceof PsiReferenceExpression)){
                 return;
             }
-
             if (isInStaticMethod(expression)) {
                 return;
             }
-
             final PsiElement referent = ((PsiReference) expression).resolve();
             if(referent == null){
                 return;
@@ -100,8 +106,10 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             }
         }
 
-        private static boolean isInStaticMethod(PsiElement elt) {
-            final PsiMember member = PsiTreeUtil.getParentOfType(elt, PsiMethod.class, PsiClassInitializer.class);
+        private static boolean isInStaticMethod(PsiElement element) {
+            final PsiMember member =
+                    PsiTreeUtil.getParentOfType(element,
+                            PsiMethod.class, PsiClassInitializer.class);
             if (member == null) {
                 return false;
             }

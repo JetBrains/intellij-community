@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,36 +23,43 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RemoveModifierFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class FinalStaticMethodInspection extends MethodInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.CLASSLAYOUT_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new FinalStaticMethodVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return new RemoveModifierFix(location);
-  }
-
-  private static class FinalStaticMethodVisitor extends BaseInspectionVisitor {
-
-    public void visitMethod(@NotNull PsiMethod method) {
-      //no call to super, so we don't drill into anonymous classes
-      if (!method.hasModifierProperty(PsiModifier.FINAL)
-          || !method.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      registerModifierError(PsiModifier.FINAL, method);
+    public String getGroupDisplayName() {
+        return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "final.static.method.problem.descriptor");
+    }
+
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new FinalStaticMethodVisitor();
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RemoveModifierFix(location);
+    }
+
+    private static class FinalStaticMethodVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            //no call to super, so we don't drill into anonymous classes
+            if (!method.hasModifierProperty(PsiModifier.FINAL)
+                    || !method.hasModifierProperty(PsiModifier.STATIC)) {
+                return;
+            }
+            registerModifierError(PsiModifier.FINAL, method);
+        }
+    }
 }

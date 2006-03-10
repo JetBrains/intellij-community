@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class NonSerializableWithSerializationMethodsInspection
         extends ClassInspection{
-    private final MakeSerializableFix fix = new MakeSerializableFix();
 
     public String getID(){
         return "NonSerializableClassWithSerializationMethods";
     }
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.display.name");
+        return InspectionGadgetsBundle.message(
+                "non.serializable.class.with.readwriteobject.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -42,22 +42,22 @@ public class NonSerializableWithSerializationMethodsInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new MakeSerializableFix();
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiClass aClass = (PsiClass) location.getParent();
-        assert aClass!=null;
-        final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
-        final boolean hasWriteObject =
-                SerializationUtils.hasWriteObject(aClass);
-
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
+        final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
         if(hasReadObject && hasWriteObject){
-            return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.problem.descriptor.both");
+            return InspectionGadgetsBundle.message(
+                    "non.serializable.class.with.readwriteobject.problem.descriptor.both");
         } else if(hasWriteObject){
-            return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.problem.descriptor.write");
+            return InspectionGadgetsBundle.message(
+                    "non.serializable.class.with.readwriteobject.problem.descriptor.write");
         } else{
-            return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.problem.descriptor.read");
+            return InspectionGadgetsBundle.message(
+                    "non.serializable.class.with.readwriteobject.problem.descriptor.read");
         }
     }
 
@@ -73,7 +73,6 @@ public class NonSerializableWithSerializationMethodsInspection
             if(aClass.isInterface() || aClass.isAnnotationType()){
                 return;
             }
-
             final boolean hasReadObject =
                     SerializationUtils.hasReadObject(aClass);
             final boolean hasWriteObject =
@@ -84,7 +83,8 @@ public class NonSerializableWithSerializationMethodsInspection
             if(SerializationUtils.isSerializable(aClass)){
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, Boolean.valueOf(hasReadObject),
+                    Boolean.valueOf(hasWriteObject));
         }
     }
 }

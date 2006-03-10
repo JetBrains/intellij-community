@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,16 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class OverlyStrongTypeCastInspection extends ExpressionInspection {
-
-    private final OverlyStrongCastFix fix = new OverlyStrongCastFix();
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -43,17 +39,16 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
-  @NotNull
-  protected String buildErrorString(Object arg) {
-      final PsiType expectedType = (PsiType)arg;
-      assert expectedType != null;
-      final String typeText = expectedType.getPresentableText();
-      return InspectionGadgetsBundle.message(
-              "overly.strong.type.cast.problem.descriptor", typeText);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        final PsiType expectedType = (PsiType)infos[0];
+        final String typeText = expectedType.getPresentableText();
+        return InspectionGadgetsBundle.message(
+                "overly.strong.type.cast.problem.descriptor", typeText);
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new OverlyStrongCastFix();
     }
 
     private static class OverlyStrongCastFix extends InspectionGadgetsFix {
@@ -68,16 +63,24 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             final PsiElement castTypeElement = descriptor.getPsiElement();
             final PsiTypeCastExpression expression =
                     (PsiTypeCastExpression) castTypeElement.getParent();
-            assert expression != null;
+            if (expression == null) {
+                return;
+            }
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression, true);
-            assert expectedType != null;
+            if (expectedType == null) {
+                return;
+            }
             final PsiExpression operand = expression.getOperand();
+            if (operand == null) {
+                return;
+            }
             final String newExpression =
                     '(' + expectedType.getCanonicalText() + ')' +
                     operand.getText();
             replaceExpressionAndShorten(expression, newExpression);
         }
+
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -128,13 +131,13 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                     return;
                 }
             }
-            if (ClassUtils.isPrimitiveNumericType(type) ||
-                    ClassUtils.isPrimitiveNumericType(expectedType)) {
+            if (type instanceof PsiPrimitiveType ||
+                    expectedType instanceof PsiPrimitiveType) {
                 return;
             }
-            if (TypeConversionUtil.isPrimitiveWrapper(type) ||
-              TypeConversionUtil.isPrimitiveWrapper(expectedType)) {
-              return;
+            if (PsiPrimitiveType.getUnboxedType(type) != null ||
+                    PsiPrimitiveType.getUnboxedType(expectedType) != null) {
+                return;
             }
             final PsiTypeElement castTypeElement = expression.getCastType();
             registerError(castTypeElement, expectedType);

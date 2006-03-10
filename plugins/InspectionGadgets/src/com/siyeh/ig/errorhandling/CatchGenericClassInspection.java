@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,46 +21,56 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ExceptionUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public class CatchGenericClassInspection extends StatementInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.ERRORHANDLING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new CatchGenericClassVisitor();
-  }
-
-  private static class CatchGenericClassVisitor extends StatementInspectionVisitor {
-
-    public void visitTryStatement(@NotNull PsiTryStatement statement) {
-      super.visitTryStatement(statement);
-      final PsiCodeBlock tryBlock = statement.getTryBlock();
-      if (tryBlock == null) {
-        return;
-      }
-      final Set<PsiType> exceptionsThrown =
-        ExceptionUtils.calculateExceptionsThrown(tryBlock);
-      final PsiParameter[] parameters = statement.getCatchBlockParameters();
-      for (final PsiParameter parameter : parameters) {
-        checkParameter(parameter, exceptionsThrown);
-      }
+    public String getGroupDisplayName() {
+        return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
-    private void checkParameter(PsiParameter parameter, Set<PsiType> exceptionsThrown) {
-      final PsiType type = parameter.getType();
-      if (!ExceptionUtils.isGenericExceptionClass(type)) {
-        return;
-      }
-      if (exceptionsThrown.contains(type)) {
-        return;
-      }
-      final PsiTypeElement typeElement = parameter.getTypeElement();
-      registerError(typeElement);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "catch.generic.class.problem.descriptor");
     }
-  }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new CatchGenericClassVisitor();
+    }
+
+    private static class CatchGenericClassVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+            super.visitTryStatement(statement);
+            final PsiCodeBlock tryBlock = statement.getTryBlock();
+            if (tryBlock == null) {
+                return;
+            }
+            final Set<PsiType> exceptionsThrown =
+                    ExceptionUtils.calculateExceptionsThrown(tryBlock);
+            final PsiParameter[] parameters =
+                    statement.getCatchBlockParameters();
+            for (final PsiParameter parameter : parameters) {
+                checkParameter(parameter, exceptionsThrown);
+            }
+        }
+
+        private void checkParameter(PsiParameter parameter,
+                                    Set<PsiType> exceptionsThrown) {
+            final PsiType type = parameter.getType();
+            if (!ExceptionUtils.isGenericExceptionClass(type)) {
+                return;
+            }
+            if (exceptionsThrown.contains(type)) {
+                return;
+            }
+            final PsiTypeElement typeElement = parameter.getTypeElement();
+            registerError(typeElement);
+        }
+    }
 }

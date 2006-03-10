@@ -23,30 +23,32 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class SuspiciousToArrayCallInspection extends StatementInspection {
-
-    private String errorString = InspectionGadgetsBundle.message("suspicious.to.array.call.problem.descriptor");
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("suspicious.to.array.call.display.name");
+        return InspectionGadgetsBundle.message(
+                "suspicious.to.array.call.display.name");
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
-        return errorString;
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        final PsiType type = (PsiType)infos[0];
+        return InspectionGadgetsBundle.message(
+                "suspicious.to.array.call.problem.descriptor",
+                type.getPresentableText());
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new SuspiciousToArrayCallVisitor();
     }
 
-    private class SuspiciousToArrayCallVisitor
+    private static class SuspiciousToArrayCallVisitor
             extends BaseInspectionVisitor {
 
         public void visitMethodCallExpression(
@@ -54,7 +56,8 @@ public class SuspiciousToArrayCallInspection extends StatementInspection {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            @NonNls final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
             if (!"toArray".equals(methodName)) {
                 return;
             }
@@ -69,7 +72,8 @@ public class SuspiciousToArrayCallInspection extends StatementInspection {
             }
             final PsiClassType classType = (PsiClassType)type;
             final PsiClass aClass = classType.resolve();
-            if (aClass == null || !ClassUtils.isSubclass(aClass, "java.util.Collection")) {
+            if (aClass == null ||
+                    !ClassUtils.isSubclass(aClass, "java.util.Collection")) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
@@ -78,53 +82,45 @@ public class SuspiciousToArrayCallInspection extends StatementInspection {
                 return;
             }
             final PsiExpression argument = arguments[0];
+            checkCollectionAndArrayTypes(classType, argument, expression);
+        }
+
+        private void checkCollectionAndArrayTypes(
+                @NotNull PsiClassType collectionType,
+                @NotNull PsiExpression argument,
+                @NotNull PsiMethodCallExpression expression) {
             final PsiType argumentType = argument.getType();
             if (!(argumentType instanceof PsiArrayType)) {
                 return;
             }
             final PsiArrayType arrayType = (PsiArrayType)argumentType;
-            if (collectionAndCallTypesMatch(classType, arrayType, expression)) {
-                return;
-            }
-            registerError(argument);
-        }
-
-        private boolean collectionAndCallTypesMatch(
-                @NotNull PsiClassType collectionType,
-                @NotNull PsiArrayType callType,
-                @NotNull PsiMethodCallExpression expression) {
             if (collectionType.hasParameters()) {
                 final PsiType[] parameters = collectionType.getParameters();
                 if (parameters.length != 1) {
-                    return true;
+                    return;
                 }
                 final PsiType parameter = parameters[0];
-                final PsiType componentType = callType.getComponentType();
+                final PsiType componentType = arrayType.getComponentType();
                 if (!parameter.equals(componentType)) {
-                    errorString =
-                      InspectionGadgetsBundle.message("suspicious.to.array.call.problem.descriptor1", parameter.getPresentableText());
-                    return false;
+                    registerError(argument, parameter);
                 }
             } else {
                 final PsiElement parent = expression.getParent();
                 if (!(parent instanceof PsiTypeCastExpression)) {
-                    return true;
+                    return ;
                 }
                 final PsiTypeCastExpression castExpression =
                         (PsiTypeCastExpression)parent;
                 final PsiTypeElement castTypeElement =
                         castExpression.getCastType();
                 if (castTypeElement == null) {
-                    return true;
+                    return ;
                 }
                 final PsiType castType = castTypeElement.getType();
-                if (!castType.equals(callType)) {
-                    errorString =
-                      InspectionGadgetsBundle.message("suspicious.to.array.call.problem.descriptor2", castType.getPresentableText());
-                    return false;
+                if (!castType.equals(arrayType)) {
+                    registerError(argument, arrayType.getComponentType());
                 }
             }
-            return true;
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,97 +26,110 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SwitchStatementsWithoutDefaultInspection extends StatementInspection {
+public class SwitchStatementsWithoutDefaultInspection
+        extends StatementInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  public boolean m_ignoreFullyCoveredEnums = true;
+    /**
+     * @noinspection PublicField
+     */
+    public boolean m_ignoreFullyCoveredEnums = true;
 
-  public String getID() {
-    return "SwitchStatementWithoutDefaultBranch";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("switch.statement.without.default.ignore.option"),
-                                          this, "m_ignoreFullyCoveredEnums");
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new SwitchStatementsWithoutDefaultVisitor();
-  }
-
-  private class SwitchStatementsWithoutDefaultVisitor extends StatementInspectionVisitor {
-
-    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      super.visitSwitchStatement(statement);
-      if (switchStatementHasDefault(statement)) {
-        return;
-      }
-      if (m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement)) {
-        return;
-      }
-      registerStatementError(statement);
+    public String getID() {
+        return "SwitchStatementWithoutDefaultBranch";
     }
 
-    private boolean switchStatementHasDefault(PsiSwitchStatement statement) {
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return false;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      for (final PsiStatement child : statements) {
-        if (child instanceof PsiSwitchLabelStatement &&
-            ((PsiSwitchLabelStatement)child).isDefaultCase()) {
-          return true;
-        }
-      }
-      return false;
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    private boolean switchStatementIsFullyCoveredEnum(PsiSwitchStatement statement) {
-      final PsiExpression expression = statement.getExpression();
-      if (expression == null) {
-        return false;
-      }
-      final PsiType type = expression.getType();
-      if (type == null) {
-        return false;
-      }
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClass aClass = ((PsiClassType)type).resolve();
-      if (aClass == null) {
-        return false;
-      }
-      if (!aClass.isEnum()) {
-        return false;
-      }
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return false;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      int numCases = 0;
-      for (final PsiStatement child : statements) {
-        if (child instanceof PsiSwitchLabelStatement) {
-          numCases++;
-        }
-      }
-      final PsiField[] fields = aClass.getFields();
-      int numEnums = 0;
-      for (final PsiField field : fields) {
-        final PsiType fieldType = field.getType();
-        if (fieldType.equals(type)) {
-          numEnums++;
-        }
-      }
-      return numEnums == numCases;
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "switch.statements.without.default.problem.descriptor");
     }
-  }
+
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "switch.statement.without.default.ignore.option"),
+                this, "m_ignoreFullyCoveredEnums");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new SwitchStatementsWithoutDefaultVisitor();
+    }
+
+    private class SwitchStatementsWithoutDefaultVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitSwitchStatement(
+                @NotNull PsiSwitchStatement statement) {
+            super.visitSwitchStatement(statement);
+            if (switchStatementHasDefault(statement)) {
+                return;
+            }
+            if (m_ignoreFullyCoveredEnums &&
+                    switchStatementIsFullyCoveredEnum(statement)) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+
+        private boolean switchStatementHasDefault(
+                PsiSwitchStatement statement) {
+            final PsiCodeBlock body = statement.getBody();
+            if (body == null) {
+                return false;
+            }
+            final PsiStatement[] statements = body.getStatements();
+            for (final PsiStatement child : statements) {
+                if (child instanceof PsiSwitchLabelStatement &&
+                        ((PsiSwitchLabelStatement)child).isDefaultCase()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean switchStatementIsFullyCoveredEnum(
+                PsiSwitchStatement statement) {
+            final PsiExpression expression = statement.getExpression();
+            if (expression == null) {
+                return false;
+            }
+            final PsiType type = expression.getType();
+            if (type == null) {
+                return false;
+            }
+            if (!(type instanceof PsiClassType)) {
+                return false;
+            }
+            final PsiClass aClass = ((PsiClassType)type).resolve();
+            if (aClass == null) {
+                return false;
+            }
+            if (!aClass.isEnum()) {
+                return false;
+            }
+            final PsiCodeBlock body = statement.getBody();
+            if (body == null) {
+                return false;
+            }
+            final PsiStatement[] statements = body.getStatements();
+            int numCases = 0;
+            for (final PsiStatement child : statements) {
+                if (child instanceof PsiSwitchLabelStatement) {
+                    numCases++;
+                }
+            }
+            final PsiField[] fields = aClass.getFields();
+            int numEnums = 0;
+            for (final PsiField field : fields) {
+                final PsiType fieldType = field.getType();
+                if (fieldType.equals(type)) {
+                    numEnums++;
+                }
+            }
+            return numEnums == numCases;
+        }
+    }
 }

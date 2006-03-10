@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@ package com.siyeh.ig.imports;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
 import com.siyeh.ig.psiutils.ImportUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaLangImportInspection extends ClassInspection{
@@ -39,7 +38,8 @@ public class JavaLangImportInspection extends ClassInspection{
         return GroupNames.IMPORTS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "java.lang.import.problem.descriptor");
     }
@@ -59,10 +59,9 @@ public class JavaLangImportInspection extends ClassInspection{
             if(!(aClass.getParent() instanceof PsiJavaFile)){
                 return;
             }
-
-          if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
-            return;
-          }
+            if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
+                return;
+            }
             final PsiJavaFile file = (PsiJavaFile) aClass.getContainingFile();
             if(!file.getClasses()[0].equals(aClass)){
                 return;
@@ -71,8 +70,8 @@ public class JavaLangImportInspection extends ClassInspection{
             if(importList == null){
                 return;
             }
-            final PsiImportStatement[] importStatements = importList
-                    .getImportStatements();
+            final PsiImportStatement[] importStatements =
+                    importList.getImportStatements();
             for(PsiImportStatement importStatement : importStatements){
                 checkImportStatment(importStatement, file);
             }
@@ -80,8 +79,8 @@ public class JavaLangImportInspection extends ClassInspection{
 
         private void checkImportStatment(PsiImportStatement importStatement,
                                          PsiJavaFile file){
-            final PsiJavaCodeReferenceElement reference = importStatement
-                    .getImportReference();
+            final PsiJavaCodeReferenceElement reference =
+                    importStatement.getImportReference();
             if(reference != null){
                 final String text = importStatement.getQualifiedName();
                 if(text != null){

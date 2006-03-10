@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,6 @@ public class ClassUtils {
             new HashSet<PsiType>(6);
 
     /** @noinspection StaticCollection*/
-    private static final Set<String> numericTypes = new HashSet<String>(6);
-
-    /** @noinspection StaticCollection*/
     private static final Set<PsiType> integralTypes = new HashSet<PsiType>(5);
 
     static {
@@ -69,13 +66,6 @@ public class ClassUtils {
         immutableTypes.add("java.lang.String");
         immutableTypes.add("java.awt.Font");
         immutableTypes.add("java.awt.Color");
-
-        numericTypes.add("java.lang.Byte");
-        numericTypes.add("java.lang.Short");
-        numericTypes.add("java.lang.Integer");
-        numericTypes.add("java.lang.Long");
-        numericTypes.add("java.lang.Float");
-        numericTypes.add("java.lang.Double");
     }
 
     private ClassUtils() {
@@ -164,20 +154,10 @@ public class ClassUtils {
         return inSamePackage(fieldClass, fromClass);
     }
 
-    public static boolean isWrappedNumericType(PsiType type) {
-        if (!(type instanceof PsiClassType)) {
-            return false;
-        }
-        final PsiClassType classType = (PsiClassType) type;
-        final String className = classType.getClassName();
-        return numericTypes.contains(className);
-    }
-
     public static boolean isPrimitiveNumericType(PsiType type) {
         return primitiveNumericTypes.contains(type);
     }
 
-    // todo remove me! PsiUtil.isInnerClass exists
     public static boolean isInnerClass(PsiClass aClass) {
         final PsiClass parentClass = getContainingClass(aClass);
         return parentClass != null;

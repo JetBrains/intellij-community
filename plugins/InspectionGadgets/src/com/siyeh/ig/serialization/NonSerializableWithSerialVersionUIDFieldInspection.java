@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,33 +31,38 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassInspection {
-    private final MakeSerializableFix fix1 = new MakeSerializableFix();
-    private final RemoveSerialVersionUIDFix fix2 = new RemoveSerialVersionUIDFix();
+public class NonSerializableWithSerialVersionUIDFieldInspection
+        extends ClassInspection {
 
     public String getID(){
         return "NonSerializableClassWithSerialVersionUID";
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("non.serializable.with.serialversionuid.display.name");
+        return InspectionGadgetsBundle.message(
+                "non.serializable.with.serialversionuid.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("non.serializable.with.serialversionuid.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "non.serializable.with.serialversionuid.problem.descriptor");
     }
 
     protected InspectionGadgetsFix[] buildFixes(PsiElement location){
-        return new InspectionGadgetsFix[]{fix1, fix2};
+        return new InspectionGadgetsFix[]{new MakeSerializableFix(),
+                                          new RemoveSerialVersionUIDFix()};
     }
 
     private static class RemoveSerialVersionUIDFix extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("non.serializable.with.serialversionuid.remove.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "non.serializable.with.serialversionuid.remove.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -72,15 +77,14 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
         return new NonSerializableWithSerialVersionUIDVisitor();
     }
 
-    private static class NonSerializableWithSerialVersionUIDVisitor extends BaseInspectionVisitor {
+    private static class NonSerializableWithSerialVersionUIDVisitor
+            extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
-
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
-
             final PsiField[] fields = aClass.getFields();
             boolean hasSerialVersionUID = false;
             for(final PsiField field : fields){
@@ -98,10 +102,9 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
         }
 
         private static boolean isSerialVersionUID(PsiField field) {
-            final String methodName = field.getName();
-            return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(methodName);
+            final String fieldName = field.getName();
+            return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(
+                    fieldName);
         }
-
     }
-
 }

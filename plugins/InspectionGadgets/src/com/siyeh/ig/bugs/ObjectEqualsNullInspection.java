@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -38,13 +37,14 @@ public class ObjectEqualsNullInspection extends ExpressionInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "object.equals.null.problem.descriptor");
+    }
+
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,35 +27,33 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToCollectionFieldFromParameterInspection
         extends ExpressionInspection{
+
     public String getID(){
         return "AssignmentToCollectionOrArrayFieldFromParameter";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("assignment.collection.array.field.from.parameter.display.name");
+        return InspectionGadgetsBundle.message(
+                "assignment.collection.array.field.from.parameter.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.ENCAPSULATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiAssignmentExpression assignment = (PsiAssignmentExpression) location.getParent();
-        assert assignment != null;
-        final PsiExpression lhs = assignment.getLExpression();
-        final PsiExpression rhs = assignment.getRExpression();
-        assert rhs != null;
-        final PsiElement element = ((PsiReference) lhs).resolve();
-
-        final PsiField field = (PsiField) element;
-        assert field != null;
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final PsiExpression rhs = (PsiExpression)infos[0];
+        final PsiField field = (PsiField)infos[1];
         final PsiType type = field.getType();
-        if(type.getArrayDimensions() > 0){
-            return InspectionGadgetsBundle
-              .message("assignment.collection.array.field.from.parameter.problem.descriptor.array", rhs.getText());
+        if(type instanceof PsiArrayType){
+            return InspectionGadgetsBundle.message(
+                    "assignment.collection.array.field.from.parameter.problem.descriptor.array",
+                    rhs.getText());
         } else{
-            return InspectionGadgetsBundle
-              .message("assignment.collection.array.field.from.parameter.problem.descriptor.collection", rhs.getText());
+            return InspectionGadgetsBundle.message(
+                    "assignment.collection.array.field.from.parameter.problem.descriptor.collection",
+                    rhs.getText());
         }
     }
 
@@ -69,19 +67,6 @@ public class AssignmentToCollectionFieldFromParameterInspection
         public void visitAssignmentExpression(@NotNull
                 PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
-                return;
-            }
-            final PsiJavaToken sign = expression.getOperationSign();
-
-            final IElementType tokenType = sign.getTokenType();
-            if(!tokenType.equals(JavaTokenType.EQ)){
-                return;
-            }
-            final PsiExpression lhs = expression.getLExpression();
-            if(!CollectionUtils.isArrayOrCollectionField(lhs)){
-                return;
-            }
             final PsiExpression rhs = expression.getRExpression();
             if(!(rhs instanceof PsiReferenceExpression)){
                 return;
@@ -93,8 +78,26 @@ public class AssignmentToCollectionFieldFromParameterInspection
             if(!(element.getParent() instanceof PsiParameterList)){
                 return;
             }
-            registerError(lhs);
+            final PsiJavaToken sign = expression.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
+            if(!tokenType.equals(JavaTokenType.EQ)){
+                return;
+            }
+            final PsiExpression lhs = expression.getLExpression();
+            if (!(lhs instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)lhs;
+            final PsiElement referent = referenceExpression.resolve();
+            if (!(referent instanceof PsiField)) {
+                return;
+            }
+            final PsiField field = (PsiField)referent;
+            if(!CollectionUtils.isArrayOrCollectionField(field)){
+                return;
+            }
+            registerError(lhs, rhs, field);
         }
     }
-
 }

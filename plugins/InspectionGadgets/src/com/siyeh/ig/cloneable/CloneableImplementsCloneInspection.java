@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,19 +36,23 @@ public class CloneableImplementsCloneInspection extends ClassInspection {
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("cloneable.class.without.clone.display.name");
+        return InspectionGadgetsBundle.message(
+                "cloneable.class.without.clone.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.CLONEABLE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("cloneable.class.without.clone.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "cloneable.class.without.clone.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("cloneable.class.without.clone.ignore.option"),
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "cloneable.class.without.clone.ignore.option"),
                 this, "m_ignoreCloneableDueToInheritance");
     }
 
@@ -64,8 +68,7 @@ public class CloneableImplementsCloneInspection extends ClassInspection {
                     || aClass.isEnum()) {
                 return;
             }
-            if(aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiAnonymousClass){
+            if(aClass instanceof PsiTypeParameter){
                 return;
             }
             if (m_ignoreCloneableDueToInheritance) {

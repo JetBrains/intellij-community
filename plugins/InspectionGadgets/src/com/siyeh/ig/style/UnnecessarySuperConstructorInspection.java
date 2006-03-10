@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,62 +26,66 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessarySuperConstructorInspection extends ExpressionInspection {
+public class UnnecessarySuperConstructorInspection
+        extends ExpressionInspection {
 
-  private final UnnecessarySuperConstructorFix fix = new UnnecessarySuperConstructorFix();
-
-  public String getID() {
-    return "UnnecessaryCallToSuper";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.STYLE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessarySuperConstructorVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class UnnecessarySuperConstructorFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.super.constructor.remove.quickfix");
+    public String getID() {
+        return "UnnecessaryCallToSuper";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement superCall = descriptor.getPsiElement();
-      final PsiElement callStatement = superCall.getParent();
-      assert callStatement != null;
-      deleteElement(callStatement);
+    public String getGroupDisplayName() {
+        return GroupNames.STYLE_GROUP_NAME;
     }
 
-  }
-
-  private static class UnnecessarySuperConstructorVisitor extends BaseInspectionVisitor {
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-      super.visitMethodCallExpression(call);
-      final PsiReferenceExpression methodExpression = call.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      final String methodText = methodExpression.getText();
-      if (!PsiKeyword.SUPER.equals(methodText)) {
-        return;
-      }
-      final PsiExpressionList argumentList = call.getArgumentList();
-      if (argumentList == null) {
-        return;
-      }
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args.length != 0) {
-        return;
-      }
-      registerError(call);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessarySuperConstructorVisitor();
     }
-  }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "unnecessary.super.constructor.problem.descriptor");
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new UnnecessarySuperConstructorFix();
+    }
+
+    private static class UnnecessarySuperConstructorFix
+            extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "unnecessary.super.constructor.remove.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement superCall = descriptor.getPsiElement();
+            final PsiElement callStatement = superCall.getParent();
+            assert callStatement != null;
+            deleteElement(callStatement);
+        }
+    }
+
+    private static class UnnecessarySuperConstructorVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call) {
+            super.visitMethodCallExpression(call);
+            final PsiReferenceExpression methodExpression =
+                    call.getMethodExpression();
+            final String methodText = methodExpression.getText();
+            if (!PsiKeyword.SUPER.equals(methodText)) {
+                return;
+            }
+            final PsiExpressionList argumentList = call.getArgumentList();
+            final PsiExpression[] args = argumentList.getExpressions();
+            if (args.length != 0) {
+                return;
+            }
+            registerError(call);
+        }
+    }
 }

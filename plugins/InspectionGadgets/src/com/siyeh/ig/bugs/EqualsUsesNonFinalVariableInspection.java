@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,20 +24,24 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EqualsUsesNonFinalVariableInspection extends ExpressionInspection{
+
     public String getID(){
         return "NonFinalFieldReferenceInEquals";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("non.final.field.in.equals.display.name");
+        return InspectionGadgetsBundle.message(
+                "non.final.field.in.equals.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("non.final.field.in.equals.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "non.final.field.in.equals.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -46,15 +50,17 @@ public class EqualsUsesNonFinalVariableInspection extends ExpressionInspection{
 
     private static class EqualsUsesNonFinalVariableVisitor
             extends BaseInspectionVisitor {
+
         public void visitMethod(@NotNull PsiMethod method){
-            final boolean isEquals = MethodUtils.isEquals(method);
-            if(isEquals){
+            if(MethodUtils.isEquals(method)){
                 method.accept(new PsiRecursiveElementVisitor() {
+
                     public void visitClass(PsiClass aClass) {
                         // Do not recurse into.
                     }
 
-                    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+                    public void visitReferenceExpression(
+                            @NotNull PsiReferenceExpression expression) {
                         super.visitReferenceExpression(expression);
                         final PsiElement element = expression.resolve();
                         if (!(element instanceof PsiField)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,6 @@ public class ConstantMathCallInspection extends ExpressionInspection{
         constantMathCall.add("toRadians");
     }
 
-    private final MakeStrictFix fix = new MakeStrictFix();
-
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "constant.math.call.display.name");
@@ -76,13 +74,14 @@ public class ConstantMathCallInspection extends ExpressionInspection{
         return GroupNames.NUMERIC_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "constant.math.call.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new MakeStrictFix();
     }
 
     private static class MakeStrictFix extends InspectionGadgetsFix{
@@ -181,7 +180,7 @@ public class ConstantMathCallInspection extends ExpressionInspection{
         } else if("sqrt".equals(name)){
             return Double.toString(Math.sqrt(value));
         } else if("cbrt".equals(name)){
-            return Double.toString(Math.pow(value, 1.0/3));
+            return Double.toString(Math.pow(value, 1.0 / 3.0));
         } else if("round".equals(name)){
             return Long.toString(Math.round(value));
         } else if("rint".equals(name)){

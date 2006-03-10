@@ -15,16 +15,15 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
 
@@ -37,9 +36,9 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
-        final PsiBinaryExpression expression = (PsiBinaryExpression)location;
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
         final PsiExpression lhs = expression.getLOperand();
         final PsiJavaToken sign = expression.getOperationSign();
         final boolean value;
@@ -58,8 +57,7 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
     }
 
     static boolean createContainsExpressionValue(
-            @NotNull PsiJavaToken sign,
-            boolean flipped) {
+            @NotNull PsiJavaToken sign, boolean flipped) {
         final IElementType tokenType = sign.getTokenType();
         if (tokenType.equals(JavaTokenType.EQEQ)) {
             return false;
@@ -101,12 +99,12 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
             if (lhs instanceof PsiMethodCallExpression) {
                 final PsiJavaToken sign = expression.getOperationSign();
                 if (isPointLess(lhs, sign, rhs, false)) {
-                    registerError(expression);
+                    registerError(expression, expression);
                 }
             } else if (rhs instanceof PsiMethodCallExpression) {
                 final PsiJavaToken sign = expression.getOperationSign();
                 if (isPointLess(rhs, sign, lhs, true)) {
-                    registerError(expression);
+                    registerError(expression, expression);
                 }
             }
         }

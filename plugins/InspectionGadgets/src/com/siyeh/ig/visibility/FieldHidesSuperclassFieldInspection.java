@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,14 +36,14 @@ import java.util.Set;
 public class FieldHidesSuperclassFieldInspection extends FieldInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = true;
-    private final RenameFix fix = new RenameFix();
 
     public String getID(){
         return "FieldNameHidesFieldInSuperclass";
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("field.name.hides.in.superclass.display.name");
+        return InspectionGadgetsBundle.message(
+                "field.name.hides.in.superclass.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -51,19 +51,22 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("field.name.hides.in.superclass.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "field.name.hides.in.superclass.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.option"),
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "field.name.hides.in.superclass.ignore.option"),
                 this, "m_ignoreInvisibleFields");
     }
 
@@ -71,8 +74,8 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
         return new FieldHidesSuperclassFieldVisitor();
     }
 
-    private class FieldHidesSuperclassFieldVisitor extends BaseInspectionVisitor {
-
+    private class FieldHidesSuperclassFieldVisitor
+            extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {
             final PsiClass aClass = field.getContainingClass();
@@ -89,9 +92,11 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
                 if (!visitedClasses.add(ancestorClass)) {
                     return;
                 }
-                final PsiField ancestorField = ancestorClass.findFieldByName(fieldName, false);
+                final PsiField ancestorField =
+                        ancestorClass.findFieldByName(fieldName, false);
                 if (ancestorField != null) {
-                    if (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(ancestorField, aClass)) {
+                    if (!m_ignoreInvisibleFields ||
+                            ClassUtils.isFieldVisible(ancestorField, aClass)) {
                         registerFieldError(field);
                         return;
                     }
@@ -99,7 +104,5 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
                 ancestorClass = ancestorClass.getSuperClass();
             }
         }
-
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,37 @@ import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
-public class NestedConditionalExpressionInspection extends ExpressionInspection {
+public class NestedConditionalExpressionInspection
+        extends ExpressionInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "nested.conditional.expression.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new NestedConditionalExpressionVisitor();
     }
 
-    private static class NestedConditionalExpressionVisitor extends BaseInspectionVisitor {
+    private static class NestedConditionalExpressionVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitConditionalExpression(PsiConditionalExpression exp) {
-            super.visitConditionalExpression(exp);
-            if (PsiTreeUtil.getParentOfType(exp, PsiConditionalExpression.class) != null) {
-                registerError(exp);
+        public void visitConditionalExpression(
+                PsiConditionalExpression expression) {
+            super.visitConditionalExpression(expression);
+            if (PsiTreeUtil.getParentOfType(expression,
+                    PsiConditionalExpression.class) == null) {
+                return;
             }
+            registerError(expression);
         }
     }
 }

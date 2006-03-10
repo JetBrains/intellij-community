@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,11 +55,11 @@ public class ReturnOfCollectionFieldInspection extends StatementInspection{
                 "ignorePrivateMethods");
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiField field = (PsiField) ((PsiReference) location).resolve();
-        assert field != null;
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final PsiField field = (PsiField)infos[0];
         final PsiType type = field.getType();
-        if(type.getArrayDimensions() > 0){
+        if(type instanceof PsiArrayType){
             return InspectionGadgetsBundle.message(
                     "return.of.collection.array.field.problem.descriptor.array");
         } else{
@@ -90,10 +90,29 @@ public class ReturnOfCollectionFieldInspection extends StatementInspection{
                     containingMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
                 return;
             }
-            if(!CollectionUtils.isArrayOrCollectionField(returnValue)){
+            final PsiClass returnStatementClass =
+                    containingMethod.getContainingClass();
+            if (returnStatementClass == null) {
                 return;
             }
-            registerError(returnValue);
+            if (!(returnValue instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)returnValue;
+            final PsiElement referent = referenceExpression.resolve();
+            if(!(referent instanceof PsiField)){
+                return;
+            }
+            final PsiField field = (PsiField) referent;
+            final PsiClass fieldClass = field.getContainingClass();
+            if (!returnStatementClass.equals(fieldClass)) {
+                return;
+            }
+            if(!CollectionUtils.isArrayOrCollectionField(field)){
+                return;
+            }
+            registerError(returnValue, field);
         }
     }
 }

@@ -322,7 +322,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CustomClassloaderInspection.class);
         m_inspectionClasses.add(CustomSecurityManagerInspection.class);
         m_inspectionClasses.add(SystemSetSecurityManagerInspection.class);
-        m_inspectionClasses.add(ClassLoader2InstantiationInspection.class);
+        m_inspectionClasses.add(ClassLoaderInstantiationInspection.class);
         m_inspectionClasses.add(UnsecureRandomNumberGenerationInspection.class);
         m_inspectionClasses.add(SystemPropertiesInspection.class);
         m_inspectionClasses.add(PublicStaticArrayFieldInspection.class);

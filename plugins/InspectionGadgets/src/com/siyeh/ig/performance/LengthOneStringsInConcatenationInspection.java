@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class LengthOneStringsInConcatenationInspection
         extends ExpressionInspection {
@@ -45,11 +44,10 @@ public class LengthOneStringsInConcatenationInspection
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final String text = location.getText();
-        final int length = text.length();
+    @NotNull
+    public String buildErrorString(Object... infos) {
         final String transformedText =
-                '\'' + text.substring(1, length - 1) + '\'';
+                '\'' + (String)infos[0] + '\'';
         return InspectionGadgetsBundle.message(
                 "length.one.strings.in.concatenation.problem.descriptor",
                 transformedText);
@@ -57,12 +55,6 @@ public class LengthOneStringsInConcatenationInspection
 
     public BaseInspectionVisitor buildVisitor() {
         return new LengthOneStringsInConcatenationVisitor();
-    }
-
-    @Nullable
-    protected String buildErrorString(Object arg) {
-        return InspectionGadgetsBundle.message(
-                "length.one.strings.in.concatenation.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -112,7 +104,7 @@ public class LengthOneStringsInConcatenationInspection
                 !isArgumentOfStringAppend(expression)) {
                 return;
             }
-            registerError(expression);
+            registerError(expression, value);
         }
 
         private static boolean isArgumentOfConcatenation(

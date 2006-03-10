@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,10 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ConstantConditionalExpressionInspection
         extends ExpressionInspection {
-
-    private final ConstantConditionalFix fix = new ConstantConditionalFix();
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
@@ -45,14 +44,16 @@ public class ConstantConditionalExpressionInspection
         return new ConstantConditionalExpressionVisitor();
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiConditionalExpression exp = (PsiConditionalExpression)location;
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiConditionalExpression exp =
+                (PsiConditionalExpression)infos[0];
         return InspectionGadgetsBundle.message(
                 "constant.conditional.expression.problem.descriptor",
                 '\'' + exp.getText(), calculateReplacementExpression(exp));
     }
 
-    private static String calculateReplacementExpression(
+    static String calculateReplacementExpression(
             PsiConditionalExpression exp) {
         final PsiExpression thenExpression = exp.getThenExpression();
         final PsiExpression elseExpression = exp.getElseExpression();
@@ -67,7 +68,7 @@ public class ConstantConditionalExpressionInspection
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new ConstantConditionalFix();
     }
 
     private static class ConstantConditionalFix extends InspectionGadgetsFix {
@@ -90,19 +91,20 @@ public class ConstantConditionalExpressionInspection
     private static class ConstantConditionalExpressionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitConditionalExpression(PsiConditionalExpression exp) {
-            super.visitConditionalExpression(exp);
-            final PsiExpression condition = exp.getCondition();
-            final PsiExpression thenExpression = exp.getThenExpression();
+        public void visitConditionalExpression(
+                PsiConditionalExpression expression) {
+            super.visitConditionalExpression(expression);
+            final PsiExpression condition = expression.getCondition();
+            final PsiExpression thenExpression = expression.getThenExpression();
             if (thenExpression == null) {
                 return;
             }
-            final PsiExpression elseExpression = exp.getElseExpression();
+            final PsiExpression elseExpression = expression.getElseExpression();
             if (elseExpression == null) {
                 return;
             }
             if (BoolUtils.isFalse(condition) || BoolUtils.isTrue(condition)) {
-                registerError(exp);
+                registerError(expression, expression);
             }
         }
     }

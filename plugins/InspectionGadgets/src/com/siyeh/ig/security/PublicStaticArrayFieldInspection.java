@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,15 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.psiutils.CollectionUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PublicStaticArrayFieldInspection extends FieldInspection {
 
@@ -35,8 +37,8 @@ public class PublicStaticArrayFieldInspection extends FieldInspection {
         return GroupNames.SECURITY_GROUP_NAME;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "public.static.array.field.problem.descriptor");
     }

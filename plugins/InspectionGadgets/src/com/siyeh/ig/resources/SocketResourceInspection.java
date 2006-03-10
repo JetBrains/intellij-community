@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,11 @@ public class SocketResourceInspection extends ExpressionInspection{
         return GroupNames.RESOURCE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiExpression expression = (PsiExpression) location;
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final PsiExpression expression = (PsiExpression) infos[0];
         final PsiType type = expression.getType();
+        assert type != null;
         final String text = type.getPresentableText();
         return InspectionGadgetsBundle.message(
                 "resource.opened.not.closed.problem.descriptor", text);
@@ -55,8 +57,6 @@ public class SocketResourceInspection extends ExpressionInspection{
 
     private static class SocketResourceVisitor extends BaseInspectionVisitor{
 
-        @NonNls private static final String ACCEPT = "accept";
-
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
@@ -65,7 +65,7 @@ public class SocketResourceInspection extends ExpressionInspection{
             }
             final PsiElement parent = expression.getParent();
             if(!(parent instanceof PsiAssignmentExpression)) {
-                registerError(expression);
+                registerError(expression, expression);
                 return;
             }
             final PsiAssignmentExpression assignment =
@@ -87,7 +87,7 @@ public class SocketResourceInspection extends ExpressionInspection{
                         PsiTreeUtil.getParentOfType(currentContext,
                                                     PsiTryStatement.class);
                 if(tryStatement == null) {
-                    registerError(expression);
+                    registerError(expression, expression);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(
@@ -105,7 +105,7 @@ public class SocketResourceInspection extends ExpressionInspection{
             }
             final PsiElement parent = expression.getParent();
             if(!(parent instanceof PsiAssignmentExpression)){
-                registerError(expression);
+                registerError(expression, expression);
                 return;
             }
             final PsiAssignmentExpression assignment =
@@ -120,14 +120,13 @@ public class SocketResourceInspection extends ExpressionInspection{
                 return;
             }
             final PsiVariable boundVariable = (PsiVariable) referent;
-
             PsiElement currentContext = expression;
             while(true){
                 final PsiTryStatement tryStatement =
                         PsiTreeUtil.getParentOfType(currentContext,
                                                     PsiTryStatement.class);
                 if(tryStatement == null){
-                    registerError(expression);
+                    registerError(expression, expression);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(
@@ -176,8 +175,9 @@ public class SocketResourceInspection extends ExpressionInspection{
                 PsiMethodCallExpression expression){
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if(!ACCEPT.equals(methodName)) {
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if(!"accept".equals(methodName)) {
                 return false;
             }
             final PsiExpression qualifier =
@@ -191,6 +191,7 @@ public class SocketResourceInspection extends ExpressionInspection{
     }
 
     private static class CloseVisitor extends PsiRecursiveElementVisitor{
+
         private boolean containsClose = false;
         private PsiVariable objectToClose;
 

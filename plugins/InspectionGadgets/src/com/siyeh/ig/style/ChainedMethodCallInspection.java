@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,10 @@ public class ChainedMethodCallInspection extends ExpressionInspection {
         return GroupNames.STYLE_GROUP_NAME;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ChainedMethodCallVisitor();
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "chained.method.call.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
@@ -57,6 +59,10 @@ public class ChainedMethodCallInspection extends ExpressionInspection {
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ChainedMethodCallVisitor();
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
@@ -83,8 +89,7 @@ public class ChainedMethodCallInspection extends ExpressionInspection {
                     methodCallExpression.getQualifierExpression();
             final DataManager dataManager = DataManager.getInstance();
             final DataContext dataContext = dataManager.getDataContext();
-            introduceHandler.invoke(project,
-                    new PsiElement[]{qualifier},
+            introduceHandler.invoke(project, new PsiElement[] {qualifier},
                     dataContext);
         }
     }

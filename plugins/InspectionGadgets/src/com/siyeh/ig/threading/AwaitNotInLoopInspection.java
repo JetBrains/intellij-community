@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,19 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AwaitNotInLoopInspection extends ExpressionInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.THREADING_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "await.not.in.loop.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -39,7 +46,8 @@ public class AwaitNotInLoopInspection extends ExpressionInspection {
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            if (!MethodCallUtils.isMethodCall(expression, "await", 0, PsiType.VOID)){
+            if (!MethodCallUtils.isMethodCall(expression, "await", 0,
+                    PsiType.VOID)){
                 return;
             }
             final PsiMethod method = expression.resolveMethod();

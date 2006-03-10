@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,9 +51,10 @@ public class UnnecessarilyQualifiedStaticUsageInspection
         return GroupNames.STYLE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiElement parent = location.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final boolean methodCall = ((Boolean)infos[0]).booleanValue();
+        if (methodCall) {
             return InspectionGadgetsBundle.message(
                     "unnecessarily.qualified.static.usage.problem.descriptor");
         } else {
@@ -123,7 +124,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             if (!isUnnecessarilyQualifiedAccess(classReference)) {
                 return;
             }
-            registerError(classReference);
+            registerError(classReference, Boolean.FALSE);
         }
 
         public void visitReferenceList(PsiReferenceList list) {
@@ -133,7 +134,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             for (PsiJavaCodeReferenceElement referenceElement :
                     referenceElements) {
                 if (isUnnecessarilyQualifiedAccess(referenceElement)) {
-                    registerError(referenceElement);
+                    registerError(referenceElement, Boolean.FALSE);
                 }
             }
         }
@@ -148,7 +149,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             if (!isUnnecessarilyQualifiedAccess(typeReference)) {
                 return;
             }
-            registerError(typeReference);
+            registerError(typeReference, Boolean.FALSE);
         }
 
         public void visitMethodCallExpression(
@@ -162,7 +163,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             if (!isUnnecessarilyQualifiedMethodCall(methodExpression)) {
                 return;
             }
-            registerError(methodExpression);
+            registerError(methodExpression, Boolean.TRUE);
         }
 
         public void visitReferenceExpression(
@@ -174,7 +175,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             if (!isUnnecessarilyQualifiedAccess(expression)) {
                 return;
             }
-            registerError(expression);
+            registerError(expression, Boolean.FALSE);
         }
 
         private boolean isUnnecessarilyQualifiedAccess(

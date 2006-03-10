@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,11 @@ import org.jetbrains.annotations.NotNull;
 public class AnonymousClassComplexityInspection
         extends ClassMetricInspection {
 
+    private static final int DEFAULT_COMPLEXITY_LIMIT = 3;
+
     public String getID() {
         return "OverlyComplexAnonymousInnerClass";
     }
-    private static final int DEFAULT_COMPLEXITY_LIMIT = 3;
-    private final MoveAnonymousToInnerClassFix fix =
-            new MoveAnonymousToInnerClassFix();
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -52,16 +51,16 @@ public class AnonymousClassComplexityInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new MoveAnonymousToInnerClassFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiClass aClass = (PsiClass) location.getParent();
-        final int totalComplexity = calculateTotalComplexity(aClass);
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final Integer totalComplexity = (Integer)infos[0];
         return InspectionGadgetsBundle.message(
                 "overly.complex.anonymous.inner.class.problem.descriptor",
                 totalComplexity);
@@ -82,40 +81,40 @@ public class AnonymousClassComplexityInspection
             if (totalComplexity <= getLimit()) {
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, Integer.valueOf(totalComplexity));
         }
-    }
 
-    static int calculateTotalComplexity(PsiClass aClass) {
-        if (aClass == null) {
-            return 0;
+        private int calculateTotalComplexity(PsiClass aClass) {
+            if (aClass == null) {
+                return 0;
+            }
+            final PsiMethod[] methods = aClass.getMethods();
+            int totalComplexity = calculateComplexityForMethods(methods);
+            totalComplexity += calculateInitializerComplexity(aClass);
+            return totalComplexity;
         }
-        final PsiMethod[] methods = aClass.getMethods();
-        int totalComplexity = calculateComplexityForMethods(methods);
-        totalComplexity += calculateInitializerComplexity(aClass);
-        return totalComplexity;
-    }
 
-    private static int calculateInitializerComplexity(PsiClass aClass) {
-        final ComplexityVisitor visitor = new ComplexityVisitor();
-        int complexity = 0;
-        final PsiClassInitializer[] initializers = aClass.getInitializers();
-        for(final PsiClassInitializer initializer : initializers){
-            visitor.reset();
-            initializer.accept(visitor);
-            complexity += visitor.getComplexity();
+        private int calculateInitializerComplexity(PsiClass aClass) {
+            final ComplexityVisitor visitor = new ComplexityVisitor();
+            int complexity = 0;
+            final PsiClassInitializer[] initializers = aClass.getInitializers();
+            for(final PsiClassInitializer initializer : initializers){
+                visitor.reset();
+                initializer.accept(visitor);
+                complexity += visitor.getComplexity();
+            }
+            return complexity;
         }
-        return complexity;
-    }
 
-    private static int calculateComplexityForMethods(PsiMethod[] methods) {
-        final ComplexityVisitor visitor = new ComplexityVisitor();
-        int complexity = 0;
-        for(final PsiMethod method : methods){
-            visitor.reset();
-            method.accept(visitor);
-            complexity += visitor.getComplexity();
+        private int calculateComplexityForMethods(PsiMethod[] methods) {
+            final ComplexityVisitor visitor = new ComplexityVisitor();
+            int complexity = 0;
+            for(final PsiMethod method : methods){
+                visitor.reset();
+                method.accept(visitor);
+                complexity += visitor.getComplexity();
+            }
+            return complexity;
         }
-        return complexity;
     }
 }

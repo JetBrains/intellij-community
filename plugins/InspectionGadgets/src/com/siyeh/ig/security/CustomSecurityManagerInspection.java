@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CustomSecurityManagerInspection extends ClassInspection {
@@ -28,11 +29,19 @@ public class CustomSecurityManagerInspection extends ClassInspection {
         return GroupNames.SECURITY_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "custom.security.manager.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new CustomSecurityManagerVisitor();
     }
 
-    private static class CustomSecurityManagerVisitor extends BaseInspectionVisitor {
+    private static class CustomSecurityManagerVisitor
+            extends BaseInspectionVisitor {
+
         public void visitClass(@NotNull PsiClass aClass) {
             if (!ClassUtils.isSubclass(aClass, "java.lang.SecurityManager")) {
                 return;

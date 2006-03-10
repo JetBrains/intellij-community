@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,92 +28,88 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantNamingConventionInspection extends ConventionInspection {
 
-  private static final int DEFAULT_MIN_LENGTH = 5;
-  private static final int DEFAULT_MAX_LENGTH = 32;
-  private final RenameFix fix = new RenameFix();
+    private static final int DEFAULT_MIN_LENGTH = 5;
+    private static final int DEFAULT_MAX_LENGTH = 32;
 
-  public String getGroupDisplayName() {
-    return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  public String buildErrorString(PsiElement location) {
-    final PsiField field = (PsiField)location.getParent();
-    assert field != null;
-    final String fieldName = field.getName();
-    if (fieldName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message("constant.name.convention.problem.descriptor.short");
-    }
-    else if (fieldName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message("constant.name.convention.problem.descriptor.long");
-    }
-    return InspectionGadgetsBundle.message("constant.name.convention.problem.descriptor.regex.mismatch", getRegex());
-  }
-
-  protected String getDefaultRegex() {
-    return "[A-Z_]*";
-  }
-
-  protected int getDefaultMinLength() {
-    return DEFAULT_MIN_LENGTH;
-  }
-
-  protected int getDefaultMaxLength() {
-    return DEFAULT_MAX_LENGTH;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new NamingConventionsVisitor();
-  }
-
-  public ProblemDescriptor[] doCheckField(PsiField field,
-                                          InspectionManager manager,
-                                          boolean isOnTheFly) {
-    final PsiClass containingClass = field.getContainingClass();
-    if (containingClass == null) {
-      return super.doCheckField(field, manager, isOnTheFly);
-    }
-    if (!containingClass.isPhysical()) {
-      return super.doCheckField(field, manager, isOnTheFly);
+    public String getGroupDisplayName() {
+        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
-    final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
-    field.accept(visitor);
-    return visitor.getErrors();
-  }
-
-  private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-
-    public void visitField(@NotNull PsiField field) {
-      super.visitField(field);
-      if (!field.hasModifierProperty(PsiModifier.STATIC) ||
-          !field.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      final String name = field.getName();
-      if (name == null) {
-        return;
-      }
-      final PsiType type = field.getType();
-      if (type == null) {
-        return;
-      }
-      if (!ClassUtils.isImmutable(type)) {
-        return;
-      }
-      if (isValid(name)) {
-        return;
-      }
-      registerFieldError(field);
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RenameFix();
     }
 
-  }
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+        return true;
+    }
+
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final String fieldName = (String)infos[0];
+        if (fieldName.length() < getMinLength()) {
+            return InspectionGadgetsBundle.message(
+                    "constant.name.convention.problem.descriptor.short");
+        }
+        else if (fieldName.length() > getMaxLength()) {
+            return InspectionGadgetsBundle.message(
+                    "constant.name.convention.problem.descriptor.long");
+        }
+        return InspectionGadgetsBundle.message(
+                "constant.name.convention.problem.descriptor.regex.mismatch",
+                getRegex());
+    }
+
+    protected String getDefaultRegex() {
+        return "[A-Z_]*";
+    }
+
+    protected int getDefaultMinLength() {
+        return DEFAULT_MIN_LENGTH;
+    }
+
+    protected int getDefaultMaxLength() {
+        return DEFAULT_MAX_LENGTH;
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new NamingConventionsVisitor();
+    }
+
+    public ProblemDescriptor[] doCheckField(PsiField field,
+                                            InspectionManager manager,
+                                            boolean isOnTheFly) {
+        final PsiClass containingClass = field.getContainingClass();
+        if (containingClass == null) {
+            return super.doCheckField(field, manager, isOnTheFly);
+        }
+        if (!containingClass.isPhysical()) {
+            return super.doCheckField(field, manager, isOnTheFly);
+        }
+        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
+        field.accept(visitor);
+        return visitor.getErrors();
+    }
+
+    private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
+        public void visitField(@NotNull PsiField field) {
+            super.visitField(field);
+            if (!field.hasModifierProperty(PsiModifier.STATIC) ||
+                    !field.hasModifierProperty(PsiModifier.FINAL)) {
+                return;
+            }
+            final String name = field.getName();
+            if (name == null) {
+                return;
+            }
+            final PsiType type = field.getType();
+            if (!ClassUtils.isImmutable(type)) {
+                return;
+            }
+            if (isValid(name)) {
+                return;
+            }
+            registerFieldError(field, name);
+        }
+    }
 }

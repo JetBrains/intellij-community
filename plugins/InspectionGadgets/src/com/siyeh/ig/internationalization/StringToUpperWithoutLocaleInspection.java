@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,35 +24,41 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class StringToUpperWithoutLocaleInspection extends ExpressionInspection {
+
     public String getID(){
         return "StringToUpperCaseOrToLowerCaseWithoutLocale";
     }
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("string.touppercase.tolowercase.without.locale.display.name");
+        return InspectionGadgetsBundle.message(
+                "string.touppercase.tolowercase.without.locale.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("string.touppercase.tolowercase.without.locale.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "string.touppercase.tolowercase.without.locale.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new StringToUpperWithoutLocaleVisitor();
     }
 
-    private static class StringToUpperWithoutLocaleVisitor extends BaseInspectionVisitor {
+    private static class StringToUpperWithoutLocaleVisitor
+            extends BaseInspectionVisitor {
      
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
-                return;
-            }
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.TO_UPPER_CASE.equals(methodName) && !HardcodedMethodConstants.TO_LOWER_CASE.equals(methodName)) {
+            if (!HardcodedMethodConstants.TO_UPPER_CASE.equals(methodName) &&
+                    !HardcodedMethodConstants.TO_LOWER_CASE.equals(methodName)) {
                 return;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -60,25 +66,19 @@ public class StringToUpperWithoutLocaleInspection extends ExpressionInspection {
                 return;
             }
             final PsiParameterList paramList = method.getParameterList();
-            if (paramList == null) {
-                return;
-            }
             final PsiParameter[] parameters = paramList.getParameters();
             if (parameters.length == 1) {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null)
-            {
+            if(containingClass == null) {
                 return;
             }
             final String className = containingClass.getQualifiedName();
-            if(!"java.lang.String".equals(className))
-            {
+            if(!"java.lang.String".equals(className)) {
                 return;
             }
             registerMethodCallError(expression);
         }
     }
-
 }

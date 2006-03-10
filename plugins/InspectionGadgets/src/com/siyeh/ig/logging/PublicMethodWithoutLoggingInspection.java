@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,24 +31,33 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 public class PublicMethodWithoutLoggingInspection extends MethodInspection{
+
     /**
      * @noinspection PublicField
      */
     public String loggerClassName = "java.util.logging.Logger";
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("public.method.without.logging.display.name");
+        return InspectionGadgetsBundle.message(
+                "public.method.without.logging.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.LOGGING_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "public.method.without.logging.problem.descriptor");
+    }
+
     public JComponent createOptionsPanel(){
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
 
-        final JLabel classNameLabel = new JLabel(InspectionGadgetsBundle.message("logger.name.option"));
+        final JLabel classNameLabel = new JLabel(
+                InspectionGadgetsBundle.message("logger.name.option"));
         classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
         final JTextField loggerClassNameField = new JTextField();
@@ -95,10 +104,6 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
         return panel;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("public.method.without.logging.problem.descriptor");
-    }
-
     public BaseInspectionVisitor buildVisitor(){
         return new PublicMethodWithoutLoggingVisitor();
     }
@@ -117,7 +122,6 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
             if(method.isConstructor()){
                 return;
             }
-
             if(PropertyUtil.isSimplePropertyAccessor(method)){
                 return;
             }
@@ -137,6 +141,7 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
 
     private class ContainsLoggingCallVisitor
             extends PsiRecursiveElementVisitor{
+
         private boolean containsLoggingCall = false;
 
         public void visitElement(@NotNull PsiElement element){
@@ -145,7 +150,8 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
             }
         }
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             if(containsLoggingCall){
                 return;
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,26 +36,14 @@ public class EqualsBetweenInconvertibleTypesInspection
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiReferenceExpression methodExpression =
-                (PsiReferenceExpression) location.getParent();
-        assert methodExpression != null;
-        final PsiMethodCallExpression expression =
-                (PsiMethodCallExpression) methodExpression.getParent();
-        assert expression != null;
-        final PsiExpressionList argumentList = expression.getArgumentList();
-        final PsiExpression[] args = argumentList.getExpressions();
-        final PsiType comparedType = args[0].getType();
-        assert comparedType != null;
-        final PsiExpression qualifier =
-                methodExpression.getQualifierExpression();
-        assert qualifier != null;
-        final PsiType comparisonType = qualifier.getType();
-        assert comparisonType != null;
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiType comparedType = (PsiType)infos[0];
+        final PsiType comparisonType = (PsiType)infos[1];
         return InspectionGadgetsBundle.message(
                 "equals.between.inconvertible.types.problem.descriptor",
-                comparisonType.getPresentableText(),
-                                               comparedType.getPresentableText());
+                comparedType.getPresentableText(),
+                comparisonType.getPresentableText());
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -78,34 +66,25 @@ public class EqualsBetweenInconvertibleTypesInspection
             if (args.length != 1) {
                 return;
             }
-            final PsiExpression arg = args[0];
-            final PsiExpression qualifier =
+            final PsiExpression expression1 = args[0];
+            final PsiExpression expression2 =
                     methodExpression.getQualifierExpression();
-            if (!areIncompatibleTypes(arg, qualifier)) {
+            if (expression2 == null) {
                 return;
-            }
-            registerMethodCallError(expression);
-        }
-
-        private static boolean areIncompatibleTypes(PsiExpression expression1,
-                                                    PsiExpression expression2) {
-            if (expression1 == null) {
-                return false;
             }
             final PsiType comparedType = expression1.getType();
             if (comparedType == null) {
-                return false;
-            }
-            if (expression2 == null) {
-                return false;
+                return;
             }
             final PsiType comparisonType = expression2.getType();
             if (comparisonType == null) {
-                return false;
+                return;
             }
-            return !TypeConversionUtil.areTypesConvertible(comparedType,
-                                                           comparisonType);
+            if (TypeConversionUtil.areTypesConvertible(comparedType,
+                    comparisonType)) {
+                return;
+            }
+            registerMethodCallError(expression, comparedType, comparisonType);
         }
     }
-
 }

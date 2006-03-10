@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
+
     /**
          * @noinspection StaticCollection
          */
@@ -96,17 +97,14 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         queried = true;
     }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+    public void visitMethodCallExpression(
+            @NotNull PsiMethodCallExpression call){
         if(queried){
             return;
         }
         super.visitMethodCallExpression(call);
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-        if(methodExpression == null){
-            return;
-        }
-
         final PsiExpression qualifier =
                 methodExpression.getQualifierExpression();
         if(!(qualifier instanceof PsiReferenceExpression)){

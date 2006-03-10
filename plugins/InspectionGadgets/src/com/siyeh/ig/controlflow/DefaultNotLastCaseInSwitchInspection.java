@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,43 +20,52 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultNotLastCaseInSwitchInspection extends StatementInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new DefaultNotLastCaseInSwitchVisitor();
-  }
-
-  private static class DefaultNotLastCaseInSwitchVisitor extends StatementInspectionVisitor {
-
-    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      super.visitSwitchStatement(statement);
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      boolean labelSeen = false;
-      for (int i = statements.length - 1; i >= 0; i--) {
-        final PsiStatement child = statements[i];
-        if (child instanceof PsiSwitchLabelStatement) {
-          final PsiSwitchLabelStatement label = (PsiSwitchLabelStatement)child;
-          if (label.isDefaultCase()) {
-            if (labelSeen) {
-              registerStatementError(label);
-            }
-            return;
-          }
-          else {
-            labelSeen = true;
-          }
-        }
-      }
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
-  }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "default.not.last.case.in.switch.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new DefaultNotLastCaseInSwitchVisitor();
+    }
+
+    private static class DefaultNotLastCaseInSwitchVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitSwitchStatement(
+                @NotNull PsiSwitchStatement statement) {
+            super.visitSwitchStatement(statement);
+            final PsiCodeBlock body = statement.getBody();
+            if (body == null) {
+                return;
+            }
+            final PsiStatement[] statements = body.getStatements();
+            boolean labelSeen = false;
+            for (int i = statements.length - 1; i >= 0; i--) {
+                final PsiStatement child = statements[i];
+                if (child instanceof PsiSwitchLabelStatement) {
+                    final PsiSwitchLabelStatement label =
+                            (PsiSwitchLabelStatement)child;
+                    if (label.isDefaultCase()) {
+                        if (labelSeen) {
+                            registerStatementError(label);
+                        }
+                        return;
+                    } else {
+                        labelSeen = true;
+                    }
+                }
+            }
+        }
+    }
 }

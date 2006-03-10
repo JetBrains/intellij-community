@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,12 +44,11 @@ import java.util.List;
 public class QuestionableNameInspection extends ClassInspection{
     /** @noinspection PublicField*/
     @NonNls public String nameCheckString = "foo,bar,baz";
-    private final RenameFix fix = new RenameFix();
 
     private List<String> nameList = new ArrayList<String>(32);
     private final Object lock = new Object();
 
-    {
+    public QuestionableNameInspection(){
         parseNameString();
     }
 
@@ -98,21 +97,23 @@ public class QuestionableNameInspection extends ClassInspection{
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "questionable.name.problem.descriptor");
+    }
+
     public JComponent createOptionsPanel(){
         final Form form = new Form();
         return form.getContentPanel();
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
-    }
-
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("questionable.name.problem.descriptor") + " ";
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -158,11 +159,13 @@ public class QuestionableNameInspection extends ClassInspection{
             super();
             table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             table.setRowSelectionAllowed(true);
-            table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            table.setSelectionMode(
+                    ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             final QuestionableNameTableModel model =
             new QuestionableNameTableModel();
             table.setModel(model);
             addButton.addActionListener(new ActionListener(){
+
                 public void actionPerformed(ActionEvent e){
                     final int listSize;
                     synchronized(lock){
@@ -172,13 +175,17 @@ public class QuestionableNameInspection extends ClassInspection{
                     model.fireTableStructureChanged();
 
                     EventQueue.invokeLater(new Runnable() {
+
                         public void run() {
-                            final Rectangle rect = table.getCellRect(listSize, 0, true);
+                            final Rectangle rect = table.getCellRect(listSize,
+                                    0, true);
                             table.scrollRectToVisible(rect);
                             table.editCellAt(listSize, 0);
-                            final TableCellEditor editor = table.getCellEditor();
+                            final TableCellEditor editor =
+                                    table.getCellEditor();
                             final Component component =
-                                    editor.getTableCellEditorComponent(table, null, true, listSize, 0);
+                                    editor.getTableCellEditorComponent(table,
+                                            null, true, listSize, 0);
                             component.requestFocus();
                 }
                     });
@@ -186,6 +193,7 @@ public class QuestionableNameInspection extends ClassInspection{
                 }
             });
             deleteButton.addActionListener(new ActionListener(){
+
                 public void actionPerformed(ActionEvent e){
                     final int[] selectedRows = table.getSelectedRows();
                     if (selectedRows.length == 0) {
@@ -216,6 +224,7 @@ public class QuestionableNameInspection extends ClassInspection{
     }
 
     private class QuestionableNameTableModel extends AbstractTableModel{
+
         public int getRowCount(){
             synchronized(lock) {
                 return nameList.size();
@@ -227,7 +236,8 @@ public class QuestionableNameInspection extends ClassInspection{
         }
 
         public String getColumnName(int columnIndex){
-            return InspectionGadgetsBundle.message("questionable.name.coulumn.title");
+            return InspectionGadgetsBundle.message(
+                    "questionable.name.coulumn.title");
         }
 
         public Class getColumnClass(int columnIndex){

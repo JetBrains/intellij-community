@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,25 +29,30 @@ public class IncrementDecrementUsedAsExpressionInspection
     public String getID() {
         return "ValueOfIncrementOrDecrementUsed";
     }
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("increment.decrement.display.name");
+        return InspectionGadgetsBundle.message(
+                "increment.decrement.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.ASSIGNMENT_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final String expressionType;
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiElement location = (PsiElement)infos[0];
         if (location instanceof PsiPostfixExpression) {
             final PsiPostfixExpression postfixExpression =
                     (PsiPostfixExpression)location;
             final PsiJavaToken sign = postfixExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
-              return InspectionGadgetsBundle.message("value.of.post.increment.problem.descriptor");
+                return InspectionGadgetsBundle.message(
+                        "value.of.post.increment.problem.descriptor");
             } else {
-              return InspectionGadgetsBundle.message("value.of.post.decrement.problem.descriptor");
+                return InspectionGadgetsBundle.message(
+                        "value.of.post.decrement.problem.descriptor");
             }
         } else {
             final PsiPrefixExpression prefixExpression =
@@ -55,13 +60,15 @@ public class IncrementDecrementUsedAsExpressionInspection
             final PsiJavaToken sign = prefixExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
-              return InspectionGadgetsBundle.message("value.of.pre.increment.problem.descriptor");
+                return InspectionGadgetsBundle.message(
+                        "value.of.pre.increment.problem.descriptor");
             } else {
-              return InspectionGadgetsBundle.message("value.of.pre.decrement.problem.descriptor");
+                return InspectionGadgetsBundle.message(
+                        "value.of.pre.decrement.problem.descriptor");
             }
         }
-
     }
+
 
     public BaseInspectionVisitor buildVisitor() {
         return new IncrementDecrementUsedAsExpressionVisitor();
@@ -73,44 +80,40 @@ public class IncrementDecrementUsedAsExpressionInspection
         public void visitPostfixExpression(
                 @NotNull PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
-            if(expression.getParent() instanceof PsiExpressionStatement ||
-                    (expression.getParent() instanceof PsiExpressionList &&
-                            expression.getParent().getParent() instanceof
+            final PsiElement parent = expression.getParent();
+            if(parent instanceof PsiExpressionStatement ||
+                    (parent instanceof PsiExpressionList &&
+                            parent.getParent() instanceof
                                     PsiExpressionListStatement)) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
-                return;
-            }
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;
             }
-            registerError(expression);
+            registerError(expression, expression);
         }
 
         public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
 
-            if (expression.getParent() instanceof PsiExpressionStatement ||
-                    (expression.getParent() instanceof PsiExpressionList &&
-                            expression.getParent().getParent() instanceof
+            final PsiElement parent = expression.getParent();
+            if (parent instanceof PsiExpressionStatement ||
+                    (parent instanceof PsiExpressionList &&
+                            parent.getParent() instanceof
                                     PsiExpressionListStatement)) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
-                return;
-            }
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;
             }
-            registerError(expression);
+            registerError(expression, expression);
         }
     }
 }

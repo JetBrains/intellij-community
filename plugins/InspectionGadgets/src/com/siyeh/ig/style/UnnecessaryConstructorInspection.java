@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryConstructorInspection extends ClassInspection {
 
-    private final UnnecessaryConstructorFix fix =
-            new UnnecessaryConstructorFix();
-
     public String getID() {
         return "RedundantNoArgConstructor";
     }
@@ -39,12 +36,18 @@ public class UnnecessaryConstructorInspection extends ClassInspection {
         return GroupNames.STYLE_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "unnecessary.constructor.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryConstructorVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new UnnecessaryConstructorFix();
     }
 
     private static class UnnecessaryConstructorFix

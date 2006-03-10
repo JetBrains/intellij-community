@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 public class NonStaticFinalLoggerInspection extends ClassInspection {
+
     /** @noinspection PublicField*/
     public String loggerClassName = "java.util.logging.Logger";
 
@@ -38,19 +39,26 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("non.constant.logger.display.name");
+        return InspectionGadgetsBundle.message(
+                "non.constant.logger.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.LOGGING_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "non.constant.logger.problem.descriptor");
+    }
 
     public JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
 
-        final JLabel classNameLabel = new JLabel(InspectionGadgetsBundle.message("logger.name.option"));
+        final JLabel classNameLabel = new JLabel(
+                InspectionGadgetsBundle.message("logger.name.option"));
         classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
         final JTextField loggerClassNameField = new JTextField();
@@ -77,7 +85,8 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
                 loggerClassName = loggerClassNameField.getText();
             }
         };
-        final Document loggerClassNameDocument = loggerClassNameField.getDocument();
+        final Document loggerClassNameDocument =
+                loggerClassNameField.getDocument();
         loggerClassNameDocument.addDocumentListener(listener);
 
         final GridBagConstraints constraints = new GridBagConstraints();
@@ -96,10 +105,6 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
         return panel;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("non.constant.logger.problem.descriptor");
-    }
-
     public BaseInspectionVisitor buildVisitor() {
         return new ClassWithoutLoggerVisitor();
     }
@@ -108,19 +113,19 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             //no recursion to avoid drilldown
-            if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+            if (aClass.isInterface() || aClass.isEnum() ||
+                    aClass.isAnnotationType()) {
                 return;
             }
-            if(aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiAnonymousClass){
+            if(aClass instanceof PsiTypeParameter) {
                 return;
             }
             if (aClass.getContainingClass() != null) {
                 return;
             }
             final PsiField[] fields = aClass.getFields();
-            for(final PsiField field : fields){
-                if(isLogger(field)){
+            for(final PsiField field : fields) {
+                if(isLogger(field)) {
                     if(!field.hasModifierProperty(PsiModifier.STATIC) ||
                             !field.hasModifierProperty(PsiModifier.FINAL)){
                         registerFieldError(field);
@@ -131,13 +136,8 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
 
         private boolean isLogger(PsiField field) {
             final PsiType type = field.getType();
-            if (type == null) {
-                return false;
-            }
             final String text = type.getCanonicalText();
             return text.equals(loggerClassName);
         }
-
     }
-
 }

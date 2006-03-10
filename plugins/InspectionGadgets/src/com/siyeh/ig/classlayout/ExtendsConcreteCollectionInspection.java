@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,45 +28,46 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsConcreteCollectionInspection extends ClassInspection {
 
-  private final ReplaceInheritanceWithDelegationFix fix = new ReplaceInheritanceWithDelegationFix();
-
-  public String getID() {
-    return "ClassExtendsConcreteCollection";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.INHERITANCE_GROUP_NAME;
-  }
-
-  public String buildErrorString(PsiElement location) {
-    final PsiClass aClass = (PsiClass)location.getParent();
-    final PsiClass superClass = aClass.getSuperClass();
-    assert superClass != null;
-    return InspectionGadgetsBundle.message("extends.concrete.collection.problem.descriptor", superClass.getQualifiedName());
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ExtendsConcreteCollectionVisitor();
-  }
-
-  private static class ExtendsConcreteCollectionVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
-        return;
-      }
-      final PsiClass superClass = aClass.getSuperClass();
-      if (superClass == null) {
-        return;
-      }
-      if (!CollectionUtils.isCollectionClass(superClass)) {
-        return;
-      }
-      registerClassError(aClass);
+    public String getID() {
+        return "ClassExtendsConcreteCollection";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.INHERITANCE_GROUP_NAME;
+    }
+
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiClass superClass = (PsiClass)infos[0];
+        return InspectionGadgetsBundle.message(
+                "extends.concrete.collection.problem.descriptor",
+                superClass.getQualifiedName());
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new ReplaceInheritanceWithDelegationFix();
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ExtendsConcreteCollectionVisitor();
+    }
+
+    private static class ExtendsConcreteCollectionVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            if (aClass.isInterface() || aClass.isAnnotationType() ||
+                    aClass.isEnum()) {
+                return;
+            }
+            final PsiClass superClass = aClass.getSuperClass();
+            if (superClass == null) {
+                return;
+            }
+            if (!CollectionUtils.isCollectionClass(superClass)) {
+                return;
+            }
+            registerClassError(aClass, superClass);
+        }
+    }
 }

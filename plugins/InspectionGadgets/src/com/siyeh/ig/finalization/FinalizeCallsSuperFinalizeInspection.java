@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
+
     @SuppressWarnings("PublicField")
     public boolean m_ignoreForObjectSubclasses = false;
 
@@ -35,11 +36,18 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("finalize.doesnt.call.super.display.name");
+        return InspectionGadgetsBundle.message(
+                "finalize.doesnt.call.super.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.FINALIZATION_GROUP_NAME;
+    }
+
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "finalize.doesnt.call.super.problem.descriptor");
     }
 
     public boolean isEnabledByDefault(){
@@ -47,13 +55,9 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("finalize.doesnt.call.super.ignore.option.label"),
-                                              this,
-                                              "m_ignoreForObjectSubclasses");
-    }
-
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("finalize.doesnt.call.super.problem.descriptor");
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "finalize.doesnt.call.super.ignore.option.label"),
+                this, "m_ignoreForObjectSubclasses");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -68,8 +72,7 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
                 return;
             }
             if(method.hasModifierProperty(PsiModifier.NATIVE) ||
-                    method.hasModifierProperty(PsiModifier.ABSTRACT))
-            {
+                    method.hasModifierProperty(PsiModifier.ABSTRACT)){
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
@@ -89,7 +92,8 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
             if(parameterList.getParameters().length != 0){
                 return;
             }
-            final CallToSuperFinalizeVisitor visitor = new CallToSuperFinalizeVisitor();
+            final CallToSuperFinalizeVisitor visitor =
+                    new CallToSuperFinalizeVisitor();
             method.accept(visitor);
             if(visitor.isCallToSuperFinalizeFound()){
                 return;

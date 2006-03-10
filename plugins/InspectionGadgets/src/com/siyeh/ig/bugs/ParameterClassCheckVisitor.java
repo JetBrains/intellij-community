@@ -19,8 +19,8 @@ import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
-class ParameterClassCheckVisitor
-        extends PsiRecursiveElementVisitor{
+class ParameterClassCheckVisitor extends PsiRecursiveElementVisitor{
+
     private final PsiParameter parameter;
 
     private boolean checked = false;
@@ -36,26 +36,21 @@ class ParameterClassCheckVisitor
         }
     }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+    public void visitMethodCallExpression(
+            @NotNull PsiMethodCallExpression expression){
         if(checked){
             return;
         }
         super.visitMethodCallExpression(expression);
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        if(methodExpression == null){
-            return;
-        }
         final String methodName = methodExpression.getReferenceName();
         if(!HardcodedMethodConstants.GET_CLASS.equals(methodName)){
             return;
         }
         final PsiExpressionList argList = expression.getArgumentList();
-        if(argList == null){
-            return;
-        }
         final PsiExpression[] args = argList.getExpressions();
-        if(args == null || args.length != 0){
+        if(args.length != 0){
             return;
         }
         final PsiExpression qualifier =
@@ -66,7 +61,8 @@ class ParameterClassCheckVisitor
         }
     }
 
-    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression){
+    public void visitInstanceOfExpression(
+            @NotNull PsiInstanceOfExpression expression){
         if(checked){
             return;
         }

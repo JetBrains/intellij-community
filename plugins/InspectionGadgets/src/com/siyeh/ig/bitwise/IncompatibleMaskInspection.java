@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,14 +42,12 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
         return GroupNames.BITWISE_GROUP_NAME;
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression) location;
-        final PsiJavaToken operationSign = binaryExpression.getOperationSign();
+                (PsiBinaryExpression) infos[0];
+        final PsiJavaToken operationSign =
+                binaryExpression.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();
         if(tokenType.equals(JavaTokenType.EQEQ)){
             return InspectionGadgetsBundle.message(
@@ -58,6 +56,10 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
             return InspectionGadgetsBundle.message(
                     "incompatible.mask.operation.problem.descriptor.always.true");
         }
+    }
+
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -92,83 +94,83 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
                        PsiUtil.isConstantExpression(strippedRhs)){
                 if(isIncompatibleMask((PsiBinaryExpression) strippedLhs,
                                       strippedRhs)){
-                    registerError(expression);
+                    registerError(expression, expression);
                 }
             } else if(isConstantMask(strippedRhs) &&
                               PsiUtil.isConstantExpression(strippedLhs)){
                 if(isIncompatibleMask((PsiBinaryExpression) strippedRhs,
                                       strippedLhs)){
-                    registerError(expression);
+                    registerError(expression, expression);
                 }
             }
         }
 
         private static boolean isIncompatibleMask(
                 PsiBinaryExpression maskExpression,
-                                              PsiExpression constantExpression){
-        final PsiJavaToken sign = maskExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
-        final Object constantValue =
-                ConstantExpressionUtil.computeCastTo(constantExpression,
-                                                     PsiType.LONG);
-        if(constantValue == null){
-            return false;
-        }
+                PsiExpression constantExpression){
+            final PsiJavaToken sign = maskExpression.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
+            final Object constantValue =
+                    ConstantExpressionUtil.computeCastTo(constantExpression,
+                            PsiType.LONG);
+            if(constantValue == null){
+                return false;
+            }
             final long constantLongValue = ((Long)constantValue).longValue();
-        final PsiExpression maskRhs = maskExpression.getROperand();
-        final PsiExpression maskLhs = maskExpression.getLOperand();
-        final long constantMaskValue;
-        if(PsiUtil.isConstantExpression(maskRhs)){
-            final Object rhsValue =
-                    ConstantExpressionUtil.computeCastTo(maskRhs, PsiType.LONG);
-            if (rhsValue == null) {
+            final PsiExpression maskRhs = maskExpression.getROperand();
+            final PsiExpression maskLhs = maskExpression.getLOperand();
+            final long constantMaskValue;
+            if(PsiUtil.isConstantExpression(maskRhs)){
+                final Object rhsValue =
+                        ConstantExpressionUtil.computeCastTo(maskRhs, PsiType.LONG);
+                if (rhsValue == null) {
                     return false; // Might indeed be the case with "null" literal
                     // whoes constant value evaluates to null. Check out (a|null) case.
-            }
+                }
                 constantMaskValue = ((Long)rhsValue).longValue();
-        } else{
-            final Object lhsValue =
-                    ConstantExpressionUtil.computeCastTo(maskLhs, PsiType.LONG);
+            } else{
+                final Object lhsValue =
+                        ConstantExpressionUtil.computeCastTo(maskLhs, PsiType.LONG);
                 if (lhsValue == null) {
                     return false;
                 }
                 constantMaskValue = ((Long)lhsValue).longValue();
+            }
+
+            if(tokenType.equals(JavaTokenType.OR)){
+                if((constantMaskValue | constantLongValue) != constantLongValue){
+                    return true;
+                }
+            }
+            if(tokenType.equals(JavaTokenType.AND)){
+                if((constantMaskValue | constantLongValue) != constantMaskValue){
+                    return true;
+                }
+            }
+            return false;
         }
 
-        if(tokenType.equals(JavaTokenType.OR)){
-            if((constantMaskValue | constantLongValue) != constantLongValue){
+        private static boolean isConstantMask(PsiExpression expression){
+            if(expression == null){
+                return false;
+            }
+            if(!(expression instanceof PsiBinaryExpression)){
+                return false;
+            }
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression) expression;
+            final PsiJavaToken sign = binaryExpression.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
+            if(!tokenType.equals(JavaTokenType.OR) &&
+                    !tokenType.equals(JavaTokenType.AND)){
+                return false;
+            }
+            final PsiExpression rhs = binaryExpression.getROperand();
+            if(PsiUtil.isConstantExpression(rhs)){
                 return true;
             }
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            return PsiUtil.isConstantExpression(lhs);
         }
-        if(tokenType.equals(JavaTokenType.AND)){
-            if((constantMaskValue | constantLongValue) != constantMaskValue){
-                return true;
-            }
-        }
-        return false;
     }
-
-    private static boolean isConstantMask(PsiExpression expression){
-        if(expression == null){
-            return false;
-        }
-        if(!(expression instanceof PsiBinaryExpression)){
-            return false;
-        }
-        final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression) expression;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
-        if(!tokenType.equals(JavaTokenType.OR) &&
-                   !tokenType.equals(JavaTokenType.AND)){
-            return false;
-        }
-        final PsiExpression rhs = binaryExpression.getROperand();
-        if(PsiUtil.isConstantExpression(rhs)){
-            return true;
-        }
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        return PsiUtil.isConstantExpression(lhs);
-    }
-}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,31 +39,33 @@ public class InstanceVariableUninitializedUseInspection
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.display.name");
+        return InspectionGadgetsBundle.message(
+                "instance.variable.used.before.initialized.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-      return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+      return InspectionGadgetsBundle.message(
+              "instance.variable.used.before.initialized.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
-                                              this, "m_ignorePrimitives");
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "primitive.fields.ignore.option"), this, "m_ignorePrimitives");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new InstanceVariableInitializationVisitor();
     }
 
-    private class InstanceVariableInitializationVisitor extends BaseInspectionVisitor {
+    private class InstanceVariableInitializationVisitor
+            extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {
-            final UninitializedReadCollector uninitializedReadsCollector =
-                    new UninitializedReadCollector();
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
@@ -85,11 +87,15 @@ public class InstanceVariableUninitializedUseInspection
             if (searchHelper.isFieldBoundToForm(field)) {
                 return;
             }
-            if (!isInitializedInInitializer(field, uninitializedReadsCollector)) {
+            final UninitializedReadCollector uninitializedReadsCollector =
+                    new UninitializedReadCollector();
+            if (!isInitializedInInitializer(field,
+                    uninitializedReadsCollector)) {
                 final PsiMethod[] constructors = aClass.getConstructors();
                 for(final PsiMethod constructor : constructors){
                     final PsiCodeBlock body = constructor.getBody();
-                    uninitializedReadsCollector.blockAssignsVariable(body, field);
+                    uninitializedReadsCollector.blockAssignsVariable(body,
+                            field);
                 }
             }
             final PsiExpression[] badReads =
@@ -100,7 +106,8 @@ public class InstanceVariableUninitializedUseInspection
         }
 
         private boolean isInitializedInInitializer(
-                @NotNull PsiField field, UninitializedReadCollector uninitializedReadsCollector) {
+                @NotNull PsiField field,
+                UninitializedReadCollector uninitializedReadsCollector) {
             final PsiClass aClass = field.getContainingClass();
             if(aClass == null) {
                 return false;
@@ -109,7 +116,8 @@ public class InstanceVariableUninitializedUseInspection
             for(final PsiClassInitializer initializer : initializers) {
                 if(!initializer.hasModifierProperty(PsiModifier.STATIC)) {
                     final PsiCodeBlock body = initializer.getBody();
-                    if(uninitializedReadsCollector.blockAssignsVariable(body, field)) {
+                    if(uninitializedReadsCollector.blockAssignsVariable(body,
+                            field)) {
                         return true;
                     }
                 }

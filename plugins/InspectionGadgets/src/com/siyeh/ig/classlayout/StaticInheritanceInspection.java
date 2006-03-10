@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,20 +31,25 @@ import org.jetbrains.annotations.NotNull;
 
 public class StaticInheritanceInspection extends ClassInspection {
 
-    private final StaticInheritanceFix fix = new StaticInheritanceFix();
-
     public String getGroupDisplayName() {
         return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "static.inheritance.problem.descriptor");
+    }
+
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new StaticInheritanceFix();
     }
 
     private static class StaticInheritanceFix extends InspectionGadgetsFix {
 
         public String getName() {
-            return InspectionGadgetsBundle.message("static.inheritance.replace.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "static.inheritance.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

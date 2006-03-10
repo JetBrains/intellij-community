@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,16 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassNestingDepthInspection
         extends ClassMetricInspection {
+
     private static final int CLASS_NESTING_LIMIT = 1;
 
-    public String getID(){
+    public String getID() {
         return "InnerClassTooDeeplyNested";
     }
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("inner.class.too.deeply.nested.display.name");
+        return InspectionGadgetsBundle.message(
+                "inner.class.too.deeply.nested.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -42,13 +45,16 @@ public class ClassNestingDepthInspection
     }
 
     protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message("inner.class.too.deeply.nested.nesting.limit.option");
+        return InspectionGadgetsBundle.message(
+                "inner.class.too.deeply.nested.nesting.limit.option");
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiClass aClass = (PsiClass) location.getParent();
-        final int count = getNestingLevel(aClass);
-        return InspectionGadgetsBundle.message("inner.class.too.deeply.nested.problem.descriptor", count);
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final Integer nestingLevel = (Integer)infos[0];
+        return InspectionGadgetsBundle.message(
+                "inner.class.too.deeply.nested.problem.descriptor",
+                nestingLevel);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -64,20 +70,19 @@ public class ClassNestingDepthInspection
             if (nestingLevel <= getLimit()) {
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, Integer.valueOf(nestingLevel));
         }
-    }
 
-    private static int getNestingLevel(PsiClass aClass) {
-        PsiElement ancestor = aClass.getParent();
-        int nestingLevel = 0;
-        while (ancestor != null) {
-            if (ancestor instanceof PsiClass) {
-                nestingLevel++;
+        private int getNestingLevel(PsiClass aClass) {
+            PsiElement ancestor = aClass.getParent();
+            int nestingLevel = 0;
+            while (ancestor != null) {
+                if (ancestor instanceof PsiClass) {
+                    nestingLevel++;
+                }
+                ancestor = ancestor.getParent();
             }
-            ancestor = ancestor.getParent();
+            return nestingLevel;
         }
-        return nestingLevel;
     }
-
 }

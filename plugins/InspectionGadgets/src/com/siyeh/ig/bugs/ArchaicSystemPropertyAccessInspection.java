@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,16 +30,34 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
 public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
+
     public String getID(){
         return "UseOfArchaicSystemPropertyAccessors";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("archaic.system.property.accessors.display.name");
+        return InspectionGadgetsBundle.message(
+                "archaic.system.property.accessors.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
+    }
+
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final PsiMethodCallExpression call =
+                (PsiMethodCallExpression) infos[0];
+        if(isIntegerGetInteger(call)){
+            return InspectionGadgetsBundle.message(
+                    "archaic.system.property.accessors.problem.descriptor.Integer");
+        } else if(isLongGetLong(call)){
+            return InspectionGadgetsBundle.message(
+                    "archaic.system.property.accessors.problem.descriptor.Long");
+        } else{
+            return InspectionGadgetsBundle.message(
+                    "archaic.system.property.accessors.problem.descriptor.Boolean");
+        }
     }
 
     @Nullable
@@ -48,24 +66,11 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
                 new ReplaceWithStandardPropertyAccessFix()};
     }
 
-    public String buildErrorString(PsiElement location){
-
-        final PsiElement parent = location.getParent();
-        assert parent != null;
-        final PsiMethodCallExpression call =
-                (PsiMethodCallExpression) parent.getParent();
-        if(isIntegerGetInteger(call)){
-            return InspectionGadgetsBundle.message("archaic.system.property.accessors.problem.descriptor.Integer");
-        } else if(isLongGetLong(call)){
-            return InspectionGadgetsBundle.message("archaic.system.property.accessors.problem.descriptor.Long");
-        } else{
-            return InspectionGadgetsBundle.message("archaic.system.property.accessors.problem.descriptor.Boolean");
-        }
-    }
-
     private static class ReplaceWithParseMethodFix extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("archaic.system.property.accessors.replace.parse.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "archaic.system.property.accessors.replace.parse.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -78,7 +83,6 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
                     (PsiMethodCallExpression) parent.getParent();
             assert call != null;
             final PsiExpressionList argList = call.getArgumentList();
-            assert argList != null;
             final PsiExpression[] args = argList.getExpressions();
             final String argText = args[0].getText();
             @NonNls final String parseMethodCall;
@@ -91,12 +95,15 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
             }
             replaceExpression(call, parseMethodCall);
         }
+
     }
 
     private static class ReplaceWithStandardPropertyAccessFix
             extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("archaic.system.property.accessors.replace.standard.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "archaic.system.property.accessors.replace.standard.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -109,7 +116,6 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
                     (PsiMethodCallExpression) parent.getParent();
             assert call != null;
             final PsiExpressionList argList = call.getArgumentList();
-            assert argList != null;
             final PsiExpression[] args = argList.getExpressions();
             final String argText = args[0].getText();
             @NonNls final String parseMethodCall;
@@ -133,6 +139,7 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
             }
             replaceExpression(call, parseMethodCall);
         }
+
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -141,78 +148,37 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
 
     private static class ArchaicSystemPropertyAccessVisitor
             extends BaseInspectionVisitor{
+
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-
             if(isIntegerGetInteger(expression) ||
-               isLongGetLong(expression) ||
-               isBooleanGetBoolean(expression)){
-                registerMethodCallError(expression);
+                    isLongGetLong(expression) ||
+                    isBooleanGetBoolean(expression)){
+                registerMethodCallError(expression, expression);
             }
         }
     }
 
-    private static boolean isIntegerGetInteger(
-            PsiMethodCallExpression expression){
-        final PsiReferenceExpression methodExpression = expression
-                .getMethodExpression();
-        if(methodExpression == null){
-            return false;
-        }
-        @NonNls final String methodName = methodExpression.getReferenceName();
-        if(!"getInteger".equals(methodName)){
-            return false;
-        }
-        final PsiMethod method = expression.resolveMethod();
-        if(method == null){
-            return false;
-        }
-        final PsiClass aClass = method.getContainingClass();
-        if(aClass == null){
-            return false;
-        }
-        final String className = aClass.getQualifiedName();
-        if(className == null){
-            return false;
-        }
-        return "java.lang.Integer".equals(className);
+    static boolean isIntegerGetInteger(PsiMethodCallExpression expression){
+        return isCallTo(expression, "java.lang.Integer", "getInteger");
     }
 
-    private static boolean isLongGetLong(PsiMethodCallExpression expression){
-        final PsiReferenceExpression methodExpression = expression
-                .getMethodExpression();
-        if(methodExpression == null){
-            return false;
-        }
-        @NonNls final String methodName = methodExpression.getReferenceName();
-        if(!"getLong".equals(methodName)){
-            return false;
-        }
-        final PsiMethod method = expression.resolveMethod();
-        if(method == null){
-            return false;
-        }
-        final PsiClass aClass = method.getContainingClass();
-        if(aClass == null){
-            return false;
-        }
-        final String className = aClass.getQualifiedName();
-        if(className == null){
-            return false;
-        }
-        return "java.lang.Long".equals(className);
+    static boolean isLongGetLong(PsiMethodCallExpression expression){
+        return isCallTo(expression, "java.lang.Long", "getLong");
     }
 
-    private static boolean isBooleanGetBoolean(
-            PsiMethodCallExpression expression){
-        final PsiReferenceExpression methodExpression = expression
-                .getMethodExpression();
-        if(methodExpression == null){
-            return false;
-        }
-        @NonNls final String methodName = methodExpression.getReferenceName();
-        if(!"getBoolean".equals(methodName)){
+    static boolean isBooleanGetBoolean(PsiMethodCallExpression expression){
+        return isCallTo(expression, "java.lang.Boolean", "getBoolean");
+    }
+
+    private static boolean isCallTo(PsiMethodCallExpression expression,
+                            String className, @NonNls String methodName) {
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
+        @NonNls final String expressionMethodName =
+                methodExpression.getReferenceName();
+        if(!methodName.equals(expressionMethodName)){
             return false;
         }
         final PsiMethod method = expression.resolveMethod();
@@ -223,10 +189,10 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
         if(aClass == null){
             return false;
         }
-        final String className = aClass.getQualifiedName();
-        if(className == null){
+        final String expressionClassName = aClass.getQualifiedName();
+        if(expressionClassName == null){
             return false;
         }
-        return "java.lang.Boolean".equals(className);
+        return className.equals(expressionClassName);
     }
 }

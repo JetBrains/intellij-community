@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,38 +30,39 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection{
 
-    private final CloneDeclaresCloneNotSupportedInspectionFix fix =
-            new CloneDeclaresCloneNotSupportedInspectionFix();
-
     public String getID(){
         return "CloneDoesntDeclareCloneNotSupportedException";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("clone.doesnt.declare.clonenotsupportedexception.display.name");
+        return InspectionGadgetsBundle.message(
+                "clone.doesnt.declare.clonenotsupportedexception.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.CLONEABLE_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "clone.doesnt.declare.clonenotsupportedexception.problem.descriptor");
+    }
+
     public boolean isEnabledByDefault(){
         return true;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("clone.doesnt.declare.clonenotsupportedexception.problem.descriptor");
-    }
-
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new CloneDeclaresCloneNotSupportedInspectionFix();
     }
 
     private static class CloneDeclaresCloneNotSupportedInspectionFix
             extends InspectionGadgetsFix{
 
         public String getName(){
-            return InspectionGadgetsBundle.message("clone.doesnt.declare.clonenotsupportedexception.declare.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "clone.doesnt.declare.clonenotsupportedexception.declare.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

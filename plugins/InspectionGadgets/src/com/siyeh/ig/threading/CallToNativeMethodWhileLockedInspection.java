@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,15 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class CallToNativeMethodWhileLockedInspection
         extends ExpressionInspection {
@@ -36,8 +38,8 @@ public class CallToNativeMethodWhileLockedInspection
         return GroupNames.THREADING_GROUP_NAME;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "call.to.native.method.while.locked.problem.descriptor");
     }

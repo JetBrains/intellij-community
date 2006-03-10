@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,43 +22,49 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ReplaceInheritanceWithDelegationFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtendsThreadInspection extends ClassInspection {
 
-  private final ReplaceInheritanceWithDelegationFix fix = new ReplaceInheritanceWithDelegationFix();
-
-  public String getID() {
-    return "ClassExplicitlyExtendsThread";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ExtendsThreadVisitor();
-  }
-
-  private static class ExtendsThreadVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
-        return;
-      }
-      final PsiClass superClass = aClass.getSuperClass();
-      if (superClass == null) {
-        return;
-      }
-      final String superclassName = superClass.getQualifiedName();
-      if (!"java.lang.Thread".equals(superclassName)) {
-        return;
-      }
-      registerClassError(aClass);
+    public String getID() {
+        return "ClassExplicitlyExtendsThread";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "extends.thread.problem.descriptor");
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new ReplaceInheritanceWithDelegationFix();
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ExtendsThreadVisitor();
+    }
+
+    private static class ExtendsThreadVisitor extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            if (aClass.isInterface() || aClass.isAnnotationType() ||
+                    aClass.isEnum()) {
+                return;
+            }
+            final PsiClass superClass = aClass.getSuperClass();
+            if (superClass == null) {
+                return;
+            }
+            final String superclassName = superClass.getQualifiedName();
+            if (!"java.lang.Thread".equals(superclassName)) {
+                return;
+            }
+            registerClassError(aClass);
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,12 @@ public class ObjectEqualityInspection extends ExpressionInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "object.comparison.problem.description");
+    }
+
     public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
@@ -74,11 +80,6 @@ public class ObjectEqualityInspection extends ExpressionInspection {
                 "object.equality.ignore.between.objects.of.a.type.with.only.private.constructors.option"),
                 "m_ignorePrivateConstructors");
         return optionsPanel;
-    }
-
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message(
-                "object.comparison.problem.description");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -139,6 +140,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             }
             replaceExpression(expression, newExpression);
         }
+
     }
 
     private class ObjectEqualityVisitor extends BaseInspectionVisitor {

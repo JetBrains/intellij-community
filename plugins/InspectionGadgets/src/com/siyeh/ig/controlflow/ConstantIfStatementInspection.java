@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -29,7 +30,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -49,8 +49,8 @@ public class ConstantIfStatementInspection extends StatementInspection {
         return true;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "constant.if.statement.problem.descriptor");
     }
@@ -60,9 +60,9 @@ public class ConstantIfStatementInspection extends StatementInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        if (location.getContainingFile() instanceof JspFile) {
-            return null;
-        }
+        //if (PsiUtil.isInJspFile(location)) {
+        //    return null;
+        //}
         return new ConstantIfStatementFix();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,72 +21,78 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ThreadDeathRethrownInspection extends StatementInspection {
 
-  public String getID() {
-    return "ThreadDeathNotRethrown";
-  }
+    public String getID() {
+        return "ThreadDeathNotRethrown";
+    }
 
-  public String getGroupDisplayName() {
-    return GroupNames.ERRORHANDLING_GROUP_NAME;
-  }
+    public String getGroupDisplayName() {
+        return GroupNames.ERRORHANDLING_GROUP_NAME;
+    }
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new ThreadDeathRethrownVisitor();
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "thread.death.rethrown.problem.descriptor");
+    }
 
-  private static class ThreadDeathRethrownVisitor
-    extends StatementInspectionVisitor {
+    public BaseInspectionVisitor buildVisitor() {
+        return new ThreadDeathRethrownVisitor();
+    }
 
+    private static class ThreadDeathRethrownVisitor
+            extends StatementInspectionVisitor {
 
-    public void visitTryStatement(@NotNull PsiTryStatement statement) {
-      super.visitTryStatement(statement);
-      final PsiCatchSection[] catchSections = statement.getCatchSections();
-      for (PsiCatchSection catchSection : catchSections) {
-        final PsiParameter parameter = catchSection.getParameter();
-        final PsiCodeBlock catchBlock =
-          catchSection.getCatchBlock();
-        if (parameter != null && catchBlock != null) {
-          checkCatchBlock(parameter, catchBlock);
+        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+            super.visitTryStatement(statement);
+            final PsiCatchSection[] catchSections = statement.getCatchSections();
+            for (PsiCatchSection catchSection : catchSections) {
+                final PsiParameter parameter = catchSection.getParameter();
+                final PsiCodeBlock catchBlock =
+                        catchSection.getCatchBlock();
+                if (parameter != null && catchBlock != null) {
+                    checkCatchBlock(parameter, catchBlock);
+                }
+            }
         }
-      }
-    }
 
-    private void checkCatchBlock(PsiParameter parameter,
-                                 PsiCodeBlock catchBlock) {
-      final PsiType type = parameter.getType();
-      if (!TypeUtils.typeEquals("java.lang.ThreadDeath", type)) {
-        return;
-      }
-      final PsiTypeElement typeElement = parameter.getTypeElement();
-      if (typeElement == null) {
-        return;
-      }
-      final PsiStatement[] statements = catchBlock.getStatements();
-      if (statements.length == 0) {
-        registerError(typeElement);
-        return;
-      }
-      final PsiStatement lastStatement =
-        statements[statements.length - 1];
-      if (!(lastStatement instanceof PsiThrowStatement)) {
-        registerError(typeElement);
-        return;
-      }
-      final PsiThrowStatement throwStatement =
-        (PsiThrowStatement)lastStatement;
-      final PsiExpression exception = throwStatement.getException();
-      if (!(exception instanceof PsiReferenceExpression)) {
-        registerError(typeElement);
-        return;
-      }
-      final PsiElement element = ((PsiReference)exception).resolve();
-      if (parameter.equals(element)) {
-        return;
-      }
-      registerError(typeElement);
+        private void checkCatchBlock(PsiParameter parameter,
+                                     PsiCodeBlock catchBlock) {
+            final PsiType type = parameter.getType();
+            if (!TypeUtils.typeEquals("java.lang.ThreadDeath", type)) {
+                return;
+            }
+            final PsiTypeElement typeElement = parameter.getTypeElement();
+            if (typeElement == null) {
+                return;
+            }
+            final PsiStatement[] statements = catchBlock.getStatements();
+            if (statements.length == 0) {
+                registerError(typeElement);
+                return;
+            }
+            final PsiStatement lastStatement =
+                    statements[statements.length - 1];
+            if (!(lastStatement instanceof PsiThrowStatement)) {
+                registerError(typeElement);
+                return;
+            }
+            final PsiThrowStatement throwStatement =
+                    (PsiThrowStatement)lastStatement;
+            final PsiExpression exception = throwStatement.getException();
+            if (!(exception instanceof PsiReferenceExpression)) {
+                registerError(typeElement);
+                return;
+            }
+            final PsiElement element = ((PsiReference)exception).resolve();
+            if (parameter.equals(element)) {
+                return;
+            }
+            registerError(typeElement);
+        }
     }
-  }
 }

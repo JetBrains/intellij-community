@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableAssignedFromVisitor extends PsiRecursiveElementVisitor{
+
     private boolean assignedFrom = false;
 
     @NotNull
@@ -35,7 +36,8 @@ public class VariableAssignedFromVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment){
+    public void visitAssignmentExpression(
+            @NotNull PsiAssignmentExpression assignment){
         if(assignedFrom){
             return;
         }
@@ -46,7 +48,8 @@ public class VariableAssignedFromVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
+    public void visitDeclarationStatement(
+            @NotNull PsiDeclarationStatement statement) {
         if(assignedFrom){
             return;
         }

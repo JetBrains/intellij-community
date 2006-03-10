@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ProtectedFieldInspection extends FieldInspection {
-    private final EncapsulateVariableFix fix = new EncapsulateVariableFix();
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("protected.field.display.name");
@@ -37,12 +36,14 @@ public class ProtectedFieldInspection extends FieldInspection {
         return GroupNames.ENCAPSULATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("protected.field.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "protected.field.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new EncapsulateVariableFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -55,7 +56,6 @@ public class ProtectedFieldInspection extends FieldInspection {
 
     private static class ProtectedFieldVisitor extends BaseInspectionVisitor {
 
-
         public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.PROTECTED)) {
                 return;
@@ -66,7 +66,5 @@ public class ProtectedFieldInspection extends FieldInspection {
             }
             registerFieldError(field);
         }
-
     }
-
 }

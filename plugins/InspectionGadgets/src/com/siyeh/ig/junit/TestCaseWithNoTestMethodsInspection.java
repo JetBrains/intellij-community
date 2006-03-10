@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,46 +21,52 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class TestCaseWithNoTestMethodsInspection extends ClassInspection {
 
-  public String getID() {
-    return "JUnitTestCaseWithNoTests";
-  }
+    public String getID() {
+        return "JUnitTestCaseWithNoTests";
+    }
 
-  public String getGroupDisplayName() {
-    return GroupNames.JUNIT_GROUP_NAME;
-  }
+    public String getGroupDisplayName() {
+        return GroupNames.JUNIT_GROUP_NAME;
+    }
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new TestCaseWithNoTestMethodsVisitor();
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "test.case.with.no.test.methods.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new TestCaseWithNoTestMethodsVisitor();
+    }
 
     private static class TestCaseWithNoTestMethodsVisitor
             extends BaseInspectionVisitor {
 
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface()
-          || aClass.isEnum()
-          || aClass.isAnnotationType()
-          || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (aClass instanceof PsiTypeParameter ||
-          aClass instanceof PsiAnonymousClass) {
-        return;
-      }
+        public void visitClass(@NotNull PsiClass aClass) {
+            if (aClass.isInterface()
+                    || aClass.isEnum()
+                    || aClass.isAnnotationType()
+                    || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            if (aClass instanceof PsiTypeParameter) {
+                return;
+            }
             if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
                 return;
             }
-      final PsiMethod[] methods = aClass.getMethods();
-      for (final PsiMethod method : methods) {
+            final PsiMethod[] methods = aClass.getMethods();
+            for (final PsiMethod method : methods) {
                 if (TestUtils.isJUnitTestMethod(method)) {
-          return;
+                    return;
+                }
+            }
+            registerClassError(aClass);
         }
-      }
-      registerClassError(aClass);
     }
-  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnusedLabelInspection extends StatementInspection {
 
-    private final UnusedLabelFix fix = new UnusedLabelFix();
-
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
@@ -43,8 +41,14 @@ public class UnusedLabelInspection extends StatementInspection {
         return new UnusedLabelVisitor();
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "unused.label.problem.descriptor");
+    }
+
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new UnusedLabelFix();
     }
 
     private static class UnusedLabelFix extends InspectionGadgetsFix {

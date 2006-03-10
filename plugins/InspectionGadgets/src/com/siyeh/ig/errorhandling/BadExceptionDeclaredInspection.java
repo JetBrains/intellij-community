@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BadExceptionDeclaredInspection extends MethodInspection{
+
     /** @noinspection PublicField*/
     public String exceptionCheckString =
       "java.lang.Throwable" + "," +
@@ -54,7 +55,8 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
     private final List<String> exceptionsList = new ArrayList<String>(32);
     private final Object lock = new Object();
 
-    {
+
+    public BadExceptionDeclaredInspection() {
         parseCallCheckString();
     }
 
@@ -102,13 +104,15 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
         return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "bad.exception.declared.problem.descriptor");
+    }
+
     public JComponent createOptionsPanel(){
         final Form form = new Form();
         return form.getContentPanel();
-    }
-
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("bad.exception.declared.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -121,21 +125,14 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
             if(ignoreTestCases){
                 final PsiClass aClass =
                         ClassUtils.getContainingClass(method);
-                if(aClass != null &&
-                        ClassUtils.isSubclass(aClass,
-                                              "junit.framework.TestCase")){
+                if(aClass != null && ClassUtils.isSubclass(aClass,
+                        "junit.framework.TestCase")){
                     return;
                 }
             }
             final PsiReferenceList throwsList = method.getThrowsList();
-            if(throwsList == null){
-                return;
-            }
             final PsiJavaCodeReferenceElement[] references =
                     throwsList.getReferenceElements();
-            if(references == null){
-                return;
-            }
             for(PsiJavaCodeReferenceElement reference : references){
                 final PsiClass thrownClass = (PsiClass) reference.resolve();
                 if(thrownClass != null){
@@ -148,7 +145,8 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
                                     exceptionsList);
                         }
                         for(Object aExceptionsList : exceptionListCopy){
-                            final String exceptionClass = (String) aExceptionsList;
+                            final String exceptionClass =
+                                    (String) aExceptionsList;
                             if(text.equals(exceptionClass)){
                                 registerError(reference);
                             }
@@ -171,7 +169,8 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
             table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             table.setRowSelectionAllowed(true);
             table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-            final ReturnCheckSpecificationTableModel model = new ReturnCheckSpecificationTableModel();
+            final ReturnCheckSpecificationTableModel model =
+                    new ReturnCheckSpecificationTableModel();
             table.setModel(model);
             addButton.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent e){
@@ -189,7 +188,8 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
                             table.editCellAt(listSize, 0);
                             final TableCellEditor editor = table.getCellEditor();
                             final Component component =
-                                    editor.getTableCellEditorComponent(table, null, true, listSize, 0);
+                                    editor.getTableCellEditorComponent(table,
+                                            null, true, listSize, 0);
                             component.requestFocus();
                         }
                     });
@@ -233,6 +233,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
     }
 
     private class ReturnCheckSpecificationTableModel extends AbstractTableModel{
+
         public int getRowCount(){
             synchronized(lock){
                 return exceptionsList.size();
@@ -244,7 +245,8 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
         }
 
         public String getColumnName(int columnIndex){
-            return InspectionGadgetsBundle.message("exception.class.column.name");
+            return InspectionGadgetsBundle.message(
+                    "exception.class.column.name");
         }
 
         public Class getColumnClass(int columnIndex){

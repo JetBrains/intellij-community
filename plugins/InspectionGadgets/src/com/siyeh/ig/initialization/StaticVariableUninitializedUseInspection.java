@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,20 +37,25 @@ public class StaticVariableUninitializedUseInspection extends FieldInspection {
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("static.variable.used.before.initialization.display.name");
+        return InspectionGadgetsBundle.message(
+                "static.variable.used.before.initialization.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-      return InspectionGadgetsBundle.message("static.variable.used.before.initialization.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+      return InspectionGadgetsBundle.message(
+              "static.variable.used.before.initialization.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
-                                              this, "m_ignorePrimitives");
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "primitive.fields.ignore.option"),
+                this, "m_ignorePrimitives");
     }
 
     public BaseInspectionVisitor buildVisitor() {

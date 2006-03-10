@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,23 +27,26 @@ import org.jetbrains.annotations.NotNull;
 public class ArrayLengthInLoopConditionInspection extends StatementInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("array.length.in.loop.condition.display.name");
+        return InspectionGadgetsBundle.message(
+                "array.length.in.loop.condition.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.J2ME_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("array.length.in.loop.condition.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "array.length.in.loop.condition.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new ArrayLengthInLoopConditionVisitor();
     }
 
-    private static class ArrayLengthInLoopConditionVisitor extends StatementInspectionVisitor {
-        
+    private static class ArrayLengthInLoopConditionVisitor
+            extends StatementInspectionVisitor {
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
@@ -64,8 +67,8 @@ public class ArrayLengthInLoopConditionInspection extends StatementInspection {
             checkForMethodCalls(condition);
         }
 
-
-        public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
+        public void visitDoWhileStatement(
+                @NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if(condition == null){
@@ -75,31 +78,31 @@ public class ArrayLengthInLoopConditionInspection extends StatementInspection {
         }
 
         private void checkForMethodCalls(PsiExpression condition){
-            final PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor(){
-                public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
+            final PsiRecursiveElementVisitor visitor =
+                    new PsiRecursiveElementVisitor(){
+
+                public void visitReferenceExpression(
+                        @NotNull PsiReferenceExpression expression){
                     super.visitReferenceExpression(expression);
                     final String name = expression.getReferenceName();
-                    if(!HardcodedMethodConstants.LENGTH.equals(name))
-                    {
+                    if(!HardcodedMethodConstants.LENGTH.equals(name)){
                         return;
                     }
-                    final PsiExpression qualifier = expression.getQualifierExpression();
-                    if(qualifier == null)
-                    {
+                    final PsiExpression qualifier =
+                            expression.getQualifierExpression();
+                    if(qualifier == null){
                         return;
                     }
                     final PsiType type = qualifier.getType();
-                    if(!(type instanceof PsiArrayType))
-                    {
+                    if(!(type instanceof PsiArrayType)){
                         return;
                     }
-                    final PsiElement lengthElement = expression.getReferenceNameElement();
+                    final PsiElement lengthElement =
+                            expression.getReferenceNameElement();
                     registerError(lengthElement);
                 }
             };
             condition.accept(visitor);
         }
-
     }
-
 }

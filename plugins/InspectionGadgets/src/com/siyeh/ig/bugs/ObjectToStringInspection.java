@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,18 @@ import java.util.Set;
 public class ObjectToStringInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-      return InspectionGadgetsBundle.message("default.tostring.call.display.name");
+      return InspectionGadgetsBundle.message(
+              "default.tostring.call.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-      return InspectionGadgetsBundle.message("default.tostring.call.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "default.tostring.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -50,7 +53,8 @@ public class ObjectToStringInspection extends ExpressionInspection {
     private static class ObjectToStringVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiType type = expression.getType();
             if(type == null) {
@@ -65,19 +69,18 @@ public class ObjectToStringInspection extends ExpressionInspection {
             checkExpression(rhs);
         }
 
-        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
-
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSEQ)) {
                 return;
             }
             final PsiExpression lhs = expression.getLExpression();
-
             final PsiType type = lhs.getType();
             if (type == null) {
                 return;
@@ -89,27 +92,22 @@ public class ObjectToStringInspection extends ExpressionInspection {
             checkExpression(rhs);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(
+                PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression
-                    .getMethodExpression();
-            if(methodExpression == null) {
-                return;
-            }
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
             final String name = methodExpression.getReferenceName();
-          if(!HardcodedMethodConstants.TO_STRING.equals(name))
-          {
+            if(!HardcodedMethodConstants.TO_STRING.equals(name)) {
                 return;
             }
             final PsiExpressionList argList = expression.getArgumentList();
-            if(argList == null) {
-                return;
-            }
             final PsiExpression[] args = argList.getExpressions();
             if(args.length !=0) {
                 return;
             }
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
             checkExpression(qualifier);
         }
 
@@ -144,8 +142,8 @@ public class ObjectToStringInspection extends ExpressionInspection {
             }
         }
 
-        private boolean hasGoodToString(PsiClass aClass,
-                                        Set<PsiClass> visitedClasses) {
+        private static boolean hasGoodToString(PsiClass aClass,
+                                               Set<PsiClass> visitedClasses) {
             if(aClass == null) {
                 return false;
             }
@@ -167,9 +165,8 @@ public class ObjectToStringInspection extends ExpressionInspection {
         }
 
         private static boolean isToString(PsiMethod method) {
-          final String methodName = method.getName();
-          if(!HardcodedMethodConstants.TO_STRING.equals(methodName))
-          {
+            final String methodName = method.getName();
+            if(!HardcodedMethodConstants.TO_STRING.equals(methodName)){
                 return false;
             }
             final PsiParameterList paramList = method.getParameterList();

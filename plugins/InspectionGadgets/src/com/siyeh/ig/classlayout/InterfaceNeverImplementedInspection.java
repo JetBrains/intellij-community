@@ -17,7 +17,6 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
@@ -50,8 +49,8 @@ public class InterfaceNeverImplementedInspection extends ClassInspection {
                 "ignoreInterfacesThatOnlyDeclareConstants");
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "interface.never.implemented.problem.descriptor");
     }

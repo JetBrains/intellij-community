@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ public class InstanceMethodNamingConventionInspection
 
     private static final int DEFAULT_MIN_LENGTH = 4;
     private static final int DEFAULT_MAX_LENGTH = 32;
-    private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -46,22 +45,20 @@ public class InstanceMethodNamingConventionInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiMethod method = (PsiMethod)location.getParent();
-        assert method != null;
-        final String methodName = method.getName();
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final String methodName = (String)infos[0];
         if (methodName.length() < getMinLength()) {
             return InspectionGadgetsBundle.message(
                     "instance.method.name.convention.problem.descriptor.short");
-        }
-        else if (methodName.length() > getMaxLength()) {
+        } else if (methodName.length() > getMaxLength()) {
             return InspectionGadgetsBundle.message(
                     "instance.method.name.convention.problem.descriptor.long");
         }
@@ -119,7 +116,7 @@ public class InstanceMethodNamingConventionInspection
             if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
                 return;
             }
-            registerMethodError(method);
+            registerMethodError(method, name);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,88 +29,95 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringConstructorInspection extends ExpressionInspection {
 
-  public String getID() {
-    return "RedundantStringConstructorCall";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new StringConstructorVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return new StringConstructorFix((PsiNewExpression)location);
-  }
-
-  private static class StringConstructorFix extends InspectionGadgetsFix {
-    private final String m_name;
-
-    private StringConstructorFix(PsiNewExpression expression) {
-      super();
-      final PsiExpressionList argList = expression.getArgumentList();
-      assert argList != null;
-      final PsiExpression[] args = argList.getExpressions();
-      if (args.length == 1) {
-        m_name = InspectionGadgetsBundle.message("string.constructor.replace.arg.quickfix");
-      }
-      else {
-        m_name = InspectionGadgetsBundle.message("string.constructor.replace.empty.quickfix");
-      }
+    public String getID() {
+        return "RedundantStringConstructorCall";
     }
 
-    public String getName() {
-      return m_name;
+    public String getGroupDisplayName() {
+        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement();
-      final PsiExpressionList argList = expression.getArgumentList();
-      assert argList != null;
-      final PsiExpression[] args = argList.getExpressions();
-      final String argText;
-      if (args.length == 1) {
-        argText = args[0].getText();
-      }
-      else {
-        argText = "\"\"";
-      }
-      replaceExpression(expression, argText);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "string.constructor.problem.descriptor");
     }
-  }
 
-  private static class StringConstructorVisitor extends BaseInspectionVisitor {
+    public boolean isEnabledByDefault() {
+        return true;
+    }
 
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringConstructorVisitor();
+    }
 
-    public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      super.visitNewExpression(expression);
-      final PsiType type = expression.getType();
-      if (!TypeUtils.isJavaLangString(type)) {
-        return;
-      }
-      final PsiExpressionList argList = expression.getArgumentList();
-      if (argList == null) {
-        return;
-      }
-      final PsiExpression[] args = argList.getExpressions();
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new StringConstructorFix((PsiNewExpression)location);
+    }
 
-      if (args.length > 1) {
-        return;
-      }
-      if (args.length == 1) {
-        final PsiType parameterType = args[0].getType();
-        if (!TypeUtils.isJavaLangString(parameterType)) {
-          return;
+    private static class StringConstructorFix extends InspectionGadgetsFix {
+
+        private final String m_name;
+
+        private StringConstructorFix(PsiNewExpression expression) {
+            super();
+            final PsiExpressionList argList = expression.getArgumentList();
+            assert argList != null;
+            final PsiExpression[] args = argList.getExpressions();
+            if (args.length == 1) {
+                m_name = InspectionGadgetsBundle.message(
+                        "string.constructor.replace.arg.quickfix");
+            } else {
+                m_name = InspectionGadgetsBundle.message(
+                        "string.constructor.replace.empty.quickfix");
+            }
         }
-      }
-      registerError(expression);
+
+        public String getName() {
+            return m_name;
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiNewExpression expression =
+                    (PsiNewExpression)descriptor.getPsiElement();
+            final PsiExpressionList argList = expression.getArgumentList();
+            assert argList != null;
+            final PsiExpression[] args = argList.getExpressions();
+            final String argText;
+            if (args.length == 1) {
+                argText = args[0].getText();
+            } else {
+                argText = "\"\"";
+            }
+            replaceExpression(expression, argText);
+        }
     }
-  }
+
+    private static class StringConstructorVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+            super.visitNewExpression(expression);
+            final PsiType type = expression.getType();
+            if (!TypeUtils.isJavaLangString(type)) {
+                return;
+            }
+            final PsiExpressionList argList = expression.getArgumentList();
+            if (argList == null) {
+                return;
+            }
+            final PsiExpression[] args = argList.getExpressions();
+            if (args.length > 1) {
+                return;
+            }
+            if (args.length == 1) {
+                final PsiType parameterType = args[0].getType();
+                if (!TypeUtils.isJavaLangString(parameterType)) {
+                    return;
+                }
+            }
+            registerError(expression);
+        }
+    }
 }

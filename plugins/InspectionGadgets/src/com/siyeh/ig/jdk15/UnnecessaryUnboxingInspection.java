@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,6 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
     @NonNls static final Map<String, String> s_unboxingMethods =
             new HashMap<String, String>(9);
 
-    private final UnnecessaryUnboxingFix fix = new UnnecessaryUnboxingFix();
-
     static {
         s_unboxingMethods.put("java.lang.Integer", "intValue");
         s_unboxingMethods.put("java.lang.Short", "shortValue");
@@ -63,8 +61,8 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
         return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.unboxing.problem.descriptor");
     }
@@ -78,7 +76,7 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new UnnecessaryUnboxingFix();
     }
 
     private static class UnnecessaryUnboxingFix extends InspectionGadgetsFix {

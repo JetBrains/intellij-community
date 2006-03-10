@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,48 +20,51 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NonFinalCloneInspection extends MethodInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.SECURITY_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new NonFinalCloneVisitor();
-  }
-
-  private static class NonFinalCloneVisitor extends BaseInspectionVisitor {
-
-    public void visitMethod(@NotNull PsiMethod method) {
-      super.visitMethod(method);
-      final String name = method.getName();
-      if (!HardcodedMethodConstants.CLONE.equals(name)) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList == null) {
-        return;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      if (parameters == null || parameters.length != 0) {
-        return;
-      }
-      if (method.hasModifierProperty(PsiModifier.FINAL)
-          || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-
-      if (containingClass.hasModifierProperty(PsiModifier.FINAL)
-          || containingClass.isInterface()) {
-        return;
-      }
-      registerMethodError(method);
+    public String getGroupDisplayName() {
+        return GroupNames.SECURITY_GROUP_NAME;
     }
-  }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "non.final.clone.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new NonFinalCloneVisitor();
+    }
+
+    private static class NonFinalCloneVisitor extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            super.visitMethod(method);
+            final String name = method.getName();
+            if (!HardcodedMethodConstants.CLONE.equals(name)) {
+                return;
+            }
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
+            if (parameters == null || parameters.length != 0) {
+                return;
+            }
+            if (method.hasModifierProperty(PsiModifier.FINAL)
+                    || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass == null) {
+                return;
+            }
+            if (containingClass.hasModifierProperty(PsiModifier.FINAL)
+                    || containingClass.isInterface()) {
+                return;
+            }
+            registerMethodError(method);
+        }
+    }
 }

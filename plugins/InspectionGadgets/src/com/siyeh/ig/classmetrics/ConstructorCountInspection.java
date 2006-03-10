@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,22 @@ package com.siyeh.ig.classmetrics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstructorCountInspection
-        extends ClassMetricInspection {
+public class ConstructorCountInspection extends ClassMetricInspection {
+
     private static final int CONSTRUCTOR_COUNT_LIMIT = 5;
 
-    public String getID(){
+    public String getID() {
         return "ClassWithTooManyConstructors";
     }
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("too.many.constructors.display.name");
+        return InspectionGadgetsBundle.message(
+                "too.many.constructors.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -43,13 +44,15 @@ public class ConstructorCountInspection
     }
 
     protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message("too.many.constructors.count.limit.option");
+        return InspectionGadgetsBundle.message(
+                "too.many.constructors.count.limit.option");
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiClass aClass = (PsiClass) location.getParent();
-        final int count = calculateTotalConstructorCount(aClass);
-        return InspectionGadgetsBundle.message("too.many.constructors.problem.descriptor", count);
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final Integer count = (Integer)infos[0];
+        return InspectionGadgetsBundle.message(
+                "too.many.constructors.problem.descriptor", count);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -60,23 +63,22 @@ public class ConstructorCountInspection
 
         public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
-            final int totalComplexity = calculateTotalConstructorCount(aClass);
-            if (totalComplexity <= getLimit()) {
+            final int constructorCount = calculateTotalConstructorCount(aClass);
+            if (constructorCount <= getLimit()) {
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, Integer.valueOf(constructorCount));
         }
-    }
 
-    private static int calculateTotalConstructorCount(PsiClass aClass) {
-        final PsiMethod[] methods = aClass.getMethods();
-        int totalCount = 0;
-        for(final PsiMethod method : methods){
-            if(method.isConstructor()){
-                totalCount++;
+        private int calculateTotalConstructorCount(PsiClass aClass) {
+            final PsiMethod[] methods = aClass.getMethods();
+            int totalCount = 0;
+            for(final PsiMethod method : methods){
+                if(method.isConstructor()){
+                    totalCount++;
+                }
             }
+            return totalCount;
         }
-        return totalCount;
     }
-
 }

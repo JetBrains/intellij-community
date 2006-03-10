@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,38 +26,41 @@ import org.jetbrains.annotations.NotNull;
 public class InstantiationOfUtilityClassInspection extends ExpressionInspection{
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("instantiation.utility.class.display.name");
+        return InspectionGadgetsBundle.message(
+                "instantiation.utility.class.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("instantiation.utility.class.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "instantiation.utility.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
         return new InstantiationOfUtilityClassVisitor();
     }
 
-    private static class InstantiationOfUtilityClassVisitor extends BaseInspectionVisitor{
+    private static class InstantiationOfUtilityClassVisitor
+            extends BaseInspectionVisitor{
 
         public void visitNewExpression(@NotNull PsiNewExpression expression){
             final PsiType type = expression.getType();
-            if(!(type instanceof PsiClassType))
-            {
+            if(!(type instanceof PsiClassType)){
                 return;
             }
             final PsiClass aClass = ((PsiClassType) type).resolve();
-            if(aClass == null)
-            {
+            if(aClass == null){
                 return;
             }
             if(!UtilityClassUtil.isUtilityClass(aClass)){
                 return;
             }
-            final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
+            final PsiJavaCodeReferenceElement classReference =
+                    expression.getClassReference();
             registerError(classReference);
         }
     }

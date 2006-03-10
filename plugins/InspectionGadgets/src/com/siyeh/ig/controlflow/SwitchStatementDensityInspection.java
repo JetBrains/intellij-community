@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,14 +43,13 @@ public class SwitchStatementDensityInspection extends StatementInspection {
     public JComponent createOptionsPanel() {
         return new SingleIntegerFieldOptionsPanel(
                 InspectionGadgetsBundle.message(
-                        "switch.statement.density.min.option"), this, "m_limit");
+                        "switch.statement.density.min.option"), this,
+                "m_limit");
     }
 
-    protected String buildErrorString(PsiElement location) {
-        final PsiSwitchStatement statement =
-                (PsiSwitchStatement)location.getParent();
-        final double density = calculateDensity(statement);
-        final int intDensity = (int)(density * 100.0);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        final Integer intDensity = (Integer)infos[0];
         return InspectionGadgetsBundle.message(
                 "switch.statement.density.problem.descriptor", intDensity);
     }
@@ -62,29 +61,31 @@ public class SwitchStatementDensityInspection extends StatementInspection {
     private class SwitchStatementWithTooFewBranchesVisitor
             extends StatementInspectionVisitor {
 
-        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+        public void visitSwitchStatement(
+                @NotNull PsiSwitchStatement statement) {
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {
                 return;
             }
             final double density = calculateDensity(statement);
-            if (density * 100.0 > m_limit) {
+            final int intDensity = (int)(density * 100.0);
+            if (intDensity > m_limit) {
                 return;
             }
-            registerStatementError(statement);
+            registerStatementError(statement, Integer.valueOf(intDensity));
         }
-    }
 
-    private static double calculateDensity(PsiSwitchStatement statement) {
-        final PsiCodeBlock body = statement.getBody();
-        if (body == null) {
-            return -1.0;
+        private double calculateDensity(PsiSwitchStatement statement) {
+            final PsiCodeBlock body = statement.getBody();
+            if (body == null) {
+                return -1.0;
+            }
+            final int numBranches = SwitchUtils.calculateBranchCount(statement);
+            final StatementCountVisitor visitor = new StatementCountVisitor();
+            body.accept(visitor);
+            final int numStatements = visitor.getNumStatements();
+            return (double)numBranches / (double)numStatements;
         }
-        final int numBranches = SwitchUtils.calculateBranchCount(statement);
-        final StatementCountVisitor visitor = new StatementCountVisitor();
-        body.accept(visitor);
-        final int numStatements = visitor.getNumStatements();
-        return (double)numBranches / (double)numStatements;
     }
 
     private static class StatementCountVisitor

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,11 +78,10 @@ public class StandardVariableNamesInspection extends VariableInspection {
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final String variableName = location.getText();
-        final String expectedType = s_expectedTypes.get(variableName);
-        final PsiManager manager = location.getManager();
-        final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final String expectedType = s_expectedTypes.get((String)infos[0]);
+        final LanguageLevel languageLevel = (LanguageLevel)infos[1];
         if (!LanguageLevel.JDK_1_3.equals(languageLevel) &&
                 !LanguageLevel.JDK_1_4.equals(languageLevel)) {
             final String boxedType = s_boxingClasses.get(expectedType);
@@ -111,9 +110,6 @@ public class StandardVariableNamesInspection extends VariableInspection {
                 return;
             }
             final PsiType type = variable.getType();
-            if (type == null) {
-                return;
-            }
             final String typeText = type.getCanonicalText();
             if (expectedType.equals(typeText)) {
                 return;
@@ -133,7 +129,7 @@ public class StandardVariableNamesInspection extends VariableInspection {
                     return;
                 }
             }
-            registerVariableError(variable);
+            registerVariableError(variable, variableName, languageLevel);
         }
     }
 }

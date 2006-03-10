@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,19 @@ import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class PublicStaticCollectionFieldInspection extends FieldInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.SECURITY_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "public.static.collection.field.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -44,9 +51,6 @@ public class PublicStaticCollectionFieldInspection extends FieldInspection {
                 return;
             }
             final PsiType type = field.getType();
-            if (type == null) {
-                return;
-            }
             if (!CollectionUtils.isCollectionClass(type)) {
                 return;
             }

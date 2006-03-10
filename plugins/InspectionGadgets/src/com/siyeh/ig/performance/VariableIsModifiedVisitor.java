@@ -24,7 +24,9 @@ import java.util.Set;
 import java.util.HashSet;
 
 class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
-    @NonNls private static final Set<String> updateNames = new HashSet<String>(33);
+
+    @NonNls private static final Set<String> updateNames =
+            new HashSet<String>(9);
     static {
         updateNames.add("append");
         updateNames.add("appendCodePoint");
@@ -51,7 +53,8 @@ class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+    public void visitMethodCallExpression(
+            @NotNull PsiMethodCallExpression call){
         if(modified){
             return;
         }
@@ -81,9 +84,6 @@ class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
         }
         final PsiReferenceExpression methodExpression =
                 methodCallExpression.getMethodExpression();
-        if (methodExpression == null) {
-            return false;
-        }
         final String methodName = methodExpression.getReferenceName();
         return updateNames.contains(methodName);
     }

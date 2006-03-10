@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class VariablePassedAsArgumentVisitor extends PsiRecursiveElementVisitor{
+
     @NotNull
     private final PsiVariable variable;
     private boolean passed = false;
@@ -40,17 +41,9 @@ public class VariablePassedAsArgumentVisitor extends PsiRecursiveElementVisitor{
         }
         super.visitMethodCallExpression(call);
         final PsiExpressionList argumentList = call.getArgumentList();
-        if(argumentList == null){
-            return;
-        }
-
-        final PsiExpression[] args = argumentList.getExpressions();
-        if(args == null){
-            return;
-        }
-        for(final PsiExpression arg : args){
-
-            if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        for(final PsiExpression argument : arguments){
+            if(VariableAccessUtils.mayEvaluateToVariable(argument, variable)){
                 passed = true;
             }
         }
@@ -65,12 +58,9 @@ public class VariablePassedAsArgumentVisitor extends PsiRecursiveElementVisitor{
         if(argumentList == null){
             return;
         }
-        final PsiExpression[] args = argumentList.getExpressions();
-        if(args == null){
-            return;
-        }
-        for(final PsiExpression arg : args){
-            if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        for(final PsiExpression argument : arguments){
+            if(VariableAccessUtils.mayEvaluateToVariable(argument, variable)){
                 passed = true;
             }
         }

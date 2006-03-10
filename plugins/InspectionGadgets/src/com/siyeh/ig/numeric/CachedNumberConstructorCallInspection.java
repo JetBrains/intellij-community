@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,15 +43,18 @@ public class CachedNumberConstructorCallInspection
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("cached.number.constructor.call.display.name");
+        return InspectionGadgetsBundle.message(
+                "cached.number.constructor.call.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.NUMERIC_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("cached.number.constructor.call.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "cached.number.constructor.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -77,7 +80,8 @@ public class CachedNumberConstructorCallInspection
         }
 
         public String getName() {
-            return InspectionGadgetsBundle.message("cached.number.constructor.call.quickfix", className);
+            return InspectionGadgetsBundle.message(
+                    "cached.number.constructor.call.quickfix", className);
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

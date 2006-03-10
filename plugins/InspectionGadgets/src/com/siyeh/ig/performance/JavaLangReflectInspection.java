@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,39 +19,42 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class JavaLangReflectInspection extends VariableInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new JavaLangReflectVisitor();
-  }
-
-  private static class JavaLangReflectVisitor extends BaseInspectionVisitor {
-
-    public void visitVariable(@NotNull PsiVariable variable) {
-      super.visitVariable(variable);
-      final PsiType type = variable.getType();
-      if (type == null) {
-        return;
-      }
-      final PsiType componentType = type.getDeepComponentType();
-      if (!(componentType instanceof PsiClassType)) {
-        return;
-      }
-      final String className = ((PsiClassType)componentType).getClassName();
-      @NonNls final String javaLangReflect = "java.lang.reflect.";
-      if (!className.startsWith(javaLangReflect)) {
-        return;
-      }
-      final PsiTypeElement typeElement = variable.getTypeElement();
-      registerError(typeElement);
+    public String getGroupDisplayName() {
+        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "java.lang.reflect.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new JavaLangReflectVisitor();
+    }
+
+    private static class JavaLangReflectVisitor extends BaseInspectionVisitor {
+
+        public void visitVariable(@NotNull PsiVariable variable) {
+            super.visitVariable(variable);
+            final PsiType type = variable.getType();
+            final PsiType componentType = type.getDeepComponentType();
+            if (!(componentType instanceof PsiClassType)) {
+                return;
+            }
+            final String className = ((PsiClassType)componentType).getClassName();
+            @NonNls final String javaLangReflect = "java.lang.reflect.";
+            if (!className.startsWith(javaLangReflect)) {
+                return;
+            }
+            final PsiTypeElement typeElement = variable.getTypeElement();
+            registerError(typeElement);
+        }
+    }
 }

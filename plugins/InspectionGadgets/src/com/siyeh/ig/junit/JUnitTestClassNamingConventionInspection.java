@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,10 @@ public class JUnitTestClassNamingConventionInspection
 
     private static final int DEFAULT_MIN_LENGTH = 8;
     private static final int DEFAULT_MAX_LENGTH = 64;
-    private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("j.unit.test.class.naming.convention.display.name");
+        return InspectionGadgetsBundle.message(
+                "j.unit.test.class.naming.convention.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -43,23 +43,26 @@ public class JUnitTestClassNamingConventionInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiClass aClass = (PsiClass) location.getParent();
-        assert aClass != null;
-        final String className = aClass.getName();
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final String className = (String)infos[0];
         if (className.length() < getMinLength()) {
-            return InspectionGadgetsBundle.message("j.unit.test.class.naming.convention.problem.descriptor.short");
+            return InspectionGadgetsBundle.message(
+                    "j.unit.test.class.naming.convention.problem.descriptor.short");
         } else if (className.length() > getMaxLength()) {
-            return InspectionGadgetsBundle.message("j.unit.test.class.naming.convention.problem.descriptor.long");
+            return InspectionGadgetsBundle.message(
+                    "j.unit.test.class.naming.convention.problem.descriptor.long");
         }
-        return InspectionGadgetsBundle.message("j.unit.test.class.naming.convention.problem.descriptor.regex.mismatch", getRegex());
+        return InspectionGadgetsBundle.message(
+                "j.unit.test.class.naming.convention.problem.descriptor.regex.mismatch",
+                getRegex());
     }
 
     protected String getDefaultRegex() {
@@ -96,8 +99,7 @@ public class JUnitTestClassNamingConventionInspection
                     aClass.isAnnotationType()) {
                 return;
             }
-            if(aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiAnonymousClass) {
+            if(aClass instanceof PsiTypeParameter) {
                 return;
             }
             if(aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -113,7 +115,7 @@ public class JUnitTestClassNamingConventionInspection
             if (isValid(name)) {
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, name);
         }
     }
 }

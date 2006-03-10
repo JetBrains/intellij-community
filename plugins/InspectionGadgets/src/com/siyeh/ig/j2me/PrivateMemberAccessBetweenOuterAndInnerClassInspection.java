@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,11 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         return GroupNames.J2ME_GROUP_NAME;
     }
 
-    protected String buildErrorString(Object arg){
+    @NotNull
+    protected String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "private.member.access.between.outer.and.inner.classes.problem.descriptor",
-                arg);
+                infos[0]);
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){

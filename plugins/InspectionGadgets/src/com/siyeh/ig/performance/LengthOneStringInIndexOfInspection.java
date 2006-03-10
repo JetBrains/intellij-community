@@ -45,14 +45,11 @@ public class LengthOneStringInIndexOfInspection
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final String text = location.getText();
-        final int length = text.length();
-        final String transformedText =
-                '\'' + text.substring(1, length - 1) + '\'';
+    @NotNull
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "length.one.strings.in.concatenation.problem.descriptor",
-                transformedText);
+                infos[0]);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -105,7 +102,7 @@ public class LengthOneStringInIndexOfInspection
             if (!isArgumentOfIndexOf(expression)) {
                 return;
             }
-            registerError(expression);
+            registerError(expression, value);
         }
 
         static boolean isArgumentOfIndexOf(PsiExpression expression) {

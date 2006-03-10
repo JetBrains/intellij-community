@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,18 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringEqualsEmptyStringInspection extends ExpressionInspection {
 
-    private final StringEqualsEmptyStringFix fix =
-            new StringEqualsEmptyStringFix();
-
     public String getGroupDisplayName() {
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "string.equals.empty.string.problem.descriptor");
+    }
+
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new StringEqualsEmptyStringFix();
     }
 
     private static class StringEqualsEmptyStringFix
@@ -73,12 +76,10 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
                 if(BoolUtils.isNegation(parentExpression)) {
                     replaceExpression(parentExpression,
                             qualifierText + ".length()!=0");
-                }
-                else {
+                } else {
                     replaceExpression(call, qualifierText + ".length()==0");
                 }
-            }
-            else {
+            } else {
                 replaceExpression(call, qualifierText + ".length()==0");
             }
         }

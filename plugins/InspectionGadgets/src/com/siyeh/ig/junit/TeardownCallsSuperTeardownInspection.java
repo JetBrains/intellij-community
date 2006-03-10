@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,83 +31,93 @@ import org.jetbrains.annotations.NonNls;
 
 public class TeardownCallsSuperTeardownInspection extends MethodInspection {
 
-  private final AddSuperTearDownCall fix = new AddSuperTearDownCall();
-
-  public String getID() {
-    return "TearDownDoesntCallSuperTearDown";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.JUNIT_GROUP_NAME;
-  }
-
-  private static class AddSuperTearDownCall extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("teardown.calls.super.teardown.add.quickfix");
+    public String getID() {
+        return "TearDownDoesntCallSuperTearDown";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement methodName = descriptor.getPsiElement();
-      final PsiMethod method = (PsiMethod)methodName.getParent();
-      assert method != null;
-      final PsiCodeBlock body = method.getBody();
-      final PsiManager psiManager = PsiManager.getInstance(project);
-      final PsiElementFactory factory =
-        psiManager.getElementFactory();
-      final PsiStatement newStatement =
-        factory.createStatementFromText("super.tearDown();", null);
-      final CodeStyleManager styleManager =
-        psiManager.getCodeStyleManager();
-      final PsiJavaToken brace = body.getRBrace();
-      body.addBefore(newStatement, brace);
-      styleManager.reformat(body);
+    public String getGroupDisplayName() {
+        return GroupNames.JUNIT_GROUP_NAME;
     }
-  }
 
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new TeardownCallsSuperTeardownVisitor();
-  }
-
-  private static class TeardownCallsSuperTeardownVisitor
-    extends BaseInspectionVisitor {
-    public void visitMethod(@NotNull PsiMethod method) {
-      //note: no call to super;
-      @NonNls final String methodName = method.getName();
-      if (!"tearDown".equals(methodName)) {
-        return;
-      }
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (method.getBody() == null) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList == null) {
-        return;
-      }
-      if (parameterList.getParameters().length != 0) {
-        return;
-      }
-
-      final PsiClass targetClass = method.getContainingClass();
-      if (targetClass == null) {
-        return;
-      }
-      if (!ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
-        return;
-      }
-      final CallToSuperTeardownVisitor visitor = new CallToSuperTeardownVisitor();
-      method.accept(visitor);
-      if (visitor.isCallToSuperTeardownFound()) {
-        return;
-      }
-      registerMethodError(method);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "teardown.calls.super.teardown.problem.descriptor");
     }
-  }
+
+    private static class AddSuperTearDownCall extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "teardown.calls.super.teardown.add.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement methodName = descriptor.getPsiElement();
+            final PsiMethod method = (PsiMethod)methodName.getParent();
+            if (method == null) {
+                return;
+            }
+            final PsiCodeBlock body = method.getBody();
+            if (body == null) {
+                return;
+            }
+            final PsiManager psiManager = PsiManager.getInstance(project);
+            final PsiElementFactory factory =
+                    psiManager.getElementFactory();
+            final PsiStatement newStatement =
+                    factory.createStatementFromText("super.tearDown();", null);
+            final CodeStyleManager styleManager =
+                    psiManager.getCodeStyleManager();
+            final PsiJavaToken brace = body.getRBrace();
+            body.addBefore(newStatement, brace);
+            styleManager.reformat(body);
+        }
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new AddSuperTearDownCall();
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new TeardownCallsSuperTeardownVisitor();
+    }
+
+    private static class TeardownCallsSuperTeardownVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            //note: no call to super;
+            @NonNls final String methodName = method.getName();
+            if (!"tearDown".equals(methodName)) {
+                return;
+            }
+            if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            if (method.getBody() == null) {
+                return;
+            }
+            final PsiParameterList parameterList = method.getParameterList();
+            if (parameterList.getParameters().length != 0) {
+                return;
+            }
+            final PsiClass targetClass = method.getContainingClass();
+            if (targetClass == null) {
+                return;
+            }
+            if (!ClassUtils.isSubclass(targetClass,
+                    "junit.framework.TestCase")) {
+                return;
+            }
+            final CallToSuperTeardownVisitor visitor =
+                    new CallToSuperTeardownVisitor();
+            method.accept(visitor);
+            if (visitor.isCallToSuperTeardownFound()) {
+                return;
+            }
+            registerMethodError(method);
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -27,12 +26,8 @@ import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryContinueInspection extends StatementInspection {
-
-    private final InspectionGadgetsFix fix =
-            new DeleteUnnecessaryStatementFix("continue");
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -43,8 +38,8 @@ public class UnnecessaryContinueInspection extends StatementInspection {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.continue.problem.descriptor");
     }
@@ -58,7 +53,7 @@ public class UnnecessaryContinueInspection extends StatementInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new DeleteUnnecessaryStatementFix("continue");
     }
 
     private static class UnnecessaryContinueVisitor

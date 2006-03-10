@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticNonFinalFieldInspection extends FieldInspection {
@@ -28,11 +29,18 @@ public class StaticNonFinalFieldInspection extends FieldInspection {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "static.non.final.field.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new StaticNonFinalFieldVisitor();
     }
 
-    private static class StaticNonFinalFieldVisitor extends BaseInspectionVisitor {
+    private static class StaticNonFinalFieldVisitor
+            extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.STATIC) ||

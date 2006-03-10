@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ public class RegExFormatter extends DefaultFormatter {
         setOverwriteMode(false);
     }
 
-    public Object stringToValue(String text) throws ParseException {
+    public Object stringToValue(String string) throws ParseException {
         try {
-            return Pattern.compile(text);
+            return Pattern.compile(string);
         } catch (final PatternSyntaxException e) {
             throw new ParseException(e.getMessage(), e.getIndex());
         }

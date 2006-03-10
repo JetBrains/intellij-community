@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class EmptyStatementBodyInspection extends StatementInspection {
+
     /** @noinspection PublicField*/
     public boolean m_reportEmptyBlocks = false;
 
@@ -35,25 +36,30 @@ public class EmptyStatementBodyInspection extends StatementInspection {
         return "StatementWithEmptyBody";
     }
 
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("statement.with.empty.body.display.name");
+    public String getDisplayName(){
+        return InspectionGadgetsBundle.message(
+                "statement.with.empty.body.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "statement.with.empty.body.problem.descriptor");
+    }
+
     public boolean isEnabledByDefault(){
         return true;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("statement.with.empty.body.problem.descriptor");
-    }
-
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("statement.with.empty.body.include.option.label"),
-                                              this, "m_reportEmptyBlocks");
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "statement.with.empty.body.include.option.label"),
+                this, "m_reportEmptyBlocks");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -62,17 +68,14 @@ public class EmptyStatementBodyInspection extends StatementInspection {
 
     private class EmptyStatementVisitor extends StatementInspectionVisitor {
 
-
-        public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
+        public void visitDoWhileStatement(
+                @NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
-
-          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
-            return;
-          }    final PsiStatement body = statement.getBody();
-            if (body == null) {
+            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
-            if (!isEmpty(body)) {
+            final PsiStatement body = statement.getBody();
+            if (body == null || !isEmpty(body)) {
                 return;
             }
             registerStatementError(statement);
@@ -80,15 +83,11 @@ public class EmptyStatementBodyInspection extends StatementInspection {
 
         public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
-
-          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
-            return;
-          }
-            final PsiStatement body = statement.getBody();
-            if (body == null) {
+            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
-            if (!isEmpty(body)) {
+            final PsiStatement body = statement.getBody();
+            if (body == null || !isEmpty(body)) {
                 return;
             }
             registerStatementError(statement);
@@ -96,31 +95,24 @@ public class EmptyStatementBodyInspection extends StatementInspection {
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
-
-          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
-            return;
-          }
-            final PsiStatement body = statement.getBody();
-            if (body == null) {
+            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
-            if (!isEmpty(body)) {
+            final PsiStatement body = statement.getBody();
+            if (body == null || !isEmpty(body)) {
                 return;
             }
             registerStatementError(statement);
         }
 
-        public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+        public void visitForeachStatement(
+                @NotNull PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
-
-          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
-            return;
-          }
-            final PsiStatement body = statement.getBody();
-            if (body == null) {
+            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
             }
-            if (!isEmpty(body)) {
+            final PsiStatement body = statement.getBody();
+            if (body == null || !isEmpty(body)) {
                 return;
             }
             registerStatementError(statement);
@@ -128,31 +120,26 @@ public class EmptyStatementBodyInspection extends StatementInspection {
 
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
-
-          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
-            return;
-          }
+            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+                return;
+            }
             final PsiStatement thenBranch = statement.getThenBranch();
-            if (thenBranch != null) {
-                if (isEmpty(thenBranch)) {
-                    registerStatementError(statement);
-                    return;
-                }
+            if (thenBranch != null && isEmpty(thenBranch)) {
+                registerStatementError(statement);
+                return;
             }
             final PsiStatement elseBranch = statement.getElseBranch();
-
-            if (elseBranch != null) {
-                if (isEmpty(elseBranch)) {
-                    final PsiElement elseToken = statement.getElseElement();
-                    registerError(elseToken);
-                }
+            if (elseBranch != null && isEmpty(elseBranch)) {
+                final PsiElement elseToken = statement.getElseElement();
+                registerError(elseToken);
             }
         }
 
         private boolean isEmpty(PsiElement body) {
             if (body instanceof PsiEmptyStatement) {
                 return true;
-            } else if (m_reportEmptyBlocks && body instanceof PsiBlockStatement) {
+            } else if (m_reportEmptyBlocks &&
+                    body instanceof PsiBlockStatement) {
                 final PsiBlockStatement block = (PsiBlockStatement) body;
                 final PsiCodeBlock codeBlock = block.getCodeBlock();
                 return codeBlockIsEmpty(codeBlock);

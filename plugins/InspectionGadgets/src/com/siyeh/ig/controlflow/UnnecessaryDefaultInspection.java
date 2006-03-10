@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,19 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryDefaultInspection extends StatementInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "unnecessary.default.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -35,7 +42,8 @@ public class UnnecessaryDefaultInspection extends StatementInspection {
     private static class UnnecessaryDefaultVisitor
             extends StatementInspectionVisitor {
 
-        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+        public void visitSwitchStatement(
+                @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             if (!switchStatementContainsUnnecessaryDefault(statement)) {
                 return;

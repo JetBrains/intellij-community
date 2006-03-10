@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,37 +26,34 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MismatchedArrayReadWriteInspection extends VariableInspection{
+
     public String getID(){
         return "MismatchedReadAndWriteOfArray";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("mismatched.read.write.array.display.name");
+        return InspectionGadgetsBundle.message(
+                "mismatched.read.write.array.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final boolean written = ((Boolean)infos[0]).booleanValue();
+        if(written){
+            return InspectionGadgetsBundle.message(
+                    "mismatched.read.write.array.problem.descriptor.write.not.read");
+        } else{
+            return InspectionGadgetsBundle.message(
+                    "mismatched.read.write.array.problem.descriptor.read.not.write");
+        }
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiVariable variable = (PsiVariable) location.getParent();
-        assert variable!=null;
-        final PsiElement context;
-        if(variable instanceof PsiField){
-            context = PsiUtil.getTopLevelClass(variable);
-        } else{
-            context = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-        }
-        final boolean written = arrayContentsAreWritten(variable, context);
-        if(written){
-            return InspectionGadgetsBundle.message("mismatched.read.write.array.problem.descriptor.write.not.read");
-        } else{
-            return InspectionGadgetsBundle.message("mismatched.read.write.array.problem.descriptor.read.not.write");
-        }
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -64,7 +61,7 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection{
     }
 
     private static class MismatchedArrayReadWriteVisitor
-                                                         extends BaseInspectionVisitor{
+            extends BaseInspectionVisitor{
 
         public void visitField(@NotNull PsiField field){
             super.visitField(field);
@@ -82,9 +79,10 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection{
             final boolean written = arrayContentsAreWritten(field,
                                                             containingClass);
             final boolean read = arrayContentsAreRead(field, containingClass);
-            if(written != read){
-                registerFieldError(field);
+            if (written == read) {
+                return;
             }
+            registerFieldError(field, Boolean.valueOf(written));
         }
 
         public void visitLocalVariable(@NotNull PsiLocalVariable variable){
@@ -98,77 +96,75 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection{
             if(type.getArrayDimensions() == 0){
                 return;
             }
-            final boolean written = arrayContentsAreWritten(variable,
-                                                            codeBlock);
+            final boolean written =
+                    arrayContentsAreWritten(variable, codeBlock);
             final boolean read = arrayContentsAreRead(variable, codeBlock);
-            if(written && read){
+            if(written == read){
                 return;
             }
-            if(!read && !written){
-                return;
+            registerVariableError(variable, Boolean.valueOf(written));
+        }
+
+        private static boolean arrayContentsAreWritten(PsiVariable variable,
+                                                       PsiElement context){
+            if(VariableAccessUtils.arrayContentsAreAssigned(variable, context)){
+                return true;
             }
-            registerVariableError(variable);
+            final PsiExpression initializer = variable.getInitializer();
+            if(initializer != null && !isDefaultArrayInitializer(initializer)){
+                return true;
+            }
+            if(VariableAccessUtils.variableIsAssigned(variable, context)){
+                return true;
+            }
+            if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
+                return true;
+            }
+            if(VariableAccessUtils.variableIsReturned(variable, context)){
+                return true;
+            }
+            if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+                    context)){
+                return true;
+            }
+            return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
+                    context);
         }
-    }
 
-    private static boolean arrayContentsAreWritten(PsiVariable variable,
-                                                   PsiElement context){
-        if(VariableAccessUtils.arrayContentsAreAssigned(variable, context)){
-            return true;
+        private static boolean arrayContentsAreRead(PsiVariable variable,
+                                                    PsiElement context){
+            if(VariableAccessUtils.arrayContentsAreAccessed(variable, context)){
+                return true;
+            }
+            final PsiExpression initializer = variable.getInitializer();
+            if(initializer != null && !isDefaultArrayInitializer(initializer)){
+                return true;
+            }
+            if(VariableAccessUtils.variableIsAssigned(variable, context)){
+                return true;
+            }
+            if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
+                return true;
+            }
+            if(VariableAccessUtils.variableIsReturned(variable, context)){
+                return true;
+            }
+            if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+                    context)){
+                return true;
+            }
+            return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
+                    context);
         }
-        final PsiExpression initializer = variable.getInitializer();
-        if(initializer != null && !isDefaultArrayInitializer(initializer)){
-            return true;
-        }
-        if(VariableAccessUtils.variableIsAssigned(variable, context)){
-            return true;
-        }
-        if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
-            return true;
-        }
-        if(VariableAccessUtils.variableIsReturned(variable, context)){
-            return true;
-        }
-        if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
-                                                                context)){
-            return true;
-        }
-        return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
-                                                                    context);
-    }
 
-    private static boolean isDefaultArrayInitializer(PsiExpression initializer){
-        if(!(initializer instanceof PsiNewExpression)){
-            return false;
+        private static boolean isDefaultArrayInitializer(
+                PsiExpression initializer){
+            if(!(initializer instanceof PsiNewExpression)){
+                return false;
+            }
+            final PsiNewExpression newExpression =
+                    (PsiNewExpression) initializer;
+            return newExpression.getArrayInitializer() == null;
         }
-        final PsiNewExpression newExpression = (PsiNewExpression) initializer;
-        return newExpression.getArrayInitializer() == null;
-    }
-
-    private static boolean arrayContentsAreRead(PsiVariable variable,
-                                                PsiElement context){
-        if(VariableAccessUtils.arrayContentsAreAccessed(variable, context)){
-            return true;
-        }
-        final PsiExpression initializer = variable.getInitializer();
-        if(initializer != null && !isDefaultArrayInitializer(initializer)){
-            return true;
-        }
-        if(VariableAccessUtils.variableIsAssigned(variable, context)){
-            return true;
-        }
-        if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
-            return true;
-        }
-        if(VariableAccessUtils.variableIsReturned(variable, context)){
-            return true;
-        }
-        if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
-                                                                context)){
-            return true;
-        }
-        return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
-                                                                    context);
     }
 }
-

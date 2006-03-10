@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends MethodInspection{
+public class NonBooleanMethodNameMayNotStartWithQuestionInspection
+        extends MethodInspection{
+
     /** @noinspection PublicField*/
     @NonNls public String nameCheckString =
             "is,can,has,should,could,will,shall,check,contains,equals,add,put," +
@@ -52,7 +54,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
     private List<Object> nameList = new ArrayList<Object>(32);
     private final Object lock = new Object();
 
-    {
+    public NonBooleanMethodNameMayNotStartWithQuestionInspection(){
         parseNameString();
     }
 
@@ -102,6 +104,12 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "non.boolean.method.name.must.not.start.with.question.problem.descriptor");
+    }
+
     public JComponent createOptionsPanel(){
         final Form form = new Form();
         return form.getContentPanel();
@@ -113,10 +121,6 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
-    }
-
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -186,6 +190,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
                     model.fireTableStructureChanged();
 
                     EventQueue.invokeLater(new Runnable(){
+
                         public void run(){
                             final Rectangle rect = table.getCellRect(listSize, 0, true);
                             table.scrollRectToVisible(rect);
@@ -200,6 +205,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
                 }
             });
             deleteButton.addActionListener(new ActionListener(){
+
                 public void actionPerformed(ActionEvent e){
                     final int[] selectedRows = table.getSelectedRows();
                     if(selectedRows.length == 0){
@@ -242,7 +248,8 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
         }
 
         public String getColumnName(int columnIndex){
-            return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.table.column.name");
+            return InspectionGadgetsBundle.message(
+                    "boolean.method.name.must.start.with.question.table.column.name");
         }
 
         public Class getColumnClass(int columnIndex){

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class FieldCountInspection extends ClassMetricInspection {
     public String getID(){
         return "ClassWithTooManyFields";
     }
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("too.many.fields.display.name");
     }
@@ -52,12 +53,19 @@ public class FieldCountInspection extends ClassMetricInspection {
         return GroupNames.CLASSMETRICS_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "too.many.fields.problem.descriptor", infos[0]);
+    }
+
     protected int getDefaultLimit() {
         return FIELD_COUNT_LIMIT;
     }
 
     protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message("too.many.fields.count.limit.option");
+        return InspectionGadgetsBundle.message(
+                "too.many.fields.count.limit.option");
     }
 
     public JComponent createOptionsPanel() {
@@ -66,7 +74,7 @@ public class FieldCountInspection extends ClassMetricInspection {
         final NumberFormat formatter = NumberFormat.getIntegerInstance();
         formatter.setParseIntegerOnly(true);
         final JFormattedTextField valueField = new JFormattedTextField(formatter);
-        valueField.setValue(m_limit);
+        valueField.setValue(Integer.valueOf(m_limit));
         valueField.setColumns(4);
         FormattedTextFieldMacFix.apply(valueField);
         final Document document = valueField.getDocument();
@@ -89,8 +97,9 @@ public class FieldCountInspection extends ClassMetricInspection {
         });
 
         final JCheckBox includeCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message("field.count.inspection.include.constant.fields.in.count.checkbox"),
-                              m_countConstantFields);
+                new JCheckBox(InspectionGadgetsBundle.message(
+                        "field.count.inspection.include.constant.fields.in.count.checkbox"),
+                        m_countConstantFields);
         final ButtonModel includeModel = includeCheckBox.getModel();
         includeModel.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
@@ -99,8 +108,9 @@ public class FieldCountInspection extends ClassMetricInspection {
         });
 
         final JCheckBox considerCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message("field.count.inspection.static.final.fields.count.as.constant.checkbox"),
-                              m_considerStaticFinalFieldsConstant);
+                new JCheckBox(InspectionGadgetsBundle.message(
+                        "field.count.inspection.static.final.fields.count.as.constant.checkbox"),
+                        m_considerStaticFinalFieldsConstant);
         final ButtonModel considerModel = considerCheckBox.getModel();
         considerModel.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
@@ -135,12 +145,6 @@ public class FieldCountInspection extends ClassMetricInspection {
         return panel;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiClass aClass = (PsiClass) location.getParent();
-        final int count = countFields(aClass);
-        return InspectionGadgetsBundle.message("too.many.fields.problem.descriptor", count);
-    }
-
     public BaseInspectionVisitor buildVisitor() {
         return new FieldCountVisitor();
     }
@@ -153,36 +157,36 @@ public class FieldCountInspection extends ClassMetricInspection {
             if (totalFields <= getLimit()) {
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, Integer.valueOf(totalFields));
         }
-    }
 
-    private int countFields(PsiClass aClass) {
-        int totalFields = 0;
-        final PsiField[] fields = aClass.getFields();
-        for(final PsiField field : fields) {
-            if (m_countConstantFields) {
-                totalFields++;
-            } else {
-                if(!fieldIsConstant(field)) {
+        private int countFields(PsiClass aClass) {
+            int totalFields = 0;
+            final PsiField[] fields = aClass.getFields();
+            for(final PsiField field : fields) {
+                if (m_countConstantFields) {
                     totalFields++;
+                } else {
+                    if(!fieldIsConstant(field)) {
+                        totalFields++;
+                    }
                 }
             }
+            return totalFields;
         }
-        return totalFields;
-    }
 
-    private boolean fieldIsConstant(PsiField field) {
-        if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-            return false;
+        private boolean fieldIsConstant(PsiField field) {
+            if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+                return false;
+            }
+            if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+                return false;
+            }
+            if (m_considerStaticFinalFieldsConstant) {
+                return true;
+            }
+            final PsiType type = field.getType();
+            return ClassUtils.isImmutable(type);
         }
-        if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-            return false;
-        }
-        if (m_considerStaticFinalFieldsConstant) {
-            return true;
-        }
-        final PsiType type = field.getType();
-        return ClassUtils.isImmutable(type);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,12 @@ public class OverlyComplexBooleanExpressionInspection
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "overly.complex.boolean.expression.problem.descriptor");
+    }
+
     public JComponent createOptionsPanel() {
         final ButtonModel pureModel =
                 m_ignoreConjunctionsDisjunctionsCheckBox.getModel();
@@ -115,11 +121,6 @@ public class OverlyComplexBooleanExpressionInspection
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
-    }
-
-    protected String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message(
-                "overly.complex.boolean.expression.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

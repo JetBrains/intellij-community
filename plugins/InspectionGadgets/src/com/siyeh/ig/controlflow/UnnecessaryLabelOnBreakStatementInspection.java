@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,14 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryLabelOnBreakStatementInspection
         extends StatementInspection {
 
-    private final UnnecessaryLabelOnBreakStatementFix fix =
-            new UnnecessaryLabelOnBreakStatementFix();
-
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "unnecessary.label.on.break.statement.problem.descriptor");
     }
 
     public boolean isEnabledByDefault() {
@@ -43,7 +46,7 @@ public class UnnecessaryLabelOnBreakStatementInspection
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new UnnecessaryLabelOnBreakStatementFix();
     }
 
     private static class UnnecessaryLabelOnBreakStatementFix
@@ -81,19 +84,19 @@ public class UnnecessaryLabelOnBreakStatementInspection
             if (labelText == null || labelText.length() == 0) {
                 return;
             }
-            final PsiStatement exitedStatement = statement.findExitedStatement();
+            final PsiStatement exitedStatement =
+                    statement.findExitedStatement();
             if (exitedStatement == null) {
                 return;
             }
-
-            PsiStatement labelEnabledParent = PsiTreeUtil.getParentOfType(statement,
-                    PsiForStatement.class, PsiDoWhileStatement.class, PsiForeachStatement.class,
-                    PsiWhileStatement.class, PsiSwitchStatement.class);
-
+            final PsiStatement labelEnabledParent =
+                    PsiTreeUtil.getParentOfType(statement,
+                            PsiForStatement.class, PsiDoWhileStatement.class,
+                            PsiForeachStatement.class, PsiWhileStatement.class,
+                            PsiSwitchStatement.class);
             if (labelEnabledParent == null) {
                 return;
             }
-
             if (exitedStatement.equals(labelEnabledParent)) {
                 registerStatementError(statement);
             }

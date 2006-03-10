@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,11 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final String type = location.getText();
-        final String interfaceName = CollectionUtils.getInterfaceForClass(type);
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final String type = ((PsiElement)infos[0]).getText();
+        final String interfaceName =
+                CollectionUtils.getInterfaceForClass(type);
         return InspectionGadgetsBundle.message(
                 "collection.declarated.by.class.problem.descriptor",
                 interfaceName);
@@ -63,7 +65,7 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
-            registerError(typeElement);
+            registerError(typeElement, typeElement);
         }
 
         public void visitMethod(@NotNull PsiMethod method) {
@@ -76,7 +78,7 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
                 return;
             }
             final PsiTypeElement typeElement = method.getReturnTypeElement();
-            registerError(typeElement);
+            registerError(typeElement, typeElement);
         }
     }
 }

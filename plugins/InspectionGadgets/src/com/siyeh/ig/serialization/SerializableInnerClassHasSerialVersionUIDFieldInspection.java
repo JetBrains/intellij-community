@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,80 +32,84 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends ClassInspection {
+public class SerializableInnerClassHasSerialVersionUIDFieldInspection
+        extends ClassInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  public boolean m_ignoreSerializableDueToInheritance = true;
-  private final AddSerialVersionUIDFix fix = new AddSerialVersionUIDFix();
+    /**
+     * @noinspection PublicField
+     */
+    public boolean m_ignoreSerializableDueToInheritance = true;
 
-  public String getID() {
-    return "SerializableNonStaticInnerClassWithoutSerialVersionUID";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.SERIALIZATION_GROUP_NAME;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("serializable.inner.class.has.serial.version.u.i.d.field.ignore.option"),
-                                          this, "m_ignoreSerializableDueToInheritance");
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new SerializableDefinesSerialVersionUIDVisitor();
-  }
-
-  private class SerializableDefinesSerialVersionUIDVisitor extends BaseInspectionVisitor {
-
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
-        return;
-      }
-      if (hasSerialVersionUIDField(aClass)) {
-        return;
-      }
-      final PsiClass containingClass = aClass.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      if (m_ignoreSerializableDueToInheritance) {
-        if (!SerializationUtils.isDirectlySerializable(aClass)) {
-          return;
-        }
-      }
-      else {
-        if (!SerializationUtils.isSerializable(aClass)) {
-          return;
-        }
-      }
-
-      registerClassError(aClass);
+    public String getID() {
+        return "SerializableNonStaticInnerClassWithoutSerialVersionUID";
     }
 
-    private boolean hasSerialVersionUIDField(PsiClass aClass) {
-      final PsiField[] fields = aClass.getFields();
-      boolean hasSerialVersionUID = false;
-      for (PsiField field : fields) {
-        final String fieldName = field.getName();
-        if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName)) {
-          hasSerialVersionUID = true;
-        }
-      }
-      return hasSerialVersionUID;
+    public String getGroupDisplayName() {
+        return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "serializable.inner.class.has.serial.version.u.i.d.field.problem.descriptor");
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new AddSerialVersionUIDFix();
+    }
+
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "serializable.inner.class.has.serial.version.u.i.d.field.ignore.option"),
+                this, "m_ignoreSerializableDueToInheritance");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new SerializableDefinesSerialVersionUIDVisitor();
+    }
+
+    private class SerializableDefinesSerialVersionUIDVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so it doesn't drill down
+            if (aClass.isInterface() || aClass.isAnnotationType()) {
+                return;
+            }
+            if (hasSerialVersionUIDField(aClass)) {
+                return;
+            }
+            final PsiClass containingClass = aClass.getContainingClass();
+            if (containingClass == null) {
+                return;
+            }
+            if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+                return;
+            }
+            if (m_ignoreSerializableDueToInheritance) {
+                if (!SerializationUtils.isDirectlySerializable(aClass)) {
+                    return;
+                }
+            } else {
+                if (!SerializationUtils.isSerializable(aClass)) {
+                    return;
+                }
+            }
+            registerClassError(aClass);
+        }
+
+        private boolean hasSerialVersionUIDField(PsiClass aClass) {
+            final PsiField[] fields = aClass.getFields();
+            boolean hasSerialVersionUID = false;
+            for (PsiField field : fields) {
+                final String fieldName = field.getName();
+                if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(
+                        fieldName)) {
+                    hasSerialVersionUID = true;
+                }
+            }
+            return hasSerialVersionUID;
+        }
+    }
 }

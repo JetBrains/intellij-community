@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,22 +28,25 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection {
-    private final MakePrivateFix fix = new MakePrivateFix();
+public class ReadObjectAndWriteObjectPrivateInspection
+        extends MethodInspection {
 
     public String getID(){
         return "NonPrivateSerializationMethod";
     }
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("readwriteobject.private.display.name");
+        return InspectionGadgetsBundle.message(
+                "readwriteobject.private.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("readwriteobject.private.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "readwriteobject.private.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -51,17 +54,16 @@ public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection 
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new MakePrivateFix();
     }
 
-    private static class ReadObjectWriteObjectPrivateVisitor extends BaseInspectionVisitor {
-
+    private static class ReadObjectWriteObjectPrivateVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down
             final PsiClass aClass = method.getContainingClass();
-            if(aClass == null)
-            {
+            if(aClass == null) {
                 return;
             }
             if (aClass.isInterface() || aClass.isAnnotationType()) {
@@ -70,7 +72,6 @@ public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection 
             if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
                 return;
             }
-
             if(!SerializationUtils.isReadObject(method) &&
                        !SerializationUtils.isWriteObject(method)){
                 return;
@@ -81,5 +82,4 @@ public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection 
             registerMethodError(method);
         }
     }
-
 }

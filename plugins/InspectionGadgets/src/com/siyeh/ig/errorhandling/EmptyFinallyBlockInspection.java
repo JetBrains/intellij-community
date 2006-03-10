@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
@@ -29,42 +29,47 @@ import org.jetbrains.annotations.NotNull;
 
 public class EmptyFinallyBlockInspection extends StatementInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.ERRORHANDLING_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new EmptyFinallyBlockVisitor();
-  }
-
-  private static class EmptyFinallyBlockVisitor extends StatementInspectionVisitor {
-
-
-    public void visitTryStatement(@NotNull PsiTryStatement statement) {
-      super.visitTryStatement(statement);
-
-      if (PsiUtil.isInJspFile(statement.getContainingFile())) {
-        return;
-      }
-      final PsiCodeBlock finallyBlock = statement.getFinallyBlock();
-      if (finallyBlock == null) {
-        return;
-      }
-      if (finallyBlock.getStatements().length != 0) {
-        return;
-      }
-      final PsiElement[] children = statement.getChildren();
-      for (final PsiElement child : children) {
-        final String childText = child.getText();
-        if (PsiKeyword.FINALLY.equals(childText)) {
-          registerError(child);
-          return;
-        }
-      }
+    public String getGroupDisplayName() {
+        return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
-  }
+
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "empty.finally.block.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new EmptyFinallyBlockVisitor();
+    }
+
+    private static class EmptyFinallyBlockVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+            super.visitTryStatement(statement);
+            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+                return;
+            }
+            final PsiCodeBlock finallyBlock = statement.getFinallyBlock();
+            if (finallyBlock == null) {
+                return;
+            }
+            if (finallyBlock.getStatements().length != 0) {
+                return;
+            }
+            final PsiElement[] children = statement.getChildren();
+            for (final PsiElement child : children) {
+                final String childText = child.getText();
+                if (PsiKeyword.FINALLY.equals(childText)) {
+                    registerError(child);
+                    return;
+                }
+            }
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiNewExpression;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ObjectAllocationInLoopInspection extends ExpressionInspection {
@@ -28,15 +29,21 @@ public class ObjectAllocationInLoopInspection extends ExpressionInspection {
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "object.allocation.in.loop.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new ObjectAllocationInLoopsVisitor();
     }
 
-    private static class ObjectAllocationInLoopsVisitor extends BaseInspectionVisitor {
+    private static class ObjectAllocationInLoopsVisitor
+            extends BaseInspectionVisitor {
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
-
             if (!ControlFlowUtils.isInLoop(expression)) {
                 return;
             }

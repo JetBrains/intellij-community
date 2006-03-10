@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,9 +77,11 @@ public class JDBCResourceInspection extends ExpressionInspection{
         return GroupNames.RESOURCE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiExpression expression = (PsiExpression) location;
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final PsiExpression expression = (PsiExpression) infos[0];
         final PsiType type = expression.getType();
+        assert type != null;
         final String text = type.getPresentableText();
         return InspectionGadgetsBundle.message(
                 "jdbc.resource.opened.not.closed.problem.descriptor", text);
@@ -99,7 +101,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
             }
             final PsiElement parent = expression.getParent();
             if(!(parent instanceof PsiAssignmentExpression)){
-                registerError(expression);
+                registerError(expression, expression);
                 return;
             }
             final PsiAssignmentExpression assignment =
@@ -120,7 +122,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
                         PsiTreeUtil.getParentOfType(currentContext,
                                                     PsiTryStatement.class);
                 if(tryStatement == null){
-                    registerError(expression);
+                    registerError(expression, expression);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(

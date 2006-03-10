@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,16 @@ public class TailRecursionInspection extends ExpressionInspection {
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "tail.recursion.problem.descriptor");
+    }
+
     @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         final PsiMethod containingMethod =
-                PsiTreeUtil.getParentOfType(location,
-                        PsiMethod.class);
+                PsiTreeUtil.getParentOfType(location, PsiMethod.class);
         if (mayBeReplacedByIterativeMethod(containingMethod)) {
             return new RemoveTailRecursionFix();
         } else {
@@ -66,18 +71,16 @@ public class TailRecursionInspection extends ExpressionInspection {
         return true;
     }
 
-    private static class RemoveTailRecursionFix
-            extends InspectionGadgetsFix {
+    private static class RemoveTailRecursionFix extends InspectionGadgetsFix {
+
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "tail.recursion.replace.quickfix");
         }
 
-        public void doFix(Project project,
-                          ProblemDescriptor descriptor)
+        public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
-            final PsiElement methodNameToken =
-                    descriptor.getPsiElement();
+            final PsiElement methodNameToken = descriptor.getPsiElement();
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(methodNameToken,
                             PsiMethod.class);
@@ -127,17 +130,15 @@ public class TailRecursionInspection extends ExpressionInspection {
                         (PsiReturnStatement)element;
                 final PsiMethodCallExpression call = (PsiMethodCallExpression)
                         returnStatement.getReturnValue();
+                assert call != null;
                 final PsiExpressionList argumentList = call.getArgumentList();
-                final PsiExpression[] args =
-                        argumentList.getExpressions();
-
+                final PsiExpression[] args = argumentList.getExpressions();
                 final PsiParameterList parameterList = method
                         .getParameterList();
                 final PsiParameter[] parameters =
                         parameterList.getParameters();
                 final boolean isInBlock =
                         returnStatement.getParent() instanceof PsiCodeBlock;
-
                 if (!isInBlock) {
                     out.append('{');
                 }
@@ -152,30 +153,27 @@ public class TailRecursionInspection extends ExpressionInspection {
                     out.append(';');
                 }
                 final PsiCodeBlock body = method.getBody();
+                assert body != null;
                 if (ControlFlowUtils.blockCompletesWithStatement(body,
                                 returnStatement)) {
                     //don't do anything, as the continue is unnecessary
-                }
-                else if (ControlFlowUtils.isInLoop(element)) {
+                } else if (ControlFlowUtils.isInLoop(element)) {
                     final String methodName = method.getName();
                     containedTailCallInLoop[0] = true;
                     out.append("continue ");
                     out.append(methodName);
                     out.append(';');
-                }
-                else {
+                } else {
                     out.append("continue;");
                 }
                 if (!isInBlock) {
                     out.append('}');
                 }
-            }
-            else {
+            } else {
                 final PsiElement[] children = element.getChildren();
                 if (children.length == 0) {
                     out.append(text);
-                }
-                else {
+                } else {
                     for (final PsiElement child : children) {
                         replaceTailCalls(child, method, out,
                                 containedTailCallInLoop);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,14 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiDoWhileStatement;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiWhileStatement;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class InfiniteLoopStatementInspection extends StatementInspection {
 
@@ -43,8 +41,8 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
         return true;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "infinite.loop.statement.problem.descriptor");
     }
@@ -68,7 +66,6 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
         }
 
         public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-
             super.visitWhileStatement(statement);
             if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
                 return;

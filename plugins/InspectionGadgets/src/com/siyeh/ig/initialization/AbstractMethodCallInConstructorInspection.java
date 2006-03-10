@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,15 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AbstractMethodCallInConstructorInspection extends MethodInspection{
+
     public String getGroupDisplayName(){
         return GroupNames.INITIALIZATION_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "abstract.method.call.in.constructor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -33,9 +40,10 @@ public class AbstractMethodCallInConstructorInspection extends MethodInspection{
     }
 
     private static class AbstractMethodCallInConstructorVisitor
-                                                                extends BaseInspectionVisitor{
+            extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(call, PsiMethod.class);
@@ -45,11 +53,10 @@ public class AbstractMethodCallInConstructorInspection extends MethodInspection{
             if(!method.isConstructor()){
                 return;
             }
-            final PsiReferenceExpression methodExpression = call.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
-            final PsiMethod calledMethod = (PsiMethod) methodExpression.resolve();
+            final PsiReferenceExpression methodExpression =
+                    call.getMethodExpression();
+            final PsiMethod calledMethod =
+                    (PsiMethod) methodExpression.resolve();
             if(calledMethod == null){
                 return;
             }
@@ -59,9 +66,9 @@ public class AbstractMethodCallInConstructorInspection extends MethodInspection{
             if(!calledMethod.hasModifierProperty(PsiModifier.ABSTRACT)){
                 return;
             }
-            final PsiClass calledMethodClass = calledMethod.getContainingClass();
-            if(calledMethodClass == null)
-            {
+            final PsiClass calledMethodClass =
+                    calledMethod.getContainingClass();
+            if(calledMethodClass == null){
                 return;
             }
             final PsiClass methodClass = method.getContainingClass();

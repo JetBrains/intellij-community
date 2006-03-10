@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,18 @@ package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public class SerializableInnerClassWithNonSerializableOuterClassInspection extends ClassInspection {
+public class SerializableInnerClassWithNonSerializableOuterClassInspection
+        extends ClassInspection {
 
     /**
      * @noinspection PublicField
@@ -41,15 +41,23 @@ public class SerializableInnerClassWithNonSerializableOuterClassInspection exten
 
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message("serializable.inner.class.with.non.serializable.outer.class.ignore.option"),
+                InspectionGadgetsBundle.message(
+                        "serializable.inner.class.with.non.serializable.outer.class.ignore.option"),
                 this, "m_ignoreSerializableDueToInheritance");
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "serializable.inner.class.with.non.serializable.outer.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new SerializableDefinesSerialVersionUIDVisitor();
     }
 
-    private class SerializableDefinesSerialVersionUIDVisitor extends BaseInspectionVisitor {
+    private class SerializableDefinesSerialVersionUIDVisitor
+            extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down

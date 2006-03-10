@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,43 +21,54 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class FallthruInSwitchStatementInspection extends StatementInspection {
 
-  public String getID() {
-    return "fallthrough";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new FallthroughInSwitchStatementVisitor();
-  }
-
-  private static class FallthroughInSwitchStatementVisitor extends StatementInspectionVisitor {
-
-    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      super.visitSwitchStatement(statement);
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return;
-      }
-      boolean switchLabelValid = true;
-      final PsiStatement[] statements = body.getStatements();
-      for (final PsiStatement child : statements) {
-        if (child instanceof PsiSwitchLabelStatement) {
-          if (!switchLabelValid) {
-            registerError(child);
-          }
-          switchLabelValid = true;
-        }
-        else {
-          switchLabelValid = !ControlFlowUtils.statementMayCompleteNormally(child);
-        }
-      }
+    public String getID() {
+        return "fallthrough";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "fallthru.in.switch.statement.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new FallthroughInSwitchStatementVisitor();
+    }
+
+    private static class FallthroughInSwitchStatementVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitSwitchStatement(
+                @NotNull PsiSwitchStatement statement) {
+            super.visitSwitchStatement(statement);
+            final PsiCodeBlock body = statement.getBody();
+            if (body == null) {
+                return;
+            }
+            boolean switchLabelValid = true;
+            final PsiStatement[] statements = body.getStatements();
+            for (final PsiStatement child : statements) {
+                if (child instanceof PsiSwitchLabelStatement) {
+                    if (!switchLabelValid) {
+                        registerError(child);
+                    }
+                    switchLabelValid = true;
+                }
+                else {
+                    switchLabelValid =
+                            !ControlFlowUtils.statementMayCompleteNormally(
+                                    child);
+                }
+            }
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,30 +28,32 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class MethodOverridesStaticMethodInspection extends MethodInspection{
-    private final RenameFix fix = new RenameFix();
 
     public String getID(){
         return "MethodOverridesStaticMethodOfSuperclass";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("method.overrides.static.display.name");
+        return InspectionGadgetsBundle.message(
+                "method.overrides.static.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "method.overrides.static.problem.descriptor");
+    }
+
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
-    }
-
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("method.overrides.static.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -67,9 +69,6 @@ public class MethodOverridesStaticMethodInspection extends MethodInspection{
             }
             final String methName = method.getName();
             final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList == null){
-                return;
-            }
             final PsiParameter[] parameters = parameterList.getParameters();
             if(parameters == null){
                 return;
@@ -81,22 +80,18 @@ public class MethodOverridesStaticMethodInspection extends MethodInspection{
                 if(!visitedClasses.add(ancestorClass)){
                     return;
                 }
-                final PsiMethod[] methods = ancestorClass
-                        .findMethodsByName(methName, false);
+                final PsiMethod[] methods =
+                        ancestorClass.findMethodsByName(methName, false);
                 for(final PsiMethod testMethod : methods){
-                    final PsiParameterList testParametersList = testMethod
-                            .getParameterList();
-                    if(testParametersList == null){
-                        continue;
-                    }
-                    final int numTestParameters = testParametersList
-                            .getParameters().length;
+                    final PsiParameterList testParametersList =
+                            testMethod.getParameterList();
+                    final int numTestParameters =
+                            testParametersList.getParameters().length;
                     if(numParameters != numTestParameters){
                         continue;
                     }
                     if(testMethod.hasModifierProperty(PsiModifier.STATIC) &&
-                            !testMethod
-                                    .hasModifierProperty(PsiModifier.PRIVATE)){
+                            !testMethod.hasModifierProperty(PsiModifier.PRIVATE)){
                         registerMethodError(method);
                         return;
                     }

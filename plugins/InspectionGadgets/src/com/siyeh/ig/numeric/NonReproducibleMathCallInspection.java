@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,14 +57,18 @@ public class NonReproducibleMathCallInspection extends ExpressionInspection {
         nonReproducibleMethods.add("tanh");
     }
 
-    private final MakeStrictFix fix = new MakeStrictFix();
-
     public String getGroupDisplayName() {
         return GroupNames.NUMERIC_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "non.reproducible.math.call.problem.descriptor");
+    }
+
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new MakeStrictFix();
     }
 
     private static class MakeStrictFix extends InspectionGadgetsFix {

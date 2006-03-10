@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,6 @@ import org.jetbrains.annotations.NonNls;
 
 public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
 
-    private final InlineCallFix fix = new InlineCallFix();
-
     public String getID(){
         return "CallToSimpleSetterFromWithinClass";
     }
@@ -46,13 +44,14 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "call.to.simple.setter.in.class.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new InlineCallFix();
     }
 
     private static class InlineCallFix extends InspectionGadgetsFix{

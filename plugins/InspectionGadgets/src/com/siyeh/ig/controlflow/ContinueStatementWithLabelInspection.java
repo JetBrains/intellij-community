@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiIdentifier;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ContinueStatementWithLabelInspection extends StatementInspection {
@@ -29,11 +30,17 @@ public class ContinueStatementWithLabelInspection extends StatementInspection {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ContinueStatementVisitor();
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "continue.statement.with.label.problem.descriptor");
     }
 
-    private static class ContinueStatementVisitor
+    public BaseInspectionVisitor buildVisitor() {
+        return new ContinueStatementWithLabelVisitor();
+    }
+
+    private static class ContinueStatementWithLabelVisitor
             extends StatementInspectionVisitor {
 
         public void visitContinueStatement(

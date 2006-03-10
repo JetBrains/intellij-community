@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,22 +26,27 @@ import org.jetbrains.annotations.NotNull;
 public class MethodCallInLoopConditionInspection extends StatementInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("method.call.in.loop.condition.display.name");
+        return InspectionGadgetsBundle.message(
+                "method.call.in.loop.condition.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.J2ME_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("method.call.in.loop.condition.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "method.call.in.loop.condition.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new MethodCallInLoopConditionVisitor();
     }
 
-    private static class MethodCallInLoopConditionVisitor extends StatementInspectionVisitor {
+    private static class MethodCallInLoopConditionVisitor
+            extends StatementInspectionVisitor {
+        
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiExpression condition = statement.getCondition();
@@ -61,26 +66,27 @@ public class MethodCallInLoopConditionInspection extends StatementInspection {
             checkForMethodCalls(condition);
         }
 
-
-        public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
+        public void visitDoWhileStatement(
+                @NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if(condition == null){
                 return;
             }
-            checkForMethodCalls(condition);;
+            checkForMethodCalls(condition);
         }
 
         private void checkForMethodCalls(PsiExpression condition){
-            final PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor(){
-                public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+            final PsiRecursiveElementVisitor visitor =
+                    new PsiRecursiveElementVisitor(){
+
+                public void visitMethodCallExpression(
+                        @NotNull PsiMethodCallExpression expression){
                     super.visitMethodCallExpression(expression);
                     registerMethodCallError(expression);
                 }
             };
             condition.accept(visitor);
         }
-
     }
-
 }

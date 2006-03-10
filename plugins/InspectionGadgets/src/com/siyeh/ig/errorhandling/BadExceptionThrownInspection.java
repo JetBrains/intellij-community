@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,21 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiThrowStatement;
 import com.intellij.psi.PsiType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -108,14 +110,12 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
         return form.getContentPanel();
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiThrowStatement throwStatement = (PsiThrowStatement) location
-                .getParent();
-        assert throwStatement != null;
-        final PsiExpression exception = throwStatement.getException();
-        final PsiType type = exception.getType();
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final PsiType type = (PsiType)infos[0];
         final String exceptionName = type.getPresentableText();
-        return InspectionGadgetsBundle.message("bad.exception.thrown.problem.descriptor", exceptionName);
+        return InspectionGadgetsBundle.message(
+                "bad.exception.thrown.problem.descriptor", exceptionName);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -134,14 +134,13 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
                 return;
             }
             final String text = type.getCanonicalText();
-
             final List<String> exceptionListCopy;
             synchronized(lock){
                 exceptionListCopy = new ArrayList<String>(exceptionsList);
             }
             for(String exceptionClass : exceptionListCopy){
                 if(text.equals(exceptionClass)){
-                    registerStatementError(statement);
+                    registerStatementError(statement, type);
                     return;
                 }
             }
@@ -149,6 +148,7 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
     }
 
     private class Form{
+        
         JPanel contentPanel;
         JButton addButton;
         JButton deleteButton;
@@ -164,6 +164,7 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
                     new ReturnCheckSpecificationTableModel();
             table.setModel(model);
             addButton.addActionListener(new ActionListener(){
+
                 public void actionPerformed(ActionEvent e){
                     final int listSize;
                     synchronized(lock){
@@ -171,22 +172,24 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
                         exceptionsList.add("");
                     }
                     model.fireTableStructureChanged();
-
                     EventQueue.invokeLater(new Runnable() {
+
                         public void run() {
-                            final Rectangle rect = table.getCellRect(listSize, 0, true);
+                            final Rectangle rect = table.getCellRect(listSize,
+                                    0, true);
                             table.scrollRectToVisible(rect);
                             table.editCellAt(listSize, 0);
                             final TableCellEditor editor = table.getCellEditor();
                             final Component component =
-                                    editor.getTableCellEditorComponent(table, null, true, listSize, 0);
+                                    editor.getTableCellEditorComponent(table,
+                                            null, true, listSize, 0);
                             component.requestFocus();
-                }
-            });
-
+                        }
+                    });
                 }
             });
             deleteButton.addActionListener(new ActionListener(){
+
                 public void actionPerformed(ActionEvent e){
                     final int[] selectedRows = table.getSelectedRows();
                     if (selectedRows.length == 0) {
@@ -227,7 +230,8 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
         }
 
         public String getColumnName(int columnIndex){
-            return InspectionGadgetsBundle.message("exception.class.column.name");
+            return InspectionGadgetsBundle.message(
+                    "exception.class.column.name");
         }
 
         public Class getColumnClass(int columnIndex){

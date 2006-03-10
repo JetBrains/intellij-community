@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,36 +25,41 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
+
     public String getID(){
         return "CallToStringEqualsIgnoreCase";
     }
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("string.equalsignorecase.call.display.name");
+        return InspectionGadgetsBundle.message(
+                "string.equalsignorecase.call.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("string.equalsignorecase.call.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "string.equalsignorecase.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new StringEqualsIgnoreCaseVisitor();
     }
 
-    private static class StringEqualsIgnoreCaseVisitor extends BaseInspectionVisitor {
-    
+    private static class StringEqualsIgnoreCaseVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
-                return;
-            }
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(methodName)) {
+            if (!HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(
+                    methodName)) {
                 return;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -62,9 +67,6 @@ public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
                 return;
             }
             final PsiParameterList paramList = method.getParameterList();
-            if (paramList == null) {
-                return;
-            }
             final PsiParameter[] parameters = paramList.getParameters();
             if (parameters.length != 1) {
                 return;
@@ -84,5 +86,4 @@ public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
             registerMethodCallError(expression);
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TestUtils;
@@ -25,33 +25,39 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
 
-  public String getID() {
-    return "JUnitTestMethodWithNoAssertions";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.JUNIT_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new TestMethodWithoutAssertionVisitor();
-  }
-
-  private static class TestMethodWithoutAssertionVisitor extends BaseInspectionVisitor {
-
-    public void visitMethod(@NotNull PsiMethod method) {
-      super.visitMethod(method);
-      if (!TestUtils.isJUnitTestMethod(method)) {
-        return;
-      }
-      final ContainsAssertionVisitor visitor = new ContainsAssertionVisitor();
-      method.accept(visitor);
-      if (visitor.containsAssertion()) {
-        return;
-      }
-      registerMethodError(method);
+    public String getID() {
+        return "JUnitTestMethodWithNoAssertions";
     }
 
+    public String getGroupDisplayName() {
+        return GroupNames.JUNIT_GROUP_NAME;
+    }
 
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "test.method.without.assertion.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new TestMethodWithoutAssertionVisitor();
+    }
+
+    private static class TestMethodWithoutAssertionVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            super.visitMethod(method);
+            if (!TestUtils.isJUnitTestMethod(method)) {
+                return;
+            }
+            final ContainsAssertionVisitor visitor =
+                    new ContainsAssertionVisitor();
+            method.accept(visitor);
+            if (visitor.containsAssertion()) {
+                return;
+            }
+            registerMethodError(method);
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,31 +23,38 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RemoveModifierFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class FinalClassInspection extends MethodInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.CLASSLAYOUT_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new FinalStaticMethodVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return new RemoveModifierFix(location);
-  }
-
-  private static class FinalStaticMethodVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      //no call to super, so we don't drill into inner classes
-      if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      registerModifierError(PsiModifier.FINAL, aClass);
+    public String getGroupDisplayName() {
+        return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "final.class.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new FinalStaticMethodVisitor();
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RemoveModifierFix(location);
+    }
+
+    private static class FinalStaticMethodVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            //no call to super, so we don't drill into inner classes
+            if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
+                return;
+            }
+            registerModifierError(PsiModifier.FINAL, aClass);
+        }
+    }
 }

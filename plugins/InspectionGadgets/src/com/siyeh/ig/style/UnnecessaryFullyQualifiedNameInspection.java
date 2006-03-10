@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,24 +28,24 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.JComponent;
 
-public class UnnecessaryFullyQualifiedNameInspection extends com.siyeh.ig.ClassInspection{
+import org.jetbrains.annotations.NotNull;
+
+public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
 
     @SuppressWarnings("PublicField")
     public boolean m_ignoreJavadoc = false;
 
-    /**
-     * @see java.lang.String#concat(String)
-     */
     public String getGroupDisplayName(){
         return com.intellij.codeInsight.daemon.GroupNames.STYLE_GROUP_NAME;
     }
 
-    public java.lang.String getDisplayName() {
+    public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.fully.qualified.name.display.name");
     }
@@ -57,7 +57,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends com.siyeh.ig.ClassI
                 this, "m_ignoreJavadoc");
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "unnecessary.fully.qualified.name.problem.descriptor");
     }
@@ -90,7 +91,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends com.siyeh.ig.ClassI
             try{
                 settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = false;
                 settings.USE_FQ_CLASS_NAMES = false;
-                final com.intellij.psi.PsiJavaCodeReferenceElement reference =
+                final PsiJavaCodeReferenceElement reference =
                         (PsiJavaCodeReferenceElement)
                                 descriptor.getPsiElement();
                 final PsiManager psiManager = reference.getManager();
@@ -120,7 +121,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends com.siyeh.ig.ClassI
                 return;
             }
             final PsiElement element = PsiTreeUtil.getParentOfType(reference,
-                    PsiImportStatementBase.class, PsiPackageStatement.class, PsiCodeFragment.class);
+                    PsiImportStatementBase.class, PsiPackageStatement.class,
+                    PsiCodeFragment.class);
             if (element != null) {
                 return;
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,22 @@ package com.siyeh.ig.logging;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.RegExInputVerifier;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
-import java.awt.*;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class ClassWithMultipleLoggersInspection extends ClassInspection {
+
     /** @noinspection PublicField*/
     public String loggerClassName = "java.util.logging.Logger";
 
@@ -41,22 +44,26 @@ public class ClassWithMultipleLoggersInspection extends ClassInspection {
         return GroupNames.LOGGING_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "multiple.loggers.problem.descriptor");
+    }
 
     public JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
-
-        final JLabel classNameLabel = new JLabel(InspectionGadgetsBundle.message("logger.name.option"));
+        final JLabel classNameLabel = new JLabel(
+                InspectionGadgetsBundle.message("logger.name.option"));
         classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-
         final JTextField loggerClassNameField = new JTextField();
         final Font panelFont = panel.getFont();
         loggerClassNameField.setFont(panelFont);
         loggerClassNameField.setText(loggerClassName);
         loggerClassNameField.setColumns(100);
         loggerClassNameField.setInputVerifier(new RegExInputVerifier());
-
         final DocumentListener listener = new DocumentListener() {
+
             public void changedUpdate(DocumentEvent e) {
                 textChanged();
             }
@@ -73,7 +80,8 @@ public class ClassWithMultipleLoggersInspection extends ClassInspection {
                 loggerClassName = loggerClassNameField.getText();
             }
         };
-        final Document loggerClassNameDocument = loggerClassNameField.getDocument();
+        final Document loggerClassNameDocument =
+                loggerClassNameField.getDocument();
         loggerClassNameDocument.addDocumentListener(listener);
 
         final GridBagConstraints constraints = new GridBagConstraints();
@@ -92,10 +100,6 @@ public class ClassWithMultipleLoggersInspection extends ClassInspection {
         return panel;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("multiple.loggers.problem.descriptor");
-    }
-
     public BaseInspectionVisitor buildVisitor() {
         return new ClassWithoutLoggerVisitor();
     }
@@ -104,11 +108,11 @@ public class ClassWithMultipleLoggersInspection extends ClassInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             //no recursion to avoid drilldown
-            if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+            if (aClass.isInterface() || aClass.isEnum() ||
+                    aClass.isAnnotationType()) {
                 return;
             }
-            if(aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiAnonymousClass){
+            if(aClass instanceof PsiTypeParameter) {
                 return;
             }
             if (aClass.getContainingClass() != null) {
@@ -129,13 +133,8 @@ public class ClassWithMultipleLoggersInspection extends ClassInspection {
 
         private boolean isLogger(PsiField field) {
             final PsiType type = field.getType();
-            if (type == null) {
-                return false;
-            }
             final String text = type.getCanonicalText();
             return text.equals(loggerClassName);
         }
-
     }
-
 }

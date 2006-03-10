@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessarySemicolonInspection extends FileInspection{
 
-    private final UnnecessarySemicolonFix fix = new UnnecessarySemicolonFix();
-
     public String getGroupDisplayName(){
         return GroupNames.STYLE_GROUP_NAME;
     }
@@ -41,7 +39,8 @@ public class UnnecessarySemicolonInspection extends FileInspection{
         return true;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "unnecessary.semicolon.problem.descriptor");
     }
@@ -51,7 +50,7 @@ public class UnnecessarySemicolonInspection extends FileInspection{
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new UnnecessarySemicolonFix();
     }
 
     private static class UnnecessarySemicolonFix extends InspectionGadgetsFix{
@@ -164,20 +163,14 @@ public class UnnecessarySemicolonInspection extends FileInspection{
         private static PsiElement skipForwardWhiteSpacesAndComments(
                 PsiElement element){
             return PsiTreeUtil.skipSiblingsForward(element,
-                    new Class[]{
-                            PsiWhiteSpace.class,
-                            PsiComment.class
-                    });
+                    PsiWhiteSpace.class, PsiComment.class);
         }
 
         @Nullable
         private static PsiElement skipBackwardWhiteSpacesAndComments(
                 PsiElement element){
             return PsiTreeUtil.skipSiblingsBackward(element,
-                    new Class[]{
-                            PsiWhiteSpace.class,
-                            PsiComment.class
-                    });
+                    PsiWhiteSpace.class, PsiComment.class);
         }
 
         public void visitEmptyStatement(PsiEmptyStatement statement){

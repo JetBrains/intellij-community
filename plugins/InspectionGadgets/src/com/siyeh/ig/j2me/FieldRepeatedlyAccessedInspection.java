@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import javax.swing.*;
 import java.util.Set;
 
 public class FieldRepeatedlyAccessedInspection extends MethodInspection {
+    
     /** @noinspection PublicField*/
     public boolean m_ignoreFinalFields = false;
 
@@ -44,13 +45,16 @@ public class FieldRepeatedlyAccessedInspection extends MethodInspection {
         return GroupNames.J2ME_GROUP_NAME;
     }
 
-    public String buildErrorString(Object arg) {
-        final String fieldName = ((PsiNamedElement) arg).getName();
-        return InspectionGadgetsBundle.message("field.repeatedly.accessed.in.method.problem.descriptor", fieldName);
+    @NotNull
+    public String buildErrorString(Object... arg) {
+        final String fieldName = ((PsiNamedElement) arg[0]).getName();
+        return InspectionGadgetsBundle.message(
+                "field.repeatedly.accessed.in.method.problem.descriptor", fieldName);
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("field.repeatedly.accessed.in.method.ignore.option"),
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "field.repeatedly.accessed.in.method.ignore.option"),
                 this, "m_ignoreFinalFields");
     }
 
@@ -83,11 +87,7 @@ public class FieldRepeatedlyAccessedInspection extends MethodInspection {
                 return false ;
             }
             final PsiType type = field.getType();
-            if(type == null){
-                return false;
-            }
             return ClassUtils.isImmutable(type);
         }
     }
-
 }

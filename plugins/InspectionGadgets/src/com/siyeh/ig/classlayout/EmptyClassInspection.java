@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,50 +18,55 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyClassInspection extends ClassInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.CLASSLAYOUT_GROUP_NAME;
-  }
+    public String getGroupDisplayName() {
+        return GroupNames.CLASSLAYOUT_GROUP_NAME;
+    }
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new EmptyClassVisitor();
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "empty.class.problem.descriptor");
+    }
 
-  private static class EmptyClassVisitor extends BaseInspectionVisitor {
+    public BaseInspectionVisitor buildVisitor() {
+        return new EmptyClassVisitor();
+    }
 
-    public void visitClass(@NotNull PsiClass aClass) {
-      //don't call super, to prevent drilldown
+    private static class EmptyClassVisitor extends BaseInspectionVisitor {
 
-      if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
-        return;
-      }
+        public void visitClass(@NotNull PsiClass aClass) {
+            //don't call super, to prevent drilldown
+
+            if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
+                return;
+            }
             if (aClass.isInterface() || aClass.isEnum() ||
                     aClass.isAnnotationType()) {
-        return;
-      }
-      if (aClass instanceof PsiTypeParameter ||
-          aClass instanceof PsiAnonymousClass) {
-        return;
-      }
-      final PsiMethod[] constructors = aClass.getConstructors();
+                return;
+            }
+            if (aClass instanceof PsiTypeParameter) {
+                return;
+            }
+            final PsiMethod[] constructors = aClass.getConstructors();
             if (constructors.length > 0) {
-        return;
-      }
-      final PsiMethod[] methods = aClass.getMethods();
+                return;
+            }
+            final PsiMethod[] methods = aClass.getMethods();
             if (methods.length > 0) {
-        return;
-      }
-      final PsiField[] fields = aClass.getFields();
+                return;
+            }
+            final PsiField[] fields = aClass.getFields();
             if (fields.length > 0) {
-        return;
-      }
-      registerClassError(aClass);
+                return;
+            }
+            registerClassError(aClass);
+        }
     }
-  }
 }

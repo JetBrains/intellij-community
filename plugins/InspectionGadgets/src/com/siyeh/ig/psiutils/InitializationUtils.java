@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -235,12 +235,10 @@ public class InitializationUtils{
                 blockAssignsVariableOrFails(tryBlock, variable,
                         checkedMethods);
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-        if (catchBlocks != null){
-            for (final PsiCodeBlock catchBlock : catchBlocks){
-                initializedInTryOrCatch &=
-                blockAssignsVariableOrFails(catchBlock, variable,
-                        checkedMethods);
-            }
+        for (final PsiCodeBlock catchBlock : catchBlocks){
+            initializedInTryOrCatch &=
+            blockAssignsVariableOrFails(catchBlock, variable,
+                    checkedMethods);
         }
         if (initializedInTryOrCatch){
             return true;
@@ -474,9 +472,6 @@ public class InitializationUtils{
             PsiVariable variable,
             @NotNull Set<MethodSignature> checkedMethods){
         final PsiExpressionList argList = callExpression.getArgumentList();
-        if(argList == null){
-            return false;
-        }
         final PsiExpression[] args = argList.getExpressions();
         for(final PsiExpression arg : args){
             if(expressionAssignsVariableOrFails(arg, variable, checkedMethods)){

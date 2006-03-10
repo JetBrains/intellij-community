@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,35 +20,44 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class NonSynchronizedMethodOverridesSynchronizedMethodInspection extends MethodInspection {
+public class NonSynchronizedMethodOverridesSynchronizedMethodInspection
+        extends MethodInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new NonSynchronizedMethodOverridesSynchronizedMethodVisitor();
-  }
-
-  private static class NonSynchronizedMethodOverridesSynchronizedMethodVisitor
-    extends BaseInspectionVisitor {
-    public void visitMethod(@NotNull PsiMethod method) {
-      //no call to super, so we don't drill into anonymous classes
-      if (method.isConstructor()) {
-        return;
-      }
-      if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-        return;
-      }
-      final PsiMethod[] superMethods = method.findSuperMethods();
-      for (final PsiMethod superMethod : superMethods) {
-        if (superMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-          registerMethodError(method);
-          return;
-        }
-      }
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
     }
-  }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "non.synchronized.method.overrides.synchronized.method.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new NonSynchronizedMethodOverridesSynchronizedMethodVisitor();
+    }
+
+    private static class NonSynchronizedMethodOverridesSynchronizedMethodVisitor
+            extends BaseInspectionVisitor {
+        
+        public void visitMethod(@NotNull PsiMethod method) {
+            //no call to super, so we don't drill into anonymous classes
+            if (method.isConstructor()) {
+                return;
+            }
+            if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+                return;
+            }
+            final PsiMethod[] superMethods = method.findSuperMethods();
+            for (final PsiMethod superMethod : superMethods) {
+                if (superMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+                    registerMethodError(method);
+                    return;
+                }
+            }
+        }
+    }
 }

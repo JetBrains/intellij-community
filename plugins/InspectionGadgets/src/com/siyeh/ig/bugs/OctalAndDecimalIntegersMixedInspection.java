@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,37 +21,47 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection {
-    public String getID(){
+public class OctalAndDecimalIntegersMixedInspection
+        extends ExpressionInspection {
+
+    public String getID() {
         return "OctalAndDecimalIntegersInSameArray";
     }
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("octal.and.decimal.integers.in.same.array.display.name");
+        return InspectionGadgetsBundle.message(
+                "octal.and.decimal.integers.in.same.array.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("octal.and.decimal.integers.in.same.array.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "octal.and.decimal.integers.in.same.array.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new OctalAndDecimalIntegersMixedVisitor();
     }
 
-    private static class OctalAndDecimalIntegersMixedVisitor extends BaseInspectionVisitor {
+    private static class OctalAndDecimalIntegersMixedVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+        public void visitArrayInitializerExpression(
+                PsiArrayInitializerExpression expression) {
             super.visitArrayInitializerExpression(expression);
             final PsiExpression[] initializers = expression.getInitializers();
             boolean hasDecimalLiteral = false;
             boolean hasOctalLiteral = false;
             for(final PsiExpression initializer : initializers){
                 if(initializer instanceof PsiLiteralExpression){
-                    final PsiLiteralExpression literal = (PsiLiteralExpression) initializer;
+                    final PsiLiteralExpression literal =
+                            (PsiLiteralExpression) initializer;
                     if(isDecimalLiteral(literal)){
                         hasDecimalLiteral = true;
                     }
@@ -87,8 +97,8 @@ public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection
             if ("0".equals(text) || "0L".equals(text)) {
                 return false;
             }
-            return text.charAt(0) == '0' && !text.startsWith("0x") && !text.startsWith("0X");
+            return text.charAt(0) == '0' && !text.startsWith("0x") &&
+                    !text.startsWith("0X");
         }
     }
-
 }

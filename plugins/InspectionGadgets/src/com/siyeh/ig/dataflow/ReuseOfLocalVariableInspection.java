@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,8 @@ public class ReuseOfLocalVariableInspection
         return GroupNames.DATA_FLOW_ISSUES;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "reuse.of.local.variable.problem.descriptor");
     }
@@ -107,10 +108,9 @@ public class ReuseOfLocalVariableInspection
                                                                false);
             final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final PsiReference[] references =
-                    searchHelper
-                            .findReferences(variable, variable.getUseScope(),
-                                            false);
-            for(PsiReference reference : references){
+                    searchHelper.findReferences(variable,
+                            variable.getUseScope(), false);
+            for (PsiReference reference : references){
                 final PsiElement referenceElement = reference.getElement();
                 if(referenceElement != null){
                     final TextRange textRange =
@@ -251,6 +251,7 @@ public class ReuseOfLocalVariableInspection
             return false;
         }
 
+        /** @noinspection AssignmentToMethodParameter*/
         @Nullable
         public static PsiElement getChildWhichContainsElement(
                 @NotNull PsiCodeBlock ancestor,

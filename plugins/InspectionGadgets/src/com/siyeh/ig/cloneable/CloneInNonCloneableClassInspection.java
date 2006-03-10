@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneInNonCloneableClassInspection extends MethodInspection {
 
-    private InspectionGadgetsFix fix = new MakeCloneableFix();
-
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "clone.method.in.non.cloneable.class.display.name");
@@ -40,13 +38,14 @@ public class CloneInNonCloneableClassInspection extends MethodInspection {
         return GroupNames.CLONEABLE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "clone.method.in.non.cloneable.class.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new MakeCloneableFix();
     }
 
     public BaseInspectionVisitor buildVisitor() {

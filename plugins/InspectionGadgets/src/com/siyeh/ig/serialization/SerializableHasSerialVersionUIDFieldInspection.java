@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,31 +30,35 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspection {
+    
     /** @noinspection PublicField*/
     public boolean m_ignoreSerializableDueToInheritance = true;
-    private final AddSerialVersionUIDFix fix = new AddSerialVersionUIDFix();
 
     public String getID(){
         return "serial";
     }
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("serializable.class.without.serialversionuid.display.name");
+        return InspectionGadgetsBundle.message(
+                "serializable.class.without.serialversionuid.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("serializable.class.without.serialversionuid.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "serializable.class.without.serialversionuid.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new AddSerialVersionUIDFix();
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("serializable.class.without.serialversionuid.ignore.option"),
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "serializable.class.without.serialversionuid.ignore.option"),
                 this, "m_ignoreSerializableDueToInheritance");
     }
 
@@ -62,16 +66,16 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
         return new SerializableDefinesSerialVersionUIDVisitor();
     }
 
-    private class SerializableDefinesSerialVersionUIDVisitor extends BaseInspectionVisitor {
+    private class SerializableDefinesSerialVersionUIDVisitor
+            extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
-
-            if (aClass.isInterface() || aClass.isAnnotationType()|| aClass.isEnum()) {
+            if (aClass.isInterface() || aClass.isAnnotationType()||
+                    aClass.isEnum()) {
                 return;
             }
-            if(aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiAnonymousClass){
+            if(aClass instanceof PsiTypeParameter){
                 return;
             }
             final PsiField[] fields = aClass.getFields();
@@ -99,9 +103,8 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
 
         private boolean isSerialVersionUID(PsiField field) {
             final String methodName = field.getName();
-            return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(methodName);
+            return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(
+                    methodName);
         }
-
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
@@ -32,31 +33,33 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class MalformedXPathInspection extends ExpressionInspection{
+
     /** @noinspection StaticCollection*/
+    @NonNls
     private static final Set<String> xpathMethodNames = new HashSet<String>(5);
 
-    static
-    {
-      //noinspection HardCodedStringLiteral
+    static{
       xpathMethodNames.add("compile");
-      //noinspection HardCodedStringLiteral
       xpathMethodNames.add("evaluate");
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("malformed.xpath.expression.display.name");
+        return InspectionGadgetsBundle.message(
+                "malformed.xpath.expression.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "malformed.xpath.expression.problem.description");
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("malformed.xpath.expression.problem.description");
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -65,22 +68,16 @@ public class MalformedXPathInspection extends ExpressionInspection{
 
     private static class MalformedXPathVisitor extends BaseInspectionVisitor{
 
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiExpressionList argList = expression.getArgumentList();
-            if(argList == null){
-                return;
-            }
             final PsiExpression[] args = argList.getExpressions();
-            if(args.length == 0)
-            {
+            if(args.length == 0){
                 return;
             }
-
             final PsiExpression xpathArg = args[0];
-            if(!TypeUtils.expressionHasType("java.lang.String", xpathArg))
-            {
+            if(!TypeUtils.expressionHasType("java.lang.String", xpathArg)){
                 return;
             }
             if(!PsiUtil.isConstantExpression(xpathArg)){
@@ -88,9 +85,9 @@ public class MalformedXPathInspection extends ExpressionInspection{
             }
             final PsiType regexType = xpathArg.getType();
             final String value =
-                    (String) ConstantExpressionUtil.computeCastTo(xpathArg, regexType);
-            if(value == null)
-            {
+                    (String) ConstantExpressionUtil.computeCastTo(xpathArg,
+                            regexType);
+            if(value == null){
                 return;
             }
             if(!callTakesRegex(expression)){
@@ -106,25 +103,20 @@ public class MalformedXPathInspection extends ExpressionInspection{
             }
         }
 
-        private static boolean callTakesRegex(PsiMethodCallExpression expression){
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if(methodExpression == null)
-            {
-                return false;
-            }
+        private static boolean callTakesRegex(
+                PsiMethodCallExpression expression){
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
             final String name = methodExpression.getReferenceName();
-            if(!xpathMethodNames.contains(name))
-            {
+            if(!xpathMethodNames.contains(name)){
                 return false;
             }
             final PsiMethod method = expression.resolveMethod();
-            if(method == null)
-            {
+            if(method == null){
                 return false;
             }
             final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null)
-            {
+            if(containingClass == null){
                 return false;
             }
             final String className = containingClass.getQualifiedName();

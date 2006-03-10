@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 public class IfStatementWithIdenticalBranchesInspection
         extends StatementInspection{
 
-    private InspectionGadgetsFix fix = new CollapseIfFix();
-
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "if.statement.with.identical.branches.display.name");
@@ -43,13 +41,14 @@ public class IfStatementWithIdenticalBranchesInspection
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "if.statement.with.identical.branches.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new CollapseIfFix();
     }
 
     private static class CollapseIfFix extends InspectionGadgetsFix{

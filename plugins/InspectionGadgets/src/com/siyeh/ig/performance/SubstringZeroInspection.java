@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,94 +21,98 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class SubstringZeroInspection extends ExpressionInspection {
 
-  private final SubstringZeroVisitor fix = new SubstringZeroVisitor();
-
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new StringToStringVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class SubstringZeroVisitor extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
+    public String getGroupDisplayName() {
+        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)descriptor
-        .getPsiElement();
-      final PsiReferenceExpression expression = call
-        .getMethodExpression();
-      final PsiExpression qualifier = expression.getQualifierExpression();
-      final String qualifierText = qualifier.getText();
-      replaceExpression(call, qualifierText);
-    }
-  }
-
-  private static class StringToStringVisitor extends BaseInspectionVisitor {
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression
-        .getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (!"substring".equals(methodName)) {
-        return;
-      }
-
-      final PsiExpressionList argList = expression.getArgumentList();
-      if (argList == null) {
-        return;
-      }
-      final PsiExpression[] args = argList.getExpressions();
-      if (args.length != 1) {
-        return;
-      }
-      final PsiExpression arg = args[0];
-      if (arg == null) {
-        return;
-      }
-      if (!isZero(arg)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      final String className = aClass.getQualifiedName();
-      if (!"java.lang.String".equals(className)) {
-        return;
-      }
-      registerError(expression);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "substring.zero.problem.descriptor");
     }
 
-    private static boolean isZero(PsiExpression expression) {
-      final Integer value = (Integer)ConstantExpressionUtil
-        .computeCastTo(expression, PsiType.INT);
-      return value != null && value == 0;
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new SubstringZeroFix();
     }
-  }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new SubstringZeroVisitor();
+    }
+
+    private static class SubstringZeroFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "constant.conditional.expression.simplify.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiMethodCallExpression call =
+                    (PsiMethodCallExpression)descriptor.getPsiElement();
+            final PsiReferenceExpression expression =
+                    call.getMethodExpression();
+            final PsiExpression qualifier = expression.getQualifierExpression();
+            if (qualifier == null) {
+                return;
+            }
+            final String qualifierText = qualifier.getText();
+            replaceExpression(call, qualifierText);
+        }
+    }
+
+    private static class SubstringZeroVisitor extends BaseInspectionVisitor {
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!"substring".equals(methodName)) {
+                return;
+            }
+            final PsiExpressionList argList = expression.getArgumentList();
+            final PsiExpression[] args = argList.getExpressions();
+            if (args.length != 1) {
+                return;
+            }
+            final PsiExpression arg = args[0];
+            if (arg == null) {
+                return;
+            }
+            if (!isZero(arg)) {
+                return;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return;
+            }
+            final String className = aClass.getQualifiedName();
+            if (!"java.lang.String".equals(className)) {
+                return;
+            }
+            registerError(expression);
+        }
+
+        private static boolean isZero(PsiExpression expression) {
+            final Integer value =
+                    (Integer)ConstantExpressionUtil.computeCastTo(expression,
+                            PsiType.INT);
+            return value != null && value.intValue() == 0;
+        }
+    }
 }

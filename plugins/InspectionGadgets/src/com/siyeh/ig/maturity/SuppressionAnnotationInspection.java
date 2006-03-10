@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,18 +22,23 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class SuppressionAnnotationInspection extends ClassInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("inspection.suppression.annotation.display.name");
+        return InspectionGadgetsBundle.message(
+                "inspection.suppression.annotation.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.MATURITY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("inspection.suppression.annotation.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "inspection.suppression.annotation.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -50,7 +55,8 @@ public class SuppressionAnnotationInspection extends ClassInspection{
                && !tokenType.equals(JavaTokenType.C_STYLE_COMMENT)){
                 return;
             }
-            @NonNls final String strippedComment = commentText.substring(2).trim();
+            @NonNls final String strippedComment =
+                    commentText.substring(2).trim();
             if(strippedComment.startsWith("noinspection")){
                 registerError(comment);
             }
@@ -60,12 +66,10 @@ public class SuppressionAnnotationInspection extends ClassInspection{
             super.visitAnnotation(annotation);
             final PsiJavaCodeReferenceElement reference =
                     annotation.getNameReferenceElement();
-            if(reference == null)
-            {
+            if(reference == null){
                 return;
             }
             @NonNls final String text = reference.getText();
-
             if("SuppressWarnings".equals(text) ||
                "java.lang.SuppressWarnings".equals(text)){
                 registerError(annotation);

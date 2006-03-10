@@ -29,10 +29,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
-
-    @NonNls String isEmptyCall = "";
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -43,10 +42,10 @@ public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "size.replaceable.by.isempty.problem.descriptor", isEmptyCall);
+                "size.replaceable.by.isempty.problem.descriptor", infos[0]);
     }
 
     @Nullable
@@ -97,8 +96,10 @@ public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
         return new SizeReplaceableByIsEmptyVisitor();
     }
 
-    private class SizeReplaceableByIsEmptyVisitor
+    private static class SizeReplaceableByIsEmptyVisitor
             extends BaseInspectionVisitor {
+
+        @NonNls private String isEmptyCall = "";
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
@@ -113,12 +114,12 @@ public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
             if (lhs instanceof PsiMethodCallExpression) {
                 final PsiJavaToken sign = expression.getOperationSign();
                 if (canBeReplacedByIsEmpty(lhs, sign, rhs, false)) {
-                    registerError(expression);
+                    registerError(expression, isEmptyCall);
                 }
             } else if (rhs instanceof PsiMethodCallExpression) {
                 final PsiJavaToken sign = expression.getOperationSign();
                 if (canBeReplacedByIsEmpty(rhs, sign, lhs, true)) {
-                    registerError(expression);
+                    registerError(expression, isEmptyCall);
                 }
             }
         }

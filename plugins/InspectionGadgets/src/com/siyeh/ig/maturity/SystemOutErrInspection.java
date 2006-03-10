@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,21 +24,24 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class SystemOutErrInspection extends ExpressionInspection {
-    public String getID(){
+
+    public String getID() {
         return "UseOfSystemOutOrSystemErr";
     }
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("use.system.out.err.display.name");
+        return InspectionGadgetsBundle.message(
+                "use.system.out.err.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.MATURITY_GROUP_NAME;
     }
 
-
-
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("use.system.out.err.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "use.system.out.err.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -47,31 +50,28 @@ public class SystemOutErrInspection extends ExpressionInspection {
 
     private static class SystemOutErrVisitor extends BaseInspectionVisitor {
 
-        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+        public void visitReferenceExpression(
+                @NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
-
             final String name = expression.getReferenceName();
-            if (!HardcodedMethodConstants.OUT.equals(name) && !HardcodedMethodConstants.ERR.equals(name)) {
+            if (!HardcodedMethodConstants.OUT.equals(name) &&
+                    !HardcodedMethodConstants.ERR.equals(name)) {
                 return;
             }
             final PsiElement referent = expression.resolve();
-            if(!(referent instanceof PsiField))
-            {
-               return;
+            if(!(referent instanceof PsiField)) {
+                return;
             }
-            final PsiClass containingClass = ((PsiMember) referent).getContainingClass();
-            if(containingClass == null)
-            {
+            final PsiField field = (PsiField)referent;
+            final PsiClass containingClass = field.getContainingClass();
+            if(containingClass == null) {
                 return;
             }
             final String className = containingClass.getQualifiedName();
-            if(!"java.lang.System".equals(className))
-            {
+            if(!"java.lang.System".equals(className)) {
                 return;
             }
             registerError(expression);
         }
-
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -38,7 +37,8 @@ public class PublicMethodNotExposedInInterfaceInspection
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "public.method.not.in.interface.problem.descriptor");
     }
@@ -75,8 +75,7 @@ public class PublicMethodNotExposedInInterfaceInspection
             if (exposedInInterface(method)) {
                 return;
             }
-            if(TestUtils.isJUnitTestMethod(method))
-            {
+            if(TestUtils.isJUnitTestMethod(method)) {
                 return;
             }
             registerMethodError(method);
@@ -84,16 +83,16 @@ public class PublicMethodNotExposedInInterfaceInspection
 
         private static boolean exposedInInterface(PsiMethod method) {
           final PsiMethod[] superMethods = method.findSuperMethods();
-            for(final PsiMethod superMethod : superMethods){
+            for(final PsiMethod superMethod : superMethods) {
                 final PsiClass superClass = superMethod.getContainingClass();
-                if(superClass.isInterface()){
+                if(superClass.isInterface()) {
                     return true;
                 }
                 final String superclassName = superClass.getQualifiedName();
-                if("java.lang.Object".equals(superclassName)){
+                if("java.lang.Object".equals(superclassName)) {
                     return true;
                 }
-                if(exposedInInterface(superMethod)){
+                if(exposedInInterface(superMethod)) {
                     return true;
                 }
             }

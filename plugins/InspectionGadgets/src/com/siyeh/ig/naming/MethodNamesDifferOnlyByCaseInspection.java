@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,58 +29,57 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
 
-  public String getID() {
-    return "MethodNamesDifferingOnlyByCase";
-  }
-
-  private final RenameFix fix = new RenameFix();
-
-  public String getGroupDisplayName() {
-    return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
-  }
-
-  public String buildErrorString(Object arg) {
-    return InspectionGadgetsBundle.message("method.names.differ.only.by.case.problem.descriptor", arg);
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new OverloadedMethodsWithSameNumberOfParametersVisitor();
-  }
-
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class OverloadedMethodsWithSameNumberOfParametersVisitor extends BaseInspectionVisitor {
-
-    public void visitMethod(@NotNull PsiMethod method) {
-      if (method.isConstructor()) {
-        return;
-      }
-      final PsiIdentifier nameIdentifier = method.getNameIdentifier();
-      if (nameIdentifier == null) {
-        return;
-      }
-      final String methodName = method.getName();
-      if (methodName == null) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      final PsiMethod[] methods = aClass.getMethods();
-      for (PsiMethod testMethod : methods) {
-        final String testMethName = testMethod.getName();
-        if (testMethName != null && !methodName.equals(testMethName) &&
-            methodName.equalsIgnoreCase(testMethName)) {
-          registerError(nameIdentifier, testMethName);
-        }
-      }
+    public String getID() {
+        return "MethodNamesDifferingOnlyByCase";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+    }
+
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "method.names.differ.only.by.case.problem.descriptor",
+                infos[0]);
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new OverloadedMethodsWithSameNumberOfParametersVisitor();
+    }
+
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+        return true;
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RenameFix();
+    }
+
+    private static class OverloadedMethodsWithSameNumberOfParametersVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            if (method.isConstructor()) {
+                return;
+            }
+            final PsiIdentifier nameIdentifier = method.getNameIdentifier();
+            if (nameIdentifier == null) {
+                return;
+            }
+            final String methodName = method.getName();
+            final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return;
+            }
+            final PsiMethod[] methods = aClass.getMethods();
+            for (PsiMethod testMethod : methods) {
+                final String testMethodName = testMethod.getName();
+                if (!methodName.equals(testMethodName) &&
+                        methodName.equalsIgnoreCase(testMethodName)) {
+                    registerError(nameIdentifier, testMethodName);
+                }
+            }
+        }
+    }
 }

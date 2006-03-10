@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,13 @@ public class FeatureEnvyInspection extends MethodInspection {
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
-    public String buildErrorString(Object arg) {
-        final String className = ((PsiNamedElement) arg).getName();
-        return InspectionGadgetsBundle.message("feature.envy.problem.descriptor", className);
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiNamedElement element = (PsiNamedElement)infos[0];
+        final String className = element.getName();
+        return InspectionGadgetsBundle.message(
+                "feature.envy.problem.descriptor", className);
     }
-
 
     public BaseInspectionVisitor buildVisitor() {
         return new FeatureEnvyVisitor();
@@ -55,14 +57,14 @@ public class FeatureEnvyInspection extends MethodInspection {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
-            final ClassAccessVisitor visitor = new ClassAccessVisitor(containingClass);
+            final ClassAccessVisitor visitor =
+                    new ClassAccessVisitor(containingClass);
             method.accept(visitor);
-            final Set<PsiClass> overaccessedClasses = visitor.getOveraccessedClasses();
+            final Set<PsiClass> overaccessedClasses =
+                    visitor.getOveraccessedClasses();
             for(PsiClass aClass : overaccessedClasses){
                 registerError(nameIdentifier, aClass);
             }
         }
-
     }
-
 }

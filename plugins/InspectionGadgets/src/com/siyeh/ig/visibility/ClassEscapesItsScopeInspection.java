@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,26 +23,32 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassEscapesItsScopeInspection extends MemberInspection {
+
     public String getID(){
         return "ClassEscapesDefinedScope";
     }
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("class.escapes.defined.scope.display.name");
+        return InspectionGadgetsBundle.message(
+                "class.escapes.defined.scope.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("class.escapes.defined.scope.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "class.escapes.defined.scope.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new ClassEscapesItsScopeVisitor();
     }
 
-    private static class ClassEscapesItsScopeVisitor extends BaseInspectionVisitor {
+    private static class ClassEscapesItsScopeVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method){
             //no call to super, so we don't drill into anonymous classes
@@ -65,9 +71,9 @@ public class ClassEscapesItsScopeInspection extends MemberInspection {
             if(returnClass == null){
                 return;
             }
-          if (returnClass.getParent() instanceof PsiTypeParameterList) {
-            return;//if it's a type parameter, it's okay.  Must be a better way to check this.
-          }
+            if (returnClass.getParent() instanceof PsiTypeParameterList) {
+                return;//if it's a type parameter, it's okay.  Must be a better way to check this.
+            }
             if(!isLessRestrictiveScope(method, returnClass)){
                 return;
             }
@@ -94,9 +100,6 @@ public class ClassEscapesItsScopeInspection extends MemberInspection {
                 return;
             }
             final PsiType type = field.getType();
-            if(type == null){
-                return;
-            }
             final PsiType componentType = type.getDeepComponentType();
             if(!(componentType instanceof PsiClassType)){
                 return;
@@ -119,12 +122,15 @@ public class ClassEscapesItsScopeInspection extends MemberInspection {
         }
 
 
-        private static boolean isLessRestrictiveScope(PsiMethod method, PsiClass aClass) {
+        private static boolean isLessRestrictiveScope(PsiMethod method,
+                                                      PsiClass aClass) {
             final int methodScopeOrder = getScopeOrder(method);
             final int classScopeOrder = getScopeOrder(aClass);
             final PsiClass containingClass = method.getContainingClass();
-            final int containingClassScopeOrder = getScopeOrder(containingClass);
-            if (methodScopeOrder <= classScopeOrder || containingClassScopeOrder <= classScopeOrder) {
+            final int containingClassScopeOrder =
+                    getScopeOrder(containingClass);
+            if (methodScopeOrder <= classScopeOrder ||
+                    containingClassScopeOrder <= classScopeOrder) {
                 return false;
             }
             final PsiMethod[] superMethods = method.findSuperMethods();
@@ -136,12 +142,14 @@ public class ClassEscapesItsScopeInspection extends MemberInspection {
             return true;
         }
 
-        private static boolean fieldHasLessRestrictiveScope(PsiField field, PsiClass aClass) {
+        private static boolean fieldHasLessRestrictiveScope(PsiField field,
+                                                            PsiClass aClass) {
             final int fieldScopeOrder = getScopeOrder(field);
             final PsiClass containingClass = field.getContainingClass();
             final int containingClassScopeOrder = getScopeOrder(containingClass);
             final int classScopeOrder = getScopeOrder(aClass);
-            return fieldScopeOrder > classScopeOrder && containingClassScopeOrder > classScopeOrder;
+            return fieldScopeOrder > classScopeOrder &&
+                    containingClassScopeOrder > classScopeOrder;
         }
 
         private static int getScopeOrder(PsiModifierListOwner element) {

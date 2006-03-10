@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,123 +25,129 @@ import org.jetbrains.annotations.NonNls;
 
 public class SystemPropertiesInspection extends ExpressionInspection {
 
-  public String getID() {
-    return "AccessOfSystemProperties";
-  }
+    public String getID() {
+        return "AccessOfSystemProperties";
+    }
 
-  public String getGroupDisplayName() {
-    return GroupNames.SECURITY_GROUP_NAME;
-  }
+    public String getGroupDisplayName() {
+        return GroupNames.SECURITY_GROUP_NAME;
+    }
 
-  public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final boolean isGetSystemProperty =
+                ((Boolean)infos[0]).booleanValue();
+        final boolean isIntegerGetInteger =
+                ((Boolean)infos[1]).booleanValue();
+        if (isGetSystemProperty) {
+            return InspectionGadgetsBundle.message(
+                    "system.set.problem.descriptor");
+        } else if (isIntegerGetInteger) {
+            return InspectionGadgetsBundle.message(
+                    "system.properties.problem.descriptor");
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "system.properties.problem.descriptor1");
+        }
+    }
 
-    final PsiElement parent = location.getParent();
-    assert parent != null;
-    final PsiMethodCallExpression call =
-      (PsiMethodCallExpression)parent.getParent();
-    if (isGetSystemProperty(call)) {
-      return InspectionGadgetsBundle.message("system.set.problem.descriptor");
+    public BaseInspectionVisitor buildVisitor() {
+        return new SystemSetSecurityManagerVisitor();
     }
-    else if (isIntegerGetInteger(call)) {
-      return InspectionGadgetsBundle.message("system.properties.problem.descriptor");
-    }
-    else {
-      return InspectionGadgetsBundle.message("system.properties.problem.descriptor1");
-    }
-  }
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new SystemSetSecurityManagerVisitor();
-  }
+    private static class SystemSetSecurityManagerVisitor
+            extends BaseInspectionVisitor {
 
-  private static class SystemSetSecurityManagerVisitor extends BaseInspectionVisitor {
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            final boolean isGetSystemProperty = isGetSystemProperty(expression);
+            final boolean isIntegerGetInteger = isIntegerGetInteger(expression);
+            final boolean isBooleanGetBoolean = isBooleanGetBoolean(expression);
+            if (!(isGetSystemProperty || isIntegerGetInteger ||
+                    isBooleanGetBoolean)) {
+                return;
+            }
+            registerMethodCallError(expression,
+                    Boolean.valueOf(isGetSystemProperty),
+                    Boolean.valueOf(isIntegerGetInteger));
+        }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
+        private static boolean isGetSystemProperty(
+                PsiMethodCallExpression expression) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!"getProperty".equals(methodName)
+                    && !"getProperties".equals(methodName)
+                    && !"setProperty".equals(methodName)
+                    && !"setProperties".equals(methodName)
+                    && !"clearProperties".equals(methodName)
+                    ) {
+                return false;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return false;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return false;
+            }
+            final String className = aClass.getQualifiedName();
+            if (className == null) {
+                return false;
+            }
+            return "java.lang.System".equals(className);
+        }
 
-      if (isGetSystemProperty(expression) ||
-          isIntegerGetInteger(expression) ||
-          isBooleanGetBoolean(expression)) {
-        registerMethodCallError(expression);
-      }
+        private static boolean isIntegerGetInteger(
+                PsiMethodCallExpression expression) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!"getInteger".equals(methodName)) {
+                return false;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return false;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return false;
+            }
+            final String className = aClass.getQualifiedName();
+            if (className == null) {
+                return false;
+            }
+            return "java.lang.Integer".equals(className);
+        }
 
+        private static boolean isBooleanGetBoolean(
+                PsiMethodCallExpression expression) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!"getBoolean".equals(methodName)) {
+                return false;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return false;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return false;
+            }
+            final String className = aClass.getQualifiedName();
+            if (className == null) {
+                return false;
+            }
+            return "java.lang.Boolean".equals(className);
+        }
     }
-  }
-
-  private static boolean isGetSystemProperty(PsiMethodCallExpression expression) {
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    if (methodExpression == null) {
-      return false;
-    }
-    @NonNls final String methodName = methodExpression.getReferenceName();
-    if (!"getProperty".equals(methodName)
-        && !"getProperties".equals(methodName)
-        && !"setProperty".equals(methodName)
-        && !"setProperties".equals(methodName)
-        && !"clearProperties".equals(methodName)
-      ) {
-      return false;
-    }
-    final PsiMethod method = expression.resolveMethod();
-    if (method == null) {
-      return false;
-    }
-    final PsiClass aClass = method.getContainingClass();
-    if (aClass == null) {
-      return false;
-    }
-    final String className = aClass.getQualifiedName();
-    if (className == null) {
-      return false;
-    }
-    return "java.lang.System".equals(className);
-  }
-
-  private static boolean isIntegerGetInteger(PsiMethodCallExpression expression) {
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    if (methodExpression == null) {
-      return false;
-    }
-    @NonNls final String methodName = methodExpression.getReferenceName();
-    if (!"getInteger".equals(methodName)) {
-      return false;
-    }
-    final PsiMethod method = expression.resolveMethod();
-    if (method == null) {
-      return false;
-    }
-    final PsiClass aClass = method.getContainingClass();
-    if (aClass == null) {
-      return false;
-    }
-    final String className = aClass.getQualifiedName();
-    if (className == null) {
-      return false;
-    }
-    return "java.lang.Integer".equals(className);
-  }
-
-  private static boolean isBooleanGetBoolean(PsiMethodCallExpression expression) {
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    if (methodExpression == null) {
-      return false;
-    }
-    @NonNls final String methodName = methodExpression.getReferenceName();
-    if (!"getBoolean".equals(methodName)) {
-      return false;
-    }
-    final PsiMethod method = expression.resolveMethod();
-    if (method == null) {
-      return false;
-    }
-    final PsiClass aClass = method.getContainingClass();
-    if (aClass == null) {
-      return false;
-    }
-    final String className = aClass.getQualifiedName();
-    if (className == null) {
-      return false;
-    }
-    return "java.lang.Boolean".equals(className);
-  }
 }

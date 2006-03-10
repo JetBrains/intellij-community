@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,8 @@ public class AssertAsNameInspection extends BaseInspection {
         return GroupNames.JDK_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "use.assert.as.identifier.problem.descriptor");
     }
@@ -51,9 +52,6 @@ public class AssertAsNameInspection extends BaseInspection {
 
     public ProblemDescriptor[] doCheckClass(
             PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
-        if (aClass instanceof PsiAnonymousClass) {
-            return super.doCheckClass(aClass, mgr, isOnTheFly);
-        }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         aClass.accept(visitor);
         return visitor.getErrors();
@@ -68,10 +66,6 @@ public class AssertAsNameInspection extends BaseInspection {
         if (!containingClass.isPhysical()) {
             return super.doCheckMethod(method, mgr, isOnTheFly);
         }
-
-        if (containingClass instanceof PsiAnonymousClass) {
-            return super.doCheckClass(containingClass, mgr, isOnTheFly);
-        }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         method.accept(visitor);
         return visitor.getErrors();
@@ -85,9 +79,6 @@ public class AssertAsNameInspection extends BaseInspection {
         }
         if (!containingClass.isPhysical()) {
             return super.doCheckField(field, mgr, isOnTheFly);
-        }
-        if (containingClass instanceof PsiAnonymousClass) {
-            return super.doCheckClass(containingClass, mgr, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         field.accept(visitor);

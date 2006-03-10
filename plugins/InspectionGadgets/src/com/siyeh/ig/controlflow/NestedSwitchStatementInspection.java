@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,36 +23,48 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NestedSwitchStatementInspection extends StatementInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new NestedSwitchStatementVisitor();
-  }
-
-  private static class NestedSwitchStatementVisitor extends StatementInspectionVisitor {
-
-    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      super.visitSwitchStatement(statement);
-      final PsiElement containingSwitchStatement =
-        PsiTreeUtil.getParentOfType(statement, PsiSwitchStatement.class);
-      if (containingSwitchStatement == null) {
-        return;
-      }
-      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(statement,
-                                                                     PsiMethod.class);
-      final PsiMethod containingContainingMethod = PsiTreeUtil.getParentOfType(containingSwitchStatement,
-                                                                               PsiMethod.class);
-      if (containingMethod == null || containingContainingMethod == null ||
-          !containingMethod.equals(containingContainingMethod)) {
-        return;
-      }
-      registerStatementError(statement);
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
-  }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "nested.switch.statement.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new NestedSwitchStatementVisitor();
+    }
+
+    private static class NestedSwitchStatementVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitSwitchStatement(
+                @NotNull PsiSwitchStatement statement) {
+            super.visitSwitchStatement(statement);
+            final PsiElement containingSwitchStatement =
+                    PsiTreeUtil.getParentOfType(statement,
+                            PsiSwitchStatement.class);
+            if (containingSwitchStatement == null) {
+                return;
+            }
+            final PsiMethod containingMethod =
+                    PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+            final PsiMethod containingContainingMethod =
+                    PsiTreeUtil.getParentOfType(containingSwitchStatement,
+                    PsiMethod.class);
+            if (containingMethod == null ||
+                    containingContainingMethod == null ||
+                    !containingMethod.equals(containingContainingMethod)) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+    }
 }

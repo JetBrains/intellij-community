@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,44 +22,52 @@ import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ComparisonOfShortAndCharInspection extends ExpressionInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.NUMERIC_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ComparisonOfShortAndCharVisitor();
-  }
-
-  private static class ComparisonOfShortAndCharVisitor
-    extends BaseInspectionVisitor {
-
-    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
-      if (!(expression.getROperand() != null)) {
-        return;
-      }
-      if (!ComparisonUtils.isEqualityComparison(expression)) {
-        return;
-      }
-      final PsiExpression lhs = expression.getLOperand();
-      final PsiType lhsType = lhs.getType();
-      final PsiExpression rhs = expression.getROperand();
-      if (rhs == null) {
-        return;
-      }
-      final PsiType rhsType = rhs.getType();
-      if (PsiType.SHORT.equals(lhsType) &&
-          PsiType.CHAR.equals(rhsType)) {
-        registerError(expression);
-      }
-      else if (PsiType.CHAR.equals(lhsType) &&
-               PsiType.SHORT.equals(rhsType)) {
-        registerError(expression);
-      }
+    public String getGroupDisplayName() {
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
-  }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "comparison.of.short.and.char.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ComparisonOfShortAndCharVisitor();
+    }
+
+    private static class ComparisonOfShortAndCharVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression) {
+            super.visitBinaryExpression(expression);
+            if (!(expression.getROperand() != null)) {
+                return;
+            }
+            if (!ComparisonUtils.isEqualityComparison(expression)) {
+                return;
+            }
+            final PsiExpression lhs = expression.getLOperand();
+            final PsiType lhsType = lhs.getType();
+            final PsiExpression rhs = expression.getROperand();
+            if (rhs == null) {
+                return;
+            }
+            final PsiType rhsType = rhs.getType();
+            if (PsiType.SHORT.equals(lhsType) &&
+                    PsiType.CHAR.equals(rhsType)) {
+                registerError(expression);
+            }
+            else if (PsiType.CHAR.equals(lhsType) &&
+                    PsiType.SHORT.equals(rhsType)) {
+                registerError(expression);
+            }
+        }
+    }
 }

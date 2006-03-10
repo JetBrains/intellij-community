@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,34 +27,36 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class TransientFieldInNonSerializableClassInspection extends ClassInspection {
+public class TransientFieldInNonSerializableClassInspection
+        extends ClassInspection {
 
-  private final TransientFieldInNonSerializableClassFix fix = new TransientFieldInNonSerializableClassFix();
+    public String getGroupDisplayName() {
+        return GroupNames.SERIALIZATION_GROUP_NAME;
+    }
 
-  public String getGroupDisplayName() {
-    return GroupNames.SERIALIZATION_GROUP_NAME;
-  }
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiField field = (PsiField)infos[0];
+        return InspectionGadgetsBundle.message(
+                "transient.field.in.non.serializable.class.problem.descriptor",
+                field.getName());
+    }
 
-  public String buildErrorString(PsiElement location) {
-    final PsiModifierList fieldModifierList = (PsiModifierList)location.getParent();
-    assert fieldModifierList != null;
-    final PsiField field = (PsiField)fieldModifierList.getParent();
-    assert field != null;
-    return InspectionGadgetsBundle.message("transient.field.in.non.serializable.class.problem.descriptor", field.getName());
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new TransientFieldInNonSerializableClassFix();
+    }
 
 
-  private static class TransientFieldInNonSerializableClassFix extends InspectionGadgetsFix {
+    private static class TransientFieldInNonSerializableClassFix
+            extends InspectionGadgetsFix {
+
         public String getName() {
-            return InspectionGadgetsBundle.message("transient.field.in.non.serializable.class.remove.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "transient.field.in.non.serializable.class.remove.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final PsiElement transientModifier = descriptor.getPsiElement();
             deleteElement(transientModifier);
         }
@@ -75,7 +77,7 @@ public class TransientFieldInNonSerializableClassInspection extends ClassInspect
             if (SerializationUtils.isSerializable(aClass)) {
                 return;
             }
-            registerModifierError(PsiModifier.TRANSIENT, field);
+            registerModifierError(PsiModifier.TRANSIENT, field, field);
         }
     }
 }

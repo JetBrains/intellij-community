@@ -19,7 +19,8 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor{
-    private final @NotNull PsiVariable variable;
+
+    @NotNull private final PsiVariable variable;
     private boolean usedInInnerClass = false;
     private boolean inInnerClass = false;
 

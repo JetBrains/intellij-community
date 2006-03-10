@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,18 +33,13 @@ import org.jetbrains.annotations.NotNull;
 public class LiteralAsArgToStringEqualsInspection
         extends ExpressionInspection {
 
-    private final SwapEqualsFix swapEqualsFix = new SwapEqualsFix();
-
     public String getGroupDisplayName() {
         return GroupNames.STYLE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiMethodCallExpression expression =
-                (PsiMethodCallExpression)location;
-        final PsiReferenceExpression methodExpression =
-                expression.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final String methodName = (String)infos[0];
         return InspectionGadgetsBundle.message(
                 "literal.as.arg.to.string.equals.problem.descriptor",
                 methodName);
@@ -55,7 +50,7 @@ public class LiteralAsArgToStringEqualsInspection
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return swapEqualsFix;
+        return new SwapEqualsFix();
     }
 
     private static class SwapEqualsFix extends InspectionGadgetsFix {
@@ -111,7 +106,8 @@ public class LiteralAsArgToStringEqualsInspection
             @NonNls final String methodName =
                     methodExpression.getReferenceName();
             if (!HardcodedMethodConstants.EQUALS.equals(methodName) &&
-                    !"equalsIgnoreCase".equals(methodName)) {
+                    !HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(
+                            methodName)) {
                 return;
             }
             final PsiExpressionList argList = expression.getArgumentList();
@@ -119,15 +115,15 @@ public class LiteralAsArgToStringEqualsInspection
             if (args.length != 1) {
                 return;
             }
-            final PsiExpression arg = args[0];
-            final PsiType argType = arg.getType();
-            if (argType == null) {
+            final PsiExpression argument = args[0];
+            final PsiType argumentType = argument.getType();
+            if (argumentType == null) {
                 return;
             }
-            if (!(arg instanceof PsiLiteralExpression)) {
+            if (!(argument instanceof PsiLiteralExpression)) {
                 return;
             }
-            if (!TypeUtils.isJavaLangString(argType)) {
+            if (!TypeUtils.isJavaLangString(argumentType)) {
                 return;
             }
             final PsiExpression target =
@@ -135,7 +131,7 @@ public class LiteralAsArgToStringEqualsInspection
             if (target instanceof PsiLiteralExpression) {
                 return;
             }
-            registerError(expression);
+            registerError(argument, methodName);
         }
     }
 }

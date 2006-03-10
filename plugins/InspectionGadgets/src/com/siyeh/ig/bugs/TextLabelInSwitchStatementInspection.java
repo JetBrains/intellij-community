@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,24 +26,29 @@ import org.jetbrains.annotations.NotNull;
 public class TextLabelInSwitchStatementInspection extends StatementInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("text.label.in.switch.statement.display.name");
+        return InspectionGadgetsBundle.message(
+                "text.label.in.switch.statement.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("text.label.in.switch.statement.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "text.label.in.switch.statement.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new TextLabelInSwitchStatementVisitor();
     }
 
-    private static class TextLabelInSwitchStatementVisitor extends StatementInspectionVisitor {
+    private static class TextLabelInSwitchStatementVisitor
+            extends StatementInspectionVisitor {
 
-        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+        public void visitSwitchStatement(
+                @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {
@@ -59,9 +64,10 @@ public class TextLabelInSwitchStatementInspection extends StatementInspection {
             if (!(statement instanceof PsiLabeledStatement)) {
                 return;
             }
-            final PsiIdentifier label = ((PsiLabeledStatement) statement).getLabelIdentifier();
+            final PsiLabeledStatement labeledStatement =
+                    (PsiLabeledStatement)statement;
+            final PsiIdentifier label = labeledStatement.getLabelIdentifier();
             registerError(label);
         }
     }
-
 }

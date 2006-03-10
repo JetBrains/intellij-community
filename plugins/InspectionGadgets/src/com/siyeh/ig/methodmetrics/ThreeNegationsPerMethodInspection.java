@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class ThreeNegationsPerMethodInspection extends MethodInspection {
 
@@ -49,12 +48,9 @@ public class ThreeNegationsPerMethodInspection extends MethodInspection {
                 this, "m_ignoreInEquals");
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiMethod method = (PsiMethod)location.getParent();
-        assert method != null;
-        final NegationCountVisitor visitor = new NegationCountVisitor();
-        method.accept(visitor);
-        final int negationCount = visitor.getCount();
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final Integer negationCount = (Integer)infos[0];
         return InspectionGadgetsBundle.message(
                 "three.negations.per.method.problem.descriptor", negationCount);
     }
@@ -76,7 +72,7 @@ public class ThreeNegationsPerMethodInspection extends MethodInspection {
             if (m_ignoreInEquals && MethodUtils.isEquals(method)) {
                 return;
             }
-            registerMethodError(method);
+            registerMethodError(method, Integer.valueOf(negationCount));
         }
     }
 }

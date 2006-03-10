@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,85 +30,85 @@ import org.jetbrains.annotations.NonNls;
 
 public class ConditionSignalInspection extends ExpressionInspection {
 
-  private final ConditionSignalFix fix = new ConditionSignalFix();
-
-  public String getID() {
-    return "CallToSignalInsteadOfSignalAll";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ConditionSignalVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class ConditionSignalFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("condition.signal.replace.quickfix");
+    public String getID() {
+        return "CallToSignalInsteadOfSignalAll";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement methodNameElement = descriptor.getPsiElement();
-      final PsiReferenceExpression methodExpression =
-        (PsiReferenceExpression)methodNameElement.getParent();
-      assert methodExpression != null;
-      final PsiExpression qualifier = methodExpression
-        .getQualifierExpression();
-      @NonNls final String signalAll = "signalAll";
-      if (qualifier == null) {
-        replaceExpression(methodExpression, signalAll);
-      }
-      else {
-        final String qualifierText = qualifier.getText();
-        replaceExpression(methodExpression,
-                          qualifierText + '.' + signalAll);
-      }
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
     }
-  }
 
-  private static class ConditionSignalVisitor extends BaseInspectionVisitor {
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression
-        .getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      final String methodName = methodExpression.getReferenceName();
-
-      @NonNls final String signal = "signal";
-      if (!signal.equals(methodName)) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList == null) {
-        return;
-      }
-      if (argumentList.getExpressions().length != 0) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (!ClassUtils
-        .isSubclass(containingClass,
-                    "java.util.concurrent.locks.Condition")) {
-        return;
-      }
-      registerMethodCallError(expression);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "condition.signal.problem.descriptor");
     }
-  }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ConditionSignalVisitor();
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new ConditionSignalFix();
+    }
+
+    private static class ConditionSignalFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "condition.signal.replace.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement methodNameElement = descriptor.getPsiElement();
+            final PsiReferenceExpression methodExpression =
+                    (PsiReferenceExpression)methodNameElement.getParent();
+            assert methodExpression != null;
+            final PsiExpression qualifier = methodExpression
+                    .getQualifierExpression();
+            @NonNls final String signalAll = "signalAll";
+            if (qualifier == null) {
+                replaceExpression(methodExpression, signalAll);
+            }
+            else {
+                final String qualifierText = qualifier.getText();
+                replaceExpression(methodExpression,
+                        qualifierText + '.' + signalAll);
+            }
+        }
+    }
+
+    private static class ConditionSignalVisitor extends BaseInspectionVisitor {
+        
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String signal = "signal";
+            if (!signal.equals(methodName)) {
+                return;
+            }
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            if (argumentList.getExpressions().length != 0) {
+                return;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass == null) {
+                return;
+            }
+            if (!ClassUtils
+                    .isSubclass(containingClass,
+                            "java.util.concurrent.locks.Condition")) {
+                return;
+            }
+            registerMethodCallError(expression);
+        }
+    }
 }

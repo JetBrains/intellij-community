@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,14 +45,16 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         return GroupNames.ASSIGNMENT_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         final PsiAssignmentExpression assignmentExpression =
-                (PsiAssignmentExpression)location;
-        return InspectionGadgetsBundle.message("assignment.replaceable.with.operator.assignment.problem.descriptor",
-                                               calculateReplacementExpression(assignmentExpression));
+                (PsiAssignmentExpression)infos[0];
+        return InspectionGadgetsBundle.message(
+                "assignment.replaceable.with.operator.assignment.problem.descriptor",
+                calculateReplacementExpression(assignmentExpression));
     }
 
-    private static String calculateReplacementExpression(
+    static String calculateReplacementExpression(
             PsiAssignmentExpression expression){
         final PsiBinaryExpression rhs =
                 (PsiBinaryExpression) expression.getRExpression();
@@ -97,7 +99,9 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
             } else if("||".equals(signText)){
                 signText = "|";
             }
-            m_name = InspectionGadgetsBundle.message("assignment.replaceable.with.operator.replace.quickfix", signText, '=');
+            m_name = InspectionGadgetsBundle.message(
+                    "assignment.replaceable.with.operator.replace.quickfix",
+                    signText, Character.valueOf('='));
         }
 
         public String getName(){
@@ -116,6 +120,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
                     calculateReplacementExpression(expression);
             replaceExpression(expression, newExpression);
         }
+
     }
 
     private static class ReplaceAssignmentWithOperatorAssignmentVisitor
@@ -146,11 +151,10 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
             if(SideEffectChecker.mayHaveSideEffects(lhs)){
                 return;
             }
-            if(!EquivalenceChecker.expressionsAreEquivalent(lhs,
-                                                            lOperand)){
+            if(!EquivalenceChecker.expressionsAreEquivalent(lhs, lOperand)) {
                 return;
             }
-            registerError(assignment);
+            registerError(assignment, assignment);
         }
     }
 }

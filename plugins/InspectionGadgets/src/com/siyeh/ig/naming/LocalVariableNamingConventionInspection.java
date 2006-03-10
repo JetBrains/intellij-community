@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,31 +49,34 @@ public class LocalVariableNamingConventionInspection
 
     private static final int DEFAULT_MIN_LENGTH = 1;
     private static final int DEFAULT_MAX_LENGTH = 20;
-    private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("local.variable.naming.convention.display.name");
+        return InspectionGadgetsBundle.message(
+                "local.variable.naming.convention.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiVariable var = (PsiVariable) location.getParent();
-        assert var != null;
-        final String varName = var.getName();
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final String varName = (String)infos[0];
         if (varName.length() < getMinLength()) {
-            return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.short");
+            return InspectionGadgetsBundle.message(
+                    "local.variable.naming.convention.problem.descriptor.short");
         } else if (varName.length() > getMaxLength()) {
-            return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.long");
+            return InspectionGadgetsBundle.message(
+                    "local.variable.naming.convention.problem.descriptor.long");
         } else {
-          return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.regex.mismatch", getRegex());
+          return InspectionGadgetsBundle.message(
+                  "local.variable.naming.convention.problem.descriptor.regex.mismatch",
+                  getRegex());
         }
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -137,7 +140,7 @@ public class LocalVariableNamingConventionInspection
             if (isValid(name)) {
                 return;
             }
-            registerVariableError(variable);
+            registerVariableError(variable, name);
         }
 
         public void visitParameter(@NotNull PsiParameter variable) {
@@ -159,7 +162,7 @@ public class LocalVariableNamingConventionInspection
             if (isValid(name)) {
                 return;
             }
-            registerVariableError(variable);
+            registerVariableError(variable, name);
         }
     }
 
@@ -169,15 +172,19 @@ public class LocalVariableNamingConventionInspection
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
 
-        final JLabel patternLabel = new JLabel(InspectionGadgetsBundle.message("convention.pattern.option"));
+        final JLabel patternLabel = new JLabel(
+                InspectionGadgetsBundle.message("convention.pattern.option"));
         patternLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-        final JLabel minLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.min.length.option"));
+        final JLabel minLengthLabel = new JLabel(
+                InspectionGadgetsBundle.message("convention.min.length.option"));
         minLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-        final JLabel maxLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.max.length.option"));
+        final JLabel maxLengthLabel = new JLabel(
+                InspectionGadgetsBundle.message("convention.max.length.option"));
         maxLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
         final JCheckBox forLoopCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.option"),
+                new JCheckBox(InspectionGadgetsBundle.message(
+                        "local.variable.naming.convention.ignore.option"),
                               m_ignoreForLoopParameters);
         final ButtonModel forLoopModel = forLoopCheckBox.getModel();
         forLoopModel.addChangeListener(new ChangeListener() {
@@ -186,7 +193,8 @@ public class LocalVariableNamingConventionInspection
             }
         });
         final JCheckBox catchCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.catch.option"),
+                new JCheckBox(InspectionGadgetsBundle.message(
+                        "local.variable.naming.convention.ignore.catch.option"),
                               m_ignoreCatchParameters);
         final ButtonModel catchBlockModel = catchCheckBox.getModel();
         catchBlockModel.addChangeListener(new ChangeListener() {
@@ -208,14 +216,14 @@ public class LocalVariableNamingConventionInspection
                 new JFormattedTextField(formatter);
         final Font panelFont = panel.getFont();
         minLengthField.setFont(panelFont);
-        minLengthField.setValue(m_minLength);
+        minLengthField.setValue(Integer.valueOf(m_minLength));
         minLengthField.setColumns(2);
         FormattedTextFieldMacFix.apply(minLengthField);
 
         final JFormattedTextField maxLengthField =
                 new JFormattedTextField(formatter);
         maxLengthField.setFont(panelFont);
-        maxLengthField.setValue(m_maxLength);
+        maxLengthField.setValue(Integer.valueOf(m_maxLength));
         maxLengthField.setColumns(2);
         FormattedTextFieldMacFix.apply(maxLengthField);
 
@@ -229,6 +237,7 @@ public class LocalVariableNamingConventionInspection
         FormattedTextFieldMacFix.apply(regexField);
 
         final DocumentListener listener = new DocumentListener() {
+
             public void changedUpdate(DocumentEvent e) {
                 textChanged();
             }

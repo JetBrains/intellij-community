@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,37 +22,45 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneableClassInSecureContextInspection extends ClassInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.SECURITY_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new CloneableClassInSecureContextVisitor();
-  }
-
-  private static class CloneableClassInSecureContextVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
-        return;
-      }
-      if (!CloneUtils.isCloneable(aClass)) {
-        return;
-      }
-      final PsiMethod[] methods = aClass.getMethods();
-      for (final PsiMethod method : methods) {
-        if (CloneUtils.isClone(method)) {
-          if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
-            return;
-          }
-        }
-      }
-      registerClassError(aClass);
+    public String getGroupDisplayName() {
+        return GroupNames.SECURITY_GROUP_NAME;
     }
-  }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "cloneable.class.in.secure.context.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new CloneableClassInSecureContextVisitor();
+    }
+
+    private static class CloneableClassInSecureContextVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so it doesn't drill down
+            if (aClass.isInterface() || aClass.isAnnotationType()) {
+                return;
+            }
+            if (!CloneUtils.isCloneable(aClass)) {
+                return;
+            }
+            final PsiMethod[] methods = aClass.getMethods();
+            for (final PsiMethod method : methods) {
+                if (CloneUtils.isClone(method)) {
+                    if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
+                        return;
+                    }
+                }
+            }
+            registerClassError(aClass);
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,120 +19,127 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new WhileLoopSpinsOnFieldVisitor();
-  }
-
-  private static class WhileLoopSpinsOnFieldVisitor extends BaseInspectionVisitor {
-
-
-    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-      super.visitWhileStatement(statement);
-      final PsiStatement body = statement.getBody();
-      if (!statementIsEmpty(body)) {
-        return;
-      }
-      final PsiExpression condition = statement.getCondition();
-      if (!isSimpleFieldComparison(condition)) {
-        return;
-      }
-      registerStatementError(statement);
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
     }
 
-    private boolean isSimpleFieldComparison(PsiExpression condition) {
-      if (condition == null) {
-        return false;
-      }
-      if (isSimpleFieldAccess(condition)) {
-        return true;
-      }
-      if (condition instanceof PsiPrefixExpression) {
-        final PsiExpression operand =
-          ((PsiPrefixExpression)condition).getOperand();
-        return isSimpleFieldComparison(operand);
-      }
-      if (condition instanceof PsiPostfixExpression) {
-        final PsiExpression operand =
-          ((PsiPostfixExpression)condition).getOperand();
-        return isSimpleFieldComparison(operand);
-      }
-      if (condition instanceof PsiParenthesizedExpression) {
-        final PsiExpression operand =
-          ((PsiParenthesizedExpression)condition).getExpression();
-        return isSimpleFieldComparison(operand);
-      }
-
-      if (condition instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)condition;
-        final PsiExpression lOperand = binaryExpression.getLOperand();
-        final PsiExpression rOperand = binaryExpression.getROperand();
-        return isSimpleFieldComparison(lOperand) &&
-               isLiteral(rOperand) ||
-                                   (isSimpleFieldComparison(rOperand) && isLiteral(lOperand));
-      }
-      return false;
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "while.loop.spins.on.field.problem.descriptor");
     }
 
-    private boolean isLiteral(PsiExpression expression) {
-      if (expression == null) {
-        return false;
-      }
-      if (expression instanceof PsiParenthesizedExpression) {
-        final PsiExpression operand =
-          ((PsiParenthesizedExpression)expression).getExpression();
-        return isSimpleFieldAccess(operand);
-      }
-      return expression instanceof PsiLiteralExpression;
+    public BaseInspectionVisitor buildVisitor() {
+        return new WhileLoopSpinsOnFieldVisitor();
     }
 
-    private boolean isSimpleFieldAccess(PsiExpression expression) {
-      if (expression == null) {
-        return false;
-      }
-      if (expression instanceof PsiParenthesizedExpression) {
-        final PsiExpression operand =
-          ((PsiParenthesizedExpression)expression).getExpression();
-        return isSimpleFieldAccess(operand);
-      }
-      if (!(expression instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      final PsiElement referent = ((PsiReference)expression).resolve();
-      if (!(referent instanceof PsiField)) {
-        return false;
-      }
-      final PsiField field = (PsiField)referent;
-      return !field.hasModifierProperty(PsiModifier.VOLATILE);
-    }
+    private static class WhileLoopSpinsOnFieldVisitor
+            extends BaseInspectionVisitor {
 
-    private boolean statementIsEmpty(PsiStatement statement) {
-      if (statement == null) {
-        return false;
-      }
-      if (statement instanceof PsiEmptyStatement) {
-        return true;
-      }
-      if (statement instanceof PsiBlockStatement) {
-        final PsiCodeBlock codeBlock =
-          ((PsiBlockStatement)statement).getCodeBlock();
-        final PsiStatement[] statements = codeBlock.getStatements();
-        for (PsiStatement statement1 : statements) {
-          if (!statementIsEmpty(statement1)) {
-            return false;
-          }
+        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+            super.visitWhileStatement(statement);
+            final PsiStatement body = statement.getBody();
+            if (!statementIsEmpty(body)) {
+                return;
+            }
+            final PsiExpression condition = statement.getCondition();
+            if (!isSimpleFieldComparison(condition)) {
+                return;
+            }
+            registerStatementError(statement);
         }
-        return true;
-      }
-      return false;
+
+        private static boolean isSimpleFieldComparison(PsiExpression condition) {
+            if (condition == null) {
+                return false;
+            }
+            if (isSimpleFieldAccess(condition)) {
+                return true;
+            }
+            if (condition instanceof PsiPrefixExpression) {
+                final PsiExpression operand =
+                        ((PsiPrefixExpression)condition).getOperand();
+                return isSimpleFieldComparison(operand);
+            }
+            if (condition instanceof PsiPostfixExpression) {
+                final PsiExpression operand =
+                        ((PsiPostfixExpression)condition).getOperand();
+                return isSimpleFieldComparison(operand);
+            }
+            if (condition instanceof PsiParenthesizedExpression) {
+                final PsiExpression operand =
+                        ((PsiParenthesizedExpression)condition).getExpression();
+                return isSimpleFieldComparison(operand);
+            }
+
+            if (condition instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression)condition;
+                final PsiExpression lOperand = binaryExpression.getLOperand();
+                final PsiExpression rOperand = binaryExpression.getROperand();
+                return isSimpleFieldComparison(lOperand) &&
+                        isLiteral(rOperand) ||
+                        (isSimpleFieldComparison(rOperand) && isLiteral(lOperand));
+            }
+            return false;
+        }
+
+        private static boolean isLiteral(PsiExpression expression) {
+            if (expression == null) {
+                return false;
+            }
+            if (expression instanceof PsiParenthesizedExpression) {
+                final PsiExpression operand =
+                        ((PsiParenthesizedExpression)expression).getExpression();
+                return isSimpleFieldAccess(operand);
+            }
+            return expression instanceof PsiLiteralExpression;
+        }
+
+        private static boolean isSimpleFieldAccess(PsiExpression expression) {
+            if (expression == null) {
+                return false;
+            }
+            if (expression instanceof PsiParenthesizedExpression) {
+                final PsiExpression operand =
+                        ((PsiParenthesizedExpression)expression).getExpression();
+                return isSimpleFieldAccess(operand);
+            }
+            if (!(expression instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiElement referent = ((PsiReference)expression).resolve();
+            if (!(referent instanceof PsiField)) {
+                return false;
+            }
+            final PsiField field = (PsiField)referent;
+            return !field.hasModifierProperty(PsiModifier.VOLATILE);
+        }
+
+        private static boolean statementIsEmpty(PsiStatement statement) {
+            if (statement == null) {
+                return false;
+            }
+            if (statement instanceof PsiEmptyStatement) {
+                return true;
+            }
+            if (statement instanceof PsiBlockStatement) {
+                final PsiCodeBlock codeBlock =
+                        ((PsiBlockStatement)statement).getCodeBlock();
+                final PsiStatement[] statements = codeBlock.getStatements();
+                for (PsiStatement statement1 : statements) {
+                    if (!statementIsEmpty(statement1)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
     }
-  }
 }

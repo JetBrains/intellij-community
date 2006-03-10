@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,8 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
         return GroupNames.STYLE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "unnecessary.block.statement.problem.descriptor");
     }
@@ -139,8 +140,9 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
                 final PsiLocalVariable variable =
                         (PsiLocalVariable) declaredVar;
                 final String variableName = variable.getName();
-                if(conflictingDeclarationExists(variableName, parentBlock,
-                                                block)){
+                if(variableName != null &&
+                        conflictingDeclarationExists(variableName, parentBlock,
+                                block)){
                     return true;
                 }
             }
@@ -148,8 +150,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
         }
 
         private static boolean conflictingDeclarationExists(
-                String name,
-                PsiCodeBlock parentBlock,
+                @NotNull String name, PsiCodeBlock parentBlock,
                 PsiCodeBlock exceptBlock){
             final ConflictingDeclarationVisitor visitor =
                     new ConflictingDeclarationVisitor(name, exceptBlock);
@@ -165,7 +166,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
         private final PsiCodeBlock exceptBlock;
         private boolean hasConflictingDeclaration = false;
 
-        ConflictingDeclarationVisitor(String variableName,
+        ConflictingDeclarationVisitor(@NotNull String variableName,
                                       PsiCodeBlock exceptBlock){
             super();
             this.variableName = variableName;
@@ -194,7 +195,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             }
             super.visitVariable(variable);
             final String name = variable.getName();
-            if(name.equals(variableName)){
+            if(variableName.equals(name)){
                 hasConflictingDeclaration = true;
             }
         }

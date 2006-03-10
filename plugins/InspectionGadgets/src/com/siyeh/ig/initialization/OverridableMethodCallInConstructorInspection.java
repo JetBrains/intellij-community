@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,15 +34,18 @@ public class OverridableMethodCallInConstructorInspection
         extends MethodInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.display.name");
+        return InspectionGadgetsBundle.message(
+                "overridable.method.call.in.constructor.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-      return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+      return InspectionGadgetsBundle.message(
+              "overridable.method.call.in.constructor.problem.descriptor");
     }
 
     @Nullable
@@ -63,6 +66,7 @@ public class OverridableMethodCallInConstructorInspection
     }
 
     private static class MakeMethodFinalFix extends InspectionGadgetsFix {
+
         private final String methodName;
 
         MakeMethodFinalFix(String methodName) {
@@ -70,7 +74,8 @@ public class OverridableMethodCallInConstructorInspection
         }
 
         public String getName() {
-            return InspectionGadgetsBundle.message("make.method.final.fix.name", methodName);
+            return InspectionGadgetsBundle.message(
+                    "make.method.final.fix.name", methodName);
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
@@ -87,10 +92,10 @@ public class OverridableMethodCallInConstructorInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new AbstractMethodCallInConstructorVisitor();
+        return new OverridableMethodCallInConstructorVisitor();
     }
 
-    private static class AbstractMethodCallInConstructorVisitor
+    private static class OverridableMethodCallInConstructorVisitor
             extends BaseInspectionVisitor {
 
         public void visitMethodCallExpression(
@@ -106,9 +111,6 @@ public class OverridableMethodCallInConstructorInspection
             }
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
-            if (methodExpression == null) {
-                return;
-            }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if (qualifier != null) {

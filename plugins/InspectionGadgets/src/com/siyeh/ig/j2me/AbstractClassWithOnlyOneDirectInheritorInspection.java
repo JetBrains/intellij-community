@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.openapi.progress.ProgressManager;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -41,8 +40,8 @@ public class AbstractClassWithOnlyOneDirectInheritorInspection
         return GroupNames.J2ME_GROUP_NAME;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "abstract.class.with.only.one.direct.inheritor.problem.descriptor");
     }
@@ -60,8 +59,7 @@ public class AbstractClassWithOnlyOneDirectInheritorInspection
                 || aClass.isEnum()) {
                 return;
             }
-            if(aClass instanceof PsiTypeParameter ||
-               aClass instanceof PsiAnonymousClass) {
+            if(aClass instanceof PsiTypeParameter) {
                 return;
             }
             if(!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticImportInspection extends ClassInspection{
@@ -38,7 +37,8 @@ public class StaticImportInspection extends ClassInspection{
         return GroupNames.IMPORTS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "static.import.problem.descriptor");
     }
@@ -48,10 +48,11 @@ public class StaticImportInspection extends ClassInspection{
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
+        // todo implement me
         return null;
     }
 
-    public static class StaticImportFix extends InspectionGadgetsFix{
+    private static class StaticImportFix extends InspectionGadgetsFix{
 
         public String getName(){
             return InspectionGadgetsBundle.message(
@@ -98,7 +99,8 @@ public class StaticImportInspection extends ClassInspection{
             }
             final PsiImportStaticStatement[] importStatements =
                     importList.getImportStaticStatements();
-            for(final PsiImportStaticStatement importStatement : importStatements){
+            for(final PsiImportStaticStatement importStatement :
+                    importStatements){
                 registerError(importStatement);
             }
         }

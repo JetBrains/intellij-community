@@ -22,12 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class VariableAccessVisitor extends PsiRecursiveElementVisitor {
-    private final Map<PsiField,Integer> m_accessCounts = new HashMap<PsiField, Integer>(2);
-    private final Set<PsiField> m_overAccessedFields = new HashSet<PsiField>(2);
 
-    public VariableAccessVisitor() {
-        super();
-    }
+    private final Map<PsiField,Integer> m_accessCounts =
+            new HashMap<PsiField, Integer>(2);
+    private final Set<PsiField> m_overAccessedFields =
+            new HashSet<PsiField>(2);
 
     public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
         super.visitReferenceExpression(ref);

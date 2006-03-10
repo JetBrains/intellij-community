@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.openapi.progress.ProgressManager;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -42,7 +41,8 @@ public class InterfaceWithOnlyOneDirectInheritorInspection
         return GroupNames.J2ME_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "interface.one.inheritor.problem.descriptor");
     }

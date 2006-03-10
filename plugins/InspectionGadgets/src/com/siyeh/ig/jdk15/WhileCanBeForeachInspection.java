@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class WhileCanBeForeachInspection extends StatementInspection {
 
-    private final WhileCanBeForeachFix fix = new WhileCanBeForeachFix();
-
     public String getID() {
         return "WhileLoopReplaceableByForEach";
     }
@@ -55,8 +53,14 @@ public class WhileCanBeForeachInspection extends StatementInspection {
         return new WhileCanBeForeachVisitor();
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "while.can.be.foreach.problem.descriptor");
+    }
+
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new WhileCanBeForeachFix();
     }
 
     private static class WhileCanBeForeachFix extends InspectionGadgetsFix {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class ThrowFromFinallyBlockInspection extends StatementInspection {
 
@@ -32,11 +34,18 @@ public class ThrowFromFinallyBlockInspection extends StatementInspection {
         return true;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "throw.from.finally.block.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new ThrowFromFinallyBlockVisitor();
     }
 
-    private static class ThrowFromFinallyBlockVisitor extends StatementInspectionVisitor {
+    private static class ThrowFromFinallyBlockVisitor
+            extends StatementInspectionVisitor {
 
         public void visitThrowStatement(PsiThrowStatement statement) {
             super.visitThrowStatement(statement);

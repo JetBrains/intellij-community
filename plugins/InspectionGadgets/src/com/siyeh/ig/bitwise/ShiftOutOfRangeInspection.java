@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,29 +26,30 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ShiftOutOfRangeInspection extends ExpressionInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("shift.operation.by.inappropriate.constant.display.name");
+        return InspectionGadgetsBundle.message(
+                "shift.operation.by.inappropriate.constant.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BITWISE_GROUP_NAME;
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final Integer value = (Integer)infos[0];
+        if(value.intValue() > 0){
+            return InspectionGadgetsBundle.message(
+                    "shift.operation.by.inappropriate.constant.problem.descriptor.too.large");
+        } else{
+            return InspectionGadgetsBundle.message(
+                    "shift.operation.by.inappropriate.constant.problem.descriptor.negative");
+        }
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiBinaryExpression binaryExp = (PsiBinaryExpression) location.getParent();
-        assert binaryExp != null;
-        final PsiExpression rhs = binaryExp.getROperand();
-        final Integer value = (Integer) ConstantExpressionUtil.computeCastTo(rhs,
-                                                                  PsiType.INT);
-        if(value>0){
-            return InspectionGadgetsBundle.message("shift.operation.by.inappropriate.constant.problem.descriptor.too.large");
-        } else{
-            return InspectionGadgetsBundle.message("shift.operation.by.inappropriate.constant.problem.descriptor.negative");
-        }
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -57,7 +58,8 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
 
     private static class ShiftOutOfRange extends BaseInspectionVisitor{
 
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
             if(!(expression.getROperand() != null)){
                 return;
@@ -69,14 +71,12 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
                        !tokenType.equals(JavaTokenType.GTGTGT)){
                 return;
             }
-
             final PsiType expressionType = expression.getType();
             if(expressionType == null){
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
-            if(rhs == null)
-            {
+            if(rhs == null){
                 return;
             }
             if(!PsiUtil.isConstantExpression(rhs)){
@@ -84,23 +84,21 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
             }
             final Integer valueObject =
                     (Integer) ConstantExpressionUtil.computeCastTo(rhs,
-                                                                   PsiType.INT);
-            if(valueObject == null)
-            {
+                            PsiType.INT);
+            if(valueObject == null){
                 return;
             }
+            final int value = valueObject.intValue();
             if(expressionType.equals(PsiType.LONG)){
-                if(valueObject < 0 || valueObject>63)
-                {
-                    registerError(sign);
+                if(value < 0 || value > 63){
+                    registerError(sign, valueObject);
                 }
             }
             if(expressionType.equals(PsiType.INT)){
-                if(valueObject < 0 || valueObject > 31){
-                    registerError(sign);
+                if(value < 0 || value > 31){
+                    registerError(sign, valueObject);
                 }
             }
         }
     }
-
 }

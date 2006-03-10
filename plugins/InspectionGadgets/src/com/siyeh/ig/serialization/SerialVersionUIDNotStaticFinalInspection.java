@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,26 +25,33 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
+
     public String getID(){
         return "SerialVersionUIDWithWrongSignature";
     }
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("serialversionuid.private.static.final.long.display.name");
+        return InspectionGadgetsBundle.message(
+                "serialversionuid.private.static.final.long.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("serialversionuid.private.static.final.long.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "serialversionuid.private.static.final.long.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new SerializableDefinesSerialVersionUIDVisitor();
     }
 
-    private static class SerializableDefinesSerialVersionUIDVisitor extends BaseInspectionVisitor {
+    private static class SerializableDefinesSerialVersionUIDVisitor
+            extends BaseInspectionVisitor {
+
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             if (aClass.isInterface() || aClass.isAnnotationType()) {
@@ -68,8 +75,7 @@ public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
                     }
                 }
             }
-            if(badSerialVersionUIDField == null)
-            {
+            if(badSerialVersionUIDField == null) {
                 return;
             }
             if(!SerializationUtils.isSerializable(aClass)){
@@ -82,7 +88,5 @@ public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
             final String fieldName = field.getName();
             return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName);
         }
-
     }
-
 }

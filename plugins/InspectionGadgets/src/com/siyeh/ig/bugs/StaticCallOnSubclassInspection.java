@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,24 +42,13 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiReferenceExpression methodExpression =
-                (PsiReferenceExpression) location.getParent();
-        assert methodExpression != null;
-        final PsiMethodCallExpression methodCall =
-                (PsiMethodCallExpression) methodExpression.getParent();
-        assert methodCall != null;
-        final PsiMethod method = methodCall.resolveMethod();
-        assert method != null;
-        final PsiClass containingClass = method.getContainingClass();
-        assert containingClass != null;
-        final String declaringClass = containingClass.getName();
-        final PsiElement qualifier = methodExpression.getQualifier();
-        assert qualifier != null;
-        final String referencedClass = qualifier.getText();
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiClass declaringClass = (PsiClass)infos[0];
+        final PsiClass referencedClass = (PsiClass)infos[1];
         return InspectionGadgetsBundle.message(
                 "static.method.via.subclass.problem.descriptor",
-                declaringClass, referencedClass);
+                declaringClass.getText(), referencedClass.getText());
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
@@ -103,6 +92,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
             replaceExpressionAndShorten(call, containingClassName + '.' +
                     methodName + argText);
         }
+
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -146,7 +136,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
                     declaringClass)) {
                 return;
             }
-            registerMethodCallError(call);
+            registerMethodCallError(call, declaringClass, referencedClass);
         }
     }
 }

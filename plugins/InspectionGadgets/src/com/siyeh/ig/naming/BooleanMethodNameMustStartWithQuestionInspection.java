@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInspection{
+
     /** @noinspection PublicField*/
     @NonNls public String nameCheckString =
             "is,can,has,should,could,will,shall,check,contains,equals,add,put," +
@@ -114,7 +115,8 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
         return true;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "boolean.method.name.must.start.with.question.problem.descriptor");
     }

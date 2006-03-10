@@ -37,12 +37,14 @@ public class RedundantMethodOverrideInspection extends MethodInspection {
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("redundant.method.override.display.name");
+        return InspectionGadgetsBundle.message(
+                "redundant.method.override.display.name");
     }
 
     @Nullable
-    protected String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("redundant.method.override.problem.descriptor");
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "redundant.method.override.problem.descriptor");
     }
 
     @Nullable
@@ -54,7 +56,8 @@ public class RedundantMethodOverrideInspection extends MethodInspection {
             extends InspectionGadgetsFix {
 
         public String getName() {
-            return InspectionGadgetsBundle.message("redundant.method.override.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "redundant.method.override.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

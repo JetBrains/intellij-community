@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -51,11 +50,10 @@ public class UnnecessaryReturnInspection extends StatementInspection {
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiMethod method =
-                PsiTreeUtil.getParentOfType(location, PsiMethod.class);
-        assert method != null;
-        if (method.isConstructor()) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final boolean isConstructor = ((Boolean)infos[0]).booleanValue();
+        if (isConstructor) {
             return InspectionGadgetsBundle.message(
                     "unnecessary.return.problem.descriptor");
         } else {
@@ -86,18 +84,22 @@ public class UnnecessaryReturnInspection extends StatementInspection {
             if (method == null) {
                 return;
             }
-            if (!method.isConstructor()) {
+            final Boolean isConstructor;
+            if (method.isConstructor()) {
+                isConstructor = Boolean.TRUE;
+            } else {
                 final PsiType returnType = method.getReturnType();
                 if (!PsiType.VOID.equals(returnType)) {
                     return;
                 }
+                isConstructor = Boolean.FALSE;
             }
             final PsiCodeBlock body = method.getBody();
             if (body == null) {
                 return;
             }
             if (ControlFlowUtils.blockCompletesWithStatement(body, statement)) {
-                registerStatementError(statement);
+                registerStatementError(statement, isConstructor);
             }
         }
     }

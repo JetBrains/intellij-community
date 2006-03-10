@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,28 +27,31 @@ import org.jetbrains.annotations.NotNull;
 public class StringConcatenationInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("string.concatenation.display.name");
+        return InspectionGadgetsBundle.message(
+                "string.concatenation.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("string.concatenation.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "string.concatenation.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new StringConcatenationVisitor();
     }
 
-    private static class StringConcatenationVisitor extends BaseInspectionVisitor {
+    private static class StringConcatenationVisitor
+            extends BaseInspectionVisitor {
 
-
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null))
-            {
+            if(!(expression.getROperand() != null)) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
@@ -57,11 +60,9 @@ public class StringConcatenationInspection extends ExpressionInspection {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-
             final PsiType lhsType = lhs.getType();
             final PsiExpression rhs = expression.getROperand();
-            if(rhs == null)
-            {
+            if(rhs == null) {
                 return;
             }
             final PsiType rhsType = rhs.getType();
@@ -70,9 +71,6 @@ public class StringConcatenationInspection extends ExpressionInspection {
                 return;
             }
             registerError(sign);
-
         }
-
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,45 +40,48 @@ public class AbstractMethodWithMissingImplementationsInspection
                 "abstract.method.with.missing.implementations.display.name");
     }
 
-  public String getGroupDisplayName() {
-    return GroupNames.INHERITANCE_GROUP_NAME;
-  }
+    public String getGroupDisplayName() {
+        return GroupNames.INHERITANCE_GROUP_NAME;
+    }
 
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "abstract.method.with.missing.implementations.problem.descriptor");
     }
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new AbstactMethodWithMissingImplementationsVisitor();
-  }
+    public BaseInspectionVisitor buildVisitor() {
+        return new AbstactMethodWithMissingImplementationsVisitor();
+    }
 
-  private static class AbstactMethodWithMissingImplementationsVisitor
-    extends BaseInspectionVisitor {
+    private static class AbstactMethodWithMissingImplementationsVisitor
+            extends BaseInspectionVisitor {
 
-    public void visitMethod(PsiMethod method) {
-      super.visitMethod(method);
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (!containingClass.isInterface() &&
-          !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
+        public void visitMethod(PsiMethod method) {
+            super.visitMethod(method);
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass == null) {
+                return;
+            }
+            if (!containingClass.isInterface() &&
+                    !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
             final InheritorFinder inheritorFinder =
                     new InheritorFinder(containingClass);
             final PsiClass[] inheritors = inheritorFinder.getInheritors();
-      for (final PsiClass inheritor : inheritors) {
-        if (!inheritor.isInterface() &&
-            !inheritor.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          if (!hasMatchingImplementation(inheritor, method)) {
-            registerMethodError(method);
-            return;
-          }
+            for (final PsiClass inheritor : inheritors) {
+                if (!inheritor.isInterface() &&
+                        !inheritor.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                    if (!hasMatchingImplementation(inheritor, method)) {
+
+                        // todo make this more efficient
+                        registerMethodError(method);
+                        return;
+                    }
+                }
+            }
         }
-      }
-    }
 
         private static boolean hasMatchingImplementation(
                 @NotNull PsiClass aClass,
@@ -86,17 +89,22 @@ public class AbstractMethodWithMissingImplementationsInspection
             final PsiMethod overridingMethod =
                     findOverridingMethod(aClass, method);
             if (overridingMethod == null ||
-                overridingMethod.hasModifierProperty(PsiModifier.STATIC)) {
+                    overridingMethod.hasModifierProperty(PsiModifier.STATIC)) {
                 return false;
             }
             if (!method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-          return true;
-        }
+                return true;
+            }
             final PsiClass superClass = method.getContainingClass();
             final PsiManager manager = overridingMethod.getManager();
             return manager.arePackagesTheSame(superClass, aClass);
-      }
+        }
 
+        /**
+         * @param method  the method of which to find an override.
+         * @param aClass  subclass to find the methed in.
+         * @return the overriding method.
+         */
         @Nullable
         private static PsiMethod findOverridingMethod(
                 PsiClass aClass, @NotNull PsiMethod method) {
@@ -128,7 +136,7 @@ public class AbstractMethodWithMissingImplementationsInspection
     private static class InheritorFinder implements Runnable {
 
         private final PsiClass aClass;
-        PsiClass[] inheritors = null;
+        private PsiClass[] inheritors = null;
 
         InheritorFinder(PsiClass aClass) {
             this.aClass = aClass;
@@ -148,6 +156,6 @@ public class AbstractMethodWithMissingImplementationsInspection
             // do not display progress
             progressManager.runProcess(this, null);
             return inheritors;
+        }
     }
-  }
 }

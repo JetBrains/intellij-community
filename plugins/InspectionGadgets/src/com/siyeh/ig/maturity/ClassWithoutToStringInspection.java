@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,30 +27,34 @@ import org.jetbrains.annotations.NotNull;
 public class ClassWithoutToStringInspection extends ClassInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("class.without.tostring.display.name");
+        return InspectionGadgetsBundle.message(
+                "class.without.tostring.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.MATURITY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("class.without.tostring.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "class.without.tostring.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new ClassWithoutToStringVisitor();
     }
 
-    private static class ClassWithoutToStringVisitor extends BaseInspectionVisitor {
+    private static class ClassWithoutToStringVisitor
+            extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             //don't call super, to prevent drilldown
-            if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
+            if (aClass.isInterface() || aClass.isAnnotationType() ||
+                    aClass.isEnum()) {
                 return;
             }
-            if(aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiAnonymousClass){
+            if(aClass instanceof PsiTypeParameter) {
                 return;
             }
             if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -64,12 +68,12 @@ public class ClassWithoutToStringInspection extends ClassInspection {
                 final String methodName = method.getName();
                 final PsiParameterList paramList = method.getParameterList();
                 final PsiParameter[] parameters = paramList.getParameters();
-                if(HardcodedMethodConstants.TO_STRING.equals(methodName) && parameters.length == 0){
+                if(HardcodedMethodConstants.TO_STRING.equals(methodName) &&
+                        parameters.length == 0){
                     return;
                 }
             }
             registerClassError(aClass);
         }
     }
-
 }

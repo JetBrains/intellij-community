@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,6 @@ import org.jetbrains.annotations.NonNls;
 
 public class ConfusingElseInspection extends StatementInspection {
 
-    private final ConfusingElseFix fix = new ConfusingElseFix();
-
     public String getID() {
         return "ConfusingElseBranch";
     }
@@ -44,13 +42,19 @@ public class ConfusingElseInspection extends StatementInspection {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "confusing.else.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new ConfusingElseVisitor();
     }
 
     @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new ConfusingElseFix();
     }
 
     private static class ConfusingElseFix extends InspectionGadgetsFix {

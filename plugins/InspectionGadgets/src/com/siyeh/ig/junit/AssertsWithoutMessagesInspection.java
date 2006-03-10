@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,12 @@ public class AssertsWithoutMessagesInspection extends ExpressionInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.JUNIT_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "asserts.without.messages.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -106,7 +112,8 @@ public class AssertsWithoutMessagesInspection extends ExpressionInspection {
             }
         }
 
-        private static boolean isJUnitAssertion(PsiMethodCallExpression expression) {
+        private static boolean isJUnitAssertion(
+                PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
@@ -119,7 +126,8 @@ public class AssertsWithoutMessagesInspection extends ExpressionInspection {
             }
             final PsiClass targetClass = method.getContainingClass();
             return targetClass != null &&
-                   ClassUtils.isSubclass(targetClass, "junit.framework.Assert");
+                    ClassUtils.isSubclass(targetClass,
+                            "junit.framework.Assert");
         }
     }
 }

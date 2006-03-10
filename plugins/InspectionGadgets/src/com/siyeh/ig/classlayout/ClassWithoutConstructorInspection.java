@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,12 @@ public class ClassWithoutConstructorInspection extends ClassInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.JAVABEANS_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "class.without.constructor.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,29 +32,38 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class InnerClassVariableHidesOuterClassVariableInspection extends FieldInspection {
+public class InnerClassVariableHidesOuterClassVariableInspection
+        extends FieldInspection {
+
     /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = true;
-    private final RenameFix fix = new RenameFix();
 
     public String getID(){
         return "InnerClassFieldHidesOuterClassField";
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("inner.class.field.hides.outer.display.name");
+        return InspectionGadgetsBundle.message(
+                "inner.class.field.hides.outer.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "inner.class.field.hides.outer.problem.descriptor");
+    }
+
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new RenameFix();
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("inner.class.field.hides.outer.ignore.option"),
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "inner.class.field.hides.outer.ignore.option"),
                 this, "m_ignoreInvisibleFields");
     }
 
@@ -62,15 +71,12 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("inner.class.field.hides.outer.problem.descriptor");
-    }
-
     public BaseInspectionVisitor buildVisitor() {
         return new InnerClassVariableHidesOuterClassVariableVisitor();
     }
 
-    private class InnerClassVariableHidesOuterClassVariableVisitor extends BaseInspectionVisitor {
+    private class InnerClassVariableHidesOuterClassVariableVisitor
+            extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {
             final PsiClass aClass = field.getContainingClass();
@@ -79,7 +85,7 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
             }
             final String fieldName = field.getName();
             if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName)) {
-              return;    //special case
+                return;    //special case
             }
             boolean reportStaticsOnly = false;
             if(aClass.hasModifierProperty(PsiModifier.STATIC))
@@ -89,16 +95,17 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
             PsiClass ancestorClass =
                     ClassUtils.getContainingClass(aClass);
             while (ancestorClass != null) {
-                final PsiField ancestorField = ancestorClass.findFieldByName(fieldName, false);
+                final PsiField ancestorField =
+                        ancestorClass.findFieldByName(fieldName, false);
                 if (ancestorField != null) {
                     if (!m_ignoreInvisibleFields ||
-                            !reportStaticsOnly || field.hasModifierProperty(PsiModifier.STATIC)) {
-                       registerFieldError(field);
+                            !reportStaticsOnly ||
+                            field.hasModifierProperty(PsiModifier.STATIC)) {
+                        registerFieldError(field);
                     }
                 }
                 ancestorClass = ClassUtils.getContainingClass(ancestorClass);
             }
         }
     }
-
 }

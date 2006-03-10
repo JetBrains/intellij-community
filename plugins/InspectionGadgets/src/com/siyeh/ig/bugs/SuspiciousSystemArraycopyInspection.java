@@ -22,34 +22,28 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class SuspiciousSystemArraycopyInspection extends StatementInspection {
 
-    private String errorString = InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor");
-
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("suspicious.system.arraycopy.display.name");
+        return InspectionGadgetsBundle.message(
+                "suspicious.system.arraycopy.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
-        return errorString;
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return (String)infos[0];
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new SuspiciousSystemArraycopyVisitor();
     }
 
-    // todo: move buildErrorString methods to BaseInspectionVisitor
-    // will make creating error string much easier
-    // no more parameters needed
-    // will be abstract so impossible to forget to implement
-    private class SuspiciousSystemArraycopyVisitor
+    private static class SuspiciousSystemArraycopyVisitor
             extends BaseInspectionVisitor {
 
         public void visitMethodCallExpression(
@@ -81,47 +75,55 @@ public class SuspiciousSystemArraycopyInspection extends StatementInspection {
             final PsiType srcType = src.getType();
             final PsiExpression srcPos = arguments[1];
             if (isNegativeArgument(srcPos)) {
-                errorString = InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor1");
-                registerError(srcPos);
+                final String errorString = InspectionGadgetsBundle.message(
+                        "suspicious.system.arraycopy.problem.descriptor1");
+                registerError(srcPos, errorString);
             }
             final PsiExpression destPos = arguments[3];
             if (isNegativeArgument(destPos)) {
-                errorString = InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor2");
-                registerError(destPos);
+                final String errorString = InspectionGadgetsBundle.message(
+                        "suspicious.system.arraycopy.problem.descriptor2");
+                registerError(destPos, errorString);
             }
             final PsiExpression length = arguments[4];
             if (isNegativeArgument(length)) {
-                errorString = InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor3");
-                registerError(length);
+                final String errorString = InspectionGadgetsBundle.message(
+                        "suspicious.system.arraycopy.problem.descriptor3");
+                registerError(length, errorString);
             }
             boolean notArrayReported = false;
             if (!(srcType instanceof PsiArrayType)) {
-                errorString = InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor4");
-                registerError(src);
+                final String errorString = InspectionGadgetsBundle.message(
+                        "suspicious.system.arraycopy.problem.descriptor4");
+                registerError(src, errorString);
                 notArrayReported = true;
             }
             final PsiExpression dest = arguments[2];
             final PsiType destType = dest.getType();
             if (!(destType instanceof PsiArrayType)) {
-                errorString = InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor5");
-                registerError(dest);
+                final String errorString = InspectionGadgetsBundle.message(
+                        "suspicious.system.arraycopy.problem.descriptor5");
+                registerError(dest, errorString);
                 notArrayReported = true;
             }
             if (notArrayReported) {
                 return;
             }
             if (!srcType.equals(destType)) {
-                errorString = InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor6");
-                registerError(dest);
+                final String errorString = InspectionGadgetsBundle.message(
+                        "suspicious.system.arraycopy.problem.descriptor6");
+                registerError(dest, errorString);
             }
         }
 
-        private boolean isNegativeArgument(@NotNull PsiExpression argument) {
+        private static boolean isNegativeArgument(
+                @NotNull PsiExpression argument) {
             final PsiManager manager = argument.getManager();
             final PsiConstantEvaluationHelper constantEvaluationHelper =
                     manager.getConstantEvaluationHelper();
             final Object constant =
-                    constantEvaluationHelper.computeConstantExpression(argument);
+                    constantEvaluationHelper.computeConstantExpression(
+                            argument);
             if (!(constant instanceof Integer)) {
                 return false;
             }

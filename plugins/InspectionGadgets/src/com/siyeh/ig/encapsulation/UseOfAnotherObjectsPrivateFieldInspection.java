@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +30,18 @@ public class UseOfAnotherObjectsPrivateFieldInspection
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("accessing.non.public.field.of.another.object.display.name");
+        return InspectionGadgetsBundle.message(
+                "accessing.non.public.field.of.another.object.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.ENCAPSULATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("accessing.non.public.field.of.another.object.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "accessing.non.public.field.of.another.object.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

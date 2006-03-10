@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,33 +17,38 @@ package com.siyeh.ig.security;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NonStaticInnerClassInSecureContextInspection extends ClassInspection {
+public class NonStaticInnerClassInSecureContextInspection
+        extends ClassInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.SECURITY_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "non.static.inner.class.in.secure.context.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new NonStaticInnerClassInSecureContextVisitor();
     }
 
-    private static class NonStaticInnerClassInSecureContextVisitor extends BaseInspectionVisitor {
+    private static class NonStaticInnerClassInSecureContextVisitor
+            extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
-            if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            if (!ClassUtils.isInnerClass(aClass)) {
+            if (!PsiUtil.isInnerClass(aClass)) {
                 return;
             }
             registerClassError(aClass);

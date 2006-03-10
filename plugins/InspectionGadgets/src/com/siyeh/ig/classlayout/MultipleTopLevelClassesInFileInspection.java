@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,51 +23,56 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MultipleTopLevelClassesInFileInspection extends ClassInspection {
 
-  private final MoveClassFix fix = new MoveClassFix();
-
-  public String getGroupDisplayName() {
-    return GroupNames.CLASSLAYOUT_GROUP_NAME;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new MultipleTopLevelClassesInFileVisitor();
-  }
-
-  private static class MultipleTopLevelClassesInFileVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so that it doesn't drill down to inner classes
-      if (!(aClass.getParent() instanceof PsiJavaFile)) {
-        return;
-      }
-      final PsiJavaFile file = (PsiJavaFile)aClass.getParent();
-      if (file == null) {
-        return;
-      }
-      int numClasses = 0;
-      final PsiElement[] children = file.getChildren();
-      for (final PsiElement child : children) {
-        if (child instanceof PsiClass) {
-          numClasses++;
-        }
-      }
-      if (numClasses <= 1) {
-        return;
-      }
-      registerClassError(aClass);
+    public String getGroupDisplayName() {
+        return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "multiple.top.level.classes.in.file.problem.descriptor");
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new MoveClassFix();
+    }
+
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+        return true;
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new MultipleTopLevelClassesInFileVisitor();
+    }
+
+    private static class MultipleTopLevelClassesInFileVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so that it doesn't drill down to inner classes
+            if (!(aClass.getParent() instanceof PsiJavaFile)) {
+                return;
+            }
+            final PsiJavaFile file = (PsiJavaFile)aClass.getParent();
+            if (file == null) {
+                return;
+            }
+            int numClasses = 0;
+            final PsiElement[] children = file.getChildren();
+            for (final PsiElement child : children) {
+                if (child instanceof PsiClass) {
+                    numClasses++;
+                }
+            }
+            if (numClasses <= 1) {
+                return;
+            }
+            registerClassError(aClass);
+        }
+    }
 }

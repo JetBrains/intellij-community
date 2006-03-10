@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,55 +16,51 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class NestingDepthInspection extends MethodMetricInspection {
 
-  public String getID() {
-    return "OverlyNestedMethod";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.METHODMETRICS_GROUP_NAME;
-  }
-
-  protected int getDefaultLimit() {
-    return 5;
-  }
-
-  protected String getConfigurationLabel() {
-    return InspectionGadgetsBundle.message("nesting.depth.limit.option");
-  }
-
-  public String buildErrorString(PsiElement location) {
-    final PsiMethod method = (PsiMethod)location.getParent();
-    assert method != null;
-    final NestingDepthVisitor visitor = new NestingDepthVisitor();
-    method.accept(visitor);
-    final int nestingDepth = visitor.getMaximumDepth();
-    return InspectionGadgetsBundle.message("nesting.depth.problem.descriptor", nestingDepth);
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new NestingDepthMethodVisitor();
-  }
-
-  private class NestingDepthMethodVisitor extends BaseInspectionVisitor {
-
-    public void visitMethod(@NotNull PsiMethod method) {
-      // note: no call to super
-      final NestingDepthVisitor visitor = new NestingDepthVisitor();
-      method.accept(visitor);
-      final int count = visitor.getMaximumDepth();
-
-      if (count <= getLimit()) {
-        return;
-      }
-      registerMethodError(method);
+    public String getID() {
+        return "OverlyNestedMethod";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.METHODMETRICS_GROUP_NAME;
+    }
+
+    protected int getDefaultLimit() {
+        return 5;
+    }
+
+    protected String getConfigurationLabel() {
+        return InspectionGadgetsBundle.message("nesting.depth.limit.option");
+    }
+
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final Integer nestingDepth = (Integer)infos[0];
+        return InspectionGadgetsBundle.message(
+                "nesting.depth.problem.descriptor", nestingDepth);
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new NestingDepthMethodVisitor();
+    }
+
+    private class NestingDepthMethodVisitor extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            // note: no call to super
+            final NestingDepthVisitor visitor = new NestingDepthVisitor();
+            method.accept(visitor);
+            final int count = visitor.getMaximumDepth();
+            if (count <= getLimit()) {
+                return;
+            }
+            registerMethodError(method, Integer.valueOf(count));
+        }
+    }
 }

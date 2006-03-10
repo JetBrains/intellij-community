@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,17 +39,14 @@ public class MisspelledCompareToInspection extends MethodInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return new RenameFix(HardcodedMethodConstants.COMPARE_TO);
-    }
-
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "misspelled.compareto.problem.descriptor");
     }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return false;
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RenameFix(HardcodedMethodConstants.COMPARE_TO);
     }
 
     public BaseInspectionVisitor buildVisitor() {

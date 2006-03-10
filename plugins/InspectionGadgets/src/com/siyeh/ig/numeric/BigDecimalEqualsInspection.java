@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,18 @@ import org.jetbrains.annotations.NotNull;
 
 public class BigDecimalEqualsInspection extends ExpressionInspection {
 
-    private final BigDecimalEqualsFix fix = new BigDecimalEqualsFix();
-
     public String getGroupDisplayName() {
         return GroupNames.NUMERIC_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "big.decimal.equals.problem.descriptor");
+    }
+
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new BigDecimalEqualsFix();
     }
 
     private static class BigDecimalEqualsFix extends InspectionGadgetsFix {

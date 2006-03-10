@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,37 +23,45 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class HashCodeUsesNonFinalVariableInspection extends ExpressionInspection {
+public class HashCodeUsesNonFinalVariableInspection
+        extends ExpressionInspection {
+
     public String getID(){
         return "NonFinalFieldReferencedInHashCode";
     }
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("non.final.field.in.hashcode.display.name");
+        return InspectionGadgetsBundle.message(
+                "non.final.field.in.hashcode.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("non.final.field.in.hashcode.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "non.final.field.in.hashcode.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new HashCodeUsesNonFinalVariableVisitor();
     }
 
-    private static class HashCodeUsesNonFinalVariableVisitor extends BaseInspectionVisitor {
+    private static class HashCodeUsesNonFinalVariableVisitor
+            extends BaseInspectionVisitor {
+
         public void visitMethod(@NotNull PsiMethod method) {
             final boolean isHashCode = MethodUtils.isHashCode(method);
             if (isHashCode) {
                 method.accept(new PsiRecursiveElementVisitor() {
+                    
                     public void visitClass(PsiClass aClass) {
                         // Do not recurse into.
                     }
 
-                    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+                    public void visitReferenceExpression(
+                            @NotNull PsiReferenceExpression expression) {
                         super.visitReferenceExpression(expression);
                         final PsiElement element = expression.resolve();
                         if (!(element instanceof PsiField)) {
@@ -68,7 +76,5 @@ public class HashCodeUsesNonFinalVariableInspection extends ExpressionInspection
                 });
             }
         }
-
     }
-
 }

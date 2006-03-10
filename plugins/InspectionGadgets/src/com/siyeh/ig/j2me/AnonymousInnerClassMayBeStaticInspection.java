@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,15 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import com.siyeh.ig.performance.InnerClassReferenceVisitor;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
-
-    private final MoveAnonymousToInnerClassFix fix =
-            new MoveAnonymousToInnerClassFix() ;
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -42,36 +38,36 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
         return GroupNames.J2ME_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
       return InspectionGadgetsBundle.message(
               "anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new MoveAnonymousToInnerClassFix();
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new AnonymousInnerClassCanBeStaticVisitor();
+        return new AnonymousInnerClassMayBeStaticVisitor();
     }
 
-    private static class AnonymousInnerClassCanBeStaticVisitor
+    private static class AnonymousInnerClassMayBeStaticVisitor
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass){
-            if(aClass instanceof PsiAnonymousClass) {
-                final PsiAnonymousClass anAnonymousClass =
-                        (PsiAnonymousClass) aClass;
-                final InnerClassReferenceVisitor visitor =
-                        new InnerClassReferenceVisitor(anAnonymousClass);
-                anAnonymousClass.accept(visitor);
-                if(!visitor.canInnerClassBeStatic()) {
-                    return;
-                }
-                final PsiJavaCodeReferenceElement classNameIdentifier =
-                        anAnonymousClass.getBaseClassReference();
-                registerError(classNameIdentifier);
+            if (!(aClass instanceof PsiAnonymousClass)) {
+                return;
             }
+            final PsiAnonymousClass anAnonymousClass =
+                    (PsiAnonymousClass) aClass;
+            final InnerClassReferenceVisitor visitor =
+                    new InnerClassReferenceVisitor(anAnonymousClass);
+            anAnonymousClass.accept(visitor);
+            if(!visitor.canInnerClassBeStatic()) {
+                return;
+            }
+            registerClassError(aClass);
         }
     }
 }

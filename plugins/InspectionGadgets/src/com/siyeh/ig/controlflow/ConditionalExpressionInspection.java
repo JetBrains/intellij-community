@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiConditionalExpression;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class ConditionalExpressionInspection extends ExpressionInspection {
 
@@ -26,16 +28,22 @@ public class ConditionalExpressionInspection extends ExpressionInspection {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "conditional.expression.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new ConditionalExpressionVisitor();
     }
 
-    private static class ConditionalExpressionVisitor extends BaseInspectionVisitor {
+    private static class ConditionalExpressionVisitor
+            extends BaseInspectionVisitor {
 
         public void visitConditionalExpression(PsiConditionalExpression exp) {
             super.visitConditionalExpression(exp);
             registerError(exp);
         }
-
     }
 }

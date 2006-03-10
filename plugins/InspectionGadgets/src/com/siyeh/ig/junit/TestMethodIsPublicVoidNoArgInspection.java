@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,54 +26,54 @@ import org.jetbrains.annotations.NonNls;
 
 public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
 
-  public String getID() {
-    return "TestMethodWithIncorrectSignature";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.JUNIT_GROUP_NAME;
-  }
-
-  public String buildErrorString(PsiElement location) {
-    return InspectionGadgetsBundle.message("test.method.is.public.void.no.arg.problem.descriptor", location.getText());
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new TestMethodIsPublicVoidNoArgVisitor();
-  }
-
-  private static class TestMethodIsPublicVoidNoArgVisitor extends BaseInspectionVisitor {
-
-    public void visitMethod(@NotNull PsiMethod method) {
-      //note: no call to super;
-      @NonNls final String methodName = method.getName();
-      if (!methodName.startsWith("test")) {
-        return;
-      }
-      final PsiType returnType = method.getReturnType();
-      if (returnType == null) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList == null) {
-        return;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      if (parameters == null) {
-        return;
-      }
-      if (parameters.length == 0
-          && returnType.equals(PsiType.VOID)
-          && method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return;
-      }
-      final PsiClass targetClass = method.getContainingClass();
-      if (targetClass == null ||
-          !ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
-        return;
-      }
-      registerMethodError(method);
+    public String getID() {
+        return "TestMethodWithIncorrectSignature";
     }
 
-  }
+    public String getGroupDisplayName() {
+        return GroupNames.JUNIT_GROUP_NAME;
+    }
+
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "test.method.is.public.void.no.arg.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new TestMethodIsPublicVoidNoArgVisitor();
+    }
+
+    private static class TestMethodIsPublicVoidNoArgVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            //note: no call to super;
+            @NonNls final String methodName = method.getName();
+            if (!methodName.startsWith("test")) {
+                return;
+            }
+            final PsiType returnType = method.getReturnType();
+            if (returnType == null) {
+                return;
+            }
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
+            if (parameters == null) {
+                return;
+            }
+            if (parameters.length == 0
+                    && returnType.equals(PsiType.VOID)
+                    && method.hasModifierProperty(PsiModifier.PUBLIC)) {
+                return;
+            }
+            final PsiClass targetClass = method.getContainingClass();
+            if (targetClass == null ||
+                    !ClassUtils.isSubclass(targetClass,
+                            "junit.framework.TestCase")) {
+                return;
+            }
+            registerMethodError(method);
+        }
+    }
 }

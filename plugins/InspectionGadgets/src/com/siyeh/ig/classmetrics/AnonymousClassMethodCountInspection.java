@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnonymousClassMethodCountInspection
         extends ClassMetricInspection {
+
     public String getID(){
         return "AnonymousInnerClassWithTooManyMethods";
     }
     private static final int DEFAULT_METHOD_COUNT_LIMIT = 1;
-    private final MoveAnonymousToInnerClassFix fix = new MoveAnonymousToInnerClassFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("anonymous.inner.class.with.too.many.methods.display.name");
+        return InspectionGadgetsBundle.message(
+                "anonymous.inner.class.with.too.many.methods.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -48,17 +49,19 @@ public class AnonymousClassMethodCountInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new MoveAnonymousToInnerClassFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiClass aClass = (PsiClass) location.getParent();
-        final int count = calculateTotalMethodCount(aClass);
-        return InspectionGadgetsBundle.message("anonymous.inner.class.with.too.many.methods.problem.descriptor", count);
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final Integer count = (Integer)infos[0];
+        return InspectionGadgetsBundle.message(
+                "anonymous.inner.class.with.too.many.methods.problem.descriptor",
+                count);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -76,23 +79,18 @@ public class AnonymousClassMethodCountInspection
             if (totalMethodCount <= getLimit()) {
                 return;
             }
-            final PsiJavaCodeReferenceElement classNameIdentifier =
-                    aClass.getBaseClassReference();
-            registerError(classNameIdentifier);
+            registerClassError(aClass, Integer.valueOf(totalMethodCount));
         }
 
-
-    }
-
-    private static int calculateTotalMethodCount(PsiClass aClass) {
-        final PsiMethod[] methods = aClass.getMethods();
-        int totalCount = 0;
-        for(final PsiMethod method : methods){
-            if(!method.isConstructor()){
-                totalCount++;
+        private int calculateTotalMethodCount(PsiClass aClass) {
+            final PsiMethod[] methods = aClass.getMethods();
+            int totalCount = 0;
+            for(final PsiMethod method : methods){
+                if(!method.isConstructor()){
+                    totalCount++;
+                }
             }
+            return totalCount;
         }
-        return totalCount;
     }
-
 }

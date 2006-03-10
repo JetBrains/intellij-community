@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,8 @@ public class ForCanBeForeachInspection extends StatementInspection{
         return true;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "for.can.be.foreach.problem.descriptor");
     }
@@ -147,9 +147,12 @@ public class ForCanBeForeachInspection extends StatementInspection{
                                     iterableClass, listClass,
                                     resolveResult.getSubstitutor());
                     if (substitutor != null) {
-                        componentType = substitutor.substitute(iterableClass.getTypeParameters()[0]);
+                        componentType = substitutor.substitute(
+                                iterableClass.getTypeParameters()[0]);
                         if (componentType instanceof PsiWildcardType) {
-                            componentType = ((PsiWildcardType) componentType).getExtendsBound();
+                            final PsiWildcardType type =
+                                    (PsiWildcardType)componentType;
+                            componentType = type.getExtendsBound();
                         }
                     }
                 }

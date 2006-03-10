@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,34 +22,41 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ResultOfObjectAllocationIgnoredInspection extends ExpressionInspection {
-
+public class ResultOfObjectAllocationIgnoredInspection
+        extends ExpressionInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.display.name");
+        return InspectionGadgetsBundle.message(
+                "result.of.object.allocation.ignored.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "result.of.object.allocation.ignored.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new IgnoreResultOfCallVisitor();
     }
 
-    private static class IgnoreResultOfCallVisitor extends BaseInspectionVisitor {
+    private static class IgnoreResultOfCallVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
+        public void visitExpressionStatement(
+                @NotNull PsiExpressionStatement statement) {
             super.visitExpressionStatement(statement);
             if (!(statement.getExpression() instanceof PsiNewExpression)) {
                 return;
             }
-            final PsiNewExpression newExpression = (PsiNewExpression) statement.getExpression();
-            final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
+            final PsiNewExpression newExpression =
+                    (PsiNewExpression) statement.getExpression();
+            final PsiExpression[] arrayDimensions =
+                    newExpression.getArrayDimensions();
             if (arrayDimensions.length != 0) {
                 return;
             }
@@ -58,9 +65,10 @@ public class ResultOfObjectAllocationIgnoredInspection extends ExpressionInspect
             }
             final PsiJavaCodeReferenceElement classReference =
                     newExpression.getClassReference();
+            if (classReference == null) {
+                return;
+            }
             registerError(classReference);
-
         }
-
     }
 }

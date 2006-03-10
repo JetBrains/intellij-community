@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,43 +19,52 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SynchronizeOnNonFinalFieldInspection extends MethodInspection {
 
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new SynchronizeOnNonFinalFieldVisitor();
-  }
-
-  private static class SynchronizeOnNonFinalFieldVisitor extends BaseInspectionVisitor {
-
-    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
-      super.visitSynchronizedStatement(statement);
-      final PsiExpression lockExpression = statement.getLockExpression();
-      if (!(lockExpression instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReference reference = lockExpression.getReference();
-      if (reference == null) {
-        return;
-      }
-      final PsiElement element = reference.resolve();
-      if (!(element instanceof PsiField)) {
-        return;
-      }
-      final PsiField field = (PsiField)element;
-      if (field.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      registerError(lockExpression);
+    public boolean isEnabledByDefault() {
+        return true;
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "synchronize.on.non.final.field.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new SynchronizeOnNonFinalFieldVisitor();
+    }
+
+    private static class SynchronizeOnNonFinalFieldVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitSynchronizedStatement(
+                @NotNull PsiSynchronizedStatement statement) {
+            super.visitSynchronizedStatement(statement);
+            final PsiExpression lockExpression = statement.getLockExpression();
+            if (!(lockExpression instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiReference reference = lockExpression.getReference();
+            if (reference == null) {
+                return;
+            }
+            final PsiElement element = reference.resolve();
+            if (!(element instanceof PsiField)) {
+                return;
+            }
+            final PsiField field = (PsiField)element;
+            if (field.hasModifierProperty(PsiModifier.FINAL)) {
+                return;
+            }
+            registerError(lockExpression);
+        }
+    }
 }

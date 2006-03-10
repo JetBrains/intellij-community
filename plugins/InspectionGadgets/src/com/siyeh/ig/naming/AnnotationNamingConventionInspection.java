@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,77 +28,79 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnnotationNamingConventionInspection extends ConventionInspection {
 
-  private static final int DEFAULT_MIN_LENGTH = 8;
-  private static final int DEFAULT_MAX_LENGTH = 64;
-  private final RenameFix fix = new RenameFix();
+    private static final int DEFAULT_MIN_LENGTH = 8;
+    private static final int DEFAULT_MAX_LENGTH = 64;
 
-  public String getGroupDisplayName() {
-    return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  public String buildErrorString(PsiElement location) {
-    final PsiClass aClass = (PsiClass)location.getParent();
-    assert aClass != null;
-    final String className = aClass.getName();
-    if (className.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message("annotation.naming.convention.problem.descriptor.short");
-    }
-    else if (className.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message("annotation.naming.convention.problem.descriptor.long");
-    }
-    return InspectionGadgetsBundle.message("annotation.naming.convention.problem.descriptor.regex.mismatch", getRegex());
-  }
-
-  protected String getDefaultRegex() {
-    return "[A-Z][A-Za-z]*";
-  }
-
-  protected int getDefaultMinLength() {
-    return DEFAULT_MIN_LENGTH;
-  }
-
-  protected int getDefaultMaxLength() {
-    return DEFAULT_MAX_LENGTH;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new NamingConventionsVisitor();
-  }
-
-  public ProblemDescriptor[] doCheckClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
-
-    if (!aClass.isPhysical()) {
-      return super.doCheckClass(aClass, manager, isOnTheFly);
-    }
-    final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
-    aClass.accept(visitor);
-
-    return visitor.getErrors();
-  }
-
-  private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (!aClass.isAnnotationType()) {
-        return;
-      }
-      final String name = aClass.getName();
-      if (name == null) {
-        return;
-      }
-      if (isValid(name)) {
-        return;
-      }
-      registerClassError(aClass);
+    public String getGroupDisplayName() {
+        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
-  }
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RenameFix();
+    }
+
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+        return true;
+    }
+
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final String annotationName = (String)infos[0];
+        if (annotationName.length() < getMinLength()) {
+            return InspectionGadgetsBundle.message(
+                    "annotation.naming.convention.problem.descriptor.short");
+        }
+        else if (annotationName.length() > getMaxLength()) {
+            return InspectionGadgetsBundle.message(
+                    "annotation.naming.convention.problem.descriptor.long");
+        }
+        return InspectionGadgetsBundle.message(
+                "annotation.naming.convention.problem.descriptor.regex.mismatch",
+                getRegex());
+    }
+
+    protected String getDefaultRegex() {
+        return "[A-Z][A-Za-z]*";
+    }
+
+    protected int getDefaultMinLength() {
+        return DEFAULT_MIN_LENGTH;
+    }
+
+    protected int getDefaultMaxLength() {
+        return DEFAULT_MAX_LENGTH;
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new NamingConventionsVisitor();
+    }
+
+    public ProblemDescriptor[] doCheckClass(
+            PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
+        if (!aClass.isPhysical()) {
+            return super.doCheckClass(aClass, manager, isOnTheFly);
+        }
+        final BaseInspectionVisitor visitor =
+                createVisitor(manager, isOnTheFly);
+        aClass.accept(visitor);
+
+        return visitor.getErrors();
+    }
+
+    private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            if (!aClass.isAnnotationType()) {
+                return;
+            }
+            final String name = aClass.getName();
+            if (name == null) {
+                return;
+            }
+            if (isValid(name)) {
+                return;
+            }
+            registerClassError(aClass, name);
+        }
+    }
 }

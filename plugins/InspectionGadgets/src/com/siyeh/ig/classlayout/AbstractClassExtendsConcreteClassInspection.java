@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,44 +17,57 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class AbstractClassExtendsConcreteClassInspection extends ClassInspection {
+public class AbstractClassExtendsConcreteClassInspection
+        extends ClassInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.INHERITANCE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new AbstractClassExtendsConcreteClassVisitor();
-  }
-
-  private static class AbstractClassExtendsConcreteClassVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so that it doesn't drill down to inner classes
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
-        return;
-      }
-      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      final PsiClass superClass = aClass.getSuperClass();
-      if (superClass == null) {
-        return;
-      }
-      if (superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      final String superclassName = superClass.getQualifiedName();
-      if ("java.lang.Object".equals(superclassName)) {
-        return;
-      }
-      registerClassError(aClass);
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "abstract.class.extends.concrete.class.display.name");
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.INHERITANCE_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "abstract.class.extends.concrete.class.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new AbstractClassExtendsConcreteClassVisitor();
+    }
+
+    private static class AbstractClassExtendsConcreteClassVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so that it doesn't drill down to inner classes
+            if (aClass.isInterface() || aClass.isAnnotationType()) {
+                return;
+            }
+            if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            final PsiClass superClass = aClass.getSuperClass();
+            if (superClass == null) {
+                return;
+            }
+            if (superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            final String superclassName = superClass.getQualifiedName();
+            if ("java.lang.Object".equals(superclassName)) {
+                return;
+            }
+            registerClassError(aClass);
+        }
+    }
 }

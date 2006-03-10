@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,77 +29,84 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringToStringInspection extends ExpressionInspection {
 
-  private final StringToStringFix fix = new StringToStringFix();
-
-  public String getID() {
-    return "RedundantStringToString";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new StringToStringVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class StringToStringFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
+    public String getID() {
+        return "RedundantStringToString";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)descriptor.getPsiElement();
-      final PsiReferenceExpression expression = call.getMethodExpression();
-      final PsiExpression qualifier = expression.getQualifierExpression();
-      final String qualifierText = qualifier.getText();
-      replaceExpression(call, qualifierText);
+    public String getGroupDisplayName() {
+        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
-  }
 
-  private static class StringToStringVisitor extends BaseInspectionVisitor {
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
-        return;
-      }
-
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiParameterList paramList = method.getParameterList();
-      if (paramList == null) {
-        return;
-      }
-      final PsiParameter[] parameters = paramList.getParameters();
-      if (parameters.length != 0) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      final String className = aClass.getQualifiedName();
-      if (!"java.lang.String".equals(className)) {
-        return;
-      }
-      registerError(expression);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "string.to.string.problem.descriptor");
     }
-  }
+
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringToStringVisitor();
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new StringToStringFix();
+    }
+
+    private static class StringToStringFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "constant.conditional.expression.simplify.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiMethodCallExpression call =
+                    (PsiMethodCallExpression)descriptor.getPsiElement();
+            final PsiReferenceExpression expression =
+                    call.getMethodExpression();
+            final PsiExpression qualifier = expression.getQualifierExpression();
+            if (qualifier == null) {
+                return;
+            }
+            final String qualifierText = qualifier.getText();
+            replaceExpression(call, qualifierText);
+        }
+    }
+
+    private static class StringToStringVisitor extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+                return;
+            }
+
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiParameterList paramList = method.getParameterList();
+            final PsiParameter[] parameters = paramList.getParameters();
+            if (parameters.length != 0) {
+                return;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return;
+            }
+            final String className = aClass.getQualifiedName();
+            if (!"java.lang.String".equals(className)) {
+                return;
+            }
+            registerError(expression);
+        }
+    }
 }

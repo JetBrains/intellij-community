@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NonNls;
 public class InstantiatingObjectToGetClassObjectInspection
         extends ExpressionInspection {
 
-    private final InstantiatingObjectToGetClassObjectFix fix =
-            new InstantiatingObjectToGetClassObjectFix();
-
     public String getGroupDisplayName() {
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
@@ -41,8 +38,14 @@ public class InstantiatingObjectToGetClassObjectInspection
         return true;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "instantiating.object.to.get.class.object.problem.descriptor");
+    }
+
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new InstantiatingObjectToGetClassObjectFix();
     }
 
     private static class InstantiatingObjectToGetClassObjectFix

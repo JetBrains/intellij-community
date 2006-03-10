@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,64 +21,76 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class AbstractClassWithoutAbstractMethodsInspection extends ClassInspection {
+public class AbstractClassWithoutAbstractMethodsInspection
+        extends ClassInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.INHERITANCE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new AbstractClassWithoutAbstractMethodsVisitor();
-  }
-
-  private static class AbstractClassWithoutAbstractMethodsVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so that it doesn't drill down to inner classes
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
-        return;
-      }
-      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (hasAbstractMethods(aClass)) {
-        return;
-      }
-      registerClassError(aClass);
+    public String getGroupDisplayName() {
+        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
-    private static boolean hasAbstractMethods(PsiClass aClass) {
-      final PsiMethod[] methods = aClass.getMethods();
-      final Set<PsiMethod> overriddenMethods = calculateOverriddenMethods(methods);
-      final PsiMethod[] allMethods = aClass.getAllMethods();
-      for (final PsiMethod method : allMethods) {
-        if (method.hasModifierProperty(PsiModifier.ABSTRACT) &&
-            !overriddenMethods.contains(method)) {
-          return true;
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "abstract.class.without.abstract.methods.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new AbstractClassWithoutAbstractMethodsVisitor();
+    }
+
+    private static class AbstractClassWithoutAbstractMethodsVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so that it doesn't drill down to inner classes
+            if (aClass.isInterface() || aClass.isAnnotationType()) {
+                return;
+            }
+            if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            if (hasAbstractMethods(aClass)) {
+                return;
+            }
+            registerClassError(aClass);
         }
-      }
-      return false;
-    }
 
-    private static Set<PsiMethod> calculateOverriddenMethods(PsiMethod[] methods) {
-      final Set<PsiMethod> overriddenMethods = new HashSet<PsiMethod>(methods.length);
-      for (final PsiMethod method : methods) {
-        calculateOverriddenMethods(method, overriddenMethods);
-      }
-      return overriddenMethods;
-    }
+        private static boolean hasAbstractMethods(PsiClass aClass) {
+            final PsiMethod[] methods = aClass.getMethods();
+            final Set<PsiMethod> overriddenMethods =
+                    calculateOverriddenMethods(methods);
+            final PsiMethod[] allMethods = aClass.getAllMethods();
+            for (final PsiMethod method : allMethods) {
+                if (method.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                        !overriddenMethods.contains(method)) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-    private static void calculateOverriddenMethods(PsiMethod method, Set<PsiMethod> overriddenMethods) {
-      final PsiMethod[] superMethods = method.findSuperMethods();
-      for (final PsiMethod superMethod : superMethods) {
-        overriddenMethods.add(superMethod);
-      }
-    }
+        private static Set<PsiMethod> calculateOverriddenMethods(
+                PsiMethod[] methods) {
+            final Set<PsiMethod> overriddenMethods =
+                    new HashSet<PsiMethod>(methods.length);
+            for (final PsiMethod method : methods) {
+                calculateOverriddenMethods(method, overriddenMethods);
+            }
+            return overriddenMethods;
+        }
 
-  }
+        private static void calculateOverriddenMethods(
+                PsiMethod method, Set<PsiMethod> overriddenMethods) {
+            final PsiMethod[] superMethods = method.findSuperMethods();
+            for (final PsiMethod superMethod : superMethods) {
+                overriddenMethods.add(superMethod);
+            }
+        }
+    }
 }

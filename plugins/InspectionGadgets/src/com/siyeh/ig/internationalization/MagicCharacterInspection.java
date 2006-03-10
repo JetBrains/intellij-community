@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +18,14 @@ package com.siyeh.ig.internationalization;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class MagicCharacterInspection extends ExpressionInspection {
-
-    private static final Set<String> s_specialCaseLiterals = new HashSet<String>(1);
-    private final IntroduceConstantFix fix = new IntroduceConstantFix();
-
-    static {
-        s_specialCaseLiterals.add(" ");
-    }
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("magic.character.display.name");
@@ -45,12 +35,14 @@ public class MagicCharacterInspection extends ExpressionInspection {
         return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("magic.character.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "magic.character.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new IntroduceConstantFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -61,9 +53,11 @@ public class MagicCharacterInspection extends ExpressionInspection {
         return new CharacterLiteralsShouldBeExplicitlyDeclaredVisitor();
     }
 
-    private static class CharacterLiteralsShouldBeExplicitlyDeclaredVisitor extends BaseInspectionVisitor {
+    private static class CharacterLiteralsShouldBeExplicitlyDeclaredVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
+        public void visitLiteralExpression(
+                @NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
             if (type == null) {
@@ -76,7 +70,7 @@ public class MagicCharacterInspection extends ExpressionInspection {
             if (text == null) {
                 return;
             }
-            if (isSpecialCase(text)) {
+            if (text.equals(" ")) {
                 return;
             }
             if (isDeclaredConstant(expression)) {
@@ -85,11 +79,8 @@ public class MagicCharacterInspection extends ExpressionInspection {
             registerError(expression);
         }
 
-        private static boolean isSpecialCase(String text) {
-            return s_specialCaseLiterals.contains(text);
-        }
-
-        private static boolean isDeclaredConstant(PsiLiteralExpression expression) {
+        private static boolean isDeclaredConstant(
+                PsiLiteralExpression expression) {
             final PsiField field =
                     PsiTreeUtil.getParentOfType(expression, PsiField.class);
             if (field == null) {
@@ -99,5 +90,4 @@ public class MagicCharacterInspection extends ExpressionInspection {
                     field.hasModifierProperty(PsiModifier.FINAL);
         }
     }
-
 }

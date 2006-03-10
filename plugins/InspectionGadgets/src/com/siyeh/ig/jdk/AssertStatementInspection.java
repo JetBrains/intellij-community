@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAssertStatement;
-import com.intellij.psi.PsiElement;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class AssertStatementInspection extends StatementInspection {
 
@@ -34,9 +34,10 @@ public class AssertStatementInspection extends StatementInspection {
         return GroupNames.JDK_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "assert.statement.problem.descriptor");
+                "statement.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

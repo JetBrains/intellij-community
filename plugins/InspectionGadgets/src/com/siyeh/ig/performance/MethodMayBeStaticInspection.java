@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ public class MethodMayBeStaticInspection extends MethodInspection{
      * @noinspection PublicField
      */
     public boolean m_ignoreEmptyMethods = true;
-    private final MethodMayBeStaticFix fix = new MethodMayBeStaticFix();
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
@@ -53,16 +52,18 @@ public class MethodMayBeStaticInspection extends MethodInspection{
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    protected String buildErrorString(PsiElement location){
+    @NotNull
+    protected String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "method.may.be.static.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new MethodMayBeStaticFix();
     }
 
     private static class MethodMayBeStaticFix extends InspectionGadgetsFix{
+
         public String getName(){
             return InspectionGadgetsBundle.message("make.static.quickfix");
         }

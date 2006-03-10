@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,71 +27,68 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
 
-  public String getID() {
-    return "UnnecessaryFinalForMethodParameter";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.STYLE_GROUP_NAME;
-  }
-
-  public String buildErrorString(PsiElement location) {
-    final PsiModifierList modifierList = (PsiModifierList)location
-      .getParent();
-    assert modifierList != null;
-    final PsiParameter parameter = (PsiParameter)modifierList.getParent();
-    assert parameter != null;
-    final String parameterName = parameter.getName();
-    return InspectionGadgetsBundle.message("unnecessary.final.on.parameter.problem.descriptor", parameterName);
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessaryFinalOnParameterVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return new RemoveModifierFix(location);
-  }
-
-  private static class UnnecessaryFinalOnParameterVisitor
-    extends BaseInspectionVisitor {
-    public void visitMethod(@NotNull PsiMethod method) {
-      super.visitMethod(method);
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList == null) {
-        return;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      if (parameters == null) {
-        return;
-      }
-      for (final PsiParameter parameter : parameters) {
-        checkParameter(method, parameter);
-      }
+    public String getID() {
+        return "UnnecessaryFinalForMethodParameter";
     }
 
-    private void checkParameter(PsiMethod method, PsiParameter parameter) {
-      if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
+    public String getGroupDisplayName() {
+        return GroupNames.STYLE_GROUP_NAME;
+    }
 
-      if (containingClass != null) {
-        if (containingClass.isInterface() || containingClass
-          .isAnnotationType()) {
-          registerModifierError(PsiModifier.FINAL, parameter);
-          return;
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiParameter parameter = (PsiParameter)infos[0];
+        final String parameterName = parameter.getName();
+        return InspectionGadgetsBundle.message(
+                "unnecessary.final.on.parameter.problem.descriptor",
+                parameterName);
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryFinalOnParameterVisitor();
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RemoveModifierFix(location);
+    }
+
+    private static class UnnecessaryFinalOnParameterVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            super.visitMethod(method);
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
+            if (parameters == null) {
+                return;
+            }
+            for (final PsiParameter parameter : parameters) {
+                checkParameter(method, parameter);
+            }
         }
-      }
 
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        registerModifierError(PsiModifier.FINAL, parameter);
-        return;
-      }
-      if (VariableAccessUtils.variableIsUsedInInnerClass(parameter, method)) {
-        return;
-      }
-      registerModifierError(PsiModifier.FINAL, parameter);
+        private void checkParameter(PsiMethod method, PsiParameter parameter) {
+            if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {
+                return;
+            }
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass != null) {
+                if (containingClass.isInterface() ||
+                        containingClass.isAnnotationType()) {
+                    registerModifierError(PsiModifier.FINAL, parameter,
+                            parameter);
+                    return;
+                }
+            }
+            if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                registerModifierError(PsiModifier.FINAL, parameter, parameter);
+                return;
+            }
+            if (VariableAccessUtils.variableIsUsedInInnerClass(parameter,
+                    method)) {
+                return;
+            }
+            registerModifierError(PsiModifier.FINAL, parameter, parameter);
+        }
     }
-  }
 }

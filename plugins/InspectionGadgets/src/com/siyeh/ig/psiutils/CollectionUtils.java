@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,9 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -325,40 +324,17 @@ public class CollectionUtils{
         return true;
     }
 
-    public static boolean isArrayOrCollectionField(
-            @Nullable PsiExpression value){
-        if(!(value instanceof PsiReferenceExpression)){
-            return false;
-        }
-        final PsiReferenceExpression fieldReference =
-                (PsiReferenceExpression) value;
-        final PsiType type = fieldReference.getType();
-        if(type == null){
-            return false;
-        }
-        final PsiClass valueContainingClass =
-                PsiTreeUtil.getParentOfType(value, PsiClass.class);
-        if(valueContainingClass == null){
-            return false;
-        }
-        boolean isArray = false;
+    public static boolean isArrayOrCollectionField(@NotNull PsiField field) {
+        final PsiType type = field.getType();
         if (!isCollectionClassOrInterface(type)) {
             if (type instanceof PsiArrayType) {
-                isArray = true;
-            } else {
-                return false;
+                // constants empty arrays are ignored.
+                return !isConstantArrayOfZeroSize(field);
             }
-        }
-        final PsiElement referent = fieldReference.resolve();
-        if(!(referent instanceof PsiField)){
             return false;
         }
-        final PsiField field = (PsiField) referent;
-        if (isArray && isConstantArrayOfZeroSize(field)) {
-            return false;           
-        }
-        final PsiClass fieldContainingClass = field.getContainingClass();
-        return valueContainingClass.equals(fieldContainingClass);
+        return true;
+
     }
 
     public static String getInterfaceForClass(String name){

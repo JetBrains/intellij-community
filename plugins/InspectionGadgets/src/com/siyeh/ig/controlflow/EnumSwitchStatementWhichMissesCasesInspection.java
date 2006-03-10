@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,10 @@ public class EnumSwitchStatementWhichMissesCasesInspection
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         final PsiSwitchStatement switchStatement =
-                (PsiSwitchStatement)location.getParent();
+                (PsiSwitchStatement)infos[0];
         assert switchStatement != null;
         final PsiExpression switchStatementExpression =
                 switchStatement.getExpression();
@@ -80,7 +81,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection
             if (!switchStatementMissingCases(statement)) {
                 return;
             }
-            registerStatementError(statement);
+            registerStatementError(statement, statement);
         }
 
         private boolean switchStatementMissingCases(

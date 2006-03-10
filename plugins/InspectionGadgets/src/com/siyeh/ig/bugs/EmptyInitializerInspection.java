@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,20 +27,24 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyInitializerInspection extends StatementInspection{
+    
     public String getID(){
         return "EmptyClassInitializer";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("empty.class.initializer.display.name");
+        return InspectionGadgetsBundle.message(
+                "empty.class.initializer.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("empty.class.initializer.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "empty.class.initializer.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
@@ -48,12 +52,14 @@ public class EmptyInitializerInspection extends StatementInspection{
     }
 
     private static class EmptyInitializerFix extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("empty.class.initializer.delete.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "empty.class.initializer.delete.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final PsiElement element = descriptor.getPsiElement();
             final PsiElement codeBlock = element.getParent();
             assert codeBlock != null;
@@ -61,6 +67,7 @@ public class EmptyInitializerInspection extends StatementInspection{
             assert classInitializer!=null;
             deleteElement(classInitializer);
         }
+
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -69,8 +76,8 @@ public class EmptyInitializerInspection extends StatementInspection{
 
     private static class EmptyInitializerVisitor extends BaseInspectionVisitor{
 
-
-        public void visitClassInitializer(@NotNull PsiClassInitializer initializer){
+        public void visitClassInitializer(
+                @NotNull PsiClassInitializer initializer){
             super.visitClassInitializer(initializer);
             final PsiCodeBlock body = initializer.getBody();
             if(!codeBlockIsEmpty(body)){

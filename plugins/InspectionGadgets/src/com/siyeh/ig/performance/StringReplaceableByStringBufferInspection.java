@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,47 +21,56 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class StringReplaceableByStringBufferInspection extends ExpressionInspection {
+public class StringReplaceableByStringBufferInspection
+        extends ExpressionInspection {
 
-  public String getID() {
-    return "NonConstantStringShouldBeStringBuffer";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new StringReplaceableByStringBufferVisitor();
-  }
-
-  private static class StringReplaceableByStringBufferVisitor extends BaseInspectionVisitor {
-
-
-    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
-      super.visitLocalVariable(variable);
-      final PsiCodeBlock codeBlock =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-      if (codeBlock == null) {
-        return;
-      }
-      final PsiType type = variable.getType();
-      if (!TypeUtils.typeEquals("java.lang.String", type)) {
-        return;
-      }
-      if (!variableIsAppendedTo(variable, codeBlock)) {
-        return;
-      }
-      registerVariableError(variable);
+    public String getID() {
+        return "NonConstantStringShouldBeStringBuffer";
     }
 
-    public static boolean variableIsAppendedTo(PsiVariable variable, PsiElement context) {
-      final StringVariableIsAppendedToVisitor visitor = new StringVariableIsAppendedToVisitor(variable);
-      context.accept(visitor);
-      return visitor.isAppendedTo();
+    public String getGroupDisplayName() {
+        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "string.replaceable.by.string.buffer.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringReplaceableByStringBufferVisitor();
+    }
+
+    private static class StringReplaceableByStringBufferVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+            super.visitLocalVariable(variable);
+            final PsiCodeBlock codeBlock =
+                    PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+            if (codeBlock == null) {
+                return;
+            }
+            final PsiType type = variable.getType();
+            if (!TypeUtils.typeEquals("java.lang.String", type)) {
+                return;
+            }
+            if (!variableIsAppendedTo(variable, codeBlock)) {
+                return;
+            }
+            registerVariableError(variable);
+        }
+
+        public static boolean variableIsAppendedTo(PsiVariable variable,
+                                                   PsiElement context) {
+            final StringVariableIsAppendedToVisitor visitor = 
+                    new StringVariableIsAppendedToVisitor(variable);
+            context.accept(visitor);
+            return visitor.isAppendedTo();
+        }
+    }
 }

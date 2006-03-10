@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,132 +31,149 @@ import org.jetbrains.annotations.NotNull;
 
 public class RedundantImplementsInspection extends ClassInspection {
 
-  private final RedundantImplementsFix fix = new RedundantImplementsFix();
-
-  public String getID() {
-    return "RedundantInterfaceDeclaration";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.STYLE_GROUP_NAME;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class RedundantImplementsFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("redundant.implements.remove.quickfix");
+    public String getID() {
+        return "RedundantInterfaceDeclaration";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement implementReference = descriptor.getPsiElement();
-      deleteElement(implementReference);
-    }
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new RedundantImplementsVisitor();
-  }
-
-  private static class RedundantImplementsVisitor
-    extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isAnnotationType()) {
-        return;
-      }
-      if (aClass.isInterface()) {
-        checkInterface(aClass);
-      }
-      else {
-        checkConcreteClass(aClass);
-      }
+    public String getGroupDisplayName() {
+        return GroupNames.STYLE_GROUP_NAME;
     }
 
-    private void checkInterface(PsiClass aClass) {
-      final PsiReferenceList extendsList = aClass.getExtendsList();
-      if (extendsList == null) {
-        return;
-      }
-      final PsiJavaCodeReferenceElement[] extendsElements =
-        extendsList.getReferenceElements();
-      for (final PsiJavaCodeReferenceElement implementsElement : extendsElements) {
-        final PsiElement referent = implementsElement.resolve();
-        if (referent instanceof PsiClass) {
-          final PsiClass implementedClass = (PsiClass)referent;
-          checkExtendedInterface(implementedClass, implementsElement, extendsElements);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "redundant.implements.problem.descriptor");
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RedundantImplementsFix();
+    }
+
+    private static class RedundantImplementsFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "redundant.implements.remove.quickfix");
         }
-      }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement implementReference = descriptor.getPsiElement();
+            deleteElement(implementReference);
+        }
     }
 
-    private void checkConcreteClass(PsiClass aClass) {
-      final PsiReferenceList extendsList = aClass.getExtendsList();
-      final PsiReferenceList implementsList = aClass.getImplementsList();
-      if (extendsList == null || implementsList == null) {
-        return;
-      }
-      final PsiJavaCodeReferenceElement[] extendsElements =
-        extendsList.getReferenceElements();
-      final PsiJavaCodeReferenceElement[] implementsElements =
-        implementsList.getReferenceElements();
-      for (final PsiJavaCodeReferenceElement implementsElement : implementsElements) {
-        final PsiElement referent = implementsElement.resolve();
-        if (referent instanceof PsiClass) {
-          final PsiClass implementedClass = (PsiClass)referent;
-          checkImplementedClass(implementedClass, implementsElement, extendsElements, implementsElements);
-        }
-      }
+    public BaseInspectionVisitor buildVisitor() {
+        return new RedundantImplementsVisitor();
     }
 
-    private void checkImplementedClass(PsiClass implementedClass,
-                                       PsiJavaCodeReferenceElement implementsElement,
-                                       PsiJavaCodeReferenceElement[] extendsElements,
-                                       PsiJavaCodeReferenceElement[] implementsElements) {
-      for (final PsiJavaCodeReferenceElement extendsElement : extendsElements) {
-        final PsiElement extendsReferent = extendsElement.resolve();
-        if (extendsReferent instanceof PsiClass) {
-          final PsiClass extendedClass = (PsiClass)extendsReferent;
-          if (extendedClass.isInheritor(implementedClass, true)) {
-            registerError(implementsElement);
-            return;
-          }
-        }
-      }
-      for (final PsiJavaCodeReferenceElement testImplementElement : implementsElements) {
-        if (!testImplementElement.equals(implementsElement)) {
-          final PsiElement implementsReferent =
-            testImplementElement.resolve();
-          if (implementsReferent instanceof PsiClass) {
-            final PsiClass testImplementedClass = (PsiClass)implementsReferent;
-            if (testImplementedClass.isInheritor(implementedClass, true)) {
-              registerError(implementsElement);
-              return;
+    private static class RedundantImplementsVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            if (aClass.isAnnotationType()) {
+                return;
             }
-          }
-        }
-      }
-    }
-
-    private void checkExtendedInterface(PsiClass implementedClass,
-                                        PsiJavaCodeReferenceElement implementsElement,
-                                        PsiJavaCodeReferenceElement[] extendsElements) {
-
-      for (final PsiJavaCodeReferenceElement testImplementElement : extendsElements) {
-        if (!testImplementElement.equals(implementsElement)) {
-          final PsiElement implementsReferent =
-            testImplementElement.resolve();
-          if (implementsReferent instanceof PsiClass) {
-            final PsiClass testImplementedClass = (PsiClass)implementsReferent;
-            if (testImplementedClass.isInheritor(implementedClass, true)) {
-              registerError(implementsElement);
-              return;
+            if (aClass.isInterface()) {
+                checkInterface(aClass);
+            } else {
+                checkConcreteClass(aClass);
             }
-          }
         }
-      }
+
+        private void checkInterface(PsiClass aClass) {
+            final PsiReferenceList extendsList = aClass.getExtendsList();
+            if (extendsList == null) {
+                return;
+            }
+            final PsiJavaCodeReferenceElement[] extendsElements =
+                    extendsList.getReferenceElements();
+            for (final PsiJavaCodeReferenceElement implementsElement :
+                    extendsElements) {
+                final PsiElement referent = implementsElement.resolve();
+                if (referent instanceof PsiClass) {
+                    final PsiClass implementedClass = (PsiClass)referent;
+                    checkExtendedInterface(implementedClass,
+                            implementsElement, extendsElements);
+                }
+            }
+        }
+
+        private void checkConcreteClass(PsiClass aClass) {
+            final PsiReferenceList extendsList = aClass.getExtendsList();
+            final PsiReferenceList implementsList = aClass.getImplementsList();
+            if (extendsList == null || implementsList == null) {
+                return;
+            }
+            final PsiJavaCodeReferenceElement[] extendsElements =
+                    extendsList.getReferenceElements();
+            final PsiJavaCodeReferenceElement[] implementsElements =
+                    implementsList.getReferenceElements();
+            for (final PsiJavaCodeReferenceElement implementsElement :
+                    implementsElements) {
+                final PsiElement referent = implementsElement.resolve();
+                if (referent instanceof PsiClass) {
+                    final PsiClass implementedClass = (PsiClass)referent;
+                    checkImplementedClass(implementedClass, implementsElement,
+                            extendsElements, implementsElements);
+                }
+            }
+        }
+
+        private void checkImplementedClass(
+                PsiClass implementedClass,
+                PsiJavaCodeReferenceElement implementsElement,
+                PsiJavaCodeReferenceElement[] extendsElements,
+                PsiJavaCodeReferenceElement[] implementsElements) {
+            for (final PsiJavaCodeReferenceElement extendsElement :
+                    extendsElements) {
+                final PsiElement extendsReferent = extendsElement.resolve();
+                if (extendsReferent instanceof PsiClass) {
+                    final PsiClass extendedClass = (PsiClass)extendsReferent;
+                    if (extendedClass.isInheritor(implementedClass, true)) {
+                        registerError(implementsElement);
+                        return;
+                    }
+                }
+            }
+            for (final PsiJavaCodeReferenceElement testImplementElement :
+                    implementsElements) {
+                if (!testImplementElement.equals(implementsElement)) {
+                    final PsiElement implementsReferent =
+                            testImplementElement.resolve();
+                    if (implementsReferent instanceof PsiClass) {
+                        final PsiClass testImplementedClass =
+                                (PsiClass)implementsReferent;
+                        if (testImplementedClass.isInheritor(implementedClass,
+                                true)) {
+                            registerError(implementsElement);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void checkExtendedInterface(
+                PsiClass implementedClass,
+                PsiJavaCodeReferenceElement implementsElement,
+                PsiJavaCodeReferenceElement[] extendsElements) {
+            for (final PsiJavaCodeReferenceElement testImplementElement :
+                    extendsElements) {
+                if (!testImplementElement.equals(implementsElement)) {
+                    final PsiElement implementsReferent =
+                            testImplementElement.resolve();
+                    if (implementsReferent instanceof PsiClass) {
+                        final PsiClass testImplementedClass =
+                                (PsiClass)implementsReferent;
+                        if (testImplementedClass.isInheritor(implementedClass,
+                                true)) {
+                            registerError(implementsElement);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
     }
-  }
 }

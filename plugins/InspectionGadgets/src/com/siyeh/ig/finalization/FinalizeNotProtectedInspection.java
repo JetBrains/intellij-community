@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,18 +28,20 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class FinalizeNotProtectedInspection extends MethodInspection{
-    private final ProtectedFinalizeFix fix = new ProtectedFinalizeFix();
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("finalize.not.declared.protected.display.name");
+        return InspectionGadgetsBundle.message(
+                "finalize.not.declared.protected.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.FINALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("finalize.not.declared.protected.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "finalize.not.declared.protected.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -47,10 +49,11 @@ public class FinalizeNotProtectedInspection extends MethodInspection{
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new ProtectedFinalizeFix();
     }
 
     private static class ProtectedFinalizeFix extends InspectionGadgetsFix{
+
         public String getName(){
             return InspectionGadgetsBundle.message("make.protected.quickfix");
         }
@@ -69,6 +72,7 @@ public class FinalizeNotProtectedInspection extends MethodInspection{
 
     private static class FinalizeDeclaredProtectedVisitor
             extends BaseInspectionVisitor{
+        
         public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
             final String methodName = method.getName();

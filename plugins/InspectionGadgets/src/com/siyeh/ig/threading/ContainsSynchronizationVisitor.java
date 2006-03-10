@@ -18,11 +18,11 @@ package com.siyeh.ig.threading;
 import com.intellij.psi.*;
 
 class ContainsSynchronizationVisitor extends PsiRecursiveElementVisitor{
+
     private boolean containsSynchronization = false;
 
     public void visitElement(PsiElement element){
-        if(containsSynchronization)
-        {
+        if(containsSynchronization){
             return;
         }
         super.visitElement(element);
@@ -33,8 +33,7 @@ class ContainsSynchronizationVisitor extends PsiRecursiveElementVisitor{
     }
 
     public void visitMethod(PsiMethod method){
-        if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED))
-        {
+        if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
             containsSynchronization = true;
             return;
         }

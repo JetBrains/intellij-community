@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class SerialPersistentFieldsWithWrongSignatureInspection
-                                                                extends ClassInspection{
+        extends ClassInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("serialpersistentfields.with.wrong.signature.display.name");
+        return InspectionGadgetsBundle.message(
+                "serialpersistentfields.with.wrong.signature.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("serialpersistentfields.with.wrong.signature.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "serialpersistentfields.with.wrong.signature.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -43,27 +47,26 @@ public class SerialPersistentFieldsWithWrongSignatureInspection
     }
 
     private static class SerializableDefinesSerialVersionUIDVisitor
-                                                                    extends BaseInspectionVisitor{
+            extends BaseInspectionVisitor{
+
         public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
             if(aClass.isInterface() || aClass.isAnnotationType()){
                 return;
             }
-
             PsiField badSerialPersistentFields = null;
             final PsiField[] fields = aClass.getFields();
             for(final PsiField field : fields){
                 if(isSerialPersistentFields(field)){
-
                     if(!field.hasModifierProperty(PsiModifier.PRIVATE) ||
-                       !field.hasModifierProperty(PsiModifier.STATIC) ||
-                       !field.hasModifierProperty(PsiModifier.FINAL)){
+                            !field.hasModifierProperty(PsiModifier.STATIC) ||
+                            !field.hasModifierProperty(PsiModifier.FINAL)){
                         badSerialPersistentFields = field;
                         break;
                     } else{
                         final PsiType type = field.getType();
-                        if(!type.equalsToText("java.io.ObjectStreamField" + "[]"))
-                        {
+                        if(!type.equalsToText("java.io.ObjectStreamField" +
+                                "[]")) {
                             badSerialPersistentFields = field;
                             break;
                         }
@@ -80,9 +83,8 @@ public class SerialPersistentFieldsWithWrongSignatureInspection
         }
 
         private static boolean isSerialPersistentFields(PsiField field){
-            final String fieldName = field.getName();
-            @NonNls final String serialPersistentFields = "serialPersistentFields";
-            return serialPersistentFields.equals(fieldName);
+            @NonNls final String fieldName = field.getName();
+            return "serialPersistentFields".equals(fieldName);
         }
     }
 }

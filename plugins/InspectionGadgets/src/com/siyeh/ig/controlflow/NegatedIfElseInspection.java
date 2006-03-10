@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ public class NegatedIfElseInspection extends StatementInspection {
 
     /** @noinspection PublicField*/
     public boolean m_ignoreNegatedNullComparison = true;
-    private final NegatedIfElseFix fix = new NegatedIfElseFix();
 
     public String getID() {
         return "IfStatementWithNegatedCondition";
@@ -51,12 +50,14 @@ public class NegatedIfElseInspection extends StatementInspection {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NegatedIfElseVisitor();
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "negated.if.else.problem.descriptor");
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("negated.if.else.problem.descriptor");
+    public BaseInspectionVisitor buildVisitor() {
+        return new NegatedIfElseVisitor();
     }
 
     public JComponent createOptionsPanel() {
@@ -66,7 +67,7 @@ public class NegatedIfElseInspection extends StatementInspection {
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new NegatedIfElseFix();
     }
 
     private static class NegatedIfElseFix extends InspectionGadgetsFix {
@@ -79,7 +80,8 @@ public class NegatedIfElseInspection extends StatementInspection {
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement ifToken = descriptor.getPsiElement();
-            final PsiIfStatement ifStatement = (PsiIfStatement) ifToken.getParent();
+            final PsiIfStatement ifStatement =
+                    (PsiIfStatement) ifToken.getParent();
             assert ifStatement != null;
             final PsiStatement elseBranch = ifStatement.getElseBranch();
             if (elseBranch == null) {

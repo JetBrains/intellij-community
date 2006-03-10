@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +61,6 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
                   "pointless.boolean.expression.ignore.option"),
                 this, "m_ignoreExpressionsContainingConstants");
     }
-    
-    private final BooleanLiteralComparisonFix fix =
-            new BooleanLiteralComparisonFix();
 
 
     public String getGroupDisplayName(){
@@ -74,24 +71,25 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         return true;
     }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new PointlessBooleanExpressionVisitor();
-    }
-
-    public String buildErrorString(PsiElement location){
-        if(location instanceof PsiBinaryExpression){
+    @NotNull
+    public String buildErrorString(Object... infos){
+        if(infos[0] instanceof PsiBinaryExpression){
             final PsiBinaryExpression expression =
-                    (PsiBinaryExpression)location;
-            return InspectionGadgetsBundle
-              .message("string.can.be.simplified.problem.descriptor",
-                      calculateSimplifiedBinaryExpression(expression));
+                    (PsiBinaryExpression)infos[0];
+            return InspectionGadgetsBundle.message(
+                    "string.can.be.simplified.problem.descriptor",
+                    calculateSimplifiedBinaryExpression(expression));
         } else{
             final PsiPrefixExpression expression =
-                    (PsiPrefixExpression)location;
-            return InspectionGadgetsBundle
-              .message("string.can.be.simplified.problem.descriptor",
-                      calculateSimplifiedPrefixExpression(expression));
+                    (PsiPrefixExpression)infos[0];
+            return InspectionGadgetsBundle.message(
+                    "string.can.be.simplified.problem.descriptor",
+                    calculateSimplifiedPrefixExpression(expression));
         }
+    }
+
+    public BaseInspectionVisitor buildVisitor(){
+        return new PointlessBooleanExpressionVisitor();
     }
 
     @Nullable
@@ -179,7 +177,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new BooleanLiteralComparisonFix();
     }
 
     private  class BooleanLiteralComparisonFix
@@ -265,7 +263,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             if(!isPointless){
                 return;
             }
-            registerError(expression);
+            registerError(expression, expression);
         }
 
         public void visitPrefixExpression(
@@ -276,7 +274,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             final IElementType tokenType = sign.getTokenType();
             if(!(!tokenType.equals(JavaTokenType.EXCL) ||
                     !notExpressionIsPointless(operand))){
-                registerError(expression);
+                registerError(expression, expression);
             }
         }
 

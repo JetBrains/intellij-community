@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,30 +24,38 @@ import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class OverlyLargePrimitiveArrayInitializerInspection
         extends ExpressionInspection{
+    
     /**
      * @noinspection PublicField
      */
     public int m_limit = 64;
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("large.initializer.primitive.type.array.display.name");
+        return InspectionGadgetsBundle.message(
+                "large.initializer.primitive.type.array.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.J2ME_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiExpression expression = (PsiExpression) location;
-        final int numElements = calculateNumElements(expression);
-        return InspectionGadgetsBundle.message("large.initializer.primitive.type.array.problem.descriptor", numElements);
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final Integer numElements = (Integer)infos[0];
+        return InspectionGadgetsBundle.message(
+                "large.initializer.primitive.type.array.problem.descriptor",
+                numElements);
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("large.initializer.primitive.type.array.maximum.number.of.elements.option"),
-                                                  this, "m_limit");
+        return new SingleIntegerFieldOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "large.initializer.primitive.type.array.maximum.number.of.elements.option"),
+                this, "m_limit");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -58,7 +66,8 @@ public class OverlyLargePrimitiveArrayInitializerInspection
             extends BaseInspectionVisitor{
 
 
-        public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression){
+        public void visitArrayInitializerExpression(
+                PsiArrayInitializerExpression expression){
             super.visitArrayInitializerExpression(expression);
             final PsiType type = expression.getType();
             if(type == null) {
@@ -72,20 +81,22 @@ public class OverlyLargePrimitiveArrayInitializerInspection
             if(numElements <= m_limit) {
                 return;
             }
-            registerError(expression);
+            registerError(expression, Integer.valueOf(numElements));
         }
-    }
 
-    private int calculateNumElements(PsiExpression expression){
-        if(expression instanceof PsiArrayInitializerExpression) {
-            final PsiArrayInitializerExpression arrayExpression = (PsiArrayInitializerExpression) expression;
-            final PsiExpression[] initializers = arrayExpression.getInitializers();
-            int out = 0;
-            for(final PsiExpression initializer : initializers){
-                out += calculateNumElements(initializer);
+        private int calculateNumElements(PsiExpression expression){
+            if(expression instanceof PsiArrayInitializerExpression) {
+                final PsiArrayInitializerExpression arrayExpression =
+                        (PsiArrayInitializerExpression) expression;
+                final PsiExpression[] initializers =
+                        arrayExpression.getInitializers();
+                int out = 0;
+                for(final PsiExpression initializer : initializers){
+                    out += calculateNumElements(initializer);
+                }
+                return out;
             }
-            return out;
+            return 1;
         }
-        return 1;
     }
 }

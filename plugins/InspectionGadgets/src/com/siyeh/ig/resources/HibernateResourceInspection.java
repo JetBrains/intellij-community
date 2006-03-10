@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,18 +40,12 @@ public class HibernateResourceInspection extends ExpressionInspection{
         return GroupNames.RESOURCE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiExpression expression = (PsiExpression) location;
-        final PsiType type = expression.getType();
-        final String text;
-        if (type == null) {
-            text = "";
-        } else {
-            text = type.getPresentableText();
-        }
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final PsiType type = (PsiType)infos[0];
         return InspectionGadgetsBundle.message(
                 "hibernate.resource.opened.not.closed.problem.descriptor",
-                text);
+                type.getPresentableText());
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -70,7 +64,7 @@ public class HibernateResourceInspection extends ExpressionInspection{
             if(!(parent instanceof PsiAssignmentExpression)) {
                 final PsiType type = expression.getType();
                 if(type != null){
-                    registerError(expression);
+                    registerError(expression, type);
                 }
                 return;
             }
@@ -95,7 +89,7 @@ public class HibernateResourceInspection extends ExpressionInspection{
                 if(tryStatement == null){
                     final PsiType type = expression.getType();
                     if(type != null){
-                        registerError(expression);
+                        registerError(expression, type);
                     }
                     return;
                 }

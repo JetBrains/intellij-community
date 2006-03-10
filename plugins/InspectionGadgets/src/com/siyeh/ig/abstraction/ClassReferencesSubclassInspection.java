@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,26 +21,27 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClassReferencesSubclassInspection extends ClassInspection{
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("class.references.subclass.display.name");
+        return InspectionGadgetsBundle.message(
+                "class.references.subclass.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiClass containingClass =
-                ClassUtils.getContainingClass(location);
-        assert containingClass != null;
-        final String containingClassName = containingClass.getName();
-        return InspectionGadgetsBundle.message("class.references.subclass.problem.descriptor", containingClassName);
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final PsiNamedElement element = (PsiNamedElement)infos[0];
+        final String containingClassName = element.getName();
+        return InspectionGadgetsBundle.message(
+                "class.references.subclass.problem.descriptor",
+                containingClassName);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -49,6 +50,7 @@ public class ClassReferencesSubclassInspection extends ClassInspection{
 
     private static class ClassReferencesSubclassVisitor
             extends BaseInspectionVisitor{
+
         public void visitVariable(@NotNull PsiVariable variable){
             final PsiTypeElement typeElement = variable.getTypeElement();
             checkTypeElement(typeElement);
@@ -59,18 +61,19 @@ public class ClassReferencesSubclassInspection extends ClassInspection{
             checkTypeElement(typeElement);
         }
 
-        public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression exp){
+        public void visitInstanceOfExpression(
+                @NotNull PsiInstanceOfExpression exp){
             final PsiTypeElement typeElement = exp.getCheckType();
             checkTypeElement(typeElement);
         }
-
 
         public void visitTypeCastExpression(@NotNull PsiTypeCastExpression exp){
             final PsiTypeElement typeElement = exp.getCastType();
             checkTypeElement(typeElement);
         }
 
-        public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression exp){
+        public void visitClassObjectAccessExpression(
+                @NotNull PsiClassObjectAccessExpression exp){
             final PsiTypeElement typeElement = exp.getOperand();
             checkTypeElement(typeElement);
         }
@@ -85,23 +88,23 @@ public class ClassReferencesSubclassInspection extends ClassInspection{
                 return;
             }
             final PsiClassType classType = (PsiClassType) componentType;
-            if(!isSubclass(classType, PsiTreeUtil.getParentOfType(typeElement, PsiClass.class))){
+            final PsiClass parentClass =
+                    PsiTreeUtil.getParentOfType(typeElement, PsiClass.class);
+            if(!isSubclass(classType, parentClass)){
                 return;
             }
-            registerError(typeElement);
+            registerError(typeElement, parentClass);
         }
 
         private static boolean isSubclass(@NotNull PsiClassType childClass,
                                           @Nullable PsiClass parent){
-            if (parent == null) {
+            if(parent == null){
                 return false;
             }
-
             final PsiClass child = childClass.resolve();
             if(child == null){
                 return false;
             }
-
             return child.isInheritor(parent, true);
         }
     }

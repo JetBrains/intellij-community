@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class LocalVariableAccessVisitor extends PsiRecursiveElementVisitor {
-    private final Set<PsiElement> m_accesssedVariables = new HashSet<PsiElement>(2);
 
-    public LocalVariableAccessVisitor() {
-        super();
-    }
+    private final Set<PsiElement> m_accesssedVariables =
+            new HashSet<PsiElement>(2);
 
     public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
         super.visitReferenceExpression(ref);

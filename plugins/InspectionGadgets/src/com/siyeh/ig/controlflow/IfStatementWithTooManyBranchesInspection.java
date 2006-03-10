@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,23 +50,12 @@ public class IfStatementWithTooManyBranchesInspection
                 this, "m_limit");
     }
 
-    protected String buildErrorString(PsiElement location) {
-        final PsiIfStatement statement = (PsiIfStatement)location.getParent();
-        final int branches = calculateNumBranches(statement);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        final Integer branchCount = (Integer)infos[0];
         return InspectionGadgetsBundle.message(
                 "if.statement.with.too.many.branches.problem.descriptor",
-                branches);
-    }
-
-    private static int calculateNumBranches(PsiIfStatement statement) {
-        final PsiStatement branch = statement.getElseBranch();
-        if (branch == null) {
-            return 1;
-        }
-        if (!(branch instanceof PsiIfStatement)) {
-            return 2;
-        }
-        return 1 + calculateNumBranches((PsiIfStatement)branch);
+                branchCount);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -86,11 +75,22 @@ public class IfStatementWithTooManyBranchesInspection
                     return;
                 }
             }
-            final int branches = calculateNumBranches(statement);
-            if (branches <= m_limit) {
+            final int branchCount = calculateBranchCount(statement);
+            if (branchCount <= m_limit) {
                 return;
             }
-            registerStatementError(statement);
+            registerStatementError(statement, Integer.valueOf(branchCount));
+        }
+
+        private int calculateBranchCount(PsiIfStatement statement) {
+            final PsiStatement branch = statement.getElseBranch();
+            if (branch == null) {
+                return 1;
+            }
+            if (!(branch instanceof PsiIfStatement)) {
+                return 2;
+            }
+            return 1 + calculateBranchCount((PsiIfStatement)branch);
         }
     }
 }

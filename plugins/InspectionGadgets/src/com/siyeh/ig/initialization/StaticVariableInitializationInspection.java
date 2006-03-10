@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,31 +34,32 @@ public class StaticVariableInitializationInspection extends FieldInspection {
     /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
-    private final MakeInitializerExplicitFix fix =
-            new MakeInitializerExplicitFix();
-
     public String getID(){
         return "StaticVariableMayNotBeInitialized";
     }
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("static.variable.may.not.be.initialized.display.name");
+        return InspectionGadgetsBundle.message(
+                "static.variable.may.not.be.initialized.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-      return InspectionGadgetsBundle.message("static.variable.may.not.be.initialized.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "static.variable.may.not.be.initialized.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "primitive.fields.ignore.option"),
                 this, "m_ignorePrimitives");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new MakeInitializerExplicitFix();
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -76,7 +77,6 @@ public class StaticVariableInitializationInspection extends FieldInspection {
                 return;
             }
             final PsiClass containingClass = field.getContainingClass();
-
             if (containingClass == null) {
                 return;
             }
@@ -89,7 +89,6 @@ public class StaticVariableInitializationInspection extends FieldInspection {
                     return;
                 }
             }
-
             final PsiClassInitializer[] initializers =
                     containingClass.getInitializers();
             for(final PsiClassInitializer initializer : initializers){

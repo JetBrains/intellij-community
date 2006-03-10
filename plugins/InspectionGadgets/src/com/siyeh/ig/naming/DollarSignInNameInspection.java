@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,113 +23,106 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class DollarSignInNameInspection extends BaseInspection {
 
-  private final RenameFix fix = new RenameFix();
-
-  public String getGroupDisplayName() {
-    return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  public ProblemDescriptor[] doCheckClass(PsiClass aClass,
-                                          InspectionManager manager,
-                                          boolean isOnTheFly) {
-    if (aClass instanceof PsiAnonymousClass) {
-      return super.doCheckClass(aClass, manager, isOnTheFly);
-    }
-    final BaseInspectionVisitor visitor = createVisitor(manager,
-                                                        isOnTheFly);
-    aClass.accept(visitor);
-    return visitor.getErrors();
-  }
-
-  public ProblemDescriptor[] doCheckMethod(PsiMethod method,
-                                           InspectionManager manager,
-                                           boolean isOnTheFly) {
-    final PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null) {
-      return super.doCheckMethod(method, manager, isOnTheFly);
-    }
-    if (!containingClass.isPhysical()) {
-      return super.doCheckMethod(method, manager, isOnTheFly);
-    }
-    if (containingClass instanceof PsiAnonymousClass) {
-      return super.doCheckClass(containingClass, manager, isOnTheFly);
-    }
-    final BaseInspectionVisitor visitor = createVisitor(manager,
-                                                        isOnTheFly);
-    method.accept(visitor);
-    return visitor.getErrors();
-  }
-
-  public ProblemDescriptor[] doCheckField(PsiField field,
-                                          InspectionManager manager,
-                                          boolean isOnTheFly) {
-    final PsiClass containingClass = field.getContainingClass();
-    if (containingClass == null) {
-      return super.doCheckField(field, manager, isOnTheFly);
-    }
-    if (!containingClass.isPhysical()) {
-      return super.doCheckField(field, manager, isOnTheFly);
-    }
-    if (containingClass instanceof PsiAnonymousClass) {
-      return super.doCheckClass(containingClass, manager, isOnTheFly);
-    }
-    final BaseInspectionVisitor visitor = createVisitor(manager,
-                                                        isOnTheFly);
-    field.accept(visitor);
-    return visitor.getErrors();
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new DollarSignInNameVisitor();
-  }
-
-  private static class DollarSignInNameVisitor extends BaseInspectionVisitor {
-    public void visitVariable(@NotNull PsiVariable variable) {
-      super.visitVariable(variable);
-      final String name = variable.getName();
-      if (name == null) {
-        return;
-      }
-      if (name.indexOf((int)'$') < 0) {
-        return;
-      }
-      registerVariableError(variable);
+    public String getGroupDisplayName() {
+        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
-    public void visitMethod(@NotNull PsiMethod method) {
-      super.visitMethod(method);
-      final String name = method.getName();
-      if (name == null) {
-        return;
-      }
-      if (name.indexOf((int)'$') < 0) {
-        return;
-      }
-      registerMethodError(method);
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RenameFix();
     }
 
-    public void visitClass(@NotNull PsiClass aClass) {
-      //note: no call to super, to avoid drill-down
-      final String name = aClass.getName();
-      if (name == null) {
-        return;
-      }
-      if (name.indexOf((int)'$') < 0) {
-        return;
-      }
-      registerClassError(aClass);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "dollar.sign.in.name.problem.descriptor");
     }
-  }
+
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+        return true;
+    }
+
+    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
+                                            InspectionManager manager,
+                                            boolean isOnTheFly) {
+        final BaseInspectionVisitor visitor = createVisitor(manager,
+                isOnTheFly);
+        aClass.accept(visitor);
+        return visitor.getErrors();
+    }
+
+    public ProblemDescriptor[] doCheckMethod(PsiMethod method,
+                                             InspectionManager manager,
+                                             boolean isOnTheFly) {
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass == null) {
+            return super.doCheckMethod(method, manager, isOnTheFly);
+        }
+        if (!containingClass.isPhysical()) {
+            return super.doCheckMethod(method, manager, isOnTheFly);
+        }
+        final BaseInspectionVisitor visitor = createVisitor(manager,
+                isOnTheFly);
+        method.accept(visitor);
+        return visitor.getErrors();
+    }
+
+    public ProblemDescriptor[] doCheckField(PsiField field,
+                                            InspectionManager manager,
+                                            boolean isOnTheFly) {
+        final PsiClass containingClass = field.getContainingClass();
+        if (containingClass == null) {
+            return super.doCheckField(field, manager, isOnTheFly);
+        }
+        if (!containingClass.isPhysical()) {
+            return super.doCheckField(field, manager, isOnTheFly);
+        }
+        final BaseInspectionVisitor visitor = createVisitor(manager,
+                isOnTheFly);
+        field.accept(visitor);
+        return visitor.getErrors();
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new DollarSignInNameVisitor();
+    }
+
+    private static class DollarSignInNameVisitor extends BaseInspectionVisitor {
+        public void visitVariable(@NotNull PsiVariable variable) {
+            super.visitVariable(variable);
+            final String name = variable.getName();
+            if (name == null) {
+                return;
+            }
+            if (name.indexOf((int)'$') < 0) {
+                return;
+            }
+            registerVariableError(variable);
+        }
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            super.visitMethod(method);
+            final String name = method.getName();
+            if (name.indexOf((int)'$') < 0) {
+                return;
+            }
+            registerMethodError(method);
+        }
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            //note: no call to super, to avoid drill-down
+            final String name = aClass.getName();
+            if (name == null) {
+                return;
+            }
+            if (name.indexOf((int)'$') < 0) {
+                return;
+            }
+            registerClassError(aClass);
+        }
+    }
 }

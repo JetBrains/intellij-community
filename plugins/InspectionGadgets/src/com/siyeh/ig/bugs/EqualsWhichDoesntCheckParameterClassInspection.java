@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ public class EqualsWhichDoesntCheckParameterClassInspection
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "equals.doesnt.check.class.parameter.problem.descriptor");
     }
@@ -50,25 +51,25 @@ public class EqualsWhichDoesntCheckParameterClassInspection
 
         public void visitMethod(@NotNull PsiMethod method){
               // note: no call to super
-          if(!MethodUtils.isEquals(method)) {
-                  return;
-              }
-              final PsiParameterList paramList = method.getParameterList();
-              final PsiParameter[] parameters = paramList.getParameters();
-              final PsiParameter parameter = parameters[0];
-              final PsiType argType = parameter.getType();
-              if(!TypeUtils.isJavaLangObject(argType)){
-                  return;
-              }
-              final PsiCodeBlock body = method.getBody();
-              if(body == null){
-                  return;
-              }
-              if(isParameterChecked(body, parameter)){
-                  return;
-              }
-              registerMethodError(method);
-          }
+            if(!MethodUtils.isEquals(method)) {
+                return;
+            }
+            final PsiParameterList paramList = method.getParameterList();
+            final PsiParameter[] parameters = paramList.getParameters();
+            final PsiParameter parameter = parameters[0];
+            final PsiType argType = parameter.getType();
+            if(!TypeUtils.isJavaLangObject(argType)){
+                return;
+            }
+            final PsiCodeBlock body = method.getBody();
+            if(body == null){
+                return;
+            }
+            if(isParameterChecked(body, parameter)){
+                return;
+            }
+            registerMethodError(method);
+        }
 
         private static boolean isParameterChecked(PsiCodeBlock body,
                                                   PsiParameter parameter){

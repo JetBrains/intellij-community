@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,10 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryConditionalExpressionInspection
         extends ExpressionInspection {
-
-    private final TrivialConditionalFix fix = new TrivialConditionalFix();
 
     public String getID() {
         return "RedundantConditionalExpression";
@@ -49,14 +48,16 @@ public class UnnecessaryConditionalExpressionInspection
         return new UnnecessaryConditionalExpressionVisitor();
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiConditionalExpression exp = (PsiConditionalExpression)location;
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiConditionalExpression expression =
+                (PsiConditionalExpression)infos[0];
         return InspectionGadgetsBundle.message(
                 "simplifiable.conditional.expression.problem.descriptor",
-                '\'' + exp.getText(), calculateReplacementExpression(exp));
+                calculateReplacementExpression(expression));
     }
 
-    private static String calculateReplacementExpression(
+    static String calculateReplacementExpression(
             PsiConditionalExpression exp) {
         final PsiExpression thenExpression = exp.getThenExpression();
         final PsiExpression elseExpression = exp.getElseExpression();
@@ -72,7 +73,7 @@ public class UnnecessaryConditionalExpressionInspection
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new TrivialConditionalFix();
     }
 
     private static class TrivialConditionalFix extends InspectionGadgetsFix {
@@ -95,13 +96,14 @@ public class UnnecessaryConditionalExpressionInspection
     private static class UnnecessaryConditionalExpressionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitConditionalExpression(PsiConditionalExpression exp) {
-            super.visitConditionalExpression(exp);
-            final PsiExpression thenExpression = exp.getThenExpression();
+        public void visitConditionalExpression(
+                PsiConditionalExpression expression) {
+            super.visitConditionalExpression(expression);
+            final PsiExpression thenExpression = expression.getThenExpression();
             if (thenExpression == null) {
                 return;
             }
-            final PsiExpression elseExpression = exp.getElseExpression();
+            final PsiExpression elseExpression = expression.getElseExpression();
             if (elseExpression == null) {
                 return;
             }
@@ -109,7 +111,7 @@ public class UnnecessaryConditionalExpressionInspection
                     BoolUtils.isTrue(elseExpression) ||
                     BoolUtils.isTrue(thenExpression) &&
                             BoolUtils.isFalse(elseExpression)) {
-                registerError(exp);
+                registerError(expression, expression);
             }
         }
     }

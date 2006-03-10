@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,22 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspection {
-    private final MakeProtectedFix fix = new MakeProtectedFix();
+public class ReadResolveAndWriteReplaceProtectedInspection
+        extends MethodInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("readresolve.writereplace.protected.display.name");
+        return InspectionGadgetsBundle.message(
+                "readresolve.writereplace.protected.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("readresolve.writereplace.protected.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "readresolve.writereplace.protected.problem.descriptor");
 
     }
 
@@ -49,10 +52,11 @@ public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspect
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new MakeProtectedFix();
     }
 
-    private static class ReadResolveWriteReplaceProtectedVisitor extends BaseInspectionVisitor {
+    private static class ReadResolveWriteReplaceProtectedVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down
@@ -82,5 +86,4 @@ public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspect
             registerMethodError(method);
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class TrivialIfInspection extends StatementInspection {
 
-    private final TrivialIfFix fix = new TrivialIfFix();
-
     public String getID() {
         return "RedundantIfStatement";
     }
@@ -53,8 +51,13 @@ public class TrivialIfInspection extends StatementInspection {
         return true;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message("trivial.if.problem.descriptor");
+    }
+
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new TrivialIfFix();
     }
 
     private static class TrivialIfFix extends InspectionGadgetsFix {
@@ -96,7 +99,7 @@ public class TrivialIfInspection extends StatementInspection {
             final String conditionText = condition.getText();
             final PsiElement nextStatement =
                     PsiTreeUtil.skipSiblingsForward(statement,
-                            new Class[]{PsiWhiteSpace.class});
+                            PsiWhiteSpace.class);
             @NonNls final String newStatement = "return " + conditionText + ';';
             replaceStatement(statement, newStatement);
             assert nextStatement != null;
@@ -141,7 +144,7 @@ public class TrivialIfInspection extends StatementInspection {
                 PsiIfStatement statement) throws IncorrectOperationException {
             final PsiElement prevStatement =
                     PsiTreeUtil.skipSiblingsBackward(statement,
-                            new Class[]{PsiWhiteSpace.class});
+                            PsiWhiteSpace.class);
             if (prevStatement == null) {
                 return;
             }
@@ -171,7 +174,7 @@ public class TrivialIfInspection extends StatementInspection {
                 throws IncorrectOperationException {
             final PsiElement prevStatement =
                     PsiTreeUtil.skipSiblingsBackward(statement,
-                            new Class[]{PsiWhiteSpace.class});
+                            PsiWhiteSpace.class);
             final PsiExpression condition = statement.getCondition();
             if (condition == null) {
                 return;
@@ -207,8 +210,7 @@ public class TrivialIfInspection extends StatementInspection {
                     BoolUtils.getNegatedExpressionText(condition);
             final PsiElement nextStatement =
                     PsiTreeUtil.skipSiblingsForward(statement,
-                            new Class[]{
-                                    PsiWhiteSpace.class});
+                                    PsiWhiteSpace.class);
             if (nextStatement == null) {
                 return;
             }
@@ -310,8 +312,7 @@ public class TrivialIfInspection extends StatementInspection {
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
-                        new Class[]{
-                                PsiWhiteSpace.class});
+                                PsiWhiteSpace.class);
         if (!(nextStatement instanceof PsiStatement)) {
             return false;
         }
@@ -331,8 +332,7 @@ public class TrivialIfInspection extends StatementInspection {
 
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
-                        new Class[]{
-                                PsiWhiteSpace.class});
+                                PsiWhiteSpace.class);
         if (!(nextStatement instanceof PsiStatement)) {
             return false;
         }
@@ -434,8 +434,7 @@ public class TrivialIfInspection extends StatementInspection {
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsBackward(ifStatement,
-                        new Class[]{
-                                PsiWhiteSpace.class});
+                                PsiWhiteSpace.class);
         if (!(nextStatement instanceof PsiStatement)) {
             return false;
         }
@@ -478,13 +477,11 @@ public class TrivialIfInspection extends StatementInspection {
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsBackward(ifStatement,
-                        new Class[]{
-                                PsiWhiteSpace.class});
+                        PsiWhiteSpace.class);
         if (!(nextStatement instanceof PsiStatement)) {
             return false;
         }
         PsiStatement elseBranch = (PsiStatement)nextStatement;
-
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
         if (ConditionalUtils.isAssignment(thenBranch, PsiKeyword.FALSE) &&
                 ConditionalUtils.isAssignment(elseBranch, PsiKeyword.TRUE)) {

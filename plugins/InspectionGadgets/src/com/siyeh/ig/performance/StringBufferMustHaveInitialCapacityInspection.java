@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,45 +20,50 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class StringBufferMustHaveInitialCapacityInspection extends ExpressionInspection {
+public class StringBufferMustHaveInitialCapacityInspection
+        extends ExpressionInspection {
 
-  public String getID() {
-    return "StringBufferWithoutInitialCapacity";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new StringBufferInitialCapacityVisitor();
-  }
-
-  private static class StringBufferInitialCapacityVisitor extends BaseInspectionVisitor {
-
-
-    public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      super.visitNewExpression(expression);
-      final PsiType type = expression.getType();
-
-      if (!TypeUtils.typeEquals("java.lang.StringBuffer", type) &&
-          !TypeUtils.typeEquals("java.lang.StringBuilder", type)) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList == null) {
-        return;
-      }
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args == null) {
-        return;
-      }
-      if (args.length != 0) {
-        return;
-      }
-      registerError(expression);
+    public String getID() {
+        return "StringBufferWithoutInitialCapacity";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.PERFORMANCE_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "string.buffer.must.have.initial.capacity.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringBufferInitialCapacityVisitor();
+    }
+
+    private static class StringBufferInitialCapacityVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+            super.visitNewExpression(expression);
+            final PsiType type = expression.getType();
+
+            if (!TypeUtils.typeEquals("java.lang.StringBuffer", type) &&
+                    !TypeUtils.typeEquals("java.lang.StringBuilder", type)) {
+                return;
+            }
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            if (argumentList == null) {
+                return;
+            }
+            final PsiExpression[] args = argumentList.getExpressions();
+            if (args.length != 0) {
+                return;
+            }
+            registerError(expression);
+        }
+    }
 }

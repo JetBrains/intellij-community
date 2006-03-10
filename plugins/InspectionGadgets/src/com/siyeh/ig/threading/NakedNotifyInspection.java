@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,71 +20,78 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class NakedNotifyInspection extends MethodInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new NakedNotifyVisitor();
-  }
-
-  private static class NakedNotifyVisitor extends BaseInspectionVisitor {
-
-    public void visitMethod(@NotNull PsiMethod method) {
-      super.visitMethod(method);
-      if (!method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-        return;
-      }
-      final PsiCodeBlock body = method.getBody();
-      if (body != null) {
-        checkBody(body);
-      }
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
     }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "naked.notify.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new NakedNotifyVisitor();
+    }
+
+    private static class NakedNotifyVisitor extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            super.visitMethod(method);
+            if (!method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+                return;
+            }
+            final PsiCodeBlock body = method.getBody();
+            if (body != null) {
+                checkBody(body);
+            }
+        }
 
         public void visitSynchronizedStatement(
                 @NotNull PsiSynchronizedStatement statement) {
-      super.visitSynchronizedStatement(statement);
-      final PsiCodeBlock body = statement.getBody();
-      if (body != null) {
-        checkBody(body);
-      }
-    }
+            super.visitSynchronizedStatement(statement);
+            final PsiCodeBlock body = statement.getBody();
+            if (body != null) {
+                checkBody(body);
+            }
+        }
 
-    private void checkBody(PsiCodeBlock body) {
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
-        return;
-      }
-      final PsiStatement firstStatement = statements[0];
-      if (!(firstStatement instanceof PsiExpressionStatement)) {
-        return;
-      }
-      final PsiExpression firstExpression =
-        ((PsiExpressionStatement)firstStatement).getExpression();
-      if (!(firstExpression instanceof PsiMethodCallExpression)) {
-        return;
-      }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)firstExpression;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
+        private void checkBody(PsiCodeBlock body) {
+            final PsiStatement[] statements = body.getStatements();
+            if (statements.length == 0) {
+                return;
+            }
+            final PsiStatement firstStatement = statements[0];
+            if (!(firstStatement instanceof PsiExpressionStatement)) {
+                return;
+            }
+            final PsiExpression firstExpression =
+                    ((PsiExpressionStatement)firstStatement).getExpression();
+            if (!(firstExpression instanceof PsiMethodCallExpression)) {
+                return;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression)firstExpression;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
             @NonNls final String methodName =
                     methodExpression.getReferenceName();
             if (!HardcodedMethodConstants.NOTIFY.equals(methodName) &&
                     !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
-        return;
-      }
+                return;
+            }
             final PsiExpressionList argumentList =
                     methodCallExpression.getArgumentList();
-      if (argumentList.getExpressions().length != 0) {
-        return;
-      }
-      registerMethodCallError(methodCallExpression);
+            if (argumentList.getExpressions().length != 0) {
+                return;
+            }
+            registerMethodCallError(methodCallExpression);
+        }
     }
-  }
 }

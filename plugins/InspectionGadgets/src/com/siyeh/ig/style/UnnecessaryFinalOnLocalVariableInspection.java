@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,9 @@ public class UnnecessaryFinalOnLocalVariableInspection
         return GroupNames.STYLE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiModifierList modifierList =
-                (PsiModifierList)location.getParent();
-        assert modifierList != null;
-        final PsiVariable parameter = (PsiVariable)modifierList.getParent();
-        assert parameter != null;
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiVariable parameter = (PsiVariable)infos[0];
         final String parameterName = parameter.getName();
         return InspectionGadgetsBundle.message(
                 "unnecessary.final.on.local.variable.problem.descriptor",
@@ -94,7 +91,7 @@ public class UnnecessaryFinalOnLocalVariableInspection
             }
             final PsiLocalVariable variable1 =
                     (PsiLocalVariable)statement.getDeclaredElements()[0];
-            registerModifierError(PsiModifier.FINAL, variable1);
+            registerModifierError(PsiModifier.FINAL, variable1, variable1);
         }
 
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
@@ -112,7 +109,8 @@ public class UnnecessaryFinalOnLocalVariableInspection
                 }
                 if (!VariableAccessUtils.variableIsUsedInInnerClass(
                         parameter, catchBlock)) {
-                    registerModifierError(PsiModifier.FINAL, parameter);
+                    registerModifierError(PsiModifier.FINAL, parameter,
+                            parameter);
                 }
             }
         }
@@ -127,7 +125,7 @@ public class UnnecessaryFinalOnLocalVariableInspection
                     statement)) {
                 return;
             }
-            registerModifierError(PsiModifier.FINAL, parameter);
+            registerModifierError(PsiModifier.FINAL, parameter, parameter);
         }
     }
 }

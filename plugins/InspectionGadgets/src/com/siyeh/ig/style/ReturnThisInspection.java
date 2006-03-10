@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,40 +19,47 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReturnThisInspection extends ExpressionInspection {
 
-  public String getID() {
-    return "ReturnOfThis";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.STYLE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ReturnThisVisitor();
-  }
-
-  private static class ReturnThisVisitor extends BaseInspectionVisitor {
-
-    public void visitThisExpression(@NotNull PsiThisExpression thisValue) {
-      super.visitThisExpression(thisValue);
-      if (thisValue.getQualifier() != null) {
-        return;
-      }
-      PsiElement parent = thisValue.getParent();
-      while (parent != null &&
-             (parent instanceof PsiParenthesizedExpression ||
-              parent instanceof PsiConditionalExpression ||
-              parent instanceof PsiTypeCastExpression)) {
-        parent = parent.getParent();
-      }
-      if (parent == null || !(parent instanceof PsiReturnStatement)) {
-        return;
-      }
-      registerError(thisValue);
+    public String getID() {
+        return "ReturnOfThis";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.STYLE_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "return.this.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ReturnThisVisitor();
+    }
+
+    private static class ReturnThisVisitor extends BaseInspectionVisitor {
+
+        public void visitThisExpression(@NotNull PsiThisExpression thisValue) {
+            super.visitThisExpression(thisValue);
+            if (thisValue.getQualifier() != null) {
+                return;
+            }
+            PsiElement parent = thisValue.getParent();
+            while (parent != null &&
+                    (parent instanceof PsiParenthesizedExpression ||
+                            parent instanceof PsiConditionalExpression ||
+                            parent instanceof PsiTypeCastExpression)) {
+                parent = parent.getParent();
+            }
+            if (parent == null || !(parent instanceof PsiReturnStatement)) {
+                return;
+            }
+            registerError(thisValue);
+        }
+    }
 }

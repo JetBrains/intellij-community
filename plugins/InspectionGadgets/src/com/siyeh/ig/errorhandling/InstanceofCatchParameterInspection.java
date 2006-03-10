@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,40 +20,49 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceofCatchParameterInspection extends ExpressionInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.ERRORHANDLING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new InstanceofCatchParameterVisitor();
-  }
-
-  private static class InstanceofCatchParameterVisitor extends BaseInspectionVisitor {
-
-    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression exp) {
-      super.visitInstanceOfExpression(exp);
-      if (!ControlFlowUtils.isInCatchBlock(exp)) {
-        return;
-      }
-
-      final PsiExpression operand = exp.getOperand();
-      if (!(operand instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression ref = (PsiReferenceExpression)operand;
-      final PsiElement referent = ref.resolve();
-      if (!(referent instanceof PsiParameter)) {
-        return;
-      }
-      if (!(((PsiParameter)referent).getDeclarationScope() instanceof PsiCatchSection)) {
-        return;
-      }
-      registerError(exp);
+    public String getGroupDisplayName() {
+        return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "instanceof.catch.parameter.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new InstanceofCatchParameterVisitor();
+    }
+
+    private static class InstanceofCatchParameterVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitInstanceOfExpression(
+                @NotNull PsiInstanceOfExpression exp) {
+            super.visitInstanceOfExpression(exp);
+            if (!ControlFlowUtils.isInCatchBlock(exp)) {
+                return;
+            }
+            final PsiExpression operand = exp.getOperand();
+            if (!(operand instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiReferenceExpression ref = (PsiReferenceExpression)operand;
+            final PsiElement referent = ref.resolve();
+            if (!(referent instanceof PsiParameter)) {
+                return;
+            }
+            final PsiParameter parameter = (PsiParameter)referent;
+            if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) {
+                return;
+            }
+            registerError(exp);
+        }
+
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,16 +47,19 @@ public class ParameterNamingConventionInspection extends ConventionInspection {
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiParameter param = (PsiParameter) location.getParent();
-        assert param != null;
-        final String paramName = param.getName();
-        if (paramName.length() < getMinLength()) {
-            return InspectionGadgetsBundle.message("parameter.naming.convention.problem.descriptor.short");
-        } else if (paramName.length() > getMaxLength()) {
-            return InspectionGadgetsBundle.message("parameter.naming.convention.problem.descriptor.long");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final String parametername = (String)infos[0];
+        if (parametername.length() < getMinLength()) {
+            return InspectionGadgetsBundle.message(
+                    "parameter.naming.convention.problem.descriptor.short");
+        } else if (parametername.length() > getMaxLength()) {
+            return InspectionGadgetsBundle.message(
+                    "parameter.naming.convention.problem.descriptor.long");
         } else {
-            return InspectionGadgetsBundle.message("parameter.naming.convention.problem.descriptor.regex.mismatch", getRegex());
+            return InspectionGadgetsBundle.message(
+                    "parameter.naming.convention.problem.descriptor.regex.mismatch",
+                    getRegex());
         }
     }
 
@@ -104,7 +107,7 @@ public class ParameterNamingConventionInspection extends ConventionInspection {
             if (name == null || isValid(name)) {
                 return;
             }
-            registerVariableError(variable);
+            registerVariableError(variable, name);
         }
     }
 }

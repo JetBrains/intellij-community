@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,43 +24,48 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class TestCaseInProductCodeInspection extends ClassInspection {
 
-  private final MoveClassFix fix = new MoveClassFix();
-
-  public String getID() {
-    return "JUnitTestCaseInProductSource";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.JUNIT_GROUP_NAME;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new TestCaseInProductCodeVisitor();
-  }
-
-  private static class TestCaseInProductCodeVisitor extends BaseInspectionVisitor {
-
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (TestUtils.isTest(aClass)) {
-        return;
-      }
-      if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
-        return;
-      }
-      registerClassError(aClass);
+    public String getID() {
+        return "JUnitTestCaseInProductSource";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.JUNIT_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "test.case.in.product.code.problem.descriptor");
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new MoveClassFix();
+    }
+
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+        return true;
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new TestCaseInProductCodeVisitor();
+    }
+
+    private static class TestCaseInProductCodeVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            if (TestUtils.isTest(aClass)) {
+                return;
+            }
+            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+                return;
+            }
+            registerClassError(aClass);
+        }
+    }
 }

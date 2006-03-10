@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,6 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
      */
     public boolean m_ignorePrimitives = false;
 
-    private final MakeInitializerExplicitFix fix =
-            new MakeInitializerExplicitFix();
-
     public String getID(){
         return "InstanceVariableMayNotBeInitialized";
     }
@@ -55,28 +52,25 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
         return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiElement parent = location.getParent();
-        if (parent instanceof PsiField) {
-            final PsiField field = (PsiField)parent;
-            final PsiClass containingClass = field.getContainingClass();
-            if (TestUtils.isJUnitTestClass(containingClass)) {
-      return InspectionGadgetsBundle.message(
-                        "instance.Variable.may.not.be.initialized.problem.descriptor.junit");
-            }
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final Boolean junitTestCase = (Boolean)infos[0];
+        if (junitTestCase.booleanValue()) {
+            return InspectionGadgetsBundle.message(
+                    "instance.Variable.may.not.be.initialized.problem.descriptor.junit");
         }
         return InspectionGadgetsBundle.message(
-              "instance.variable.may.not.be.initialized.problem.descriptor");
+                "instance.variable.may.not.be.initialized.problem.descriptor");
     }
 
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
-                                              this, "m_ignorePrimitives");
+                this, "m_ignorePrimitives");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new MakeInitializerExplicitFix();
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -122,14 +116,14 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
             }
             final PsiMethod[] constructors = aClass.getConstructors();
             if(constructors.length == 0){
-                registerFieldError(field);
+                registerFieldError(field, Boolean.FALSE);
                 return;
             }
             for(final PsiMethod constructor : constructors){
                 final PsiCodeBlock body = constructor.getBody();
                 if(!InitializationUtils.blockAssignsVariableOrFails(body,
                         field)) {
-                    registerFieldError(field);
+                    registerFieldError(field, Boolean.FALSE);
                     return;
                 }
             }
@@ -146,7 +140,7 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
                     field)) {
                 return;
             }
-            registerFieldError(field);
+            registerFieldError(field, Boolean.TRUE);
         }
 
         @Nullable

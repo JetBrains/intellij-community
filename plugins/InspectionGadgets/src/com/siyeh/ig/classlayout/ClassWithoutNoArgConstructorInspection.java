@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,15 @@ public class ClassWithoutNoArgConstructorInspection extends ClassInspection {
 
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message("class.without.no.arg.constructor.ignore.option"),
+                InspectionGadgetsBundle.message(
+                        "class.without.no.arg.constructor.ignore.option"),
                 this, "m_ignoreClassesWithNoConstructors");
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "class.without.no.arg.constructor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -55,8 +62,7 @@ public class ClassWithoutNoArgConstructorInspection extends ClassInspection {
                     aClass.isAnnotationType()) {
                 return;
             }
-            if (aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiAnonymousClass) {
+            if (aClass instanceof PsiTypeParameter) {
                 return;
             }
             if (m_ignoreClassesWithNoConstructors &&

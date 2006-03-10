@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
@@ -29,32 +28,38 @@ import org.jetbrains.annotations.NotNull;
 
 public class EmptySynchronizedStatementInspection extends StatementInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new EmptySynchronizedStatementVisitor();
-  }
-
-  private static class EmptySynchronizedStatementVisitor extends StatementInspectionVisitor {
-
-    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
-      super.visitSynchronizedStatement(statement);
-
-      if (PsiUtil.isInJspFile(statement.getContainingFile())) {
-        return;
-      }
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length > 0) {
-        return;
-      }
-      registerStatementError(statement);
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
     }
 
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "empty.synchronized.statement.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new EmptySynchronizedStatementVisitor();
+    }
+
+    private static class EmptySynchronizedStatementVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitSynchronizedStatement(
+                @NotNull PsiSynchronizedStatement statement) {
+            super.visitSynchronizedStatement(statement);
+            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+                return;
+            }
+            final PsiCodeBlock body = statement.getBody();
+            if (body == null) {
+                return;
+            }
+            final PsiStatement[] statements = body.getStatements();
+            if (statements.length > 0) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+    }
 }

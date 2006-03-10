@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,54 +43,38 @@ public class ForLoopWithMissingComponentInspection extends StatementInspection {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiJavaToken forToken = (PsiJavaToken)location;
-        final PsiForStatement forStatement =
-                (PsiForStatement)forToken.getParent();
-        boolean hasInitializer = false;
-        int count = 0;
-        if (!hasInitializer(forStatement)) {
-            hasInitializer = true;
-            count++;
-        }
-        boolean hasCondition = false;
-        if (!hasCondition(forStatement)) {
-            hasCondition = true;
-            count++;
-        }
-        if (!hasUpdate(forStatement)) {
-            count++;
-        }
-        if (count == 1) {
-            if (hasInitializer){
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final boolean hasInitializer = ((Boolean)infos[0]).booleanValue();
+        final boolean hasCondition = ((Boolean)infos[1]).booleanValue();
+        final boolean hasUpdate = ((Boolean)infos[2]).booleanValue();
+        if (hasInitializer) {
+            if (hasCondition) {
                 return InspectionGadgetsBundle.message(
-                        "for.loop.with.missing.component.problem.descriptor1");
-            } else if (hasCondition){
+                        "for.loop.with.missing.component.problem.descriptor3");
+            } else if (hasUpdate) {
                 return InspectionGadgetsBundle.message(
                         "for.loop.with.missing.component.problem.descriptor2");
             } else {
                 return InspectionGadgetsBundle.message(
-                        "for.loop.with.missing.component.problem.descriptor3");
-            }
-        } else if (count == 2) {
-            if (hasInitializer){
-                if (hasCondition){
-                    return InspectionGadgetsBundle.message(
-                            "for.loop.with.missing.component.problem.descriptor4");
-                } else {
-                    return InspectionGadgetsBundle.message(
-                            "for.loop.with.missing.component.problem.descriptor5");
-                }
-            } else {
-                return InspectionGadgetsBundle.message(
                         "for.loop.with.missing.component.problem.descriptor6");
             }
+        } else if (hasCondition) {
+            if (hasUpdate) {
+                return InspectionGadgetsBundle.message(
+                        "for.loop.with.missing.component.problem.descriptor1");
+            } else {
+                return InspectionGadgetsBundle.message(
+                        "for.loop.with.missing.component.problem.descriptor5");
+            }
+        } else if (hasUpdate) {
+            return InspectionGadgetsBundle.message(
+                    "for.loop.with.missing.component.problem.descriptor4");
         } else {
             return InspectionGadgetsBundle.message(
                     "for.loop.with.missing.component.problem.descriptor7");
         }
     }
-
 
     @Nullable
     public JComponent createOptionsPanel() {
@@ -108,14 +92,17 @@ public class ForLoopWithMissingComponentInspection extends StatementInspection {
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
-            if (hasCondition(statement) && hasInitializer(statement)
-                    && hasUpdate(statement)) {
+            final boolean hasCondition = hasCondition(statement);
+            final boolean hasInitializer = hasInitializer(statement);
+            final boolean hasUpdate = hasUpdate(statement);
+            if (hasCondition && hasInitializer && hasUpdate) {
                 return;
             }
             if (ignoreCollectionLoops && isCollectionLoopStatement(statement)) {
                 return;
             }
-            registerStatementError(statement);
+            registerStatementError(statement, Boolean.valueOf(hasInitializer),
+                    Boolean.valueOf(hasCondition), Boolean.valueOf(hasUpdate));
         }
     }
 

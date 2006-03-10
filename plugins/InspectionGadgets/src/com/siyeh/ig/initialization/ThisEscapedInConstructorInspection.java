@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,18 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("this.reference.escaped.in.construction.display.name");
+        return InspectionGadgetsBundle.message(
+                "this.reference.escaped.in.construction.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("this.reference.escaped.in.construction.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "this.reference.escaped.in.construction.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -52,31 +55,33 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             extends BaseInspectionVisitor{
 
         public void visitNewExpression(
-                @NotNull PsiNewExpression psiNewExpression){
-            super.visitNewExpression(psiNewExpression);
+                @NotNull PsiNewExpression newExpression){
+            super.visitNewExpression(newExpression);
             final boolean isInInitialization =
-                    checkForInitialization(psiNewExpression);
+                    checkForInitialization(newExpression);
             if(!isInInitialization){
                 return;
             }
-            if(psiNewExpression.getClassReference() == null){
+            if(newExpression.getClassReference() == null){
                 return;
             }
             final PsiThisExpression thisExposed =
-                    checkArgumentsForThis(psiNewExpression);
+                    checkArgumentsForThis(newExpression);
             if(thisExposed == null){
                 return;
             }
             final PsiJavaCodeReferenceElement refElement =
-                    psiNewExpression.getClassReference();
+                    newExpression.getClassReference();
             if(refElement != null){
                 final PsiClass constructorClass =
                         (PsiClass) refElement.resolve();
                 if(constructorClass != null){
                     // Skips inner classes and containing classes (as well as
                     // top level package class with file-named class)
-                    if(constructorClass.getContainingFile()
-                            .equals(psiNewExpression.getContainingFile())){
+                    final PsiFile containingFile =
+                            constructorClass.getContainingFile();
+                    if(containingFile.equals(
+                            newExpression.getContainingFile())){
                         return;
                     }
                 }
@@ -119,8 +124,8 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             if(field == null){
                 return;
             }
-            if(field.getContainingFile()
-                    .equals(assignment.getContainingFile())){
+            final PsiFile containingFile = field.getContainingFile();
+            if(containingFile.equals(assignment.getContainingFile())){
                 return;
             }
 
@@ -145,9 +150,6 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             }
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
             final PsiMethod calledMethod = call.resolveMethod();
             if(calledMethod == null){
                 return;

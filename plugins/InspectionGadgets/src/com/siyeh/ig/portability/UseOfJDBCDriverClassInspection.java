@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,70 +26,64 @@ import org.jetbrains.annotations.NotNull;
 public class UseOfJDBCDriverClassInspection extends VariableInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("use.of.concrete.jdbc.driver.class.display.name");
+        return InspectionGadgetsBundle.message(
+                "use.of.concrete.jdbc.driver.class.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.PORTABILITY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("use.of.concrete.jdbc.driver.class.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "use.of.concrete.jdbc.driver.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new UseOfJDBCDriverClassVisitor();
     }
 
-    private static class UseOfJDBCDriverClassVisitor extends BaseInspectionVisitor {
+    private static class UseOfJDBCDriverClassVisitor
+            extends BaseInspectionVisitor {
        
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiType type = variable.getType();
-            if (type == null) {
-                return;
-            }
-
             if (!(type instanceof PsiClassType)) {
                 return;
             }
             final PsiType deepComponentType = type.getDeepComponentType();
-            if (deepComponentType == null) {
-                return;
-            }
             if(!(deepComponentType instanceof PsiClassType)) {
                 return;
             }
-            final PsiClass resolveClass = ((PsiClassType) deepComponentType).resolve();
-            if(resolveClass == null)
-            {
+            final PsiClassType classType = (PsiClassType)deepComponentType;
+            final PsiClass resolveClass = classType.resolve();
+            if(resolveClass == null) {
                 return;
             }
-            if(resolveClass.isEnum()||resolveClass.isInterface() || resolveClass.isAnnotationType())
-            {
+            if(resolveClass.isEnum()||resolveClass.isInterface() ||
+                    resolveClass.isAnnotationType()) {
                 return;
             }
-            if(resolveClass instanceof PsiTypeParameter ||
-                    resolveClass instanceof PsiAnonymousClass){
+            if(resolveClass instanceof PsiTypeParameter){
                 return;
             }
-            if(!ClassUtils.isSubclass(resolveClass, "java.sql.Driver"))
-            {
+            if(!ClassUtils.isSubclass(resolveClass, "java.sql.Driver")) {
                 return;
             }
-
             final PsiTypeElement typeElement = variable.getTypeElement();
             registerError(typeElement);
         }
 
-        public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
+        public void visitNewExpression(
+                @NotNull PsiNewExpression newExpression) {
             super.visitNewExpression(newExpression);
             final PsiType type = newExpression.getType();
             if (type == null) {
                 return;
             }
-            if(!(type instanceof PsiClassType))
-            {
+            if(!(type instanceof PsiClassType)) {
                 return;
             }
             final PsiClass resolveClass = ((PsiClassType) type).resolve();
@@ -100,17 +94,15 @@ public class UseOfJDBCDriverClassInspection extends VariableInspection {
                     resolveClass.isAnnotationType()) {
                 return;
             }
-            if(resolveClass instanceof PsiTypeParameter ||
-                    resolveClass instanceof PsiAnonymousClass){
+            if(resolveClass instanceof PsiTypeParameter){
                 return;
             }
             if(!ClassUtils.isSubclass(resolveClass, "java.sql.Driver")) {
                 return;
             }
-            final PsiJavaCodeReferenceElement classNameElement = newExpression.getClassReference();
+            final PsiJavaCodeReferenceElement classNameElement =
+                    newExpression.getClassReference();
             registerError(classNameElement);
         }
-
     }
-
 }

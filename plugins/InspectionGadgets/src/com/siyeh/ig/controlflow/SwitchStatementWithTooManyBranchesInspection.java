@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,16 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSwitchStatement;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class SwitchStatementWithTooManyBranchesInspection
         extends StatementInspection {
@@ -50,14 +49,12 @@ public class SwitchStatementWithTooManyBranchesInspection
                 this, "m_limit");
     }
 
-    protected String buildErrorString(PsiElement location) {
-        final PsiSwitchStatement statement =
-                (PsiSwitchStatement)location.getParent();
-        assert statement != null;
-        final int numBranches = SwitchUtils.calculateBranchCount(statement);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        final Integer branchCount = (Integer)infos[0];
         return InspectionGadgetsBundle.message(
                 "if.statement.with.too.many.branches.problem.descriptor",
-                numBranches);
+                branchCount);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -67,16 +64,17 @@ public class SwitchStatementWithTooManyBranchesInspection
     private class SwitchStatementWithTooManyBranchesVisitor
             extends StatementInspectionVisitor {
 
-        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+        public void visitSwitchStatement(
+                @NotNull PsiSwitchStatement statement) {
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {
                 return;
             }
-            final int numBranches = SwitchUtils.calculateBranchCount(statement);
-            if (numBranches <= m_limit) {
+            final int branchCount = SwitchUtils.calculateBranchCount(statement);
+            if (branchCount <= m_limit) {
                 return;
             }
-            registerStatementError(statement);
+            registerStatementError(statement, Integer.valueOf(branchCount));
         }
     }
 }

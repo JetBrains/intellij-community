@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,84 +31,91 @@ import org.jetbrains.annotations.NonNls;
 
 public class SetupCallsSuperSetupInspection extends MethodInspection {
 
-  private final AddSuperSetUpCall fix = new AddSuperSetUpCall();
-
-  public String getID() {
-    return "SetUpDoesntCallSuperSetUp";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.JUNIT_GROUP_NAME;
-  }
-
-  private static class AddSuperSetUpCall extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("setup.calls.super.setup.add.quickfix");
+    public String getID() {
+        return "SetUpDoesntCallSuperSetUp";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement methodName = descriptor.getPsiElement();
-      final PsiMethod method = (PsiMethod)methodName.getParent();
-      assert method != null;
-      final PsiCodeBlock body = method.getBody();
-      final PsiManager psiManager = PsiManager.getInstance(project);
-      final PsiElementFactory factory =
-        psiManager.getElementFactory();
-      final PsiStatement newStatement =
-        factory.createStatementFromText("super.setUp();", null);
-      final CodeStyleManager styleManager =
-        psiManager.getCodeStyleManager();
-      final PsiJavaToken brace = body.getLBrace();
-      body.addAfter(newStatement, brace);
-      styleManager.reformat(body);
+    public String getGroupDisplayName() {
+        return GroupNames.JUNIT_GROUP_NAME;
     }
-  }
 
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new SetupCallsSuperSetupVisitor();
-  }
-
-  private static class SetupCallsSuperSetupVisitor
-    extends BaseInspectionVisitor {
-    public void visitMethod(@NotNull PsiMethod method) {
-      //note: no call to super;
-      @NonNls final String methodName = method.getName();
-      if (!"setUp".equals(methodName)) {
-        return;
-      }
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (method.getBody() == null) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList == null) {
-        return;
-      }
-      if (parameterList.getParameters().length != 0) {
-        return;
-      }
-
-      final PsiClass targetClass = method.getContainingClass();
-      if (targetClass == null) {
-        return;
-      }
-      if (!ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
-        return;
-      }
-      final CallToSuperSetupVisitor visitor =
-        new CallToSuperSetupVisitor();
-      method.accept(visitor);
-      if (visitor.isCallToSuperSetupFound()) {
-        return;
-      }
-      registerMethodError(method);
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "setup.calls.super.setup.problem.descriptor");
     }
-  }
+
+    private static class AddSuperSetUpCall extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "setup.calls.super.setup.add.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement methodName = descriptor.getPsiElement();
+            final PsiMethod method = (PsiMethod)methodName.getParent();
+            assert method != null;
+            final PsiCodeBlock body = method.getBody();
+            if (body == null) {
+                return;
+            }
+            final PsiManager psiManager = PsiManager.getInstance(project);
+            final PsiElementFactory factory =
+                    psiManager.getElementFactory();
+            final PsiStatement newStatement =
+                    factory.createStatementFromText("super.setUp();", null);
+            final CodeStyleManager styleManager =
+                    psiManager.getCodeStyleManager();
+            final PsiJavaToken brace = body.getLBrace();
+            body.addAfter(newStatement, brace);
+            styleManager.reformat(body);
+        }
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new AddSuperSetUpCall();
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new SetupCallsSuperSetupVisitor();
+    }
+
+    private static class SetupCallsSuperSetupVisitor
+            extends BaseInspectionVisitor {
+        
+        public void visitMethod(@NotNull PsiMethod method) {
+            //note: no call to super;
+            @NonNls final String methodName = method.getName();
+            if (!"setUp".equals(methodName)) {
+                return;
+            }
+            if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            if (method.getBody() == null) {
+                return;
+            }
+            final PsiParameterList parameterList = method.getParameterList();
+            if (parameterList.getParameters().length != 0) {
+                return;
+            }
+            final PsiClass targetClass = method.getContainingClass();
+            if (targetClass == null) {
+                return;
+            }
+            if (!ClassUtils.isSubclass(targetClass,
+                    "junit.framework.TestCase")) {
+                return;
+            }
+            final CallToSuperSetupVisitor visitor =
+                    new CallToSuperSetupVisitor();
+            method.accept(visitor);
+            if (visitor.isCallToSuperSetupFound()) {
+                return;
+            }
+            registerMethodError(method);
+        }
+    }
 }

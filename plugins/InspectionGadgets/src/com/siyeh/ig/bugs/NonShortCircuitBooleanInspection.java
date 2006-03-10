@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,41 +28,49 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NonShortCircuitBooleanInspection extends ExpressionInspection {
+
     public String getID(){
         return "NonShortCircuitBooleanExpression";
     }
-    private final InspectionGadgetsFix fix = new NonShortCircuitBooleanFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.display.name");
+        return InspectionGadgetsBundle.message(
+                "non.short.circuit.boolean.expression.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "non.short.circuit.boolean.expression.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new NonShortCircuitBooleanFix();
     }
 
-    private static class NonShortCircuitBooleanFix extends InspectionGadgetsFix {
+    private static class NonShortCircuitBooleanFix
+            extends InspectionGadgetsFix {
+
         public String getName() {
-            return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.replace.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "non.short.circuit.boolean.expression.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
-            final PsiBinaryExpression expression = (PsiBinaryExpression) descriptor.getPsiElement();
+                throws IncorrectOperationException{
+            final PsiBinaryExpression expression =
+                    (PsiBinaryExpression) descriptor.getPsiElement();
             final PsiExpression lhs = expression.getLOperand();
             final PsiExpression rhs = expression.getROperand();
             final PsiJavaToken operationSign = expression.getOperationSign();
             final IElementType tokenType = operationSign.getTokenType();
             assert rhs != null;
-            final String newExpression = lhs.getText() + getShortCircuitOperand(tokenType) + rhs.getText();
+            final String newExpression = lhs.getText() +
+                    getShortCircuitOperand(tokenType) + rhs.getText();
             replaceExpression(expression, newExpression);
         }
 
@@ -74,20 +82,22 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
                 return "||";
             }
         }
+
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new NonShortCircuitBooleanVisitor();
     }
 
-    private static class NonShortCircuitBooleanVisitor extends BaseInspectionVisitor {
+    private static class NonShortCircuitBooleanVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!(expression.getROperand() != null)){
                 return;
             }
-
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.AND) &&

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 public class ClassWithoutLoggerInspection extends ClassInspection {
+
     /** @noinspection PublicField*/
     public String loggerClassName = "java.util.logging.Logger";
 
@@ -41,12 +42,17 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
         return GroupNames.LOGGING_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message("no.logger.problem.descriptor");
+    }
 
     public JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
 
-        final JLabel classNameLabel = new JLabel(InspectionGadgetsBundle.message("logger.name.option"));
+        final JLabel classNameLabel = new JLabel(
+                InspectionGadgetsBundle.message("logger.name.option"));
         classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
         final JTextField loggerClassNameField = new JTextField();
@@ -55,8 +61,8 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
         loggerClassNameField.setText(loggerClassName);
         loggerClassNameField.setColumns(100);
         loggerClassNameField.setInputVerifier(new RegExInputVerifier());
-
         final DocumentListener listener = new DocumentListener() {
+
             public void changedUpdate(DocumentEvent e) {
                 textChanged();
             }
@@ -73,9 +79,9 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
                 loggerClassName =  loggerClassNameField.getText();
             }
         };
-        final Document loggerClassNameDocument = loggerClassNameField.getDocument();
+        final Document loggerClassNameDocument =
+                loggerClassNameField.getDocument();
         loggerClassNameDocument.addDocumentListener(listener);
-
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
         constraints.gridy = 0;
@@ -91,9 +97,6 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
 
         return panel;
     }
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("no.logger.problem.descriptor");
-    }
 
     public BaseInspectionVisitor buildVisitor() {
         return new ClassWithoutLoggerVisitor();
@@ -103,21 +106,19 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             //no recursion to avoid drilldown
-            if(aClass.isInterface() || aClass.isEnum()|| aClass.isAnnotationType())
-            {
+            if(aClass.isInterface() || aClass.isEnum()||
+                    aClass.isAnnotationType()){
                 return;
             }
-            if(aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiAnonymousClass){
+            if(aClass instanceof PsiTypeParameter) {
                 return;
             }
-            if(aClass.getContainingClass()!=null)
-            {
+            if(aClass.getContainingClass()!=null) {
                 return;
             }
             final PsiField[] fields = aClass.getFields();
-            for(PsiField field : fields){
-                if(isLogger(field)){
+            for(PsiField field : fields) {
+                if(isLogger(field)) {
                     return;
                 }
             }
@@ -129,7 +130,5 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
             final String text = type.getCanonicalText();
             return text.equals(loggerClassName);
         }
-
     }
-
 }

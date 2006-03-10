@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringBufferReplaceableByStringInspection
         extends ExpressionInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.display.name");
+        return InspectionGadgetsBundle.message(
+                "string.buffer.replaceable.by.string.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "string.buffer.replaceable.by.string.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -93,7 +97,8 @@ public class StringBufferReplaceableByStringInspection
             return visitor.isModified();
         }
 
-        private static boolean isNewStringBufferOrStringBuilder(PsiExpression expression){
+        private static boolean isNewStringBufferOrStringBuilder(
+                PsiExpression expression){
             if(expression == null){
                 return false;
             } else if(expression instanceof PsiNewExpression){
@@ -101,11 +106,12 @@ public class StringBufferReplaceableByStringInspection
             } else if(expression instanceof PsiMethodCallExpression){
                 final PsiMethodCallExpression methodCallExpression =
                         (PsiMethodCallExpression)expression;
-                if (!VariableIsModifiedVisitor.isStringBufferUpdate(methodCallExpression)) {
+                if (!VariableIsModifiedVisitor.isStringBufferUpdate(
+                        methodCallExpression)) {
                     return false;
                 }
                 final PsiReferenceExpression methodExpression =
-                        ((PsiMethodCallExpression) expression).getMethodExpression();
+                        methodCallExpression.getMethodExpression();
                 final PsiExpression qualifier =
                         methodExpression.getQualifierExpression();
                 return isNewStringBufferOrStringBuilder(qualifier);

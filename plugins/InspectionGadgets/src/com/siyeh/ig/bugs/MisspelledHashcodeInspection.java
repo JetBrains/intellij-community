@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,17 +39,14 @@ public class MisspelledHashcodeInspection extends MethodInspection{
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
-        return new RenameFix(HardcodedMethodConstants.HASH_CODE);
-    }
-
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "misspelled.hashcode.problem.descriptor");
     }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
+    protected InspectionGadgetsFix buildFix(PsiElement location){
+        return new RenameFix(HardcodedMethodConstants.HASH_CODE);
     }
 
     public BaseInspectionVisitor buildVisitor(){

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,9 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
         return GroupNames.STYLE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        if (location.getParent() instanceof PsiMethodCallExpression) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        if (infos[0] instanceof PsiMethodCallExpression) {
             return InspectionGadgetsBundle.message(
                     "unqualified.static.usage.problem.descriptor");
         } else {
@@ -133,7 +134,7 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
             if (!isUnqualifiedStaticAccess(methodExpression)) {
                 return;
             }
-            registerError(methodExpression);
+            registerError(methodExpression, expression);
         }
 
         public void visitReferenceExpression(
@@ -154,7 +155,7 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
             if (!isUnqualifiedStaticAccess(expression)) {
                 return;
             }
-            registerError(expression);
+            registerError(expression, expression);
         }
 
         private boolean isUnqualifiedStaticAccess(

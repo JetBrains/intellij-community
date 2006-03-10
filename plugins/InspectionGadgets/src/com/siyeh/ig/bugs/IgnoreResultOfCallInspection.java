@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
             new ArrayList<ReturnCheckSpecification>(32);
     final Object lock = new Object();
 
-    {
+    public IgnoreResultOfCallInspection(){
         parseCallCheckString();
     }
 
@@ -127,6 +127,15 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final PsiClass containingClass = (PsiClass)infos[0];
+        final String className = containingClass.getName();
+        return InspectionGadgetsBundle.message(
+                "result.of.method.call.ignored.problem.descriptor",
+                className);
+    }
+
     public JComponent createOptionsPanel(){
         final Form form = new Form();
         return form.getContentPanel();
@@ -134,21 +143,6 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
 
     public boolean isEnabledByDefault(){
         return true;
-    }
-
-    public String buildErrorString(PsiElement location){
-        final PsiElement parent = location.getParent();
-        assert parent != null;
-        final PsiMethodCallExpression methodCallExpression =
-                (PsiMethodCallExpression) parent.getParent();
-        assert methodCallExpression != null;
-        final PsiMethod method = methodCallExpression.resolveMethod();
-        assert method != null;
-        final PsiClass containingClass = method.getContainingClass();
-        assert containingClass != null;
-        final String className = containingClass.getName();
-        return InspectionGadgetsBundle.message(
-                "result.of.method.call.ignored.problem.descriptor", className);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -160,11 +154,12 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         public void visitExpressionStatement(
                 @NotNull PsiExpressionStatement statement){
             super.visitExpressionStatement(statement);
-            if(!(statement.getExpression() instanceof PsiMethodCallExpression)){
+            final PsiExpression expression = statement.getExpression();
+            if(!(expression instanceof PsiMethodCallExpression)){
                 return;
             }
             final PsiMethodCallExpression call =
-                    (PsiMethodCallExpression) statement.getExpression();
+                    (PsiMethodCallExpression) expression;
             final PsiMethod method = call.resolveMethod();
             if(method == null){
                 return;
@@ -182,7 +177,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
             }
             if(m_reportAllNonLibraryCalls &&
                        !LibraryUtil.classIsInLibrary(aClass)){
-                registerMethodCallError(call);
+                registerMethodCallError(call, aClass);
                 return;
             }
             final PsiReferenceExpression methodExpression =
@@ -202,7 +197,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
                         methodNamesMatch(methodName, methodNamePattern)){
                     final String classNameToCompare = spec.getClassName();
                     if(ClassUtils.isSubclass(aClass, classNameToCompare)){
-                        registerMethodCallError(call);
+                        registerMethodCallError(call, aClass);
                         return;
                     }
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,30 +28,32 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class MethodOverridesPrivateMethodInspection extends MethodInspection{
-    private final RenameFix fix = new RenameFix();
 
     public String getID(){
         return "MethodOverridesPrivateMethodOfSuperclass";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("method.overrides.private.display.name");
+        return InspectionGadgetsBundle.message(
+                "method.overrides.private.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "method.overrides.private.display.name.problem.descriptor");
+    }
+
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
-    }
-
-    public String buildErrorString(PsiElement location){
-      return InspectionGadgetsBundle.message("method.overrides.private.display.name.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

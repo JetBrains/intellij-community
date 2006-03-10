@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,12 @@ public class ReturnNullInspection extends StatementInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "return.of.null.problem.descriptor");
+    }
+
     @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         if (AnnotationUtil.isAnnotatingApplicable(location)) {
@@ -89,11 +95,7 @@ public class ReturnNullInspection extends StatementInspection {
             final CodeStyleManager styleManager = manager.getCodeStyleManager();
             styleManager.shortenClassReferences(modifierList);
         }
-    }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message(
-                "return.of.null.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {

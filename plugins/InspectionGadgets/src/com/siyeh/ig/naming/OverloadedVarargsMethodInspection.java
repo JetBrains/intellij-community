@@ -33,8 +33,9 @@ public class OverloadedVarargsMethodInspection extends MethodInspection {
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiMethod element = (PsiMethod)location.getParent();
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiMethod element = (PsiMethod)infos[0];
         if (element.isConstructor()) {
             return InspectionGadgetsBundle.message(
                     "overloaded.vararg.constructor.problem.descriptor");
@@ -60,15 +61,11 @@ public class OverloadedVarargsMethodInspection extends MethodInspection {
                 return;
             }
             final String methodName = method.getName();
-            final PsiMethod[] sameNameMethods;
-            if (method.isConstructor()) {
-                sameNameMethods = aClass.findMethodsByName(methodName, false);
-            } else {
-                sameNameMethods = aClass.findMethodsByName(methodName, false);
-            }
+            final PsiMethod[] sameNameMethods =
+                    aClass.findMethodsByName(methodName, false);
             for (PsiMethod sameNameMethod : sameNameMethods) {
                 if(!sameNameMethod.equals(method)) {
-                    registerMethodError(method);
+                    registerMethodError(method, method);
                 }
             }
         }

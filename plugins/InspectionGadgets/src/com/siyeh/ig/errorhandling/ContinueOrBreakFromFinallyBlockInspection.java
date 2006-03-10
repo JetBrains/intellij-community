@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,11 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ContinueOrBreakFromFinallyBlockInspection extends StatementInspection {
+public class ContinueOrBreakFromFinallyBlockInspection
+        extends StatementInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.ERRORHANDLING_GROUP_NAME;
@@ -35,18 +37,27 @@ public class ContinueOrBreakFromFinallyBlockInspection extends StatementInspecti
         return true;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "continue.or.break.from.finally.block.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new ContinueOrBreakFromFinallyBlockVisitor();
     }
 
-    private static class ContinueOrBreakFromFinallyBlockVisitor extends StatementInspectionVisitor {
+    private static class ContinueOrBreakFromFinallyBlockVisitor
+            extends StatementInspectionVisitor {
 
-        public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
+        public void visitContinueStatement(
+                @NotNull PsiContinueStatement statement) {
             super.visitContinueStatement(statement);
             if (!ControlFlowUtils.isInFinallyBlock(statement)) {
                 return;
             }
-            final PsiStatement continuedStatement = statement.findContinuedStatement();
+            final PsiStatement continuedStatement =
+                    statement.findContinuedStatement();
             if (continuedStatement == null) {
                 return;
             }

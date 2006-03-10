@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,22 +30,26 @@ public class InstanceofChainInspection extends StatementInspection {
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("chain.of.instanceof.checks.display.name");
+        return InspectionGadgetsBundle.message(
+                "chain.of.instanceof.checks.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
-    protected String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("chain.of.instanceof.checks.problem.descriptor");
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "chain.of.instanceof.checks.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new InstanceofChainVisitor();
     }
 
-    private static class InstanceofChainVisitor extends StatementInspectionVisitor {
+    private static class InstanceofChainVisitor
+            extends StatementInspectionVisitor {
+
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiElement parent = statement.getParent();
@@ -64,7 +68,6 @@ public class InstanceofChainInspection extends StatementInspection {
                     return;
                 }
                 numChecks++;
-
                 final PsiStatement elseBranch = branch.getElseBranch();
                 if (elseBranch instanceof PsiIfStatement) {
                     branch = (PsiIfStatement) elseBranch;
@@ -78,28 +81,35 @@ public class InstanceofChainInspection extends StatementInspection {
             registerStatementError(statement);
         }
 
-        private boolean isInstanceofCheck(PsiExpression condition) {
+        private static boolean isInstanceofCheck(PsiExpression condition) {
             if (condition == null) {
                 return false;
             } else if (condition instanceof PsiInstanceOfExpression) {
                 return true;
             } else if (condition instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) condition;
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) condition;
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 final PsiExpression rhs = binaryExpression.getROperand();
                 return isInstanceofCheck(lhs) && isInstanceofCheck(rhs);
             } else if (condition instanceof PsiParenthesizedExpression) {
-                final PsiExpression contents = ((PsiParenthesizedExpression) condition).getExpression();
+                final PsiParenthesizedExpression parenthesizedExpression =
+                        (PsiParenthesizedExpression)condition;
+                final PsiExpression contents =
+                        parenthesizedExpression.getExpression();
                 return isInstanceofCheck(contents);
             } else if (condition instanceof PsiPrefixExpression) {
-                final PsiExpression contents = ((PsiPrefixExpression) condition).getOperand();
+                final PsiPrefixExpression prefixExpression =
+                        (PsiPrefixExpression)condition;
+                final PsiExpression contents = prefixExpression.getOperand();
                 return isInstanceofCheck(contents);
             } else if (condition instanceof PsiPostfixExpression) {
-                final PsiExpression contents = ((PsiPostfixExpression) condition).getOperand();
+                final PsiPostfixExpression postfixExpression =
+                        (PsiPostfixExpression)condition;
+                final PsiExpression contents = postfixExpression.getOperand();
                 return isInstanceofCheck(contents);
             }
             return false;
         }
-
     }
 }

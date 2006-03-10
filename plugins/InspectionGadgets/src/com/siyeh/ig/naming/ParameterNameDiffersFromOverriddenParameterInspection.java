@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,13 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "parameter.name.differs.from.overridden.parameter.problem.descriptor",
+                infos[0]);
+    }
+
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
@@ -72,38 +79,13 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
             final PsiParameter[] parameters = parameterList.getParameters();
             if (parameters != null) {
                 final String superParameterName = parameters[index].getName();
+                assert superParameterName != null;
                 if (!superParameterName.equals(parameterName)) {
                     return new RenameParameterFix(superParameterName);
                 }
             }
         }
         return null;
-    }
-
-    public String buildErrorString(PsiElement location) {
-        final PsiParameter parameter = (PsiParameter)location.getParent();
-        assert parameter != null;
-        final String parameterName = parameter.getName();
-        final PsiMethod method =
-                PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
-        assert method != null;
-        final PsiMethod[] superMethods = method.findSuperMethods();
-        final PsiParameterList methodParamList = method.getParameterList();
-        final int index = methodParamList.getParameterIndex(parameter);
-        for (final PsiMethod superMethod : superMethods) {
-            final PsiParameterList parameterList =
-                    superMethod.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters != null) {
-                final String superParameterName =
-                        parameters[index].getName();
-                if (!superParameterName.equals(parameterName)) {
-                    return InspectionGadgetsBundle.message(
-                            "parameter.name.differs.from.overridden.parameter.problem.descriptor", superParameterName);
-                }
-            }
-        }
-        return "";// this can't happen
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -116,37 +98,39 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
         public void visitMethod(@NotNull PsiMethod method) {
             final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters == null || parameters.length == 0) {
+            if (parameters.length == 0) {
                 return;
             }
-            final PsiMethod[] superMethods =
-                    method.findSuperMethods();
+            final PsiMethod[] superMethods = method.findSuperMethods();
             if (superMethods.length == 0) {
                 return;
             }
-            for (int i = 0; i < parameters.length; i++) {
-                checkParameter(parameters[i], i, superMethods);
+            for (final PsiMethod superMethod : superMethods) {
+                checkParameters(superMethod, parameters);
             }
         }
 
-        private void checkParameter(PsiParameter parameter, int index,
-                                    PsiMethod[] superMethods) {
-            final String parameterName = parameter.getName();
-            for (final PsiMethod superMethod : superMethods) {
-                final PsiParameterList parameterList =
-                        superMethod.getParameterList();
-                final PsiParameter[] parameters = parameterList.getParameters();
-                if (parameters != null) {
-                    final String superParameterName =
-                            parameters[index].getName();
-                    if (!superParameterName.equals(parameterName)) {
-                        if (!m_ignoreSingleCharacterNames ||
-                            superParameterName.length() != 1) {
-                            registerVariableError(parameter);
-                            return;
-                        }
-                    }
+        private void checkParameters(PsiMethod superMethod,
+                                     PsiParameter[] parameters) {
+            final PsiParameterList superParameterList =
+                    superMethod.getParameterList();
+            final PsiParameter[] superParameters =
+                    superParameterList.getParameters();
+            for (int i = 0; i < parameters.length; i++) {
+                final PsiParameter parameter = parameters[i];
+                final String parameterName = parameter.getName();
+                final String superParameterName = superParameters[i].getName();
+                if (superParameterName == null) {
+                    continue;
                 }
+                if (superParameterName.equals(parameterName)) {
+                    continue;
+                }
+                if (m_ignoreSingleCharacterNames &&
+                        superParameterName.length() == 1) {
+                    continue;
+                }
+                registerVariableError(parameter, superParameterName);
             }
         }
     }

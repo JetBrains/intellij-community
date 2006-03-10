@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryLabelOnContinueStatementInspection
         extends StatementInspection {
 
-    private final UnnecessaryLabelOnContinueStatementFix fix =
-            new UnnecessaryLabelOnContinueStatementFix();
-
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
@@ -42,8 +39,14 @@ public class UnnecessaryLabelOnContinueStatementInspection
         return true;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "unnecessary.label.on.continue.statement.problem.descriptor");
+    }
+
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new UnnecessaryLabelOnContinueStatementFix();
     }
 
     private static class UnnecessaryLabelOnContinueStatementFix
@@ -71,7 +74,9 @@ public class UnnecessaryLabelOnContinueStatementInspection
 
     private static class UnnecessaryLabelOnContinueStatementVisitor
             extends StatementInspectionVisitor {
-        public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
+
+        public void visitContinueStatement(
+                @NotNull PsiContinueStatement statement) {
             final PsiIdentifier labelIdentifier =
                     statement.getLabelIdentifier();
             if (labelIdentifier == null) {
@@ -81,19 +86,19 @@ public class UnnecessaryLabelOnContinueStatementInspection
             if (labelText == null || labelText.length() == 0) {
                 return;
             }
-            final PsiStatement exitedStatement = statement.findContinuedStatement();
+            final PsiStatement exitedStatement =
+                    statement.findContinuedStatement();
             if (exitedStatement == null) {
                 return;
             }
-
-            PsiStatement labelEnabledParent = PsiTreeUtil.getParentOfType(statement,
-                    PsiForStatement.class, PsiDoWhileStatement.class, PsiForeachStatement.class,
-                    PsiWhileStatement.class, PsiSwitchStatement.class);
-
+            final PsiStatement labelEnabledParent =
+                    PsiTreeUtil.getParentOfType(statement,
+                            PsiForStatement.class, PsiDoWhileStatement.class,
+                            PsiForeachStatement.class, PsiWhileStatement.class,
+                            PsiSwitchStatement.class);
             if (labelEnabledParent == null) {
                 return;
             }
-
             if (exitedStatement.equals(labelEnabledParent)) {
                 registerStatementError(statement);
             }

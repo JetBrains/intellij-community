@@ -22,8 +22,9 @@ import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableReturnedVisitor extends PsiRecursiveElementVisitor {
+
     private boolean returned = false;
-    private final @NotNull PsiVariable variable;
+    @NotNull private final PsiVariable variable;
 
     public VariableReturnedVisitor(@NotNull PsiVariable variable) {
         super();
@@ -31,7 +32,8 @@ public class VariableReturnedVisitor extends PsiRecursiveElementVisitor {
     }
 
 
-    public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement){
+    public void visitReturnStatement(
+            @NotNull PsiReturnStatement returnStatement){
         if(returned){
             return;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,23 +27,27 @@ import org.jetbrains.annotations.NotNull;
 public class StaticVariableOfConcreteClassInspection extends FieldInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("static.variable.of.concrete.class.display.name");
+        return InspectionGadgetsBundle.message(
+                "static.variable.of.concrete.class.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
-    public String buildErrorString(Object arg) {
-        return InspectionGadgetsBundle.message("static.variable.of.concrete.class.problem.descriptor", arg);
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "static.variable.of.concrete.class.problem.descriptor",
+                infos[0]);
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new StaticVariableOfConcreteClassVisitor();
     }
 
-    private static class StaticVariableOfConcreteClassVisitor extends BaseInspectionVisitor {
-
+    private static class StaticVariableOfConcreteClassVisitor
+            extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {
             super.visitField(field);
@@ -58,5 +62,4 @@ public class StaticVariableOfConcreteClassInspection extends FieldInspection {
             registerError(typeElement, variableName);
         }
     }
-
 }

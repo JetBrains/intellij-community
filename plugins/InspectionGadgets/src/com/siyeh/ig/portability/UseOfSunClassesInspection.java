@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class UseOfSunClassesInspection extends VariableInspection {
 
@@ -33,16 +33,18 @@ public class UseOfSunClassesInspection extends VariableInspection {
         return GroupNames.PORTABILITY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("use.sun.classes.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "use.sun.classes.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new ObsoleteCollectionVisitor();
     }
 
-    private static class ObsoleteCollectionVisitor extends BaseInspectionVisitor {
-        @NonNls private static final String prefix = "sun.";
+    private static class ObsoleteCollectionVisitor
+            extends BaseInspectionVisitor {
 
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
@@ -54,14 +56,15 @@ public class UseOfSunClassesInspection extends VariableInspection {
             final PsiClassType classType = (PsiClassType) deepComponentType;
             final String className = classType.getCanonicalText();
 
-            if(className == null || !className.startsWith(prefix)) {
+            if(className == null || !className.startsWith("sun.")) {
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
             registerError(typeElement);
         }
 
-        public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
+        public void visitNewExpression(
+                @NotNull PsiNewExpression newExpression) {
             super.visitNewExpression(newExpression);
             final PsiType type = newExpression.getType();
             if (type == null) {
@@ -72,14 +75,13 @@ public class UseOfSunClassesInspection extends VariableInspection {
                 return;
             }
             final PsiClassType classType = (PsiClassType) type;
-            final String className = classType.getCanonicalText();
-            if (className==null || !className.startsWith(prefix)) {
+            @NonNls final String className = classType.getCanonicalText();
+            if (className==null || !className.startsWith("sun.")) {
                 return;
             }
-            final PsiJavaCodeReferenceElement classNameElement = newExpression.getClassReference();
+            final PsiJavaCodeReferenceElement classNameElement =
+                    newExpression.getClassReference();
             registerError(classNameElement);
         }
-
     }
-
 }

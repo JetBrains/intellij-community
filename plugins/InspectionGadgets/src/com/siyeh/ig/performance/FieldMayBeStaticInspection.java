@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,76 +31,81 @@ import org.jetbrains.annotations.NotNull;
 
 public class FieldMayBeStaticInspection extends FieldInspection {
 
-  private final MakeStaticFix fix = new MakeStaticFix();
-
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new FieldMayBeStaticVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class MakeStaticFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("make.static.quickfix");
+    public String getGroupDisplayName() {
+        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiJavaToken m_fieldNameToken =
-        (PsiJavaToken)descriptor.getPsiElement();
-      final PsiField field = (PsiField)m_fieldNameToken.getParent();
-      assert field != null;
-      final PsiModifierList modifiers = field.getModifierList();
-      modifiers.setModifierProperty(PsiModifier.STATIC, true);
-    }
-  }
-
-  private static class FieldMayBeStaticVisitor extends BaseInspectionVisitor {
-
-    public void visitField(@NotNull PsiField field) {
-      if (field.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      final PsiExpression initializer = field.getInitializer();
-      if (initializer == null) {
-        return;
-      }
-      if (SideEffectChecker.mayHaveSideEffects(initializer)) {
-        return;
-      }
-      if (!canBeStatic(initializer)) {
-        return;
-      }
-      final PsiType type = field.getType();
-
-      if (!ClassUtils.isImmutable(type)) {
-        return;
-      }
-      PsiClass containingClass = field.getContainingClass();
-      if (containingClass != null
-          && !containingClass.hasModifierProperty(PsiModifier.STATIC)
-          && containingClass.getContainingClass() != null
-          && !PsiUtil.isCompileTimeConstant(field)) {
-        // inner class cannot have static declarations
-        return;
-      }
-      registerFieldError(field);
+    public BaseInspectionVisitor buildVisitor() {
+        return new FieldMayBeStaticVisitor();
     }
 
-    private static boolean canBeStatic(PsiExpression initializer) {
-      final CanBeStaticVisitor canBeStaticVisitor =
-        new CanBeStaticVisitor();
-      initializer.accept(canBeStaticVisitor);
-      return canBeStaticVisitor.canBeStatic();
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "field.may.be.static.problem.descriptor");
     }
-  }
+
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new MakeStaticFix();
+    }
+
+    private static class MakeStaticFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message("make.static.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiJavaToken m_fieldNameToken =
+                    (PsiJavaToken)descriptor.getPsiElement();
+            final PsiField field = (PsiField)m_fieldNameToken.getParent();
+            assert field != null;
+            final PsiModifierList modifiers = field.getModifierList();
+            modifiers.setModifierProperty(PsiModifier.STATIC, true);
+        }
+    }
+
+    private static class FieldMayBeStaticVisitor extends BaseInspectionVisitor {
+
+        public void visitField(@NotNull PsiField field) {
+            if (field.hasModifierProperty(PsiModifier.STATIC)) {
+                return;
+            }
+            if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+                return;
+            }
+            final PsiExpression initializer = field.getInitializer();
+            if (initializer == null) {
+                return;
+            }
+            if (SideEffectChecker.mayHaveSideEffects(initializer)) {
+                return;
+            }
+            if (!canBeStatic(initializer)) {
+                return;
+            }
+            final PsiType type = field.getType();
+
+            if (!ClassUtils.isImmutable(type)) {
+                return;
+            }
+            final PsiClass containingClass = field.getContainingClass();
+            if (containingClass != null
+                    && !containingClass.hasModifierProperty(PsiModifier.STATIC)
+                    && containingClass.getContainingClass() != null
+                    && !PsiUtil.isCompileTimeConstant(field)) {
+                // inner class cannot have static declarations
+                return;
+            }
+            registerFieldError(field);
+        }
+
+        private static boolean canBeStatic(PsiExpression initializer) {
+            final CanBeStaticVisitor canBeStaticVisitor =
+                    new CanBeStaticVisitor();
+            initializer.accept(canBeStaticVisitor);
+            return canBeStaticVisitor.canBeStatic();
+        }
+    }
 }

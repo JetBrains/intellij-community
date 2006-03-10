@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,12 @@ public class PublicConstructorInNonPublicClassInspection
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiModifierList modifiers = (PsiModifierList)location.getParent();
-        assert modifiers != null;
-        final PsiMethod meth = (PsiMethod)modifiers.getParent();
-        assert meth != null;
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiMethod method = (PsiMethod)infos[0];
         return InspectionGadgetsBundle.message(
-                "public.constructor.in.non.public.class.problem.descriptor", meth.getName());
+                "public.constructor.in.non.public.class.problem.descriptor",
+                method.getName());
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -75,7 +74,7 @@ public class PublicConstructorInNonPublicClassInspection
                     return;
                 }
             }
-            registerModifierError(PsiModifier.PUBLIC, method);
+            registerModifierError(PsiModifier.PUBLIC, method, method);
         }
     }
 }

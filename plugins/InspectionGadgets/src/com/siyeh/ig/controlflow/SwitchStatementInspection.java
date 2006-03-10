@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SwitchStatementInspection extends StatementInspection {
@@ -28,13 +29,21 @@ public class SwitchStatementInspection extends StatementInspection {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "statement.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new SwitchStatementVisitor();
     }
 
-    private static class SwitchStatementVisitor extends StatementInspectionVisitor {
+    private static class SwitchStatementVisitor
+            extends StatementInspectionVisitor {
 
-        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+        public void visitSwitchStatement(
+                @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             registerStatementError(statement);
         }

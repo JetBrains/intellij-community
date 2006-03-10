@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,35 +28,33 @@ import org.jetbrains.annotations.NotNull;
 public class AssignmentToDateFieldFromParameterInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("assignment.to.date.calendar.field.from.parameter.display.name");
+        return InspectionGadgetsBundle.message(
+                "assignment.to.date.calendar.field.from.parameter.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.ENCAPSULATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiAssignmentExpression assignment = (PsiAssignmentExpression) location.getParent();
-        assert assignment != null;
-        final PsiExpression lhs = assignment.getLExpression();
-        final PsiExpression rhs = assignment.getRExpression();
-        final PsiElement element = ((PsiReference) lhs).resolve();
-
-        final PsiField field = (PsiField) element;
-        assert field != null;
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiField field = (PsiField) infos[0];
+        final PsiExpression rhs = (PsiExpression)infos[1];
         final PsiType type = field.getType();
-        assert rhs != null;
-        return InspectionGadgetsBundle
-          .message("assignment.to.date.calendar.field.from.parameter.problem.descriptor", type.getPresentableText(), rhs.getText());
+        return InspectionGadgetsBundle.message(
+                "assignment.to.date.calendar.field.from.parameter.problem.descriptor",
+                type.getPresentableText(), rhs.getText());
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new AssignmentToDateFieldFromParameterVisitor();
     }
 
-    private static class AssignmentToDateFieldFromParameterVisitor extends BaseInspectionVisitor {
+    private static class AssignmentToDateFieldFromParameterVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
@@ -71,7 +69,8 @@ public class AssignmentToDateFieldFromParameterInspection extends ExpressionInsp
                 return;
             }
             if (!TypeUtils.expressionHasTypeOrSubtype("java.util.Date", lhs)
-                    && !TypeUtils.expressionHasTypeOrSubtype("java.util.Calendar", lhs)) {
+                    && !TypeUtils.expressionHasTypeOrSubtype(
+                    "java.util.Calendar", lhs)) {
                 return;
             }
             final PsiElement lhsReferent = ((PsiReference) lhs).resolve();
@@ -89,8 +88,7 @@ public class AssignmentToDateFieldFromParameterInspection extends ExpressionInsp
             if (!(rhsReferent.getParent() instanceof PsiParameterList)) {
                 return;
             }
-            registerError(lhs);
+            registerError(lhs, lhsReferent, rhs);
         }
     }
-
 }

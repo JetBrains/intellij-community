@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,9 +63,10 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         final String replacementString =
-                calculateReplacementExpression(location);
+                calculateReplacementExpression((PsiElement)infos[0]);
         return InspectionGadgetsBundle.message(
                 "unnecessary.temporary.on.conversion.from.string.problem.descriptor",
                 replacementString);
@@ -213,7 +214,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
             if (!mappingMethod.equals(methodName)) {
                 return;
             }
-            registerError(expression);
+            registerError(expression, expression);
         }
     }
 }

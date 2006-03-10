@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
+
+    /** @noinspection PublicField*/
     public boolean m_ignoreExpressionsContainingConstants = false;
 
     static final Set<String> bitwiseTokens =
@@ -48,31 +50,36 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
         bitwiseTokens.add(">>>");
     }
 
-    public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message("pointless.bitwise.expression.ignore.option.label"),                this, "m_ignoreExpressionsContainingConstants");
-    }
-
-    private final PointlessBitwiseFix fix = new PointlessBitwiseFix();
-
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("pointless.bitwise.expression.display.name");
+        return InspectionGadgetsBundle.message(
+                "pointless.bitwise.expression.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BITWISE_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final String replacementExpression =
+                calculateReplacementExpression((PsiExpression)infos[0]);
+        return InspectionGadgetsBundle.message(
+                "pointless.bitwise.expression.problem.descriptor",
+                replacementExpression);
+    }
+
     public boolean isEnabledByDefault(){
         return true;
     }
 
-    public String buildErrorString(PsiElement location){
-      return InspectionGadgetsBundle
-        .message("pointless.bitwise.expression.problem.descriptor", calculateReplacementExpression((PsiExpression)location));
+    public JComponent createOptionsPanel(){
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "pointless.bitwise.expression.ignore.option.label"),
+                this, "m_ignoreExpressionsContainingConstants");
     }
 
-    private String calculateReplacementExpression(PsiExpression expression){
+    String calculateReplacementExpression(PsiExpression expression){
         final PsiBinaryExpression exp = (PsiBinaryExpression) expression;
         final PsiExpression lhs = exp.getLOperand();
         final PsiExpression rhs = exp.getROperand();
@@ -116,12 +123,14 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new PointlessBitwiseFix();
     }
 
     private class PointlessBitwiseFix extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("pointless.bitwise.expression.simplify.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "pointless.bitwise.expression.simplify.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -132,6 +141,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
                     calculateReplacementExpression(expression);
             replaceExpression(expression, newExpression);
         }
+
     }
 
     private class PointlessBitwiseVisitor extends BaseInspectionVisitor{
@@ -153,7 +163,6 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
             if(rhs == null){
                 return;
             }
-
             final PsiType rhsType = rhs.getType();
             if(rhsType == null){
                 return;
@@ -191,7 +200,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
             if(!isPointless){
                 return;
             }
-            registerError(expression);
+            registerError(expression, expression);
         }
 
         private boolean andExpressionIsPointless(PsiExpression lhs,
@@ -229,8 +238,8 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
                 && !(expression instanceof PsiLiteralExpression)){
             return false;
         }
-        final Object value = ConstantExpressionUtil
-                .computeCastTo(expression, expressionType);
+        final Object value =
+                ConstantExpressionUtil.computeCastTo(expression, expressionType);
         if(value == null){
             return false;
         }
@@ -254,8 +263,8 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
                 && !(expression instanceof PsiLiteralExpression)){
             return false;
         }
-        final Object value = ConstantExpressionUtil
-                .computeCastTo(expression, expressionType);
+        final Object value =
+                ConstantExpressionUtil.computeCastTo(expression, expressionType);
         if(value == null){
             return false;
         }

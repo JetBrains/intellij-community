@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,46 +24,50 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class MisspelledSetUpInspection extends MethodInspection {
 
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return new RenameFix("setUp");
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.JUNIT_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new MisspelledSetUpVisitor();
-  }
-
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  private static class MisspelledSetUpVisitor extends BaseInspectionVisitor {
-
-    public void visitMethod(@NotNull PsiMethod method) {
-      //note: no call to super
-      final PsiClass aClass = method.getContainingClass();
-      @NonNls final String methodName = method.getName();
-      if (!"setup".equals(methodName)) {
-        return;
-      }
-      if (aClass == null) {
-        return;
-      }
-      if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
-        return;
-      }
-
-      registerMethodError(method);
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RenameFix("setUp");
     }
 
+    public String getGroupDisplayName() {
+        return GroupNames.JUNIT_GROUP_NAME;
+    }
 
-  }
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "misspelled.set.up.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new MisspelledSetUpVisitor();
+    }
+
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+        return true;
+    }
+
+    private static class MisspelledSetUpVisitor extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            //note: no call to super
+            final PsiClass aClass = method.getContainingClass();
+            @NonNls final String methodName = method.getName();
+            if (!"setup".equals(methodName)) {
+                return;
+            }
+            if (aClass == null) {
+                return;
+            }
+            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+                return;
+            }
+            registerMethodError(method);
+        }
+    }
 }

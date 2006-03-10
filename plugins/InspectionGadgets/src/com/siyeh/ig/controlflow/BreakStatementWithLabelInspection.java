@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiIdentifier;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class BreakStatementWithLabelInspection extends StatementInspection {
@@ -29,15 +30,23 @@ public class BreakStatementWithLabelInspection extends StatementInspection {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "break.statement.with.label.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new BreakStatementWithLabelVisitor();
     }
 
-    private static class BreakStatementWithLabelVisitor extends StatementInspectionVisitor {
+    private static class BreakStatementWithLabelVisitor
+            extends StatementInspectionVisitor {
 
         public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
             super.visitBreakStatement(statement);
-            final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
+            final PsiIdentifier labelIdentifier =
+                    statement.getLabelIdentifier();
             if (labelIdentifier == null) {
                 return;
             }

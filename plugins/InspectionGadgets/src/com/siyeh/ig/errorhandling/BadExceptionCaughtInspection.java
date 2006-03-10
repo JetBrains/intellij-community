@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,20 +89,23 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
         return "ProhibitedExceptionCaught";
     }
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("bad.exception.caught.display.name");
+        return InspectionGadgetsBundle.message(
+                "bad.exception.caught.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "bad.exception.caught.problem.descriptor");
+    }
+
     public JComponent createOptionsPanel() {
         final Form form = new Form();
         return form.getContentPanel();
-    }
-
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("bad.exception.caught.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -114,15 +117,13 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
 
             super.visitTryStatement(statement);
-            final PsiParameter[] catchBlockParameters = statement.getCatchBlockParameters();
+            final PsiParameter[] catchBlockParameters =
+                    statement.getCatchBlockParameters();
             for(final PsiParameter parameter : catchBlockParameters){
                 if(parameter == null){
                     continue;
                 }
                 final PsiType type = parameter.getType();
-                if(type == null){
-                    continue;
-                }
                 final String text = type.getCanonicalText();
                 if(text == null){
                     continue;
@@ -134,7 +135,8 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
                 }
                 for(String exceptionClass : exceptionListCopy){
                     if(text.equals(exceptionClass)){
-                        final PsiTypeElement typeElement = parameter.getTypeElement();
+                        final PsiTypeElement typeElement =
+                                parameter.getTypeElement();
                         registerError(typeElement);
                     }
                 }
@@ -244,5 +246,4 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
             }
         }
     }
-
 }

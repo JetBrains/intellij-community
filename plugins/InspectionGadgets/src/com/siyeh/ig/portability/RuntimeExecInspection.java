@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +24,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class RuntimeExecInspection extends ExpressionInspection {
-    public String getID(){
+
+    public String getID() {
         return "CallToRuntimeExec";
     }
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("runtime.exec.call.display.name");
+        return InspectionGadgetsBundle.message(
+                "runtime.exec.call.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.PORTABILITY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("runtime.exec.call.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "runtime.exec.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -45,12 +50,11 @@ public class RuntimeExecInspection extends ExpressionInspection {
 
     private static class RuntimeExecVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
-                return;
-            }
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
             @NonNls final String exec = "exec";
             if (!exec.equals(methodName)) {
@@ -72,5 +76,4 @@ public class RuntimeExecInspection extends ExpressionInspection {
             registerMethodCallError(expression);
         }
     }
-
 }

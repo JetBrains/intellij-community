@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class ThreadDumpStackInspection extends ExpressionInspection {
+
     public String getID(){
         return "CallToThreadDumpStack";
     }
@@ -36,8 +37,10 @@ public class ThreadDumpStackInspection extends ExpressionInspection {
         return GroupNames.MATURITY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("dumpstack.call.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "dumpstack.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -46,23 +49,19 @@ public class ThreadDumpStackInspection extends ExpressionInspection {
 
     private static class ThreadDumpStackVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final String methodName = MethodCallUtils.getMethodName(expression);
             if (!HardcodedMethodConstants.DUMP_STACKTRACE.equals(methodName)) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
-            if (argumentList == null) {
-                return;
-            }
             if (argumentList.getExpressions().length != 0) {
                 return;
             }
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
-                return;
-            }
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
             final PsiElement element = methodExpression.resolve();
             if (!(element instanceof PsiMethod)) {
                 return;
@@ -79,7 +78,5 @@ public class ThreadDumpStackInspection extends ExpressionInspection {
             }
             registerMethodCallError(expression);
         }
-
     }
-
 }

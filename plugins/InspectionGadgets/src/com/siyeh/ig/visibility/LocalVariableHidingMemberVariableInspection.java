@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ public class LocalVariableHidingMemberVariableInspection
     public boolean m_ignoreInvisibleFields = true;
     /** @noinspection PublicField*/
     public boolean m_ignoreStaticMethods = true;
-    private final RenameFix fix = new RenameFix();
 
     public String getID(){
         return "LocalVariableHidesMemberVariable";
@@ -52,14 +51,15 @@ public class LocalVariableHidingMemberVariableInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "local.variable.hides.member.variable.problem.descriptor");
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,17 +31,16 @@ public class UnsecureRandomNumberGenerationInspection
         return GroupNames.SECURITY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        @NonNls final String text = location.getText();
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        @NonNls final String text = ((PsiElement)infos[0]).getText();
         if ("random".equals(text)) {
             return InspectionGadgetsBundle.message(
                     "unsecure.random.number.generation.problem.descriptor1");
-        }
-        else if ("Random".equals(text)) {
+        } else if ("Random".equals(text)) {
             return InspectionGadgetsBundle.message(
                     "unsecure.random.number.generation.problem.descriptor2");
-        }
-        else {
+        } else {
             return InspectionGadgetsBundle.message(
                     "unsecure.random.number.generation.problem.descriptor3");
         }
@@ -73,7 +72,7 @@ public class UnsecureRandomNumberGenerationInspection
             if ("java.security.SecureRandom".equals(qualifiedName)) {
                 return;
             }
-            registerError(reference);
+            registerError(reference, reference);
         }
 
         public void visitMethodCallExpression(
@@ -98,7 +97,7 @@ public class UnsecureRandomNumberGenerationInspection
             if (!"java.lang.Math".equals(className)) {
                 return;
             }
-            registerMethodCallError(expression);
+            registerMethodCallError(expression, expression);
         }
     }
 }

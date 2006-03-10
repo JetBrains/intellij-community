@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,51 +21,59 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SynchronizeOnLockInspection extends MethodInspection {
 
-  public String getID() {
-    return "SynchroniziationOnLockObject";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new SynchronizeOnLockVisitor();
-  }
-
-  private static class SynchronizeOnLockVisitor extends BaseInspectionVisitor {
-
-
-    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
-      super.visitSynchronizedStatement(statement);
-      final PsiExpression lockExpression = statement.getLockExpression();
-      if (lockExpression == null) {
-        return;
-      }
-      final PsiType type = lockExpression.getType();
-      if (type == null) {
-        return;
-      }
-      final PsiManager manager = lockExpression.getManager();
-      final Project project = manager.getProject();
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      final PsiClass javaUtilLockClass =
-        manager.findClass("java.util.concurrent.locks.Lock", scope);
-      if (javaUtilLockClass == null) {
-        return;
-      }
-      final PsiElementFactory elementFactory =
-        manager.getElementFactory();
-      final PsiClassType javaUtilLockType =
-        elementFactory.createType(javaUtilLockClass);
-      if (!javaUtilLockType.isAssignableFrom(type)) {
-        return;
-      }
-      registerError(lockExpression);
+    public String getID() {
+        return "SynchroniziationOnLockObject";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "synchronize.on.lock.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new SynchronizeOnLockVisitor();
+    }
+
+    private static class SynchronizeOnLockVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitSynchronizedStatement(
+                @NotNull PsiSynchronizedStatement statement) {
+            super.visitSynchronizedStatement(statement);
+            final PsiExpression lockExpression = statement.getLockExpression();
+            if (lockExpression == null) {
+                return;
+            }
+            final PsiType type = lockExpression.getType();
+            if (type == null) {
+                return;
+            }
+            final PsiManager manager = lockExpression.getManager();
+            final Project project = manager.getProject();
+            final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+            final PsiClass javaUtilLockClass =
+                    manager.findClass("java.util.concurrent.locks.Lock", scope);
+            if (javaUtilLockClass == null) {
+                return;
+            }
+            final PsiElementFactory elementFactory =
+                    manager.getElementFactory();
+            final PsiClassType javaUtilLockType =
+                    elementFactory.createType(javaUtilLockClass);
+            if (!javaUtilLockType.isAssignableFrom(type)) {
+                return;
+            }
+            registerError(lockExpression);
+        }
+    }
 }

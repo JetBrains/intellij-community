@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,10 +56,9 @@ public class PointlessArithmeticExpressionInspection
                 this, "m_ignoreExpressionsContainingConstants");
     }
 
-    private final PointlessArithmeticFix fix = new PointlessArithmeticFix();
-
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("pointless.arithmetic.expression.display.name");
+        return InspectionGadgetsBundle.message(
+                "pointless.arithmetic.expression.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -70,12 +69,14 @@ public class PointlessArithmeticExpressionInspection
         return true;
     }
 
-    public String buildErrorString(PsiElement location){
+    @NotNull
+    public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle
-          .message("expression.can.be.replaced.problem.descriptor", calculateReplacementExpression((PsiExpression)location));
+          .message("expression.can.be.replaced.problem.descriptor",
+                  calculateReplacementExpression((PsiExpression)infos[0]));
     }
 
-    private String calculateReplacementExpression(
+    String calculateReplacementExpression(
             PsiExpression expression){
         final PsiBinaryExpression exp = (PsiBinaryExpression) expression;
         final PsiJavaToken sign = exp.getOperationSign();
@@ -111,18 +112,20 @@ public class PointlessArithmeticExpressionInspection
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new PointlessArithmeticFix();
     }
 
     private class PointlessArithmeticFix extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "constant.conditional.expression.simplify.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
-            final PsiExpression expression = (PsiExpression) descriptor
-                    .getPsiElement();
+            final PsiExpression expression =
+                    (PsiExpression) descriptor.getPsiElement();
             final String newExpression =
                     calculateReplacementExpression(expression);
             replaceExpression(expression, newExpression);
@@ -170,7 +173,6 @@ public class PointlessArithmeticExpressionInspection
             if(!isPointless){
                 return;
             }
-
             final PsiType expressionType = expression.getType();
             if (expressionType == null ||
                     !expressionType.equals(rhs.getType()) ||
@@ -179,52 +181,53 @@ public class PointlessArithmeticExpressionInspection
                 // 'int sum = 5, n = 6; float p = (1.0f * sum) / n;'
                 return;
             }
-
-            registerError(expression);
+            registerError(expression, expression);
         }
-    }
 
-    private  boolean subtractionExpressionIsPointless(PsiExpression rhs){
-        return isZero(rhs);
-    }
+        private  boolean subtractionExpressionIsPointless(PsiExpression rhs){
+            return isZero(rhs);
+        }
 
-    private  boolean additionExpressionIsPointless(PsiExpression lhs,
-                                                         PsiExpression rhs){
-        return isZero(lhs) || isZero(rhs);
-    }
+        private  boolean additionExpressionIsPointless(PsiExpression lhs,
+                                                       PsiExpression rhs){
+            return isZero(lhs) || isZero(rhs);
+        }
 
-    private  boolean multiplyExpressionIsPointless(PsiExpression lhs,
-                                                         PsiExpression rhs){
-        return isZero(lhs) || isZero(rhs) || isOne(lhs) || isOne(rhs);
-    }
+        private  boolean multiplyExpressionIsPointless(PsiExpression lhs,
+                                                       PsiExpression rhs){
+            return isZero(lhs) || isZero(rhs) || isOne(lhs) || isOne(rhs);
+        }
 
-    private  boolean divideExpressionIsPointless(PsiExpression rhs){
-        return isOne(rhs);
+        private  boolean divideExpressionIsPointless(PsiExpression rhs){
+            return isOne(rhs);
+        }
     }
 
     /**
      * @noinspection FloatingPointEquality
      */
-    private boolean isZero(PsiExpression expression){
+    boolean isZero(PsiExpression expression){
         if(m_ignoreExpressionsContainingConstants &&
                 !(expression instanceof PsiLiteralExpression)){
             return false;
         }
-        final Double value= (Double) ConstantExpressionUtil
-                .computeCastTo(expression, PsiType.DOUBLE);
-        return value != null && value == 0.0;
+        final Double value= (Double)
+                ConstantExpressionUtil.computeCastTo(
+                        expression, PsiType.DOUBLE);
+        return value != null && value.doubleValue() == 0.0;
     }
 
     /**
      * @noinspection FloatingPointEquality
      */
-    private boolean isOne(PsiExpression expression){
+    boolean isOne(PsiExpression expression){
         if(m_ignoreExpressionsContainingConstants &&
                 !(expression instanceof PsiLiteralExpression)){
             return false;
         }
-        final Double value = (Double) ConstantExpressionUtil
-                .computeCastTo(expression, PsiType.DOUBLE);
-        return value != null && value == 1.0;
+        final Double value = (Double)
+                ConstantExpressionUtil.computeCastTo(
+                        expression, PsiType.DOUBLE);
+        return value != null && value.doubleValue() == 1.0;
     }
 }

@@ -42,8 +42,8 @@ public class LoopConditionNotUpdatedInsideLoopInspection
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "loop.condition.not.updated.inside.loop.problem.descriptor");
     }
@@ -77,7 +77,7 @@ public class LoopConditionNotUpdatedInsideLoopInspection
             final List<PsiExpression> notUpdated =
                     new SmartList<PsiExpression>();
             if (checkCondition(condition, statement, notUpdated)) {
-                if (notUpdated.size() == 0) {
+                if (notUpdated.isEmpty()) {
                     // condition involves only final variables and/or constants,
                     // flag the whole condition
                     // Maybe this should show a different error message, like

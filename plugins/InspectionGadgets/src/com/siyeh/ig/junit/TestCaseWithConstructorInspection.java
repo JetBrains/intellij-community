@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class TestCaseWithConstructorInspection extends ClassInspection {
 
@@ -39,9 +38,9 @@ public class TestCaseWithConstructorInspection extends ClassInspection {
         return GroupNames.JUNIT_GROUP_NAME;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
-        if (location instanceof PsiJavaToken) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        if (Boolean.TRUE.equals(infos[0])) {
             return InspectionGadgetsBundle.message(
                     "test.case.with.constructor.problem.descriptor.initializer");
         } else {
@@ -70,15 +69,16 @@ public class TestCaseWithConstructorInspection extends ClassInspection {
             if (isTrivial(body)) {
                 return;
             }
-            registerMethodError(method);
+            registerMethodError(method, Boolean.FALSE);
         }
 
         public void visitClassInitializer(PsiClassInitializer initializer) {
             if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            if (initializer.getParent() instanceof PsiClass &&
-                !TestUtils.isJUnitTestClass((PsiClass) initializer.getParent())) {
+            final PsiElement parent = initializer.getParent();
+            if (parent instanceof PsiClass &&
+                !TestUtils.isJUnitTestClass((PsiClass) parent)) {
                 return;
             }
             final PsiCodeBlock body = initializer.getBody();
@@ -86,7 +86,7 @@ public class TestCaseWithConstructorInspection extends ClassInspection {
                 return;
             }
             final PsiJavaToken leftBrace = body.getLBrace();
-            registerError(leftBrace);
+            registerError(leftBrace, Boolean.TRUE);
         }
 
         private static boolean isTrivial(PsiCodeBlock codeBlock) {

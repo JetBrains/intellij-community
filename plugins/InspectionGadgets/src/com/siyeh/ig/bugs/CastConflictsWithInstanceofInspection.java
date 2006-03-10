@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,20 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("cast.conflicts.with.instanceof.display.name");
+        return InspectionGadgetsBundle.message(
+                "cast.conflicts.with.instanceof.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("cast.conflicts.with.instanceof.problem.descriptor");
+    @NotNull
+    public String buildErrorString(Object... infos){
+        return InspectionGadgetsBundle.message(
+                "cast.conflicts.with.instanceof.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -43,10 +47,10 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
 
     private static class CastConflictsWithInstanceofVisitor
             extends BaseInspectionVisitor{
+
         public void visitTypeCastExpression(
                 @NotNull PsiTypeCastExpression expression){
             super.visitTypeCastExpression(expression);
-
             final PsiTypeElement castTypeElement = expression.getCastType();
             if(castTypeElement == null){
                 return;
@@ -64,8 +68,9 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
             }
             boolean hasConflictingInstanceof = false;
             boolean hasConfirmingInstanceof = false;
-            PsiIfStatement currentStatement = PsiTreeUtil
-                    .getParentOfType(expression, PsiIfStatement.class);
+            PsiIfStatement currentStatement =
+                    PsiTreeUtil.getParentOfType(expression,
+                            PsiIfStatement.class);
             while(currentStatement != null){
                 if(!isInElse(expression, currentStatement)){
                     final PsiExpression condition = currentStatement
@@ -82,9 +87,9 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
                         }
                     }
                 }
-                currentStatement = PsiTreeUtil
-                        .getParentOfType(currentStatement,
-                                         PsiIfStatement.class);
+                currentStatement =
+                        PsiTreeUtil.getParentOfType(currentStatement,
+                                PsiIfStatement.class);
             }
             if(hasConflictingInstanceof && !hasConfirmingInstanceof){
                 registerError(castTypeElement);
@@ -94,19 +99,18 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
         private static boolean isInElse(PsiExpression expression,
                                  PsiIfStatement statement){
             final PsiStatement branch = statement.getElseBranch();
-            if(branch == null)
-            {
+            if(branch == null){
                 return false;
             }
             return PsiTreeUtil.isAncestor(branch, expression, true);
         }
 
-        private boolean isConflicting(PsiInstanceOfExpression condition,
-                                      PsiExpression operand,
-                                      PsiType castType){
+        private static boolean isConflicting(PsiInstanceOfExpression condition,
+                                             PsiExpression operand,
+                                             PsiType castType){
             final PsiExpression conditionOperand = condition.getOperand();
-            if(!EquivalenceChecker
-                    .expressionsAreEquivalent(operand, conditionOperand)){
+            if(!EquivalenceChecker.expressionsAreEquivalent(operand,
+                    conditionOperand)){
                 return false;
             }
             final PsiTypeElement typeElement = condition.getCheckType();
@@ -117,21 +121,21 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
             return !castType.isAssignableFrom(type);
         }
 
-        private boolean isConfirming(PsiInstanceOfExpression condition,
-                                     PsiExpression operand,
-                                     PsiType castType){
+        private static boolean isConfirming(PsiInstanceOfExpression condition,
+                                            PsiExpression operand,
+                                            PsiType castType){
             final PsiExpression conditionOperand = condition.getOperand();
-            if(!EquivalenceChecker
-                    .expressionsAreEquivalent(operand, conditionOperand)){
+            if(!EquivalenceChecker.expressionsAreEquivalent(operand,
+                    conditionOperand)){
                 return false;
             }
-
             final PsiTypeElement typeElement = condition.getCheckType();
             if(typeElement == null){
                 return false;
             }
             final PsiType type = typeElement.getType();
-            return castType.isAssignableFrom(type);   //TODO: should this take inheritance into account
+            //TODO: should this take inheritance into account
+            return castType.isAssignableFrom(type);
         }
     }
 }

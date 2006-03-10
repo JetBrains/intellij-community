@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantDeclaredInInterfaceInspection extends FieldInspection {
@@ -28,11 +29,18 @@ public class ConstantDeclaredInInterfaceInspection extends FieldInspection {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
+    @NotNull
+    protected String buildErrorString(Object... infos) {
+        return InspectionGadgetsBundle.message(
+                "constant.declared.in.interface.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new ConstantDeclaredInInterfaceVisitor();
     }
 
-    private static class ConstantDeclaredInInterfaceVisitor extends BaseInspectionVisitor {
+    private static class ConstantDeclaredInInterfaceVisitor
+            extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {
             //no call to super, so we don't drill into anonymous classes
@@ -40,7 +48,8 @@ public class ConstantDeclaredInInterfaceInspection extends FieldInspection {
             if (containingClass == null) {
                 return;
             }
-            if (!containingClass.isInterface() && !containingClass.isAnnotationType()) {
+            if (!containingClass.isInterface() &&
+                    !containingClass.isAnnotationType()) {
                 return;
             }
             registerFieldError(field);

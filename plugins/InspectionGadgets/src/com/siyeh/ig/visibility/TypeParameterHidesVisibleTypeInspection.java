@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,13 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterHidesVisibleTypeInspection extends ClassInspection{
-    private final RenameFix fix = new RenameFix();
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("type.parameter.hides.visible.type.display.name");
+        return InspectionGadgetsBundle.message(
+                "type.parameter.hides.visible.type.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -35,24 +36,19 @@ public class TypeParameterHidesVisibleTypeInspection extends ClassInspection{
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
 
-    public String buildErrorString(PsiElement location){
-        final PsiTypeParameter parameter = (PsiTypeParameter) location.getParent();
-        assert parameter != null;
-        final PsiManager manager = parameter.getManager();
-        final PsiFile containingFile = parameter.getContainingFile();
-        final PsiResolveHelper resolveHelper = manager.getResolveHelper();
-        final String unqualifiedClassName = parameter.getName();
-        final PsiClass aClass =
-                resolveHelper.resolveReferencedClass(unqualifiedClassName,
-                                                     containingFile);
-        return InspectionGadgetsBundle.message("type.parameter.hides.visible.type.problem.descriptor", aClass .getQualifiedName());
+    @NotNull
+    public String buildErrorString(Object... infos){
+        final PsiClass aClass = (PsiClass)infos[0];
+        return InspectionGadgetsBundle.message(
+                "type.parameter.hides.visible.type.problem.descriptor",
+                aClass.getQualifiedName());
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -76,7 +72,7 @@ public class TypeParameterHidesVisibleTypeInspection extends ClassInspection{
                 return;
             }
             final PsiIdentifier identifier = parameter.getNameIdentifier();
-            registerError(identifier);
+            registerError(identifier, aClass);
         }
     }
 }

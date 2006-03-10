@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 class CallToSuperSetupVisitor extends PsiRecursiveElementVisitor{
+
     private boolean callToSuperSetupFound = false;
 
     public void visitElement(@NotNull PsiElement element){
@@ -28,16 +29,14 @@ class CallToSuperSetupVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+    public void visitMethodCallExpression(
+            @NotNull PsiMethodCallExpression expression){
         if(callToSuperSetupFound){
             return;
         }
         super.visitMethodCallExpression(expression);
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        if(methodExpression == null){
-            return;
-        }
         @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"setUp".equals(methodName)){
             return;

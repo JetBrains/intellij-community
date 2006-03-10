@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,13 +42,14 @@ public class StringEqualityInspection extends ExpressionInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-
-    public String buildErrorString(PsiElement location) {
+    @NotNull
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.comparison.problem.descriptor");
+    }
+
+    public boolean isEnabledByDefault(){
+        return true;
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -67,7 +68,7 @@ public class StringEqualityInspection extends ExpressionInspection {
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final PsiElement comparisonToken = descriptor.getPsiElement();
             final PsiBinaryExpression expression =
                     (PsiBinaryExpression) comparisonToken.getParent();
@@ -109,6 +110,7 @@ public class StringEqualityInspection extends ExpressionInspection {
             }
             replaceExpression(expression, newExpression);
         }
+
     }
 
     private static class ObjectEqualityVisitor extends BaseInspectionVisitor {

@@ -45,8 +45,9 @@ public class IndexOfReplaceableByContainsInspection
         return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiBinaryExpression expression = (PsiBinaryExpression)location;
+    @NotNull
+    public String buildErrorString(Object... infos) {
+        final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
         final PsiExpression lhs = expression.getLOperand();
         final PsiJavaToken sign = expression.getOperationSign();
         final String text;

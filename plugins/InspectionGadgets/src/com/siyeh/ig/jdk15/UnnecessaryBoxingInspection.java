@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,6 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
     @NonNls static final Map<String, String> s_boxingArgs =
             new HashMap<String, String>(9);
 
-    private final UnnecessaryBoxingFix fix = new UnnecessaryBoxingFix();
-
     static {
         s_boxingArgs.put("java.lang.Integer", "int");
         s_boxingArgs.put("java.lang.Short", "short");
@@ -65,8 +63,8 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
         return true;
     }
 
-    @Nullable
-    protected String buildErrorString(PsiElement location) {
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.boxing.problem.descriptor");
     }
@@ -76,10 +74,11 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new UnnecessaryBoxingFix();
     }
 
     private static class UnnecessaryBoxingFix extends InspectionGadgetsFix {
+
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unnecessary.boxing.remove.quickfix");
@@ -115,9 +114,6 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
 
     private static class UnnecessaryBoxingVisitor
             extends BaseInspectionVisitor {
-
-        @NonNls
-        private static final String VALUE_OF = "valueOf";
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             final PsiManager manager = expression.getManager();
@@ -182,8 +178,9 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             }
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
+            @NonNls
             final String referenceName = methodExpression.getReferenceName();
-            if (referenceName == null || !referenceName.equals(VALUE_OF)) {
+            if (referenceName == null || !referenceName.equals("valueOf")) {
                 return;
             }
             final PsiExpression qualifierExpression =
