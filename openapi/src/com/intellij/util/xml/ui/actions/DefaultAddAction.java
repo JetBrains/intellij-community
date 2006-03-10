@@ -43,14 +43,13 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
 
   protected abstract DomCollectionChildDescription getDomCollectionChildDescription();
 
-  protected abstract T getParentDomElement();
+  protected abstract DomElement getParentDomElement();
 
   protected boolean beforeAddition() {
     return true;
   }
 
   protected void afterAddition(final AnActionEvent e, DomElement newElement) {
-
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -62,7 +61,6 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
               result.setResult(doAdd());
             }
           }.execute().getResultObject();
-
           afterAddition(e, newElement);
         }
       }

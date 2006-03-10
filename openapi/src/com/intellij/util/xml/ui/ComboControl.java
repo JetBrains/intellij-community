@@ -44,7 +44,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
     myDataFactory = createEnumFactory(aClass);
   }
 
-  private static Factory<List<String>> createEnumFactory(final Class<? extends Enum> aClass) {
+  static Factory<List<String>> createEnumFactory(final Class<? extends Enum> aClass) {
     return new Factory<List<String>>() {
       public List<String> create() {
         return ContainerUtil.map2List(aClass.getEnumConstants(), new Function<Enum, String>() {
@@ -54,12 +54,6 @@ public class ComboControl extends BaseControl<JComboBox, String> {
         });
       }
     };
-  }
-
-  public static <T extends Enum> DefaultCellEditor createTableCellEditor(final Class<T> type) {
-    final DefaultCellEditor defaultCellEditor = new DefaultCellEditor(createEnumComboBox(type));
-    defaultCellEditor.setClickCountToStart(2);
-    return defaultCellEditor;
   }
 
   public static <T extends Enum> JComboBox createEnumComboBox(final Class<T> type) {
@@ -80,7 +74,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
     });
   }
 
-  private static JComboBox initComboBox(final JComboBox comboBox, final Condition<String> validity) {
+  static JComboBox initComboBox(final JComboBox comboBox, final Condition<String> validity) {
     comboBox.setEditable(false);
     comboBox.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

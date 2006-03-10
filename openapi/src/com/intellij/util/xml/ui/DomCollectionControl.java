@@ -329,7 +329,7 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     return (DomEditorManager)component;
   }
 
-  public class ControlAddAction extends DefaultAddAction<DomElement> {
+  public class ControlAddAction extends DefaultAddAction<T> {
 
     public ControlAddAction() {
     }
@@ -342,21 +342,19 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
       super(text, description, icon);
     }
 
-
-    protected DomCollectionChildDescription getDomCollectionChildDescription() {
+    protected final DomCollectionChildDescription getDomCollectionChildDescription() {
       return myChildDescription;
     }
 
-    protected DomElement getParentDomElement() {
+    protected final DomElement getParentDomElement() {
       return myParentDomElement;
     }
-
 
     protected void afterAddition(final JTable table, final int rowIndex) {
       table.setRowSelectionInterval(rowIndex, rowIndex);
     }
 
-    protected void afterAddition(final AnActionEvent e, final DomElement newElement) {
+    protected final void afterAddition(final AnActionEvent e, final DomElement newElement) {
       if (newElement != null) {
         reset();
         afterAddition(myCollectionPanel.getTable(), myData.size() - 1);
