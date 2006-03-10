@@ -37,15 +37,19 @@ public class CompilerConfigurable implements SearchableConfigurable, ProjectComp
   }
 
   public boolean isModified() {
-    return myDelegateConfigurable.isModified();
+    return myDelegateConfigurable != null && myDelegateConfigurable.isModified();
   }
 
   public void reset() {
-    myDelegateConfigurable.reset();
+    if (myDelegateConfigurable != null) {
+      myDelegateConfigurable.reset();
+    }
   }
 
   public void apply() throws ConfigurationException {
-    myDelegateConfigurable.apply();
+    if (myDelegateConfigurable != null) {
+      myDelegateConfigurable.apply();
+    }
   }
 
   public Icon getIcon() {
