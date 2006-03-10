@@ -9,6 +9,9 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import java.awt.event.KeyEvent;
 
 public class ControlPanelMnemonicsUtil {
+  private ControlPanelMnemonicsUtil() {
+  }
+
   public static Configurable getConfigurableFromMnemonic(KeyEvent e, ConfigurableGroup[] groups) {
     ConfigurableGroup group = getGroupFromKeycode(e.getKeyCode(), groups);
     if (group == null) return null;

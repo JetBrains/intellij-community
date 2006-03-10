@@ -4,10 +4,9 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
@@ -18,19 +17,27 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.ex.ActionToolbarEx;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.FilterComponent;
-import com.intellij.ui.HorizontalLabeledIcon;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
@@ -42,10 +49,9 @@ import java.util.Set;
 public class ExplorerSettingsEditor extends DialogWrapper {
   /** When you visit the same editor next time you see the same selected configurable. */
   private static final TObjectIntHashMap<String> ourGroup2LastConfigurableIndex = new TObjectIntHashMap<String>();
-  private static String ourLastGroup;
+  private String myLastGroup;
 
   private final Project myProject;
-  private Configurable myKeySelectedConfigurable;
   private int myKeySelectedConfigurableIndex;
 
   private final ConfigurableGroup[] myGroups;
@@ -62,8 +68,10 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   private JPanel myComponentPanel;
   private FilterComponent mySearchField;
   private Set<Configurable> myOptionContainers = null;
-  private JPanel myLeftPane;
   private Alarm myShowHintAlarm = new Alarm();
+  private JTree myTree;
+  @NonNls final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ex.ExplorerSettingsEditor");
 
   public ExplorerSettingsEditor(Project project, ConfigurableGroup[] group) {
     super(project, true);
@@ -91,7 +99,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     int lastGroup = 0;
     for (int i = 0; i < myGroups.length; i++) {
       ConfigurableGroup group = myGroups[i];
-      if (Comparing.equal(group.getShortName(), ourLastGroup)) {
+      if (Comparing.equal(group.getShortName(), myLastGroup)) {
         lastGroup = i;
         break;
       }
@@ -110,7 +118,12 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     rememberLastUsedPage();
 
     mySelectedGroup = myGroups[groupIdx];
-    ourLastGroup = mySelectedGroup.getShortName();
+    myLastGroup = mySelectedGroup.getShortName();
+
+    final DefaultMutableTreeNode groupNode = (DefaultMutableTreeNode)myRoot.getChildAt(groupIdx);
+    myTree.expandPath(new TreePath(groupNode.getPath()));
+    TreeUtil.selectNode(myTree, groupNode.getChildAt(indexToSelect));
+
     Configurable[] configurables = mySelectedGroup.getConfigurables();
     Configurable toSelect = configurables[indexToSelect];
 
@@ -201,10 +214,23 @@ public class ExplorerSettingsEditor extends DialogWrapper {
       }
     };
 
-    myLeftPane = new JPanel(new BorderLayout());
+    initTree();
     initToolbar();
-    myLeftPane.setBorder(BorderFactory.createRaisedBevelBorder());
-    myComponentPanel.add(myLeftPane, BorderLayout.WEST);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+    TreeUtil.expandAll(myTree);
+    final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20,
+                                                  scrollPane.getPreferredSize().height);
+    scrollPane.setPreferredSize(preferredSize);
+    scrollPane.setMinimumSize(preferredSize);
+    TreeUtil.collapseAll(myTree, 1);
+
+    final JPanel leftPane = new JPanel(new BorderLayout());
+    leftPane.setBorder(BorderFactory.createRaisedBevelBorder());
+    leftPane.add(scrollPane, BorderLayout.CENTER);
+    myComponentPanel.add(leftPane, BorderLayout.WEST);
 
     myOptionsPanel.setBorder(BorderFactory.createEmptyBorder(15, 5, 2, 5));
     myComponentPanel.add(myOptionsPanel, BorderLayout.CENTER);
@@ -220,9 +246,23 @@ public class ExplorerSettingsEditor extends DialogWrapper {
         int keyCode = e.getKeyCode();
         if (keyCode == KeyEvent.VK_UP) {
           index--;
+          if (index == -1){
+            final int groupIdx = ArrayUtil.find(myGroups, mySelectedGroup);
+            if (groupIdx > 0){
+              selectGroup(groupIdx - 1, myGroups[groupIdx - 1].getConfigurables().length - 1);
+              return;
+            }
+          }
         }
         else if (keyCode == KeyEvent.VK_DOWN) {
           index++;
+          if (index == configurables.length){
+            final int groupIdx = ArrayUtil.find(myGroups, mySelectedGroup);
+            if (groupIdx < myGroups.length - 1){
+              selectGroup(groupIdx + 1, 0);
+              return;
+            }
+          }
         }
         else {
           Configurable configurableFromMnemonic = ControlPanelMnemonicsUtil.getConfigurableFromMnemonic(e, myGroups);
@@ -246,11 +286,68 @@ public class ExplorerSettingsEditor extends DialogWrapper {
           }
           index = ControlPanelMnemonicsUtil.getIndexFromKeycode(keyCode, mySelectedGroup == myGroups[0]);
         }
-        if (index == -1 || index == configurables.length) return;
-        selectConfigurableLater(configurables[index], index);
+        if (index == -1 || index >= configurables.length) return;
+        final TreeNode groupNode = myRoot.getChildAt(ArrayUtil.find(myGroups, mySelectedGroup));
+        TreeUtil.selectPath(myTree, new TreePath(new TreeNode[]{ myRoot, groupNode, groupNode.getChildAt(index)}));
       }
     });
     return myComponentPanel;
+  }
+
+  private void initTree() {
+    myTree = new JTree(myRoot){
+      public Dimension getPreferredScrollableViewportSize() {
+        Dimension size = super.getPreferredScrollableViewportSize();
+        size = new Dimension(size.width + 10, size.height);
+        return size;
+      }
+    };
+    //noinspection NonStaticInitializer
+    myTree.setCellRenderer(new ColoredTreeCellRenderer() {
+      {
+        setFocusBorderAroundIcon(true);
+      }
+      public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        if (value instanceof DefaultMutableTreeNode){
+          Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+          if (userObject instanceof Pair){
+            final Pair configurableWithMnemonics = ((Pair)userObject);
+            final Configurable configurable = (Configurable)configurableWithMnemonics.first;
+            setIcon(configurable.getIcon());
+            append(configurable.getDisplayName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append(" ( " + configurableWithMnemonics.second + " )", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          } else if (userObject instanceof String){
+            setIcon(null);
+            append((String)userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          }
+        }
+      }
+    });
+
+    myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        final Object node = myTree.getLastSelectedPathComponent();
+        if (node instanceof DefaultMutableTreeNode) {
+          final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
+          final Object userObject = treeNode.getUserObject();
+          if (userObject instanceof Pair){
+            final Pair configurableWithMnemonic = (Pair)userObject;
+            final Configurable configurable = (Configurable)configurableWithMnemonic.first;
+            final TreeNode[] nodes = treeNode.getPath();
+            LOG.assertTrue(nodes != null && nodes.length > 0 && nodes[1] != null);
+            final int groupIdx = myRoot.getIndex(nodes[1]);
+            selectConfigurableLater(configurable, ArrayUtil.find(myGroups[groupIdx].getConfigurables(), configurable));
+            rememberLastUsedPage();
+            mySelectedGroup = myGroups[groupIdx];
+            myLastGroup = mySelectedGroup.getShortName();
+          }
+        }
+      }
+    });
+    TreeUtil.installActions(myTree);
+    UIUtil.setLineStyleAngled(myTree);
+    myTree.setShowsRootHandles(true);
+    myTree.setRootVisible(false);
   }
 
   protected JComponent createNorthPanel() {
@@ -291,6 +388,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
           }, 300, ModalityState.defaultModalityState());
         }
         initToolbar();
+        TreeUtil.expandAll(myTree);
         if (mySelectedConfigurable instanceof SearchableConfigurable){
           selectOption((SearchableConfigurable)mySelectedConfigurable);
         }
@@ -320,48 +418,21 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   }
 
   private void initToolbar() {
-    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    myRoot.removeAllChildren();
     char mnemonicStartChar = '1';
     for (ConfigurableGroup group : myGroups) {
-      boolean firstActionInGroup = true;
+      DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(group.getDisplayName());
       final Configurable[] configurables = group.getConfigurables();
-      for (int i = 0; i < configurables.length; i++) {
+      for (int i = 0; i < configurables.length; i++){
         Configurable configurable = configurables[i];
-        if (myOptionContainers == null || myOptionContainers.contains(configurable)){
-          if (firstActionInGroup){
-            actionGroup.add(new MyHorizontalSeparator(group));
-            firstActionInGroup = false;
-          }
-          actionGroup.add(new MySelectConfigurableAction(configurable, i, (char)(mnemonicStartChar + i)));
+        if (myOptionContainers == null || myOptionContainers.contains(configurable)) {
+          groupNode.add(new DefaultMutableTreeNode(Pair.create(configurable, (char)(mnemonicStartChar + i))));
         }
       }
       mnemonicStartChar = 'A';
+      myRoot.add(groupNode);
     }
-
-    final ActionToolbarEx toolbar = (ActionToolbarEx)ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.UNKNOWN,
-      actionGroup,
-      false);
-
-    toolbar.adjustTheSameSize(true);
-
-    toolbar.setButtonLook(new LeftAlignedIconButtonLook());
-
-    JPanel toolbarPanel = new JPanel(new BorderLayout(2, 0));
-    toolbarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
-    final JScrollPane scrollPane =
-      new JScrollPane(toolbarPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) {
-        public Dimension getPreferredSize() {
-          return actionGroup.getChildrenCount() > 2 ? new Dimension(toolbar.getComponent().getPreferredSize().width + getVerticalScrollBar().getPreferredSize().width + 5, 5) : new Dimension(150, -1);
-        }
-
-        public Dimension getMinimumSize() {
-          return getPreferredSize();
-        }
-      };
-    myLeftPane.removeAll();
-    scrollPane.getVerticalScrollBar().setUnitIncrement(toolbar.getMaxButtonHeight());
-    myLeftPane.add(scrollPane, BorderLayout.CENTER);
+    ((DefaultTreeModel)myTree.getModel()).reload();
   }
 
   private final Alarm myAlarm = new Alarm();
@@ -372,7 +443,6 @@ public class ExplorerSettingsEditor extends DialogWrapper {
         selectConfigurable(configurable, index);
       }
     }, 400);
-    myKeySelectedConfigurable = configurable;
     myKeySelectedConfigurableIndex = index;
 
     myComponentPanel.repaint();
@@ -387,7 +457,6 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     if (configurable == null) {
       mySelectedConfigurable = null;
       myKeySelectedConfigurableIndex = 0;
-      myKeySelectedConfigurable = null;
       updateTitle();
       myOptionsPanel.removeAll();
       validate();
@@ -428,7 +497,6 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     myOptionsPanel.removeAll();
 
     mySelectedConfigurable = configurable;
-    myKeySelectedConfigurable = configurable;
     myKeySelectedConfigurableIndex = index;
     JComponent component = myInitializedConfigurables2Component.get(configurable);
     if (component == null) {
@@ -536,35 +604,6 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     }
   }
 
-  private final class MySelectConfigurableAction extends ToggleAction {
-    private final Configurable myConfigurable;
-    private final int myIndex;
-
-    private MySelectConfigurableAction(Configurable configurable, int index, char mnemonic) {
-      myConfigurable = configurable;
-      myIndex = index;
-      Presentation presentation = getTemplatePresentation();
-      String displayName = myConfigurable.getDisplayName();
-      Icon icon = myConfigurable.getIcon();
-      if (icon == null) {
-        icon = IconLoader.getIcon("/general/configurableDefault.png");
-      }
-      Icon labeledIcon = new HorizontalLabeledIcon(icon, displayName, " ("+mnemonic+")");
-      presentation.setIcon(labeledIcon);
-      presentation.setText(null);
-    }
-
-    public boolean isSelected(AnActionEvent e) {
-      return myConfigurable.equals(myKeySelectedConfigurable);
-    }
-
-    public void setSelected(AnActionEvent e, boolean state) {
-      if (state) {
-        selectConfigurableLater(myConfigurable, myIndex);
-      }
-    }
-  }
-
   private class SwitchToDefaultViewAction extends AbstractAction {
     public SwitchToDefaultViewAction() {
       putValue(Action.NAME, OptionsBundle.message("explorer.panel.default.view.button"));
@@ -582,46 +621,5 @@ public class ExplorerSettingsEditor extends DialogWrapper {
         ((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).showControlPanelOptions(myProject, myGroups, preselectedConfigurable);
       }
     }, ModalityState.NON_MMODAL);
-  }
-
-  private static class LeftAlignedIconButtonLook extends ActionButtonLook {
-    private ActionButtonLook myDelegate = ActionButtonLook.IDEA_LOOK;
-
-    public void paintIconAt(Graphics g, ActionButtonComponent button, Icon icon, int x, int y) {
-      myDelegate.paintIconAt(g, button, icon, x, y);
-    }
-
-    public void paintBorder(Graphics g, JComponent component, int state) {
-      myDelegate.paintBorder(g, component, state);
-    }
-
-    public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
-      int height = icon.getIconHeight();
-      int x = 2;
-      int y = (int)Math.ceil((actionButton.getHeight() - height) / 2);
-      paintIconAt(g, actionButton, icon, x, y);
-    }
-
-    public void paintBackground(Graphics g, JComponent component, int state) {
-      myDelegate.paintBackground(g, component, state);
-    }
-  }
-
-  private static class MyHorizontalSeparator extends AnAction {
-
-    public MyHorizontalSeparator(ConfigurableGroup group) {
-     Presentation presentation = getTemplatePresentation();
-      String displayName = group.getDisplayName();
-      Icon labeledIcon = new HorizontalLabeledIcon(new EmptyIcon(16,16), displayName, "");
-      presentation.setIcon(labeledIcon);
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(false);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      //do nothing
-    }
   }
 }
