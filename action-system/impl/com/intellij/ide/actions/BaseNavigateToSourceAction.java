@@ -25,11 +25,10 @@ public abstract class BaseNavigateToSourceAction extends AnAction {
     event.getPresentation().setEnabled(isEnabled(dataContext));
   }
 
-  private boolean isEnabled(final DataContext dataContext) {
+  private static boolean isEnabled(final DataContext dataContext) {
     Navigatable[] navigatables = (Navigatable[])dataContext.getData(DataConstants.NAVIGATABLE_ARRAY);
     if (navigatables != null) {
-      for (int i = 0; i < navigatables.length; i++) {
-        Navigatable navigatable = navigatables[i];
+      for (Navigatable navigatable : navigatables) {
         if (navigatable.canNavigateToSource()) return true;
       }
     }

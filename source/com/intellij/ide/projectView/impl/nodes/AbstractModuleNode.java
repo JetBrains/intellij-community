@@ -39,10 +39,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 
 public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
-  protected AbstractModuleNode(Project project, Module value, ViewSettings viewSettings) {
-    super(project, value, viewSettings);
+  protected AbstractModuleNode(Project project, Module module, ViewSettings viewSettings) {
+    super(project, module, viewSettings);
   }
 
   public void update(PresentationData presentation) {
@@ -62,11 +63,23 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
 
   public boolean contains(VirtualFile file) {
     return PackageUtil.moduleContainsFile(getValue(), file, getSettings(), false) ||
-          PackageUtil.moduleContainsFile(getValue(), file, getSettings(), true);
+           PackageUtil.moduleContainsFile(getValue(), file, getSettings(), true);
   }
 
   public String getToolTip() {
     final Module module = getValue();
     return module.getModuleType().getName();
+  }
+
+  public void navigate(final boolean requestFocus) {
+    ModulesConfigurator.showDialog(getProject(), getValue().getName(), null, false);
+  }
+
+  public boolean canNavigate() {
+    return true;
+  }
+
+  public boolean canNavigateToSource() {
+    return true;
   }
 }
