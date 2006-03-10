@@ -20,10 +20,9 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ExceptionFilter implements Filter{
   private final Project myProject;
@@ -78,9 +77,13 @@ public class ExceptionFilter implements Filter{
       if (aClass == null) return null;
       final PsiFile file = (PsiFile) aClass.getContainingFile().getNavigationElement();
       if (file == null) return null;
+
+      /*
+       IDEADEV-4976: Some scramblers put something like SourceFile mock instead of real class name.
       final int slashIndex = filePath.lastIndexOf(File.separatorChar);
       final String shortFileName = slashIndex < 0 ? filePath : filePath.substring(slashIndex + 1);
       if (!file.getName().equalsIgnoreCase(shortFileName)) return null;
+      */
 
       final int textStartOffset = entireLength - line.length();
       final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
