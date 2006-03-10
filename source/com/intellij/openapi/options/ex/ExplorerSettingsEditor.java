@@ -49,7 +49,7 @@ import java.util.Set;
 public class ExplorerSettingsEditor extends DialogWrapper {
   /** When you visit the same editor next time you see the same selected configurable. */
   private static final TObjectIntHashMap<String> ourGroup2LastConfigurableIndex = new TObjectIntHashMap<String>();
-  private String myLastGroup;
+  private static String ourLastGroup;
 
   private final Project myProject;
   private int myKeySelectedConfigurableIndex;
@@ -99,7 +99,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     int lastGroup = 0;
     for (int i = 0; i < myGroups.length; i++) {
       ConfigurableGroup group = myGroups[i];
-      if (Comparing.equal(group.getShortName(), myLastGroup)) {
+      if (Comparing.equal(group.getShortName(), ourLastGroup)) {
         lastGroup = i;
         break;
       }
@@ -118,7 +118,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     rememberLastUsedPage();
 
     mySelectedGroup = myGroups[groupIdx];
-    myLastGroup = mySelectedGroup.getShortName();
+    ourLastGroup = mySelectedGroup.getShortName();
 
     final DefaultMutableTreeNode groupNode = (DefaultMutableTreeNode)myRoot.getChildAt(groupIdx);
     myTree.expandPath(new TreePath(groupNode.getPath()));
@@ -339,7 +339,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
             selectConfigurableLater(configurable, ArrayUtil.find(myGroups[groupIdx].getConfigurables(), configurable));
             rememberLastUsedPage();
             mySelectedGroup = myGroups[groupIdx];
-            myLastGroup = mySelectedGroup.getShortName();
+            ourLastGroup = mySelectedGroup.getShortName();
           }
         }
       }
