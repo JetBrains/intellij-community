@@ -18,8 +18,8 @@ public class XmlEnumeratedTypeImpl extends XmlElementImpl implements XmlEnumerat
   }
 
   public XmlElement[] getEnumeratedValues() {
-    final List result = new ArrayList();
+    final List<XmlElement> result = new ArrayList<XmlElement>();
     processElements(new FilterElementProcessor(new TokenTypeFilter(XmlTokenType.XML_NAME), result), this);
-    return (XmlElement[])result.toArray(new XmlElement[result.size()]);
+    return result.toArray(new XmlElement[result.size()]);
   }
 }
