@@ -488,7 +488,7 @@ public final class TreeUtil {
     tree.expandPath(new TreePath(root));
     if (leadSelectionPath != null) {
       final Object[] path = leadSelectionPath.getPath();
-      final Object[] pathToSelect = new Object[(path.length > keepSelectionLevel && keepSelectionLevel >= 0) ? keepSelectionLevel : path.length];
+      final Object[] pathToSelect = new Object[path.length > keepSelectionLevel && keepSelectionLevel >= 0 ? keepSelectionLevel : path.length];
       for (int i = 0; i < pathToSelect.length; i++) {
         pathToSelect[i] = path[i];
       }

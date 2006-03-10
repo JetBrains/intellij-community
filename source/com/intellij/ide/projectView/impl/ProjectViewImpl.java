@@ -2,6 +2,7 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
+import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
@@ -51,6 +52,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Icons;
+import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Attribute;
@@ -512,7 +514,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
       public void update(AnActionEvent e) {
         super.update(e);
-        if (myCurrentViewId == ScopeViewPane.ID) {
+        if (ScopeViewPane.ID.equals(myCurrentViewId)) {
           e.getPresentation().setEnabled(false);
         }
       }
@@ -526,6 +528,28 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myActionGroup.add(myAutoScrollFromSourceHandler.createToggleAction());
     myActionGroup.add(new ShowStructureAction());
     myActionGroup.add(new SortByTypeAction());
+
+    myActionGroup.add(new CollapseAllToolbarAction(new TreeExpander() {
+      public void expandAll() {
+
+      }
+
+      public boolean canExpand() {
+        return false;
+      }
+
+      public void collapseAll() {
+        AbstractProjectViewPane pane = getCurrentProjectViewPane();
+        JTree tree = pane.myTree;
+        if (tree != null) {
+          TreeUtil.collapseAll(tree, -1);
+        }
+      }
+
+      public boolean canCollapse() {
+        return true;
+      }
+    }));
 
     getCurrentProjectViewPane().addToolbarActions(myActionGroup);
   }
@@ -763,7 +787,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   public void changeView(@NotNull String viewId, @Nullable String subId) {
-    int i = 0;
     AbstractProjectViewPane pane = getProjectViewPaneById(viewId);
     if (!viewId.equals(getCurrentViewId())
         || subId != null && !subId.equals(pane.getSubId()) ||
