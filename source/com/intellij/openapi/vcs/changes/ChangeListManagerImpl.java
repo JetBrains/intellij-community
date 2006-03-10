@@ -50,7 +50,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private final ProjectLevelVcsManager myVcsManager;
   private static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
-  private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
+  private static Alarm ourUpdateAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
   private Alarm myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myInitilized = false;
@@ -102,7 +102,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public void projectClosed() {
     myDisposed = true;
-    myUpdateAlarm.cancelAllRequests();
+    ourUpdateAlarm.cancelAllRequests();
     myRepaintAlarm.cancelAllRequests();
 
     ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
@@ -240,7 +240,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
         synchronized (myPendingUpdatesLock) {
           scheduleUpdate(0);
-          while (myUpdateAlarm.getActiveRequestCount() > 0 || myUpdateInProgress) {
+          while (ourUpdateAlarm.getActiveRequestCount() > 0 || myUpdateInProgress) {
             if (indicator != null && indicator.isCanceled()) break;
 
             try {
@@ -262,8 +262,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   private void scheduleUpdate(int millis) {
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(new Runnable() {
+    ourUpdateAlarm.cancelAllRequests();
+    ourUpdateAlarm.addRequest(new Runnable() {
       public void run() {
         if (myDisposed) return;
         if (!myInitilized) {
