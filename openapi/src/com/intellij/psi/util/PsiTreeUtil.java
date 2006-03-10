@@ -96,7 +96,7 @@ public class PsiTreeUtil {
   }
 
 
-  private static <T extends PsiElement>boolean instanceOf(final Class<T> aClass, final PsiElement child) {
+  private static <T extends PsiElement> boolean instanceOf(final Class<T> aClass, final PsiElement child) {
     if (aClass == PsiClass.class) return child instanceof PsiClass;
     else if (aClass == PsiMethod.class) return child instanceof PsiMethod;
     else if (aClass == PsiField.class) return child instanceof PsiField;
@@ -117,10 +117,10 @@ public class PsiTreeUtil {
    * @return the element, or null if none was found.
    * @since 5.1
    */
-  @Nullable public static PsiElement getChildOfAnyType(@NotNull PsiElement element, @NotNull Class... classes) {
+  @Nullable public static <T extends PsiElement> T getChildOfAnyType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes) {
     for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
-      for(Class aClass:classes) {
-        if (instanceOf(aClass, child)) return child;
+      for(Class<? extends T> aClass : classes) {
+        if (instanceOf(aClass, child)) return (T)child;
       }
     }
     return null;
