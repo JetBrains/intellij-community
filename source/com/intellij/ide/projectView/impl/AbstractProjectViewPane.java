@@ -289,7 +289,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     }
   }
 
-  public final void restoreState(){
+  public final void restoreExpandedPaths(){
     myReadTreeState.applyTo(myTree);
   }
 

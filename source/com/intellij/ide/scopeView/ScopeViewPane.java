@@ -95,7 +95,6 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
     myTree = myViewPanel.getTree();
     installTreePopupHandler(ActionPlaces.SCOPE_VIEW_POPUP, IdeActions.GROUP_SCOPE_VIEW_POPUP);
 
-    restoreState();
     return myViewPanel.getPanel();
   }
 

@@ -323,6 +323,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     updateToolWindowTitle();
     showOrHideStructureView(isShowStructure());
 
+    newPane.restoreExpandedPaths();
     if (selectedPsiElement != null) {
       VirtualFile virtualFile = PsiUtil.getVirtualFile(selectedPsiElement);
       if (((ProjectViewSelectInTarget)newPane.createSelectInTarget()).isSubIdSelectable(newSubId, virtualFile)) {
