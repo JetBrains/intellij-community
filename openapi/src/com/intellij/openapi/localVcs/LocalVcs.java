@@ -36,7 +36,7 @@ public abstract class LocalVcs {
 
   public abstract LvcsFile findFile(String filePath, boolean ignoreDeleted);
 
-  public abstract LvcsFile findFileByDate(final String filePath, long date);
+  public abstract LvcsFileRevision findFileRevisionByDate(final String filePath, long date);
 
   public abstract LvcsFile findFile(String filePath, LvcsLabel label);
 

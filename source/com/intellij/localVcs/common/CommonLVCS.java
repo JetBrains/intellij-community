@@ -156,8 +156,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return myImplementation.findFile(filePath, ignoreDeleted);
   }
 
-  public synchronized LvcsFile findFileByDate(final String filePath, long date) {
-    return myImplementation.findFileByDate(filePath, date);
+  public synchronized LvcsFileRevision findFileRevisionByDate(final String filePath, long date) {
+    return myImplementation.findFileRevisionByDate(filePath, date);
   }
 
   public synchronized LvcsFileRevision findFileRevision(final String filePath, final LvcsLabel label) {

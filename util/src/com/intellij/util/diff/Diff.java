@@ -21,6 +21,8 @@ import gnu.trove.TObjectHashingStrategy;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author dyoma
  */
@@ -78,8 +80,8 @@ public class Diff {
       //System.err.println(line0+","+line1+","+inserted+","+deleted);
     }
 
+    @NonNls
     public String toString() {
-      //noinspection HardCodedStringLiteral
       return "change[" + "inserted=" + inserted + ", deleted=" + deleted + ", line0=" + line0 + ", line1=" + line1 + "]";
     }
 
