@@ -53,7 +53,7 @@ public class RequiredAttributesInspection extends UnfairLocalInspectionTool impl
 
   @NonNls
   public String getShortName() {
-    return RequiredAttributesInspection.SHORT_NAME;
+    return SHORT_NAME;
   }
 
   @Nullable

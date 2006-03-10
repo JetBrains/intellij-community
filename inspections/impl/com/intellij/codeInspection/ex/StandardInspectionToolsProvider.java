@@ -34,14 +34,14 @@ import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
-import com.intellij.codeInspection.unchekedWarnings.UncheckedWarningLocalInspection;
+import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unneededThrows.UnneededThrows;
 import com.intellij.codeInspection.unneededThrows.UnusedThrowsDeclaration;
-import com.intellij.codeInspection.unnessecaryModuleDependency.UnnessecaryModuleDependencyInspection;
+import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
-import com.intellij.codeInspection.unussedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection;
@@ -113,7 +113,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       RequiredAttributesInspection.class,
       DefaultFileTemplateUsageInspection.class,
       BooleanMethodIsAlwaysInvertedInspection.class,
-      UnnessecaryModuleDependencyInspection.class,
+      UnnecessaryModuleDependencyInspection.class,
       UnhandledExceptionInJSP.class,
       RedundantSuppressInspection.class,
       UnusedSymbolLocalInspection.class,

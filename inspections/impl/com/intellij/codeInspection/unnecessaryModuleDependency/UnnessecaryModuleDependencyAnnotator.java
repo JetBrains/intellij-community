@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2006 Your Corporation. All Rights Reserved.
  */
-package com.intellij.codeInspection.unnessecaryModuleDependency;
+package com.intellij.codeInspection.unnecessaryModuleDependency;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;

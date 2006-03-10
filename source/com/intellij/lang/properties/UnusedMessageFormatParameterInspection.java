@@ -39,7 +39,7 @@ public class UnusedMessageFormatParameterInspection extends BaseLocalInspectionT
   @Nullable
   public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
-    PropertiesFile propertiesFile = ((PropertiesFile)file);
+    PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<Property> properties = propertiesFile.getProperties();
     List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
     for (Property property : properties) {
