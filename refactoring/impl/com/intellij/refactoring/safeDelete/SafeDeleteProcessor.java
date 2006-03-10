@@ -11,6 +11,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -149,6 +151,12 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
     for (PsiReference ref : ReferencesSearch.search(parameter).findAll()) {
       PsiElement element = ref.getElement();
+      final PsiDocTag docTag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
+      if (docTag != null) {
+        usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(docTag, parameter, true));
+        continue;
+      }
+
       boolean isSafeDelete = false;
       if (element.getParent().getParent() instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression call = (PsiMethodCallExpression) element.getParent().getParent();
@@ -160,6 +168,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
           }
         }
       }
+
       usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(element, parameter, isSafeDelete));
     }
 
