@@ -267,7 +267,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     * @see com.intellij.ide.todo.FileTree#getFiles(VirtualFile)
     */
    public Iterator<PsiFile> getFiles(Module module) {
-    if (module.isDisposed()) return Collections.EMPTY_LIST.iterator();
+    if (module.isDisposed()) return Collections.<PsiFile>emptyList().iterator();
     ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
