@@ -208,4 +208,6 @@ public interface IdeActions {
   String GROUP_WELCOME_SCREEN_DOC = "WelcomeScreen.Documentation";
   String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";
   String ACTION_MOVE = "Move";
+
+  String ACTION_ANALYZE_DEPENDENCIES = "ShowPackageDeps";
 }

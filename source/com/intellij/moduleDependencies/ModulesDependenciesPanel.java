@@ -103,6 +103,8 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       }
     });
 
+    appendDependenciesAction(group);
+
     group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.direction"), "", DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png")){
       public boolean isSelected(AnActionEvent e) {
         return DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection();
@@ -121,19 +123,35 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     return toolbar.getComponent();
   }
 
+  private static void appendDependenciesAction(final DefaultActionGroup group) {
+    final AnAction analyzeDepsAction = ActionManager.getInstance().getAction(IdeActions.ACTION_ANALYZE_DEPENDENCIES);
+    group.add(new AnAction(analyzeDepsAction.getTemplatePresentation().getText(),
+                           analyzeDepsAction.getTemplatePresentation().getDescription(),
+                           IconLoader.getIcon("/general/toolWindowInspection.png")){
+
+      public void actionPerformed(AnActionEvent e) {
+        analyzeDepsAction.actionPerformed(e);
+      }
+
+
+      public void update(AnActionEvent e) {
+        analyzeDepsAction.update(e);
+      }
+    });
+  }
+
   private void buildRightTree(Module module){
     final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myRightTreeModel.getRoot();
     root.removeAllChildren();
     final Set<List<Module>> cycles = CyclicGraphUtil.getNodeCycles(myModulesGraph, module);
     int index = 1;
-    for (Iterator<List<Module>> cyclesIterator = cycles.iterator(); cyclesIterator.hasNext();) {
-      List<Module> modules = cyclesIterator.next();
-      final DefaultMutableTreeNode cycle = new DefaultMutableTreeNode(AnalysisScopeBundle.message("module.dependencies.cycle.node.text", Integer.toString(index++).toUpperCase()));
+    for (List<Module> modules : cycles) {
+      final DefaultMutableTreeNode cycle = new DefaultMutableTreeNode(
+        AnalysisScopeBundle.message("module.dependencies.cycle.node.text", Integer.toString(index++).toUpperCase()));
       root.add(cycle);
       cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, module)));
-      for (Iterator<Module> inCycleIterator = modules.iterator(); inCycleIterator.hasNext();) {
-        Module module1 = inCycleIterator.next();
-        cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, module1)));
+      for (Module moduleInCycle : modules) {
+        cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, moduleInCycle)));
       }
     }
     ((DefaultTreeModel)myRightTree.getModel()).reload();
@@ -150,7 +168,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
         final DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(false, module));
         root.add(moduleNode);
         final Iterator<Module> out = myModulesGraph.getOut(module);
-        for (; out.hasNext();) {
+        while (out.hasNext()) {
           moduleNode.add(new DefaultMutableTreeNode(new MyUserObject(false, out.next())));
         }
       }
@@ -159,7 +177,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     myLeftTreeModel.reload();
   }
 
-  private void sortSubTree(final DefaultMutableTreeNode root) {
+  private static void sortSubTree(final DefaultMutableTreeNode root) {
     TreeUtil.sort(root, new Comparator() {
       public int compare(final Object o1, final Object o2) {
         DefaultMutableTreeNode node1 = (DefaultMutableTreeNode)o1;
@@ -190,8 +208,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       current = (DefaultMutableTreeNode)current.getParent();
     }
     if (flag){
-      for (Iterator<DefaultMutableTreeNode> iterator = selectionNodes.iterator(); iterator.hasNext();) {
-        DefaultMutableTreeNode node = iterator.next();
+      for (DefaultMutableTreeNode node : selectionNodes) {
         ((MyUserObject)node.getUserObject()).setInCycle(true);
       }
     }
@@ -217,7 +234,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
           if (child.getChildCount() == 0){
             Module module = ((MyUserObject)child.getUserObject()).getModule();
             final Iterator<Module> out = myModulesGraph.getOut(module);
-            for (; out.hasNext();) {
+            while (out.hasNext()) {
               final Module nextModule = out.next();
               child.add(new DefaultMutableTreeNode(new MyUserObject(false, nextModule)));
             }
@@ -248,7 +265,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     TreeUtil.selectFirstNode(myLeftTree);
   }
 
-  private ActionGroup createTreePopupActions(final boolean isRightTree, final Tree tree) {
+  private static ActionGroup createTreePopupActions(final boolean isRightTree, final Tree tree) {
     DefaultActionGroup group = new DefaultActionGroup();
     final TreeExpander treeExpander = new TreeExpander() {
       public void expandAll() {
@@ -278,10 +295,11 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), tree);
     group.add(collapseAllToolbarAction);
     group.add(ActionManager.getInstance().getAction(IdeActions.MODULE_SETTINGS));
+    appendDependenciesAction(group);
     return group;
   }
 
-  private void initTree(Tree tree, boolean isRightTree) {
+  private static void initTree(Tree tree, boolean isRightTree) {
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
