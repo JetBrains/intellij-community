@@ -188,7 +188,9 @@ public class OwnBufferLeafPsiElement extends OwnBufferLeafElementImpl implements
 
   public Project getProject() {
     final PsiManager manager = getManager();
-    return manager != null ? manager.getProject() : null;
+    if (manager == null) throw new PsiInvalidElementAccessException(this);
+
+    return manager.getProject();
   }
 
   @NotNull

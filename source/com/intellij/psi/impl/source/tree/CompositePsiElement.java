@@ -236,9 +236,12 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return vFile != null ? FileStatusManager.getInstance(getProject()).getStatus(vFile) : FileStatus.NOT_CHANGED;
   }
 
+  @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();
-    return manager != null ? manager.getProject() : null;
+    if (manager == null) throw new PsiInvalidElementAccessException(this);
+
+    return manager.getProject();
   }
 
   @NotNull

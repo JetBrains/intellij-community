@@ -180,7 +180,10 @@ public abstract class LightPsiFileImpl extends ElementBase implements PsiFileEx 
   }
 
   public Project getProject() {
-    return getManager().getProject();
+    final PsiManager manager = getManager();
+    if (manager == null) throw new PsiInvalidElementAccessException(this);
+
+    return manager.getProject();
   }
 
   public PsiElement getNavigationElement() {

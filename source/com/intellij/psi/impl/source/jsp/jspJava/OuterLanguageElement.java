@@ -1,38 +1,35 @@
 package com.intellij.psi.impl.source.jsp.jspJava;
 
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
-import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspDirectiveKind;
-import com.intellij.psi.jsp.JspElementType;
-import com.intellij.psi.xml.XmlText;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.text.StringSearcher;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.jsp.JspxFileViewProvider;
-import com.intellij.lang.jsp.JspFileViewProvider;
-import com.intellij.lang.jsp.JspxFileViewProviderImpl;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.jsp.JspDirectiveKind;
+import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class OuterLanguageElement extends LeafElement implements PsiElement{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement");
@@ -251,7 +248,9 @@ public class OuterLanguageElement extends LeafElement implements PsiElement{
 
   public Project getProject() {
     final PsiManager manager = getManager();
-    return manager != null ? manager.getProject() : null;
+    if (manager == null) throw new PsiInvalidElementAccessException(this);
+
+    return manager.getProject();
   }
 
   @NotNull

@@ -3,7 +3,6 @@ package com.intellij.psi.impl;
 
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
@@ -119,7 +118,9 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
 
   public Project getProject() {
     final PsiManager manager = getManager();
-    return manager != null ? manager.getProject() : null;
+    if (manager == null) throw new PsiInvalidElementAccessException(this);
+
+    return manager.getProject();
   }
 
   //default implementations of methods from NavigationItem

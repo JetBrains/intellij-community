@@ -58,7 +58,7 @@ public final class PsiUtil {
   };
   public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
       public Project getProject() {
-        return null;
+        throw new PsiInvalidElementAccessException(this);
       }
 
       @NotNull

@@ -80,7 +80,9 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
 
   public Project getProject() {
     final PsiManager manager = getManager();
-    return manager != null ? manager.getProject() : null;
+    if (manager == null) throw new PsiInvalidElementAccessException(this);
+
+    return manager.getProject();
   }
 
   public PsiManager getManager() {

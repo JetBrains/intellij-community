@@ -44,7 +44,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the project instance.
    */
-  Project getProject();
+  @NotNull
+  Project getProject() throws PsiInvalidElementAccessException;
 
   /**
    * Returns the language of the PSI element.
