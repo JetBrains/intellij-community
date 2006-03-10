@@ -31,16 +31,14 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import org.jetbrains.annotations.NotNull;
-
-public class XHtmlFileType extends LanguageFileType {
+public class XHtmlFileType extends XmlLikeFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/xhtml.png");
 
   public XHtmlFileType() {

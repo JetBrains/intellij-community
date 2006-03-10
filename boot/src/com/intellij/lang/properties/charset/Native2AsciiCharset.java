@@ -1,8 +1,6 @@
 package com.intellij.lang.properties.charset;
 
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
+import java.nio.charset.*;
 
 /**
  * @author Alexey
@@ -15,7 +13,14 @@ public class Native2AsciiCharset extends Charset {
   public Native2AsciiCharset(String canonicalName) {
     super(canonicalName, null);
     String baseCharsetName = canonicalName.substring(NAME_PREFIX.length());
-    Charset baseCharset = Charset.forName(baseCharsetName);
+    Charset baseCharset = null;
+    try {
+      baseCharset = Charset.forName(baseCharsetName);
+    }
+    catch (IllegalCharsetNameException e) {
+    }
+    catch(UnsupportedCharsetException e){
+    }
     myBaseCharset = baseCharset == null ? Charset.forName("ISO-8859-1") : baseCharset;
   }
 

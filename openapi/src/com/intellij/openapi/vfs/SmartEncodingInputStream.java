@@ -55,7 +55,7 @@ import java.nio.charset.Charset;
  */
 public class SmartEncodingInputStream extends InputStream {
   private InputStream is;
-  private int bufferLength;
+  private final int bufferLength;
   private byte[] buffer;
   private int counter;
   private Charset charset;
@@ -72,7 +72,7 @@ public class SmartEncodingInputStream extends InputStream {
     this.bufferLength = is != null ? is.read(buffer) : buffer.length;
     CharsetToolkit charsetToolkit = new CharsetToolkit(buffer, defaultCharset);
     charsetToolkit.setEnforce8Bit(enforce8Bit);
-    this.charset = charsetToolkit.guessEncoding( BUFFER_LENGTH_8KB );
+    this.charset = charsetToolkit.guessEncoding(bufferLength);
   }
 
   /**

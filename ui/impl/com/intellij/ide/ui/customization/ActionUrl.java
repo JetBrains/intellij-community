@@ -36,7 +36,7 @@ public class ActionUrl implements JDOMExternalizable {
   public int myInitialPosition = -1;
 
   @NonNls private static final String IS_GROUP = "is_group";
-  @NonNls private static final String SEPERATOR = "seperator";
+  @NonNls private static final String SEPARATOR = "seperator";
   @NonNls private static final String IS_ACTION = "is_action";
   @NonNls private static final String VALUE = "value";
   @NonNls private static final String PATH = "path";
@@ -121,7 +121,7 @@ public class ActionUrl implements JDOMExternalizable {
     if (element.getAttributeValue(IS_ACTION) != null) {
       myComponent = attributeValue;
     }
-    else if (element.getAttributeValue(SEPERATOR) != null) {
+    else if (element.getAttributeValue(SEPARATOR) != null) {
       myComponent = Separator.getInstance();
     }
     else if (element.getAttributeValue(IS_GROUP) != null) {
@@ -147,7 +147,7 @@ public class ActionUrl implements JDOMExternalizable {
       element.setAttribute(IS_ACTION, Boolean.TRUE.toString());
     }
     else if (myComponent instanceof Separator) {
-      element.setAttribute(SEPERATOR, Boolean.TRUE.toString());
+      element.setAttribute(SEPARATOR, Boolean.TRUE.toString());
     }
     else if (myComponent instanceof Group) {
       final String groupId = ((Group)myComponent).getId() != null && !((Group)myComponent).getId().equals("") ? ((Group)myComponent).getId() : ((Group)myComponent).getName();

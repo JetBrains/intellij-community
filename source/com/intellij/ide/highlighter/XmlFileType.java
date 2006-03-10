@@ -33,18 +33,15 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class XmlFileType extends LanguageFileType {
+public class XmlFileType extends XmlLikeFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "xml";
-  @NonNls public static final String DOT_DEFAULT_EXTENSION = ".xml";
+  @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/xml.png");
 
   public XmlFileType() {
@@ -68,9 +65,5 @@ public class XmlFileType extends LanguageFileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public String getCharset(VirtualFile file) {
-    return XmlUtil.extractXmlEncodingFromProlog(file);
   }
 }

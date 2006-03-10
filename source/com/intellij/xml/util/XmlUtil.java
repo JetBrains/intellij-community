@@ -2,15 +2,17 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
@@ -32,8 +34,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.ant.AntPropertyDeclaration;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -1139,7 +1139,8 @@ public class XmlUtil {
     return result.toString();
   }
 
-  private static final byte[] ENCODING_XML_PROLOG = "<?xml version=\"1.0\" encoding=\"".getBytes();
+  private static final String ENCODING_XML_PROLOG = "<?xml version=\"1.0\" encoding=\"";
+  private static final byte[] ENCODING_XML_PROLOG_BYTES = ENCODING_XML_PROLOG.getBytes();
   @Nullable public static String extractXmlEncodingFromProlog(VirtualFile file) {
     byte[] bytes;
     try {
@@ -1155,8 +1156,8 @@ public class XmlUtil {
 
     if (start >= bytes.length) return null;
     int i;
-    for (i = 0; i < ENCODING_XML_PROLOG.length; i++) {
-      if (bytes[start+i] != ENCODING_XML_PROLOG[i]) {
+    for (i = 0; i < ENCODING_XML_PROLOG_BYTES.length; i++) {
+      if (bytes[start+i] != ENCODING_XML_PROLOG_BYTES[i]) {
         return null;
       }
     }
@@ -1171,5 +1172,14 @@ public class XmlUtil {
       i++;
     }
     return encoding.toString();
+  }
+  @Nullable public static String extractXmlEncodingFromProlog(String text) {
+    if (text.startsWith(ENCODING_XML_PROLOG)) {
+      int i = text.indexOf('"', ENCODING_XML_PROLOG.length());
+      if (i != -1) {
+        return text.substring(ENCODING_XML_PROLOG.length(), i);
+      }
+    }
+    return null;
   }
 }
