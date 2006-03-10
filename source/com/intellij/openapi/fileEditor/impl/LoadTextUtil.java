@@ -1,7 +1,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -19,64 +19,33 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharSequenceReader;
+import com.intellij.xml.util.XmlUtil;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 
 public final class LoadTextUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.LoadTextUtil");
-
-  private static char[] ourSharedBuffer = new char[50000];
   static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
 
   private LoadTextUtil() {}
 
-  private static Pair<CharSequence,String> loadText(byte[] bytes, final VirtualFile virtualFile) {
-    try {
-      Reader reader = getReader(virtualFile, new ByteArrayInputStream(bytes));
-      return loadTextAndClose(reader, bytes.length);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    return null;
-  }
-
-  private static Pair<CharSequence,String> loadTextAndClose(Reader reader, int fileLength) throws IOException {
-    char[] buffer = ourSharedBuffer.length >= fileLength ? ourSharedBuffer : new char[fileLength];
-
-    int offset = 0;
-    try {
-      do {
-        int read = reader.read(buffer, offset, buffer.length - offset);
-        if (read < 0) break;
-        offset += read;
-
-        if (offset >= buffer.length) {
-          // Number of characters read might exceed fileLength if the encoding being used is capable to
-          // produce more than one character from a single byte. Need to reallocate in this case.
-          char[] newBuffer = new char[buffer.length * 2];
-          System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
-          buffer = newBuffer;
-        }
-      } while(true);
-    }
-    finally {
-      reader.close();
-    }
-
+  private static Pair<CharSequence, String> convertLineSeparators(final CharBuffer buffer) {
     final int LF = 1;
     final int CR = 2;
     int line_separator = 0;
 
     int dst = 0;
     char prev = ' ';
-    for (int src = 0; src < offset; src++) {
-      char c = buffer[src];
+    final int length = buffer.length();
+    for (int src = 0; src < length; src++) {
+      char c = buffer.charAt(src);
       switch (c) {
         case '\r':
-          buffer[dst++] = '\n';
+          buffer.put(dst++, '\n');
           line_separator = CR;
           break;
         case '\n':
@@ -84,12 +53,12 @@ public final class LoadTextUtil {
             line_separator = CR + LF;
           }
           else {
-            buffer[dst++] = '\n';
+            buffer.put(dst++, '\n');
             line_separator = LF;
           }
           break;
         default:
-          buffer[dst++] = c;
+          buffer.put(dst++, c);
           break;
       }
       prev = c;
@@ -102,68 +71,58 @@ public final class LoadTextUtil {
       case CR + LF: detectedLineSeparator = "\r\n"; break;
     }
 
-    char[] chars = new char[dst];
-    System.arraycopy(buffer, 0, chars, 0, chars.length);
-    return new Pair<CharSequence, String>(new CharArrayCharSequence(chars), detectedLineSeparator);
+    CharSequence result;
+    if (buffer.length() == dst) {
+      result = buffer;
+    }
+    else {
+      char[] chars = new char[dst];
+      System.arraycopy(buffer.array(), 0, chars, 0, dst);
+      result = new CharArrayCharSequence(chars);
+    }
+    return Pair.create(result, detectedLineSeparator);
   }
 
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  private static Reader getReader(final VirtualFile virtualFile, InputStream stream) throws IOException {
-    if (virtualFile instanceof MockVirtualFile) {
-      return new CharSequenceReader(((MockVirtualFile)virtualFile).getContent());
-    }
-
-    final Reader reader;
-
+  private static int detectCharsetAndSkipBOM(final VirtualFile virtualFile, final byte[] content) {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
     String charsetName = fileType.getCharset(virtualFile);
     if (charsetName != null) {
-      virtualFile.setCharset(Charset.forName(charsetName));
-      reader = new BufferedReader(new InputStreamReader(stream, virtualFile.getCharset()));
-      skipUTF8BOM(virtualFile, reader);
-      return reader;
+      Charset charset = null;
+      try {
+        charset = Charset.forName(charsetName);
+      }
+      catch (IllegalCharsetNameException e) {
+      }
+      catch(UnsupportedCharsetException e){
+      }
+      virtualFile.setCharset(charset);
+      return skipUTF8BOM(virtualFile, content);
     }
 
     CharsetSettings settings = CharsetSettings.getInstance();
     if (settings != null && settings.isUseUTFGuessing()) {
-      SmartEncodingInputStream seis = new SmartEncodingInputStream(stream,
-                                                                   SmartEncodingInputStream.BUFFER_LENGTH_4KB,
-                                                                   CharsetToolkit.getIDEOptionsCharset(),
-                                                                   true);
-      virtualFile.setCharset(seis.getEncoding());
-      reader = seis.getReader();
-      if (Patches.SUN_BUG_ID_4508058) {
-        virtualFile.setBOM(seis.detectUTF8_BOM());
-      }
+      CharsetToolkit toolkit = new CharsetToolkit(content, CharsetToolkit.getIDEOptionsCharset());
+      toolkit.setEnforce8Bit(true);
+      Charset charset = toolkit.guessEncoding(SmartEncodingInputStream.BUFFER_LENGTH_4KB);
+
+      virtualFile.setCharset(charset);
+      return skipUTF8BOM(virtualFile, content);
     }
     else {
       virtualFile.setCharset(CharsetToolkit.getIDEOptionsCharset());
-      if (virtualFile.getCharset() != null) {
-        reader = new BufferedReader(new InputStreamReader(stream, virtualFile.getCharset()));
-        skipUTF8BOM(virtualFile, reader);
-      }
-      else {
-        reader = new InputStreamReader(stream);
-      }
+      return skipUTF8BOM(virtualFile, content);
     }
-
-    return reader;
   }
 
-  private static void skipUTF8BOM(final VirtualFile virtualFile, final Reader reader) throws IOException {
+  private static int skipUTF8BOM(final VirtualFile virtualFile, byte[] content) {
     if (Patches.SUN_BUG_ID_4508058) {
       //noinspection HardCodedStringLiteral
-      if (virtualFile.getCharset() != null && virtualFile.getCharset().name().contains("UTF-8")) {
-        reader.mark(1);
-        char c = (char)reader.read();
-        if (c == '\uFEFF') {
-          virtualFile.setBOM(CharsetToolkit.UTF8_BOM);
-        }
-        else {
-          reader.reset();
-        }
+      if (virtualFile.getCharset() != null && virtualFile.getCharset().name().contains("UTF-8") && CharsetToolkit.hasUTF8Bom(content)) {
+        virtualFile.setBOM(CharsetToolkit.UTF8_BOM);
+        return CharsetToolkit.UTF8_BOM.length;
       }
     }
+    return 0;
   }
 
   /**
@@ -176,17 +135,38 @@ public final class LoadTextUtil {
    * @param requestor any object to control who called this method. Note that
    * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
    * See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
+   * @param text
    * @param newModificationStamp new modification stamp or -1 if no special value should be set
-   * @param newTimeStamp new time stamp or -1 if no special value should be set
    * @return <code>Writer</code>
    * @throws java.io.IOException if an I/O error occurs
    * @see VirtualFile#getModificationStamp()
    */
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public static Writer getWriter(final VirtualFile virtualFile, Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException{
-    Charset charset = virtualFile.getCharset();
-    OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, newTimeStamp);
+  public static Writer getWriter(final VirtualFile virtualFile, Object requestor, final String text, final long newModificationStamp) throws IOException{
+    Charset charset = getCharsetForWriting(virtualFile, text);
+    OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
     return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
+  }
+
+  private static Charset getCharsetForWriting(final VirtualFile virtualFile, final String text) {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+    Charset charset = null;
+    if (fileType instanceof XmlLikeFileType) {
+      String name = XmlUtil.extractXmlEncodingFromProlog(text);
+      if (name != null) {
+        try {
+          charset = Charset.forName(name);
+        }
+        catch (IllegalCharsetNameException e) {
+        }
+        catch(UnsupportedCharsetException e){
+        }
+      }
+    }
+    if (charset == null) {
+      charset = virtualFile.getCharset();
+    }
+    return charset;
   }
 
   public static CharSequence loadText(VirtualFile file) {
@@ -231,8 +211,28 @@ public final class LoadTextUtil {
     //}
   }
 
-  private static CharSequence getTextByBinaryPresentation(final byte[] content, final VirtualFile virtualFile) {
-    final Pair<CharSequence, String> result = loadText(content, virtualFile);
+  public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile) {
+    CharBuffer charBuffer;
+    if (virtualFile instanceof MockVirtualFile) {
+      CharSequence content = ((MockVirtualFile)virtualFile).getContent();
+      charBuffer = CharBuffer.allocate(content.length());
+      charBuffer.append(content);
+      charBuffer.flip();
+    }
+    else {
+      int offset = detectCharsetAndSkipBOM(virtualFile, bytes);
+      ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, offset, bytes.length - offset);
+
+      Charset charset = virtualFile.getCharset();
+      if (charset == null) {
+        charset = CharsetToolkit.getDefaultSystemCharset();
+      }
+      if (charset == null) {
+        charset = Charset.forName("ISO-8859-1");
+      }
+      charBuffer = charset.decode(byteBuffer);
+    }
+    Pair<CharSequence, String> result = convertLineSeparators(charBuffer);
     virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
     return result.getFirst();
   }
