@@ -1159,6 +1159,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     splitterProportions.saveSplitterProportions(myPanel);
     splitterProportions.writeExternal(navigatorElement);
     parentNode.addContent(navigatorElement);
+
+    // for compatibility with idea 5.1
+    @Deprecated @NonNls final String ATTRIBUTE_SPLITTER_PROPORTION = "splitterProportion";
+    navigatorElement.setAttribute(ATTRIBUTE_SPLITTER_PROPORTION, "0.5");
   }
 
   public boolean isAutoscrollToSource(String paneId) {
