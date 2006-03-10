@@ -288,7 +288,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   public String getName() {
     String temp = myProjectFile.getFileName();
     if (temp.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-      temp = temp.substring(temp.length() - 4);
+      temp = temp.substring(0, temp.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length());
     }
     final int i = temp.lastIndexOf(File.separatorChar);
     if (i >= 0) {
