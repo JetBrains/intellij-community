@@ -151,11 +151,11 @@ public class EditorOptionsPanel {
     closePolicy.add(myCloseLRUFilesRadio);
 
     myEditorTabPlacement.setModel(new DefaultComboBoxModel(new Object[]{
-      new Integer(SwingConstants.TOP),
-      new Integer(SwingConstants.LEFT),
-      new Integer(SwingConstants.BOTTOM),
-      new Integer(SwingConstants.RIGHT),
-      new Integer(UISettings.TABS_NONE),
+      SwingConstants.TOP,
+      SwingConstants.LEFT,
+      SwingConstants.BOTTOM,
+      SwingConstants.RIGHT,
+      UISettings.TABS_NONE,
     }));
     myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer());
     myHighlightSettingsPanel.setLayout(new BorderLayout());
@@ -300,7 +300,7 @@ public class EditorOptionsPanel {
 
     // Editor Tabs
     myScrollTabLayoutInEditorCheckBox.setSelected(uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR);
-    myEditorTabPlacement.setSelectedItem(new Integer(uiSettings.EDITOR_TAB_PLACEMENT));
+    myEditorTabPlacement.setSelectedItem(uiSettings.EDITOR_TAB_PLACEMENT);
     myHideKnownExtensions.setSelected(uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS);
     if (uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST) {
       myCloseNonModifiedFilesFirstRadio.setSelected(true);
@@ -494,10 +494,8 @@ public class EditorOptionsPanel {
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
     UISettings uiSettings=UISettings.getInstance();
 
-    boolean isModified = false;
-
     // Display
-    isModified |= isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
+    boolean isModified = isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
     isModified |= isModified(myCbBlinkCaret, editorSettings.isBlinkCaret());
     isModified |= isModified(myBlinkIntervalField, editorSettings.getBlinkPeriod());
 
