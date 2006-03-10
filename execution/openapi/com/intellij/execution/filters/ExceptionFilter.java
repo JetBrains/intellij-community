@@ -22,14 +22,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
-
 public class ExceptionFilter implements Filter{
   private final Project myProject;
   @NonNls protected static final String AT_STR = "at";
   protected static final String AT_PREFIX = AT_STR + " ";
   protected static final String _AT_STR = " " + AT_STR + " ";
-
 
   public ExceptionFilter(final Project project) {
     myProject = project;
@@ -69,7 +66,6 @@ public class ExceptionFilter implements Filter{
     if (colonIndex < 0) return null;
 
     final String lineString = fileAndLine.substring(colonIndex + 1);
-    final String filePath = fileAndLine.substring(0, colonIndex).replace('/', File.separatorChar);
     try{
       final int lineNumber = Integer.parseInt(lineString);
       final PsiManager manager = PsiManager.getInstance(myProject);
@@ -80,6 +76,7 @@ public class ExceptionFilter implements Filter{
 
       /*
        IDEADEV-4976: Some scramblers put something like SourceFile mock instead of real class name.
+      final String filePath = fileAndLine.substring(0, colonIndex).replace('/', File.separatorChar);
       final int slashIndex = filePath.lastIndexOf(File.separatorChar);
       final String shortFileName = slashIndex < 0 ? filePath : filePath.substring(slashIndex + 1);
       if (!file.getName().equalsIgnoreCase(shortFileName)) return null;
