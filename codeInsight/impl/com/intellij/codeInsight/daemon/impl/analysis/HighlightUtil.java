@@ -1397,7 +1397,8 @@ public class HighlightUtil {
 
     // check if expression inside super()/this() call
     PsiElement element = expression.getParent();
-    while (element instanceof PsiExpression || element instanceof PsiExpressionList || element instanceof PsiAnonymousClass) {
+    while (element != null) {
+      if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) break;
       if (isSuperOrThisMethodCall(element)) {
         PsiElement parentClass = new PsiMatcherImpl(element)
           .parent(PsiMatcherImpl.hasClass(PsiExpressionStatement.class))
