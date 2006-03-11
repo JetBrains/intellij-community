@@ -151,7 +151,7 @@ public class PluginManagerMain
           IdeaPluginDescriptor pluginDescriptor = pluginTable.getSelectedObject();
           if( pluginDescriptor != null )
           {
-              LaunchStringAction( pluginDescriptor.getVendorEmail(), "" );
+              LaunchStringAction( pluginDescriptor.getVendorUrl(), "" );
           }
       }
     });
@@ -163,7 +163,7 @@ public class PluginManagerMain
           IdeaPluginDescriptor pluginDescriptor = pluginTable.getSelectedObject();
           if( pluginDescriptor != null )
           {
-              LaunchStringAction( pluginDescriptor.getVendorEmail(), "" );
+              LaunchStringAction( pluginDescriptor.getUrl(), "" );
           }
       }
     });
