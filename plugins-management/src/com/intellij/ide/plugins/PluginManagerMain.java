@@ -102,6 +102,20 @@ public class PluginManagerMain
           toolbar.updateActionsImmediately();
         }
     });
+
+    //  Add handler for right mouse button - select a row for which
+    //  we want to show a context menu.
+    pluginTable.addMouseListener( new MouseAdapter()
+    {
+       public void mousePressed( MouseEvent e)
+       {
+         Point p = e.getPoint();
+         int row = pluginTable.rowAtPoint( p );
+         if( row != -1 && SwingUtilities.isRightMouseButton( e )) {
+           pluginTable.setRowSelectionInterval(row, row);
+         }
+       }
+    });
     PopupHandler.installUnknownPopupHandler(pluginTable, getActionGroup(), ActionManager.getInstance());
 
     myToolbarPanel.setLayout(new BorderLayout());
