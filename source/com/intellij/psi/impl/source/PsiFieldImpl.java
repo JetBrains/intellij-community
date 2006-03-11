@@ -5,6 +5,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.FieldView;
 import com.intellij.psi.impl.cache.InitializerTooLongException;
@@ -85,6 +86,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     return parent instanceof PsiClass ? (PsiClass)parent : null;
   }
 
+  @NotNull
   public final PsiIdentifier getNameIdentifier(){
     return (PsiIdentifier)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
@@ -171,11 +173,9 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
           return this;
         }
         else{
-          ASTNode prevField = treeElement.getTreePrev();
-          while(prevField.getElementType() != JavaElementType.FIELD){
-            prevField = prevField.getTreePrev();
-          }
-          return ((PsiFieldImpl)SourceTreeToPsiMap.treeElementToPsi(prevField)).findFirstFieldInDeclaration();
+          final PsiFieldImpl prevField = PsiTreeUtil.getPrevSiblingOfType(this, PsiFieldImpl.class);
+          LOG.assertTrue(prevField != null);
+          return prevField.findFirstFieldInDeclaration();
         }
       }
       else{
@@ -231,7 +231,6 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     }
 
     PsiType type = getType();
-    if (type == null) return null;
     // javac rejects all non primitive and non String constants, although JLS states constants "variables whose initializers are constant expressions"
     if (!(type instanceof PsiPrimitiveType) && !type.equalsToText("java.lang.String")) return null;
 
@@ -301,7 +300,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       boolean deprecated;
       if (getTreeElement() != null){
         PsiDocComment docComment = getDocComment();
-        deprecated = docComment != null && getDocComment().findTagByName("deprecated") != null;
+        deprecated = docComment != null && docComment.findTagByName("deprecated") != null;
         if (!deprecated) {
           deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
         }
@@ -319,16 +318,13 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   }
 
   public PsiDocComment getDocComment(){
-    CompositeElement treeElement = calcTreeElement();
     if (getTypeElement() != null) {
-      return (PsiDocComment)treeElement.findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
+      return (PsiDocComment)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
     }
     else{
-      ASTNode prevField = treeElement.getTreePrev();
-      while(prevField.getElementType() != JavaElementType.FIELD){
-        prevField = prevField.getTreePrev();
-      }
-      return ((PsiField)SourceTreeToPsiMap.treeElementToPsi(prevField)).getDocComment();
+      final PsiField prevField = PsiTreeUtil.getPrevSiblingOfType(this, PsiField.class);
+      LOG.assertTrue(prevField != null);
+      return prevField.getDocComment();
     }
   }
 
@@ -350,7 +346,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       CodeEditUtil.removeChild((CompositeElement)comma.getTreeParent(), comma);
 
       PsiElement typeClone = type.copy();
-      CodeEditUtil.addChild((CompositeElement)nextField, (TreeElement)SourceTreeToPsiMap.psiElementToTree(typeClone),
+      CodeEditUtil.addChild((CompositeElement)nextField, SourceTreeToPsiMap.psiElementToTree(typeClone),
                             nextField.getFirstChildNode());
 
       PsiElement modifierListClone = modifierList.copy();
