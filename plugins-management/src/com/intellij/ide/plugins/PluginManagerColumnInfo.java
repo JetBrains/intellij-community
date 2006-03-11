@@ -329,41 +329,42 @@ class PluginManagerColumnInfo extends ColumnInfo {
               if (column == 2) {
                 setHorizontalAlignment( SwingConstants.RIGHT );
               }
-              setForeground(Color.black);
+              setForeground( Color.black );
 
               if( descriptor instanceof IdeaPluginDescriptorImpl )
               {
                 setEnabled( !((IdeaPluginDescriptorImpl)descriptor).isDeleted() );
                 
                 if(((IdeaPluginDescriptorImpl)descriptor).isDeleted())
-                  setForeground(Color.lightGray);
+                  setForeground( Color.lightGray );
                 else
-                  setBackground(LIGHT_BLUE_COLOR);
+                  setBackground( LIGHT_BLUE_COLOR );
               }
               else
               {
                   PluginNode node = (PluginNode)descriptor;
                   Date pluginDate = new Date( node.getDate() );
 
+                  setEnabled( true );
                   switch (PluginManagerColumnInfo.getRealNodeState( node ))
                   {
                     case PluginNode.STATUS_OUT_OF_DATE:
-                      setBackground(RED_COLOR);
+                      setBackground( RED_COLOR );
                       break;
                     case PluginNode.STATUS_CURRENT:
-                      setBackground(GREEN_COLOR);
+                      setBackground( GREEN_COLOR );
                       break;
                     default:
-                      setBackground(Color.white);
+                      setBackground( Color.white );
                   }
 
                   if( yearAgo.after( pluginDate ) )
-                      setForeground(Color.lightGray);
+                      setForeground( Color.lightGray );
                   else
                   if( weekAgo.before( pluginDate ) )
-                      setBackground(HOTVERSION);
+                      setBackground( HOTVERSION );
                   else
-                      setBackground(Color.white);
+                      setBackground( Color.white );
               }
         }
 
