@@ -50,20 +50,28 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private final ProjectLevelVcsManager myVcsManager;
   private static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private static Alarm ourUpdateAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
+
   private Alarm myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myInitilized = false;
+
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private boolean myDisposed = false;
 
   private boolean SHOW_FLATTEN_MODE = true;
 
   private UnversionedFilesHolder myUnversionedFilesHolder = new UnversionedFilesHolder();
   private final List<ChangeList> myChangeLists = new ArrayList<ChangeList>();
+
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private ChangeList myDefaultChangelist;
+
   private ChangesListView myView;
   private JLabel myProgressLabel;
 
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
 
   private final Object myPendingUpdatesLock = new Object();
@@ -425,6 +433,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
 
+  @NotNull
   public List<VirtualFile> getAffectedFiles() {
     List<VirtualFile> files = new ArrayList<VirtualFile>();
     for (ChangeList list : myChangeLists) {
