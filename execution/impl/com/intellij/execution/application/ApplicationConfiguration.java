@@ -17,9 +17,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.util.PathUtil;
+import com.intellij.uiDesigner.snapShooter.SnapShooter;
 import org.jdom.Element;
 
 import java.util.Collection;
@@ -32,6 +35,7 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
   public String WORKING_DIRECTORY;
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
+  public boolean ENABLE_SWING_INSPECTOR;
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
     super(name, new RunConfigurationModule(project, true), applicationConfigurationType.getConfigurationFactories()[0]);
@@ -46,7 +50,15 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
         final JavaParameters params = new JavaParameters();
         JavaParametersUtil.configureModule(getConfigurationModule(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
         JavaParametersUtil.configureConfiguration(params, ApplicationConfiguration.this);
-        params.setMainClass(MAIN_CLASS_NAME);
+        if (ENABLE_SWING_INSPECTOR) {
+          params.getProgramParametersList().prepend(MAIN_CLASS_NAME);
+          params.getClassPath().addTail(PathUtil.getJarPathForClass(SnapShooter.class));       // idea.jar
+          params.getClassPath().addTail(PathUtil.getJarPathForClass(ProjectComponent.class));  // openapi.jar
+          params.setMainClass("com.intellij.uiDesigner.snapShooter.SnapShooter");
+        }
+        else {
+          params.setMainClass(MAIN_CLASS_NAME);
+        }
         return params;
       }
     };

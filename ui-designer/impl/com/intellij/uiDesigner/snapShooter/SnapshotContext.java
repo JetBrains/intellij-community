@@ -9,13 +9,9 @@ import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.Enumeration;
+import java.util.*;
 
 /**
  * @author yole
