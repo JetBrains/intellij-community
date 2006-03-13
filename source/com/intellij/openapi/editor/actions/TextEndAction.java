@@ -9,11 +9,14 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 
 public class TextEndAction extends EditorAction {
   public TextEndAction() {
@@ -30,6 +33,11 @@ public class TextEndAction extends EditorAction {
       scrollingModel.disableAnimation();
       scrollingModel.scrollToCaret(ScrollType.CENTER);
       scrollingModel.enableAnimation();
+
+      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      if (project != null) {
+        IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
+      }
     }
   }
 }

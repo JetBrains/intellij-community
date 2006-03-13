@@ -392,7 +392,7 @@ public class ModuleEditor {
     Object getDelegate();
   }
 
-  private Object[] unwrapParams(Object[] params) {
+  private static Object[] unwrapParams(Object[] params) {
     if (params == null || params.length == 0) {
       return params;
     }
