@@ -30,6 +30,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
+ * @author yole
  */
 public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadTabbedPane");
@@ -46,8 +47,8 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     super(module, JTabbedPane.class, id);
   }
 
-  public RadTabbedPane(final Module module, @NotNull final String id, final Palette palette) {
-    super(module, JTabbedPane.class, id, palette);
+  public RadTabbedPane(@NotNull final String id, final Palette palette) {
+    super(JTabbedPane.class, id, palette);
   }
 
   @Override protected RadLayoutManager createInitialLayoutManager() {
@@ -229,6 +230,20 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     if (mySelectedIndex >= 0) {
       getTabbedPane().setSelectedIndex(mySelectedIndex);
       markPropertyAsModified(mySelectedIndexProperty);
+    }
+  }
+
+  @Override
+  protected void importSnapshotComponent(final RadRootContainer rootContainer, final Palette palette, final JComponent component) {
+    JTabbedPane tabbedPane = (JTabbedPane) component;
+    for(int i=0; i<tabbedPane.getTabCount(); i++) {
+      String title = tabbedPane.getTitleAt(i);
+      Component child = tabbedPane.getComponentAt(i);
+      if (child instanceof JComponent) {
+        RadComponent childComponent = createSnapshotComponent(rootContainer, palette, (JComponent) child);
+        childComponent.setCustomLayoutConstraints(new LwTabbedPane.Constraints(StringDescriptor.create(title)));
+        addComponent(childComponent);
+      }
     }
   }
 

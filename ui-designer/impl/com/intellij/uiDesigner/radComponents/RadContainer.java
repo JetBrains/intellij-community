@@ -80,8 +80,8 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
-  public RadContainer(final Module module, @NotNull final Class aClass, @NotNull final String id, final Palette palette) {
-    this(module, aClass, id);
+  public RadContainer(@NotNull final Class aClass, @NotNull final String id, final Palette palette) {
+    this(null, aClass, id);
     setPalette(palette);
   }
 
@@ -510,6 +510,26 @@ public class RadContainer extends RadComponent implements IContainer {
     // Margin and border
     writeBorder(writer);
     writeChildren(writer);
+  }
+
+  @Override
+  protected void importSnapshotComponent(final RadRootContainer rootContainer, final Palette palette, final JComponent component) {
+    if (component.getLayout() instanceof BorderLayout) {
+      setLayoutManager(new RadBorderLayoutManager());
+    }
+    else if (component.getLayout() instanceof GridBagLayout) {
+      setLayoutManager(new RadGridBagLayoutManager());
+    }
+    else if (component.getLayout() instanceof FlowLayout) {
+      setLayoutManager(new RadFlowLayoutManager());
+    }
+    getLayoutManager().createSnapshotLayout(this, component.getLayout());
+    for(Component child: component.getComponents()) {
+      if (child instanceof JComponent) {
+        RadComponent childComponent = createSnapshotComponent(rootContainer, palette, (JComponent) child);
+        getLayoutManager().addSnapshotComponent(component, (JComponent) child, this, childComponent);
+      }
+    }
   }
 
   private final class MyBorderTitleProperty extends Property{

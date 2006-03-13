@@ -25,8 +25,8 @@ public final class RadScrollPane extends RadContainer {
     super(module, COMPONENT_CLASS, id);
   }
 
-  public RadScrollPane(final Module module, final String id, final Palette palette) {
-    super(module, COMPONENT_CLASS, id, palette);
+  public RadScrollPane(final String id, final Palette palette) {
+    super(COMPONENT_CLASS, id, palette);
   }
 
   @Nullable @Override
@@ -45,6 +45,16 @@ public final class RadScrollPane extends RadContainer {
 
   @Override public RadComponent getComponentToResize(RadComponent child) {
     return this;
+  }
+
+  @Override
+  protected void importSnapshotComponent(final RadRootContainer rootContainer, final Palette palette, final JComponent component) {
+    JScrollPane scrollPane = (JScrollPane) component;
+    final Component view = scrollPane.getViewport().getView();
+    if (view instanceof JComponent) {
+      RadComponent childComponent = createSnapshotComponent(rootContainer, palette, (JComponent) view);
+      addComponent(childComponent);
+    }
   }
 
   private class RadScrollPaneLayoutManager extends RadLayoutManager {

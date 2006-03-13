@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.LwSplitPane;
@@ -23,6 +24,10 @@ public final class RadSplitPane extends RadContainer {
 
   public RadSplitPane(final Module module, final String id) {
     super(module, JSplitPane.class, id);
+  }
+
+  public RadSplitPane(@NotNull final String id, final Palette palette) {
+    super(JSplitPane.class, id, palette);
   }
 
   @Override protected RadLayoutManager createInitialLayoutManager() {
@@ -87,6 +92,25 @@ public final class RadSplitPane extends RadContainer {
     }
     finally {
       writer.endElement(); // scrollpane
+    }
+  }
+
+
+  @Override
+  protected void importSnapshotComponent(final RadRootContainer rootContainer, final Palette palette, final JComponent component) {
+    JSplitPane splitPane = (JSplitPane) component;
+    importSideComponent(splitPane.getLeftComponent(), rootContainer, palette, LwSplitPane.POSITION_LEFT);
+    importSideComponent(splitPane.getRightComponent(), rootContainer, palette, LwSplitPane.POSITION_RIGHT);
+  }
+
+  private void importSideComponent(final Component sideComponent,
+                                   final RadRootContainer rootContainer,
+                                   final Palette palette,
+                                   final String position) {
+    if (sideComponent instanceof JComponent) {
+      RadComponent radSideComponent = createSnapshotComponent(rootContainer, palette, (JComponent) sideComponent);
+      radSideComponent.setCustomLayoutConstraints(position);
+      addComponent(radSideComponent);
     }
   }
 

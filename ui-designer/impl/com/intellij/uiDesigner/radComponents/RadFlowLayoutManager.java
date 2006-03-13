@@ -68,17 +68,17 @@ public class RadFlowLayoutManager extends RadLayoutManager {
       VGapProperty.getInstance(project) };
   }
 
+  @Override
+  public void createSnapshotLayout(final RadContainer container, final LayoutManager layout) {
+    FlowLayout flowLayout = (FlowLayout) layout;
+    container.setLayout(new FlowLayout(flowLayout.getAlignment(), flowLayout.getHgap(), flowLayout.getVgap()));
+  }
 
   @Override
   public void addSnapshotComponent(final JComponent parent,
                                    final JComponent child,
                                    final RadContainer container,
                                    final RadComponent component) {
-    FlowLayout sourceLayout = (FlowLayout) parent.getLayout();
-    FlowLayout targetLayout = (FlowLayout) container.getDelegee().getLayout();
-    targetLayout.setAlignment(sourceLayout.getAlignment());
-    targetLayout.setHgap(sourceLayout.getHgap());
-    targetLayout.setVgap(sourceLayout.getVgap());
     container.addComponent(component);
   }
 

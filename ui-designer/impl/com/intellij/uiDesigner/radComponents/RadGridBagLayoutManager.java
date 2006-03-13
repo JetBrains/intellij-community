@@ -5,12 +5,13 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 
 import javax.swing.*;
-import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.LayoutManager;
 
 /**
  * @author yole
@@ -22,15 +23,19 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
   }
 
   @Override
+  public void createSnapshotLayout(final RadContainer container, final LayoutManager layout) {
+    GridBagLayout gridBag = (GridBagLayout) layout;
+    int[][] layoutDimensions = gridBag.getLayoutDimensions();
+    container.setLayout(new GridLayoutManager(layoutDimensions [1].length,
+                                              layoutDimensions [0].length));
+  }
+
+  @Override
   public void addSnapshotComponent(final JComponent parent,
                                    final JComponent child,
                                    final RadContainer container,
                                    final RadComponent component) {
     GridBagLayout gridBag = (GridBagLayout) parent.getLayout();
-    if (container.getComponentCount() == 0) {
-      int[][] layoutDimensions = gridBag.getLayoutDimensions();
-      container.setLayout(new GridLayoutManager(layoutDimensions [1].length, layoutDimensions [0].length));
-    }
     final GridBagConstraints gbc = gridBag.getConstraints(child);
     component.getConstraints().setColumn(gbc.gridx);
     component.getConstraints().setRow(gbc.gridy);

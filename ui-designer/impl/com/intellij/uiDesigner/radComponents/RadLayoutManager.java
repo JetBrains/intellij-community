@@ -94,4 +94,7 @@ public abstract class RadLayoutManager {
                                    final RadContainer container,
                                    final RadComponent component) {
   }
+
+  public void createSnapshotLayout(final RadContainer container, final LayoutManager layout) {
+  }
 }
