@@ -596,11 +596,24 @@ public abstract class RadComponent implements IComponent {
     else {
       result = new RadAtomicComponent(null, component.getClass(), id, context.getPalette());
     }
+    context.registerComponent(component, result);
     result.importSnapshotComponent(context, component);
+
     final IntrospectedProperty[] properties = context.getPalette().getIntrospectedProperties(component.getClass());
     for(IntrospectedProperty prop: properties) {
       prop.importSnapshotValue(component, result);
     }
+
+    if (component instanceof AbstractButton) {
+      AbstractButton btn = (AbstractButton) component;
+      if (btn.getModel() instanceof DefaultButtonModel) {
+        DefaultButtonModel model = (DefaultButtonModel) btn.getModel();
+        if (model.getGroup() != null) {
+          context.registerButtonGroup(model.getGroup());
+        }
+      }
+    }
+
     return result;
   }
 
