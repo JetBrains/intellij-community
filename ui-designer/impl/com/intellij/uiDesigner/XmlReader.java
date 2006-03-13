@@ -130,7 +130,12 @@ public final class XmlReader {
 
             String layoutManagerName = lwContainer.getLayoutManager();
             if (layoutManagerName == null || layoutManagerName.length() == 0) {
-              layoutManagerName = UIFormXmlConstants.LAYOUT_INTELLIJ;
+              if (layout instanceof XYLayoutManager) {
+                layoutManagerName = UIFormXmlConstants.LAYOUT_XY;
+              }
+              else {
+                layoutManagerName = UIFormXmlConstants.LAYOUT_INTELLIJ;
+              }
             }
             ((RadContainer) component).setLayoutManager(RadLayoutManager.createLayoutManager(layoutManagerName));
           }
