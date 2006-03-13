@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
@@ -97,18 +98,17 @@ public final class RadSplitPane extends RadContainer {
 
 
   @Override
-  protected void importSnapshotComponent(final RadRootContainer rootContainer, final Palette palette, final JComponent component) {
+  protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
     JSplitPane splitPane = (JSplitPane) component;
-    importSideComponent(splitPane.getLeftComponent(), rootContainer, palette, LwSplitPane.POSITION_LEFT);
-    importSideComponent(splitPane.getRightComponent(), rootContainer, palette, LwSplitPane.POSITION_RIGHT);
+    importSideComponent(splitPane.getLeftComponent(), context, LwSplitPane.POSITION_LEFT);
+    importSideComponent(splitPane.getRightComponent(), context, LwSplitPane.POSITION_RIGHT);
   }
 
   private void importSideComponent(final Component sideComponent,
-                                   final RadRootContainer rootContainer,
-                                   final Palette palette,
+                                   final SnapshotContext context,
                                    final String position) {
     if (sideComponent instanceof JComponent) {
-      RadComponent radSideComponent = createSnapshotComponent(rootContainer, palette, (JComponent) sideComponent);
+      RadComponent radSideComponent = createSnapshotComponent(context, (JComponent) sideComponent);
       radSideComponent.setCustomLayoutConstraints(position);
       addComponent(radSideComponent);
     }

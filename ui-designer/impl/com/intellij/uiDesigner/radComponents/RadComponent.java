@@ -5,7 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.RevalidateInfo;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.EventProcessor;
@@ -578,32 +578,32 @@ public abstract class RadComponent implements IComponent {
   }
 
   @NotNull
-  public static RadComponent createSnapshotComponent(final RadRootContainer rootContainer, final Palette palette, final JComponent component) {
-    String id = FormEditingUtil.generateId(rootContainer);
+  public static RadComponent createSnapshotComponent(final SnapshotContext context, final JComponent component) {
+    String id = context.newId();
     RadComponent result;
     if (component instanceof JPanel) {
-      result = new RadContainer(component.getClass(), id, palette);
+      result = new RadContainer(component.getClass(), id, context.getPalette());
     }
     else if (component instanceof JScrollPane) {
-      result = new RadScrollPane(id, palette);
+      result = new RadScrollPane(id, context.getPalette());
     }
     else if (component instanceof JTabbedPane) {
-      result = new RadTabbedPane(id, palette);
+      result = new RadTabbedPane(id, context.getPalette());
     }
     else if (component instanceof JSplitPane) {
-      result = new RadSplitPane(id, palette);
+      result = new RadSplitPane(id, context.getPalette());
     }
     else {
-      result = new RadAtomicComponent(null, component.getClass(), id, palette);
+      result = new RadAtomicComponent(null, component.getClass(), id, context.getPalette());
     }
-    result.importSnapshotComponent(rootContainer, palette, component);
-    final IntrospectedProperty[] properties = palette.getIntrospectedProperties(component.getClass());
+    result.importSnapshotComponent(context, component);
+    final IntrospectedProperty[] properties = context.getPalette().getIntrospectedProperties(component.getClass());
     for(IntrospectedProperty prop: properties) {
       prop.importSnapshotValue(component, result);
     }
     return result;
   }
 
-  protected void importSnapshotComponent(final RadRootContainer rootContainer, final Palette palette, final JComponent component) {
+  protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
   }
 }

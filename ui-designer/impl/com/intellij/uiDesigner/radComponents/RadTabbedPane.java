@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.*;
@@ -234,13 +235,13 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   }
 
   @Override
-  protected void importSnapshotComponent(final RadRootContainer rootContainer, final Palette palette, final JComponent component) {
+  protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
     JTabbedPane tabbedPane = (JTabbedPane) component;
     for(int i=0; i<tabbedPane.getTabCount(); i++) {
       String title = tabbedPane.getTitleAt(i);
       Component child = tabbedPane.getComponentAt(i);
       if (child instanceof JComponent) {
-        RadComponent childComponent = createSnapshotComponent(rootContainer, palette, (JComponent) child);
+        RadComponent childComponent = createSnapshotComponent(context, (JComponent) child);
         childComponent.setCustomLayoutConstraints(new LwTabbedPane.Constraints(StringDescriptor.create(title)));
         addComponent(childComponent);
       }

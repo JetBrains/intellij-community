@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
@@ -48,11 +49,11 @@ public final class RadScrollPane extends RadContainer {
   }
 
   @Override
-  protected void importSnapshotComponent(final RadRootContainer rootContainer, final Palette palette, final JComponent component) {
+  protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
     JScrollPane scrollPane = (JScrollPane) component;
     final Component view = scrollPane.getViewport().getView();
     if (view instanceof JComponent) {
-      RadComponent childComponent = createSnapshotComponent(rootContainer, palette, (JComponent) view);
+      RadComponent childComponent = createSnapshotComponent(context, (JComponent) view);
       addComponent(childComponent);
     }
   }

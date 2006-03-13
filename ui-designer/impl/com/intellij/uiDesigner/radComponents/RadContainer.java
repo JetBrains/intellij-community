@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -513,7 +514,7 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
   @Override
-  protected void importSnapshotComponent(final RadRootContainer rootContainer, final Palette palette, final JComponent component) {
+  protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
     if (component.getLayout() instanceof BorderLayout) {
       setLayoutManager(new RadBorderLayoutManager());
     }
@@ -526,7 +527,7 @@ public class RadContainer extends RadComponent implements IContainer {
     getLayoutManager().createSnapshotLayout(this, component.getLayout());
     for(Component child: component.getComponents()) {
       if (child instanceof JComponent) {
-        RadComponent childComponent = createSnapshotComponent(rootContainer, palette, (JComponent) child);
+        RadComponent childComponent = createSnapshotComponent(context, (JComponent) child);
         getLayoutManager().addSnapshotComponent(component, (JComponent) child, this, childComponent);
       }
     }
