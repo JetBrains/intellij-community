@@ -114,8 +114,12 @@ public final class IntroStringProperty extends IntrospectedProperty{
     }
 
     // 2. plain value
-    final StringDescriptor result;
     final JComponent delegee = component.getDelegee();
+    return stringDescriptorFromValue(delegee);
+  }
+
+  private StringDescriptor stringDescriptorFromValue(final JComponent delegee) {
+    final StringDescriptor result;
     if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof JLabel)){
       final JLabel label = (JLabel)delegee;
       result = StringDescriptor.create(
@@ -130,7 +134,12 @@ public final class IntroStringProperty extends IntrospectedProperty{
       );
     }
     else{
-      result = StringDescriptor.create((String)super.getValue(component));
+      try {
+        result = StringDescriptor.create((String) myReadMethod.invoke(delegee, EMPTY_OBJECT_ARRAY));
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
 
     if (result != null) {
@@ -217,7 +226,7 @@ public final class IntroStringProperty extends IntrospectedProperty{
     try {
       Object value = myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
       if (value != null) {
-        setValue(radComponent, StringDescriptor.create((String) value));
+        setValue(radComponent, stringDescriptorFromValue(component));
       }
     }
     catch (Exception e) {
