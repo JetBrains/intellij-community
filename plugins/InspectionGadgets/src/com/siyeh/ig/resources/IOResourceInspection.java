@@ -81,7 +81,7 @@ public class IOResourceInspection extends ExpressionInspection{
             }
             final PsiElement referent =
                     ((PsiReference) lhs).resolve();
-            if(referent == null || !(referent instanceof PsiVariable)){
+            if(!(referent instanceof PsiVariable)){
                 return;
             }
             final PsiVariable boundVariable = (PsiVariable) referent;
@@ -124,9 +124,6 @@ public class IOResourceInspection extends ExpressionInspection{
             }
             final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
             if(tryBlock == null){
-                return false;
-            }
-            if(!PsiTreeUtil.isAncestor(tryBlock, lhs, true)){
                 return false;
             }
             return containsResourceClose(finallyBlock, boundVariable);
