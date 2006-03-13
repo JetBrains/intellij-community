@@ -81,4 +81,22 @@ public class IOResourceInspection {
             reader.close();
         }
     }
+
+    public void correct2() throws IOException {
+        FileInputStream str = new FileInputStream("xxxx");
+        try {
+            str.read();
+        } finally {
+            str.close();
+        }
+    }
+    public void interrupting() throws IOException {
+        FileInputStream str = new FileInputStream("xxxx");
+        str.read();
+        try {
+            str.read();
+        } finally {
+            str.close();
+        }
+    }
 }

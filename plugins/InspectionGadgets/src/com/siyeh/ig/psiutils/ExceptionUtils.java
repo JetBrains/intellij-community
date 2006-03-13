@@ -39,7 +39,7 @@ public class ExceptionUtils{
         s_genericExceptionTypes.add("java.lang.Error");
     }
 
-    public static Set<PsiType> calculateExceptionsThrown(
+    @NotNull public static Set<PsiType> calculateExceptionsThrown(
             @NotNull PsiElement statement){
         final ExceptionsThrownVisitor visitor = new ExceptionsThrownVisitor();
         statement.accept(visitor);
@@ -299,7 +299,7 @@ public class ExceptionUtils{
             return out;
         }
 
-        public Set<PsiType> getExceptionsThrown(){
+        @NotNull public Set<PsiType> getExceptionsThrown(){
             return Collections.unmodifiableSet(m_exceptionsThrown);
         }
     }

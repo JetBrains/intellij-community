@@ -21,9 +21,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public class IOResourceInspection extends ExpressionInspection{
 
@@ -55,7 +58,6 @@ public class IOResourceInspection extends ExpressionInspection{
     }
 
     private static class IOResourceVisitor extends BaseInspectionVisitor{
-
         public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             if(!isIOResource(expression)){
@@ -69,42 +71,69 @@ public class IOResourceInspection extends ExpressionInspection{
                     return;
                 }
             }
-            if(!(parent instanceof PsiAssignmentExpression)){
-                registerError(expression, expression);
-                return;
-            }
-            final PsiAssignmentExpression assignment =
-                    (PsiAssignmentExpression) parent;
+          final PsiVariable boundVariable;
+          if (parent instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
             final PsiExpression lhs = assignment.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)){
-                return;
+            if (!(lhs instanceof PsiReferenceExpression)) {
+              return;
             }
-            final PsiElement referent =
-                    ((PsiReference) lhs).resolve();
-            if(!(referent instanceof PsiVariable)){
-                return;
+            final PsiElement referent = ((PsiReference)lhs).resolve();
+            if (!(referent instanceof PsiVariable)) {
+              return;
             }
-            final PsiVariable boundVariable = (PsiVariable) referent;
-            final PsiElement containingBlock =
-                    PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class);
+            boundVariable = (PsiVariable)referent;
+          }
+          else if (parent instanceof PsiLocalVariable) {
+            boundVariable = (PsiVariable)parent;
+          }
+          else {
+            registerError(expression, expression);
+            return;
+          }
+          final PsiElement containingBlock =
+                  PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class);
             if(isArgToResourceCreation(boundVariable, containingBlock)){
                 return;
             }
-            PsiElement currentContext = expression;
-            while(true){
-                final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext,
-                                PsiTryStatement.class);
-                if(tryStatement == null){
-                    registerError(expression, expression);
-                    return;
-                }
-                if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
-                        expression, boundVariable)) {
-                    return;
-                }
-                currentContext = tryStatement;
+            if (!isResourceClosedInFinally(expression, boundVariable)) {
+              registerError(expression, expression);
             }
+        }
+        private static boolean isResourceClosedInFinally(PsiNewExpression expression,
+                                                         PsiVariable boundVariable) {
+          PsiElement currentContext = expression;
+          while(true){
+              final PsiTryStatement tryStatement =
+                      PsiTreeUtil.getParentOfType(currentContext,
+                                                  PsiTryStatement.class, true, PsiMember.class);
+              if(tryStatement == null){
+                  break;
+              }
+              if(resourceIsClosedInFinally(tryStatement,
+                                           boundVariable)) {
+                  return true;
+              }
+              currentContext = tryStatement;
+          }
+          
+          // look for try block down the control flow
+          currentContext = PsiTreeUtil.getParentOfType(expression, PsiStatement.class, false, PsiMember.class);
+          if (currentContext == null) return false;
+          currentContext = currentContext.getNextSibling();
+          while (currentContext != null) {
+            if (currentContext instanceof PsiTryStatement) {
+              if(resourceIsClosedInFinally((PsiTryStatement)currentContext,
+                                           boundVariable)) {
+                  return true;
+              }
+            }
+            Set<PsiType> thrown = ExceptionUtils.calculateExceptionsThrown(currentContext);
+            // any thrown exception can interrupt control flow and resource would remain unclosed
+            if (!thrown.isEmpty()) return false;
+            currentContext = currentContext.getNextSibling();
+          }
+          return false;
         }
 
         private static boolean isArgToResourceCreation(PsiVariable boundVariable,
@@ -115,9 +144,8 @@ public class IOResourceInspection extends ExpressionInspection{
             return visitor.usedAsArgToResourceCreation();
         }
 
-        private static boolean resourceIsOpenedInTryAndClosedInFinally(
-                PsiTryStatement tryStatement, PsiExpression lhs,
-                PsiVariable boundVariable){
+        private static boolean resourceIsClosedInFinally(PsiTryStatement tryStatement,
+                                                         PsiVariable boundVariable){
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if(finallyBlock == null){
                 return false;
