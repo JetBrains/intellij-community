@@ -16,42 +16,59 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Factory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * @author peter
  */
 public class ComboTableCellEditor extends DefaultCellEditor {
+  private final boolean myNullable;
   private final Factory<List<String>> myDataFactory;
   private Set<String> myData;
+  private static final String EMPTY = " ";
 
-  public ComboTableCellEditor(Factory<List<String>> dataFactory) {
+  public ComboTableCellEditor(Factory<List<String>> dataFactory, final boolean nullable) {
     super(new JComboBox());
     myDataFactory = dataFactory;
+    myNullable = nullable;
     setClickCountToStart(2);
     JComboBox comboBox = (JComboBox)editorComponent;
     ComboControl.initComboBox(comboBox, new Condition<String>() {
       public boolean value(final String object) {
-        return myData != null && myData.contains(object);
+        return myData != null && (myData.contains(object) || myNullable && EMPTY.equals(object));
       }
     });
   }
 
-  public ComboTableCellEditor(Class<? extends Enum> anEnum) {
-    this(ComboControl.createEnumFactory(anEnum));
+  public ComboTableCellEditor(Class<? extends Enum> anEnum, final boolean nullable) {
+    this(ComboControl.createEnumFactory(anEnum), nullable);
+  }
+
+  public Object getCellEditorValue() {
+    final String cellEditorValue = (String)super.getCellEditorValue();
+    return EMPTY.equals(cellEditorValue) ? null : cellEditorValue;
   }
 
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-    myData = new HashSet<String>(myDataFactory.create());
+    final List<String> list = myDataFactory.create();
+    myData = new HashSet<String>(list);
     String string = (String) value;
-    final JComboBox comboBox = (JComboBox) super.getTableCellEditorComponent(table, value, isSelected, row, column);
+    JComboBox comboBox = (JComboBox)editorComponent;
+    comboBox.removeAllItems();
+    if (myNullable) {
+      comboBox.addItem(EMPTY);
+    }
+    for (final String s : list) {
+      comboBox.addItem(s);
+    }
+    super.getTableCellEditorComponent(table, value, isSelected, row, column);
     if (!myData.contains(string)) {
       comboBox.setEditable(true);
       comboBox.setSelectedItem(string);
