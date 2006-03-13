@@ -103,7 +103,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     return module;
   }
 
-  private static void readJdomExternalizables(ModuleImpl module) {
+  protected static void readJdomExternalizables(ModuleImpl module) {
     final ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
     module.doInitJdomExternalizable(ModuleRootManager.class, moduleRootManager);
 
