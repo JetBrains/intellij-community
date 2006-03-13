@@ -113,8 +113,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     final ReferencedElementsCollector collector = new ReferencedElementsCollector();
     myMethod.accept(collector);
-    final Map<PsiMember,Set<PsiMember>> containersToReferenced;
-    containersToReferenced = getInaccessible(collector.myReferencedMembers, usagesIn);
+    final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usagesIn);
 
     final Set<PsiMember> containers = containersToReferenced.keySet();
     for (PsiMember container : containers) {
@@ -313,7 +312,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiLocalVariable resultVar = null;
     PsiStatement[] statements = blockData.block.getStatements();
     if (statements.length > 0) {
-      int first = 0;
       int last = statements.length - 1;
       /*PsiElement first = statements[0];
       PsiElement last = statements[statements.length - 1];*/
@@ -322,6 +320,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         last--;
       }
 
+      int first = 0;
       if (first <= last) {
         PsiElement firstAdded = anchorParent.addRangeBefore(statements[first], statements[last], anchor);
 
@@ -510,14 +509,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     PsiLocalVariable thisVar = null;
     if (!myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-      String thisVarName;
       PsiClass containingClass = myMethod.getContainingClass();
 
       if (containingClass != null) {
         PsiType thisType = myFactory.createType(containingClass, callSubstitutor);
         String[] names = myCodeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType)
           .names;
-        thisVarName = names[0];
+        String thisVarName = names[0];
         thisVarName = myCodeStyleManager.suggestUniqueVariableName(thisVarName, block.getFirstChild(), true);
         PsiExpression initializer = myFactory.createExpressionFromText("null", null);
         PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(thisVarName, thisType,
@@ -815,7 +813,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void declareUsedLocalsFinal(PsiElement expr, boolean strictlyFinal) throws IncorrectOperationException {
+  private static void declareUsedLocalsFinal(PsiElement expr, boolean strictlyFinal) throws IncorrectOperationException {
     if (expr instanceof PsiReferenceExpression) {
       PsiElement refElement = ((PsiReferenceExpression)expr).resolve();
       if (refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter) {
@@ -983,7 +981,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             classInitializer.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
           }
           myAddedClassInitializers.put(field, classInitializer);
-          continue RefLoop;
+          continue;
         }
       }
 
@@ -998,7 +996,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return refsVector.toArray(new PsiReferenceExpression[refsVector.size()]);
   }
 
-  private void addMarkedElements(final List<PsiReferenceExpression> array, PsiElement scope) {
+  private static void addMarkedElements(final List<PsiReferenceExpression> array, PsiElement scope) {
     scope.accept(new PsiRecursiveElementVisitor() {
       public void visitElement(PsiElement element) {
         if (element.getCopyableUserData(MARK_KEY) != null) {
@@ -1064,24 +1062,24 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       LOG.debug(controlFlow.toString());
     }
 
-    Instruction[] instructions = controlFlow.getInstructions().clone();
+    List<Instruction> instructions = new ArrayList<Instruction>(controlFlow.getInstructions());
 
     // temporary replace all return's with empty statements in the flow
     for (PsiReturnStatement aReturn : returns) {
       int offset = controlFlow.getStartOffset(aReturn);
       int endOffset = controlFlow.getEndOffset(aReturn);
-      while (offset <= endOffset && !(instructions[offset] instanceof GoToInstruction)) {
+      while (offset <= endOffset && !(instructions.get(offset) instanceof GoToInstruction)) {
         offset++;
       }
-      LOG.assertTrue(instructions[offset] instanceof GoToInstruction);
-      instructions[offset] = EmptyInstruction.INSTANCE;
+      LOG.assertTrue(instructions.get(offset) instanceof GoToInstruction);
+      instructions.set(offset, EmptyInstruction.INSTANCE);
     }
 
     for (PsiReturnStatement aReturn : returns) {
       int offset = controlFlow.getEndOffset(aReturn);
       while (true) {
-        if (offset == instructions.length) break;
-        Instruction instruction = instructions[offset];
+        if (offset == instructions.size()) break;
+        Instruction instruction = instructions.get(offset);
         if (instruction instanceof GoToInstruction) {
           offset = ((GoToInstruction)instruction).offset;
         }

@@ -14,9 +14,7 @@ public interface ControlFlow {
   int JUMP_ROLE_GOTO_THEN = 1;
   int JUMP_ROLE_GOTO_ELSE = 2;
 
-  Instruction[] getInstructions();
-
-  List<Instruction> getInstructionsList();
+  List<Instruction> getInstructions();
 
   int getSize();
 

@@ -172,7 +172,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     if (offsets == null) return;
     for (int i = 0; i < offsets.size(); i++) {
       int offset = offsets.get(i);
-      BranchingInstruction instruction = (BranchingInstruction)myCurrentFlow.getInstructionsList().get(offset);
+      BranchingInstruction instruction = (BranchingInstruction)myCurrentFlow.getInstructions().get(offset);
       instruction.offset += add;
       LOG.assertTrue(instruction.offset >= 0);
 //      if (instruction instanceof ReturnInstruction) {
@@ -400,7 +400,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       final int finallyStartOffset = finallyBlock == null ? -1 : myCurrentFlow.getStartOffset(finallyBlock);
       if (finallyBlock != null && finallyStartOffset != -1) {
         // go out of finally, use return
-        CallInstruction callInstruction = (CallInstruction)myCurrentFlow.getInstructionsList().get(finallyStartOffset - 2);
+        CallInstruction callInstruction = (CallInstruction)myCurrentFlow.getInstructions().get(finallyStartOffset - 2);
         instruction = new ReturnInstruction(0, myStack, callInstruction);
       }
       else {
@@ -453,7 +453,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       final int finallyStartOffset = finallyBlock == null ? -1 : myCurrentFlow.getStartOffset(finallyBlock);
       if (finallyBlock != null && finallyStartOffset != -1) {
         // go out of finally, use return
-        CallInstruction callInstruction = (CallInstruction)myCurrentFlow.getInstructionsList().get(finallyStartOffset - 2);
+        CallInstruction callInstruction = (CallInstruction)myCurrentFlow.getInstructions().get(finallyStartOffset - 2);
         instruction = new ReturnInstruction(0, myStack, callInstruction);
       }
       else {
@@ -1067,16 +1067,16 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       final int procStart = myCurrentFlow.getStartOffset(finallyBlock);
       final int procEnd = myCurrentFlow.getEndOffset(finallyBlock);
       int offset = procStart - 6;
-      final Instruction[] instructions = myCurrentFlow.getInstructions();
-      CallInstruction callInstruction = (CallInstruction)instructions[offset];
+      final List<Instruction> instructions = myCurrentFlow.getInstructions();
+      CallInstruction callInstruction = (CallInstruction)instructions.get(offset);
       callInstruction.procBegin = procStart;
       callInstruction.procEnd = procEnd;
       offset += 2;
-      callInstruction = (CallInstruction)instructions[offset];
+      callInstruction = (CallInstruction)instructions.get(offset);
       callInstruction.procBegin = procStart;
       callInstruction.procEnd = procEnd;
       offset += 2;
-      callInstruction = (CallInstruction)instructions[offset];
+      callInstruction = (CallInstruction)instructions.get(offset);
       callInstruction.procBegin = procStart;
       callInstruction.procEnd = procEnd;
 

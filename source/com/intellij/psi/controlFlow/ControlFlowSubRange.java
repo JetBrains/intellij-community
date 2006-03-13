@@ -10,25 +10,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ControlFlowSubRange implements ControlFlow {
-  private final ControlFlow myControlFlow;
+  private final ControlFlowImpl myControlFlow;
   private final int myStart;
   private final int myEnd;
   private List<Instruction> myInstructions;
 
-  public ControlFlowSubRange(ControlFlow controlFlow, int start, int end) {
+  public ControlFlowSubRange(ControlFlowImpl controlFlow, int start, int end) {
     myControlFlow = controlFlow;
     myStart = start;
     myEnd = end;
   }
 
-  public Instruction[] getInstructions() {
-    return getInstructionsList().toArray(new Instruction[myEnd-myStart]);
-  }
-
-  public List<Instruction> getInstructionsList() {
+  public List<Instruction> getInstructions() {
     if (myInstructions == null) {
       final List<Instruction> list = new ArrayList<Instruction>(myEnd - myStart);
-      final List<Instruction> oldList = myControlFlow.getInstructionsList();
+      final List<Instruction> oldList = myControlFlow.getInstructions();
       for (int i = myStart; i < myEnd; i++) {
         Instruction instruction = oldList.get(i).clone();
         if (instruction instanceof BranchingInstruction) {
@@ -90,7 +86,7 @@ public class ControlFlowSubRange implements ControlFlow {
       append(myEnd).
       append("]\n");
 
-    final List<Instruction> instructions = getInstructionsList();
+    final List<Instruction> instructions = getInstructions();
     for(int i = 0; i < instructions.size(); i++){
       Instruction instruction = instructions.get(i);
       buffer.append(Integer.toString(i));

@@ -50,13 +50,12 @@ public class ControlFlowUtil {
   }
 
   public static PsiVariable[] getSSAVariables(ControlFlow flow, boolean reportVarsIfNonInitializingPathExists) {
-    Instruction[] instructions = flow.getInstructions();
-    return getSSAVariables(flow, 0, instructions.length, reportVarsIfNonInitializingPathExists);
+    return getSSAVariables(flow, 0, flow.getSize(), reportVarsIfNonInitializingPathExists);
   }
 
   public static PsiVariable[] getSSAVariables(ControlFlow flow, int from, int to,
                                               boolean reportVarsIfNonInitializingPathExists) {
-    Instruction[] instructions = flow.getInstructions();
+    List<Instruction> instructions = flow.getInstructions();
     PsiVariable[] writtenVariables = getWrittenVariables(flow, from, to, false);
     ArrayList<PsiVariable> result = new ArrayList<PsiVariable>(1);
 
@@ -74,7 +73,7 @@ public class ControlFlowUtil {
           processedStates.add(state);
           int i = state.getInstructionIdx();
           if (i < to) {
-            Instruction instruction = instructions[i];
+            Instruction instruction = instructions.get(i);
 
             if (instruction instanceof ReturnInstruction) {
               int[] offsets = ((ReturnInstruction)instruction).getPossibleReturnOffsets();
@@ -106,9 +105,7 @@ public class ControlFlowUtil {
             }
             else if (instruction instanceof WriteVariableInstruction) {
               WriteVariableInstruction write = (WriteVariableInstruction)instruction;
-              queue.add(
-                new SSAInstructionState(state.getWriteCount() + (write.variable == psiVariable ? 1 : 0), i + 1)
-              );
+              queue.add(new SSAInstructionState(state.getWriteCount() + (write.variable == psiVariable ? 1 : 0), i + 1));
             }
             else if (instruction instanceof ReadVariableInstruction) {
               ReadVariableInstruction read = (ReadVariableInstruction)instruction;
@@ -167,9 +164,9 @@ public class ControlFlowUtil {
 
   public static PsiVariable[] getReadVariables(ControlFlow flow, int start, int end) {
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
-    Instruction[] instructions = flow.getInstructions();
+    List<Instruction> instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
-      Instruction instruction = instructions[i];
+      Instruction instruction = instructions.get(i);
       if (instruction instanceof ReadVariableInstruction) {
         PsiVariable variable = ((ReadVariableInstruction)instruction).variable;
         if (!array.contains(variable)) {
@@ -182,22 +179,21 @@ public class ControlFlowUtil {
 
   public static PsiVariable[] getWrittenVariables(ControlFlow flow, int start, int end, final boolean ignoreNotReachingWrites) {
     Set<PsiVariable> set = new HashSet<PsiVariable>();
-    Instruction[] instructions = flow.getInstructions();
+    List<Instruction> instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
-      Instruction instruction = instructions[i];
-      if (instruction instanceof WriteVariableInstruction &&
-          (!ignoreNotReachingWrites || isInstructionReachable(flow, end, i))) {
-          set.add(((WriteVariableInstruction)instruction).variable);
-        }
+      Instruction instruction = instructions.get(i);
+      if (instruction instanceof WriteVariableInstruction && (!ignoreNotReachingWrites || isInstructionReachable(flow, end, i))) {
+        set.add(((WriteVariableInstruction)instruction).variable);
+      }
     }
     return set.toArray(new PsiVariable[set.size()]);
   }
 
   public static PsiVariable[] getUsedVariables(ControlFlow flow, int start, int end) {
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
-    Instruction[] instructions = flow.getInstructions();
+    List<Instruction> instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
-      Instruction instruction = instructions[i];
+      Instruction instruction = instructions.get(i);
       if (instruction instanceof ReadVariableInstruction) {
         PsiVariable variable = ((ReadVariableInstruction)instruction).variable;
         if (!array.contains(variable)) {
@@ -215,10 +211,10 @@ public class ControlFlowUtil {
   }
 
   public static PsiVariable[] getInputVariables(ControlFlow flow, int start, int end) {
-    PsiVariable[] usedVariables = ControlFlowUtil.getUsedVariables(flow, start, end);
+    PsiVariable[] usedVariables = getUsedVariables(flow, start, end);
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
     for (PsiVariable variable : usedVariables) {
-      if (ControlFlowUtil.needVariableValueAt(variable, flow, start)) {
+      if (needVariableValueAt(variable, flow, start)) {
         array.add(variable);
       }
     }
@@ -233,11 +229,11 @@ public class ControlFlowUtil {
   }
 
   public static PsiVariable[] getOutputVariables(ControlFlow flow, int start, int end, int[] exitPoints) {
-    PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, start, end, true);
+    PsiVariable[] writtenVariables = getWrittenVariables(flow, start, end, true);
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
     for (PsiVariable variable : writtenVariables) {
       for (int exitPoint : exitPoints) {
-        if (ControlFlowUtil.needVariableValueAt(variable, flow, exitPoint)) {
+        if (needVariableValueAt(variable, flow, exitPoint)) {
           array.add(variable);
         }
       }
@@ -335,10 +331,10 @@ public class ControlFlowUtil {
   }
 
   private static int promoteThroughGotoChain(ControlFlow flow, int offset) {
-    Instruction[] instructions = flow.getInstructions();
+    List<Instruction> instructions = flow.getInstructions();
     while (true) {
-      if (offset >= instructions.length) break;
-      Instruction instruction = instructions[offset];
+      if (offset >= instructions.size()) break;
+      Instruction instruction = instructions.get(offset);
       if (!(instruction instanceof GoToInstruction) || ((GoToInstruction)instruction).isReturn) break;
       offset = ((GoToInstruction)instruction).offset;
     }
@@ -934,9 +930,9 @@ public class ControlFlowUtil {
     internalDepthFirstSearch(flow.getInstructions(), visitor, startOffset, endOffset);
   }
 
-  private static void internalDepthFirstSearch(final Instruction[] instructions, final InstructionClientVisitor clientVisitor, int offset, int endOffset) {
-    final IntArrayList oldOffsets = new IntArrayList(instructions.length / 2);
-    final IntArrayList newOffsets = new IntArrayList(instructions.length / 2);
+  private static void internalDepthFirstSearch(final List<Instruction> instructions, final InstructionClientVisitor clientVisitor, int offset, int endOffset) {
+    final IntArrayList oldOffsets = new IntArrayList(instructions.size() / 2);
+    final IntArrayList newOffsets = new IntArrayList(instructions.size() / 2);
 
     oldOffsets.add(offset);
     newOffsets.add(-1);
@@ -950,7 +946,7 @@ public class ControlFlowUtil {
           int newOffset = instruction.offset;
           // 'procedure' pointed by call instruction should be processed regardless of whether it was already visited or not
           // clear procedure text and return instructions aftewards
-          for (int i = instruction.procBegin; i < instruction.procEnd || instructions[i] instanceof ReturnInstruction; i++) {
+          for (int i = instruction.procBegin; i < instruction.procEnd || instructions.get(i) instanceof ReturnInstruction; i++) {
             clientVisitor.processedInstructions[i] = false;
           }
           oldOffsets.add(offset);
@@ -1014,7 +1010,7 @@ public class ControlFlowUtil {
         if (offset >= endOffset) {
           continue;
         }
-        Instruction instruction = instructions[offset];
+        Instruction instruction = instructions.get(offset);
 
         if (clientVisitor.processedInstructions[offset]) {
           if (newOffset != -1) {
@@ -1028,7 +1024,7 @@ public class ControlFlowUtil {
         }
         if (currentProcedureReturnOffsets.size() != 0) {
           int returnOffset = currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1);
-          CallInstruction callInstruction = (CallInstruction) instructions[returnOffset - 1];
+          CallInstruction callInstruction = (CallInstruction) instructions.get(returnOffset - 1);
           // check if we inside procedure but 'return offset' stack is empty, so
           // we should push back to 'return offset' stack
           synchronized (callInstruction.stack) {

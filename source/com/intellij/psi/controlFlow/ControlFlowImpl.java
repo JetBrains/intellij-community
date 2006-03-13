@@ -47,10 +47,7 @@ class ControlFlowImpl implements ControlFlow {
     myElementToEndOffsetMap.put(element, myInstructions.size());
   }
 
-  public Instruction[] getInstructions() {
-    return myInstructions.toArray(new Instruction[myInstructions.size()]);
-  }
-  public List<Instruction> getInstructionsList() {
+  public List<Instruction> getInstructions() {
     return myInstructions;
   }
   public int getSize() {

@@ -128,15 +128,15 @@ public class DefUseUtil {
     catch (AnalysisCanceledException e) {
       return null;
     }
-    Instruction[] instructions = flow.getInstructions();
+    List<Instruction> instructions = flow.getInstructions();
     if (LOG.isDebugEnabled()) {
       System.out.println(flow);
     }
 
     Set<PsiVariable> assignedVariables = new THashSet<PsiVariable>();
     Set<PsiVariable> readVariables = new THashSet<PsiVariable>();
-    for (int i = 0; i < instructions.length; i++) {
-      Instruction instruction = instructions[i];
+    for (int i = 0; i < instructions.size(); i++) {
+      Instruction instruction = instructions.get(i);
       ProgressManager.getInstance().checkCanceled();
       if (instruction instanceof WriteVariableInstruction) {
         WriteVariableInstruction writeInstruction = (WriteVariableInstruction)instruction;
@@ -146,15 +146,16 @@ public class DefUseUtil {
         if (context != null && !(context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null)) {
           assignedVariables.add(psiVariable);
         }
-      } else if (instruction instanceof ReadVariableInstruction) {
-        ReadVariableInstruction readInstruction = (ReadVariableInstruction) instruction;
+      }
+      else if (instruction instanceof ReadVariableInstruction) {
+        ReadVariableInstruction readInstruction = (ReadVariableInstruction)instruction;
         readVariables.add(readInstruction.variable);
       }
     }
 
     InstructionState[] states = getStates(instructions);
 
-    boolean[] defsArmed = new boolean[instructions.length];
+    boolean[] defsArmed = new boolean[instructions.size()];
     for (int i = 0; i < defsArmed.length; i++) defsArmed[i] = false;
 
     List<InstructionState> queue = new ArrayList<InstructionState>();
@@ -177,21 +178,23 @@ public class DefUseUtil {
         state.markVisited();
 
         int idx = state.getInstructionIdx();
-        if (idx < instructions.length) {
-          Instruction instruction = instructions[idx];
+        if (idx < instructions.size()) {
+          Instruction instruction = instructions.get(idx);
 
           if (instruction instanceof WriteVariableInstruction) {
-            WriteVariableInstruction writeInstruction = (WriteVariableInstruction) instruction;
+            WriteVariableInstruction writeInstruction = (WriteVariableInstruction)instruction;
             PsiVariable psiVariable = writeInstruction.variable;
             outUsedVariables.add(psiVariable);
             if (state.mergeUseDisarmed(psiVariable)) {
               defsArmed[idx] = true;
             }
-          } else if (instruction instanceof ReadVariableInstruction) {
+          }
+          else if (instruction instanceof ReadVariableInstruction) {
             ReadVariableInstruction readInstruction = (ReadVariableInstruction)instruction;
             state.mergeUseArmed(readInstruction.variable);
             outUsedVariables.add(readInstruction.variable);
-          } else {
+          }
+          else {
             state.touch();
           }
         }
@@ -206,8 +209,8 @@ public class DefUseUtil {
       }
     }
 
-    for (int i = 0; i < instructions.length; i++) {
-      Instruction instruction = instructions[i];
+    for (int i = 0; i < instructions.size(); i++) {
+      Instruction instruction = instructions.get(i);
       if (instruction instanceof WriteVariableInstruction) {
         WriteVariableInstruction writeInstruction = (WriteVariableInstruction)instruction;
         if (!defsArmed[i]) {
@@ -220,7 +223,8 @@ public class DefUseUtil {
               if (!assignedVariables.contains(psiVariable)) {
                 unusedDefs.add(new Info(psiVariable, context, false));
               }
-            } else {
+            }
+            else {
               unusedDefs.add(new Info(psiVariable, context, readVariables.contains(psiVariable)));
             }
           }
@@ -283,11 +287,11 @@ public class DefUseUtil {
       return new RefsDefs(body) {
 
         protected int nNext(int index) {
-          return instructions[index].nNext();
+          return instructions.get(index).nNext();
         }
 
         protected int getNext(int index, int no) {
-          return instructions[index].getNext(index, no);
+          return instructions.get(index).getNext(index, no);
         }
 
         protected boolean defs() { return false; }
@@ -320,7 +324,7 @@ public class DefUseUtil {
     protected abstract int   nNext(int index);
     protected abstract int getNext(int index, int no);
 
-    final Instruction[] instructions;
+    final List<Instruction> instructions;
     final ControlFlow flow;
     final PsiCodeBlock body;
 
@@ -339,8 +343,7 @@ public class DefUseUtil {
         return null;
       }
 
-      final boolean [] visited = new boolean[instructions.length + 1];
-      final boolean [] parmsVisited = new boolean [1];
+      final boolean [] visited = new boolean[instructions.size() + 1];
       visited [visited.length-1] = true; // stop on the code end
       int elem = flow.getStartOffset(ref);
 
@@ -350,7 +353,7 @@ public class DefUseUtil {
       }
 
       if (elem != -1) {
-        if (!defs () && instructions [elem] instanceof ReadVariableInstruction) {
+        if (!defs () && instructions.get(elem) instanceof ReadVariableInstruction) {
           LOG.assertTrue(nNext(elem) == 1);
           LOG.assertTrue(getNext(elem,0) == elem+1);
           elem += 1;
@@ -363,7 +366,7 @@ public class DefUseUtil {
             visited [index] = true;
 
             if (defs ()) {
-              final Instruction instruction = instructions [index];
+              final Instruction instruction = instructions.get(index);
               processInstruction(res, instruction, index);
               if (instruction instanceof WriteVariableInstruction) {
                 WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
@@ -373,6 +376,7 @@ public class DefUseUtil {
               }
 
               // hack: ControlFlow doesnn't contains parameters initialization
+              final boolean[] parmsVisited = new boolean [1];
               if (index == 0 && !parmsVisited [0]) {
                 parmsVisited [0] = true;
                 if (def instanceof PsiParameter) {
@@ -386,7 +390,7 @@ public class DefUseUtil {
               final int prev = getNext(index, i);
               if (!visited [prev]) {
                 if (!defs ()) {
-                  final Instruction instruction = instructions [prev];
+                  final Instruction instruction = instructions.get(prev);
                   if (instruction instanceof WriteVariableInstruction) {
                     WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
                     if (instructionW.variable == def) {
@@ -410,14 +414,14 @@ public class DefUseUtil {
   }
 
 
-  private static InstructionState[] getStates(final Instruction[] instructions) {
-    final InstructionState[] states = new InstructionState[instructions.length];
+  private static InstructionState[] getStates(final List<Instruction> instructions) {
+    final InstructionState[] states = new InstructionState[instructions.size()];
     for (int i = 0; i < states.length; i++) {
       states[i] = new InstructionState(i);
     }
 
-    for (int i = 0; i < instructions.length; i++) {
-      final Instruction instruction = instructions[i];
+    for (int i = 0; i < instructions.size(); i++) {
+      final Instruction instruction = instructions.get(i);
       for (int j = 0; j != instruction.nNext(); ++ j) {
         final int next = instruction.getNext(i, j);
         if (next < states.length) {
@@ -470,18 +474,17 @@ public class DefUseUtil {
 
       if (def instanceof PsiLocalVariable || def instanceof PsiParameter) {
         final PsiVariable var = (PsiVariable) def;
-        final PsiMethod method;
         PsiElement p = var;
         while (!(p instanceof PsiMethod)) {
           final PsiElement parent = p.getParent();
           LOG.assertTrue (parent != null);
           p = parent;
         }
-        method = (PsiMethod)p;
+        final PsiMethod method = (PsiMethod)p;
         final PsiCodeBlock body = method.getBody();
         return defs
-               ? DefUseUtil.getDefs(body, var, refElem)
-               : DefUseUtil.getRefs(body, var, refElem);
+               ? getDefs(body, var, refElem)
+               : getRefs(body, var, refElem);
       }
     }
     return null;
