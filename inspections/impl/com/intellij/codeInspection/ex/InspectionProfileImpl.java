@@ -277,7 +277,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
       final String toolName = key.toString();
       inspectionElement.setAttribute(CLASS_TAG, toolName);
-      inspectionElement.setAttribute(LEVEL_TAG, getErrorLevel(key).toString());
+      inspectionElement.setAttribute(LEVEL_TAG, getToolState(key).getLevel().toString());
       inspectionElement.setAttribute(ENABLED_TAG, Boolean.toString(isToolEnabled(key)));
 
       final InspectionTool tool = myTools.get(toolName);
