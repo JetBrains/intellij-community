@@ -29,6 +29,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.BevelBorder;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -525,10 +529,30 @@ public class RadContainer extends RadComponent implements IContainer {
       setLayoutManager(new RadFlowLayoutManager());
     }
     getLayoutManager().createSnapshotLayout(this, component.getLayout());
+    importSnapshotBorder(component);
     for(Component child: component.getComponents()) {
       if (child instanceof JComponent) {
         RadComponent childComponent = createSnapshotComponent(context, (JComponent) child);
         getLayoutManager().addSnapshotComponent(component, (JComponent) child, this, childComponent);
+      }
+    }
+  }
+
+  private void importSnapshotBorder(final JComponent component) {
+    Border border = component.getBorder();
+    if (border != null) {
+      if (border instanceof TitledBorder) {
+        TitledBorder titledBorder = (TitledBorder) border;
+        setBorderTitle(StringDescriptor.create(titledBorder.getTitle()));
+        border = titledBorder.getBorder();
+      }
+
+      if (border instanceof EtchedBorder) {
+        setBorderType(BorderType.ETCHED);
+      }
+      else if (border instanceof BevelBorder) {
+        BevelBorder bevelBorder = (BevelBorder) border;
+        setBorderType(bevelBorder.getBevelType() == BevelBorder.RAISED ? BorderType.BEVEL_RAISED : BorderType.BEVEL_LOWERED);
       }
     }
   }
