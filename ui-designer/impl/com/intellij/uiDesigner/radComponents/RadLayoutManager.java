@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.LayoutManager;
 import java.awt.Point;
 import java.util.HashMap;
@@ -86,5 +87,11 @@ public abstract class RadLayoutManager {
 
   public Property[] getComponentProperties(final Project project, final RadComponent component) {
     return Property.EMPTY_ARRAY;
+  }
+
+  public void addSnapshotComponent(final JComponent parent,
+                                   final JComponent child,
+                                   final RadContainer container,
+                                   final RadComponent component) {
   }
 }

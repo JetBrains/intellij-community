@@ -1,7 +1,11 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.uiDesigner.ReferenceUtil;
+import com.intellij.uiDesigner.SwingProperties;
+import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -9,9 +13,8 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.containers.HashMap;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,7 +134,8 @@ public final class IntroStringProperty extends IntrospectedProperty{
     }
 
     if (result != null) {
-      result.setResolvedValue(ReferenceUtil.resolve(component, result));
+      // in this branch, the StringDescriptor is always a plain string, so resolve() is not necessary
+      result.setResolvedValue(result.getValue());
     }
     return result;
   }
@@ -148,7 +152,10 @@ public final class IntroStringProperty extends IntrospectedProperty{
 
     // 2. Apply real string value to JComponent peer
     final JComponent delegee = component.getDelegee();
-    final String resolvedValue = ReferenceUtil.resolve(component, descriptor);
+    final String resolvedValue = (descriptor != null && descriptor.getValue() != null)
+                                 ? descriptor.getValue()
+                                 : ReferenceUtil.resolve(component, descriptor);
+
     if (descriptor != null) {
       descriptor.setResolvedValue(resolvedValue);
     }
@@ -198,15 +205,23 @@ public final class IntroStringProperty extends IntrospectedProperty{
     }
   }
 
-  public void write(final Object value, final XmlWriter writer) {
-    if (value == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("value cannot be null");
-    }
+  public void write(@NotNull final Object value, final XmlWriter writer) {
     final StringDescriptor descriptor = (StringDescriptor)value;
     writer.writeStringDescriptor(descriptor,
                                  UIFormXmlConstants.ATTRIBUTE_VALUE,
                                  UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE,
                                  UIFormXmlConstants.ATTRIBUTE_KEY);
+  }
+
+  @Override public void importSnapshotValue(final JComponent component, final RadComponent radComponent) {
+    try {
+      Object value = myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
+      if (value != null) {
+        setValue(radComponent, StringDescriptor.create((String) value));
+      }
+    }
+    catch (Exception e) {
+      // ignore
+    }
   }
 }

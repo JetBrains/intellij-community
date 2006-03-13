@@ -4,6 +4,7 @@
 
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
@@ -15,9 +16,9 @@ import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.FlowLayout;
 import java.awt.LayoutManager;
 import java.awt.Point;
@@ -54,7 +55,8 @@ public class RadFlowLayoutManager extends RadLayoutManager {
     return container.getComponentCount() == 0;
   }
 
-  @Override public DropLocation getDropLocation(RadContainer container, final Point location) {
+  @NotNull @Override
+  public DropLocation getDropLocation(RadContainer container, final Point location) {
     FlowLayout flowLayout = (FlowLayout) container.getLayout();
     return new FlowDropLocation(container, location, (flowLayout.getHgap()+1)/2, (flowLayout.getVgap()+1)/2, false);
   }
@@ -64,6 +66,20 @@ public class RadFlowLayoutManager extends RadLayoutManager {
       ALIGN_PROPERTY,
       HGapProperty.getInstance(project),
       VGapProperty.getInstance(project) };
+  }
+
+
+  @Override
+  public void addSnapshotComponent(final JComponent parent,
+                                   final JComponent child,
+                                   final RadContainer container,
+                                   final RadComponent component) {
+    FlowLayout sourceLayout = (FlowLayout) parent.getLayout();
+    FlowLayout targetLayout = (FlowLayout) container.getDelegee().getLayout();
+    targetLayout.setAlignment(sourceLayout.getAlignment());
+    targetLayout.setHgap(sourceLayout.getHgap());
+    targetLayout.setVgap(sourceLayout.getVgap());
+    container.addComponent(component);
   }
 
   private static class MyAlignProperty extends Property<RadContainer> {

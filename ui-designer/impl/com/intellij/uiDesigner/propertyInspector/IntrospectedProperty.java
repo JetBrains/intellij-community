@@ -1,25 +1,26 @@
 package com.intellij.uiDesigner.propertyInspector;
 
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public abstract class IntrospectedProperty extends Property<RadComponent> {
-  private final static Object[] EMPTY_OBJECT_ARRAY=new Object[]{};
+  protected final static Object[] EMPTY_OBJECT_ARRAY=new Object[]{};
 
   /**
    * This method is used to set property value to "delegee" JComponent
    */
-  private final Method myReadMethod;
+  protected final Method myReadMethod;
   /**
    * This method is used to get property value from "delegee" JComponent
    */
@@ -70,10 +71,28 @@ public abstract class IntrospectedProperty extends Property<RadComponent> {
   }
 
   @Override public void resetValue(RadComponent component) throws Exception {
+    final Object defaultValue = getDefaultValue(component);
+    myWriteMethod.invoke(component.getDelegee(), defaultValue);
+    markTopmostModified(component, false);
+  }
+
+  private Object getDefaultValue(final RadComponent component) throws Exception {
     final Constructor constructor = component.getComponentClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
     constructor.setAccessible(true);
     JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
-    myWriteMethod.invoke(component.getDelegee(), myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY));
-    markTopmostModified(component, false);
+    return myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY);
+  }
+
+  public void importSnapshotValue(final JComponent component, final RadComponent radComponent) {
+    try {
+      Object value = myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
+      Object defaultValue = getDefaultValue(radComponent);
+      if (!Comparing.equal(value, defaultValue)) {
+        setValue(radComponent, value);
+      }
+    }
+    catch (Exception e) {
+      // ignore
+    }
   }
 }

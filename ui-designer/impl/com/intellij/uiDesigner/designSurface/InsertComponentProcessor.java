@@ -246,7 +246,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     }
 
     RadComponent result;
-    final String id = editor.generateId();
+    final String id = FormEditingUtil.generateId(editor.getRootContainer());
 
     if (JScrollPane.class.getName().equals(item.getClassName())) {
       result = new RadScrollPane(editor.getModule(), id);

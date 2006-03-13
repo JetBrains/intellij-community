@@ -1,14 +1,13 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.xml.util.XmlUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
-import java.util.Iterator;
+import java.awt.Dimension;
 import java.util.Stack;
 
 /**
@@ -20,13 +19,13 @@ import java.util.Stack;
 public final class XmlWriter{
   private static final int INDENT = 2;
 
-  private final Stack myElementNames;
-  private final Stack myElementHasBody;
-  private final StringBuffer myBuffer;
+  private final Stack<String> myElementNames;
+  private final Stack<Boolean> myElementHasBody;
+  @NonNls private final StringBuffer myBuffer;
 
   public XmlWriter(){
-    myElementNames = new Stack();
-    myElementHasBody = new Stack();
+    myElementNames = new Stack<String>();
+    myElementHasBody = new Stack<Boolean>();
     myBuffer = new StringBuffer();
     //noinspection HardCodedStringLiteral
     myBuffer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -56,7 +55,7 @@ public final class XmlWriter{
 
   public void startElement(@NonNls final String elementName, final String namespace){
     if (myElementNames.size() > 0) {
-      if(!((Boolean)myElementHasBody.peek()).booleanValue()){
+      if(!myElementHasBody.peek().booleanValue()){
         myBuffer.append(">\n");
       }
       myElementHasBody.set(myElementHasBody.size()-1,Boolean.TRUE);
@@ -66,7 +65,6 @@ public final class XmlWriter{
     myBuffer.append("<").append(elementName);
 
     if (namespace != null) {
-      //noinspection HardCodedStringLiteral
       myBuffer.append(" xmlns=\"").append(namespace).append('"');
     }
 
@@ -75,8 +73,8 @@ public final class XmlWriter{
   }
 
   public void endElement() {
-    final String elementName = (String)myElementNames.peek();
-    final boolean hasBody = ((Boolean)myElementHasBody.peek()).booleanValue();
+    final String elementName = myElementNames.peek();
+    final boolean hasBody = myElementHasBody.peek().booleanValue();
 
     myElementNames.pop();
     myElementHasBody.pop();
@@ -121,12 +119,12 @@ public final class XmlWriter{
   public void writeElement(final Element element){
     startElement(element.getName());
     try {
-      for (Iterator iterator = element.getAttributes().iterator(); iterator.hasNext();) {
-        final Attribute attribute = (Attribute)iterator.next();
+      for (final Object o1 : element.getAttributes()) {
+        final Attribute attribute = (Attribute)o1;
         addAttribute(attribute.getName(), attribute.getValue());
       }
-      for (Iterator iterator = element.getChildren().iterator(); iterator.hasNext(); ){
-        final Element child = (Element)iterator.next();
+      for (final Object o : element.getChildren()) {
+        final Element child = (Element)o;
         writeElement(child);
       }
     }

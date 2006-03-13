@@ -15,6 +15,7 @@ import com.intellij.util.Filter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.lang.reflect.Method;
 
 /**
@@ -63,5 +64,9 @@ public class IntroComponentProperty extends IntrospectedProperty {
   @Override public void resetValue(RadComponent component) throws Exception {
     setValue(component, null);
     markTopmostModified(component, false);
+  }
+
+  @Override public void importSnapshotValue(final JComponent component, final RadComponent radComponent) {
+    // do nothing for now
   }
 }

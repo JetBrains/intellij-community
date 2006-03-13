@@ -32,7 +32,7 @@ import java.util.Map;
 
 /**
  * @author yole
- * @noinspection ForLoopReplaceableByForEach, unchecked
+ * @noinspection ForLoopReplaceableByForEach,unchecked
  */
 public class GridBagConverter {
   private Insets myInsets;
@@ -163,8 +163,9 @@ public class GridBagConverter {
     }
   }
 
-  private void makeSameSizes(final Result[] resultArray, boolean horizontal) {
-    int minimum = -1, preferred=-1;
+  private static void makeSameSizes(final Result[] resultArray, boolean horizontal) {
+    int minimum = -1;
+    int preferred = -1;
     for(int i=0; i<resultArray.length; i++) {
       Result result = resultArray [i];
       Dimension minSize = result.minimumSize != null || result.component == null

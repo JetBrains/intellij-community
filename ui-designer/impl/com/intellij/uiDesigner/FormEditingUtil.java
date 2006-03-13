@@ -481,6 +481,34 @@ public final class FormEditingUtil {
     editor.refreshAndSave(true);
   }
 
+  public static boolean idAlreadyExist(final String id, final RadComponent component) {
+    if (id.equals(component.getId())) {
+      return true;
+    }
+    if (component instanceof RadContainer) {
+      final RadContainer container = (RadContainer)component;
+      for (int i = 0; i < container.getComponentCount(); i++) {
+        if (idAlreadyExist(id, container.getComponent(i))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @return id
+     * @param rootContainer
+   */
+  public static String generateId(final RadRootContainer rootContainer) {
+    while (true) {
+      final String id = Integer.toString((int)(Math.random() * 1024 * 1024), 16);
+      if (!idAlreadyExist(id, rootContainer)) {
+        return id;
+      }
+    }
+  }
+
   public static interface StringDescriptorVisitor<T extends IComponent> {
     boolean visit(T component, StringDescriptor descriptor);
   }

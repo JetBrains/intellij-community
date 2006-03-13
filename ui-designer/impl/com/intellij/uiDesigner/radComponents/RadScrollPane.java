@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.DropLocation;
@@ -22,6 +23,10 @@ public final class RadScrollPane extends RadContainer {
 
   public RadScrollPane(final Module module, final String id){
     super(module, COMPONENT_CLASS, id);
+  }
+
+  public RadScrollPane(final Module module, final String id, final Palette palette) {
+    super(module, COMPONENT_CLASS, id, palette);
   }
 
   @Nullable @Override

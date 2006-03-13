@@ -1,20 +1,22 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.FontEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import javax.swing.*;
+import java.awt.Font;
 import java.lang.reflect.Method;
 
 /**
@@ -94,6 +96,21 @@ public class IntroFontProperty extends IntrospectedProperty {
     protected void customize(Object value) {
       FontDescriptor fontDescriptor = (FontDescriptor) value;
       setText(descriptorToString(fontDescriptor));
+    }
+  }
+
+  @Override public void importSnapshotValue(final JComponent component, final RadComponent radComponent) {
+    try {
+      if (component.getParent() != null) {
+        Font componentFont = (Font) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
+        Font parentFont = (Font) myReadMethod.invoke(component.getParent(), EMPTY_OBJECT_ARRAY);
+        if (!Comparing.equal(componentFont, parentFont)) {
+          setValue(radComponent, new FontDescriptor(componentFont));
+        }
+      }
+    }
+    catch (Exception e) {
+      // ignore
     }
   }
 }

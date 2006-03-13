@@ -4,18 +4,20 @@
 
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.FeedbackLayer;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.DropLocation;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
-import com.intellij.uiDesigner.designSurface.FeedbackLayer;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -44,7 +46,8 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_BORDER_CONSTRAINT, (String) child.getCustomLayoutConstraints());
   }
 
-  @Override public DropLocation getDropLocation(RadContainer container, final Point location) {
+  @NotNull @Override
+  public DropLocation getDropLocation(RadContainer container, final Point location) {
     return new MyDropLocation(container, getQuadrantAt(container, location));
   }
 
@@ -79,6 +82,15 @@ public class RadBorderLayoutManager extends RadLayoutManager {
       HGapProperty.getInstance(project),
       VGapProperty.getInstance(project)
     };
+  }
+
+  @Override public void addSnapshotComponent(final JComponent parent,
+                                             final JComponent child,
+                                             final RadContainer container,
+                                             final RadComponent component) {
+    BorderLayout borderLayout = (BorderLayout) parent.getLayout();
+    component.setCustomLayoutConstraints(borderLayout.getConstraints(child));
+    container.addComponent(component);
   }
 
   private static class MyDropLocation implements DropLocation {
@@ -129,3 +141,4 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
   }
 }
+

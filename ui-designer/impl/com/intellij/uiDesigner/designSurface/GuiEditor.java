@@ -754,33 +754,6 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
   }
 
-  /**
-   * @return id
-   */
-  public String generateId() {
-    while (true) {
-      final String id = Integer.toString((int)(Math.random() * 1024 * 1024), 16);
-      if (!idAlreadyExist(id, getRootContainer())) {
-        return id;
-      }
-    }
-  }
-
-  private static boolean idAlreadyExist(final String id, final RadComponent component) {
-    if (id.equals(component.getId())) {
-      return true;
-    }
-    if (component instanceof RadContainer) {
-      final RadContainer container = (RadContainer)component;
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        if (idAlreadyExist(id, container.getComponent(i))) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   public static void repaintLayeredPane(final RadComponent component) {
     final GuiEditor uiEditor = (GuiEditor)SwingUtilities.getAncestorOfClass(GuiEditor.class, component.getDelegee());
     if (uiEditor != null) {

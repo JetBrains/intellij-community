@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -79,13 +80,23 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
+  public RadContainer(final Module module, @NotNull final Class aClass, @NotNull final String id, final Palette palette) {
+    this(module, aClass, id);
+    setPalette(palette);
+  }
+
   @Nullable protected RadLayoutManager createInitialLayoutManager() {
-    final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(getModule().getProject());
-    if (configuration.IRIDA_LAYOUT_MODE) {
-      return new RadXYLayoutManager();
+    String defaultLayoutManager = UIFormXmlConstants.LAYOUT_INTELLIJ;
+    if (getModule() != null) {
+      final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(getModule().getProject());
+      if (configuration.IRIDA_LAYOUT_MODE) {
+        return new RadXYLayoutManager();
+      }
+      defaultLayoutManager = configuration.DEFAULT_LAYOUT_MANAGER;
     }
+
     try {
-      return RadLayoutManager.createLayoutManager(configuration.DEFAULT_LAYOUT_MANAGER);
+      return RadLayoutManager.createLayoutManager(defaultLayoutManager);
     }
     catch (Exception e) {
       LOG.error(e);
@@ -377,8 +388,11 @@ public class RadContainer extends RadComponent implements IContainer {
   /**
    * Updates delegee's border
    */
-  public void updateBorder(){
-    final String title = ReferenceUtil.resolve(this, myBorderTitle);
+  public void updateBorder() {
+    String title = null;
+    if (myBorderTitle != null) {
+      title = ReferenceUtil.resolve(this, myBorderTitle);
+    }
     getDelegee().setBorder(myBorderType.createBorder(title));
   }
 

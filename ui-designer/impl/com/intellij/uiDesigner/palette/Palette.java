@@ -94,7 +94,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   }
 
   /** Invoked by reflection */
-  private Palette(Project project) {
+  public Palette(Project project) {
     myProject = project;
     myLafManagerListener = new MyLafManagerListener();
     myClass2Properties = new HashMap<Class, IntrospectedProperty[]>();
@@ -102,8 +102,10 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     myGroups = new ArrayList<GroupItem>();
     myListeners = new ArrayList<Listener>();
 
-    mySpecialGroup.setReadOnly(true);
-    mySpecialGroup.addItem(ComponentItem.createAnyComponentItem(project));
+    if (project != null) {
+      mySpecialGroup.setReadOnly(true);
+      mySpecialGroup.addItem(ComponentItem.createAnyComponentItem(project));
+    }
   }
 
   /**Adds specified listener.*/
@@ -582,7 +584,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
         final IntrospectedProperty property;
 
         final Class propertyType = descriptor.getPropertyType();
-        final Properties properties = Properties.getInstance();
+        final Properties properties = (myProject == null) ? new Properties() : Properties.getInstance();
         if (int.class.equals(propertyType)) { // int
           IntEnumEditor.Pair[] enumPairs = properties.getEnumPairs(aClass, name);
           if (enumPairs != null) {

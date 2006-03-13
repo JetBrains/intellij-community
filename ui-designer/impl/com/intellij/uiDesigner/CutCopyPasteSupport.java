@@ -164,11 +164,11 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
         // pasted components should have no bindings
         lwComponent.setBinding(null);
-        lwComponent.setId(editor.generateId());
+        lwComponent.setId(FormEditingUtil.generateId(editor.getRootContainer()));
         FormEditingUtil.iterate(lwComponent, new FormEditingUtil.ComponentVisitor<LwComponent>() {
           public boolean visit(final LwComponent c) {
             c.setBinding(null);
-            c.setId(editor.generateId());
+            c.setId(FormEditingUtil.generateId(editor.getRootContainer()));
             return true;
           }
         });

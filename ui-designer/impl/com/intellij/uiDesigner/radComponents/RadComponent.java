@@ -93,6 +93,8 @@ public abstract class RadComponent implements IComponent {
 
   private final HashSet<String> myModifiedPropertyNames;
 
+  private Palette myPalette;
+
   private boolean myHasDragger;
   private boolean myResizing;
   private boolean myDragging;
@@ -107,7 +109,7 @@ public abstract class RadComponent implements IComponent {
    * @param id id of the compoent inside the form. <code>id</code>
    * should be a unique atring inside the form.
    */
-  public RadComponent(@NotNull final Module module, @NotNull final Class aClass, @NotNull final String id){
+  public RadComponent(final Module module, @NotNull final Class aClass, @NotNull final String id) {
     myModule = module;
     myClass = aClass;
     myId = id;
@@ -128,10 +130,14 @@ public abstract class RadComponent implements IComponent {
     myDelegee.putClientProperty(CLIENT_PROP_RAD_COMPONENT, this);
   }
 
+  public RadComponent(final Module module, @NotNull final Class aClass, @NotNull final String id, final Palette palette) {
+    this(module, aClass, id);
+    myPalette = palette;
+  }
+
   /**
    * @return module for the component.
    */
-  @NotNull
   public final Module getModule() {
     return myModule;
   }
@@ -140,12 +146,23 @@ public abstract class RadComponent implements IComponent {
     return myModule.getProject();
   }
 
+  public Palette getPalette() {
+    if (myPalette == null) {
+      return Palette.getInstance(getProject());
+    }
+    return myPalette;
+  }
+
+  public void setPalette(final Palette palette) {
+    myPalette = palette;
+  }
+
   /**
    * Initializes introspected properties into default values and
    * sets default component's constraints.
    */
   public void init(final GuiEditor editor, @NotNull final ComponentItem item) {
-    final IntrospectedProperty[] properties = Palette.getInstance(myModule.getProject()).getIntrospectedProperties(myClass);
+    final IntrospectedProperty[] properties = getPalette().getIntrospectedProperties(myClass);
     for (final IntrospectedProperty property : properties) {
       final Object initialValue = item.getInitialValue(property);
       if (initialValue != null) {
@@ -206,7 +223,7 @@ public abstract class RadComponent implements IComponent {
 
   @Nullable
   public Property getDefaultInplaceProperty() {
-    return Palette.getInstance(myModule.getProject()).getInplaceProperty(getComponentClass());
+    return getPalette().getInplaceProperty(getComponentClass());
   }
 
   @Nullable
@@ -452,7 +469,8 @@ public abstract class RadComponent implements IComponent {
 
   public void processMouseEvent(final MouseEvent event) {}
 
-  @Nullable public EventProcessor getEventProcessor(final MouseEvent event) {
+  @Nullable
+  public EventProcessor getEventProcessor(final MouseEvent event) {
     return null;
   }
 
@@ -497,7 +515,7 @@ public abstract class RadComponent implements IComponent {
     writer.startElement("properties");
     try{
       final IntrospectedProperty[] introspectedProperties =
-        Palette.getInstance(myModule.getProject()).getIntrospectedProperties(getComponentClass());
+        getPalette().getIntrospectedProperties(getComponentClass());
       for(final IntrospectedProperty property : introspectedProperties) {
         if (isMarkedAsModified(property)) {
           final Object value = property.getValue(this);
@@ -522,8 +540,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   public IProperty[] getModifiedProperties() {
-    final Palette palette = Palette.getInstance(getModule().getProject());
-    IntrospectedProperty[] props = palette.getIntrospectedProperties(getComponentClass());
+    IntrospectedProperty[] props = getPalette().getIntrospectedProperties(getComponentClass());
     ArrayList<IProperty> result = new ArrayList<IProperty>();
     for(IntrospectedProperty prop: props) {
       if (isMarkedAsModified(prop)) {
