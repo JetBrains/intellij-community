@@ -148,7 +148,7 @@ public class TypedAction {
       logError();
     }
     private void logError() {
-      LOG.error("PSI should not be commited on every typing since this greatly reduces app responsiveness");
+      //LOG.error("PSI should not be commited on every typing since this greatly reduces app responsiveness");
     }
   }
 }

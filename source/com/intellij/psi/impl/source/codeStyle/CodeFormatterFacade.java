@@ -75,7 +75,7 @@ public class CodeFormatterFacade implements Constants {
       if (containingFile.getTextLength() > 0) {
         try {
           FormatterEx.getInstanceEx().format(model, mySettings,
-                                             mySettings.getIndentOptions(fileType), range);
+                                             mySettings.getIndentOptions(fileType), range, true);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -91,6 +91,10 @@ public class CodeFormatterFacade implements Constants {
   }
 
   public void processText(final PsiFile file, final int startOffset, final int endOffset) {
+    processText(file, startOffset, endOffset, true);
+  }
+
+  private void processText(final PsiFile file, final int startOffset, final int endOffset, boolean headWhitespace) {
     final FileType fileType = myHelper.getFileType();
 
     final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
@@ -106,7 +110,7 @@ public class CodeFormatterFacade implements Constants {
             project, mySettings, fileType, file);
 
           FormatterEx.getInstanceEx().format(model, mySettings,
-                                             mySettings.getIndentOptions(fileType), range);
+                                             mySettings.getIndentOptions(fileType), range, headWhitespace);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -115,5 +119,8 @@ public class CodeFormatterFacade implements Constants {
     }
   }
 
+  public void processTextWithoutHeadWhitespace(final PsiFile psiFile, final int startOffset, final int endOffset) {
+    processText(psiFile, startOffset, endOffset, false);
+  }
 }
 

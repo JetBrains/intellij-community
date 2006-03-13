@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.*;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.javadoc.*;
@@ -45,6 +46,7 @@ public class Factory implements Constants {
     final FileElement holderElement = new DummyHolder(manager, table, type.getLanguage()).getTreeElement();
     newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, -1, holderElement.getCharTable());
     TreeUtil.addChildren(holderElement, newElement);
+    newElement.putCopyableUserData(CodeEditUtil.GENERATED_FLAG, true);
     return newElement;
   }
 

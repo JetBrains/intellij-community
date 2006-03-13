@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.TextRange;
 
 import java.beans.PropertyChangeListener;
 import java.io.Writer;
@@ -310,4 +311,6 @@ public interface Document extends UserDataHolder {
   void setCyclicBufferSize(int bufferSize);
 
   void setText(final CharSequence text);
+
+  RangeMarker createRangeMarker(final TextRange textRange);
 }

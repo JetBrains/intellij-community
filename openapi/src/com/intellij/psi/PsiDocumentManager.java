@@ -164,4 +164,8 @@ public abstract class PsiDocumentManager {
    * @param listener the listener to add.
    */
   public abstract void removeListener(Listener listener);
+
+  public abstract boolean isDocumentBlockedByPsi(Document doc);
+
+  public abstract void doPostponedOperationsAndUnblockDocument(Document doc);
 }

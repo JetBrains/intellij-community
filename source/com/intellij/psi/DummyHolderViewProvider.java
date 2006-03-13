@@ -112,6 +112,10 @@ public class DummyHolderViewProvider implements FileViewProvider{
     return myHolder.createLexer();
   }
 
+  public boolean isLockedByPsiOperations() {
+    return false;
+  }
+
   public PsiElement findElementAt(final int offset) {
     final LeafElement element = ((PsiFileImpl)getPsi(getBaseLanguage())).calcTreeElement().findLeafElementAt(offset);
     return element != null ? element.getPsi() : null;

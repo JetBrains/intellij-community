@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.CodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ class DeclarationMover extends LineMover {
 
       try {
         PsiElement inserted = myEnumToInsertSemicolonAfter.getParent().addAfter(semicolon.getPsi(), myEnumToInsertSemicolonAfter);
+        inserted = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(inserted);
         insertOffset = nextLineOffset(editor, inserted.getTextRange().getEndOffset());
       }
       catch (IncorrectOperationException e) {
@@ -52,6 +54,8 @@ class DeclarationMover extends LineMover {
     final int line1 = editor.offsetToLogicalPosition(myInsertStartAfterCutOffset).line;
     final int line2 = editor.offsetToLogicalPosition(myInsertEndAfterCutOffset).line;
     Document document = editor.getDocument();
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+    documentManager.commitDocument(document);
     PsiWhiteSpace whiteSpace1 = findWhitespaceNear(document.getLineStartOffset(line1), file, false);
     PsiWhiteSpace whiteSpace2 = findWhitespaceNear(document.getLineStartOffset(line2), file, false);
     PsiWhiteSpace whiteSpace = findWhitespaceNear(myDeleteStartAfterMoveOffset, file, false);
@@ -76,12 +80,9 @@ class DeclarationMover extends LineMover {
     PsiElement element1 = whitespace.getPrevSibling();
     PsiElement element2 = whitespace.getNextSibling();
     if (element2 == null || element1 == null) return;
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(whitespace.getProject());
-    final Document document = documentManager.getDocument(whitespace.getContainingFile());
     String ws = CodeEditUtil.getStringWhiteSpaceBetweenTokens(whitespace.getNode(), element2.getNode(), element1.getContainingFile().getLanguage());
     LeafElement node = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, ws.toCharArray(), 0, ws.length(), SharedImplUtil.findCharTableByTree(whitespace.getNode()), whitespace.getManager());
     whitespace.getParent().getNode().replaceChild(whitespace.getNode(), node);
-    documentManager.commitDocument(document);
   }
 
   protected boolean checkAvailable(Editor editor, PsiFile file) {

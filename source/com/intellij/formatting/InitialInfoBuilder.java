@@ -14,6 +14,7 @@ class InitialInfoBuilder {
   private WhiteSpace myCurrentWhiteSpace;
   private final FormattingDocumentModel myModel;
   private TextRange myAffectedRange;
+  private boolean myProcessHeadingWhitespace;
   private final Map<Block, AbstractBlockWrapper> myResult = new LinkedHashMap<Block, AbstractBlockWrapper>();
   private LeafBlockWrapper myPreviousBlock;
   private LeafBlockWrapper myFirstTokenBlock;
@@ -23,18 +24,21 @@ class InitialInfoBuilder {
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
                              final TextRange affectedRange,
-                             final CodeStyleSettings.IndentOptions options) {
+                             final CodeStyleSettings.IndentOptions options,
+                             final boolean processHeadingWhitespace) {
     myModel = model;
     myAffectedRange = affectedRange;
+    myProcessHeadingWhitespace = processHeadingWhitespace;
     myCurrentWhiteSpace = new WhiteSpace(0, true);
     myOptions = options;
   }
 
   public static InitialInfoBuilder buildBlocks(Block root,
-                                                     FormattingDocumentModel model,
-                                                     final TextRange affectedRange,
-                                                     final CodeStyleSettings.IndentOptions options) {
-    final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRange, options);
+                                               FormattingDocumentModel model,
+                                               final TextRange affectedRange,
+                                               final CodeStyleSettings.IndentOptions options,
+                                               final boolean processHeadingWhitespace) {
+    final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRange, options, processHeadingWhitespace);
     final AbstractBlockWrapper wrapper = builder.buildFrom(root, 0, null, null, root.getTextRange());
     wrapper.setIndent((IndentImpl)Indent.getNoneIndent());
     return builder;
@@ -162,7 +166,12 @@ class InitialInfoBuilder {
       final TextRange textRange = myCurrentWhiteSpace.getTextRange();
 
       if (textRange.getStartOffset() >= myAffectedRange.getEndOffset()) return true;
-      return textRange.getEndOffset() < myAffectedRange.getStartOffset();
+      if (myProcessHeadingWhitespace) {
+        return textRange.getEndOffset() < myAffectedRange.getStartOffset();
+      }
+      else {
+        return textRange.getEndOffset() <= myAffectedRange.getStartOffset();
+      }
     }
   }
 

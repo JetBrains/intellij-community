@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -43,6 +44,12 @@ public class CodeInsightUtil {
 
   public static PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
     if(!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return null;
+    final PsiExpression expression = findElementInRange(file, startOffset, endOffset, PsiExpression.class);
+    if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) return null;
+    return expression;
+  }
+
+  public static <T extends PsiElement> T findElementInRange(PsiFile file, int startOffset, int endOffset, Class<T> klass){
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, StdLanguages.JAVA);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
     if (element1 instanceof PsiWhiteSpace) {
@@ -52,14 +59,13 @@ public class CodeInsightUtil {
       endOffset = element2.getTextRange().getStartOffset();
     }
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
-    final PsiExpression expression = commonParent instanceof PsiExpression ?
-                                     (PsiExpression)commonParent :
-                                     PsiTreeUtil.getParentOfType(commonParent, PsiExpression.class);
-    if (expression == null ||
-        expression.getTextRange().getStartOffset() != startOffset ||
-        expression.getTextRange().getEndOffset() != endOffset) return null;
-    if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) return null;
-    return expression;
+    final T element = klass.isAssignableFrom(commonParent.getClass()) ?
+                                     (T)commonParent :
+                                     PsiTreeUtil.getParentOfType(commonParent, klass);
+    if (element == null ||
+        element.getTextRange().getStartOffset() != startOffset ||
+        element.getTextRange().getEndOffset() != endOffset) return null;
+    return element;
   }
 
   @NotNull public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
@@ -390,5 +396,17 @@ public class CodeInsightUtil {
       }
     }
     return null;
+  }
+
+  public static <T extends PsiElement> T forcePsiPosprocessAndRestoreElement(final T element) {
+    final PsiFile psiFile = element.getContainingFile();
+    final Document document = psiFile.getViewProvider().getDocument();
+    if(document == null) return element;
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
+    final RangeMarker rangeMarker = document.createRangeMarker(element.getTextRange());
+    documentManager.doPostponedOperationsAndUnblockDocument(document);
+    documentManager.commitDocument(document);
+
+    return findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), (Class<? extends T>)element.getClass());
   }
 }

@@ -36,16 +36,19 @@ class FormatProcessor {
   private Collection<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
   private final WhiteSpace myLastWhiteSpace;
 
-  public FormatProcessor(final FormattingDocumentModel docModel, Block rootBlock,
+  public FormatProcessor(final FormattingDocumentModel docModel,
+                         Block rootBlock,
                          CodeStyleSettings settings,
                          CodeStyleSettings.IndentOptions indentOptions,
-                         TextRange affectedRange) {
+                         TextRange affectedRange,
+                         final boolean processHeadingWhitespace) {
     myIndentOption = indentOptions;
     mySettings = settings;
     final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock,
                                                                       docModel,
                                                                       affectedRange,
-                                                                      indentOptions);
+                                                                      indentOptions,
+                                                                      processHeadingWhitespace);
     myInfos = builder.getBlockToInfoMap();
     myFirstTokenBlock = builder.getFirstTokenBlock();
     myLastTokenBlock = builder.getLastTokenBlock();

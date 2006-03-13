@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -181,8 +182,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     cast.getOperand().replace(instanceOfExpression.getOperand());
     PsiDeclarationStatement decl = factory.createVariableDeclarationStatement("xxx", castType, cast);
     PsiDeclarationStatement element = insertAtAnchor(instanceOfExpression, decl);
-
-    return element;
+    return CodeInsightUtil.forcePsiPosprocessAndRestoreElement(element);
   }
 
   @Nullable

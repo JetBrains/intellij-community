@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -31,13 +32,14 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
     PsiElementFactory elementFactory = psiManager.getElementFactory();
 
     try {
-      final PsiMethod constructor = (PsiMethod)targetClass.add(elementFactory.createConstructor());
+      PsiMethod constructor = (PsiMethod)targetClass.add(elementFactory.createConstructor());
 
       final PsiFile file = targetClass.getContainingFile();
       TemplateBuilder templateBuilder = new TemplateBuilder(constructor);
       CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, myConstructorCall.getArgumentList(), getTargetSubstitutor(myConstructorCall));
       CreateClassFromNewAction.setupSuperCall(targetClass, constructor, templateBuilder);
 
+      constructor = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(constructor);
       Template template = templateBuilder.buildTemplate();
 
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);

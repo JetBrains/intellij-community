@@ -38,6 +38,7 @@ import java.util.Map;
 public class CodeEditUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
   public static final Key<IndentInfo> INDENT_INFO_KEY = new Key<IndentInfo>("IndentInfo");
+  public static final Key<Boolean> GENERATED_FLAG = new Key<Boolean>("CREATED BY IDEA");
 
   private CodeEditUtil() {
   }
@@ -1003,6 +1004,10 @@ public class CodeEditUtil {
       settings.XML_KEEP_LINE_BREAKS = oldValue;
       settings.XML_KEEP_BLANK_LINES = oldKeepBlankLines;
     }
+  }
+
+  public static boolean isNodeGenerated(final ASTNode node) {
+    return node.getCopyableUserData(GENERATED_FLAG) != null;
   }
 
   private static class MyIndentInfoStorage implements FormatterEx.IndentInfoStorage {

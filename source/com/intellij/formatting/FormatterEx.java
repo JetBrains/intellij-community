@@ -35,9 +35,11 @@ public abstract class FormatterEx{
     return myTestInstance;
   }
 
-  public abstract void format(FormattingModel model, CodeStyleSettings settings,
+  public abstract void format(FormattingModel model,
+                              CodeStyleSettings settings,
                               CodeStyleSettings.IndentOptions indentOptions,
-                              TextRange affectedRange) throws IncorrectOperationException;
+                              TextRange affectedRange,
+                              final boolean processHeadingWhitespace) throws IncorrectOperationException;
 
 
   public abstract IndentInfo getWhiteSpaceBefore(final FormattingDocumentModel psiBasedFormattingModel,

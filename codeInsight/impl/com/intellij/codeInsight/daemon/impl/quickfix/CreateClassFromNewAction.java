@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -36,32 +37,33 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
       new Runnable() {
         public void run() {
           try {
-            if (psiClass == null) return;
+            PsiClass aClass = psiClass;
+            if (aClass == null) return;
 
-            setupInheritance(myNewExpression, psiClass);
-            setupGenericParameters(myNewExpression, psiClass);
+            setupInheritance(myNewExpression, aClass);
+            setupGenericParameters(myNewExpression, aClass);
 
             PsiExpressionList argList = myNewExpression.getArgumentList();
             if (argList != null && argList.getExpressions().length > 0) {
               PsiMethod constructor = elementFactory.createConstructor();
-              constructor = (PsiMethod) psiClass.add(constructor);
+              constructor = (PsiMethod) aClass.add(constructor);
 
-              TemplateBuilder templateBuilder = new TemplateBuilder(psiClass);
+              TemplateBuilder templateBuilder = new TemplateBuilder(aClass);
               CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(myNewExpression));
 
-              setupSuperCall(psiClass, constructor, templateBuilder);
+              setupSuperCall(aClass, constructor, templateBuilder);
 
-              getReferenceElement(myNewExpression).bindToElement(psiClass);
-
+              getReferenceElement(myNewExpression).bindToElement(aClass);
+              aClass = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(aClass);
               Template template = templateBuilder.buildTemplate();
 
-              Editor editor = positionCursor(project, psiClass.getContainingFile(), psiClass);
-              TextRange textRange = psiClass.getTextRange();
+              Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
+              TextRange textRange = aClass.getTextRange();
               editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
 
               startTemplate(editor, template, project);
             } else {
-              positionCursor(project, psiClass.getContainingFile(), psiClass);
+              positionCursor(project, aClass.getContainingFile(), aClass);
             }
           }
           catch (IncorrectOperationException e) {

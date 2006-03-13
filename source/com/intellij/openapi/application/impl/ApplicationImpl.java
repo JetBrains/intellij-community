@@ -31,6 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.HashMap;
@@ -83,6 +84,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
   @NonNls private static final String NULL_STR = "null";
   @NonNls private static final String XML_EXTENSION = ".xml";
+  private List<Runnable> myPostprocessActions = new ArrayList<Runnable>();
 
   public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, String appName) {
     myStartTime = System.currentTimeMillis();
@@ -676,6 +678,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         myWriteActionsStack.push(action);
       }
       action.run();
+      writeActionPostprocessing();
     }
     finally {
       synchronized (myWriteActionsStack) {
@@ -685,6 +688,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       myActionsLock.writeLock().release();
     }
 
+  }
+
+  public void addPostWriteAction(Runnable action) {
+    myPostprocessActions.add(action);
+  }
+
+  public void removePostWriteAction(Runnable action) {
+    myPostprocessActions.remove(action);
+  }
+
+  private void writeActionPostprocessing() {
+    for (Runnable postprocessAction : myPostprocessActions) {
+      postprocessAction.run();
+    }
   }
 
   public <T> T runWriteAction(final Computable<T> computation) {

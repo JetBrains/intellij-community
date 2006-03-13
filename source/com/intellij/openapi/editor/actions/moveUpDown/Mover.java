@@ -70,27 +70,22 @@ abstract class Mover {
       restoreSelection(editor, selectionStart, selectionEnd, start, myInsertStartAfterCutOffset);
     }
 
-    try {
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-      final int line1 = editor.offsetToLogicalPosition(myInsertStartAfterCutOffset).line;
-      final int line2 = editor.offsetToLogicalPosition(myInsertEndAfterCutOffset).line;
-      caretModel.moveToOffset(myInsertStartAfterCutOffset + caretRelativePos);
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    final int line1 = editor.offsetToLogicalPosition(myInsertStartAfterCutOffset).line;
+    final int line2 = editor.offsetToLogicalPosition(myInsertEndAfterCutOffset).line;
+    caretModel.moveToOffset(myInsertStartAfterCutOffset + caretRelativePos);
 
-      for (int line = line1; line <= line2; line++) {
-        if (lineContainsNonSpaces(document, line)) {
-          int lineStart = document.getLineStartOffset(line);
-          int oldLineLength = document.getLineEndOffset(line) - lineStart;
-          codeStyleManager.adjustLineIndent(file, lineStart);
-          int newLineLength = document.getLineEndOffset(line) - lineStart;
-          myInsertEndAfterCutOffset += newLineLength - oldLineLength;
-          if (!myIsDown) {
-            myDeleteStartAfterMoveOffset += newLineLength - oldLineLength;
-          }
+    for (int line = line1; line <= line2; line++) {
+      if (lineContainsNonSpaces(document, line)) {
+        int lineStart = document.getLineStartOffset(line);
+        int oldLineLength = document.getLineEndOffset(line) - lineStart;
+        codeStyleManager.adjustLineIndent(document, lineStart);
+        int newLineLength = document.getLineEndOffset(line) - lineStart;
+        myInsertEndAfterCutOffset += newLineLength - oldLineLength;
+        if (!myIsDown) {
+          myDeleteStartAfterMoveOffset += newLineLength - oldLineLength;
         }
       }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
     }
 
     afterMove(editor, file);

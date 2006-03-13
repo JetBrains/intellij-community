@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -199,6 +200,10 @@ public class MockDocument implements DocumentEx {
   }
 
   public void setText(final CharSequence text) {
+  }
+
+  public RangeMarker createRangeMarker(final TextRange textRange) {
+    return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
 }

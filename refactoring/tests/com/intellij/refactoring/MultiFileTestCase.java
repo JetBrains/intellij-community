@@ -6,7 +6,9 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -33,6 +35,8 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
 
     performAction.performAction(rootDir, rootDir2);
+    myProject.getComponent(PostprocessReformatingAspect.class).doPostponedFormatting();
+    FileDocumentManager.getInstance().saveAllDocuments();
 
     if (myDoCompare) {
       IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, CVS_FILE_FILTER);

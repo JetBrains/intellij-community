@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
+import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
@@ -266,6 +267,19 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       myListeners.remove(listener);
       myCachedListeners = null;
     }
+  }
+
+  public boolean isDocumentBlockedByPsi(Document doc) {
+    final FileViewProvider viewProvider = getCachedViewProvider(doc);
+    if(viewProvider != null)
+      return viewProvider.isLockedByPsiOperations();
+    return false;
+  }
+
+  public void doPostponedOperationsAndUnblockDocument(Document doc) {
+    final PostprocessReformatingAspect component = myProject.getComponent(PostprocessReformatingAspect.class);
+    final FileViewProvider viewProvider = getCachedViewProvider(doc);
+    if(viewProvider != null) component.doPostponedFormatting(viewProvider);
   }
 
   protected void fireDocumentCreated(Document document, PsiFile file) {

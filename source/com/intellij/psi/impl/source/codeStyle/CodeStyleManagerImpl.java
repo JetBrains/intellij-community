@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -374,6 +375,58 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
       int result = FormatterEx.getInstanceEx().adjustLineIndent(model, settings, indentOptions, offset, significantRange);
       return result;
+    }
+    else {
+      return offset;
+    }
+  }
+
+  public int adjustLineIndent(Document document, int offset) {
+
+    final PsiDocumentManager psiDocManager = PsiDocumentManager.getInstance(myProject);
+
+    psiDocManager.commitDocument(document);
+
+    PsiFile file = psiDocManager.getPsiFile(document);
+
+    if (file == null) return offset;
+
+    final JspFile jspFile = PsiUtil.getJspFile(file);
+
+    if (jspFile != null) {
+      file = jspFile;
+    }
+
+    final PsiElement element = file.findElementAt(offset);
+    if (element == null && offset != file.getTextLength()) {
+      return offset;
+    }
+    if (element != null && !(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
+      return CharArrayUtil.shiftForward(file.textToCharArray(), offset, " \t");
+    }
+    final Language fileLanguage = file.getLanguage();
+    final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
+    FormattingModelBuilder elementBuilder = builder;
+    if (element != null) {
+      final Language elementLanguage = element.getLanguage();
+      elementBuilder = elementLanguage.getFormattingModelBuilder();
+    }
+    if (builder != null && elementBuilder != null) {
+      final CodeStyleSettings settings = getSettings();
+      final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
+      final TextRange significantRange = getSignificantRange(file, offset);
+      final FormattingModel model = builder.createModel(file, settings);
+
+      final DocumentBasedFormattingModel documentBasedModel =
+        new DocumentBasedFormattingModel(model.getRootBlock(), document, getProject(), settings, file.getFileType(), file);
+
+      try {
+        return FormatterEx.getInstanceEx().adjustLineIndent(documentBasedModel, settings, indentOptions, offset, significantRange);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return offset;
+      }
     }
     else {
       return offset;

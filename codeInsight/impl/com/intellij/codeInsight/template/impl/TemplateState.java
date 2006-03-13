@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.DefaultCharFilter;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
@@ -500,6 +501,7 @@ public class TemplateState implements Disposable {
             try {
               toProcessChangedUpdate = false;
               paramList.add(aClass.copy());
+              CodeInsightUtil.forcePsiPosprocessAndRestoreElement(paramList);
               toProcessChangedUpdate = true;
             }
             catch (IncorrectOperationException e) {
@@ -905,20 +907,22 @@ public class TemplateState implements Disposable {
       if (myTemplate.isToReformat()) {
         try {
           toProcessChangedUpdate = false;
-          PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
           int endSegmentNumber = myTemplate.getEndSegmentNumber();
+          PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
           PsiElement marker = null;
+          RangeMarker rangeMarker = null;
           if (endSegmentNumber >= 0) {
             int endVarOffset = mySegments.getSegmentStart(endSegmentNumber);
             marker = codeStyleManager.insertNewLineIndentMarker(file, endVarOffset);
+            if(marker != null) rangeMarker = myDocument.createRangeMarker(marker.getTextRange());
           }
-          codeStyleManager.reformatRange(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset(), true);
+          codeStyleManager.reformatText(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
+          PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
 
-          if (marker != null && marker.isValid()) {
+          if (rangeMarker != null && rangeMarker.isValid()) {
             //[ven] TODO: [max] correct javadoc reformatting to eliminate isValid() check!!!
-            TextRange range = marker.getTextRange();
-            mySegments.replaceSegmentAt(endSegmentNumber, range.getStartOffset(), range.getEndOffset());
-            myDocument.deleteString(range.getStartOffset(), range.getEndOffset());
+            mySegments.replaceSegmentAt(endSegmentNumber, rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+            myDocument.deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
           }
           toProcessChangedUpdate = true;
         }

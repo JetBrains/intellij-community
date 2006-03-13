@@ -329,7 +329,9 @@ public class RefactoringUtil {
     }
 
     for (PsiFile file : filesToOffsetsMap.keySet()) {
-      final Document editorDocument = PsiDocumentManager.getInstance(project).getDocument(file);
+      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+      final Document editorDocument = psiDocumentManager.getDocument(file);
+      psiDocumentManager.doPostponedOperationsAndUnblockDocument(editorDocument);
 
       ArrayList<UsageOffset> list = filesToOffsetsMap.get(file);
       UsageOffset[] offsets = list.toArray(new UsageOffset[list.size()]);

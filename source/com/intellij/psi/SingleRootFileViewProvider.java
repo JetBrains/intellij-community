@@ -27,6 +27,7 @@ import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
+import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
@@ -82,11 +83,18 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return myPsiFile != null ? myPsiFile : (myPsiFile = createFile());
   }
 
+  boolean myPostProcessReformafingStatus = false;
+
   public void beforeContentsSynchronized() {
+    final PostprocessReformatingAspect component = myManager.getProject().getComponent(PostprocessReformatingAspect.class);
+    myPostProcessReformafingStatus = component.isDisabled();
+    component.setDisabled(true);
   }
 
   public void contentsSynchronized() {
     unsetPsiContent();
+    final PostprocessReformatingAspect component = myManager.getProject().getComponent(PostprocessReformatingAspect.class);
+    component.setDisabled(myPostProcessReformafingStatus);
   }
 
   private void unsetPsiContent() {
@@ -101,6 +109,10 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public void beforeDocumentChanged() {
+    final PostprocessReformatingAspect component = myManager.getProject().getComponent(PostprocessReformatingAspect.class);
+    if(component.isViewProviderLocked(this))
+      throw new RuntimeException("Document is locked by write PSI operations");
+    component.doPostponedFormatting();
     final PsiFileImpl psiFile = (PsiFileImpl)getCachedPsi(getBaseLanguage());
     if(psiFile != null && psiFile.isContentsLoaded() && getContent() instanceof DocumentContent)
       setContent(new PsiFileContent(psiFile, getModificationStamp()));
@@ -268,6 +280,11 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     final ParserDefinition parserDefinition = language.getParserDefinition();
     if(parserDefinition == null) return ((PsiFileImpl)getPsi(getBaseLanguage())).createLexer();
     return parserDefinition.createLexer(getManager().getProject());
+  }
+
+  public boolean isLockedByPsiOperations() {
+    final PostprocessReformatingAspect component = myManager.getProject().getComponent(PostprocessReformatingAspect.class);
+    return component.isViewProviderLocked(this);
   }
 
   protected PsiReference findReferenceAt(final PsiFile psiFile, final int offset) {

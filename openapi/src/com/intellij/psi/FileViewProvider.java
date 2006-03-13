@@ -42,4 +42,6 @@ public interface FileViewProvider extends Cloneable{
   PsiElement findElementAt(final int offset, final Language language);
   PsiReference findReferenceAt(final int offsetInElement, final Language language);
   Lexer createLexer(final Language language);
+
+  boolean isLockedByPsiOperations();
 }

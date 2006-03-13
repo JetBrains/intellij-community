@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -192,6 +193,16 @@ public abstract class CodeStyleManager {
    * @throws IncorrectOperationException if the file is read-only.
    */
   public abstract int adjustLineIndent(@NotNull PsiFile file, int offset) throws IncorrectOperationException;
+
+  /**
+   * Reformats the line at the specified offset in the specified file, modifying only the line indent
+   * and leaving all other whitespace intact.
+   *
+   * @param file   the file to reformat.
+   * @param offset the offset the line at which should be reformatted.
+   * @throws IncorrectOperationException if the file is read-only.
+   */
+  public abstract int adjustLineIndent(@NotNull Document document, int offset);
 
   /**
    * @deprecated this method is not intended to be used by plugins.

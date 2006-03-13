@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -8,6 +9,8 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -60,7 +63,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
       return;
     }
 
-    PsiFile targetFile = targetClass.getContainingFile();
+    final PsiFile targetFile = targetClass.getContainingFile();
 
     String methodName = ref.getReferenceName();
 
@@ -89,8 +92,6 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
         }
       }
 
-      TemplateBuilder builder = new TemplateBuilder(method);
-
       setupVisibility(parentClass, targetClass, method.getModifierList());
 
       if (shouldCreateStaticMember(myMethodCall.getMethodExpression(), enclosingContext, targetClass) && !targetClass.isInterface()) {
@@ -99,6 +100,8 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
       PsiSubstitutor substitutor = getTargetSubstitutor(myMethodCall);
 
+      method = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(method);
+      TemplateBuilder builder = new TemplateBuilder(method);
       CreateFromUsageUtils.setupMethodParameters(method, builder, myMethodCall.getArgumentList(), substitutor);
 
       PsiElement context = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class, PsiMethod.class);
@@ -112,14 +115,16 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
         builder.setEndVariableAfter(method);
       }
 
-      Template template = builder.buildTemplate();
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      final Document document = documentManager.getDocument(targetFile);
+      final RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+      documentManager.commitDocument(document);
 
       final Editor newEditor = positionCursor(project, targetFile, method);
-      TextRange range = method.getTextRange();
-      newEditor.getCaretModel().moveToOffset(range.getStartOffset());
-      newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-
-      final PsiFile file = method.getContainingFile();
+      Template template = builder.buildTemplate();
+      newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
+      newEditor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
 
       if (!targetClass.isInterface()) {
         startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
@@ -128,7 +133,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
               public void run() {
                 PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
                 final int offset = newEditor.getCaretModel().getOffset();
-                PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
+                PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiMethod.class, false);
 
                 if (method != null) {
                   try {

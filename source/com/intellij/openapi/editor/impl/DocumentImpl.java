@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
@@ -639,6 +640,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     }
     else replaceString(0, getTextLength(), text);
+  }
+
+  public RangeMarker createRangeMarker(final TextRange textRange) {
+    return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
   }
 }
 

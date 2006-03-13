@@ -1,15 +1,18 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -139,7 +142,18 @@ public class SmartEnterProcessor {
     }
   }
 
+  private RangeMarker createRangeMarker(final PsiElement elt) {
+    final PsiFile psiFile = elt.getContainingFile();
+    final PsiDocumentManager instance = PsiDocumentManager.getInstance(myProject);
+    final Document document = instance.getDocument(psiFile);
+    final TextRange textRange = elt.getTextRange();
+    return document.createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+  }
+
   private void doEnter(PsiElement atCaret) throws IncorrectOperationException {
+    final PsiFile psiFile = atCaret.getContainingFile();
+
+    final RangeMarker rangeMarker = createRangeMarker(atCaret);
     if (myFirstErrorOffset != Integer.MAX_VALUE) {
       myEditor.getCaretModel().moveToOffset(myFirstErrorOffset);
       reformat(atCaret);
@@ -147,8 +161,13 @@ public class SmartEnterProcessor {
     }
 
     reformat(atCaret);
-
+    PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+    atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
     for (EnterProcessor processor : ourEnterProcessors) {
+      if(atCaret == null){
+        LOG.error("Can't restore element at caret after enter processor execution!");
+        break;
+      }
       if (processor.doEnter(myEditor, atCaret, isModified())) return;
     }
 
@@ -156,7 +175,7 @@ public class SmartEnterProcessor {
       plainEnter();
     } else {
       if (myFirstErrorOffset == Integer.MAX_VALUE) {
-        myEditor.getCaretModel().moveToOffset(end(atCaret));
+        myEditor.getCaretModel().moveToOffset(rangeMarker.getEndOffset());
       } else {
         myEditor.getCaretModel().moveToOffset(myFirstErrorOffset);
       }
@@ -175,7 +194,8 @@ public class SmartEnterProcessor {
       atCaret = parent;
     }
 
-    CodeStyleManager.getInstance(myProject).reformat(atCaret);
+    final TextRange range = atCaret.getTextRange();
+    CodeStyleManager.getInstance(myProject).reformatText(atCaret.getContainingFile(), range.getStartOffset(), range.getEndOffset());
   }
 
   private static void collectAllElements(PsiElement atCaret, List<PsiElement> res, boolean recurse) {
@@ -199,10 +219,6 @@ public class SmartEnterProcessor {
     if (myFirstErrorOffset > offset) {
       myFirstErrorOffset = offset;
     }
-  }
-
-  private static int end(PsiElement p) {
-    return p.getTextRange().getEndOffset();
   }
 
   private boolean isModified() {

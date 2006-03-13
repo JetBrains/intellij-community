@@ -39,6 +39,7 @@ import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -283,6 +284,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public void performActionWithFormatterDisabled(Runnable r) {
+    final PostprocessReformatingAspect component = getProject().getComponent(PostprocessReformatingAspect.class);
+    final boolean oldValue = component.isDisabled();
+    component.setDisabled(true);
     ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
     try {
       r.run();
@@ -290,6 +294,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     finally {
       ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
     }
+    component.setDisabled(oldValue);
   }
 
   public <T> T performActionWithFormatterDisabled(Computable<T> r) {

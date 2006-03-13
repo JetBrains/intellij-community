@@ -7,10 +7,13 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
+import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
+import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -123,16 +126,15 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {
       public PomModelEvent runInner(){
+        final PomModelEvent event = new PomModelEvent(model);
+        final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, (XmlFile)getContainingFile());
+        xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), oldName, null));
+        xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), nameText, getValue()));
+        event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
         CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
-        return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), nameText, getValue());
+        return event;
       }
     });
-    model.runTransaction(new PomTransactionBase(getParent(), aspect) {
-      public PomModelEvent runInner(){
-        return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), oldName, null);
-      }
-    });
-
     return this;
   }
 

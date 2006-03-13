@@ -456,13 +456,7 @@ public class PasteHandler extends EditorActionHandler {
     }
 
     Indent indent = codeStyleManager.getIndent(chars.subSequence(spaceStart, spaceEnd).toString(), fileType);
-    int newEnd = spaceEnd;
-    try {
-      newEnd = codeStyleManager.adjustLineIndent(file, spaceEnd);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    int newEnd = codeStyleManager.adjustLineIndent(document, spaceEnd);
     chars = document.getCharsSequence();
     if (spaceStart > newEnd) {
       newEnd = spaceStart; //TODO lesya. Try to reproduce it. SCR52139

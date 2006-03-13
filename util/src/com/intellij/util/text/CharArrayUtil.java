@@ -15,9 +15,13 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.TextRange;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.List;
+import java.util.ArrayList;
 
 public class CharArrayUtil {
   public static void getChars(CharSequence src, char[] dst, int dstOffset) {
@@ -229,5 +233,28 @@ public class CharArrayUtil {
       if (c1 != c2) return false;
     }
     return true;
+  }
+
+  public static TextRange[] getIndents(CharSequence charsSequence, int shift) {
+    List<TextRange> result = new ArrayList<TextRange>();
+    int whitespaceEnd = -1;
+    int lastTextFound = 0;
+    for(int i = charsSequence.length() - 1; i >= 0; i--){
+      final char charAt = charsSequence.charAt(i);
+      final boolean isPlainWhitespace = Character.isWhitespace(charAt) && charAt != '\n';
+      if(whitespaceEnd >= 0){
+        if(isPlainWhitespace) continue;
+        if(charAt == '\n') result.add(new TextRange(i, whitespaceEnd + 1).shiftRight(shift));
+        else lastTextFound = result.size();
+        whitespaceEnd = -1;
+      }
+      else if(isPlainWhitespace){
+        whitespaceEnd = i;
+      }
+    }
+    if(whitespaceEnd > 0) result.add(new TextRange(0, whitespaceEnd + 1).shiftRight(shift));
+    if(lastTextFound < result.size())
+      result = result.subList(0, lastTextFound);
+    return result.toArray(new TextRange[result.size()]);
   }
 }

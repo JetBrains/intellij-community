@@ -18,10 +18,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.light.*;
 import com.intellij.psi.impl.source.*;
-import com.intellij.psi.impl.source.parsing.DeclarationParsing;
-import com.intellij.psi.impl.source.parsing.ExpressionParsing;
-import com.intellij.psi.impl.source.parsing.JavaParsingContext;
-import com.intellij.psi.impl.source.parsing.Parsing;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.parsing.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -238,6 +236,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     PsiParameter parameter = (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(treeElement);
     parameter.getModifierList()
       .setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_PARAMETERS);
+    treeElement.acceptTree(new GeneratedMarkerVisitor());
     return (PsiParameter)codeStyleManager.reformat(parameter);
   }
 
@@ -274,11 +273,16 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       final ParserDefinition parserDefinition = language.getParserDefinition();
       FileViewProvider viewProvider = language.createViewProvider(virtualFile, myManager, physical);
       if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
-      if (parserDefinition != null) return viewProvider.getPsi(language);
+      if (parserDefinition != null){
+        final PsiFile psiFile = viewProvider.getPsi(language);
+        ((TreeElement)psiFile.getNode()).acceptTree(new GeneratedMarkerVisitor());
+        return psiFile;
+      }
     }
     final SingleRootFileViewProvider singleRootFileViewProvider =
       new SingleRootFileViewProvider(myManager, virtualFile, physical);
     final PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
+    plainTextFile.getNode().putCopyableUserData(CodeEditUtil.GENERATED_FLAG, true);
     return plainTextFile;
   }
 
@@ -396,8 +400,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   @NotNull
   public PsiPackageStatement createPackageStatement(String name) throws IncorrectOperationException {
     final PsiJavaFile javaFile = (PsiJavaFile)createFileFromText("dummy.java", "package " + name + ";");
-    final PsiPackageStatement packageStatement = javaFile.getPackageStatement();
-    return packageStatement;
+    return javaFile.getPackageStatement();
   }
 
   @NotNull
@@ -426,6 +429,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       throw new IncorrectOperationException("Incorrect annotation \"" + annotationText + "\".");
     }
     TreeUtil.addChildren(holderElement, annotationElement);
+    annotationElement.acceptTree(new GeneratedMarkerVisitor());
     return (PsiAnnotation)SourceTreeToPsiMap.treeElementToPsi(annotationElement);
   }
 
@@ -488,6 +492,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     PsiCatchSection psiCatchSection = (PsiCatchSection)SourceTreeToPsiMap.treeElementToPsi(catchSection);
 
     setupCatchBlock(exceptionName, context, psiCatchSection);
+    holderElement.acceptTree(new GeneratedMarkerVisitor());
     return (PsiCatchSection)myManager.getCodeStyleManager().reformat(psiCatchSection);
   }
 
@@ -540,6 +545,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       holderElement.getCharTable()
     );
     TreeUtil.addChildren(holderElement, newElement);
+    holderElement.acceptTree(new GeneratedMarkerVisitor());
     return newElement.getPsi();
   }
 
@@ -736,6 +742,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       throw new IncorrectOperationException("Incorrect field \"" + text + "\".");
     }
     TreeUtil.addChildren(holderElement, decl);
+    holderElement.acceptTree(new GeneratedMarkerVisitor());
     return (PsiField)SourceTreeToPsiMap.treeElementToPsi(decl);
   }
 
@@ -765,6 +772,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       throw new IncorrectOperationException("Incorrect method \"" + text + "\".");
     }
     TreeUtil.addChildren(holderElement, decl);
+    holderElement.acceptTree(new GeneratedMarkerVisitor());
     return (PsiMethod)SourceTreeToPsiMap.treeElementToPsi(decl);
   }
 
@@ -776,6 +784,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       throw new IncorrectOperationException("Incorrect parameter \"" + text + "\".");
     }
     TreeUtil.addChildren(holderElement, param);
+    holderElement.acceptTree(new GeneratedMarkerVisitor());
     return (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(param);
   }
 
@@ -790,6 +799,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     }
     TreeUtil.addChildren(holderElement, typeElement);
     PsiTypeElement psiTypeElement = (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(typeElement);
+    holderElement.acceptTree(new GeneratedMarkerVisitor());
     return psiTypeElement.getType();
   }
 
@@ -801,6 +811,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       throw new IncorrectOperationException("Incorrect code block \"" + text + "\".");
     }
     TreeUtil.addChildren(holderElement, treeElement);
+    holderElement.acceptTree(new GeneratedMarkerVisitor());
     return (PsiCodeBlock)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
@@ -812,6 +823,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       throw new IncorrectOperationException("Incorrect statement \"" + text + "\".");
     }
     TreeUtil.addChildren(treeHolder, treeElement);
+    treeHolder.acceptTree(new GeneratedMarkerVisitor());
     return (PsiStatement)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
@@ -824,6 +836,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       throw new IncorrectOperationException("Incorrect expression \"" + text + "\".");
     }
     TreeUtil.addChildren(treeHolder, treeElement);
+    treeHolder.acceptTree(new GeneratedMarkerVisitor());
     return (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
@@ -933,7 +946,14 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       throw new IncorrectOperationException("Incorrect type parameter \"" + text + "\"");
     }
     TreeUtil.addChildren(holderElement, treeElement);
+    holderElement.acceptTree(new GeneratedMarkerVisitor());
     return (PsiTypeParameter)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
+  public static class GeneratedMarkerVisitor extends RecursiveTreeElementVisitor {
+    protected boolean visitNode(TreeElement element){
+      element.putCopyableUserData(CodeEditUtil.GENERATED_FLAG, true);
+      return true;
+    }
+  }
 }

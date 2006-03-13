@@ -120,7 +120,6 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
           myProject,
           aClass, baseClass, fieldName, innerClassName, delegatedInterfaces, delegatedMethods, delegateOtherMembers,
           generateGetter).run();
-        FileDocumentManager.getInstance().saveAllDocuments();
       }
     };
   }
@@ -158,7 +157,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
           myProject,
           aClass, baseClass, fieldName, innerClassName, delegatedInterfaces, delegatedMethods, delegateOtherMembers,
           generateGetter).run();
-        FileDocumentManager.getInstance().saveAllDocuments();
+        //FileDocumentManager.getInstance().saveAllDocuments();
       }
     };
   }
