@@ -1,17 +1,15 @@
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.RevalidateInfo;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.EventProcessor;
-import com.intellij.uiDesigner.lw.ComponentVisitor;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.lw.IContainer;
-import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -37,6 +35,8 @@ import java.util.HashSet;
  * @author Vladimir Kondratyev
  */
 public abstract class RadComponent implements IComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadComponent");
+
   /**
    * Shared instance of empty array of RadComponenets
    */
@@ -560,5 +560,21 @@ public abstract class RadComponent implements IComponent {
 
   public boolean accept(ComponentVisitor visitor) {
     return visitor.visit(this);
+  }
+
+  public void loadLwProperty(final LwComponent lwComponent,
+                             final LwIntrospectedProperty lwProperty,
+                             final IntrospectedProperty property) {
+    try {
+      final Object value = lwComponent.getPropertyValue(lwProperty);
+      property.setValue(this, value);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      //TODO[anton,vova]: show error and continue to load form
+    }
+  }
+
+  public void doneLoadingFromLw() {
   }
 }

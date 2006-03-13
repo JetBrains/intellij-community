@@ -158,14 +158,7 @@ public final class XmlReader {
         if (property == null) {
           continue;
         }
-        try {
-          final Object value = lwComponent.getPropertyValue(lwProperty);
-          property.setValue(component, value);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          //TODO[anton,vova]: show error and continue to load form
-        }
+        component.loadLwProperty(lwComponent, lwProperty, property);
       }
     }
 
@@ -197,6 +190,7 @@ public final class XmlReader {
       radRootContainer.getDelegee().setBackground(Color.WHITE);
     }
 
+    component.doneLoadingFromLw();
     return component;
   }
 

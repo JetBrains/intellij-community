@@ -3,21 +3,16 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.uiDesigner.ReferenceUtil;
-import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.lw.ITabbedPane;
-import com.intellij.uiDesigner.lw.LwTabbedPane;
-import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.util.containers.HashMap;
@@ -44,8 +39,15 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   @NonNls
   private static final String CLIENT_PROP_ID_2_DESCRIPTOR = "index2descriptor";
 
+  private int mySelectedIndex = -1;
+  private IntrospectedProperty mySelectedIndexProperty = null;
+
   public RadTabbedPane(final Module module, final String id){
     super(module, JTabbedPane.class, id);
+  }
+
+  public RadTabbedPane(final Module module, @NotNull final String id, final Palette palette) {
+    super(module, JTabbedPane.class, id, palette);
   }
 
   @Override protected RadLayoutManager createInitialLayoutManager() {
@@ -213,6 +215,23 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
   }
 
+  @Override public void loadLwProperty(final LwComponent lwComponent, final LwIntrospectedProperty lwProperty, final IntrospectedProperty property) {
+    if (lwProperty.getName().equals(SwingProperties.SELECTED_INDEX)) {
+      mySelectedIndexProperty = property;
+      mySelectedIndex = ((Integer)lwProperty.getPropertyValue(lwComponent)).intValue();
+    }
+    else {
+      super.loadLwProperty(lwComponent, lwProperty, property);
+    }
+  }
+
+  @Override public void doneLoadingFromLw() {
+    if (mySelectedIndex >= 0) {
+      getTabbedPane().setSelectedIndex(mySelectedIndex);
+      markPropertyAsModified(mySelectedIndexProperty);
+    }
+  }
+
   private final class MyTitleProperty extends Property{
     /**
      * Index of tab which title should be edited
@@ -235,7 +254,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       // 1. resource bundle
       final StringDescriptor descriptor = getId2Descriptor(RadTabbedPane.this).get(tabComponent.getId());
       LOG.debug("MyTitleProperty: getting value " + (descriptor == null ? "<null>" : descriptor.toString()) +
-        " for component ID=" + tabComponent.getId());
+                " for component ID=" + tabComponent.getId());
       if(descriptor != null){
         return descriptor;
       }
@@ -249,7 +268,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       // 1. Put value into map
       final StringDescriptor descriptor = (StringDescriptor)value;
       LOG.debug("MyTitleProperty: setting value " + (descriptor == null ? "<null>" : descriptor.toString()) +
-        " for component ID=" + tabComponent.getId());
+                " for component ID=" + tabComponent.getId());
       final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(RadTabbedPane.this);
       if(descriptor == null){
         id2Descriptor.remove(tabComponent.getId());
