@@ -11,12 +11,16 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.psi.*;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+
+import org.jetbrains.annotations.NotNull;
 
 final class StructureTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
@@ -102,6 +106,11 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
         }
       }
     };
+  }
+
+  @NotNull
+  protected ProgressIndicator createProgressIndicator() {
+    return new StatusBarProgress();
   }
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {

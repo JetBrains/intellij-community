@@ -1298,7 +1298,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       if (viewPane == null) {
         return;
       }
-      final BaseProjectTreeBuilder treeBuilder = viewPane.myTreeBuilder;
+      final BaseProjectTreeBuilder treeBuilder = (BaseProjectTreeBuilder)viewPane.myTreeBuilder;
       final JTree tree = viewPane.myTree;
       final DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
       final List<TreePath> paths = new ArrayList<TreePath>(myElements.length);

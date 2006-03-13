@@ -1,6 +1,5 @@
 package com.intellij.ide.util.treeView;
 
-import com.intellij.ide.LoadingNode;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -9,15 +8,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -54,7 +52,7 @@ public abstract class AbstractTreeBuilder {
   private final TreeExpansionListener myExpansionListener;
 
   private WorkerThread myWorker = null;
-  private final ProgressIndicator myProgress = new StatusBarProgress();
+  private final ProgressIndicator myProgress;
 
   private static final int WAIT_CURSOR_DELAY = 100;
 
@@ -74,7 +72,11 @@ public abstract class AbstractTreeBuilder {
     myTree.addTreeExpansionListener(myExpansionListener);
 
     myUpdater = createUpdater();
+    myProgress = createProgressIndicator();
   }
+
+  @NotNull
+  protected abstract ProgressIndicator createProgressIndicator();
 
   protected AbstractTreeUpdater createUpdater() {
     return new AbstractTreeUpdater(this);
@@ -642,6 +644,10 @@ public abstract class AbstractTreeBuilder {
     }
   }
 
+  public DefaultTreeModel getTreeModel() {
+    return myTreeModel;
+  }
+
   private void insertNodesInto(ArrayList<TreeNode> nodes, DefaultMutableTreeNode parentNode) {
     if (nodes.size() == 0) return;
 
@@ -862,4 +868,15 @@ public abstract class AbstractTreeBuilder {
     public void update(PresentationData presentation) {
     }
   }
+
+  private static class LoadingNode extends DefaultMutableTreeNode {
+    public LoadingNode() {
+      super(IdeBundle.message("treenode.loading"));
+    }
+
+    public LoadingNode(String text) {
+      super(text);
+    }
+  }
+
 }

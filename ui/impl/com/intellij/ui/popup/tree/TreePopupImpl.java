@@ -13,10 +13,13 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.TreePopup;
 import com.intellij.openapi.ui.popup.TreePopupStep;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.BasePopup;
 import jetbrains.fabrique.ui.treeStructure.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTreeUI;
@@ -529,6 +532,11 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
     private Object getSelected() {
       TreePopupStructure.Node selected = (TreePopupStructure.Node) myWizardTree.getSelectedNode();
       return selected != null ? selected.getDelegate() : null;
+    }
+
+    @NotNull
+    protected ProgressIndicator createProgressIndicator() {
+      return new StatusBarProgress();
     }
   }
 

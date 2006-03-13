@@ -4,7 +4,6 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
@@ -12,12 +11,12 @@ import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -40,7 +39,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   protected Runnable myTreeChangeListener;
   protected JTree myTree;
   protected AbstractTreeStructure myTreeStructure;
-  protected BaseProjectTreeBuilder myTreeBuilder;
+  protected AbstractTreeBuilder myTreeBuilder;
   private TreeState myReadTreeState = new TreeState();
   private String mySubId;
 
@@ -268,7 +267,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     return element;
   }
 
-  public BaseProjectTreeBuilder getTreeBuilder() {
+  public AbstractTreeBuilder getTreeBuilder() {
     return myTreeBuilder;
   }
 

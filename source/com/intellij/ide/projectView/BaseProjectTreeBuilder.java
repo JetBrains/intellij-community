@@ -5,17 +5,21 @@ import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -70,10 +74,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
 
     myTree.expandPath(new TreePath(node.getPath()));
-    
+
     List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (int i = 0; i < node.getChildCount(); i++) {
-      javax.swing.tree.TreeNode childAt = node.getChildAt(i);
+      TreeNode childAt = node.getChildAt(i);
       DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)childAt;
       if (defaultMutableTreeNode.getUserObject() instanceof AbstractTreeNode) {
         ProjectViewNode treeNode = (ProjectViewNode)defaultMutableTreeNode.getUserObject();
@@ -145,7 +149,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
-  private boolean elementIsEqualTo(final Object node, final Object element) {
+  private static boolean elementIsEqualTo(final Object node, final Object element) {
     if (node instanceof DefaultMutableTreeNode) {
       final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
       if (userObject instanceof ProjectViewNode) {
@@ -194,4 +198,8 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return null;
   }
 
+  @NotNull
+  protected ProgressIndicator createProgressIndicator() {
+    return new StatusBarProgress();
+  }
 }

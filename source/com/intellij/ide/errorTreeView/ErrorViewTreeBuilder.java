@@ -7,9 +7,13 @@ package com.intellij.ide.errorTreeView;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -44,6 +48,11 @@ public class ErrorViewTreeBuilder extends AbstractTreeBuilder{
 
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return nodeDescriptor.getParentDescriptor() == null || nodeDescriptor.getElement() instanceof GroupingElement;
+  }
+
+  @NotNull
+  protected ProgressIndicator createProgressIndicator() {
+    return new StatusBarProgress();
   }
 }
 

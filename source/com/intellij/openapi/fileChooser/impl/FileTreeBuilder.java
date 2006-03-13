@@ -10,11 +10,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.Comparator;
+
+import org.jetbrains.annotations.NotNull;
 
 public class FileTreeBuilder extends AbstractTreeBuilder {
   private final FileChooserDescriptor myChooserDescriptor;
@@ -97,5 +101,10 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
       }
     }
     super.expandNodeChildren(node);
+  }
+
+  @NotNull
+  protected ProgressIndicator createProgressIndicator() {
+    return new StatusBarProgress();
   }
 }

@@ -11,6 +11,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
@@ -26,6 +28,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Comparator;
+
+import org.jetbrains.annotations.NotNull;
 
 public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
@@ -50,7 +54,7 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     myFileStatusListener = new MyFileStatusListener();
     myProjectManagerListener = new MyProjectManagerListener();
-    
+
     initRootNode();
     tree.addTreeSelectionListener(mySelectionListener);
     tree.addTreeExpansionListener(myTreeExpansionListener);
@@ -100,6 +104,11 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
       FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
       ProjectManager.getInstance().removeProjectManagerListener(myProject, myProjectManagerListener);
     }
+  }
+
+  @NotNull
+  protected ProgressIndicator createProgressIndicator() {
+    return new StatusBarProgress();
   }
 
   private final class MyTreeSelectionListener implements TreeSelectionListener {

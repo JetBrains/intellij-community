@@ -19,12 +19,15 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -602,6 +605,11 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   public boolean isDirectoryEmpty(PsiDirectory psiDirectory){
     LOG.assertTrue(psiDirectory != null);
     return myFileTree.isDirectoryEmpty(psiDirectory.getVirtualFile());
+  }
+
+  @NotNull
+  protected ProgressIndicator createProgressIndicator() {
+    return new StatusBarProgress();
   }
 
   private static final class MyComparator implements Comparator<NodeDescriptor> {

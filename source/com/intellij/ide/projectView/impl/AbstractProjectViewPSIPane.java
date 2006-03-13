@@ -161,7 +161,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
-      myTreeBuilder.select(element, file, requestFocus);
+      ((BaseProjectTreeBuilder)myTreeBuilder).select(element, file, requestFocus);
     }
   }
 
@@ -173,7 +173,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
         if (requestFocus) {
           projectView.changeView(getId(), getSubId());
         }
-        myTreeBuilder.selectInWidth(module, requestFocus, new Condition<AbstractTreeNode>(){
+        ((BaseProjectTreeBuilder)myTreeBuilder).selectInWidth(module, requestFocus, new Condition<AbstractTreeNode>(){
           public boolean value(final AbstractTreeNode node) {
             return node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode;
           }

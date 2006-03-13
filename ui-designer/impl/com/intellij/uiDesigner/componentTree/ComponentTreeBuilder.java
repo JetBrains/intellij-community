@@ -4,6 +4,8 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.HierarchyChangeListener;
@@ -123,6 +125,11 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
 
     // Notify the ComponentTree that selected component changed
     myEditor.fireSelectedComponentChanged();
+  }
+
+  @NotNull
+  protected ProgressIndicator createProgressIndicator() {
+    return new StatusBarProgress();
   }
 
   /**

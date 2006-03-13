@@ -8,12 +8,16 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.Comparator;
+
+import org.jetbrains.annotations.NotNull;
 
 public class SimpleTreeBuilder extends AbstractTreeBuilder {
 
@@ -61,5 +65,10 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
   public SimpleTreeBuilder initRoot() {
     initRootNode();
     return this;
+  }
+
+  @NotNull
+  protected ProgressIndicator createProgressIndicator() {
+    return new StatusBarProgress();
   }
 }

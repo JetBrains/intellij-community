@@ -9,9 +9,13 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
+
+import org.jetbrains.annotations.NotNull;
 
 public class ViewerTreeBuilder extends AbstractTreeBuilder {
   public ViewerTreeBuilder(Project project, JTree tree) {
@@ -30,5 +34,10 @@ public class ViewerTreeBuilder extends AbstractTreeBuilder {
     NodeDescriptor parent = nodeDescriptor.getParentDescriptor();
     if (parent != null && rootElement.equals(parent.getElement())) return true;
     return false;
+  }
+
+  @NotNull
+  protected ProgressIndicator createProgressIndicator() {
+    return new StatusBarProgress();
   }
 }
