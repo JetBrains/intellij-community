@@ -35,6 +35,8 @@ public class CaptionComponent extends JPanel {
   }
 
   public void setText(final String text) {
+    if(text == null) return;
+
     myCaptionLabel.setText(text);
   }
 
@@ -43,6 +45,7 @@ public class CaptionComponent extends JPanel {
   }
 
   public void setIcon(final Icon icon) {
+    myIconLabel.setVisible(icon != null);
     myIconLabel.setIcon(icon);
   }
 
