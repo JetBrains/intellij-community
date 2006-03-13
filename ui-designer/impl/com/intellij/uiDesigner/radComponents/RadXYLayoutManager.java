@@ -95,7 +95,16 @@ public class RadXYLayoutManager extends RadLayoutManager {
     }
 
     public boolean canDrop(ComponentDragObject dragObject) {
-      return myLocation != null && myContainer.getComponentCount() == 0 && dragObject.getComponentCount() == 1;
+      if (myLocation == null || dragObject.getComponentCount() != 1) {
+        return false;
+      }
+      for(RadComponent component: myContainer.getComponents()) {
+        if (!component.isDragging()) {
+          return false;
+        }
+      }
+
+      return true;
     }
 
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
