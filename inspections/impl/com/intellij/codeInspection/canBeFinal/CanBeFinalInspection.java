@@ -129,7 +129,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
         if (filter.accepts((RefElement)refEntity)) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
-              if (!refMethod.isStatic() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
+              if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
                   !(refMethod instanceof RefImplicitConstructor)) {
                 getContext().enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
                   public boolean process(PsiMethod derivedMethod) {

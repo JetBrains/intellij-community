@@ -9,6 +9,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
+import com.intellij.testFramework.InspectionTestCase;
 
 public class CanBeFinalTest extends InspectionTestCase {
   protected void setUp() throws Exception {
@@ -20,6 +21,10 @@ public class CanBeFinalTest extends InspectionTestCase {
     tool.REPORT_CLASSES = true;
     tool.REPORT_FIELDS = true;
     tool.REPORT_METHODS = true;
+    doTest(tool);
+  }
+
+  private void doTest(final CanBeFinalInspection tool) throws Exception {
     doTest("canBeFinal/" + getTestName(false), tool);
   }
 
@@ -69,6 +74,6 @@ public class CanBeFinalTest extends InspectionTestCase {
     tool.REPORT_FIELDS = false;
     tool.REPORT_METHODS = true;
 
-    doTest();
+    doTest(tool);
   }
 }

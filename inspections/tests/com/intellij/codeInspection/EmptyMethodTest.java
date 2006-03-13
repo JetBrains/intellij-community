@@ -1,13 +1,14 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
+import com.intellij.testFramework.InspectionTestCase;
 
 /**
  * @author max
  */
 public class EmptyMethodTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    final EmptyMethodInspection tool = new EmptyMethodInspection();    
+    final EmptyMethodInspection tool = new EmptyMethodInspection();
     doTest("emptyMethod/" + getTestName(false), tool);
   }
 

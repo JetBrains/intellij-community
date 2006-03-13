@@ -4,17 +4,15 @@
 
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.suspiciousNameCombination.SuspiciousNameCombinationInspection;
+import com.intellij.testFramework.InspectionTestCase;
 
 /**
  * @author yole
  */
 public class SuspiciousNameCombinationTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    final SuspiciousNameCombinationInspection tool = new SuspiciousNameCombinationInspection();
-    LocalInspectionToolWrapper wrapper = new LocalInspectionToolWrapper(tool);
-    doTest("suspiciousNameCombination/" + getTestName(false), wrapper);
+    doTest("suspiciousNameCombination/" + getTestName(false), new SuspiciousNameCombinationInspection());
   }
 
   public void testAssignment() throws Exception {

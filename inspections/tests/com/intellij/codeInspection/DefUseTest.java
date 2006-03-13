@@ -1,16 +1,14 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.defUse.DefUseInspection;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.testFramework.InspectionTestCase;
 
 public class DefUseTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    final InspectionTool tool = new LocalInspectionToolWrapper(new DefUseInspection());
-    doTest("defUse/" + getTestName(false), tool);
+    doTest("defUse/" + getTestName(false), new DefUseInspection());
   }
 
- 
+
   public void testSCR5144() throws Exception {
     doTest();
   }

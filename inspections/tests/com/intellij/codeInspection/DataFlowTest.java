@@ -10,11 +10,11 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.testFramework.InspectionTestCase;
 
 public class DataFlowTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new DataFlowInspection());
-    doTest("dataFlow/" + getTestName(false), tool);
+    doTest("dataFlow/" + getTestName(false), new DataFlowInspection());
   }
 
   private void doTest15() throws Exception {

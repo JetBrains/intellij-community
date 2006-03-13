@@ -1,24 +1,22 @@
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
+import com.intellij.testFramework.InspectionTestCase;
 
 
 /**
  * @author max
- */ 
+ */
 public class LocalCanBeFinalTest extends InspectionTestCase {
   private LocalCanBeFinal myTool;
-  private LocalInspectionToolWrapper myWrapper;
 
   protected void setUp() throws Exception {
     super.setUp();
-    myWrapper = new LocalInspectionToolWrapper(new LocalCanBeFinal());
-    myTool = (LocalCanBeFinal)myWrapper.getTool();    
+    myTool = new LocalCanBeFinal();
   }
 
   private void doTest() throws Exception {
-    doTest("localCanBeFinal/" + getTestName(false), myWrapper);
+    doTest("localCanBeFinal/" + getTestName(false), myTool);
   }
 
   public void testmultiWriteNoRead() throws Exception {

@@ -5,14 +5,14 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.testFramework.InspectionTestCase;
 
 /**
  * @author max
  */
 public class DeprecationInspectionTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    doTest("deprecation/" + getTestName(false), new LocalInspectionToolWrapper(new DeprecationInspection()));
+    doTest("deprecation/" + getTestName(false), new DeprecationInspection());
   }
 
   public void testDeprecatedMethod() throws Exception{

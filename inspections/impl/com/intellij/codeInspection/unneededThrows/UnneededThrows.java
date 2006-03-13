@@ -17,10 +17,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -68,25 +68,21 @@ public class UnneededThrows extends DescriptorProviderInspection {
       PsiJavaCodeReferenceElement throwsRef = throwsRefs[i];
       if (ExceptionUtil.isUncheckedException(throwsType)) continue;
 
-      for (int j = 0; j < unThrown.length; j++) {
-        PsiClassType s = unThrown[j];
+      for (PsiClassType s : unThrown) {
         if (s.equals(throwsType)) {
           if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
 
           if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
-            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor",
-                                                                                        "<code>#ref</code>"), getFix(),
-                                                                                                              ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+              "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), getFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
           }
           else if (refMethod.getDerivedMethods().size() > 0) {
-            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor1",
-                                                                                        "<code>#ref</code>"), getFix(),
-                                                                                                              ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+              "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), getFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
           }
           else {
-            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor2",
-                                                                                        "<code>#ref</code>"), getFix(),
-                                                                                                              ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+              "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), getFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
           }
 
 
@@ -122,6 +118,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
     return false;
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
     return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
@@ -172,16 +169,15 @@ public class UnneededThrows extends DescriptorProviderInspection {
         if (problems == null) return;
         PsiManager psiManager = PsiManager.getInstance(project);
         List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<PsiJavaCodeReferenceElement>();
-        for (int i = 0; i < problems.length; i++) {
-          ProblemDescriptor problem = problems[i];
+        for (ProblemDescriptor problem : problems) {
           PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)problem.getPsiElement();
           if (classRef == null) continue;
           PsiType psiType = psiManager.getElementFactory().createType(classRef);
           removeException(refMethod, psiType, refsToDelete);
         }
 
-        for (Iterator<PsiJavaCodeReferenceElement> iterator = refsToDelete.iterator(); iterator.hasNext();) {
-          iterator.next().delete();
+        for (final PsiJavaCodeReferenceElement aRefsToDelete : refsToDelete) {
+          aRefsToDelete.delete();
         }
       }
       catch (IncorrectOperationException e) {
@@ -195,16 +191,14 @@ public class UnneededThrows extends DescriptorProviderInspection {
       PsiManager psiManager = psiMethod.getManager();
 
       PsiJavaCodeReferenceElement[] refs = psiMethod.getThrowsList().getReferenceElements();
-      for (int i = 0; i < refs.length; i++) {
-        PsiJavaCodeReferenceElement ref = refs[i];
+      for (PsiJavaCodeReferenceElement ref : refs) {
         PsiType refType = psiManager.getElementFactory().createType(ref);
         if (exceptionType.isAssignableFrom(refType)) {
           refsToDelete.add(ref);
         }
       }
 
-      for (Iterator<RefMethod> iterator = refMethod.getDerivedMethods().iterator(); iterator.hasNext();) {
-        RefMethod refDerived = iterator.next();
+      for (RefMethod refDerived : refMethod.getDerivedMethods()) {
         removeException(refDerived, exceptionType, refsToDelete);
       }
     }

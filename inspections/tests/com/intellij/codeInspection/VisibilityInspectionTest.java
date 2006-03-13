@@ -1,6 +1,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.visibility.VisibilityInspection;
+import com.intellij.testFramework.InspectionTestCase;
 
 public class VisibilityInspectionTest extends InspectionTestCase {
   private VisibilityInspection myTool = new VisibilityInspection();
