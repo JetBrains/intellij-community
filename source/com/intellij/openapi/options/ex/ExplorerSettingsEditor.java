@@ -344,6 +344,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
         }
       }
     });
+    myTree.setRowHeight(32);
     TreeUtil.installActions(myTree);
     UIUtil.setLineStyleAngled(myTree);
     myTree.setShowsRootHandles(true);
