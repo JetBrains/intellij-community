@@ -240,13 +240,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
     Runnable runnable = new Runnable() {
       public void run() {
-        for (int i = 0; i < modelsToCommit.size(); i++) {
-          RootModelImpl rootModel = modelsToCommit.get(i);
+        for (RootModelImpl rootModel : modelsToCommit) {
           rootModel.myModuleRootManager.commitModelWithoutEvents(rootModel);
         }
 
-        for (int i = 0; i < modelsToDispose.size(); i++) {
-          ModifiableRootModel model = modelsToDispose.get(i);
+        for (ModifiableRootModel model : modelsToDispose) {
           model.dispose();
         }
       }
@@ -261,7 +259,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     for (ModifiableRootModel _rootModel : _rootModels) {
       RootModelImpl rootModel = (RootModelImpl)_rootModel;
       if (rootModel.isChanged()) {
-        rootModels.add((RootModelImpl)rootModel);
+        rootModels.add(rootModel);
       }
     }
 
@@ -300,7 +298,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       return result.toArray(new String[result.size()]);
     }
     else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
-      return ModuleRootManagerImpl.this.getUrls(OrderRootType.CLASSES_AND_OUTPUT, processed);
+      return getUrls(OrderRootType.CLASSES_AND_OUTPUT, processed);
     }
     LOG.error("Unknown root type: " + rootType);
     return null;
@@ -348,7 +346,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       return result.toArray(new VirtualFile[result.size()]);
     }
     else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
-      return ModuleRootManagerImpl.this.getFiles(OrderRootType.CLASSES_AND_OUTPUT, processed);
+      return getFiles(OrderRootType.CLASSES_AND_OUTPUT, processed);
     }
     LOG.error("Unknown root type: " + rootType);
     return null;
@@ -435,7 +433,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       }
     }
     final Collection<RootModelImpl> allRootModels = nameToModel.values();
-    DFSTBuilder<RootModelImpl> builder = new DFSTBuilder<RootModelImpl>(new GraphGenerator<RootModelImpl>(new CachingSemiGraph<RootModelImpl>(new GraphGenerator.SemiGraph<RootModelImpl>() {
+    return new DFSTBuilder<RootModelImpl>(new GraphGenerator<RootModelImpl>(new CachingSemiGraph<RootModelImpl>(new GraphGenerator.SemiGraph<RootModelImpl>() {
           public Collection<RootModelImpl> getNodes() {
             return allRootModels;
           }
@@ -458,8 +456,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
             final String[] names = names1.toArray(new String[names1.size()]);
             List<RootModelImpl> result = new ArrayList<RootModelImpl>();
-            for (int i = 0; i < names.length; i++) {
-              String name = names[i];
+            for (String name : names) {
               final RootModelImpl depRootModel = nameToModel.get(name);
               if (depRootModel != null) { // it is ok not to find one
                 result.add(depRootModel);
@@ -468,7 +465,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
             return result.iterator();
           }
         })));
-    return builder;
   }
 
 
@@ -490,7 +486,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     for (ModifiableRootModel _rootModel : _rootModels) {
       RootModelImpl rootModel = (RootModelImpl)_rootModel;
       if (rootModel.isChanged()) {
-        rootModels.add((RootModelImpl)rootModel);
+        rootModels.add(rootModel);
       }
     }
     DFSTBuilder<RootModelImpl> dfstBuilder = createDFSTBuilder(rootModels, moduleModel);
