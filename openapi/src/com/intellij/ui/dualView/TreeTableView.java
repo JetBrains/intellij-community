@@ -85,13 +85,17 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
 
   public TableCellEditor getCellEditor(int row, int column) {
     ColumnInfo columnInfo = getTreeViewModel().getColumnInfos()[column];
-    TableCellEditor editor = columnInfo.getEditor(getTree().getPathForRow(row).getLastPathComponent());
+    TableCellEditor editor = getEditor(columnInfo, getTree().getPathForRow(row).getLastPathComponent());
     if (editor == null) {
       return super.getCellEditor(row, column);
     }
     else {
       return editor;
     }
+  }
+
+  protected TableCellEditor getEditor(final ColumnInfo columnInfo, final Object o) {
+    return columnInfo.getEditor(o);
   }
 
   public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
@@ -136,7 +140,7 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
 
   public TableCellRenderer getCellRenderer(int row, int column) {
     ColumnInfo columnInfo = getTreeViewModel().getColumnInfos()[convertColumnIndexToModel(column)];
-    TableCellRenderer renderer = columnInfo.getRenderer(getTree().getPathForRow(row).getLastPathComponent());
+    TableCellRenderer renderer = getRenderer(columnInfo, getTree().getPathForRow(row).getLastPathComponent());
     final TableCellRenderer baseRenderer = renderer == null ? super.getCellRenderer(row, column) : renderer;
     return new TableCellRenderer() {
       public Component getTableCellRendererComponent(JTable table,
@@ -159,6 +163,10 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
         return rendererComponent;
       }
     };
+  }
+
+  protected TableCellRenderer getRenderer(final ColumnInfo columnInfo, final Object o) {
+    return columnInfo.getRenderer(o);
   }
 
   public List getItems() {

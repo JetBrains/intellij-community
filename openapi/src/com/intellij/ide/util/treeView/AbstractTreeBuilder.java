@@ -75,8 +75,10 @@ public abstract class AbstractTreeBuilder {
     myProgress = createProgressIndicator();
   }
 
-  @NotNull
-  protected abstract ProgressIndicator createProgressIndicator();
+  @Nullable
+  protected ProgressIndicator createProgressIndicator() {
+    return null;
+  }
 
   protected AbstractTreeUpdater createUpdater() {
     return new AbstractTreeUpdater(this);
@@ -95,7 +97,9 @@ public abstract class AbstractTreeBuilder {
     }
     myElementToNodeMap.clear();
     TREE_NODE_WRAPPER.setValue(null);
-    myProgress.cancel();
+    if (myProgress != null) {
+      myProgress.cancel();
+    }
   }
 
   public boolean isDisposed() {
@@ -572,17 +576,19 @@ public abstract class AbstractTreeBuilder {
     Runnable runnable1 = new Runnable() {
       public void run() {
         try {
-          ProgressManager.getInstance().runProcess(
-            new Runnable() {
+          Runnable runnable2 = new Runnable() {
               public void run() {
                 ApplicationManager.getApplication().runReadAction(runnable);
                 if (postRunnable != null) {
                   ApplicationManager.getApplication().invokeLater(postRunnable);
                 }
               }
-            },
-            myProgress
-          );
+            };
+          if (myProgress != null) {
+            ProgressManager.getInstance().runProcess(runnable2, myProgress);
+          } else {
+            runnable2.run();
+          }
         }
         catch (ProcessCanceledException e) {
           //ignore

@@ -12,7 +12,7 @@ import java.awt.*;
  */
 public class StripeTableCellRenderer implements TableCellRenderer {
   private final TableCellRenderer myRenderer;
-  private static final double FACTOR = 0.9;
+  private static final double FACTOR = 0.92;
 
   public StripeTableCellRenderer(final TableCellRenderer renderer) {
     myRenderer = renderer;
@@ -30,12 +30,13 @@ public class StripeTableCellRenderer implements TableCellRenderer {
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    final Component component = getRenderer(row, column).getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    final JComponent component = (JComponent)getRenderer(row, column).getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     if (row % 2 == 0 && !isSelected) {
       component.setBackground(darken(table.getBackground()));
     } else {
       component.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
     }
+    component.setOpaque(true);
     return component;
   }
 
