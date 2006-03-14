@@ -99,4 +99,11 @@ public class IOResourceInspection {
             str.close();
         }
     }
+    public FileInputStream escaped() throws IOException {
+        return new FileInputStream("xxxx");
+    }
+    public FileInputStream escaped2() throws IOException {
+        FileInputStream stream = new FileInputStream("xxxx");
+        return stream;
+    }
 }
