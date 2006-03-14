@@ -4,6 +4,8 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
+import com.intellij.uiDesigner.UIDesignerBundle;
+
 import javax.swing.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
@@ -18,8 +20,11 @@ import java.awt.AWTEvent;
  * @author yole
  */
 public class SnapShooter {
+  private SnapShooter() {
+  }
+
   public static void main(String[] args) throws Throwable {
-    final JFrame snapShotFrame = new JFrame("SnapShooter");
+    final JFrame snapShotFrame = new JFrame(UIDesignerBundle.message("swing.inspector.title"));
     JButton takeSnapShotButton = new JButton("Take snapshot (PrintScreen)");
     takeSnapShotButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -50,10 +55,11 @@ public class SnapShooter {
     for (int j = 1; j < args.length; j++) {
       parms[j - 1] = args[j];
     }
-    Method m = Class.forName(mainClass).getMethod("main", new Class[]{parms.getClass()});
+    //noinspection HardCodedStringLiteral
+    Method m = Class.forName(mainClass).getMethod("main", parms.getClass());
     try {
       ensureAccess(m);
-      m.invoke(null, new Object[]{parms});
+      m.invoke(null, (Object) parms);
     } catch (InvocationTargetException ite) {
       throw ite.getTargetException();
     }
@@ -64,8 +70,9 @@ public class SnapShooter {
     // calling setAccessible() via reflection because the method is missing from java version 1.1.x
     final Class aClass = reflectionObject.getClass();
     try {
-      final Method setAccessibleMethod = aClass.getMethod("setAccessible", new Class[] {boolean.class});
-      setAccessibleMethod.invoke(reflectionObject, new Object[] {Boolean.TRUE});
+      //noinspection HardCodedStringLiteral
+      final Method setAccessibleMethod = aClass.getMethod("setAccessible", boolean.class);
+      setAccessibleMethod.invoke(reflectionObject, Boolean.TRUE);
     }
     catch (Exception e) {
       // the method not found
