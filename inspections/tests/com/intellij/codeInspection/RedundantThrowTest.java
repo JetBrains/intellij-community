@@ -1,12 +1,12 @@
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.unneededThrows.UnneededThrows;
+import com.intellij.codeInspection.unneededThrows.RedundantThrows;
 import com.intellij.testFramework.InspectionTestCase;
 
 
 public class RedundantThrowTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    final UnneededThrows tool = new UnneededThrows();
+    final RedundantThrows tool = new RedundantThrows();
     doTest("redundantThrow/" + getTestName(false), tool);
   }
 

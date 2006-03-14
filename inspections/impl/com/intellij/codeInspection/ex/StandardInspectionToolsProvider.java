@@ -35,8 +35,8 @@ import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspecti
 import com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
-import com.intellij.codeInspection.unneededThrows.UnneededThrows;
-import com.intellij.codeInspection.unneededThrows.UnusedThrowsDeclaration;
+import com.intellij.codeInspection.unneededThrows.RedundantThrows;
+import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
@@ -75,7 +75,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       UnusedReturnValue.class,
       SameReturnValueInspection.class,
       EmptyMethodInspection.class,
-      UnneededThrows.class,
+      RedundantThrows.class,
 
       DataFlowInspection.class,
       DefUseInspection.class,
@@ -107,7 +107,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       WrongPackageStatementInspection.class,
       DependencyInspection.class,
       SillyAssignmentInspection.class,
-      UnusedThrowsDeclaration.class,
+      RedundantThrowsDeclaration.class,
       AccessStaticViaInstance.class,
       HtmlStyleLocalInspection.class,
       RequiredAttributesInspection.class,

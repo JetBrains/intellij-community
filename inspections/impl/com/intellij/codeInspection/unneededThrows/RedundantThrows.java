@@ -26,18 +26,18 @@ import java.util.List;
 /**
  * @author max
  */
-public class UnneededThrows extends DescriptorProviderInspection {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.UnneededThrows");
+public class RedundantThrows extends DescriptorProviderInspection {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.throws.display.name");
   private QuickFix myQuickFix;
-  @NonNls public static final String SHORT_NAME = "UnneededThrows";
+  @NonNls public static final String SHORT_NAME = "RedundantThrows";
 
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod && !((RefMethod)refEntity).isSyntheticJSP()) {
           RefMethod refMethod = (RefMethod)refEntity;
-          if (!getContext().isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnneededThrows.this)) return;
+          if (!getContext().isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), RedundantThrows.this)) return;
           ProblemDescriptorImpl[] descriptors = checkMethod(refMethod, manager);
           if (descriptors != null) {
             addProblemElement(refMethod, descriptors);
@@ -135,7 +135,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
     return SHORT_NAME;
   }
 
-  public UnneededThrows() {
+  public RedundantThrows() {
   }
 
   private LocalQuickFix getFix() {

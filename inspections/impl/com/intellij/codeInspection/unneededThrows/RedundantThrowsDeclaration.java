@@ -36,18 +36,18 @@ import java.util.Set;
  * User: anna
  * Date: 15-Nov-2005
  */
-public class UnusedThrowsDeclaration extends LocalInspectionTool {
+public class RedundantThrowsDeclaration extends LocalInspectionTool {
   public String getGroupDisplayName() {
     return "";
   }
 
   public String getDisplayName() {
-    return InspectionsBundle.message("unused.throws.declaration");
+    return InspectionsBundle.message("redundant.throws.declaration");
   }
 
   @NonNls
   public String getShortName() {
-    return "UnusedThrowsDeclaration";
+    return "RedundantThrowsDeclaration";
   }
 
   @Nullable
