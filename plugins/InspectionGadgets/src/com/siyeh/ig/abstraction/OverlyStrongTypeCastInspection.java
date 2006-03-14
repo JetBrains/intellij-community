@@ -80,7 +80,6 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                     operand.getText();
             replaceExpressionAndShorten(expression, newExpression);
         }
-
     }
 
     public BaseInspectionVisitor buildVisitor() {

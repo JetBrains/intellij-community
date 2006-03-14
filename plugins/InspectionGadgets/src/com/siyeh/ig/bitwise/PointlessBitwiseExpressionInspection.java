@@ -141,7 +141,6 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
                     calculateReplacementExpression(expression);
             replaceExpression(expression, newExpression);
         }
-
     }
 
     private class PointlessBitwiseVisitor extends BaseInspectionVisitor{

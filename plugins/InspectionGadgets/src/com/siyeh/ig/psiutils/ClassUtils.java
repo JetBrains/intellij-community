@@ -31,7 +31,7 @@ public class ClassUtils {
 
     /** @noinspection StaticCollection*/
     private static final Set<String> immutableTypes =
-            new HashSet<String>(11);
+            new HashSet<String>(14);
 
     /** @noinspection StaticCollection*/
     private static final Set<PsiType> primitiveNumericTypes =
@@ -66,6 +66,9 @@ public class ClassUtils {
         immutableTypes.add("java.lang.String");
         immutableTypes.add("java.awt.Font");
         immutableTypes.add("java.awt.Color");
+        immutableTypes.add("java.math.BigDecimal");
+        immutableTypes.add("java.math.BigInteger");
+        immutableTypes.add("java.math.MathContext");
     }
 
     private ClassUtils() {
@@ -150,7 +153,6 @@ public class ClassUtils {
                 field.hasModifierProperty(PsiModifier.PROTECTED)) {
             return true;
         }
-
         return inSamePackage(fieldClass, fromClass);
     }
 
