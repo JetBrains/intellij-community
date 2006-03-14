@@ -17,6 +17,10 @@ import java.awt.LayoutManager;
  * @author yole
  */
 public class RadGridBagLayoutManager extends RadGridLayoutManager {
+  private int myLastSnapshotRow = -1;
+  private int myLastSnapshotCol = -1;
+  private int[] mySnapshotXMax = new int[512];
+  private int[] mySnapshotYMax = new int[512];
 
   @Override public String getName() {
     return UIFormXmlConstants.LAYOUT_GRIDBAG;
@@ -35,14 +39,88 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
                                    final JComponent child,
                                    final RadContainer container,
                                    final RadComponent component) {
+    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+
+    // logic copied from GridBagLayout.java
+
     GridBagLayout gridBag = (GridBagLayout) parent.getLayout();
-    final GridBagConstraints gbc = gridBag.getConstraints(child);
-    component.getConstraints().setColumn(gbc.gridx);
-    component.getConstraints().setRow(gbc.gridy);
-    component.getConstraints().setColSpan(gbc.gridwidth);
-    component.getConstraints().setRowSpan(gbc.gridheight);
-    component.getConstraints().setAnchor(convertAnchor(gbc));
-    component.getConstraints().setFill(convertFill(gbc));
+    final GridBagConstraints constraints = gridBag.getConstraints(child);
+
+    int curX = constraints.gridx;
+    int curY = constraints.gridy;
+    int curWidth = constraints.gridwidth;
+    int curHeight = constraints.gridheight;
+    int px;
+    int py;
+
+    /* If x or y is negative, then use relative positioning: */
+    if (curX < 0 && curY < 0) {
+      if(myLastSnapshotRow >= 0)
+        curY = myLastSnapshotRow;
+      else if(myLastSnapshotCol >= 0)
+        curX = myLastSnapshotCol;
+      else
+        curY = 0;
+    }
+
+    if (curX < 0) {
+      if (curHeight <= 0) {
+        curHeight += grid.getRowCount() - curY;
+        if (curHeight < 1)
+          curHeight = 1;
+      }
+
+      px = 0;
+      for (int i = curY; i < (curY + curHeight); i++)
+        px = Math.max(px, mySnapshotXMax[i]);
+
+      curX = px - curX - 1;
+      if(curX < 0)
+        curX = 0;
+    }
+    else if (curY < 0) {
+      if (curWidth <= 0) {
+        curWidth += grid.getColumnCount() - curX;
+        if (curWidth < 1)
+          curWidth = 1;
+      }
+
+      py = 0;
+      for (int i = curX; i < (curX + curWidth); i++)
+        py = Math.max(py, mySnapshotYMax[i]);
+
+      curY = py - curY - 1;
+      if(curY < 0)
+        curY = 0;
+    }
+
+    if (curWidth <= 0) {
+      curWidth += grid.getColumnCount() - curX;
+      if (curWidth < 1)
+        curWidth = 1;
+    }
+
+    if (curHeight <= 0) {
+      curHeight += grid.getRowCount() - curY;
+      if (curHeight < 1)
+        curHeight = 1;
+    }
+
+    /* Make negative sizes start a new row/column */
+    if (constraints.gridheight == 0 && constraints.gridwidth == 0)
+      myLastSnapshotRow = myLastSnapshotCol = -1;
+    if (constraints.gridheight == 0 && myLastSnapshotRow < 0)
+      myLastSnapshotCol = curX + curWidth;
+    else if (constraints.gridwidth == 0 && myLastSnapshotCol < 0)
+      myLastSnapshotRow = curY + curHeight;
+
+    component.getConstraints().setColumn(curX);
+    component.getConstraints().setRow(curY);
+    component.getConstraints().setColSpan(curWidth);
+    component.getConstraints().setRowSpan(curHeight);
+
+    component.getConstraints().setAnchor(convertAnchor(constraints));
+    component.getConstraints().setFill(convertFill(constraints));
     container.addComponent(component);
   }
 

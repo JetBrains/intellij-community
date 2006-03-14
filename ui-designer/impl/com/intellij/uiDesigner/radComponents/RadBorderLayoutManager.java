@@ -94,8 +94,13 @@ public class RadBorderLayoutManager extends RadLayoutManager {
                                              final RadContainer container,
                                              final RadComponent component) {
     BorderLayout borderLayout = (BorderLayout) parent.getLayout();
-    component.setCustomLayoutConstraints(borderLayout.getConstraints(child));
-    container.addComponent(component);
+    final Object constraints = borderLayout.getConstraints(child);
+    if (constraints != null) {
+      // sometimes the container sets the layout manager to BorderLayout but
+      // overrides the layout() method so that the component constraints are not used
+      component.setCustomLayoutConstraints(constraints);
+      container.addComponent(component);
+    }
   }
 
   private static class MyDropLocation implements DropLocation {
