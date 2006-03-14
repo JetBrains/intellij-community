@@ -224,7 +224,6 @@
     <component>
       <interface-class>com.intellij.pom.xml.XmlAspect</interface-class>
       <implementation-class>com.intellij.pom.xml.impl.XmlAspectImpl</implementation-class>
-      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.pom.java.PomJavaAspect</interface-class>
