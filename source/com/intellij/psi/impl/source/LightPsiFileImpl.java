@@ -279,9 +279,7 @@ public abstract class LightPsiFileImpl extends ElementBase implements PsiFileEx 
   }
 
   public boolean isWritable() {
-    PsiFile file = getContainingFile();
-    if (file == null) return false;
-    return file.isWritable();
+    return getViewProvider().getVirtualFile().isWritable();
   }
 
   @NotNull
