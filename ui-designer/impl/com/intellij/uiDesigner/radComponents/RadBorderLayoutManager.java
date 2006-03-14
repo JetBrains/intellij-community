@@ -84,7 +84,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     };
   }
 
-  @Override public void createSnapshotLayout(final RadContainer container, final LayoutManager layout) {
+  @Override public void createSnapshotLayout(final JComponent parent, final RadContainer container, final LayoutManager layout) {
     BorderLayout borderLayout = (BorderLayout) layout;
     container.setLayout(new BorderLayout(borderLayout.getHgap(), borderLayout.getVgap()));
   }

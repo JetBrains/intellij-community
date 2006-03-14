@@ -69,7 +69,7 @@ public class RadFlowLayoutManager extends RadLayoutManager {
   }
 
   @Override
-  public void createSnapshotLayout(final RadContainer container, final LayoutManager layout) {
+  public void createSnapshotLayout(final JComponent parent, final RadContainer container, final LayoutManager layout) {
     FlowLayout flowLayout = (FlowLayout) layout;
     container.setLayout(new FlowLayout(flowLayout.getAlignment(), flowLayout.getHgap(), flowLayout.getVgap()));
   }

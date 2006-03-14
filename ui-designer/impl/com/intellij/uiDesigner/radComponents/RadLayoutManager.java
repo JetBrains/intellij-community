@@ -60,6 +60,9 @@ public abstract class RadLayoutManager {
     if (layout instanceof FlowLayout) {
       return new RadFlowLayoutManager();
     }
+    if (layout instanceof GridLayout) {
+      return new RadSwingGridLayoutManager();
+    }
     return null;
   }
 
@@ -108,6 +111,6 @@ public abstract class RadLayoutManager {
                                    final RadComponent component) {
   }
 
-  public void createSnapshotLayout(final RadContainer container, final LayoutManager layout) {
+  public void createSnapshotLayout(final JComponent parent, final RadContainer container, final LayoutManager layout) {
   }
 }
