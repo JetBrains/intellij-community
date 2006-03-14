@@ -109,8 +109,10 @@ public final class RadSplitPane extends RadContainer {
                                    final String position) {
     if (sideComponent instanceof JComponent) {
       RadComponent radSideComponent = createSnapshotComponent(context, (JComponent) sideComponent);
-      radSideComponent.setCustomLayoutConstraints(position);
-      addComponent(radSideComponent);
+      if (sideComponent != null) {
+        radSideComponent.setCustomLayoutConstraints(position);
+        addComponent(radSideComponent);
+      }
     }
   }
 

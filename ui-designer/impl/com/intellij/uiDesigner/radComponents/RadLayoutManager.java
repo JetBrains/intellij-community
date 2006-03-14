@@ -15,8 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.LayoutManager;
-import java.awt.Point;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Arrays;
@@ -49,6 +48,19 @@ public abstract class RadLayoutManager {
       throw new IllegalArgumentException("Unknown layout manager " + name);
     }
     return cls.newInstance();
+  }
+
+  public static RadLayoutManager createFromLayout(LayoutManager layout) {
+    if (layout instanceof BorderLayout) {
+      return new RadBorderLayoutManager();
+    }
+    if (layout instanceof GridBagLayout) {
+      return new RadGridBagLayoutManager();
+    }
+    if (layout instanceof FlowLayout) {
+      return new RadFlowLayoutManager();
+    }
+    return null;
   }
 
   /**

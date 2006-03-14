@@ -577,14 +577,11 @@ public abstract class RadComponent implements IComponent {
   public void doneLoadingFromLw() {
   }
 
-  @NotNull
+  @Nullable
   public static RadComponent createSnapshotComponent(final SnapshotContext context, final JComponent component) {
     String id = context.newId();
     RadComponent result;
-    if (component instanceof JPanel) {
-      result = new RadContainer(component.getClass(), id, context.getPalette());
-    }
-    else if (component instanceof JScrollPane) {
+    if (component instanceof JScrollPane) {
       result = new RadScrollPane(id, context.getPalette());
     }
     else if (component instanceof JTabbedPane) {
@@ -594,7 +591,31 @@ public abstract class RadComponent implements IComponent {
       result = new RadSplitPane(id, context.getPalette());
     }
     else {
-      result = new RadAtomicComponent(null, component.getClass(), id, context.getPalette());
+      Class componentClass = component.getClass();
+
+      try {
+        componentClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
+      }
+      catch (NoSuchMethodException e) {
+        componentClass = context.getReplacementClass(componentClass);
+        if (componentClass == null) {
+          return null;
+        }
+      }
+
+      if (component instanceof JPanel) {
+        RadContainer container = new RadContainer(componentClass, id, context.getPalette());
+        final RadLayoutManager manager = RadLayoutManager.createFromLayout(component.getLayout());
+        if (manager == null) {
+          context.notifyUnknownLayoutManager(component);
+          return null;
+        }
+        container.setLayoutManager(manager);
+        result = container;
+      }
+      else {
+        result = new RadAtomicComponent(componentClass, id, context.getPalette());
+      }
     }
     context.registerComponent(component, result);
     result.importSnapshotComponent(context, component);

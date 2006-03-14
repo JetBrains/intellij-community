@@ -54,7 +54,9 @@ public final class RadScrollPane extends RadContainer {
     final Component view = scrollPane.getViewport().getView();
     if (view instanceof JComponent) {
       RadComponent childComponent = createSnapshotComponent(context, (JComponent) view);
-      addComponent(childComponent);
+      if (childComponent != null) {
+        addComponent(childComponent);
+      }
     }
   }
 

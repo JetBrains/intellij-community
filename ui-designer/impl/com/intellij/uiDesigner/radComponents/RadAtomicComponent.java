@@ -14,8 +14,8 @@ public class RadAtomicComponent extends RadComponent {
     super(module, aClass, id);
   }
 
-  public RadAtomicComponent(final Module module, @NotNull final Class aClass, @NotNull final String id, final Palette palette) {
-    super(module, aClass, id, palette);
+  public RadAtomicComponent(@NotNull final Class aClass, @NotNull final String id, final Palette palette) {
+    super(null, aClass, id, palette);
   }
 
   public void write(final XmlWriter writer) {

@@ -242,8 +242,10 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       Component child = tabbedPane.getComponentAt(i);
       if (child instanceof JComponent) {
         RadComponent childComponent = createSnapshotComponent(context, (JComponent) child);
-        childComponent.setCustomLayoutConstraints(new LwTabbedPane.Constraints(StringDescriptor.create(title)));
-        addComponent(childComponent);
+        if (childComponent != null) {
+          childComponent.setCustomLayoutConstraints(new LwTabbedPane.Constraints(StringDescriptor.create(title)));
+          addComponent(childComponent);
+        }
       }
     }
   }

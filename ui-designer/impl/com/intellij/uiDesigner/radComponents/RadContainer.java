@@ -519,21 +519,14 @@ public class RadContainer extends RadComponent implements IContainer {
 
   @Override
   protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
-    if (component.getLayout() instanceof BorderLayout) {
-      setLayoutManager(new RadBorderLayoutManager());
-    }
-    else if (component.getLayout() instanceof GridBagLayout) {
-      setLayoutManager(new RadGridBagLayoutManager());
-    }
-    else if (component.getLayout() instanceof FlowLayout) {
-      setLayoutManager(new RadFlowLayoutManager());
-    }
     getLayoutManager().createSnapshotLayout(this, component.getLayout());
     importSnapshotBorder(component);
     for(Component child: component.getComponents()) {
       if (child instanceof JComponent) {
         RadComponent childComponent = createSnapshotComponent(context, (JComponent) child);
-        getLayoutManager().addSnapshotComponent(component, (JComponent) child, this, childComponent);
+        if (childComponent != null) {
+          getLayoutManager().addSnapshotComponent(component, (JComponent) child, this, childComponent);
+        }
       }
     }
   }
