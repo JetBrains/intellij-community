@@ -242,7 +242,7 @@ public class SelectInAction extends AnAction {
       if (!(selectedValue instanceof ProjectViewSelectInTarget)) return false;
       final ProjectViewSelectInTarget target = (ProjectViewSelectInTarget)selectedValue;
       String[] subIds = target.getSubIds();
-      return subIds != null && subIds.length != 0;
+      return subIds.length != 0;
     }
 
     public boolean isSelectable(final SelectInTarget target) {

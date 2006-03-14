@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +38,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class ScopeViewPane extends AbstractProjectViewPane implements ProjectComponent {
+public class ScopeViewPane extends AbstractProjectViewPane {
   @NonNls public static final String ID = "Scope";
   private final ProjectView myProjectView;
   private ScopeTreeViewPanel myViewPanel;

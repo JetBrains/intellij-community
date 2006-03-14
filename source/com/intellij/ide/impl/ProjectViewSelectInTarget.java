@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper {
   private String mySubId;
@@ -36,6 +37,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     }
   }
 
+  @NotNull
   public String[] getSubIds() {
     AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getProjectViewPaneById(getMinorViewId());
     return pane.getSubIds();

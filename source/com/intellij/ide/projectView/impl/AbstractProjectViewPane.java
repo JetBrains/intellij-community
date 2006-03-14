@@ -21,7 +21,9 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +34,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider, ProjectComponent {
@@ -40,7 +43,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   protected JTree myTree;
   protected AbstractTreeStructure myTreeStructure;
   protected AbstractTreeBuilder myTreeBuilder;
-  private TreeState myReadTreeState = new TreeState();
+  // subId->Tree state; key may be null
+  private final Map<String,TreeState> myReadTreeState = new HashMap<String, TreeState>();
   private String mySubId;
 
   protected AbstractProjectViewPane(Project project) {
@@ -67,12 +71,18 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   public final void setSubId(@Nullable String subId) {
+    saveExpandedPaths();
     mySubId = subId;
   }
 
-  @Nullable public String[] getSubIds(){
-    return null;
+  /**
+   * @return all supported sub views IDs.
+   * should return empty array if there is no subViews as in Project/Packages view.
+   */
+  @NotNull public String[] getSubIds(){
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
+
   @NotNull public String getPresentableSubIdName(@NotNull final String subId) {
     throw new IllegalStateException("should not call");
   }
@@ -272,24 +282,40 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    myReadTreeState.readExternal(element);
+    List<Element> subPanes = element.getChildren("subPane");
+    for (Element subPane : subPanes) {
+      String subId = subPane.getAttributeValue("subId");
+      TreeState treeState = new TreeState();
+      treeState.readExternal(subPane);
+      myReadTreeState.put(subId, treeState);
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    if (myTree != null) {
-      saveExpandedPaths();
+    saveExpandedPaths();
+    for (String subId : myReadTreeState.keySet()) {
+      TreeState treeState = myReadTreeState.get(subId);
+      Element subPane = new Element("subPane");
+      if (subId != null) {
+        subPane.setAttribute("subId", subId);
+      }
+      treeState.writeExternal(subPane);
+      element.addContent(subPane);
     }
-    myReadTreeState.writeExternal(element);
   }
 
   void saveExpandedPaths() {
     if (myTree != null) {
-      myReadTreeState = TreeState.createOn(myTree);
+      TreeState treeState = TreeState.createOn(myTree);
+      myReadTreeState.put(getSubId(), treeState);
     }
   }
 
   public final void restoreExpandedPaths(){
-    myReadTreeState.applyTo(myTree);
+    TreeState treeState = myReadTreeState.get(getSubId());
+    if (treeState != null) {
+      treeState.applyTo(myTree);
+    }
   }
 
   public void installComparator() {

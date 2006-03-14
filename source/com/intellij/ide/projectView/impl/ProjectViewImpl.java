@@ -52,6 +52,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Icons;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -268,12 +269,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
     final String id = newPane.getId();
     myId2Pane.put(id, newPane);
-    myCombo.insertItemAt(Pair.create(id, null), index);
     String[] subIds = newPane.getSubIds();
-    if (subIds != null) {
-      for (String subId : subIds) {
-        myCombo.insertItemAt(Pair.create(id, subId), ++index);
-      }
+    subIds = ArrayUtil.mergeArrays(new String[]{null}, subIds, String.class);
+    for (String subId : subIds) {
+      myCombo.insertItemAt(Pair.create(id, subId), index++);
     }
     myCombo.setMaximumRowCount(myCombo.getItemCount());
     SelectInTarget selectInTarget = newPane.createSelectInTarget();
@@ -287,7 +286,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       mySavedPaneSubId = null;
     }
     else if (selected == null) {
-      changeView(id, subIds==null||subIds.length==0 ? null : subIds[0]);
+      changeView(id, subIds[0]);
     }
   }
 
@@ -295,7 +294,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     AbstractProjectViewPane currentPane = getCurrentProjectViewPane();
     PsiElement selectedPsiElement = null;
     if (currentPane != null) {
-      currentPane.saveExpandedPaths();
+      if (currentPane != newPane) {
+        currentPane.saveExpandedPaths();
+      }
       Object selected = currentPane.getSelectedElement();
       if (selected instanceof PsiElement) {
         selectedPsiElement = (PsiElement)selected;
@@ -456,11 +457,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     newPane.setSubId(subId);
     String[] subIds = newPane.getSubIds();
 
-    if (subId == null && subIds != null) {
-      final String firstSubId = subIds.length == 0 ? null : subIds[0];
+    if (subId == null && subIds.length != 0) {
+      final String firstNonTrivialSubId = subIds[0];
       SwingUtilities.invokeLater(new Runnable(){
         public void run() {
-          changeView(id, firstSubId);
+          changeView(id, firstNonTrivialSubId);
         }
       });
     }

@@ -18,7 +18,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -91,7 +90,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     super.dispose();
   }
 
-  @Nullable
+  @NotNull
   public String[] getSubIds() {
     return myFavoritesManager.getAvailableFavoritesLists();
   }
