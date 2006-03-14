@@ -234,7 +234,6 @@
     <component>
       <interface-class>com.intellij.pom.tree.TreeAspect</interface-class>
       <implementation-class>com.intellij.pom.tree.TreeAspect</implementation-class>
-      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</interface-class>
