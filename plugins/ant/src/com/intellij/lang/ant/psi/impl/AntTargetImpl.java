@@ -3,19 +3,19 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class AntTargetImpl extends AntElementImpl implements AntTarget {
 
-  private String myName;
-  private String myDepends;
-  private String myDescription;
   private AntTarget[] myDependsTargets;
 
   public AntTargetImpl(AntProject parent, final XmlTag tag) {
@@ -28,9 +28,9 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
     try {
       builder.append("AntTarget: ");
       builder.append(getName());
-      if (myDescription != null) {
+      if (getDescription() != null) {
         builder.append(" [");
-        builder.append(myDescription);
+        builder.append(getDescription());
         builder.append(']');
       }
       final AntTarget[] targets = getDependsTargets();
@@ -51,56 +51,46 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
 
   @Nullable
   public String getName() {
-    parseTag();
-    return myName;
+    return getSourceElement().getAttributeValue("name");
+  }
+
+  public PsiElement setName(String name) throws IncorrectOperationException {
+    return null;
   }
 
   @Nullable
   public String getDescription() {
-    parseTag();
-    return myDescription;
+    return getSourceElement().getAttributeValue("description");
   }
 
   @NotNull
   public AntTarget[] getDependsTargets() {
     if (myDependsTargets == null) {
-      myDependsTargets = AntProjectImpl.EMPTY_TARGETS;
-      final String depends = myDepends;
-      if (depends != null && depends.length() > 0) {
-        AntProject project = (AntProject)getParent();
-        final String[] names = depends.split(",");
-        ArrayList<AntTarget> targets = null;
-        for (String name : names) {
+      final String depends = getSourceElement().getAttributeValue("depends");
+      if (depends == null || depends.length() == 0) {
+        myDependsTargets = AntProjectImpl.EMPTY_TARGETS;
+      }
+      else {
+        AntProject project = (AntProject)getAntParent();
+        final List<AntTarget> targets = new ArrayList<AntTarget>();
+        for (String name : depends.split(",")) {
           final AntTarget antTarget = project.getTarget(name);
           if (antTarget != null) {
-            if (targets == null) {
-              targets = new ArrayList<AntTarget>();
-            }
             targets.add(antTarget);
           }
         }
-        if (targets != null) {
-          myDependsTargets = targets.toArray(new AntTarget[targets.size()]);
-        }
+        myDependsTargets = targets.toArray(new AntTarget[targets.size()]);
       }
     }
     return myDependsTargets;
   }
 
-  protected AntElement parseSubTag(final XmlTag tag) {
-    return null;
+  @NotNull
+  public XmlTag getSourceElement() {
+    return (XmlTag)super.getSourceElement();
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
-  private void parseTag() {
-    if (myName == null) {
-      final XmlTag tag = getSourceTag();
-      final String name = tag.getName();
-      if ("target".equalsIgnoreCase(name)) {
-        myName = tag.getAttributeValue("name");
-        myDepends = tag.getAttributeValue("depends");
-        myDescription = tag.getAttributeValue("description");
-      }
-    }
+  protected AntElement[] getChildrenInner() {
+    return new AntElement[0];
   }
 }

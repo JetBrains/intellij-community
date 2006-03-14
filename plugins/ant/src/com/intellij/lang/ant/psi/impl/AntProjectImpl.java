@@ -5,24 +5,23 @@ import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class AntProjectImpl extends AntElementImpl implements AntProject {
-
   final static AntTarget[] EMPTY_TARGETS = new AntTarget[0];
 
-  private String myName;
-  private String myDefaultTargetName;
-  private String myBaseDir;
-  private String myDescription;
   private AntTarget[] myTargets;
-  private AntTarget myDefaultTarget;
 
   public AntProjectImpl(final AntFile parent, final XmlTag tag) {
     super(parent, tag);
@@ -34,9 +33,9 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     try {
       builder.append("AntProject: ");
       builder.append(getName());
-      if (myDescription != null) {
+      if (getDescription() != null) {
         builder.append(" [");
-        builder.append(myDescription);
+        builder.append(getDescription());
         builder.append("]");
       }
       return builder.toString();
@@ -46,70 +45,61 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     }
   }
 
+  @NotNull
+  public XmlTag getSourceElement() {
+    return (XmlTag)super.getSourceElement();
+  }
+
   @Nullable
   public String getName() {
-    parseTag();
-    return myName;
+    return getSourceElement().getAttributeValue("name");
+  }
+
+  public PsiElement setName(String name) throws IncorrectOperationException {
+    getSourceElement().setAttribute("name", name);
+    subtreeChanged();
+    return this;
   }
 
   @Nullable
   public String getBaseDir() {
-    parseTag();
-    return myBaseDir;
+    return getSourceElement().getAttributeValue("basedir");
   }
 
   @Nullable
   public String getDescription() {
-    parseTag();
-    return myDescription;
+    final XmlTag tag = getSourceElement().findFirstSubTag("description");
+    return tag != null ? tag.getValue().getTrimmedText() : null;
   }
 
   @NotNull
-  public AntTarget[] getAllTargets() {
-    if (myTargets == null) {
-      myTargets = EMPTY_TARGETS;
-      final PsiElement[] children = getChildren();
-      if (children.length > 0) {
-        ArrayList<AntTarget> targets = null;
-        for (PsiElement child : children) {
-          if (child instanceof AntTarget) {
-            if (targets == null) {
-              targets = new ArrayList<AntTarget>();
-            }
-            targets.add((AntTarget)child);
-          }
-        }
-        if (targets != null) {
-          myTargets = targets.toArray(new AntTarget[ targets.size()]);
-        }
-      }
+  public AntTarget[] getTargets() {
+    if (myTargets != null) return myTargets;
+    final List<AntTarget> targets = new ArrayList<AntTarget>();
+    for (final AntElement child : getChildren()) {
+      if (child instanceof AntTarget)
+        targets.add((AntTarget)child);
     }
-    return myTargets;
+    return myTargets = targets.toArray(new AntTarget[targets.size()]);
   }
 
   @Nullable
   public AntTarget getDefaultTarget() {
-    if (myDefaultTarget == null) {
-      parseTag();
-      final String defaultTarget = myDefaultTargetName;
-      if (defaultTarget == null || defaultTarget.length() > 0) {
-        return null;
-      }
-      for (AntTarget target : getAllTargets()) {
-        if (defaultTarget.equals(target.getName())) {
-          myDefaultTarget = target;
-          break;
-        }
+    final PsiReference[] references = getReferences();
+    for (PsiReference ref : references) {
+      final GenericReference reference = (GenericReference)ref;
+      if (reference.getType().isAssignableTo(ReferenceType.ANT_TARGET)) {
+        return (AntTarget)reference.resolve();
       }
     }
-    return myDefaultTarget;
+    return null;
   }
 
   @Nullable
   public AntTarget getTarget(final String name) {
-    AntTarget[] targets = getAllTargets();
+    AntTarget[] targets = getTargets();
     for (AntTarget target : targets) {
-      if (name.compareToIgnoreCase(target.getName()) == 0) {
+      if (name.equals(target.getName())) {
         return target;
       }
     }
@@ -117,30 +107,18 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  protected AntElement parseSubTag(final XmlTag tag) {
-    if ("target".equalsIgnoreCase(tag.getName())) {
-      return new AntTargetImpl(this, tag);
-    }
-    else if ("property".equalsIgnoreCase(tag.getName())) {
-      return new AntPropertySetImpl(this, tag);
-    }
-    return null;
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  private void parseTag() {
-    if (myName == null) {
-      final XmlTag tag = getSourceTag();
-      final String name = tag.getName();
-      if ("project".equalsIgnoreCase(name)) {
-        myName = tag.getAttributeValue("name");
-        myDefaultTargetName = tag.getAttributeValue("default");
-        myBaseDir = tag.getAttributeValue("basedir");
-        final XmlTag descTag = tag.findFirstSubTag("description");
-        if (descTag != null) {
-          myDescription = descTag.getValue().getText();
-        }
+  protected AntElement[] getChildrenInner() {
+    final XmlTag[] tags = getSourceElement().getSubTags();
+    final List<AntElement> children = new ArrayList<AntElement>();
+    for (final XmlTag tag : tags) {
+      final String tagName = tag.getName();
+      if ("target".equals(tagName)) {
+        children.add(new AntTargetImpl(this, tag));
+      }
+      else if("property".equals(tagName)) {
+        children.add(new AntPropertySetImpl(this, tag));
       }
     }
+    return children.toArray(new AntElement[children.size()]);
   }
 }

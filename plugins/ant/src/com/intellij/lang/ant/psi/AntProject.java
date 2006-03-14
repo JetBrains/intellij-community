@@ -1,10 +1,10 @@
 package com.intellij.lang.ant.psi;
 
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface AntProject extends AntElement {
-
+public interface AntProject extends AntElement, PsiNamedElement {
   @Nullable
   String getBaseDir();
 
@@ -12,11 +12,11 @@ public interface AntProject extends AntElement {
   String getDescription();
 
   @NotNull
-  AntTarget[] getAllTargets();
+  AntTarget[] getTargets();
+
+  @Nullable
+  AntTarget getTarget(final String name);
 
   @Nullable
   AntTarget getDefaultTarget();
-
-  @Nullable
-  AntTarget getTarget( final String name );
 }

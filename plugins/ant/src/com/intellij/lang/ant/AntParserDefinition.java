@@ -3,7 +3,7 @@ package com.intellij.lang.ant;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
@@ -51,6 +51,6 @@ public class AntParserDefinition implements ParserDefinition {
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {
-    return new AntFile(viewProvider);
+    return new AntFileImpl(viewProvider);
   }
 }

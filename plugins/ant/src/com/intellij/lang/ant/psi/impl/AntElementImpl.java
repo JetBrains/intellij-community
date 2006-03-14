@@ -2,71 +2,62 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
+import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public abstract class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
-  private static final AntElement[] EMPTY_CHILDREN = new AntElement[0];
-  private final PsiElement myParent;
-  private AntElement[] myChildren;
+  private final AntElement myParent;
+  private AntElement[] myChildren = null;
+  private PsiReference[] myReferences = null;
 
-  public AntElementImpl(final PsiElement parent, final PsiElement sourceElement) {
+  public AntElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(sourceElement);
     myParent = parent;
   }
 
   @NotNull
-  public Language getLanguage() {
+  public AntLanguage getLanguage() {
     return AntSupport.getLanguage();
   }
 
   @NotNull
-  public XmlTag getSourceTag() {
-    return (XmlTag)getSourceElement();
+  public XmlElement getSourceElement() {
+    return (XmlElement)super.getSourceElement();
   }
 
+  public AntElement getAntParent() {
+    return myParent;
+  }
 
-  public PsiElement getParent() {
+  public PsiElement getParent(){
     return myParent;
   }
 
   @NotNull
-  public PsiElement[] getChildren() {
-    if (myChildren == null) {
-      myChildren = EMPTY_CHILDREN;
-      ArrayList<AntElement> children = null;
-      final XmlTag tag = getSourceTag();
-      final XmlTag[] tags = tag.getSubTags();
-      for (XmlTag subtag : tags) {
-        AntElement child = parseSubTag(subtag);
-        if (child != null) {
-          if (children == null) {
-            children = new ArrayList<AntElement>();
-          }
-          children.add(child);
-        }
-      }
-      if (children != null) {
-        myChildren = children.toArray(new AntElement[children.size()]);
-      }
-    }
-    return myChildren;
+  public AntElement[] getChildren(){
+    if(myChildren != null) return myChildren;
+    return myChildren = getChildrenInner();
   }
 
+  protected abstract AntElement[] getChildrenInner();
+
   @Nullable
-  public PsiElement getFirstChild() {
-    final PsiElement[] children = getChildren();
+  public AntElement getFirstChild() {
+    final AntElement[] children = getChildren();
     return (children.length == 0) ? null : children[0];
   }
 
@@ -78,7 +69,7 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
 
   @Nullable
   public PsiElement getNextSibling() {
-    final PsiElement parent = getParent();
+    final PsiElement parent = getAntParent();
     if (parent != null) {
       final PsiElement[] thisLevelElements = parent.getChildren();
       PsiElement thisElement = null;
@@ -97,7 +88,7 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
   @Nullable
   public PsiElement getPrevSibling() {
     PsiElement prev = null;
-    final PsiElement parent = getParent();
+    final PsiElement parent = getAntParent();
     if (parent != null) {
       final PsiElement[] thisLevelElements = parent.getChildren();
       for (PsiElement element : thisLevelElements) {
@@ -110,19 +101,31 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
     return prev;
   }
 
+  public void clearCaches() {
+    myReferences = null;
+    myChildren = null;
+  }
+
+  public void subtreeChanged() {
+    final AntElement parent = getAntParent();
+    clearCaches();
+    if(parent != null) parent.subtreeChanged();
+  }
+
+  protected AntElement clone() {
+    final AntElementImpl element = (AntElementImpl)super.clone();
+    element.clearCaches();
+    return element;
+  }
+
   public PsiElement findElementAt(int offset) {
-    final TextRange textRange = getTextRange();
-    if (textRange.getStartOffset() <= offset && textRange.getEndOffset() >= offset) {
-      final PsiElement[] children = getChildren();
-      for (PsiElement child : children) {
-        final PsiElement psiElement = child.findElementAt(offset);
-        if (psiElement != null) {
-          return psiElement;
-        }
-      }
-      return this;
+    final int offsetInFile = offset + getTextRange().getStartOffset();
+    for (final AntElement element : getChildren()) {
+      final TextRange textRange = element.getTextRange();
+      if(textRange.contains(offsetInFile))
+        return element.findElementAt(offsetInFile - textRange.getStartOffset());
     }
-    return null;
+    return getTextRange().contains(offsetInFile) ? this : null;
   }
 
   public ASTNode getNode() {
@@ -131,47 +134,13 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
 
   @NotNull
   public PsiReference[] getReferences() {
-    return new PsiReference[]{new PsiReference() {
+    if(myReferences != null) return myReferences;
 
-      public PsiElement getElement() {
-        return AntElementImpl.this;
-      }
-
-      public TextRange getRangeInElement() {
-        return getTextRange();
-      }
-
-      @Nullable
-      public PsiElement resolve() {
-        return null;
-      }
-
-      public String getCanonicalText() {
-        return getText();
-      }
-
-      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-        return null;
-      }
-
-      public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-        return null;
-      }
-
-      public boolean isReferenceTo(PsiElement element) {
-        return false;
-      }
-
-      public Object[] getVariants() {
-        return new Object[0];
-      }
-
-      public boolean isSoft() {
-        return false;
-      }
-    }};
+    final GenericReferenceProvider[] providers = AntReferenceProvidersRegistry.getProvidersByElement(this);
+    final List<PsiReference> result = new ArrayList<PsiReference>();
+    for (final GenericReferenceProvider provider : providers) {
+      result.addAll(Arrays.asList(provider.getReferencesByElement(this)));
+    }
+    return myReferences = result.toArray(new PsiReference[result.size()]);
   }
-
-  protected abstract AntElement parseSubTag(final XmlTag tag);
-
 }

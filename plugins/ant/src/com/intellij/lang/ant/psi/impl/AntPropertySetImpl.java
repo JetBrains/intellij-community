@@ -16,7 +16,6 @@ import java.util.Enumeration;
 import java.util.Properties;
 
 public class AntPropertySetImpl extends AntElementImpl implements AntPropertySet {
-
   private String myName;
   private String myValue;
   private String myFile;
@@ -76,7 +75,7 @@ public class AntPropertySetImpl extends AntElementImpl implements AntPropertySet
       try {
         FileInputStream fis = null;
         try {
-          fis = new FileInputStream(new File(((AntProject)getParent()).getBaseDir(), myFile));
+          fis = new FileInputStream(new File(((AntProject)getAntParent()).getBaseDir(), myFile));
           result.load(fis);
         }
         finally {
@@ -99,7 +98,7 @@ public class AntPropertySetImpl extends AntElementImpl implements AntPropertySet
   @SuppressWarnings("HardCodedStringLiteral")
   private void parseTag() {
     if (myName == null) {
-      final XmlTag tag = getSourceTag();
+      final XmlTag tag = (XmlTag)getSourceElement();
       final String name = tag.getName();
       if ("property".compareToIgnoreCase(name) == 0) {
         myName = tag.getAttributeValue("name");
@@ -109,5 +108,9 @@ public class AntPropertySetImpl extends AntElementImpl implements AntPropertySet
         myFile = tag.getAttributeValue("file");
       }
     }
+  }
+
+  protected AntElement[] getChildrenInner() {
+    return new AntElement[0];
   }
 }
