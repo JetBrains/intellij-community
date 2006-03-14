@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -92,7 +93,7 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
       }
 
       builder.setEndVariableAfter(field.getNameIdentifier());
-
+      field = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(field);
       Template template = builder.buildTemplate();
 
       Editor newEditor = positionCursor(project, targetFile, field);
