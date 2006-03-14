@@ -126,6 +126,10 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     return myComponentTree;
   }
 
+  public ComponentTreeBuilder getComponentTreeBuilder() {
+    return myComponentTreeBuilder;
+  }
+
   public PropertyInspector getPropertyInspector() {
     return myPropertyInspector;
   }

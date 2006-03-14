@@ -75,6 +75,15 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
     return getComponentTreeStructure().isAutoExpandNode(descriptor);
   }
 
+  public void beginUpdateSelection() {
+    myInsideChange++;
+  }
+
+  public void endUpdateSelection() {
+    myInsideChange--;
+    updateSelection();
+  }
+
   /**
    * This method synchronizes selection in the tree with the selected
    * RadComponent in the component hierarchy
@@ -201,16 +210,20 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
     }
 
     protected void selectionChanged(final RadComponent component, final boolean ignored) {
-      if(myInsideChange > 0){
-        return;
-      }
-      myInsideChange++;
-      try {
-        updateFromRoot();
-        syncSelection();
-      } finally {
-        myInsideChange--;
-      }
+      updateSelection();
+    }
+  }
+
+  private void updateSelection() {
+    if(myInsideChange > 0){
+      return;
+    }
+    myInsideChange++;
+    try {
+      updateFromRoot();
+      syncSelection();
+    } finally {
+      myInsideChange--;
     }
   }
 

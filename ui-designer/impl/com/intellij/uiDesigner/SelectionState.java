@@ -22,10 +22,6 @@ public final class SelectionState{
   private boolean myInsideChange;
 
   public SelectionState(@NotNull final GuiEditor editor) {
-    //noinspection ConstantConditions
-    if (editor == null) {
-      throw new IllegalArgumentException("editor cannot be null");
-    }
     mySelectionHistory = new Stack<ComponentPtr[]>();
     editor.addComponentSelectionListener(new MyComponentSelectionListener());
   }

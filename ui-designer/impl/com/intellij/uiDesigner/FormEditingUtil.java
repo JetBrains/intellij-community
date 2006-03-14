@@ -313,19 +313,19 @@ public final class FormEditingUtil {
     return message;
   }
 
-  public static boolean bindingExists(IComponent component, final String binding) {
-    return bindingExists(component, binding, null);
+  public static IComponent findComponentWithBinding(IComponent component, final String binding) {
+    return findComponentWithBinding(component, binding, null);
   }
 
-  public static boolean bindingExists(IComponent component, final String binding, @Nullable final IComponent exceptComponent) {
+  public static IComponent findComponentWithBinding(IComponent component, final String binding, @Nullable final IComponent exceptComponent) {
     // Check that binding is unique
-    final Ref<Boolean> bindingExists = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<IComponent> boundComponent = new Ref<IComponent>();
     iterate(
       component,
       new ComponentVisitor() {
         public boolean visit(final IComponent component) {
           if(component != exceptComponent && binding.equals(component.getBinding())) {
-            bindingExists.set(Boolean.TRUE);
+            boundComponent.set(component);
             return false;
           }
           return true;
@@ -333,7 +333,7 @@ public final class FormEditingUtil {
       }
     );
 
-    return bindingExists.get().booleanValue();
+    return boundComponent.get();
   }
 
   @Nullable

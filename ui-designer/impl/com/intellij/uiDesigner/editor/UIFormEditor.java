@@ -13,10 +13,11 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormHighlightingPass;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -122,32 +123,18 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     }
   }
 
-  public void selectComponent(@NotNull final String binding){
-    FormEditingUtil.clearSelection(myEditor.getRootContainer());
-
-    FormEditingUtil.iterate(myEditor.getRootContainer(), new FormEditingUtil.ComponentVisitor<RadComponent>() {
-      public boolean visit(final RadComponent component) {
-        if (binding.equals(component.getBinding())) {
-          component.setSelected(true);
-          return false;
-        }
-        return true;
-      }
-    });
+  public void selectComponent(@NotNull final String binding) {
+    final RadComponent component = (RadComponent) FormEditingUtil.findComponentWithBinding(myEditor.getRootContainer(), binding);
+    if (component != null) {
+      GuiEditorUtil.selectSingleComponent(component);
+    }
   }
 
   public void selectComponentById(@NotNull final String id) {
-    FormEditingUtil.clearSelection(myEditor.getRootContainer());
-
-    FormEditingUtil.iterate(myEditor.getRootContainer(), new FormEditingUtil.ComponentVisitor<RadComponent>() {
-      public boolean visit(final RadComponent component) {
-        if (id.equals(component.getId())) {
-          component.setSelected(true);
-          return false;
-        }
-        return true;
-      }
-    });
+    final RadComponent component = FormEditingUtil.findComponent(myEditor.getRootContainer(), id);
+    if (component != null) {
+      GuiEditorUtil.selectSingleComponent(component);
+    }
   }
 
   public StructureViewBuilder getStructureViewBuilder() {

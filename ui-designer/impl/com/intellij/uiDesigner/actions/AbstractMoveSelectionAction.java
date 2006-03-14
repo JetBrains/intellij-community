@@ -4,15 +4,17 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GuiEditorUtil;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.core.GridLayoutManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.Point;
 import java.util.ArrayList;
 
 /**
@@ -24,8 +26,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
 
   private final GuiEditor myEditor;
 
-  public AbstractMoveSelectionAction(final GuiEditor editor) {
-    LOG.assertTrue(editor != null);
+  public AbstractMoveSelectionAction(@NotNull final GuiEditor editor) {
     myEditor = editor;
   }
 
@@ -96,9 +97,8 @@ abstract class AbstractMoveSelectionAction extends AnAction{
     }
 
     LOG.assertTrue(nextSelectedIndex != -1);
-    FormEditingUtil.clearSelection(myEditor.getRootContainer());
     final RadComponent component = components.get(nextSelectedIndex);
-    GuiEditorUtil.selectComponent(component);
+    GuiEditorUtil.selectSingleComponent(component);
   }
 
   private void moveToFirstComponent(final JComponent rootContainerDelegee) {
@@ -150,8 +150,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
 
       final RadComponent component = parent.getComponentAtGrid(row, column);
       if (component != null && component != selectedComponent) {
-        FormEditingUtil.clearSelection(myEditor.getRootContainer());
-        component.setSelected(true);
+        GuiEditorUtil.selectSingleComponent(component);
         return true;
       }
     } while(true);

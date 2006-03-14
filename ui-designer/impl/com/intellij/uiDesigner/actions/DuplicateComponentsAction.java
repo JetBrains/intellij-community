@@ -29,7 +29,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     RadContainer parent = GuiEditorUtil.getSelectionParent(selection);
     assert parent != null;
-    FormEditingUtil.clearSelection(parent);
+    List<RadComponent> duplicates = new ArrayList<RadComponent>();
     TIntHashSet insertedRows = new TIntHashSet();
     for(RadComponent c: selection) {
       final int row = c.getConstraints().getRow();
@@ -47,9 +47,10 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
         copy.getConstraints().setRow(row+rowSpan);
         copy.getConstraints().setRowSpan(rowSpan);
         parent.addComponent(copy);
-        copy.setSelected(true);
+        duplicates.add(copy);
       }
     }
+    GuiEditorUtil.selectComponents(duplicates);
   }
 
   private static boolean isSpaceBelowEmpty(final RadComponent component) {

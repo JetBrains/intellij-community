@@ -116,7 +116,7 @@ public final class CreateFieldFix extends QuickFix{
       final PsiField field = factory.createField(fieldName, type);
       PsiField lastUiField = null;
       for(PsiField uiField: boundClass.getFields()) {
-        if (FormEditingUtil.bindingExists(rootContainer, uiField.getName())) {
+        if (FormEditingUtil.findComponentWithBinding(rootContainer, uiField.getName()) != null) {
           lastUiField = uiField;
         }
       }

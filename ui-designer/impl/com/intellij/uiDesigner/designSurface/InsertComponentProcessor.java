@@ -95,7 +95,7 @@ public final class InsertComponentProcessor extends EventProcessor {
         VariableKind.FIELD
       );
 
-      if (!FormEditingUtil.bindingExists(root, binding)) {
+      if (FormEditingUtil.findComponentWithBinding(root, binding) == null) {
         return binding;
       }
     }
@@ -184,8 +184,7 @@ public final class InsertComponentProcessor extends EventProcessor {
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
             location.processDrop(myEditor, components, null, item);
 
-            FormEditingUtil.clearSelection(myEditor.getRootContainer());
-            myInsertedComponent.setSelected(true);
+            GuiEditorUtil.selectSingleComponent(myInsertedComponent);
 
             if (location.getContainer() != null && location.getContainer().isXY()) {
               Dimension newSize = myInsertedComponent.getPreferredSize();
@@ -197,8 +196,7 @@ public final class InsertComponentProcessor extends EventProcessor {
                 myInsertedComponent.getParent() instanceof RadRootContainer &&
                 myInsertedComponent instanceof RadAtomicComponent) {
               GridBuildUtil.convertToGrid(myEditor);
-              FormEditingUtil.clearSelection(myEditor.getRootContainer());
-              myInsertedComponent.setSelected(true);
+              GuiEditorUtil.selectSingleComponent(myInsertedComponent);
             }
 
             checkBindTopLevelPanel();
