@@ -49,5 +49,5 @@ public abstract class DomManager implements ProjectComponent {
 
   public abstract void unregisterPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider);
 
-  public abstract <T extends DomElement> T createMockElement(Class<T> aClass, final Module module);
+  public abstract <T extends DomElement> T createMockElement(Class<T> aClass, final Module module, final boolean physical);
 }

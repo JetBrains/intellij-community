@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -322,8 +323,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return getCachedElement(tag);
   }
 
-  public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module) {
-    final XmlFile file = (XmlFile)PsiManager.getInstance(myProject).getElementFactory().createFileFromText("a.xml", "");
+  public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
+    final XmlFile file = (XmlFile)PsiManager.getInstance(myProject).getElementFactory().createFileFromText("a.xml", StdFileTypes.XML, "", 0, physical);
     final DomFileElementImpl<T> fileElement = getFileElement(file, aClass, "root");
     fileElement.putUserData(MODULE, module);
     return fileElement.getRootElement();

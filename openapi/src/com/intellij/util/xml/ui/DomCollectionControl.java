@@ -23,10 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.table.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -110,16 +107,14 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
       myCollectionPanel = boundComponent;
     }
     myCollectionPanel.setControl(this);
-    if (myColumnInfos == null) {
-      myColumnInfos = createColumnInfos(myParentDomElement);
-    }
+    myColumnInfos = createColumnInfos(myParentDomElement);
 
     reset();
     initializeTable();
   }
 
   protected ColumnInfo[] createColumnInfos(DomElement parent) {
-    throw new UnsupportedOperationException("Should initialize column infos");
+    return myColumnInfos;
   }
 
   protected void initializeTable() {
@@ -162,6 +157,11 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
       }
     });
 
+    adjustColumnWidths(table);
+    fireTableChanged();
+  }
+
+  private void adjustColumnWidths(final JTable table) {
     for (int i = 0; i < myColumnInfos.length; i++) {
       ColumnInfo<T, ?> columnInfo = myColumnInfos[i];
       final TableColumn column = table.getColumnModel().getColumn(i);
@@ -187,7 +187,13 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
         column.setCellEditor(cellEditor);
       }
     }
-    reset();
+  }
+
+  public final void columnsChanged() {
+    myColumnInfos = createColumnInfos(myParentDomElement);
+    final JTable table = myCollectionPanel.getTable();
+    adjustColumnWidths(table);
+    ((AbstractTableModel)table.getModel()).fireTableStructureChanged();
   }
 
   protected void doEdit() {
@@ -295,11 +301,15 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     myData.clear();
     myData.addAll(getData());
     if (myCollectionPanel != null) {
-      final int row = myCollectionPanel.getTable().getSelectedRow();
-      myCollectionPanel.getTableModel().fireTableDataChanged();
-      if (row >= 0 && row < myData.size()) {
-        myCollectionPanel.getTable().getSelectionModel().setSelectionInterval(row, row);
-      }
+      fireTableChanged();
+    }
+  }
+
+  private void fireTableChanged() {
+    final int row = myCollectionPanel.getTable().getSelectedRow();
+    myCollectionPanel.getTableModel().fireTableDataChanged();
+    if (row >= 0 && row < myData.size()) {
+      myCollectionPanel.getTable().getSelectionModel().setSelectionInterval(row, row);
     }
   }
 
