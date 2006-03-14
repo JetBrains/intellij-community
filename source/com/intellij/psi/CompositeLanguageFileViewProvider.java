@@ -214,7 +214,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
       final PsiElement psiRoot = getPsi(language);
       final PsiReference reference = SharedPsiElementImplUtil.findReferenceAt(psiRoot, offset);
       if (reference == null) continue;
-      final TextRange textRange = reference.getRangeInElement().shiftRight(reference.getElement().getNode().getStartOffset());
+      final TextRange textRange = reference.getRangeInElement().shiftRight(reference.getElement().getTextRange().getStartOffset());
       if (minRange.contains(textRange)) {
         minRange = textRange;
         ret = reference;
