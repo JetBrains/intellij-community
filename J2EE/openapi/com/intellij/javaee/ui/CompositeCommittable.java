@@ -59,4 +59,8 @@ public class CompositeCommittable implements Committable {
     }
     return result;
   }
+
+  public List<Committable> getChildren() {
+    return myComponents;
+  }
 }

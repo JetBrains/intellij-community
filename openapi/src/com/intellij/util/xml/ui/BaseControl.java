@@ -156,6 +156,14 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
     }
   }
 
+
+  public boolean canNavigate(DomElement element) {
+    return false;
+  }
+
+  public void navigate(DomElement element) {
+  }
+
   protected abstract T getValue(Bound component);
   protected abstract void setValue(Bound component, T value);
 

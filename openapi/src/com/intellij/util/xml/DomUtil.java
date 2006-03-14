@@ -4,7 +4,15 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;

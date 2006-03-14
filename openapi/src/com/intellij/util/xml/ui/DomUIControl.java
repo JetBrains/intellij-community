@@ -25,4 +25,7 @@ public interface DomUIControl extends CommittablePanel {
 
   void removeCommitListener(CommitListener listener);
 
+  boolean canNavigate(DomElement element);
+
+  void navigate(DomElement element);
 }

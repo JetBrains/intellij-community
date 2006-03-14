@@ -93,6 +93,15 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     myDispatcher.removeListener(listener);
   }
 
+
+  public boolean canNavigate(DomElement element) {
+    return false;
+  }
+
+  public void navigate(DomElement element) {
+
+  }
+
   protected void initialize(final DomCollectionPanel boundComponent) {
     if (boundComponent == null) {
       myCollectionPanel = new DomCollectionPanel();
