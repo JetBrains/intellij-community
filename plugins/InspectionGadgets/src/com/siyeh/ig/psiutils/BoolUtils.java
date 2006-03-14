@@ -43,7 +43,8 @@ public class BoolUtils {
         return ParenthesesUtils.stripParentheses(operand);
     }
 
-    public static String getNegatedExpressionText(PsiExpression condition) {
+    public static String getNegatedExpressionText(
+            @Nullable PsiExpression condition) {
         if (condition == null) {
             return "";
         }
@@ -85,7 +86,7 @@ public class BoolUtils {
         return PsiKeyword.TRUE.equals(text);
     }
 
-    public static boolean isFalse(PsiExpression expression) {
+    public static boolean isFalse(@Nullable PsiExpression expression) {
         if (expression == null) {
             return false;
         }

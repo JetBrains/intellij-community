@@ -379,7 +379,8 @@ public class ControlFlowUtils{
         return PsiTreeUtil.isAncestor(body, element, true);
     }
 
-    public static PsiStatement stripBraces(@NotNull PsiStatement branch){
+    @Nullable
+    public static PsiStatement stripBraces(@Nullable PsiStatement branch){
         if(branch instanceof PsiBlockStatement){
             final PsiBlockStatement block = (PsiBlockStatement) branch;
             final PsiCodeBlock codeBlock = block.getCodeBlock();
