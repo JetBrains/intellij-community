@@ -14,10 +14,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerConfiguration;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.RepositoryElementsManager;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -375,7 +372,8 @@ public class FileManagerImpl implements FileManager {
     if(instance.isFileIgnored(name)) return null;
     final FileType fileTypeByFileName = instance.getFileTypeByFileName(name);
     final Document document = FileDocumentManager.getInstance().getDocument(vFile);
-    return myManager.getElementFactory().createFileFromText(name, fileTypeByFileName, document != null ? document.getCharsSequence() : "");
+    return ((PsiElementFactoryImpl)myManager.getElementFactory()).createFileFromText(name, fileTypeByFileName, document != null ? document.getCharsSequence() : "",
+                                                                                     vFile.getModificationStamp(), true, false);
   }
 
   public PsiDirectory findDirectory(VirtualFile vFile) {

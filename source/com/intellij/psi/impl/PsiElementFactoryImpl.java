@@ -263,9 +263,14 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return new PsiClassReferenceType(classReference);
   }
 
-  @NotNull
   public PsiFile createFileFromText(String name, FileType fileType, CharSequence text,
                                     long modificationStamp, final boolean physical) {
+    return createFileFromText(name, fileType, text, modificationStamp, physical, true);
+  }
+
+  @NotNull
+  public PsiFile createFileFromText(String name, FileType fileType, CharSequence text,
+                                    long modificationStamp, final boolean physical, boolean markAsCopy) {
     final MockVirtualFile virtualFile = new MockVirtualFile(name, fileType, text, modificationStamp);
 
     if(fileType instanceof LanguageFileType){
@@ -275,14 +280,14 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
       if (parserDefinition != null){
         final PsiFile psiFile = viewProvider.getPsi(language);
-        ((TreeElement)psiFile.getNode()).acceptTree(new GeneratedMarkerVisitor());
+        if(markAsCopy) ((TreeElement)psiFile.getNode()).acceptTree(new GeneratedMarkerVisitor());
         return psiFile;
       }
     }
     final SingleRootFileViewProvider singleRootFileViewProvider =
       new SingleRootFileViewProvider(myManager, virtualFile, physical);
     final PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
-    plainTextFile.getNode().putCopyableUserData(CodeEditUtil.GENERATED_FLAG, true);
+    if(markAsCopy) plainTextFile.getNode().putCopyableUserData(CodeEditUtil.GENERATED_FLAG, true);
     return plainTextFile;
   }
 

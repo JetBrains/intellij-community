@@ -699,5 +699,5 @@ public interface PsiElementFactory {
   @NotNull PsiFile createFileFromText(final String fileName, final FileType fileType, final CharSequence text);
 
   @NotNull PsiFile createFileFromText(String name, FileType fileType, CharSequence text,
-                             long modificationStamp, boolean physical);
+                                      long modificationStamp, boolean physical);
 }
