@@ -236,7 +236,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
           type = HighlightInfoType.DEPRECATED;
         }
         else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
-          if (tool.getShortName() == JavaDocReferenceInspection.SHORT_NAME){
+          if (JavaDocReferenceInspection.SHORT_NAME.equals(tool.getShortName())){
             type = HighlightInfoType.JAVADOC_WRONG_REF;
           } else {
             type = HighlightInfoType.WRONG_REF;

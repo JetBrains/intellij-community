@@ -251,7 +251,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       HighlightDisplayKey key = HighlightDisplayKey.find(toolClassName);
       if (key == null) {
         if (tool instanceof LocalInspectionToolWrapper) {
-          key = HighlightDisplayKey.register(toolClassName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
+          key = HighlightDisplayKey.register(toolClassName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getShortName());
         } else {
           key = HighlightDisplayKey.register(toolClassName);
         }
@@ -261,7 +261,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       myDisplayLevelMap.put(key, new ToolState(level, enabled != null && Boolean.parseBoolean(enabled)));
     }
 
-    myBaseProfile = InspectionProfileImpl.DEFAULT_PROFILE;
+    myBaseProfile = DEFAULT_PROFILE;
   }
 
 

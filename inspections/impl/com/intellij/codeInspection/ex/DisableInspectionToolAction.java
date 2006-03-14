@@ -15,11 +15,11 @@ public class DisableInspectionToolAction implements IntentionAction {
   private final String myToolId;
 
   public DisableInspectionToolAction(LocalInspectionTool tool) {
-    myToolId = tool.getID();
+    myToolId = tool.getShortName();
   }
 
   public DisableInspectionToolAction(final HighlightDisplayKey key) {
-    myToolId = key.getID();
+    myToolId = key.toString();
   }
 
   public String getText() {
@@ -31,7 +31,10 @@ public class DisableInspectionToolAction implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return true;
+   final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(file.getProject());
+   InspectionProfile inspectionProfile = profileManager.getInspectionProfile(file);
+   ModifiableModel model = inspectionProfile.getModifiableModel();
+   return !model.isDefault();
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

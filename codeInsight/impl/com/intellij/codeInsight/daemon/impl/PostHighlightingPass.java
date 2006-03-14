@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
@@ -107,7 +108,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     myRefCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(document, myFile);
-    myStyleManager = (CodeStyleManagerEx)CodeStyleManagerEx.getInstance(myProject);
+    myStyleManager = (CodeStyleManagerEx)CodeStyleManager.getInstance(myProject);
     myCurentEntryIndex = -1;
   }
 
@@ -267,6 +268,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightInfo processLocalVariable(PsiLocalVariable variable, final List<IntentionAction> options, final String displayName) {
     PsiIdentifier identifier = variable.getNameIdentifier();
+    if (identifier == null) return null;
 
     if (!myRefCountHolder.isReferenced(variable)) {
       String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_USED, identifier.getText());
@@ -303,6 +305,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightInfo processField(PsiField field, final List<IntentionAction> options, final String displayName) {
     final PsiIdentifier identifier = field.getNameIdentifier();
+    if (identifier == null) return null;
     final PsiFile boundForm = CodeInsightUtil.getFormFile(field);
     final boolean isBoundToForm = boundForm != null;
     final boolean injected = field.getModifierList().findAnnotation("javax.annotation.Resource") != null ||
