@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.DropLocation;
@@ -84,7 +85,10 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     };
   }
 
-  @Override public void createSnapshotLayout(final JComponent parent, final RadContainer container, final LayoutManager layout) {
+  @Override public void createSnapshotLayout(final SnapshotContext context,
+                                             final JComponent parent,
+                                             final RadContainer container,
+                                             final LayoutManager layout) {
     BorderLayout borderLayout = (BorderLayout) layout;
     container.setLayout(new BorderLayout(borderLayout.getHgap(), borderLayout.getVgap()));
   }

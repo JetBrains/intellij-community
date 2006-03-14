@@ -35,6 +35,8 @@ public class SnapshotContext {
     myDialogParent = dialogParent;
     myPalette = new Palette(null);
     myRootContainer = new RadRootContainer(null, "1");
+
+    myClassesToReplace.put(Box.Filler.class, JPanel.class);
   }
 
   public RadRootContainer getRootContainer() {

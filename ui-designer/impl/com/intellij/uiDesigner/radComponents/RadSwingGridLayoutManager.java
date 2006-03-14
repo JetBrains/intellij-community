@@ -5,6 +5,8 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 
 import javax.swing.*;
 import java.awt.LayoutManager;
@@ -19,7 +21,10 @@ public class RadSwingGridLayoutManager extends RadGridLayoutManager {
   private int myLastColumn = 0;
 
   @Override
-  public void createSnapshotLayout(final JComponent parent, final RadContainer container, final LayoutManager layout) {
+  public void createSnapshotLayout(final SnapshotContext context,
+                                   final JComponent parent,
+                                   final RadContainer container,
+                                   final LayoutManager layout) {
     GridLayout gridLayout = (GridLayout) layout;
 
     int ncomponents = parent.getComponentCount();
@@ -47,6 +52,7 @@ public class RadSwingGridLayoutManager extends RadGridLayoutManager {
     GridLayoutManager grid = (GridLayoutManager) container.getLayout();
     component.getConstraints().setRow(myLastRow);
     component.getConstraints().setColumn(myLastColumn);
+    component.getConstraints().setFill(GridConstraints.FILL_BOTH);
     if (myLastColumn == grid.getColumnCount()-1) {
       myLastRow++;
       myLastColumn = 0;
@@ -54,5 +60,6 @@ public class RadSwingGridLayoutManager extends RadGridLayoutManager {
     else {
       myLastColumn++;
     }
+    container.addComponent(component);
   }
 }

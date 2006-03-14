@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 
@@ -27,7 +28,10 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
   }
 
   @Override
-  public void createSnapshotLayout(final JComponent parent, final RadContainer container, final LayoutManager layout) {
+  public void createSnapshotLayout(final SnapshotContext context,
+                                   final JComponent parent,
+                                   final RadContainer container,
+                                   final LayoutManager layout) {
     GridBagLayout gridBag = (GridBagLayout) layout;
     int[][] layoutDimensions = gridBag.getLayoutDimensions();
     container.setLayout(new GridLayoutManager(layoutDimensions [1].length,

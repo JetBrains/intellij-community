@@ -6,6 +6,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.NoDropLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -63,6 +64,9 @@ public abstract class RadLayoutManager {
     if (layout instanceof GridLayout) {
       return new RadSwingGridLayoutManager();
     }
+    if (layout instanceof BoxLayout) {
+      return new RadBoxLayoutManager();
+    }
     return null;
   }
 
@@ -111,6 +115,9 @@ public abstract class RadLayoutManager {
                                    final RadComponent component) {
   }
 
-  public void createSnapshotLayout(final JComponent parent, final RadContainer container, final LayoutManager layout) {
+  public void createSnapshotLayout(final SnapshotContext context,
+                                   final JComponent parent,
+                                   final RadContainer container,
+                                   final LayoutManager layout) {
   }
 }

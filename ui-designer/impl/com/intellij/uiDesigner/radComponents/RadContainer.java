@@ -519,7 +519,7 @@ public class RadContainer extends RadComponent implements IContainer {
 
   @Override
   protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
-    getLayoutManager().createSnapshotLayout(component, this, component.getLayout());
+    getLayoutManager().createSnapshotLayout(context, component, this, component.getLayout());
     importSnapshotBorder(component);
     for(Component child: component.getComponents()) {
       if (child instanceof JComponent) {

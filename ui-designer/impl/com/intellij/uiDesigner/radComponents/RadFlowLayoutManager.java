@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -69,7 +70,10 @@ public class RadFlowLayoutManager extends RadLayoutManager {
   }
 
   @Override
-  public void createSnapshotLayout(final JComponent parent, final RadContainer container, final LayoutManager layout) {
+  public void createSnapshotLayout(final SnapshotContext context,
+                                   final JComponent parent,
+                                   final RadContainer container,
+                                   final LayoutManager layout) {
     FlowLayout flowLayout = (FlowLayout) layout;
     container.setLayout(new FlowLayout(flowLayout.getAlignment(), flowLayout.getHgap(), flowLayout.getVgap()));
   }
