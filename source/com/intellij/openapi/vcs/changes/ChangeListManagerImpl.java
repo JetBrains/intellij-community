@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -293,12 +294,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
           for (final VcsDirtyScope scope : scopes) {
             updateProgressText(VcsBundle.message("changes.update.progress.message", scope.getScopeRoot().getPresentableUrl()));
-            synchronized (myChangeLists) {
-              for (ChangeList list : getChangeLists()) {
-                if (myDisposed) return;
-                list.startProcessingChanges(scope);
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                synchronized (myChangeLists) {
+                  for (ChangeList list : getChangeLists()) {
+                    if (myDisposed) return;
+                    list.startProcessingChanges(scope);
+                  }
+                }
               }
-            }
+            });
 
             final UnversionedFilesHolder workingHolderCopy = myUnversionedFilesHolder.copy();
             workingHolderCopy.cleanScope(scope);
@@ -309,23 +314,27 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                 final ChangeProvider changeProvider = vcs.getChangeProvider();
                 if (changeProvider != null) {
                   changeProvider.getChanges(scope, new ChangelistBuilder() {
-                    public void processChange(Change change) {
+                    public void processChange(final Change change) {
                       if (myDisposed) return;
-                      if (isUnder(change, scope)) {
-                        try {
-                          synchronized (myChangeLists) {
-                            for (ChangeList list : myChangeLists) {
-                              if (list == myDefaultChangelist) continue;
-                              if (list.processChange(change)) return;
-                            }
+                      ApplicationManager.getApplication().runReadAction(new Runnable() {
+                        public void run() {
+                          if (isUnder(change, scope)) {
+                            try {
+                              synchronized (myChangeLists) {
+                                for (ChangeList list : myChangeLists) {
+                                  if (list == myDefaultChangelist) continue;
+                                  if (list.processChange(change)) return;
+                                }
 
-                            myDefaultChangelist.processChange(change);
+                                myDefaultChangelist.processChange(change);
+                              }
+                            }
+                            finally {
+                              scheduleRefresh();
+                            }
                           }
                         }
-                        finally {
-                          scheduleRefresh();
-                        }
-                      }
+                      });
                     }
 
                     public void processUnversionedFile(VirtualFile file) {

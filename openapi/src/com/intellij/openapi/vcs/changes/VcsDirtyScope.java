@@ -121,7 +121,7 @@ public class VcsDirtyScope {
       if (path.isUnder(filePath, false)) return true;
     }
 
-    FilePath parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getVirtualFileParent());
+    FilePath parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getIOFile().getParentFile());
     for (FilePath filePath : myDirtyFiles) {
       if (filePath.equals(parent) || filePath.equals(path)) return true;
     }
