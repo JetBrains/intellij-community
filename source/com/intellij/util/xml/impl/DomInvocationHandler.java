@@ -128,8 +128,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
-  public final DomElement createMockCopy() {
-    final DomElement copy = myManager.createMockElement((Class<? extends DomElement>)DomUtil.getRawType(myType), getModule(), false);
+  public final DomElement createMockCopy(final boolean physical) {
+    final DomElement copy = myManager.createMockElement((Class<? extends DomElement>)DomUtil.getRawType(myType), getModule(), physical);
     copy.copyFrom(getProxy());
     return copy;
   }

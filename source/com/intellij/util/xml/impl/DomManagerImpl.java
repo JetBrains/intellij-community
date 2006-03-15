@@ -5,10 +5,12 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Condition;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -27,10 +29,12 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import net.sf.cglib.core.CodeGenerationException;
+import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -59,6 +63,11 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private Project myProject;
   private PomModel myPomModel;
   private boolean myChanging;
+  private static final Condition<DomElement> INVALID = new Condition<DomElement>() {
+    public boolean value(final DomElement object) {
+      return false;
+    }
+  };
 
   public DomManagerImpl(final PomModel pomModel, final Project project) {
     myPomModel = pomModel;
@@ -132,8 +141,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return invocationCache;
   }
 
+  @Nullable
   public static DomInvocationHandler getDomInvocationHandler(DomElement proxy) {
-    return (DomInvocationHandler)AdvancedProxy.getInvocationHandler(proxy);
+    final InvocationHandler handler = AdvancedProxy.getInvocationHandler(proxy);
+    return handler instanceof DomInvocationHandler ? (DomInvocationHandler)handler : null;
   }
 
   final DomElement createDomElement(final DomInvocationHandler handler) {
@@ -329,4 +340,76 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     fileElement.putUserData(MODULE, module);
     return fileElement.getRootElement();
   }
+
+  public <T extends DomElement> T createStableValue(final Factory<T> provider) {
+    return createStableValue(provider.create(), provider, new Condition<T>() {
+      public boolean value(final T object) {
+        return object.isValid();
+      }
+    });
+  }
+
+  private static <T extends DomElement> T createStableValue(final T initial, final Factory<T> provider, final Condition<T> validity) {
+    final InvocationHandler handler = new InvocationHandler() {
+      private T myCachedValue = initial;
+
+      @Nullable
+      private T getValidCachedValue() {
+        if (!validity.value(myCachedValue)) {
+          myCachedValue = provider.create();
+        }
+        return myCachedValue != null && myCachedValue.isValid() ? myCachedValue : null;
+      }
+
+      public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
+        if (!validity.value(myCachedValue)) {
+          if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
+            return null;
+          }
+
+          myCachedValue = provider.create();
+          if (myCachedValue == null || !myCachedValue.isValid()) {
+            if ("isValid".equals(method.getName()) && DomElement.class.equals(method.getDeclaringClass())) {
+              return Boolean.FALSE;
+            }
+            throw new AssertionError("Calling methods on invalid value");
+          }
+        }
+
+        final Object o = method.invoke(myCachedValue, args);
+        if (o instanceof DomElement) {
+          return createStableChildValue((DomElement)o);
+        }
+
+        if (o instanceof List) {
+          List list = (List)o;
+          if (list.isEmpty() || !(list.get(0) instanceof DomElement)) return list;
+          return ContainerUtil.map2List(list, new Function() {
+            public Object fun(final Object s) {
+              return createStableChildValue((DomElement)s);
+            }
+          });
+        }
+
+        return o;
+      }
+
+      private DomElement createStableChildValue(final DomElement element) {
+        final String tagName = element.getXmlElementName();
+        final DomChildrenDescription childDescription = myCachedValue.getGenericInfo().getChildDescription(tagName);
+        final int i = childDescription.getValues(myCachedValue).indexOf(element);
+        assert i >= 0;
+        return createStableValue(element, new Factory<DomElement>() {
+          public DomElement create() {
+            final T t = getValidCachedValue();
+            if (t == null) return null;
+            final List<? extends DomElement> list = childDescription.getValues(t);
+            return list.size() > i ? list.get(i) : null;
+          }
+        }, INVALID);
+      }
+    };
+    return AdvancedProxy.createProxy((Class<? extends T>)initial.getClass().getSuperclass(), initial.getClass().getInterfaces(), handler, Collections.<JavaMethodSignature>emptySet());
+  }
+
 }

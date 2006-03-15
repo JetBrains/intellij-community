@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.xml.JavaMethodSignature;
+import com.intellij.openapi.diagnostic.Logger;
 import net.sf.cglib.proxy.AdvancedEnhancer;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Factory;
@@ -13,6 +14,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -22,6 +24,19 @@ import java.util.Set;
  * @author peter
  */
 public class AdvancedProxy {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AdvancedProxy");
+  public static Method FINALIZE_METHOD;
+
+  static {
+    try {
+      FINALIZE_METHOD = Object.class.getDeclaredMethod("finalize");
+    }
+    catch (NoSuchMethodException e) {
+      LOG.error(e);
+    }
+  }
+
+
   private static final Map<ProxyDescription, Factory> ourFactories = new WeakValueHashMap<ProxyDescription, Factory>();
   private static final Map<Class, Constructor> ourConstructors = new WeakValueHashMap<Class, Constructor>();
 

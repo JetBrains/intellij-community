@@ -166,7 +166,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     throw new UnsupportedOperationException("Method copyFrom is not yet implemented in " + getClass().getName());
   }
 
-  public DomElement createMockCopy() {
+  public DomElement createMockCopy(final boolean physical) {
     throw new UnsupportedOperationException("Method createMockCopy is not yet implemented in " + getClass().getName());
   }
 

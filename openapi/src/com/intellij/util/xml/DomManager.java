@@ -6,6 +6,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -50,4 +51,6 @@ public abstract class DomManager implements ProjectComponent {
   public abstract void unregisterPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider);
 
   public abstract <T extends DomElement> T createMockElement(Class<T> aClass, final Module module, final boolean physical);
+
+  public abstract <T extends DomElement> T createStableValue(Factory<T> provider);
 }

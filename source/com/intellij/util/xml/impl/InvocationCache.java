@@ -42,7 +42,14 @@ public class InvocationCache {
       if ("equals".equals(method.getName())) {
         ourCoreInvocations.put(JavaMethodSignature.getSignature(method), new Invocation() {
           public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
-            return handler.getProxy() == args[0];
+            final Object o = args[0];
+            final DomElement proxy = handler.getProxy();
+            if (proxy == o) return true;
+            if (!(o instanceof DomElement)) return false;
+            if (DomManagerImpl.getDomInvocationHandler((DomElement)o) == null) {
+              return o.equals(proxy);
+            }
+            return false;
           }
         });
       }
