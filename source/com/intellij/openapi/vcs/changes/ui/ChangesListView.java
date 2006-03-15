@@ -224,6 +224,7 @@ public class ChangesListView extends Tree implements DataProvider {
       final HashMap<Module, Node> moduleCache = new HashMap<Module, Node>();
       for (Change change : list.getChanges()) {
         final Node node = new Node(change);
+        getFilePath(change).refresh();
         model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, listNode), 0);
       }
     }
