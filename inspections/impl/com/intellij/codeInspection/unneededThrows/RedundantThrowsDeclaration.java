@@ -17,12 +17,9 @@ package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -120,31 +117,8 @@ public class RedundantThrowsDeclaration extends LocalInspectionTool {
 
     String description = JavaErrorMessages.message("exception.is.never.thrown", HighlightUtil.formatType(exceptionType));
 
-    final LocalQuickFix quickFixes = new RemoveFix(method, exceptionType);
+    final LocalQuickFix quickFixes = new DeleteThrowsFix(method, exceptionType);
     return inspectionManager.createProblemDescriptor(referenceElement, description, quickFixes, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-  }
-
-  private static class RemoveFix implements LocalQuickFix {
-    private final MethodThrowsFix myQuickFix;
-
-    public RemoveFix(PsiMethod method, PsiClassType exceptionClass) {
-      myQuickFix = new MethodThrowsFix(method, exceptionClass, false, false);
-    }
-
-    public String getName() {
-      return myQuickFix.getText();
-    }
-
-    public String getFamilyName() {
-      return QuickFixBundle.message("fix.throws.list.family");
-    }
-
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
-      final PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
-      if (myQuickFix.isAvailable(project, null, psiFile)) {
-        myQuickFix.invoke(project, null, psiFile);
-      }
-    }
   }
 
 }

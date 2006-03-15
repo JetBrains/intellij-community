@@ -4,6 +4,7 @@ import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.RedundantSuppressInspection;
+import com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection;
 import com.intellij.codeInspection.suspiciousNameCombination.SuspiciousNameCombinationInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
@@ -119,8 +120,8 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       UnusedSymbolLocalInspection.class,
       UnusedImportLocalInspection.class,
       UncheckedWarningLocalInspection.class,
-
-      SuspiciousNameCombinationInspection.class
+      SuspiciousNameCombinationInspection.class,
+      DuplicateThrowsInspection.class,
       };
   }
 }

@@ -1,0 +1,18 @@
+<html>
+<body>
+<font face="verdana" size="-1">This inspection reports duplicate classes in the method throws list.
+<br>For example:
+<code><pre>
+<b><font color="#000080">void</font></b> f() <b><font color="#000080">throws</font></b> Exception, <b><font color="#800000">Exception</font></b> {
+}
+</pre></code>
+<br>
+Also, inspection warns if you have declared two exceptions one of which subclasses another.
+ E.g.:
+<code><pre>
+<b><font color="#000080">void</font></b> f() <b><font color="#000080">throws</font></b> <b><font color="#800000">IOException</font></b>, Exception {
+}
+</pre></code>
+</font>
+</body>
+</html>
