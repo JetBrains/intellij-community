@@ -1,13 +1,10 @@
 package com.intellij.psi.impl.search;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLock;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -16,55 +13,78 @@ import com.intellij.util.text.StringSearcher;
 
 public class LowLevelSearchUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.LowLevelSearchUtil");
-  private LowLevelSearchUtil() {}
+
+  private LowLevelSearchUtil() {
+  }
 
   public static boolean processElementsContainingWordInElement(TextOccurenceProcessor processor,
                                                                PsiElement scope,
                                                                StringSearcher searcher,
                                                                ProgressIndicator progress,
                                                                final short searchContext) {
-    return processElementsContainingWordInElement(processor, SourceTreeToPsiMap.psiElementToTree(scope), searcher, progress, searchContext);
-  }
-
-
-  private static boolean processElementsContainingWordInElement(TextOccurenceProcessor processor,
-                                                                ASTNode scope,
-                                                                StringSearcher searcher,
-                                                                ProgressIndicator progress,
-                                                                final short searchContext) {
     ProgressManager.getInstance().checkCanceled();
-    char[] buffer = ((CompositeElement)scope).textToCharArray();
+    char[] buffer = scope.textToCharArray();
     int startOffset = 0;
     int endOffset = buffer.length;
     final int patternLength = searcher.getPatternLength();
 
-    final int scopeStartOffset = scope.getStartOffset();
+    final int scopeStartOffset = scope.getTextRange().getStartOffset();
     do {
       int i = searchWord(buffer, startOffset, endOffset, searcher);
       if (i >= 0) {
-        LeafElement leafNode = ((TreeElement)scope).findLeafElementAt(i);
-        if (leafNode == null) return true;
-        int start = i - leafNode.getStartOffset() + scopeStartOffset;
-        LOG.assertTrue(start >= 0);
-        boolean contains = leafNode.getTextLength() - start >= patternLength;
-        if (contains) {
-          if (!processor.execute(leafNode.getPsi(), start)) return false;
-        }
 
-        TreeElement prev = leafNode;
-        CompositeElement run = leafNode.getTreeParent();
-        while(run != null) {
-          start += prev.getStartOffsetInParent();
-          contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
+        if (scope instanceof TreeElement) {
+          LeafElement leafNode = ((TreeElement)scope).findLeafElementAt(i);
+          if (leafNode == null) return true;
+          int start = i - leafNode.getStartOffset() + scopeStartOffset;
+          LOG.assertTrue(start >= 0);
+          boolean contains = leafNode.getTextLength() - start >= patternLength;
           if (contains) {
-            if (!processor.execute(run.getPsi(), start)) return false;
+            if (!processor.execute(leafNode.getPsi(), start)) return false;
           }
-          prev = run;
-          if (run == scope) break;
-          run = run.getTreeParent();
-        }
 
-        assert run == scope;
+          TreeElement prev = leafNode;
+          CompositeElement run = leafNode.getTreeParent();
+          while (run != null) {
+            start += prev.getStartOffsetInParent();
+            contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
+            if (contains) {
+              if (!processor.execute(run.getPsi(), start)) return false;
+            }
+            prev = run;
+            if (run == scope) break;
+            run = run.getTreeParent();
+          }
+          assert run == scope;
+        }
+        else {
+          PsiElement leafElement;
+          if(scope instanceof PsiFile)
+            leafElement = ((PsiFile)scope).getViewProvider().findElementAt(i, scope.getLanguage());
+          else
+            leafElement = scope.findElementAt(i); 
+          if (leafElement == null) return true;
+          int start = i - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
+          LOG.assertTrue(start >= 0);
+          boolean contains = leafElement.getTextLength() - start >= patternLength;
+          if (contains) {
+            if (!processor.execute(leafElement, start)) return false;
+          }
+
+          PsiElement prev = leafElement;
+          PsiElement run = leafElement.getParent();
+          while (run != null) {
+            start += prev.getStartOffsetInParent();
+            contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
+            if (contains) {
+              if (!processor.execute(run, start)) return false;
+            }
+            prev = run;
+            if (run == scope) break;
+            run = run.getParent();
+          }
+          assert run == scope;
+        }
 
         startOffset = i + 1;
       }
@@ -140,46 +160,6 @@ public class LowLevelSearchUtil {
     return true;
   }
 
-  private static boolean processChildren(ASTNode scope,
-                                         StringSearcher searcher,
-                                         TextOccurenceProcessor processor,
-                                         ProgressIndicator progress,
-                                         final short searchContext) {
-    synchronized (PsiLock.LOCK) {
-      ASTNode child = scope.getFirstChildNode();
-      while (child != null) {
-        if (child instanceof LeafElement && ((LeafElement)child).isChameleon()) {
-          LeafElement leaf = (LeafElement)child;
-          if (leaf.searchWord(0, searcher) >= 0) {
-            ASTNode next = child.getTreeNext();
-            child = ChameleonTransforming.transform((LeafElement)child);
-            if (child == null) {
-              child = next;
-            }
-          continue;
-          }
-        }
-        child = child.getTreeNext();
-      }
-    }
-
-    ASTNode child = null;
-    while (true) {
-      synchronized (PsiLock.LOCK) {
-        child = child != null ? child.getTreeNext() : scope.getFirstChildNode();
-        while (child instanceof LeafElement && ((LeafElement)child).isChameleon()) {
-          child = child.getTreeNext();
-        }
-        if (child == null) break;
-      }
-
-      if (!processElementsContainingWordInElement(processor, child, searcher, progress, searchContext)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   @SuppressWarnings({"AssignmentToForLoopParameter"})
   public static int searchWord(char[] text, int startOffset, int endOffset, StringSearcher searcher) {
     for (int index = startOffset; index < endOffset; index++) {
@@ -189,7 +169,7 @@ public class LowLevelSearchUtil {
       if (index > startOffset) {
         char c = text[index - 1];
         if (Character.isJavaIdentifierPart(c) && c != '$') {
-        continue;
+          continue;
         }
       }
 
@@ -197,7 +177,7 @@ public class LowLevelSearchUtil {
       if (index + pattern.length() < endOffset) {
         char c = text[index + pattern.length()];
         if (Character.isJavaIdentifierPart(c) && c != '$') {
-        continue;
+          continue;
         }
       }
       return index;
