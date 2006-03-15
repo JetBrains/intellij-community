@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 public class SimplifiableIfStatementInspection
         extends ExpressionInspection {
 
-
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "simplifiable.if.statement.display.name");
@@ -124,21 +123,22 @@ public class SimplifiableIfStatementInspection
         if (elseRhs == null) {
             return "";
         }
+        final PsiJavaToken token = elseAssignment.getOperationSign();
         if (BoolUtils.isTrue(thenRhs)) {
-            return lExpression.getText() + " = " + condition.getText() +
-                    " || " + elseRhs.getText() + ';';
+            return lExpression.getText() + ' ' + token.getText() + ' ' +
+                    condition.getText() + " || " + elseRhs.getText() + ';';
         } else if (BoolUtils.isFalse(thenRhs)) {
-            return lExpression.getText() + " = " +
+            return lExpression.getText() + ' ' + token.getText() + ' ' +
                     BoolUtils.getNegatedExpressionText(condition) + " && " +
                     elseRhs.getText() + ';';
         }
         if (BoolUtils.isTrue(elseRhs)) {
-            return lExpression.getText() + " = " +
+            return lExpression.getText() + ' ' + token.getText() + ' ' +
                     BoolUtils.getNegatedExpressionText(condition) + " || " +
                     thenRhs.getText() + ';';
         } else {
-            return lExpression.getText() + " = " + condition.getText() +
-                    " && " + thenRhs.getText() + ';';
+            return lExpression.getText() + ' ' + token.getText() + ' ' +
+                    condition.getText() + " && " + thenRhs.getText() + ';';
         }
     }
 
@@ -236,6 +236,15 @@ public class SimplifiableIfStatementInspection
                     (PsiExpressionStatement)elseBranch;
             final PsiAssignmentExpression elseExpression =
                     (PsiAssignmentExpression)elseStatement.getExpression();
+            final PsiJavaToken thenOperationSign =
+                    thenExpression.getOperationSign();
+            final IElementType thenTokenType = thenOperationSign.getTokenType();
+            final PsiJavaToken elseOperationSign =
+                    elseExpression.getOperationSign();
+            final IElementType elseTokenType = elseOperationSign.getTokenType();
+            if (!thenTokenType.equals(elseTokenType)) {
+                return false;
+            }
             final PsiExpression thenRhs = thenExpression.getRExpression();
             if (thenRhs == null) {
                 return false;
