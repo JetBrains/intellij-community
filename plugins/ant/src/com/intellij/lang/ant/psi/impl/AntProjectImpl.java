@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.psi.PsiElement;
@@ -23,7 +22,7 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
 
   private AntTarget[] myTargets;
 
-  public AntProjectImpl(final AntFile parent, final XmlTag tag) {
+  public AntProjectImpl(final AntFileImpl parent, final XmlTag tag) {
     super(parent, tag);
   }
 

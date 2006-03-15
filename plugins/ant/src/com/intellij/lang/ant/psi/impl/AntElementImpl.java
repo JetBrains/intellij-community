@@ -5,11 +5,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +43,11 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
 
   public AntElement getAntParent() {
     return myParent;
+  }
+
+  @Nullable
+  public AntProject getAntProject() {
+    return (AntProject)((this instanceof AntProject) ? this : PsiTreeUtil.getParentOfType(this, AntProject.class));
   }
 
   public PsiElement getParent(){

@@ -1,8 +1,8 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
-import com.intellij.lang.ant.psi.impl.AntProjectImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -23,7 +23,7 @@ public class AntTargetReference extends GenericReference {
   public AntTargetReference(GenericReferenceProvider provider, final AntElement antElement, final String str, final TextRange textRange) {
     super(provider);
     myAntElement = antElement;
-    myText = str.trim();
+    myText = str;
     myTextRange = textRange;
   }
 
@@ -40,14 +40,20 @@ public class AntTargetReference extends GenericReference {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final AntProjectImpl project = (AntProjectImpl)getElement();
-    project.getSourceElement().setAttribute("default", newElementName);
-    project.subtreeChanged();
-    return getElement();
+    final PsiElement element = getElement();
+    if (element instanceof AntProject) {
+      final AntProject project = (AntProject)element;
+      project.getSourceElement().setAttribute("default", newElementName);
+      project.subtreeChanged();
+    }
+    else if (element instanceof AntTarget) {
+
+    }
+    return element;
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-    if(element instanceof AntTarget) {
+    if (element instanceof AntTarget) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       return handleElementRename(psiNamedElement.getName());
     }

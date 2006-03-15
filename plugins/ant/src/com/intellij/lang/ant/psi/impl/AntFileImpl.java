@@ -4,7 +4,6 @@ import com.intellij.extapi.psi.LightPsiFileBase;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
@@ -13,8 +12,9 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class AntFileImpl extends LightPsiFileBase implements AntFile {
+public class AntFileImpl extends LightPsiFileBase implements AntElement {
   private AntProject myProject;
   private PsiElement[] myChildren = null;
 
@@ -43,6 +43,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return getAntProject();
   }
 
+  @Nullable
   public AntProject getAntProject() {
     if(myProject != null) return myProject;
     final XmlFile baseFile = (XmlFile)getSourceElement();
