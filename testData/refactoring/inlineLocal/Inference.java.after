@@ -6,6 +6,6 @@ class Inference {
         void foo (String s) {}
 
         {
-            foo((String)new Inference().getX());
+            foo((String) new Inference().getX());
         }
 }
