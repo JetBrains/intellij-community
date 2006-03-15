@@ -1,0 +1,57 @@
+<!--
+  ~ Copyright 2000-2006 JetBrains s.r.o.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+DomElement interface is used to represent Schema- or DTD-based XML trees. It is more consistent,
+than the standard XML PSI tree. The concrete code dealing with XML is generated at runtime, based
+on your interfaces structure. For every needed XML type one should create subinterface of
+DomElement. This subinterface may have XML methods, that are used for getting children of tag,
+corresponding to current instance of the interface. Methods (getters and setters) may have the
+following annotations:
+<p>
+<li>@TagValue - method will deal (get or set) with tag text contents.</li>
+<li>@Attribute - gets attribute value. Attribute name is specified in "value" property.</li>
+<li>
+  @SubTag - method (getter only) will deal with subtag. Should return instance of DomElement (the child DomElement type
+  is inferred from return type of
+  method). The subtag name
+  is specified in "value" property. If there are several (fixed count) of same-named subtags,
+  "index" property can specify, which subtag value should be returned. Sometimes the tag's existence
+  is itself a value (a boolean one), then set property "indicator" to "true" (cannot be used with "index")
+</li>
+<li>
+  @SubTagList - method will deal with subtag collection. Should return Collection of DomElements. The
+  subtag name is specified in "value" property. The resulting Collection is immutable. There can be no
+  setters annotated with it. Instead of them one may have "addition" methods: "MyDomElement addCollectionElement()".
+  These addition methods may have "index" argument, specifying, where in collection to insert. One may not have
+  one subtag name for both fixed-count children and collections.
+</li>
+<li>
+  @SubTagsList - If you have several @SubTagList collections and you need to access them all at once, this
+  annotation will help. "value" property will hold the array of possible subtag names. One should have different
+  addition methods for each subtag name, each returning its own DomElement type, each may have an "index" parameter.
+  The element will be inserted in proper place in the "merged" collection, allowing you to mix elements of different
+  types (if Schema or DTD allows).
+</li>
+<p>
+  One may annotate not every method, then the corresponding property classes and values are inferred from
+  the method name, method return type and parameter types. For non-indicator subtag values with index 0 it's
+  "SomeType getSomeName()", for collections - "Collection&lt;SomeType> getSomeNames()" and "SomeType addSomeName()".
+  (SomeType should extend DomElement). For tag value the default methods are "getValue" and "setValue". The
+  name
+  is inferred using DomNameStrategy subclasses. The default is HyphenNameStrategy, which splits the
+  camelhump name and joins the resulting words with "-". Another standard strategy is JavaNameStrategy,
+  that preserves the camel humps.
+<p>
