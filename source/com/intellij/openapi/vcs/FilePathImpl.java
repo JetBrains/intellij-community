@@ -33,6 +33,12 @@ public class FilePathImpl implements FilePath {
     refresh();
   }
 
+
+  public FilePathImpl(final File file) {
+    myFile = file;
+    myName = file.getName();
+  }
+
   public int hashCode() {
     return myFile.hashCode();
   }
@@ -152,7 +158,7 @@ public class FilePathImpl implements FilePath {
 
     File parentFile = selectedFile.getParentFile();
     if (parentFile == null) {
-      return null;
+      return new FilePathImpl(selectedFile);
     }
 
     VirtualFile virtualFileParent = lfs.findFileByIoFile(parentFile);
@@ -160,7 +166,7 @@ public class FilePathImpl implements FilePath {
       return new FilePathImpl(virtualFileParent, selectedFile.getName());
     }
     else {
-      return null;
+      return new FilePathImpl(selectedFile);
     }
   }
 

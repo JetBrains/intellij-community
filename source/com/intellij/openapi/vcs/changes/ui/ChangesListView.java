@@ -662,7 +662,7 @@ public class ChangesListView extends Tree implements DataProvider {
         final FilePath filePath = getFilePath(change);
         append(filePath.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
         if (isShowFlatten()) {
-          append(" (" + filePath.getVirtualFileParent().getPresentableUrl() + ", " + getChangeStatus(change).getText() + ")",
+          append(" (" + filePath.getIOFile().getParentFile().getPath() + ", " + getChangeStatus(change).getText() + ")",
                  SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
 
