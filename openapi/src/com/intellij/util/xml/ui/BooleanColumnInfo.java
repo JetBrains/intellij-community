@@ -12,7 +12,7 @@ import javax.swing.table.TableCellEditor;
 /**
  * @author peter
  */
-public class BooleanColumnInfo extends StripeColumnInfo<GenericDomValue<Boolean>, Boolean> {
+public class BooleanColumnInfo extends DomColumnInfo<GenericDomValue<Boolean>, Boolean> {
 
   public BooleanColumnInfo(final String name) {
     super(name, new BooleanTableCellRenderer());

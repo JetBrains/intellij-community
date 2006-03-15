@@ -11,23 +11,23 @@ import javax.swing.table.TableCellRenderer;
 /**
  * @author peter
  */
-public abstract class StripeColumnInfo<T, Aspect> extends ColumnInfo<T, Aspect> {
-  private final StripeTableCellRenderer myRenderer;
+public abstract class DomColumnInfo<T, Aspect> extends ColumnInfo<T, Aspect> {
+  private final TableCellRenderer myRenderer;
 
-  public StripeColumnInfo(String name) {
+  public DomColumnInfo(String name) {
     this(name, new DefaultTableCellRenderer());
   }
 
-  public StripeColumnInfo(String name, final TableCellRenderer renderer) {
+  public DomColumnInfo(String name, final TableCellRenderer renderer) {
     super(name);
-    myRenderer = new StripeTableCellRenderer(renderer);
+    myRenderer = renderer;
   }
 
   public boolean isCellEditable(final T o) {
     return getEditor(o) != null;
   }
 
-  public StripeTableCellRenderer getRenderer(T value) {
+  public TableCellRenderer getRenderer(T value) {
     return myRenderer;
   }
 

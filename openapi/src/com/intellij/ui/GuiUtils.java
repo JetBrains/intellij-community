@@ -196,9 +196,6 @@ public class GuiUtils {
   }
 
   public static void replaceJSplitPaneWithIDEASplitter(JComponent root) {
-    replaceJSplitPaneWithIDEASplitter(root, false);
-  }
-  public static void replaceJSplitPaneWithIDEASplitter(JComponent root, boolean honorMinimumSize) {
     final Container parent = root.getParent();
     if (root instanceof JSplitPane) {
       // we can painlessly replace only splitter which is the only child in container
@@ -213,7 +210,7 @@ public class GuiUtils {
       splitter.setFirstComponent((JComponent) component1);
       splitter.setSecondComponent((JComponent) component2);
       splitter.setShowDividerControls(pane.isOneTouchExpandable());
-      splitter.setHonorComponentsMinimumSize(honorMinimumSize);
+      splitter.setHonorComponentsMinimumSize(true);
 
       // let the component chance to resize itself
       SwingUtilities.invokeLater(new Runnable() {
@@ -243,14 +240,14 @@ public class GuiUtils {
         parent.setLayout(new BorderLayout());
         parent.add(splitter, BorderLayout.CENTER);
       }
-      replaceJSplitPaneWithIDEASplitter((JComponent) component1, honorMinimumSize);
-      replaceJSplitPaneWithIDEASplitter((JComponent) component2, honorMinimumSize);
+      replaceJSplitPaneWithIDEASplitter((JComponent) component1);
+      replaceJSplitPaneWithIDEASplitter((JComponent) component2);
     }
     else {
       final Component[] components = root.getComponents();
       for (Component component : components) {
         if (component instanceof JComponent) {
-          replaceJSplitPaneWithIDEASplitter((JComponent)component, honorMinimumSize);
+          replaceJSplitPaneWithIDEASplitter((JComponent)component);
         }
       }
     }

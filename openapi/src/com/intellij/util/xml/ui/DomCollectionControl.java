@@ -192,8 +192,8 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
   public final void columnsChanged() {
     myColumnInfos = createColumnInfos(myParentDomElement);
     final JTable table = myCollectionPanel.getTable();
-    adjustColumnWidths(table);
     ((AbstractTableModel)table.getModel()).fireTableStructureChanged();
+    adjustColumnWidths(table);
   }
 
   protected void doEdit() {

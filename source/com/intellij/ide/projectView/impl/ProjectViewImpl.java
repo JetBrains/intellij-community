@@ -422,7 +422,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     });
     installLabelFocusListener();
 
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel, true);
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
     ModuleManager.getInstance(myProject).addModuleListener(myModulesListener);
     isInitialized = true;
     doAddUninitializedPanes();

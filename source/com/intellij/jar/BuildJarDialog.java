@@ -205,7 +205,7 @@ public class BuildJarDialog extends DialogWrapper {
         myElementsChooser.selectElements(Collections.singletonList(element));
       }
     });
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel, true);
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
   }
 
   private GlobalSearchScope createMainClassScope() {

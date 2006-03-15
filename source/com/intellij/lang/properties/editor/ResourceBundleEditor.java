@@ -87,7 +87,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
     myProject = project;
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel, true);
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
 
     myResourceBundle = resourceBundle;
     myStructureViewComponent = new ResourceBundleStructureViewComponent(project, myResourceBundle, this);

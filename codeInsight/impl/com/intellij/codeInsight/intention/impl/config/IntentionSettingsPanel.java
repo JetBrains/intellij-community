@@ -55,7 +55,7 @@ public class IntentionSettingsPanel {
     myTreePanel.setLayout(new BorderLayout());
     myTreePanel.add(myIntentionSettingsTree.getComponent(), BorderLayout.CENTER);
 
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel, true);
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
 
     myDescriptionPanel.setLayout(new BorderLayout());
     myDescriptionPanel.add(myIntentionDescriptionPanel.getComponent(), BorderLayout.CENTER);

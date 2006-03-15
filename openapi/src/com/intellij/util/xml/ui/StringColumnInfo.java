@@ -4,12 +4,11 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementPresentation;
 
 /**
  * @author peter
  */
-public class StringColumnInfo<T extends DomElement> extends StripeColumnInfo<T, String> {
+public class StringColumnInfo<T extends DomElement> extends DomColumnInfo<T, String> {
   public StringColumnInfo(final String name) {
     super(name);
   }
