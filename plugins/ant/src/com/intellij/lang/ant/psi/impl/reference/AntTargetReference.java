@@ -13,6 +13,9 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericRefe
 import com.intellij.util.IncorrectOperationException;
 
 public class AntTargetReference extends GenericReference {
+
+  private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.ANT_TARGET);
+
   private AntElement myAntElement;
   private String myText;
   private TextRange myTextRange;
@@ -20,7 +23,7 @@ public class AntTargetReference extends GenericReference {
   public AntTargetReference(GenericReferenceProvider provider, final AntElement antElement, final String str, final TextRange textRange) {
     super(provider);
     myAntElement = antElement;
-    myText = str;
+    myText = str.trim();
     myTextRange = textRange;
   }
 
@@ -59,12 +62,16 @@ public class AntTargetReference extends GenericReference {
     return null;
   }
 
+  public static ReferenceType getReferenceType() {
+    return ourRefType;
+  }
+
   public ReferenceType getType() {
-    return new ReferenceType(ReferenceType.ANT_TARGET);
+    return getReferenceType();
   }
 
   public ReferenceType getSoftenType() {
-    return getType();
+    return getReferenceType();
   }
 
   public boolean needToCheckAccessibility() {
