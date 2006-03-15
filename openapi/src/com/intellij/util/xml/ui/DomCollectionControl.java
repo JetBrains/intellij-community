@@ -92,11 +92,21 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
 
 
   public boolean canNavigate(DomElement element) {
-    return false;
+    final Class<DomElement> aClass = (Class<DomElement>)DomUtil.getRawType(myChildDescription.getType());
+
+    final DomElement domElement = element.getParentOfType(aClass, false);
+
+    return domElement != null && myData.contains(domElement);
   }
 
   public void navigate(DomElement element) {
+    final Class<DomElement> aClass = (Class<DomElement>)DomUtil.getRawType(myChildDescription.getType());
+    final DomElement domElement = element.getParentOfType(aClass, false);
 
+    int index = myData.indexOf(domElement);
+    if (index < 0) index = 0;
+
+    myCollectionPanel.getTable().setRowSelectionInterval(index, index);
   }
 
   protected void initialize(final DomCollectionPanel boundComponent) {
@@ -380,5 +390,6 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
       }
     }
   }
+
 
 }
