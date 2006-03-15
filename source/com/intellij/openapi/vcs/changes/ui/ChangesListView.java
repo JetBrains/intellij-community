@@ -1,8 +1,11 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.dnd.*;
+import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -14,6 +17,10 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -38,7 +45,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class ChangesListView extends Tree implements DataProvider {
+public class ChangesListView extends Tree implements DataProvider, DeleteProvider {
   private ChangesListView.DragSource myDragSource;
   private ChangesListView.DropTarget myDropTarget;
   private DnDManager myDndManager;
@@ -49,6 +56,7 @@ public class ChangesListView extends Tree implements DataProvider {
   private boolean myShowFlatten = false;
   @NonNls private static final String ROOT_NODE_VALUE = "root";
 
+  private static final String UNVERSIONED_FILES_KEY = "ChangeListView.UnversionedFiles";
 
   private static FilePath getFilePath(final Change change) {
     ContentRevision revision = change.getAfterRevision();
@@ -350,8 +358,32 @@ public class ChangesListView extends Tree implements DataProvider {
       }
       return navigatables;
     }
+    else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+      return this;
+    }
+    else if (UNVERSIONED_FILES_KEY.equals(dataId)) {
+      return getSelectedUnversionedFiles();
+    }
 
     return null;
+  }
+
+  private List<VirtualFile> getSelectedUnversionedFiles() {
+    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final TreePath[] paths = getSelectionPaths();
+    if (paths != null) {
+      for (TreePath path : paths) {
+        Node node = (Node)path.getLastPathComponent();
+        final Object userObject = node.getUserObject();
+        if (userObject instanceof VirtualFile) {
+          final VirtualFile file = (VirtualFile)userObject;
+          if (file.isValid()) {
+            files.add(file);
+          }
+        }
+      }
+    }
+    return files;
   }
 
   private VirtualFile[] getSelectedFiles() {
@@ -367,21 +399,40 @@ public class ChangesListView extends Tree implements DataProvider {
       }
     }
 
-    final TreePath[] paths = getSelectionPaths();
-    if (paths != null) {
-      for (TreePath path : paths) {
-        Node node = (Node)path.getLastPathComponent();
-        final Object userObject = node.getUserObject();
-        if (userObject instanceof VirtualFile) {
-          final VirtualFile file = (VirtualFile)userObject;
-          if (file.isValid()) {
-            files.add(file);
-          }
+    files.addAll(getSelectedUnversionedFiles());
+
+    return files.toArray(new VirtualFile[files.size()]);
+  }
+
+  public void deleteElement(DataContext dataContext) {
+    PsiElement[] elements = getPsiElements(dataContext);
+    DeleteHandler.deletePsiElement(elements, myProject);
+  }
+
+  public boolean canDeleteElement(DataContext dataContext) {
+    PsiElement[] elements = getPsiElements(dataContext);
+    return DeleteHandler.shouldEnableDeleteAction(elements);
+  }
+
+  private PsiElement[] getPsiElements(final DataContext dataContext) {
+    List<PsiElement> elements = new ArrayList<PsiElement>();
+    final PsiManager manager = PsiManager.getInstance(myProject);
+    List<VirtualFile> files = (List<VirtualFile>)dataContext.getData(UNVERSIONED_FILES_KEY);
+    for (VirtualFile file : files) {
+      if (file.isDirectory()) {
+        final PsiDirectory psiDir = manager.findDirectory(file);
+        if (psiDir != null) {
+          elements.add(psiDir);
+        }
+      }
+      else {
+        final PsiFile psiFile = manager.findFile(file);
+        if (psiFile != null) {
+          elements.add(psiFile);
         }
       }
     }
-
-    return files.toArray(new VirtualFile[files.size()]);
+    return (PsiElement[])elements.toArray(new PsiElement[elements.size()]);
   }
 
   @NotNull

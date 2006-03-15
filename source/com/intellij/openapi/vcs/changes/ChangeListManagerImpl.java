@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.actions.DeleteAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -191,6 +192,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     menuGroup.add(diffAction);
     menuGroup.addSeparator();
     menuGroup.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
+    menuGroup.add(new DeleteAction());
     menuGroup.addSeparator();
     menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
 
