@@ -32,6 +32,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.Set;
 import java.util.HashSet;
+import java.awt.LayoutManager;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
 
 /**
  * @author Anton Katilin
@@ -223,5 +226,25 @@ public final class Utils {
       }
     }
     return null;
+  }
+
+  public static int getHGap(LayoutManager layout) {
+    if (layout instanceof BorderLayout) {
+      return ((BorderLayout) layout).getHgap();
+    }
+    if (layout instanceof CardLayout) {
+      return ((CardLayout) layout).getHgap();
+    }
+    return 0;
+  }
+
+  public static int getVGap(LayoutManager layout) {
+    if (layout instanceof BorderLayout) {
+      return ((BorderLayout) layout).getVgap();
+    }
+    if (layout instanceof CardLayout) {
+      return ((CardLayout) layout).getVgap();
+    }
+    return 0;
   }
 }

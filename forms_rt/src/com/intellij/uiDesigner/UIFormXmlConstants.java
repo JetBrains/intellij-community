@@ -52,12 +52,14 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_MEMBER = "member";
   public static final String ELEMENT_NESTED_FORM = "nested-form";
   public static final String ELEMENT_TOOLBAR = "toolbar";
+  public static final String ELEMENT_CARD = "card";
 
   public static final String LAYOUT_INTELLIJ = "GridLayoutManager";
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";
   public static final String LAYOUT_BORDER = "BorderLayout";
   public static final String LAYOUT_FLOW = "FlowLayout";
   public static final String LAYOUT_XY = "XYLayout";
+  public static final String LAYOUT_CARD = "CardLayout";
 
   private UIFormXmlConstants() {
   }

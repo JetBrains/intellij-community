@@ -6,10 +6,12 @@ import com.intellij.openapi.project.Project;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.CardLayout;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
+ * @author yole
  */
 public final class HGapProperty extends AbstractIntProperty<RadContainer> {
   public static HGapProperty getInstance(Project project) {
@@ -29,6 +31,10 @@ public final class HGapProperty extends AbstractIntProperty<RadContainer> {
       FlowLayout layout = (FlowLayout) component.getLayout();
       return layout.getHgap();
     }
+    if (component.getLayout() instanceof CardLayout) {
+      CardLayout layout = (CardLayout) component.getLayout();
+      return layout.getHgap();
+    }
     final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
     return layoutManager.getHGap();
   }
@@ -40,6 +46,10 @@ public final class HGapProperty extends AbstractIntProperty<RadContainer> {
     }
     else if (component.getLayout() instanceof FlowLayout) {
       FlowLayout layout = (FlowLayout) component.getLayout();
+      layout.setHgap(((Integer) value).intValue());
+    }
+    else if (component.getLayout() instanceof CardLayout) {
+      CardLayout layout = (CardLayout) component.getLayout();
       layout.setHgap(((Integer) value).intValue());
     }
     else {

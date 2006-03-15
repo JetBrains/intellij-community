@@ -5,12 +5,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -196,7 +196,6 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
                           addError(context, e, formFile);
                         }
                       }
-                      FileDocumentManager.getInstance().saveAllDocuments();
                     }
                   }
                 );
@@ -205,6 +204,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
             "",
             null
           );
+          FileDocumentManager.getInstance().saveAllDocuments();
         }
       }, ModalityState.NON_MMODAL);
     }

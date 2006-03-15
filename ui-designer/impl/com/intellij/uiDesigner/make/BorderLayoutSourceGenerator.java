@@ -8,7 +8,7 @@ import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 
 /**
  * @author yole
@@ -16,16 +16,7 @@ import java.awt.*;
 public class BorderLayoutSourceGenerator extends LayoutSourceGenerator {
 
   @Override public void generateContainerLayout(final LwContainer component, final FormSourceCodeGenerator generator, final String variable) {
-    generator.startMethodCall(variable, "setLayout");
-
-    BorderLayout layout = (BorderLayout) component.getLayout();
-
-    generator.startConstructor(BorderLayout.class.getName());
-    generator.push(layout.getHgap());
-    generator.push(layout.getVgap());
-    generator.endConstructor();
-
-    generator.endMethod();
+    generateLayoutWithGaps(component, generator, variable, BorderLayout.class);
   }
 
   public void generateComponentLayout(final LwComponent component,

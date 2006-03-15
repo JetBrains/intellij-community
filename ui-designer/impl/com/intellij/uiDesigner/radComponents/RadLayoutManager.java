@@ -35,6 +35,7 @@ public abstract class RadLayoutManager {
     ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_BORDER, RadBorderLayoutManager.class);
     ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_FLOW, RadFlowLayoutManager.class);
     ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_XY, RadXYLayoutManager.class);
+    ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_CARD, RadCardLayoutManager.class);
   }
 
   public static String[] getLayoutManagerNames() {
@@ -66,6 +67,9 @@ public abstract class RadLayoutManager {
     }
     if (layout instanceof BoxLayout) {
       return new RadBoxLayoutManager();
+    }
+    if (layout instanceof CardLayout) {
+      return new RadCardLayoutManager();
     }
     return null;
   }
@@ -99,6 +103,10 @@ public abstract class RadLayoutManager {
 
   public void removeComponentFromContainer(final RadContainer container, final RadComponent component) {
     container.getDelegee().remove(component.getDelegee());
+  }
+
+  public boolean switchContainerToChild(RadContainer container, RadComponent child) {
+    return false;
   }
 
   public Property[] getContainerProperties(final Project project) {

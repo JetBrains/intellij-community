@@ -250,7 +250,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
   }
 
-  private final class MyTitleProperty extends Property{
+  private final class MyTitleProperty extends Property<RadComponent> {
     /**
      * Index of tab which title should be edited
      */
@@ -409,6 +409,12 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       }
       return Property.EMPTY_ARRAY;
     }
+
+    @Override
+    public boolean switchContainerToChild(RadContainer container, RadComponent child) {
+      RadTabbedPane.this.selectTab(child);
+      return true;
+    }
   }
 
   private final class InsertTabDropLocation implements DropLocation {
@@ -474,6 +480,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       else {
         Palette palette = Palette.getInstance(editor.getProject());
         RadContainer panel = (RadContainer) InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
+        assert panel != null;
         addComponent(panel);
         panel.getDropLocation(null).processDrop(editor, new RadComponent[] { componentToAdd }, null, palette.getPanelItem());
       }

@@ -277,6 +277,9 @@ public class LwContainer extends LwComponent implements IContainer{
     else if (UIFormXmlConstants.LAYOUT_FLOW.equals(myLayoutManager)) {
       myLayoutSerializer = FlowLayoutSerializer.INSTANCE;
     }
+    else if (UIFormXmlConstants.LAYOUT_CARD.equals(myLayoutManager)) {
+      myLayoutSerializer = CardLayoutSerializer.INSTANCE;
+    }
     else if (UIFormXmlConstants.LAYOUT_XY.equals(myLayoutManager)) {
       myLayoutSerializer = XYLayoutSerializer.INSTANCE;
     }

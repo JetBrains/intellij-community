@@ -6,10 +6,12 @@ import com.intellij.openapi.project.Project;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.CardLayout;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
+ * @author yole
  */
 public final class VGapProperty extends AbstractIntProperty<RadContainer> {
   public static VGapProperty getInstance(Project project) {
@@ -29,6 +31,10 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
       FlowLayout layout = (FlowLayout) component.getLayout();
       return layout.getVgap();
     }
+    if (component.getLayout() instanceof CardLayout) {
+      CardLayout layout = (CardLayout) component.getLayout();
+      return layout.getVgap();
+    }
     final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
     return layoutManager.getVGap();
   }
@@ -40,6 +46,10 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
     }
     else if (component.getLayout() instanceof FlowLayout) {
       FlowLayout layout = (FlowLayout) component.getLayout();
+      layout.setVgap(((Integer) value).intValue());
+    }
+    else if (component.getLayout() instanceof CardLayout) {
+      CardLayout layout = (CardLayout) component.getLayout();
       layout.setVgap(((Integer) value).intValue());
     }
     else {

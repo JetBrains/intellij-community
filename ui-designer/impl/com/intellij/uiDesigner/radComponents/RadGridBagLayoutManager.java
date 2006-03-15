@@ -13,6 +13,7 @@ import javax.swing.*;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.LayoutManager;
+import java.awt.Component;
 
 /**
  * @author yole
@@ -34,8 +35,18 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
                                    final LayoutManager layout) {
     GridBagLayout gridBag = (GridBagLayout) layout;
     int[][] layoutDimensions = gridBag.getLayoutDimensions();
-    container.setLayout(new GridLayoutManager(layoutDimensions [1].length,
-                                              layoutDimensions [0].length));
+
+    int rowCount = layoutDimensions[1].length;
+    int colCount = layoutDimensions[0].length;
+
+    // account for invisible components
+    for(Component component: parent.getComponents()) {
+      final GridBagConstraints constraints = gridBag.getConstraints(component);
+      colCount = Math.max(colCount, constraints.gridx + constraints.gridwidth);
+      rowCount = Math.max(rowCount, constraints.gridy + constraints.gridheight);
+    }
+
+    container.setLayout(new GridLayoutManager(rowCount, colCount));
   }
 
   @Override

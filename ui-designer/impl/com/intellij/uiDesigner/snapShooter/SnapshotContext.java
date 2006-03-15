@@ -18,6 +18,7 @@ import javax.swing.*;
 import java.util.*;
 import java.awt.Component;
 import java.awt.Container;
+import java.lang.reflect.Modifier;
 
 /**
  * @author yole
@@ -115,6 +116,9 @@ public class SnapshotContext {
       componentClass = componentClass.getSuperclass();
       if (componentClass.equals(JComponent.class)) {
         return JPanel.class;
+      }
+      if ((componentClass.getModifiers() & Modifier.ABSTRACT) != 0) {
+        continue;
       }
       try {
         componentClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);

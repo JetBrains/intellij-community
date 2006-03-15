@@ -18,18 +18,22 @@ package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
-import org.objectweb.asm.Type;
-
-import java.awt.*;
 
 /**
+ * Layout code generator shared between BorderLayout and CardLayout.
+ *
  * @author yole
  */
-public class BorderLayoutCodeGenerator extends LayoutCodeGenerator {
-  private static Type ourBorderLayoutType = Type.getType(BorderLayout.class);
+public class SimpleLayoutCodeGenerator extends LayoutCodeGenerator {
+  private final Type myLayoutType;
   private static Method ourConstructor = Method.getMethod("void <init>(int,int)");
+
+  public SimpleLayoutCodeGenerator(final Type layoutType) {
+    myLayoutType = layoutType;
+  }
 
   public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
     if (lwComponent instanceof LwContainer) {
@@ -37,12 +41,12 @@ public class BorderLayoutCodeGenerator extends LayoutCodeGenerator {
 
       generator.loadLocal(componentLocal);
 
-      BorderLayout borderLayout = (BorderLayout) container.getLayout();
-      generator.newInstance(ourBorderLayoutType);
+      generator.newInstance(myLayoutType);
       generator.dup();
-      generator.push(borderLayout.getHgap());
-      generator.push(borderLayout.getVgap());
-      generator.invokeConstructor(ourBorderLayoutType, ourConstructor);
+      generator.push(Utils.getHGap(container.getLayout()));
+      generator.push(Utils.getVGap(container.getLayout()));
+
+      generator.invokeConstructor(myLayoutType, ourConstructor);
 
       generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
     }

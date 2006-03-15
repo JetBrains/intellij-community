@@ -1,48 +1,25 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
-import com.intellij.util.ui.UIUtil;
-
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IntEditor extends PropertyEditor{
+public final class IntEditor extends AbstractTextFieldEditor {
   private final int myLowBoundary;
-  private final JTextField myTf;
 
   /**
    * @param lowBoundary minimal integer value that editor accepts.
    */
   public IntEditor(final int lowBoundary){
     myLowBoundary = lowBoundary;
-    myTf = new JTextField();
-    myTf.addActionListener(new MyActionListener());
   }
 
-  public void updateUI() {
-    SwingUtilities.updateComponentTreeUI(myTf);
-  }
-
-  public JComponent getComponent(final RadComponent ignored, final Object value, final boolean inplace){
+  protected void setValueFromComponent(final RadComponent component, final Object value) {
     final Integer integer = (Integer)value;
     myTf.setText(integer.toString());
-
-    if(inplace){
-      //noinspection HardCodedStringLiteral
-      myTf.setBorder(UIUtil.getTextFieldBorder());
-    }
-    else{
-      myTf.setBorder(null);
-    }
-
-    return myTf;
   }
 
   public Object getValue() throws Exception{
@@ -57,10 +34,5 @@ public final class IntEditor extends PropertyEditor{
       throw new RuntimeException(UIDesignerBundle.message("error.not.an.integer"));
     }
   }
-
-  private final class MyActionListener implements ActionListener{
-    public void actionPerformed(final ActionEvent e){
-      fireValueCommited();
-    }
-  }
 }
+
