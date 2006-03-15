@@ -247,7 +247,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         }
 
         synchronized (myPendingUpdatesLock) {
-          scheduleUpdate(0);
+          scheduleUpdate(10);
           while (ourUpdateAlarm.getActiveRequestCount() > 0 || myUpdateInProgress) {
             if (indicator != null && indicator.isCanceled()) break;
 
