@@ -286,7 +286,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       mySavedPaneSubId = null;
     }
     else if (selected == null) {
-      changeView(id, subIds[0]);
+      changeView(id, subIds.length == 1 ? subIds[0] : subIds[1]);
     }
   }
 
