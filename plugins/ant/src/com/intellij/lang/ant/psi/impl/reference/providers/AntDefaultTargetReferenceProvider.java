@@ -3,7 +3,6 @@ package com.intellij.lang.ant.psi.impl.reference.providers;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
-import com.intellij.lang.ant.psi.impl.AntProjectImpl;
 import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -13,28 +12,36 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 public class AntDefaultTargetReferenceProvider extends GenericReferenceProvider {
+  private final ReferenceType myRefType;
 
-  final AntProjectImpl myProject;
-  final XmlAttribute myAttribute;
-
-  public AntDefaultTargetReferenceProvider(final AntProjectImpl project, final XmlAttribute attribute) {
-    myProject = project;
-    myAttribute = attribute;
+  public AntDefaultTargetReferenceProvider() {
+    myRefType = new ReferenceType(ReferenceType.ANT_TARGET);
   }
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
-    final int offsetInProject = myAttribute.getValueElement().getTextRange().getStartOffset() - myProject.getTextRange().getStartOffset() + 1;
-    return getReferencesByString(myAttribute.getValue(), myProject, new ReferenceType(ReferenceType.ANT_TARGET), offsetInProject);
+    final AntProject project = (AntProject)element;
+    final XmlAttribute attr = ((XmlTag)project.getSourceElement()).getAttribute("default", null);
+    if (attr == null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    final int offsetInProject = attr.getValueElement().getTextRange().getStartOffset() - project.getTextRange().getStartOffset() + 1;
+    return getReferencesByString(attr.getValue(), project, myRefType, offsetInProject);
   }
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
-    final int offsetInProject = myAttribute.getValueElement().getTextRange().getStartOffset() - myProject.getTextRange().getStartOffset();
-    return getReferencesByString(myAttribute.getValue(), myProject, type, offsetInProject);
+    final AntProject project = (AntProject)element;
+    final XmlAttribute attr = ((XmlTag)project.getSourceElement()).getAttribute("default", null);
+    if (attr == null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    final int offsetInProject = attr.getValueElement().getTextRange().getStartOffset() - project.getTextRange().getStartOffset();
+    return getReferencesByString(attr.getValue(), project, type, offsetInProject);
   }
 
   @NotNull

@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.psi.impl;
 
-import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntPropertySet;
 import com.intellij.psi.xml.XmlTag;
@@ -91,10 +90,6 @@ public class AntPropertySetImpl extends AntElementImpl implements AntPropertySet
     return result;
   }
 
-  protected AntElement parseSubTag(final XmlTag tag) {
-    return null;
-  }
-
   @SuppressWarnings("HardCodedStringLiteral")
   private void parseTag() {
     if (myName == null) {
@@ -108,9 +103,5 @@ public class AntPropertySetImpl extends AntElementImpl implements AntPropertySet
         myFile = tag.getAttributeValue("file");
       }
     }
-  }
-
-  protected AntElement[] getChildrenInner() {
-    return new AntElement[0];
   }
 }

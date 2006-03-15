@@ -68,4 +68,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public AntElement getAntParent() {
     return null;
   }
+
+
+  public void subtreeChanged() {
+    clearCaches();
+  }
 }

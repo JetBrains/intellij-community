@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.ant.psi.impl.AntProjectImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -18,12 +19,10 @@ public class AntTargetReference extends GenericReference {
 
   public AntTargetReference(GenericReferenceProvider provider, final AntElement antElement, final String str, final TextRange textRange) {
     super(provider);
-
     myAntElement = antElement;
     myText = str;
     myTextRange = textRange;
   }
-
 
   public PsiElement getElement() {
     return myAntElement;
@@ -38,13 +37,16 @@ public class AntTargetReference extends GenericReference {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return getManipulator(getElement()).handleContentChange(getElement(), getRangeInElement(), newElementName);
+    final AntProjectImpl project = (AntProjectImpl)getElement();
+    project.getSourceElement().setAttribute("default", newElementName);
+    project.subtreeChanged();
+    return getElement();
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     if(element instanceof AntTarget) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
-      return getManipulator(getElement()).handleContentChange(getElement(), getRangeInElement(), psiNamedElement.getName());
+      return handleElementRename(psiNamedElement.getName());
     }
     throw new IncorrectOperationException("Can bind only to ant targets.");
   }

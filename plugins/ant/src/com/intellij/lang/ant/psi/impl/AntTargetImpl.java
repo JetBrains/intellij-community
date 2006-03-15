@@ -55,7 +55,9 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {
-    return null;
+    getSourceElement().setAttribute("name", name);
+    subtreeChanged();
+    return this;
   }
 
   @Nullable
@@ -91,6 +93,6 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
   }
 
   protected AntElement[] getChildrenInner() {
-    return new AntElement[0];
+    return AntElement.EMPTY_ARRAY;
   }
 }

@@ -53,8 +53,6 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
     return myChildren = getChildrenInner();
   }
 
-  protected abstract AntElement[] getChildrenInner();
-
   @Nullable
   public AntElement getFirstChild() {
     final AntElement[] children = getChildren();
@@ -112,12 +110,6 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
     if(parent != null) parent.subtreeChanged();
   }
 
-  protected AntElement clone() {
-    final AntElementImpl element = (AntElementImpl)super.clone();
-    element.clearCaches();
-    return element;
-  }
-
   public PsiElement findElementAt(int offset) {
     final int offsetInFile = offset + getTextRange().getStartOffset();
     for (final AntElement element : getChildren()) {
@@ -134,13 +126,24 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
 
   @NotNull
   public PsiReference[] getReferences() {
-    if(myReferences != null) return myReferences;
-
+    if(myReferences != null) {
+      return myReferences;
+    }
     final GenericReferenceProvider[] providers = AntReferenceProvidersRegistry.getProvidersByElement(this);
     final List<PsiReference> result = new ArrayList<PsiReference>();
     for (final GenericReferenceProvider provider : providers) {
       result.addAll(Arrays.asList(provider.getReferencesByElement(this)));
     }
     return myReferences = result.toArray(new PsiReference[result.size()]);
+  }
+
+  protected AntElement[] getChildrenInner() {
+    return AntElement.EMPTY_ARRAY;
+  }
+
+  protected AntElement clone() {
+    final AntElementImpl element = (AntElementImpl)super.clone();
+    element.clearCaches();
+    return element;
   }
 }
