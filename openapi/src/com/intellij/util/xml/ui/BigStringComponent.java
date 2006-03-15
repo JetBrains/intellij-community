@@ -6,6 +6,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.javaee.J2EEBundle;
+import com.intellij.util.Icons;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -17,6 +18,7 @@ public class BigStringComponent extends TextFieldWithBrowseButton {
 
   public BigStringComponent() {
     this(true);
+    setButtonIcon(Icons.OPEN_EDIT_DIALOG_ICON);
   }
 
   public BigStringComponent(boolean hasBorder) {
