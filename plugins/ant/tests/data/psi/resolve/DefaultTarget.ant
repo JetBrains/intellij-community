@@ -1,0 +1,3 @@
+<project default="<ref>main">
+<target name="main"/>
+</project>
