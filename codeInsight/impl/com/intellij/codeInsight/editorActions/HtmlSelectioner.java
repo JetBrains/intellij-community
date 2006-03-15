@@ -154,12 +154,15 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
     }
     int start = i.getStart();
 
-    while (!i.atEnd() && i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) { i.advance(); }
+    while (!i.atEnd() &&
+           i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN &&
+           i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
+           ) { i.advance(); }
     if (i.atEnd()) return;
 
     int end = i.getEnd();
 
-    i.advance();
+    if (i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) i.advance();
     if (!i.atEnd() && i.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
       end = i.getEnd();
     }
