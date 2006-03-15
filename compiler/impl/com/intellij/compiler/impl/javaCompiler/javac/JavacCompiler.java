@@ -287,8 +287,12 @@ public class JavacCompiler extends ExternalCompiler {
       cpFile.deleteOnExit();
       myTempFiles.add(cpFile);
       PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(cpFile)));
-      writer.println(cpString);
-      writer.close();
+      try {
+        writer.println(cpString);
+      }
+      finally {
+        writer.close();
+      }
       commandLine.add("@" + cpFile.getAbsolutePath());
     }
   }

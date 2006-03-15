@@ -98,17 +98,26 @@ public final class PagedFileStorage {
       FileOutputStream stream = new FileOutputStream(myFile, true);
       FileChannel channel = stream.getChannel();
 
-      byte[] temp = new byte[size - current];
-      Arrays.fill(temp, (byte)0);
-      channel.write(ByteBuffer.wrap(temp));
+      try {
+        byte[] temp = new byte[size - current];
+        Arrays.fill(temp, (byte)0);
+        channel.write(ByteBuffer.wrap(temp));
 
-      channel.force(true);
-      channel.close();
+        channel.force(true);
+      }
+      finally {
+        channel.close();
+        stream.close();
+      }
     }
     else {
       RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-      raf.setLength(size);
-      raf.close();
+      try {
+        raf.setLength(size);
+      }
+      finally {
+        raf.close();
+      }
     }
 
     map();

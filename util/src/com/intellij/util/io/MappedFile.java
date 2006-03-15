@@ -164,8 +164,12 @@ public class MappedFile {
     unmap();
     try {
       RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-      raf.setLength(mySize);
-      raf.close();
+      try {
+        raf.setLength(mySize);
+      }
+      finally {
+        raf.close();
+      }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -177,8 +181,12 @@ public class MappedFile {
     if (current == size) return;
     unmap();
     RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-    raf.setLength(size);
-    raf.close();
+    try {
+      raf.setLength(size);
+    }
+    finally {
+      raf.close();
+    }
     map();
   }
 

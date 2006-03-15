@@ -309,10 +309,10 @@ public class PathManager {
 
     File propFile = new File(propFilePath);
     if (propFile.exists()) {
+      InputStream fis = null;
       try {
-        final InputStream fis = new BufferedInputStream(new FileInputStream(propFile));
+        fis = new BufferedInputStream(new FileInputStream(propFile));
         final PropertyResourceBundle bundle = new PropertyResourceBundle(fis);
-        fis.close();
         final Enumeration keys = bundle.getKeys();
         final Properties sysProperties = System.getProperties();
         while (keys.hasMoreElements()) {
@@ -327,11 +327,20 @@ public class PathManager {
         //noinspection HardCodedStringLiteral
         System.out.println("Problem reading from property file: " + propFilePath);
       }
+      finally{
+        try {
+          if (fis != null) {
+            fis.close();
+          }
+        }
+        catch (IOException e) {
+        }
+      }
     }
   }
 
   public static String substitueVars(String s) {
-    final String ideaHomePath = PathManager.getHomePath();
+    final String ideaHomePath = getHomePath();
     return substituteVars(s, ideaHomePath);
   }
 
@@ -341,8 +350,8 @@ public class PathManager {
     s = StringUtil.replace(s, "${idea.home}", ideaHomePath);
     final Properties props = System.getProperties();
     final Set keys = props.keySet();
-    for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
-      String key = (String)iterator.next();
+    for (final Object key1 : keys) {
+      String key = (String)key1;
       String value = props.getProperty(key);
       s = StringUtil.replace(s, "${" + key + "}", value);
     }

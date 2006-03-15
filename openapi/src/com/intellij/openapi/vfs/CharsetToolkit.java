@@ -84,7 +84,7 @@ public class CharsetToolkit {
    */
   public CharsetToolkit(byte[] buffer) {
     this.buffer = buffer;
-    this.defaultCharset = getDefaultSystemCharset();
+    defaultCharset = getDefaultSystemCharset();
   }
 
   /**
@@ -120,7 +120,7 @@ public class CharsetToolkit {
    * @param enforce a boolean specifying the use or not of US-ASCII.
    */
   public void setEnforce8Bit(boolean enforce) {
-    this.enforce8Bit = enforce;
+    enforce8Bit = enforce;
   }
 
   /**
@@ -129,7 +129,7 @@ public class CharsetToolkit {
    * @return a boolean representing the flag of use of US-ASCII.
    */
   public boolean getEnforce8Bit() {
-    return this.enforce8Bit;
+    return enforce8Bit;
   }
 
   /**
@@ -249,8 +249,8 @@ public class CharsetToolkit {
     // (it might have been UTF-7, but this encoding is usually internally used only by mail systems)
     if (!highOrderBit) {
       // returns the default charset rather than US-ASCII if the enforce8Bit flag is set.
-      if (this.enforce8Bit)
-        return this.defaultCharset;
+      if (enforce8Bit)
+        return defaultCharset;
       else
         return Charset.forName("US-ASCII");
     }
@@ -258,22 +258,11 @@ public class CharsetToolkit {
     // otherwise the file would not be human readable
     if (validU8Char) return Charset.forName("UTF-8");
     // finally, if it's not UTF-8 nor US-ASCII, let's assume the encoding is the default encoding
-    return this.defaultCharset;
+    return defaultCharset;
   }
 
-  public static Charset guessEncoding(File f, int bufferLength) throws FileNotFoundException, IOException {
-    FileInputStream fis = new FileInputStream(f);
-    return guessEncoding(fis, bufferLength);
-  }
-
-  public static Charset guessEncoding(InputStream fis, int bufferLength) throws IOException {
-    byte[] buffer = new byte[bufferLength];
-    fis.read(buffer);
-    fis.close();
-    CharsetToolkit toolkit = new CharsetToolkit(buffer);
-    toolkit.setDefaultCharset(getIDEOptionsCharset());
-    toolkit.setEnforce8Bit(true);
-    return toolkit.guessEncoding( bufferLength );
+  public static Charset guessEncoding(File f, int bufferLength) throws IOException {
+    return guessEncoding(f, bufferLength, getIDEOptionsCharset());
   }
 
   public static Charset getIDEOptionsCharset() {
@@ -290,11 +279,15 @@ public class CharsetToolkit {
     return charset != null ? charset :  getDefaultSystemCharset();
   }
 
-  public static Charset guessEncoding(File f, int bufferLength, Charset defaultCharset) throws FileNotFoundException, IOException {
+  public static Charset guessEncoding(File f, int bufferLength, Charset defaultCharset) throws IOException {
     FileInputStream fis = new FileInputStream(f);
     byte[] buffer = new byte[bufferLength];
-    fis.read(buffer);
-    fis.close();
+    try {
+      fis.read(buffer);
+    }
+    finally {
+      fis.close();
+    }
     CharsetToolkit toolkit = new CharsetToolkit(buffer);
     toolkit.setDefaultCharset(defaultCharset);
     return toolkit.guessEncoding( bufferLength );
@@ -415,7 +408,7 @@ public class CharsetToolkit {
    * @return an array of <code>Charset</code>s.
    */
   public static Charset[] getAvailableCharsets() {
-    Collection collection = Charset.availableCharsets().values();
-    return (Charset[]) collection.toArray(new Charset[collection.size()]);
+    Collection<Charset> collection = Charset.availableCharsets().values();
+    return collection.toArray(new Charset[collection.size()]);
   }
 }
