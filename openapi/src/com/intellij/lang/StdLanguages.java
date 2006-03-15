@@ -74,4 +74,9 @@ public class StdLanguages {
    * The definition for the JSP Expression Language language. 
    */
   public static Language EL;
+
+  /**
+   * The definition for the Text language.
+   */
+  public static Language TEXT;
 }

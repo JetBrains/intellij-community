@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.TokenTypeEx;
@@ -19,8 +20,8 @@ public interface ElementType extends
                              JspElementType,
                              XmlElementType
                              {
-  IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", Language.ANY);
-  IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", Language.ANY);
+  IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", StdLanguages.TEXT);
+  IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", StdLanguages.TEXT);
   IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", Language.ANY);
   IElementType DUMMY_HOLDER = new IElementType("DUMMY_HOLDER", Language.ANY);
 

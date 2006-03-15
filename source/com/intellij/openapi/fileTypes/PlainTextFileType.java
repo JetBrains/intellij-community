@@ -41,8 +41,13 @@ import javax.swing.*;
 
 import org.jetbrains.annotations.NotNull;
 
-public class PlainTextFileType implements FileType {
+public class PlainTextFileType extends LanguageFileType {
+  private static final Language ourLanguage = new PlainTextLanguage();
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/text.png");
+
+  public PlainTextFileType() {
+    super(ourLanguage);
+  }
 
   @NotNull
   public String getName() {
@@ -61,29 +66,5 @@ public class PlainTextFileType implements FileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public boolean isBinary() {
-    return false;
-  }
-
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  public String getCharset(VirtualFile file) {
-    return null;
-  }
-
-  public SyntaxHighlighter getHighlighter(Project project) {
-    return new PlainSyntaxHighlighter();
-  }
-
-  public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
-    return null;
-  }
-
-  public Language getLanguage() {
-    return null;
   }
 }
