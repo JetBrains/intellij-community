@@ -16,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -305,7 +306,7 @@ public class RedundantCastUtil {
       else {
         PsiElement parent = typeCast.getParent();
         if (parent instanceof PsiConditionalExpression) {
-          if (typeCast.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+          if (PsiUtil.getLanguageLevel(typeCast).compareTo(LanguageLevel.JDK_1_5) < 0) {
             //branches need to be of the same type
             if (!Comparing.equal(operand.getType(),((PsiConditionalExpression)parent).getType())) return;
           }

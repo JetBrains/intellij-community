@@ -126,6 +126,11 @@ public interface PsiElementFactory {
    */
   @NotNull PsiClassType createType(PsiClass resolve, PsiSubstitutor substitutor);
 
+  /*
+    additional languageLevel parameter to memorize language level for allowing/prohibiting boxing/unboxing
+   */
+  @NotNull PsiClassType createType(PsiClass resolve, PsiSubstitutor substitutor, LanguageLevel languageLevel);
+
   /**
    * Creates a class type for the specified reference pointing to a class.
    *

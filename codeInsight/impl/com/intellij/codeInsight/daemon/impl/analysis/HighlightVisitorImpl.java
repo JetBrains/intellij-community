@@ -376,7 +376,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitImportStaticStatement(PsiImportStaticStatement statement) {
-    if (statement.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+    if (PsiUtil.getLanguageLevel(statement).compareTo(LanguageLevel.JDK_1_5) < 0) {
       myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                      statement.getFirstChild(),
                                                      JavaErrorMessages.message("static.imports.prior.15")));
@@ -384,7 +384,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitForeachStatement(PsiForeachStatement statement) {
-    if (statement.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+    if (PsiUtil.getLanguageLevel(statement).compareTo(LanguageLevel.JDK_1_5) < 0) {
       myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                      statement.getFirstChild(),
                                                      JavaErrorMessages.message("foreach.prior.15")));

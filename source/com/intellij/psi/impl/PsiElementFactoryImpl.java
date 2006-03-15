@@ -125,6 +125,11 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   @NotNull
+  public PsiClassType createType(PsiClass resolve, PsiSubstitutor substitutor, LanguageLevel languageLevel) {
+    return new PsiImmediateClassType(resolve, substitutor, languageLevel);
+  }
+
+  @NotNull
   public PsiClass createClass(String name) throws IncorrectOperationException {
     CheckUtil.checkIsIdentifier(myManager, name);
     @NonNls String text = "public class " + name + "{ }";
@@ -263,6 +268,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return new PsiClassReferenceType(classReference);
   }
 
+  @NotNull
   public PsiFile createFileFromText(String name, FileType fileType, CharSequence text,
                                     long modificationStamp, final boolean physical) {
     return createFileFromText(name, fileType, text, modificationStamp, physical, true);
@@ -429,13 +435,18 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   public PsiAnnotation createAnnotationFromText(String annotationText, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     CompositeElement annotationElement =
-    getJavaParsingContext(holderElement).getDeclarationParsing().parseAnnotationFromText(myManager, annotationText);
+    getJavaParsingContext(holderElement).getDeclarationParsing().parseAnnotationFromText(myManager, annotationText, getLanguageLevel(context));
     if (annotationElement == null || annotationElement.getElementType() != ElementType.ANNOTATION) {
       throw new IncorrectOperationException("Incorrect annotation \"" + annotationText + "\".");
     }
     TreeUtil.addChildren(holderElement, annotationElement);
     annotationElement.acceptTree(new GeneratedMarkerVisitor());
     return (PsiAnnotation)SourceTreeToPsiMap.treeElementToPsi(annotationElement);
+  }
+
+  private LanguageLevel getLanguageLevel(final PsiElement context) {
+    if (context == null) return myManager.getEffectiveLanguageLevel();
+    return PsiUtil.getLanguageLevel(context);
   }
 
   @NotNull

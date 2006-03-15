@@ -89,7 +89,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
         if (args.length != 1) return;
         PsiType argType = args[0].getType();
         if (argType instanceof PsiPrimitiveType) {
-          argType = ((PsiPrimitiveType)argType).getBoxedType(methodCall.getManager(), methodCall.getResolveScope());
+          argType = ((PsiPrimitiveType)argType).getBoxedType(methodCall);
         }
 
         if (!(argType instanceof PsiClassType)) return;

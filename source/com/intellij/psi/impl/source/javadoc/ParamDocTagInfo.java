@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTNode;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.util.ArrayUtil;
@@ -23,7 +24,7 @@ class ParamDocTagInfo implements JavadocTagInfo {
   public boolean isValidInContext(PsiElement element) {
     return element instanceof PsiMethod ||
            (element instanceof PsiClass &&
-            element.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) <= 0);
+            PsiUtil.getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_5) >= 0);
   }
 
   public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {

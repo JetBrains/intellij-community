@@ -181,7 +181,7 @@ public class CompletionUtil {
         return ourJavaDocCompletionData;
       }
       else{
-        return element != null && element.getManager().getEffectiveLanguageLevel() == LanguageLevel.JDK_1_5 ? ourJava15CompletionData : ourJavaCompletionData;
+        return element != null && PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_1_5) ? ourJava15CompletionData : ourJavaCompletionData;
       }
     }
     else if (file.getViewProvider().getBaseLanguage() == StdLanguages.JSP) {

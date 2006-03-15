@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,5 +105,6 @@ public interface PsiResolveHelper {
   PsiType getSubstitutionForTypeParameter(PsiTypeParameter typeParam,
                                           PsiType param,
                                           PsiType arg,
-                                          boolean isContraVariantPosition);
+                                          boolean isContraVariantPosition,
+                                          LanguageLevel languageLevel);
 }

@@ -146,7 +146,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
       }
       final Map<PsiTypeParameter, PsiType> hashMap = new HashMap<PsiTypeParameter, PsiType>();
       processClass(aClass, resolveResult.getSubstitutor(), hashMap);
-      return aClass.getManager().getElementFactory().createType(aClass, createSubstitutor(hashMap));
+      return aClass.getManager().getElementFactory().createType(aClass, createSubstitutor(hashMap), classType.getLanguageLevel());
     }
 
     protected PsiType substituteTypeParameter(final PsiTypeParameter typeParameter) {

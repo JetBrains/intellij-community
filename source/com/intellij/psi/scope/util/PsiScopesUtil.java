@@ -139,7 +139,7 @@ public class PsiScopesUtil {
             else target = null;
           }
           else if(target instanceof PsiClass){
-            type = factory.createType((PsiClass)target);
+            type = factory.createType((PsiClass)target,substitutor, PsiUtil.getLanguageLevel(ref));
             processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
           }
           final PsiType[] types = referenceElement.getTypeParameters();

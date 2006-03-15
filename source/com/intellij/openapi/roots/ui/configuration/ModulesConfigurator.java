@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.Splitter;
@@ -61,7 +60,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private JList myModuleEditorsList;
   private JPanel myModuleContentsPanel;
   @NonNls private static final String EMPTY_PANEL_ID = "EmptyPanel";
-  private ComboBox myLanguageLevelCombo;
+  private LanguageLevelCombo myLanguageLevelCombo;
   private JRadioButton myRbRelativePaths;
   private JRadioButton myRbAbsolutePaths;
 
@@ -97,12 +96,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
     myModuleListPanel = new JPanel(new BorderLayout());
 
-    myLanguageLevelCombo = new ComboBox();
-    myLanguageLevelCombo.addItem(LanguageLevel.JDK_1_3);
-    myLanguageLevelCombo.addItem(LanguageLevel.JDK_1_4);
-    myLanguageLevelCombo.addItem(LanguageLevel.JDK_1_5);
-    myLanguageLevelCombo.setRenderer(new MyDefaultListCellRenderer());
-    myLanguageLevelCombo.setSelectedItem(ProjectRootManagerEx.getInstanceEx(myProject).getLanguageLevel());
+    myLanguageLevelCombo = new LanguageLevelCombo(myProject);
     myRbRelativePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
     myRbAbsolutePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.absolute.radio"));
     ButtonGroup buttonGroup = new ButtonGroup();
@@ -335,7 +329,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try {
-            final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
+            final LanguageLevel newLevel = myLanguageLevelCombo.getSelectedItem();
             projectRootManagerEx.setLanguageLevel(newLevel);
             ((ProjectEx)myProject).setSavePathsRelative(myRbRelativePaths.isSelected());
             final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
@@ -673,14 +667,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           }
         });
       }
-    }
-  }
-
-  private static class MyDefaultListCellRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      setText(((LanguageLevel)value).getPresentableText());
-      return this;
     }
   }
 

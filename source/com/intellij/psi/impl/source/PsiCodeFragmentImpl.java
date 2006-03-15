@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
@@ -199,6 +200,11 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
   }
 
   public Lexer createLexer() {
+    final PsiElement context = getContext();
+    if (context != null) {
+      return new JavaLexer(PsiUtil.getLanguageLevel(context));
+    }
+
     final PsiManager manager = getManager();
     return new JavaLexer(manager.getEffectiveLanguageLevel());
   }

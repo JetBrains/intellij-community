@@ -19,6 +19,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +133,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
           }
         }
         final Pair<PsiType,ConstraintType> currentSubstitution = getSubstitutionForTypeParameterConstraint(typeParameter, parameterType,
-                                                                            argumentType, true);
+                                                                            argumentType, true, PsiUtil.getLanguageLevel(argument));
         if (currentSubstitution == null) continue;
         final ConstraintType constraintType = currentSubstitution.getSecond();
         final PsiType type = currentSubstitution.getFirst();
@@ -200,27 +201,30 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   public PsiType getSubstitutionForTypeParameter(PsiTypeParameter typeParam,
                                                  PsiType param,
                                                  PsiType arg,
-                                                 boolean isContraVariantPosition) {
-    final Pair<PsiType, ConstraintType> constraint = getSubstitutionForTypeParameterConstraint(typeParam, param, arg, isContraVariantPosition);
+                                                 boolean isContraVariantPosition,
+                                                 final LanguageLevel languageLevel) {
+    final Pair<PsiType, ConstraintType> constraint = getSubstitutionForTypeParameterConstraint(typeParam, param, arg, isContraVariantPosition,
+                                                                                               languageLevel);
     return constraint == null ? PsiType.NULL : constraint.getFirst();
   }
 
   public static Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterConstraint(PsiTypeParameter typeParam,
                                                                                         PsiType param,
                                                                                         PsiType arg,
-                                                                                        boolean isContraVariantPosition) {
+                                                                                        boolean isContraVariantPosition,
+                                                                                        final LanguageLevel languageLevel) {
     //Ellipsis types are analyzed somewhere else
     LOG.assertTrue(!(param instanceof PsiEllipsisType));
 
     if (param instanceof PsiArrayType && arg instanceof PsiArrayType) {
       return getSubstitutionForTypeParameterConstraint(typeParam, ((PsiArrayType)param).getComponentType(), ((PsiArrayType)arg).getComponentType(),
-                                             isContraVariantPosition);
+                                             isContraVariantPosition, languageLevel);
     }
 
     if (param instanceof PsiClassType) {
       PsiManager manager = typeParam.getManager();
       if (arg instanceof PsiPrimitiveType) {
-        arg = ((PsiPrimitiveType)arg).getBoxedType(manager, typeParam.getResolveScope());
+        arg = ((PsiPrimitiveType)arg).getBoxedType(typeParam);
         if (arg == null) return null;
       }
 
@@ -242,12 +246,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         if (isContraVariantPosition) {
           PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(paramClass, argClass, argResult.getSubstitutor());
           if (substitutor == null) return null;
-          arg = factory.createType(paramClass, substitutor);
+          arg = factory.createType(paramClass, substitutor, languageLevel);
         }
         else {
           PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(argClass, paramClass, paramResult.getSubstitutor());
           if (substitutor == null) return null;
-          param = factory.createType(argClass, substitutor);
+          param = factory.createType(argClass, substitutor, languageLevel);
         }
 
         return getSubstitutionForTypeParameterInner(param, arg, patternType, ConstraintType.SUPERTYPE);
@@ -410,7 +414,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     }
 
     PsiType returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
-    PsiType guess = getSubstitutionForTypeParameter(typeParameter, returnType, type, false);
+    PsiType guess = getSubstitutionForTypeParameter(typeParameter, returnType, type, false, PsiUtil.getLanguageLevel(parent));
 
     if (guess == PsiType.NULL) {
       PsiType superType = substitutor.substitute(typeParameter.getSuperTypes()[0]);

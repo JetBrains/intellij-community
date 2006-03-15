@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hint.api.impls;
 import com.intellij.codeInsight.hint.api.*;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -32,22 +33,20 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
   }
 
   public PsiReferenceParameterList findElementForParameterInfo(final CreateParameterInfoContext context) {
-    if (context.getFile().getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
-      final PsiReferenceParameterList referenceParameterList =
-        ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiReferenceParameterList.class);
+    final PsiReferenceParameterList referenceParameterList =
+      ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiReferenceParameterList.class);
 
-      if (referenceParameterList != null) {
-        if (!(referenceParameterList.getParent() instanceof PsiJavaCodeReferenceElement)) return null;
-        final PsiJavaCodeReferenceElement ref = ((PsiJavaCodeReferenceElement)referenceParameterList.getParent());
-        final PsiElement psiElement = ref.resolve();
-        if (!(psiElement instanceof PsiTypeParameterListOwner)) return null;
+    if (referenceParameterList != null) {
+      if (!(referenceParameterList.getParent() instanceof PsiJavaCodeReferenceElement)) return null;
+      final PsiJavaCodeReferenceElement ref = ((PsiJavaCodeReferenceElement)referenceParameterList.getParent());
+      final PsiElement psiElement = ref.resolve();
+      if (!(psiElement instanceof PsiTypeParameterListOwner)) return null;
 
-        final PsiTypeParameter[] typeParams = ((PsiTypeParameterListOwner)psiElement).getTypeParameters();
-        if (typeParams.length == 0) return null;
+      final PsiTypeParameter[] typeParams = ((PsiTypeParameterListOwner)psiElement).getTypeParameters();
+      if (typeParams.length == 0) return null;
 
-        context.setItemsToShow(typeParams);
-        return referenceParameterList;
-      }
+      context.setItemsToShow(typeParams);
+      return referenceParameterList;
     }
 
     return null;

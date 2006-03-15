@@ -6,6 +6,7 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
@@ -26,8 +27,9 @@ public interface JavaDocElementType {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
-      JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
-      return context.getJavadocParsing().parseJavaDocReference(chars, table, getLanguage().getParserDefinition().createLexer(manager.getProject()),
+      //no language features from higher java language versions are present in javadoc
+      JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.JDK_1_3);
+      return context.getJavadocParsing().parseJavaDocReference(chars, table, new JavaLexer(LanguageLevel.JDK_1_3),
                                                   ((LeafElement)chameleon).getState(), false, manager);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
@@ -38,8 +40,9 @@ public interface JavaDocElementType {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
-      JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
-      return context.getJavadocParsing().parseJavaDocReference(chars, table, getLanguage().getParserDefinition().createLexer(manager.getProject()),
+      //no language features from higher java language versions are present in javadoc
+      JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.JDK_1_3);
+      return context.getJavadocParsing().parseJavaDocReference(chars, table, new JavaLexer(LanguageLevel.JDK_1_3),
                                                   ((LeafElement)chameleon).getState(), true, manager);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}

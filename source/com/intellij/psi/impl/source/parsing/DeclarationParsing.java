@@ -49,8 +49,8 @@ public class DeclarationParsing extends Parsing {
     return first;
   }
 
-  public TreeElement parseMemberValueText(PsiManager manager, char[] buffer) {
-    Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
+  public TreeElement parseMemberValueText(PsiManager manager, char[] buffer, final LanguageLevel languageLevel) {
+    Lexer originalLexer = new JavaLexer(languageLevel);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, 0, buffer.length);
     TreeElement first = parseAnnotationMemberValue(lexer);
@@ -392,8 +392,8 @@ public class DeclarationParsing extends Parsing {
     return modifierList;
   }
 
-  public CompositeElement parseAnnotationFromText(PsiManager manager, String text) {
-    Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
+  public CompositeElement parseAnnotationFromText(PsiManager manager, String text, final LanguageLevel languageLevel) {
+    Lexer originalLexer = new JavaLexer(languageLevel);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     char[] buffer = text.toCharArray();
     lexer.start(buffer, 0, buffer.length);

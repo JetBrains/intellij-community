@@ -215,7 +215,7 @@ public class SystemBuilder {
           }
         }
         final PsiType currentSubstitution = helper.getSubstitutionForTypeParameter(typeParameter, parameterType,
-                                                                                   argumentType, true);
+                                                                                   argumentType, true, PsiUtil.getLanguageLevel(parent));
         if (currentSubstitution == null) {
           substitution = null;
           break;
@@ -287,7 +287,7 @@ public class SystemBuilder {
     }
 
     PsiType returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
-    PsiType guess = parent.getManager().getResolveHelper().getSubstitutionForTypeParameter(typeParameter, returnType, type, false);
+    PsiType guess = parent.getManager().getResolveHelper().getSubstitutionForTypeParameter(typeParameter, returnType, type, false, PsiUtil.getLanguageLevel(parent));
 
     if (guess == PsiType.NULL) {
       PsiType superType = substitutor.substitute(typeParameter.getSuperTypes()[0]);

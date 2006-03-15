@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.Patches;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.JavaUtil;
 import com.intellij.ide.util.projectWizard.ToolbarPanel;
@@ -19,6 +20,8 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -46,10 +49,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -75,6 +76,8 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   private JCheckBox myCbExcludeOutput;
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
+  private LanguageLevelCombo myLanguageLevelCombo;
+  private JRadioButton myRbUseModuleLanguageLevel;
 
   public ContentEntriesEditor(Project project, String moduleName, ModifiableRootModel model, ModulesProvider modulesProvider) {
     super(project, model);
@@ -82,8 +85,8 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     myModulesProvider = modulesProvider;
     final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
       public void afterRefreshFinish(boolean asynchonous) {
-        for (Iterator<ContentEntry> it = myEntryToEditorMap.keySet().iterator(); it.hasNext();) {
-          final ContentEntryEditor editor = myEntryToEditorMap.get(it.next());
+        for (final ContentEntry contentEntry : myEntryToEditorMap.keySet()) {
+          final ContentEntryEditor editor = myEntryToEditorMap.get(contentEntry);
           if (editor != null) {
             editor.update();
           }
@@ -122,12 +125,21 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     if (super.isModified()) {
       return true;
     }
-    final Module selfModule = getMyModule();
-    return selfModule == null || myRbRelativePaths == null ? false : selfModule.isSavePathsRelative() != myRbRelativePaths.isSelected();
+    final Module selfModule = getModule();
+    if (selfModule == null) return false;
+    if (myRbRelativePaths != null && selfModule.isSavePathsRelative() != myRbRelativePaths.isSelected()) return true;
+    final LanguageLevel moduleLanguageLevel = selfModule.getLanguageLevel();
+    if (moduleLanguageLevel == null) {
+      return myRbUseModuleLanguageLevel.isSelected();
+    } else {
+      if (!myRbUseModuleLanguageLevel.isSelected()) return true;
+    }
+    return !myLanguageLevelCombo.getSelectedItem().equals(moduleLanguageLevel);
   }
 
   public JPanel createComponentImpl() {
-    final Project project = getMyModule().getProject();
+    final Module module = getModule();
+    final Project project = module.getProject();
 
     myContentEntryEditorListener = new MyContentEntryEditorListener();
 
@@ -161,29 +173,65 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     final JComponent treeEditorComponent = myRootTreeEditor.createComponent();
     splitter.setSecondComponent(treeEditorComponent);
 
-    final JPanel rbPanel = new JPanel(new GridBagLayout());
-    rbPanel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 6));
+    final JPanel innerPanel = new JPanel(new GridBagLayout());
+    innerPanel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 6));
     myRbRelativePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
     final JRadioButton rbAbsolutePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.absolute.radio"));
     ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(myRbRelativePaths);
     buttonGroup.add(rbAbsolutePaths);
-    rbPanel.add(new JLabel(ProjectBundle.message("module.paths.outside.module.dir.label")),
-                new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
-                                       0, 0));
-    rbPanel.add(rbAbsolutePaths,
-                new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
-                                       0, 0));
-    rbPanel.add(myRbRelativePaths,
-                new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
-                                       0, 0));
-    if (getMyModule().isSavePathsRelative()) {
+    innerPanel.add(new JLabel(ProjectBundle.message("module.paths.outside.module.dir.label")),
+                   new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
+                                          0, 0));
+    innerPanel.add(rbAbsolutePaths,
+                   new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
+                                          0, 0));
+    innerPanel.add(myRbRelativePaths,
+                   new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
+                                          0, 0));
+    if (module.isSavePathsRelative()) {
       myRbRelativePaths.setSelected(true);
     }
     else {
       rbAbsolutePaths.setSelected(true);
     }
-    mainPanel.add(rbPanel, BorderLayout.SOUTH);
+
+    final JRadioButton rbUseProjectLanguageLevel = new JRadioButton(ProjectBundle.message("module.use.project.language.level"));
+    myRbUseModuleLanguageLevel = new JRadioButton(ProjectBundle.message("module.module.language.level"));
+    ButtonGroup languageGroup = new ButtonGroup();
+    languageGroup.add(myRbUseModuleLanguageLevel);
+    languageGroup.add(rbUseProjectLanguageLevel);
+
+    myLanguageLevelCombo = new LanguageLevelCombo(myProject);
+    final LanguageLevel moduleLanguageLevel = module.getLanguageLevel();
+    if (moduleLanguageLevel != null) {
+      myRbUseModuleLanguageLevel.setSelected(true);
+      myLanguageLevelCombo.setSelectedItem(moduleLanguageLevel);
+    } else {
+      rbUseProjectLanguageLevel.setSelected(true);
+    }
+
+    myLanguageLevelCombo.setEnabled(myRbUseModuleLanguageLevel.isSelected());
+    myRbUseModuleLanguageLevel.addItemListener(new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
+        myLanguageLevelCombo.setEnabled(myRbUseModuleLanguageLevel.isSelected());
+      }
+    });
+
+    innerPanel.add(rbUseProjectLanguageLevel,
+                   new GridBagConstraints(0, 1, 3, 1, 1.0, 0.0, GridBagConstraints.WEST,
+                                          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+
+    final Box horizontalBox = Box.createHorizontalBox();
+    horizontalBox.add(myRbUseModuleLanguageLevel);
+    horizontalBox.add(Box.createHorizontalStrut(5));
+    horizontalBox.add(myLanguageLevelCombo);
+
+    innerPanel.add(horizontalBox,
+                   new GridBagConstraints(0, 2, 3, 1, 1.0, 0.0, GridBagConstraints.WEST,
+                                          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+
+    mainPanel.add(innerPanel, BorderLayout.SOUTH);
 
     final ContentEntry[] contentEntries = myModel.getContentEntries();
     if (contentEntries.length > 0) {
@@ -196,7 +244,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     return mainPanel;
   }
 
-  private Module getMyModule() {
+  private Module getModule() {
     return myModulesProvider.getModule(myModuleName);
   }
 
@@ -310,14 +358,12 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
       }
     });
 
-    final FieldPanel fieldPanel = new FieldPanel(textField, null, null, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
+    return new FieldPanel(textField, null, null, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
         commitRunnable.run();
       }
     }, null);
-
-    return fieldPanel;
   }
 
   private void addContentEntryPanel(final ContentEntry contentEntry) {
@@ -393,7 +439,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   }
 
   private void addContentEntries(final VirtualFile[] files) {
-    java.util.List<ContentEntry> contentEntries = new ArrayList<ContentEntry>();
+    List<ContentEntry> contentEntries = new ArrayList<ContentEntry>();
     for (final VirtualFile file : files) {
       if (isAlreadyAdded(file)) {
         continue;
@@ -406,8 +452,8 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
       final ContentEntry[] contentEntriesArray = contentEntries.toArray(new ContentEntry[contentEntries.size()]);
       addSourceRoots(myProject, contentEntriesArray, new Runnable() {
         public void run() {
-          for (int idx = 0; idx < contentEntriesArray.length; idx++) {
-            addContentEntryPanel(contentEntriesArray[idx]);
+          for (ContentEntry contentEntry : contentEntriesArray) {
+            addContentEntryPanel(contentEntry);
           }
           myEditorsPanel.revalidate();
           myEditorsPanel.repaint();
@@ -428,11 +474,18 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   }
 
   public void saveData() {
-    getMyModule().setSavePathsRelative(myRbRelativePaths.isSelected());
+    final Module module = getModule();
+    module.setSavePathsRelative(myRbRelativePaths.isSelected());
+    final LanguageLevel newLanguageLevel = getConfiguredLanguageLevel();
+    ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).setLanguageLevel(newLanguageLevel);
+  }
+
+  private LanguageLevel getConfiguredLanguageLevel() {
+    return myRbUseModuleLanguageLevel.isSelected() ? myLanguageLevelCombo.getSelectedItem() : null;
   }
 
   private static void addSourceRoots(final Project project, final ContentEntry[] contentEntries, final Runnable finishRunnable) {
-    final HashMap<ContentEntry, java.util.List<Pair<File, String>>> entryToRootMap = new HashMap<ContentEntry, java.util.List<Pair<File, String>>>();
+    final HashMap<ContentEntry, List<Pair<File, String>>> entryToRootMap = new HashMap<ContentEntry, List<Pair<File, String>>>();
     final Map<File, ContentEntry> fileToEntryMap = new HashMap<File, ContentEntry>();
     for (final ContentEntry contentEntry : contentEntries) {
       entryToRootMap.put(contentEntry, null);
@@ -442,17 +495,16 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     final ProgressWindow progressWindow = new ProgressWindow(true, project);
     final ProgressIndicator progressIndicator = Patches.MAC_HIDE_QUIT_HACK
                                                 ? progressWindow
-                                                : (ProgressIndicator)new SmoothProgressAdapter(progressWindow, project);
+                                                : new SmoothProgressAdapter(progressWindow, project);
 
     final Runnable searchRunnable = new Runnable() {
       public void run() {
         final Runnable process = new Runnable() {
           public void run() {
-            for (Iterator it = fileToEntryMap.keySet().iterator(); it.hasNext();) {
-              final File entryFile = (File)it.next();
-              progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", entryFile.getPath()));
-              final java.util.List<Pair<File, String>> roots = JavaUtil.suggestRoots(entryFile);
-              entryToRootMap.put(fileToEntryMap.get(entryFile), roots);
+            for (final File file : fileToEntryMap.keySet()) {
+              progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", file.getPath()));
+              final List<Pair<File, String>> roots = JavaUtil.suggestRoots(file);
+              entryToRootMap.put(fileToEntryMap.get(file), roots);
             }
           }
         };
@@ -463,12 +515,10 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
 
     final Runnable addSourcesRunnable = new Runnable() {
       public void run() {
-        for (int idx = 0; idx < contentEntries.length; idx++) {
-          final ContentEntry contentEntry = contentEntries[idx];
-          final java.util.List<Pair<File, String>> suggestedRoots = entryToRootMap.get(contentEntry);
+        for (final ContentEntry contentEntry : contentEntries) {
+          final List<Pair<File, String>> suggestedRoots = entryToRootMap.get(contentEntry);
           if (suggestedRoots != null) {
-            for (int j = 0; j < suggestedRoots.size(); j++) {
-              final Pair<File, String> suggestedRoot = suggestedRoots.get(j);
+            for (final Pair<File, String> suggestedRoot : suggestedRoots) {
               final VirtualFile sourceRoot = LocalFileSystem.getInstance().findFileByIoFile(suggestedRoot.first);
               if (sourceRoot != null && VfsUtil.isAncestor(contentEntry.getFile(), sourceRoot, false)) {
                 contentEntry.addSourceFolder(sourceRoot, false, suggestedRoot.getSecond());

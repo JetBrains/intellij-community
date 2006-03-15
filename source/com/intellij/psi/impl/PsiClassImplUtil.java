@@ -310,7 +310,7 @@ public class PsiClassImplUtil {
             for (final Pair<PsiField, PsiSubstitutor> candidate : list) {
               PsiField candidateField = candidate.getFirst();
               PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(candidateField.getContainingClass(), candidate.getSecond(), aClass,
-                                                                       substitutor);
+                                                                       substitutor, place);
 
               processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, candidateField.getContainingClass());
               if (!processor.execute(candidateField, finalSubstitutor)) return false;
@@ -343,7 +343,7 @@ public class PsiClassImplUtil {
                 final PsiClass containingClass = inner.getContainingClass();
                 if (containingClass != null) {
                   PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
-                                                                           substitutor);
+                                                                           substitutor, place);
                   processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
                   if (!processor.execute(inner, finalSubstitutor)) return false;
                 }
@@ -374,7 +374,7 @@ public class PsiClassImplUtil {
             }
             final PsiClass containingClass = candidateMethod.getContainingClass();
             PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
-                                                                     substitutor);
+                                                                     substitutor, place);
             if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
               PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
               for (PsiTypeParameter methodTypeParameter : methodTypeParameters) {
@@ -392,14 +392,17 @@ public class PsiClassImplUtil {
     return processDeclarationsInClassNotCached(aClass, processor, substitutor, visited, last, place, isRaw);
   }
 
-  static PsiSubstitutor obtainFinalSubstitutor(PsiClass candidateClass, PsiSubstitutor candidateSubstitutor, PsiClass aClass,
-                                                       PsiSubstitutor substitutor) {
+  static PsiSubstitutor obtainFinalSubstitutor(PsiClass candidateClass,
+                                               PsiSubstitutor candidateSubstitutor,
+                                               PsiClass aClass,
+                                               PsiSubstitutor substitutor,
+                                               final PsiElement place) {
     PsiElementFactory elementFactory = candidateClass.getManager().getElementFactory();
     if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
       return elementFactory.createRawSubstitutor(candidateClass);
     }
 
-    final PsiType containingType = elementFactory.createType(candidateClass, candidateSubstitutor);
+    final PsiType containingType = elementFactory.createType(candidateClass, candidateSubstitutor, PsiUtil.getLanguageLevel(place));
     PsiType type = substitutor.substitute(containingType);
     if (!(type instanceof PsiClassType)) return candidateSubstitutor;
     return ((PsiClassType)type).resolveGenerics().getSubstitutor();
@@ -493,7 +496,8 @@ public class PsiClassImplUtil {
       final PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
-      PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass, substitutor);
+      PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass, substitutor,
+                                                               place);
       if (!processDeclarationsInClass(superClass, processor, finalSubstitutor, visited, last, place, isRaw)) {
         return false;
       }

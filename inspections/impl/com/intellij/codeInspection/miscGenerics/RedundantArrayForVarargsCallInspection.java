@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -51,7 +52,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
   }
 
   public ProblemDescriptor[] getDescriptions(PsiElement place, final InspectionManager manager) {
-    if (place.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
+    if (PsiUtil.getLanguageLevel(place).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     place.accept(new PsiRecursiveElementVisitor() {
       public void visitCallExpression(PsiCallExpression expression) {

@@ -110,8 +110,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         Lexer lexer = lang.getSyntaxHighlighter(file.getProject()).getHighlightingLexer();
         TokenSet commentTokens = null;
         if (file instanceof PsiJavaFile) {
-          LanguageLevel level = file.getProject() != null ? PsiManager.getInstance(file.getProject()).getEffectiveLanguageLevel() : LanguageLevel.HIGHEST;
-          lexer = new JavaLexer(level);
+          lexer = new JavaLexer(((PsiJavaFile)file).getLanguageLevel());
           commentTokens = TokenSet.orSet(ElementType.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
         }
         else if (PsiUtil.isInJspFile(file)) {

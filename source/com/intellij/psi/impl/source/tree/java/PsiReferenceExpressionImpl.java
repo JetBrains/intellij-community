@@ -15,6 +15,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiSubstitutorEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
@@ -29,6 +30,7 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -242,7 +244,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       return null;
     }
 
-    final PsiType ret;
+    PsiType ret;
     if (resolve instanceof PsiVariable) {
       PsiType type = ((PsiVariable)resolve).getType();
       ret = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
@@ -254,11 +256,16 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       return null;
     }
     if (ret == null) return null;
+    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(this);
+    if (ret instanceof PsiClassType) {
+      ((PsiClassType)ret).setLanguageLevel(languageLevel);
+    }
 
-    if (getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+    if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
       PsiType substitutedType = result.getSubstitutor().substitute(ret);
       return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, this);
     }
+
     return TypeConversionUtil.erasure(ret);
   }
 

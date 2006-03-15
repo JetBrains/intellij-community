@@ -2,9 +2,11 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,10 +60,15 @@ public class PsiImmediateClassType extends PsiClassType {
   };
 
   public PsiImmediateClassType(PsiClass aClass, PsiSubstitutor substitutor) {
+    this (aClass, substitutor, null);
+  }
+
+  public PsiImmediateClassType(final PsiClass aClass, final PsiSubstitutor substitutor, final LanguageLevel languageLevel) {
     myClass = aClass;
     myManager = aClass.getManager();
     mySubstitutor = substitutor;
     LOG.assertTrue(mySubstitutor != null);
+    myLanguageLevel = languageLevel;
   }
 
   public PsiClass resolve() {
@@ -206,5 +213,11 @@ public class PsiImmediateClassType extends PsiClassType {
   @NotNull
   public GlobalSearchScope getResolveScope() {
     return myClass.getResolveScope();
+  }
+
+  @NotNull
+  public LanguageLevel getLanguageLevel() {
+    if (myLanguageLevel != null) return myLanguageLevel;
+    return PsiUtil.getLanguageLevel(myClass);
   }
 }

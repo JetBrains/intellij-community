@@ -29,6 +29,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,7 +190,7 @@ class SuppressInspectionToolbarAction extends AnAction {
       final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
       if (jdk != null) {
         isSuppressWarnings = DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && jdk.getVersionString().indexOf("1.5") > 0 &&
-                             LanguageLevel.JDK_1_5.compareTo(context.getManager().getEffectiveLanguageLevel()) <= 0;
+                             LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(context)) <= 0;
       }
     }
     if (isSuppressWarnings) {

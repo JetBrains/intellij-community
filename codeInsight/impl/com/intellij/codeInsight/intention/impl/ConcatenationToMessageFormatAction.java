@@ -44,7 +44,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     String format = prepareString(formatString.toString());
     PsiExpression formatArgument = manager.getElementFactory().createExpressionFromText("\"" + format + "\"", null);
     argumentList.add(formatArgument);
-    if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+    if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_5) >= 0) {
       for (PsiExpression arg : args) {
         argumentList.add(arg);
       }
@@ -145,7 +145,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     arg = PsiUtil.deparenthesizeExpression(arg);
     final PsiManager manager = arg.getManager();
     final PsiElementFactory factory = manager.getElementFactory();
-    if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+    if (PsiUtil.getLanguageLevel(arg).compareTo(LanguageLevel.JDK_1_5) < 0) {
       final PsiType type = arg.getType();
       if (type instanceof PsiPrimitiveType && !type.equals(PsiType.NULL)) {
         final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type;
@@ -169,7 +169,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    if (PsiManager.getInstance(project).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_4) < 0) return false;
+    if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_4) < 0) return false;
     return getEnclosingLiteralConcatenation(file, editor) != null;
   }
 

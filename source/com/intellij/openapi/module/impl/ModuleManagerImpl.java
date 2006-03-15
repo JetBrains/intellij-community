@@ -147,8 +147,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
           myFailedModulePaths.clear();
           myFailedModulePaths.addAll(Arrays.asList(myModulePaths));
           final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
-          for (int idx = 0; idx < myModulePaths.length; idx++) {
-            final ModulePath modulePath = myModulePaths[idx];
+          for (final ModulePath modulePath : myModulePaths) {
             try {
               final Module module = myModuleModel.loadModuleInternal(modulePath.getPath());
               if (module.getModuleType() instanceof UnknownModuleType) {
@@ -178,12 +177,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
                 public void run() {
                   int response = Messages.showDialog(ProjectBundle.message("module.loading.cancelled.error", modulePath.getPath(),
                                                                            e.getIssuer().getComponentName(), e.getMessage()),
-                                                     ProjectBundle.message("module.loading.cancelled.title"),
-                                                     new String[]{
-                                                       ProjectBundle.message("module.loading.cancelled.load.later.action"),
-                                                       ProjectBundle.message("module.loading.cancelled.remove.action")
-                                                     }, 0,
-                                                     Messages.getErrorIcon());
+                                                     ProjectBundle.message("module.loading.cancelled.title"), new String[]{
+                    ProjectBundle.message("module.loading.cancelled.load.later.action"),
+                    ProjectBundle.message("module.loading.cancelled.remove.action")}, 0, Messages.getErrorIcon());
                   if (response == 1) {
                     myModuleModel.myPath2CancelledModelMap.remove(modulePath.getPath());
                   }
@@ -198,8 +194,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             }
             else {
               StringBuilder modulesBuilder = new StringBuilder();
-              for (Iterator it = modulesWithUnknownTypes.iterator(); it.hasNext();) {
-                final Module module = (Module)it.next();
+              for (final Module module : modulesWithUnknownTypes) {
                 modulesBuilder.append("\n\"");
                 modulesBuilder.append(module.getName());
                 modulesBuilder.append("\"");
@@ -473,9 +468,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final Module[] modules = myModuleModel.getModules();
-        for (int i = 0; i < modules.length; i++) {
-          ModuleImpl module = (ModuleImpl)modules[i];
-          module.moduleAdded();
+        for (Module module : modules) {
+          ((ModuleImpl)module).moduleAdded();
           fireModuleAdded(module);
         }
       }
@@ -684,7 +678,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     private Graph<Module> moduleGraph() {
-      final Graph<Module> graph = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
+      return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
         public Collection<Module> getNodes() {
           return Arrays.asList(getModules());
         }
@@ -694,7 +688,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
           return Arrays.asList(dependentModules).iterator();
         }
       }));
-      return graph;
     }
 
     @NotNull private List<Module> getModuleDependentModules(Module module) {
@@ -748,10 +741,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
           thisModule.dispose();
         }
       }
-      for (int i = 0; i < myModulesToDispose.size(); i++) {
-        ModuleImpl module = (ModuleImpl)myModulesToDispose.get(i);
-        if (!list.contains(module)) {
-          module.dispose();
+      for (Module moduleToDispose : myModulesToDispose) {
+        if (!list.contains(moduleToDispose)) {
+          ((ModuleImpl)moduleToDispose).dispose();
         }
       }
       clearRenamingStuff();
@@ -805,9 +797,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     ProjectRootManagerEx.getInstanceEx(myProject).beforeRootsChange(false);
 
     try {
-      for (int i = 0; i < removedModules.size(); i++) {
-        ModuleImpl module = (ModuleImpl)removedModules.get(i);
-        fireBeforeModuleRemoved(module);
+      for (Module removedModule : removedModules) {
+        fireBeforeModuleRemoved(removedModule);
         cleanCachedStuff();
       }
 
@@ -824,19 +815,17 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         runnable.run();
       }
 
-      for (int i = 0; i < removedModules.size(); i++) {
-        ModuleImpl module = (ModuleImpl)removedModules.get(i);
+      for (Module module : removedModules) {
         fireModuleRemoved(module);
         cleanCachedStuff();
-        module.dispose();
+        ((ModuleImpl)module).dispose();
         cleanCachedStuff();
       }
 
-      for (int i = 0; i < addedModules.size(); i++) {
-        ModuleImpl module = (ModuleImpl)addedModules.get(i);
-        module.moduleAdded();
+      for (Module addedModule : addedModules) {
+        ((ModuleImpl)addedModule).moduleAdded();
         cleanCachedStuff();
-        fireModuleAdded(module);
+        fireModuleAdded(addedModule);
         cleanCachedStuff();
       }
       final Map<Module, String> modulesToNewNamesMap = moduleModel.myModulesToNewNamesMap;

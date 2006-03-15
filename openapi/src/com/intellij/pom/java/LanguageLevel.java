@@ -21,19 +21,17 @@ import com.intellij.psi.PsiBundle;
  * @author dsl
  */
 public enum LanguageLevel {
-  JDK_1_3 ("1.3", "1.3 ", false, false),
-  JDK_1_4 ("1.4", PsiBundle.message("jdk.1.4.language.level.description"), true, false), // assert keyword
-  JDK_1_5 ("5.0", PsiBundle.message("jdk.1.5.language.level.description"), true, true); // enums etc.
+  JDK_1_3 ("1.3 ", false, false),
+  JDK_1_4 (PsiBundle.message("jdk.1.4.language.level.description"), true, false), // assert keyword
+  JDK_1_5 (PsiBundle.message("jdk.1.5.language.level.description"), true, true); // enums etc.
 
   public static final LanguageLevel HIGHEST = JDK_1_5;
-  private final String myId;
   private final boolean myHasAssertKeyword;
   private final boolean myHasEnumKeywordAndAutoboxing;
   private final String myPresentableText;
 
 
-  private LanguageLevel(String id, String presentableText, boolean hasAssertKeyword, boolean hasEnumKeywordAndAutoboxing) {
-    myId = id;
+  private LanguageLevel(String presentableText, boolean hasAssertKeyword, boolean hasEnumKeywordAndAutoboxing) {
     myHasAssertKeyword = hasAssertKeyword;
     myHasEnumKeywordAndAutoboxing = hasEnumKeywordAndAutoboxing;
     myPresentableText = presentableText;
@@ -49,11 +47,6 @@ public enum LanguageLevel {
 
   public boolean hasEnumKeywordAndAutoboxing() {
     return myHasEnumKeywordAndAutoboxing;
-  }
-
-  public String toString() {
-    //noinspection HardCodedStringLiteral
-    return "java " + myId;
   }
 
   public String getPresentableText() {

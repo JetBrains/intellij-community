@@ -361,7 +361,7 @@ public class OverrideImplementUtil {
 
     if (candidates.length == 0) return;
 
-    boolean isJdk15Enabled = LanguageLevel.JDK_1_5.compareTo(PsiManager.getInstance(project).getEffectiveLanguageLevel()) <= 0;
+    boolean isJdk15Enabled = LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(aClass)) <= 0;
     final MemberChooser chooser = new MemberChooser(candidates, false, true, project, !toImplement && isJdk15Enabled);
     chooser.setTitle(toImplement
                      ? CodeInsightBundle.message("methods.to.implement.chooser.title")

@@ -20,6 +20,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.BytePointer;
@@ -663,7 +664,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   public boolean isVarArgs() {
       if (myIsVarArgs == null) {
         boolean isVarArgs;
-        if (getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+        if (PsiUtil.getLanguageLevel(this).compareTo(LanguageLevel.JDK_1_5) >= 0) {
           if (getRepositoryId() < 0) {
             isVarArgs = (getAccessFlags() & ClsUtil.ACC_VARARGS) != 0;
           }

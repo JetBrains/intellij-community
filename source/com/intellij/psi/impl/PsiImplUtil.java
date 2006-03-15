@@ -148,7 +148,7 @@ public class PsiImplUtil {
       return new PsiClassReferenceType(new LightClassReference(manager, "Class", "java.lang.Class", resolveScope));
     }
     else {
-      if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+      if (PsiUtil.getLanguageLevel(classAccessExpression).compareTo(LanguageLevel.JDK_1_5) < 0) {
         //Raw java.lang.Class
         return manager.getElementFactory().createType(classClass);
       }
@@ -159,7 +159,7 @@ public class PsiImplUtil {
         if (PsiType.VOID.equals(operandType)) {
           operandType = manager.getElementFactory().createTypeByFQClassName("java.lang.Void", classAccessExpression.getResolveScope());
         } else {
-          operandType = ((PsiPrimitiveType)operandType).getBoxedType(manager, classAccessExpression.getResolveScope());
+          operandType = ((PsiPrimitiveType)operandType).getBoxedType(classAccessExpression);
         }
       }
       final PsiTypeParameter[] typeParameters = classClass.getTypeParameters();

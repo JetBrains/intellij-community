@@ -28,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -907,7 +908,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       }
     }
 
-    boolean isJdk15Enabled = LanguageLevel.JDK_1_5.compareTo(PsiManager.getInstance(project).getEffectiveLanguageLevel()) <= 0;
+    boolean isJdk15Enabled = LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(aClass)) <= 0;
     final MemberChooser chooser = new MemberChooser(methods.toArray(), false, true, project, isJdk15Enabled);
     chooser.setTitle(CompletionBundle.message("completion.smarttype.select.methods.to.override"));
     chooser.setCopyJavadocVisible(true);

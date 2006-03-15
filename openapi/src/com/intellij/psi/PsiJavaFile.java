@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.pom.java.LanguageLevel;
 
 /**
  * Represents a Java or JSP file.
@@ -94,4 +95,6 @@ public interface PsiJavaFile extends PsiImportHolder {
    * @return the Java code reference under the import statement, or null if there is no such statement.
    */
   @Nullable PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass);
+
+  @NotNull LanguageLevel getLanguageLevel();
 }

@@ -2,6 +2,10 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
@@ -18,6 +22,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +41,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private final Map<PsiJavaFile,Map<String, SoftReference<JavaResolveResult[]>>> myGuessCache = ResolveCache.getOrCreateWeakMap(myManager, CACHED_CLASSES_MAP_KEY, false);
 
   private static final @NonNls String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
+  private LanguageLevel myLanguageLevel;
 
   //protected PsiJavaFileBaseImpl(Project project,
   //                              IElementType elementType,
@@ -440,4 +446,37 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   public boolean importClass(PsiClass aClass) {
     return ((CodeStyleManagerEx) getManager().getCodeStyleManager()).addImport(this, aClass);
   }
+
+  @NotNull
+  public LanguageLevel getLanguageLevel() {
+    if (myLanguageLevel == null) {
+      myLanguageLevel = getLanguageLevelInner();
+    }
+    return myLanguageLevel;
+  }
+
+  private LanguageLevel getLanguageLevelInner() {
+    final VirtualFile virtualFile = getVirtualFile();
+    if (virtualFile == null) {
+      return getManager().getEffectiveLanguageLevel();
+    }
+    final Project project = getProject();
+    final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
+    if (module != null) {
+      return module.getEffectiveLanguageLevel();
+    }
+    else {
+      final PsiFile originalFile = (PsiFile)getOriginalElement();
+      if (originalFile instanceof PsiJavaFile && originalFile != this) return ((PsiJavaFile)originalFile).getLanguageLevel();
+    }
+
+    return PsiManager.getInstance(project).getEffectiveLanguageLevel();
+  }
+
+
+  /*public PsiElement getOriginalElement() {
+    final PsiClass[] classes = getClasses();
+    if (classes.length > 0) return classes[0].getOriginalElement().getContainingFile();
+    return this;
+  }*/
 }

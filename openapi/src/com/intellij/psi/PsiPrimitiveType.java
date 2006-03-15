@@ -22,14 +22,15 @@
  */
 package com.intellij.psi;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
-
-import java.util.Map;
-
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * Represents primitive types of Java language.
@@ -97,23 +98,37 @@ public class PsiPrimitiveType extends PsiType {
   @Nullable
   public static PsiPrimitiveType getUnboxedType(PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
+    if (!((PsiClassType)type).getLanguageLevel().hasEnumKeywordAndAutoboxing()) return null;
     final PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return null;
-    if (!psiClass.getManager().getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing()) return null;
     return ourQNameToUnboxed.get(psiClass.getQualifiedName());
   }
 
   /**
    * Returns a boxed class type corresponding to the primitive type.
    *
-   * @param manager      the manager used to create the class type.
-   * @param resolveScope the scope for searching the class.
+   * @param context where this boxed type is to be used
    * @return the class type, or null if the current language level does not support autoboxing or
    *         it was not possible to resolve the reference to the class.
    */
   @Nullable
-  public PsiClassType getBoxedType(PsiManager manager, GlobalSearchScope resolveScope) {
-    if (!manager.getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing()) return null;
+  public PsiClassType getBoxedType(PsiElement context) {
+    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(context);
+    if (!languageLevel.hasEnumKeywordAndAutoboxing()) return null;
+    final String boxedQName = ourUnboxedToQName.get(this);
+
+    //[ven]previous call returns null for NULL, VOID
+    if (boxedQName == null) return null;
+
+    PsiManager manager = context.getManager();
+    final PsiClass aClass = manager.findClass(boxedQName, context.getResolveScope());
+    if (aClass == null) return null;
+    return manager.getElementFactory().createType(aClass, PsiSubstitutor.EMPTY, languageLevel);
+  }
+
+  @Nullable
+  public PsiClassType getBoxedType(final PsiManager manager, final GlobalSearchScope resolveScope, final LanguageLevel languageLevel) {
+    if (!languageLevel.hasEnumKeywordAndAutoboxing()) return null;
     final String boxedQName = ourUnboxedToQName.get(this);
 
     //[ven]previous call returns null for NULL, VOID

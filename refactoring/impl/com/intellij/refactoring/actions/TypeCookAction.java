@@ -27,8 +27,6 @@ public class TypeCookAction extends BaseRefactoringAction {
     if (project == null) {
       return false;
     }
-    LanguageLevel languageLevel = PsiManager.getInstance(project).getEffectiveLanguageLevel();
-    if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) return false;
 
     for (int i = 0; i < elements.length; i++) {
       PsiElement element = elements[i];

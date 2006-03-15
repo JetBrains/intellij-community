@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,13 +61,13 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
 
     if (TypeConversionUtil.isAssignable(type1, type2, false)) return type1;
     if (TypeConversionUtil.isAssignable(type2, type1, false)) return type2;
-    if (getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+    if (PsiUtil.getLanguageLevel(this).compareTo(LanguageLevel.JDK_1_5) < 0) {
       return null;
     }
     else {
-      if (TypeConversionUtil.isPrimitiveAndNotNull(type1)) type1 = ((PsiPrimitiveType)type1).getBoxedType(getManager(), getResolveScope());
+      if (TypeConversionUtil.isPrimitiveAndNotNull(type1)) type1 = ((PsiPrimitiveType)type1).getBoxedType(this);
       if (type1 == null) return null;
-      if (TypeConversionUtil.isPrimitiveAndNotNull(type2)) type2 = ((PsiPrimitiveType)type2).getBoxedType(getManager(), getResolveScope());
+      if (TypeConversionUtil.isPrimitiveAndNotNull(type2)) type2 = ((PsiPrimitiveType)type2).getBoxedType(this);
       if (type2 == null) return null;
 
       return GenericsUtil.getLeastUpperBound(type1, type2, getManager());

@@ -301,7 +301,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     String commentText = comment.getText();
     if (!commentText.endsWith(DOC_COMMENT_SUFFIX)) return false;
 
-    Lexer lexer = new JavaLexer(comment.getManager().getEffectiveLanguageLevel());
+    Lexer lexer = new JavaLexer(PsiUtil.getLanguageLevel(comment));
     lexer.start(commentText.toCharArray(), DOC_COMMENT_PREFIX.length(), commentText.length());
     while (true) {
       IElementType tokenType = lexer.getTokenType();

@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,7 +27,12 @@ public class JavaParserDefinition implements ParserDefinition {
 
   @NotNull
   public Lexer createLexer(Project project) {
-    return new JavaLexer(PsiManager.getInstance(project).getEffectiveLanguageLevel());
+    throw new UnsupportedOperationException("Cannot create lexer");
+  }
+
+  @NotNull
+  public static Lexer createLexer(LanguageLevel languageLevel) {
+    return new JavaLexer(languageLevel);
   }
 
   public IFileElementType getFileNodeType() {

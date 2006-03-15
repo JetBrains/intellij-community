@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -69,8 +70,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
   private static @Nullable LocalQuickFix[] createNPEFixes(PsiExpression qualifier) {
-    if (qualifier != null && qualifier.getManager().getEffectiveLanguageLevel().hasAssertKeyword() &&
-        !(qualifier instanceof PsiMethodCallExpression)) {
+    if (qualifier != null &&!(qualifier instanceof PsiMethodCallExpression) && PsiUtil.getLanguageLevel(qualifier).hasAssertKeyword()) {
       try {
         PsiBinaryExpression binary = (PsiBinaryExpression)qualifier.getManager().getElementFactory().createExpressionFromText("a != null",
                                                                                                                               null);

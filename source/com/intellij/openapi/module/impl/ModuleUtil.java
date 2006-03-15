@@ -20,11 +20,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,5 +200,18 @@ public class ModuleUtil {
       }
     }
     return null;
+  }
+
+  public static LanguageLevel getLanguageLevel(@NotNull final PsiFile file, final Project project) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) throw new IllegalStateException("Cannot get language level for " + file.getName());
+    final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
+    if (module != null) {
+      return module.getEffectiveLanguageLevel();
+    } else {
+      final PsiFile originalFile = file.getOriginalFile();
+    }
+
+    return PsiManager.getInstance(project).getEffectiveLanguageLevel();
   }
 }

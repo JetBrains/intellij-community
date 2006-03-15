@@ -301,6 +301,8 @@ public abstract class PsiManager implements UserDataHolder {
   /**
    * Returns the language level set for this project.
    *
+   * @deprecated  use {@link com.intellij.psi.PsiJavaFile#getLanguageLevel()} or
+   * {@link com.intellij.psi.util.PsiUtil#getLanguageLevel(PsiElement)}
    * @return the language level instance.
    */
   public abstract @NotNull LanguageLevel getEffectiveLanguageLevel();

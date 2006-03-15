@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.parsing;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.psi.PsiManager;
@@ -12,6 +11,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -25,12 +25,9 @@ public class FileTextParsing extends Parsing {
     return parseFileText(manager, lexer, buffer, startOffset, endOffset, false, table);
   }
 
-  private static final TokenSet IMPORT_LIST_STOPPER_BIT_SET = TokenSet.create(new IElementType[]{CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, AT});
+  private static final TokenSet IMPORT_LIST_STOPPER_BIT_SET = TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, AT);
 
-  public static TreeElement parseFileText(PsiManager manager, Lexer lexer, char[] buffer, int startOffset, int endOffset, boolean skipHeader, CharTable table) {
-    if (lexer == null){
-      lexer = new JavaLexer(manager.getEffectiveLanguageLevel());
-    }
+  public static TreeElement parseFileText(PsiManager manager, @NotNull Lexer lexer, char[] buffer, int startOffset, int endOffset, boolean skipHeader, CharTable table) {
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, startOffset, endOffset);
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
@@ -73,7 +70,7 @@ public class FileTextParsing extends Parsing {
     }
 
     ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    return (TreeElement)dummyRoot.getFirstChildNode();
+    return dummyRoot.getFirstChildNode();
   }
 
   public ASTNode parseImportList(Lexer lexer) {
@@ -97,8 +94,7 @@ public class FileTextParsing extends Parsing {
         lastPos = lexer.getTokenEnd();
         lexer.advance();
       }
-      LeafElement chameleon = Factory.createLeafElement(IMPORT_LIST, lexer.getBuffer(), startPos, lastPos, lexer.getState(), myContext.getCharTable());
-      return chameleon;
+      return Factory.createLeafElement(IMPORT_LIST, lexer.getBuffer(), startPos, lastPos, lexer.getState(), myContext.getCharTable());
     }
 
     return importList;

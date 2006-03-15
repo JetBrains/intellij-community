@@ -20,6 +20,10 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.cls.BytePointer;
+import com.intellij.util.cls.ClsUtil;
+import com.intellij.util.cls.ClsFormatException;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -32,6 +36,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   private static final Key<Document> DOCUMENT_IN_MIRROR_KEY = Key.create("DOCUMENT_IN_MIRROR_KEY");
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
+  private LanguageLevel myLanguageLevel = null;
 
   private ClsFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider, boolean forDecompiling) {
     super(manager, -2);
@@ -50,6 +55,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   }
 
   public void unloadContent() {
+    myLanguageLevel = null;
     if (myClass != null) {
       myClass.invalidate();
       myClass = null;
@@ -125,7 +131,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
         myClass = (ClsClassImpl)getRepositoryElementsManager().findOrCreatePsiElementById(classIds[0]);
       }
       else {
-        myClass = new ClsClassImpl(myManager, this, getVirtualFile());
+        myClass = new ClsClassImpl(myManager, this, new ClassFileData(getVirtualFile()));
       }
     }
     return new PsiClass[]{myClass};
@@ -181,6 +187,36 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return null;
   }
 
+  @NotNull
+  public LanguageLevel getLanguageLevel() {
+    //TODO: repository for language level
+    if (myLanguageLevel == null) {
+      myLanguageLevel = getLanguageLevelInner();
+    }
+    return myLanguageLevel;
+  }
+
+  private LanguageLevel getLanguageLevelInner() {
+    try {
+      final ClassFileData classFileData = new ClassFileData(getVirtualFile());
+      final BytePointer ptr = new BytePointer(classFileData.getData(), 6);
+      final int majorVersion = ClsUtil.readU2(ptr);
+      return getLanguageLevelInner(majorVersion);
+    }
+    catch (ClsFormatException e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(e);
+      }
+      return getManager().getEffectiveLanguageLevel();
+    }
+  }
+
+  private static LanguageLevel getLanguageLevelInner(int majorClassFileVersion) {
+    if (majorClassFileVersion < 48) return LanguageLevel.JDK_1_3;
+    if (majorClassFileVersion < 49) return LanguageLevel.JDK_1_4;
+    return LanguageLevel.JDK_1_5;
+  }
+
   public PsiElement setName(String name) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
@@ -211,14 +247,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     if (mirrorFile instanceof PsiJavaFile) {
       PsiPackageStatement packageStatement = ((PsiJavaFile)mirrorFile).getPackageStatement();
       if (packageStatement != null) {
-          ((ClsElementImpl)getPackageStatement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(packageStatement));
+        ((ClsElementImpl)getPackageStatement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(packageStatement));
       }
       PsiClass[] classes = getClasses();
       PsiClass[] mirrorClasses = ((PsiJavaFile)mirrorFile).getClasses();
       LOG.assertTrue(classes.length == mirrorClasses.length);
       if (classes.length == mirrorClasses.length) {
         for (int i = 0; i < classes.length; i++) {
-            ((ClsElementImpl)classes[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
+          ((ClsElementImpl)classes[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
         }
       }
     }

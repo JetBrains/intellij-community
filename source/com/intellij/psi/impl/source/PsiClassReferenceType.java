@@ -3,8 +3,10 @@ package com.intellij.psi.impl.source;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +32,12 @@ public class PsiClassReferenceType extends PsiClassType {
   @NotNull
   public GlobalSearchScope getResolveScope() {
     return myReference.getResolveScope();
+  }
+
+  @NotNull
+  public LanguageLevel getLanguageLevel() {
+    if (myLanguageLevel != null) return myLanguageLevel;
+    return PsiUtil.getLanguageLevel(myReference);
   }
 
   public PsiClass resolve() {
@@ -94,7 +102,7 @@ public class PsiClassReferenceType extends PsiClassType {
     final PsiElementFactory factory = manager.getElementFactory();
     if (resolved instanceof PsiClass) {
       final PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor((PsiClass) resolved);
-      return factory.createType((PsiClass) resolved, rawSubstitutor);
+      return factory.createType((PsiClass) resolved, rawSubstitutor, getLanguageLevel());
     }
     String qualifiedName = myReference.getQualifiedName();
     return new PsiClassReferenceType(new LightClassReference(manager, myReference.getReferenceName(), qualifiedName, myReference.getResolveScope()));

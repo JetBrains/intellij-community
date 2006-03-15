@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -36,7 +37,7 @@ public class ValueDocTagInfo implements JavadocTagInfo {
   public String checkTagValue(PsiDocTagValue value) {
     boolean hasReference = (value != null && value.getFirstChild() != null);
     if (hasReference) {
-      if (!value.getManager().getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing()) {
+      if (!PsiUtil.getLanguageLevel(value).hasEnumKeywordAndAutoboxing()) {
         return JavaErrorMessages.message("javadoc.value.tag.jdk15.required");
       }
     }

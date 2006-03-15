@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.javadoc.JavadocTagInfo;
@@ -100,7 +101,7 @@ class SeeDocTagInfo implements JavadocTagInfo {
 
   public boolean isValidInContext(PsiElement element) {
     if (myInline && myName.equals(LINKPLAIN_TAG))
-      return element.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_4) >= 0;
+      return PsiUtil.getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_4) >= 0;
 
     return true;
   }

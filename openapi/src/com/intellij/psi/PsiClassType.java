@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ public abstract class PsiClassType extends PsiType {
    * The empty array of PSI class types which can be reused to avoid unnecessary allocations.
    */
   public static final PsiClassType[] EMPTY_ARRAY = new PsiClassType[0];
+  protected LanguageLevel myLanguageLevel;
 
   /**
    * Resolves the class reference and returns the resulting class.
@@ -187,6 +189,13 @@ public abstract class PsiClassType extends PsiType {
 
   public <A> A accept(PsiTypeVisitor<A> visitor) {
     return visitor.visitClassType(this);
+  }
+
+  @NotNull
+  public abstract LanguageLevel getLanguageLevel();
+
+  public void setLanguageLevel(final LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
   }
 
   /**

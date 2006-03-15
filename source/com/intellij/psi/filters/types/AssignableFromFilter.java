@@ -3,6 +3,7 @@ package com.intellij.psi.filters.types;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterUtil;
@@ -61,7 +62,8 @@ public class AssignableFromFilter implements ElementFilter{
         if (substitutor != null) returnType = substitutor.substitute(returnType);
         final PsiType substitutionForParameter = method.getManager().getResolveHelper().getSubstitutionForTypeParameter(parameter,
                                                                                                                         returnType, type,
-                                                                                                                        false);
+                                                                                                                        false,
+                                                                                                                        PsiUtil.getLanguageLevel(context));
         if (substitutionForParameter != PsiType.NULL) {
           return true;
         }

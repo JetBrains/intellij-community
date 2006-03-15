@@ -23,6 +23,8 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
@@ -35,6 +37,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,6 +53,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   private VirtualFile myFile;
 
   @NonNls private static final String TEMPLATE_NAME_PROPERTY = "NAME";
+  private LanguageLevel myLanguageLevel;
 
   public PsiDirectoryImpl(PsiManagerImpl manager, VirtualFile file) {
     myManager = manager;
@@ -457,6 +461,26 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     if (myFile == null) return false;
     final VirtualFile sourceRoot = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getSourceRootForFile(myFile);
     return myFile.equals(sourceRoot);
+  }
+
+  public LanguageLevel getLanguageLevel() {
+    if (myLanguageLevel == null) {
+      myLanguageLevel = getLanguageLevelInner();
+    }
+    return myLanguageLevel;
+
+  }
+
+  private LanguageLevel getLanguageLevelInner() {
+    final VirtualFile virtualFile = getVirtualFile();
+    if (virtualFile == null) throw new IllegalStateException("Cannot get language level for " + getName());
+    final Project project = getProject();
+    final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
+    if (module != null) {
+      return module.getEffectiveLanguageLevel();
+    }
+
+    return PsiManager.getInstance(project).getEffectiveLanguageLevel();
   }
 
   public PsiElement add(PsiElement element) throws IncorrectOperationException {

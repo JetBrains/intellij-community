@@ -29,16 +29,21 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModule;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.pom.core.impl.PomModuleImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiManager;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -480,6 +485,19 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
       }
       return myModuleRuntimeClasspathScope;
     }
+  }
+
+  @NotNull
+  public LanguageLevel getEffectiveLanguageLevel() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    LanguageLevel level = getLanguageLevel();
+    if (level != null) return level;
+    return PsiManager.getInstance(myProject).getEffectiveLanguageLevel();
+  }
+  
+  @Nullable
+  public LanguageLevel getLanguageLevel() {
+    return ((ModuleRootManagerImpl)ModuleRootManager.getInstance(this)).getLanguageLevel();
   }
 
   public void clearScopesCache() {

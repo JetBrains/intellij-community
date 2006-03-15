@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
@@ -18,6 +19,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.CharTable;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -166,8 +168,14 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public Lexer createLexer() {
-    final ParserDefinition parserDefinition = getLanguage().getParserDefinition();
-    if(parserDefinition == null) return new JavaLexer(getManager().getEffectiveLanguageLevel());
+    final Language language = getLanguage();
+    if (language.equals(StdLanguages.JAVA)) {
+      LanguageLevel javaLanguageLevel;
+      final PsiElement context = getContext();
+      javaLanguageLevel = context != null ? PsiUtil.getLanguageLevel(context) : getManager().getEffectiveLanguageLevel();
+      return new JavaLexer(javaLanguageLevel);
+    }
+    final ParserDefinition parserDefinition = language.getParserDefinition();
     return parserDefinition.createLexer(getManager().getProject());
   }
 

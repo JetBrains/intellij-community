@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.javadoc;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.util.ArrayUtil;
@@ -29,7 +30,7 @@ class SimpleDocTagInfo implements JavadocTagInfo {
   }
 
   public boolean isValidInContext(PsiElement element) {
-    if (element.getManager().getEffectiveLanguageLevel().compareTo(myLanguageLevel) < 0) {
+    if (PsiUtil.getLanguageLevel(element).compareTo(myLanguageLevel) < 0) {
       return false;
     }
 

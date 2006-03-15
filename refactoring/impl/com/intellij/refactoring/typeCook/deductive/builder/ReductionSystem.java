@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 
 import java.util.*;
 
@@ -56,8 +57,8 @@ public class ReductionSystem {
   }
 
   public void addSubtypeConstraint(PsiType left, PsiType right) {
-    if (left instanceof PsiPrimitiveType) left = ((PsiPrimitiveType)left).getBoxedType(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
-    if (right instanceof PsiPrimitiveType) right = ((PsiPrimitiveType)right).getBoxedType(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
+    if (left instanceof PsiPrimitiveType) left = ((PsiPrimitiveType)left).getBoxedType(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject), LanguageLevel.JDK_1_5);
+    if (right instanceof PsiPrimitiveType) right = ((PsiPrimitiveType)right).getBoxedType(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject), LanguageLevel.JDK_1_5);
     if (left == null || right == null) {
       return;
     }

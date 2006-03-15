@@ -4,6 +4,7 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.pom.java.LanguageLevel;
 
 /**
  *
@@ -21,7 +22,7 @@ public class LightKeyword extends LightElement implements PsiKeyword, PsiJavaTok
   }
 
   public IElementType getTokenType(){
-    Lexer lexer = new JavaLexer(myManager.getEffectiveLanguageLevel());
+    Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
     lexer.start(myText.toCharArray());
     return lexer.getTokenType();
   }

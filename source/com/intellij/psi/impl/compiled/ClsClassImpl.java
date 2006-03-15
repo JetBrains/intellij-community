@@ -2,10 +2,6 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.PomMemberOwner;
@@ -58,10 +54,10 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   private PsiDocComment myDocComment = null;
   private ClsAnnotationImpl[] myAnnotations = null;
 
-  public ClsClassImpl(PsiManagerImpl manager, ClsElementImpl parent, VirtualFile file) {
+  public ClsClassImpl(PsiManagerImpl manager, ClsElementImpl parent, final ClassFileData classFileData) {
     super(manager, -1);
     myParent = parent;
-    myClassFileData = new ClassFileData(file);
+    myClassFileData = classFileData;
   }
 
   public ClsClassImpl(PsiManagerImpl manager, long repositoryId) {
@@ -634,7 +630,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
               String innerName = childName.substring(prefix.length());
               if (innerName.indexOf('$') >= 0) continue;
               if (!myManager.getNameHelper().isIdentifier(innerName)) continue;
-              PsiClass aClass = new ClsClassImpl(myManager, this, child);
+              PsiClass aClass = new ClsClassImpl(myManager, this, new ClassFileData(child));
               array.add(aClass);
             }
           }

@@ -34,6 +34,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1147,5 +1148,19 @@ public final class PsiUtil {
       child = parent;
     }
     while (true);
+  }
+
+  @NotNull
+  public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
+    if (element instanceof PsiDirectory) return ((PsiDirectory)element).getLanguageLevel();
+    final PsiFile file = element.getContainingFile();
+    if (file == null) return element.getManager().getEffectiveLanguageLevel();
+
+    if (!(file instanceof PsiJavaFile)) {
+      final PsiElement context = file.getContext();
+      if (context != null) return getLanguageLevel(context);
+      return element.getManager().getEffectiveLanguageLevel();
+    }
+    return ((PsiJavaFile)file).getLanguageLevel();
   }
 }

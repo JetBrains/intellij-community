@@ -17,6 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,8 +137,7 @@ public class AnnotationUtil {
   }
 
   public static boolean isAnnotatingApplicable(PsiElement elt) {
-    final PsiManager manager = elt.getManager();
-    if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return false;
-    return manager.findClass(NULLABLE, elt.getResolveScope()) != null;
+    if (PsiUtil.getLanguageLevel(elt).compareTo(LanguageLevel.JDK_1_5) < 0) return false;
+    return elt.getManager().findClass(NULLABLE, elt.getResolveScope()) != null;
   }
 }

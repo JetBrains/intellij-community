@@ -103,7 +103,8 @@ public class PsiSuperMethodImplUtil {
       final PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
-      PsiSubstitutor finalSubstitutor = PsiClassImplUtil.obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass, substitutor);
+      PsiSubstitutor finalSubstitutor = PsiClassImplUtil.obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass, substitutor,
+                                                                                aClass);
       buildMethodHierarchy(superClass, finalSubstitutor, visited, signatures, result);
     }
 

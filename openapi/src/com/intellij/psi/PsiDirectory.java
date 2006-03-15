@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,4 +212,6 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return true if the directory is a source root, false otherwise
    */
   boolean isSourceRoot();
+
+  LanguageLevel getLanguageLevel();
 }

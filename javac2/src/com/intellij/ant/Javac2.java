@@ -35,9 +35,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
-/**
- * @noinspection unchecked
- */
 public final class Javac2 extends Javac{
   private ArrayList myFormFiles;
 

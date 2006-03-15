@@ -82,7 +82,7 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkReferenceTypeParametersList(final PsiTypeParameterListOwner typeParameterListOwner,
                                                                final PsiJavaCodeReferenceElement referenceElement,
                                                                final PsiSubstitutor substitutor, boolean registerIntentions) {
-    if (referenceElement.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+    if (PsiUtil.getLanguageLevel(referenceElement).compareTo(LanguageLevel.JDK_1_5) < 0) {
       final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
       if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
@@ -410,7 +410,7 @@ public class GenericsHighlightUtil {
 
   //precondition: TypeConversionUtil.isAssignable(lType, rType) || expressionAssignable
   public static HighlightInfo checkRawToGenericAssignment(PsiType lType, PsiType rType, PsiElement elementToHighlight) {
-    if (elementToHighlight.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
+    if (PsiUtil.getLanguageLevel(elementToHighlight).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     if (!InspectionProjectProfileManager.getInstance(elementToHighlight.getProject()).getInspectionProfile(elementToHighlight).isToolEnabled(key)) return null;
     if (!isGenericToRaw(lType, rType)) return null;
@@ -439,7 +439,7 @@ public class GenericsHighlightUtil {
   }
 
   public static HighlightInfo checkUncheckedTypeCast(PsiTypeCastExpression typeCast) {
-    if (typeCast.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
+    if (PsiUtil.getLanguageLevel(typeCast).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     if (!InspectionProjectProfileManager.getInstance(typeCast.getProject()).getInspectionProfile(typeCast).isToolEnabled(key)) return null;
     final PsiTypeElement typeElement = typeCast.getCastType();
@@ -540,7 +540,7 @@ public class GenericsHighlightUtil {
   }
 
   public static HighlightInfo checkUncheckedCall(JavaResolveResult resolveResult, PsiCall call) {
-    if (call.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
+    if (PsiUtil.getLanguageLevel(call).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     if (!InspectionProjectProfileManager.getInstance(call.getProject()).getInspectionProfile(call).isToolEnabled(key)) return null;
 
@@ -727,7 +727,7 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkTypeParametersList(PsiTypeParameterList parameterList) {
     PsiTypeParameter[] typeParameters = parameterList.getTypeParameters();
     if (typeParameters.length == 0) return null;
-    if (parameterList.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+    if (PsiUtil.getLanguageLevel(parameterList).compareTo(LanguageLevel.JDK_1_5) < 0) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                parameterList,
                                                GENERICS_ARE_NOT_SUPPORTED);
@@ -945,7 +945,7 @@ public class GenericsHighlightUtil {
   }
 
   public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
-    if (overrider.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
+    if (PsiUtil.getLanguageLevel(overrider).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     if (!InspectionProjectProfileManager.getInstance(overrider.getProject()).getInspectionProfile(overrider).isToolEnabled(key)) return null;
     for (MethodSignatureBackedByPsiMethod signature : superMethodSignatures) {

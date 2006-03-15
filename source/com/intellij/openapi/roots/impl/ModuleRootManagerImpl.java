@@ -23,8 +23,12 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
+import org.jdom.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -42,6 +46,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private boolean myIsDisposed = false;
   private boolean isModuleAdded = false;
   private Map<OrderRootType, VirtualFile[]> myCachedFiles;
+
+  private @NonNls String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
+  private @Nullable LanguageLevel myLanguageLevel;
 
   public ModuleRootManagerImpl(Module module,
                                DirectoryIndex directoryIndex,
@@ -110,10 +117,22 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void readExternal(Element element) throws InvalidDataException {
+    final Attribute langLevelAttribute = element.getAttribute(LANGUAGE_LEVEL_ELEMENT_NAME);
+    if (langLevelAttribute != null) {
+      try {
+        myLanguageLevel = LanguageLevel.valueOf(langLevelAttribute.getValue());
+      }
+      catch (IllegalArgumentException e) {
+        //bad value was stored
+      }
+    }
     setModel(new RootModelImpl(element, this, myProjectRootManager, myFilePointerManager));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
+    if (myLanguageLevel != null) {
+      element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
+    }
     myRootModel.writeExternal(element);
   }
 
@@ -495,5 +514,14 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       throw new ModuleCircularDependencyException(circularDependency.first.getModule().getName(),
                                                   circularDependency.second.getModule().getName());
     }
+  }
+
+  public void setLanguageLevel(final LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
+  }
+
+  @Nullable
+  public LanguageLevel getLanguageLevel() {
+    return myLanguageLevel;
   }
 }
