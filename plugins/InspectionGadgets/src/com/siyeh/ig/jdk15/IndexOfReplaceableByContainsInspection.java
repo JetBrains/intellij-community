@@ -160,12 +160,12 @@ public class IndexOfReplaceableByContainsInspection
             if (lhs instanceof PsiMethodCallExpression) {
                 final PsiJavaToken sign = expression.getOperationSign();
                 if (canBeReplacedByContains(lhs, sign, rhs, false)) {
-                    registerError(expression);
+                    registerError(expression, expression);
                 }
             } else if (rhs instanceof PsiMethodCallExpression) {
                 final PsiJavaToken sign = expression.getOperationSign();
                 if (canBeReplacedByContains(rhs, sign, lhs, true)) {
-                    registerError(expression);
+                    registerError(expression, expression);
                 }
             }
         }
