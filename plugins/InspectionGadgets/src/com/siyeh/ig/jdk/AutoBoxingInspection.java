@@ -199,9 +199,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
             final PsiPrimitiveType primitiveType =
                     (PsiPrimitiveType)expressionType;
             final PsiClassType boxedType =
-                    primitiveType.getBoxedType(
-                            expression.getManager(),
-                            expression.getResolveScope());
+                    primitiveType.getBoxedType(expression);
             if(boxedType == null){
                 return;
             }

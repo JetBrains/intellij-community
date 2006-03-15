@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -180,10 +179,7 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
                     final PsiPrimitiveType primitiveType =
                             (PsiPrimitiveType)type;
                     final Project project = unboxingExpression.getProject();
-                    final GlobalSearchScope scope =
-                            GlobalSearchScope.allScope(project);
-                    final PsiManager manager = unboxingExpression.getManager();
-                    types[i] = primitiveType.getBoxedType(manager, scope);
+                    types[i] = primitiveType.getBoxedType(unboxingExpression);
                 } else {
                     types[i] = type;
                 }
