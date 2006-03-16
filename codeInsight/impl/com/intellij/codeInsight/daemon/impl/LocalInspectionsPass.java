@@ -278,7 +278,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         }
       };
       String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
-      @NonNls String tooltip = "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
+      @NonNls String tooltip = message.startsWith("<html>") ? message : "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
       HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
       infos.add(highlightInfo);
       List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
