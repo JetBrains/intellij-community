@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.core.GridConstraints;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -17,7 +18,7 @@ public class NoDropLocation implements DropLocation {
   }
 
   public boolean canDrop(ComponentDragObject dragObject) {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
@@ -27,5 +28,10 @@ public class NoDropLocation implements DropLocation {
                           RadComponent[] components,
                           GridConstraints[] constraintsToAdjust,
                           ComponentDragObject dragObject) {
+  }
+
+  @Nullable
+  public DropLocation getAdjacentLocation(Direction direction) {
+    return null;
   }
 }

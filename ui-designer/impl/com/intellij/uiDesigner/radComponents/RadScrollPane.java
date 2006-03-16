@@ -110,5 +110,10 @@ public final class RadScrollPane extends RadContainer {
                             ComponentDragObject dragObject) {
       addComponent(components[0]);
     }
+
+    @Nullable
+    public DropLocation getAdjacentLocation(Direction direction) {
+      return null;
+    }
   }
 }

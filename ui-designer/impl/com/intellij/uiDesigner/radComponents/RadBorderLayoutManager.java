@@ -17,6 +17,7 @@ import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -152,6 +153,11 @@ public class RadBorderLayoutManager extends RadLayoutManager {
                             ComponentDragObject dragObject) {
       components [0].setCustomLayoutConstraints(myQuadrant);
       myContainer.addComponent(components [0]);
+    }
+
+    @Nullable
+    public DropLocation getAdjacentLocation(Direction direction) {
+      return null;
     }
   }
 }

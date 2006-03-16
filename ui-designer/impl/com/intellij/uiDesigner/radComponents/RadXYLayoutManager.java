@@ -18,6 +18,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Insets;
 import java.awt.LayoutManager;
@@ -139,6 +140,11 @@ public class RadXYLayoutManager extends RadLayoutManager {
           component.shift(-patchX, -patchY);
         }
       }
+    }
+
+    @Nullable
+    public DropLocation getAdjacentLocation(Direction direction) {
+      return null;
     }
   }
 

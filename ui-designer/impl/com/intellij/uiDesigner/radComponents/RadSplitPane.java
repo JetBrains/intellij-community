@@ -208,6 +208,11 @@ public final class RadSplitPane extends RadContainer {
       components[0].setCustomLayoutConstraints(myLeft ? LwSplitPane.POSITION_LEFT : LwSplitPane.POSITION_RIGHT);
       addComponent(components[0]);
     }
+
+    @Nullable
+    public DropLocation getAdjacentLocation(Direction direction) {
+      return null;
+    }
   }
 
   private class DividerDragProcessor extends EventProcessor {

@@ -70,11 +70,36 @@ public class PasteProcessor extends EventProcessor {
   }
 
   protected void processKeyEvent(KeyEvent e) {
-    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-      doPaste(myLastLocation);
+    if (e.getID() == KeyEvent.KEY_PRESSED) {
+      if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+        doPaste(myLastLocation);
+      }
+      else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+        endPaste();
+      }
+      else {
+        DropLocation.Direction dir = directionFromKey(e.getKeyCode());
+        if (dir != null && myLastLocation != null) {
+          DropLocation adjacentLocation = myLastLocation.getAdjacentLocation(dir);
+          while(adjacentLocation != null && !adjacentLocation.canDrop(myPastedComponentList)) {
+            adjacentLocation = adjacentLocation.getAdjacentLocation(dir);
+          }
+          if (adjacentLocation != null && adjacentLocation.canDrop(myPastedComponentList)) {
+            adjacentLocation.placeFeedback(myEditor.getActiveDecorationLayer(), myPastedComponentList);
+            myLastLocation = adjacentLocation;
+          }
+        }
+      }
     }
-    else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-      endPaste();
+  }
+
+  private static DropLocation.Direction directionFromKey(final int keyCode) {
+    switch(keyCode) {
+      case KeyEvent.VK_RIGHT: return DropLocation.Direction.RIGHT;
+      case KeyEvent.VK_LEFT: return DropLocation.Direction.LEFT;
+      case KeyEvent.VK_UP: return DropLocation.Direction.UP;
+      case KeyEvent.VK_DOWN: return DropLocation.Direction.DOWN;
+      default: return null;
     }
   }
 

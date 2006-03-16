@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -119,6 +120,11 @@ public class FirstComponentInsertLocation extends GridDropLocation {
         (myTargetPoint.y > midY1 && (vSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) == 0)) {
       insertSpacer(icp, vSpacerItem, GridInsertMode.RowBefore);
     }
+  }
+
+  @Nullable
+  public DropLocation getAdjacentLocation(Direction direction) {
+    return null;
   }
 
   private void insertSpacer(InsertComponentProcessor icp, ComponentItem spacerItem, GridInsertMode mode) {

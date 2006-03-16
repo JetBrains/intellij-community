@@ -182,6 +182,11 @@ public class RadCardLayoutManager extends RadLayoutManager {
       components [0].setCustomLayoutConstraints(CARD_NAME_PREFIX + cardIndex);
       myContainer.addComponent(components [0]);
     }
+
+    @Nullable
+    public DropLocation getAdjacentLocation(Direction direction) {
+      return null;
+    }
   }
 
   private static class CardNameProperty extends Property {

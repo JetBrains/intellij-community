@@ -6,6 +6,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Rectangle;
 
@@ -148,6 +149,17 @@ public class GridDropLocation implements DropLocation {
                           final GridConstraints[] constraintsToAdjust,
                           final ComponentDragObject dragObject) {
     myContainer.dropIntoGrid(components, myRow, myColumn, dragObject);
+  }
+
+  @Nullable
+  public DropLocation getAdjacentLocation(Direction direction) {
+    switch(direction) {
+      case LEFT:  return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.ColumnBefore);
+      case UP:    return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.RowBefore);
+      case RIGHT: return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.ColumnAfter);
+      case DOWN:  return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.RowAfter); 
+    }
+    return null;
   }
 
   @NonNls @Override public String toString() {

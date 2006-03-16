@@ -484,5 +484,10 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       }
       getTabbedPane().setSelectedIndex(myInsertIndex);
     }
+
+    @Nullable
+    public DropLocation getAdjacentLocation(Direction direction) {
+      return null;
+    }
   }
 }

@@ -334,6 +334,10 @@ public final class MainProcessor extends EventProcessor{
     myEditor.getLayeredPane().setCursor(null);
   }
 
+  public boolean isProcessorActive() {
+    return myCurrentProcessor != null;
+  }
+
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
     public void selectedComponentChanged(final GuiEditor source) {
       // TODO[vova] stop inplace editing

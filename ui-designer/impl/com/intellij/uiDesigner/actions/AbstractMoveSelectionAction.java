@@ -131,6 +131,11 @@ abstract class AbstractMoveSelectionAction extends AnAction{
     }
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(!myEditor.getMainProcessor().isProcessorActive());
+  }
+
   private boolean moveSelectionByGrid(final RadComponent selectedComponent) {
     final RadContainer parent = selectedComponent.getParent();
     if (parent == null || !parent.isGrid()) {

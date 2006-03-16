@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -122,7 +123,6 @@ public class GridInsertLocation extends GridDropLocation {
   @Override public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
     final int insertCol = getColumn();
     final int insertRow = getRow();
-    final GridInsertMode insertMode = myMode;
 
     Rectangle cellRect = getGridFeedbackRect(dragObject);
     if (cellRect == null) {
@@ -130,14 +130,14 @@ public class GridInsertLocation extends GridDropLocation {
       return;
     }
 
-    FeedbackPainter painter = (insertMode == GridInsertMode.ColumnBefore ||
-                               insertMode == GridInsertMode.ColumnAfter)
+    FeedbackPainter painter = (myMode == GridInsertMode.ColumnBefore ||
+                               myMode == GridInsertMode.ColumnAfter)
                               ? VertInsertFeedbackPainter.INSTANCE
                               : HorzInsertFeedbackPainter.INSTANCE;
     Rectangle rc;
 
     Rectangle rcFeedback = null;
-    if (dragObject.getComponentCount() == 1 && insertMode != GridInsertMode.InCell) {
+    if (dragObject.getComponentCount() == 1 && myMode != GridInsertMode.InCell) {
       RadComponent component = getContainer().getComponentAtGrid(insertRow, insertCol);
       if (component != null) {
         Rectangle bounds = component.getBounds();
@@ -150,16 +150,16 @@ public class GridInsertLocation extends GridDropLocation {
 
         int spaceToRight = vGridLines [insertCol+1] - vGridLines [insertCol] - (bounds.x + bounds.width);
         int spaceBelow = hGridLines [insertRow+1] - hGridLines [insertRow] - (bounds.y + bounds.height);
-        if (insertMode == GridInsertMode.RowBefore && bounds.y > INSERT_RECT_MIN_SIZE) {
+        if (myMode == GridInsertMode.RowBefore && bounds.y > INSERT_RECT_MIN_SIZE) {
           rcFeedback = new Rectangle(0, 0, cellWidth, bounds.y);
         }
-        else if (insertMode == GridInsertMode.RowAfter && spaceBelow > INSERT_RECT_MIN_SIZE) {
+        else if (myMode == GridInsertMode.RowAfter && spaceBelow > INSERT_RECT_MIN_SIZE) {
           rcFeedback = new Rectangle(0, bounds.y + bounds.height, cellWidth, spaceBelow);
         }
-        else if (insertMode == GridInsertMode.ColumnBefore && bounds.x > INSERT_RECT_MIN_SIZE) {
+        else if (myMode == GridInsertMode.ColumnBefore && bounds.x > INSERT_RECT_MIN_SIZE) {
           rcFeedback = new Rectangle(0, 0, bounds.x, cellHeight);
         }
-        else if (insertMode == GridInsertMode.ColumnAfter && spaceToRight > INSERT_RECT_MIN_SIZE) {
+        else if (myMode == GridInsertMode.ColumnAfter && spaceToRight > INSERT_RECT_MIN_SIZE) {
           rcFeedback = new Rectangle(bounds.x + bounds.width, 0, spaceToRight, cellHeight);
         }
 
@@ -173,7 +173,7 @@ public class GridInsertLocation extends GridDropLocation {
 
     int w=4;
     //noinspection EnumSwitchStatementWhichMissesCases
-    switch (insertMode) {
+    switch (myMode) {
       case ColumnBefore:
         rc = new Rectangle(cellRect.x - w, cellRect.y - INSERT_ARROW_SIZE,
                            2 * w, cellRect.height + 2 * INSERT_ARROW_SIZE);
@@ -252,4 +252,43 @@ public class GridInsertLocation extends GridDropLocation {
     return "GridInsertLocation(" + myMode.toString() + ", row=" + getRow() + ", col=" + getColumn() + ")";
   }
 
+  @Override @Nullable
+  public DropLocation getAdjacentLocation(Direction direction) {
+    GridLayoutManager grid = (GridLayoutManager) myContainer.getLayout();
+    if (isRowInsert()) {
+      if (direction == Direction.RIGHT && getColumn() < grid.getColumnCount()-1) {
+        return new GridInsertLocation(myContainer, getRow(), getColumn()+1, getMode());
+      }
+      if (direction == Direction.LEFT && getColumn() > 0) {
+        return new GridInsertLocation(myContainer, getRow(), getColumn()-1, getMode());
+      }
+      if (direction == Direction.DOWN || direction == Direction.UP) {
+        int adjRow = (myMode == GridInsertMode.RowAfter) ? getRow() : getRow()-1;
+        if (direction == Direction.DOWN && adjRow+1 < grid.getRowCount()-1) {
+          return new GridDropLocation(myContainer, adjRow+1, getColumn());
+        }
+        if (direction == Direction.UP && adjRow >= 0) {
+          return new GridDropLocation(myContainer, adjRow, getColumn());
+        }
+      }
+    }
+    else {
+      if (direction == Direction.DOWN && getRow() < grid.getRowCount()-1) {
+        return new GridInsertLocation(myContainer, getRow()+1, getColumn(), getMode());
+      }
+      if (direction == Direction.UP && getRow() > 0) {
+        return new GridInsertLocation(myContainer, getRow()-1, getColumn(), getMode());
+      }
+      if (direction == Direction.LEFT || direction == Direction.RIGHT) {
+        int adjCol = (myMode == GridInsertMode.ColumnAfter) ? getColumn() : getColumn()-1;
+        if (direction == Direction.RIGHT && adjCol+1 < grid.getColumnCount()-1) {
+          return new GridDropLocation(myContainer, getRow(), adjCol+1);
+        }
+        if (direction == Direction.LEFT && adjCol >= 0) {
+          return new GridDropLocation(myContainer, getRow(), adjCol);
+        }
+      }
+    }
+    return null;
+  }
 }
