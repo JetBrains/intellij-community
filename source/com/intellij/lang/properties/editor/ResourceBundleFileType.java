@@ -25,7 +25,7 @@ class ResourceBundleFileType extends FakeFileType {
     return file instanceof ResourceBundleAsVirtualFile;
   }
 
-  public SyntaxHighlighter getHighlighter(Project project) {
+  public SyntaxHighlighter getHighlighter(Project project, final VirtualFile virtualFile) {
     return null;
   }
 }

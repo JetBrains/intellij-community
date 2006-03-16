@@ -16,6 +16,7 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
@@ -43,7 +44,7 @@ public class PropertiesLanguage extends Language {
   }
 
   @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project) {
+  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
     return new PropertiesHighlighter();
   }
 

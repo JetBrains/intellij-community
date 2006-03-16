@@ -20,7 +20,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.lexer.EmptyLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +38,7 @@ public class PlainTextLanguage extends Language {
   }
 
   @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project) {
+  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
     return new PlainSyntaxHighlighter();
   }
 

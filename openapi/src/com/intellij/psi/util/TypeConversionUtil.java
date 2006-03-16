@@ -694,7 +694,8 @@ public class TypeConversionUtil {
   private static boolean isBoxable(final PsiClassType left, final PsiPrimitiveType right) {
     final PsiClass psiClass = left.resolve();
     if (psiClass == null) return false;
-    final PsiClassType rightBoxedType = right.getBoxedType(psiClass.getManager(), left.getResolveScope(), left.getLanguageLevel());
+    if (!left.getLanguageLevel().hasEnumKeywordAndAutoboxing()) return false;
+    final PsiClassType rightBoxedType = right.getBoxedType(psiClass.getManager(), left.getResolveScope());
     if (rightBoxedType != null) {
       return isAssignable(left, rightBoxedType);
     }

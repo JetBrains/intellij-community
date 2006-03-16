@@ -82,7 +82,7 @@ public class ModuleFileType implements FileType {
     return "UTF-8";
   }
 
-  public SyntaxHighlighter getHighlighter(Project project) {
+  public SyntaxHighlighter getHighlighter(Project project, final VirtualFile virtualFile) {
     return new XmlFileHighlighter();
   }
 

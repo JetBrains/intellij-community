@@ -88,11 +88,12 @@ public interface FileType {
   /**
    * Returns the syntax highlighter for the files of the type.
    * @param project The project in which the highligher will work, or null if the highlighter is not tied to any project.
+   * @param virtualFile
    * @return The highlighter implementation.
    */
 
   @Nullable
-  SyntaxHighlighter getHighlighter(@Nullable Project project);
+  SyntaxHighlighter getHighlighter(@Nullable Project project, final VirtualFile virtualFile);
 
   /**
    * Returns the structure view builder for the specified file.

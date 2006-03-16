@@ -52,12 +52,13 @@ public abstract class LanguageFileType implements FileType{
   /**
    * Returns the syntax highlighter for the files of the type.
    * @param project The project in which the highligher will work, or null if the highlighter is not tied to any project.
+   * @param virtualFile The file to be highlighted
    * @return The highlighter implementation.
    */
 
   @NotNull
-  public final SyntaxHighlighter getHighlighter(@Nullable Project project) {
-    return myLanguage.getSyntaxHighlighter(project);
+  public final SyntaxHighlighter getHighlighter(@Nullable Project project, @Nullable final VirtualFile virtualFile) {
+    return myLanguage.getSyntaxHighlighter(project, virtualFile);
   }
 
   /**

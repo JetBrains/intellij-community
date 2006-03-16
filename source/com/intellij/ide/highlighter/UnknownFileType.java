@@ -76,7 +76,7 @@ public class UnknownFileType implements FileType {
     return null;
   }
 
-  public SyntaxHighlighter getHighlighter(Project project) {
+  public SyntaxHighlighter getHighlighter(Project project, final VirtualFile virtualFile) {
     return null;
   }
 

@@ -13,6 +13,9 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
@@ -60,9 +63,20 @@ public class JavaLanguage extends Language {
   }
 
   @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project) {
-    LanguageLevel level = project != null ? PsiManager.getInstance(project).getEffectiveLanguageLevel() : LanguageLevel.HIGHEST;
-    return new JavaFileHighlighter(level);
+  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
+    LanguageLevel languageLevel;
+    if (project != null && virtualFile != null) {
+      final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
+      if (module != null) {
+        languageLevel = module.getEffectiveLanguageLevel();
+      } else {
+        languageLevel = LanguageLevel.HIGHEST;
+      }
+    } else {
+      languageLevel = LanguageLevel.HIGHEST;
+    }
+
+    return new JavaFileHighlighter(languageLevel);
   }
 
   public ParserDefinition getParserDefinition() {

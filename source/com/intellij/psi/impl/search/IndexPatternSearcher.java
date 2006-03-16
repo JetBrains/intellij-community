@@ -27,7 +27,6 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.pom.java.LanguageLevel;
 import gnu.trove.TIntArrayList;
 
 import java.util.regex.Matcher;
@@ -94,7 +93,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       synchronized (PsiLock.LOCK) {
         if (fType instanceof CustomFileType) {
           TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
-          Lexer lexer = fType.getHighlighter(file.getProject()).getHighlightingLexer();
+          Lexer lexer = fType.getHighlighter(file.getProject(), file.getVirtualFile()).getHighlightingLexer();
           findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds);
         }
         else {
@@ -107,7 +106,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       // collect comment offsets to prevent long locks by PsiManagerImpl.LOCK
       synchronized (PsiLock.LOCK) {
         final Language lang = file.getLanguage();
-        Lexer lexer = lang.getSyntaxHighlighter(file.getProject()).getHighlightingLexer();
+        Lexer lexer = lang.getSyntaxHighlighter(file.getProject(), file.getVirtualFile()).getHighlightingLexer();
         TokenSet commentTokens = null;
         if (file instanceof PsiJavaFile) {
           lexer = new JavaLexer(((PsiJavaFile)file).getLanguageLevel());

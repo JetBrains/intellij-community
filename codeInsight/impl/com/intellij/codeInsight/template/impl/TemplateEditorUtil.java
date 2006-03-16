@@ -68,11 +68,11 @@ public class TemplateEditorUtil {
       fileType = StdFileTypes.PLAIN_TEXT;
     }
 
-    SyntaxHighlighter highlighter = createTemplateTextHighlighter(fileType.getHighlighter(null));
+    SyntaxHighlighter highlighter = createTemplateTextHighlighter(fileType.getHighlighter(null, null));
     ((EditorEx)editor).setHighlighter(new LexerEditorHighlighter(highlighter, EditorColorsManager.getInstance().getGlobalScheme()));
   }
 
-  private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(new IElementType[]{TemplateTokenType.TEXT});
+  private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(TemplateTokenType.TEXT);
 
   private static SyntaxHighlighter createTemplateTextHighlighter(final SyntaxHighlighter original) {
     return new TemplateHighlighter(original);

@@ -7,6 +7,7 @@ import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
@@ -44,7 +45,7 @@ public class HTMLLanguage extends XMLLanguage {
   }
 
   @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project) {
+  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
     if (myHighlighter == null) myHighlighter = new HtmlFileHighlighter();
     return myHighlighter;
   }

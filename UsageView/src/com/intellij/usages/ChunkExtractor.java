@@ -76,7 +76,7 @@ public class ChunkExtractor {
     myColumnNumber = absoluteStartOffset - myDocument.getLineStartOffset(myLineNumber);
   }
 
-  private int getStartOffset(final List<RangeMarker> rangeMarkers) {
+  private static int getStartOffset(final List<RangeMarker> rangeMarkers) {
     LOG.assertTrue(rangeMarkers.size() > 0);
     int minStart = Integer.MAX_VALUE;
     for (RangeMarker rangeMarker : rangeMarkers) {
@@ -91,7 +91,7 @@ public class ChunkExtractor {
     final int lineStartOffset = myDocument.getLineStartOffset(myLineNumber);
     final int lineEndOffset = myDocument.getLineEndOffset(myLineNumber);
     final FileType fileType = myElement.getContainingFile().getFileType();
-    SyntaxHighlighter highlighter = fileType.getHighlighter(myElement.getProject());
+    SyntaxHighlighter highlighter = fileType.getHighlighter(myElement.getProject(), myElement.getContainingFile().getVirtualFile());
     if (highlighter == null) {
       highlighter = new PlainSyntaxHighlighter();
     }

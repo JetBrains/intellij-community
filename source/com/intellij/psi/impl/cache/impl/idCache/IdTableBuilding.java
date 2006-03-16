@@ -270,12 +270,12 @@ public class IdTableBuilding {
     registerCacheBuilder(StdFileTypes.IDEA_PROJECT, new EmptyBuilder());
   }
 
-  public static IdCacheBuilder getCacheBuilder(FileType fileType, final Project project) {
+  public static IdCacheBuilder getCacheBuilder(FileType fileType, final Project project, final VirtualFile virtualFile) {
     final IdCacheBuilder idCacheBuilder = cacheBuilders.get(fileType);
 
     if (idCacheBuilder != null) return idCacheBuilder;
 
-    final SyntaxHighlighter highlighter = fileType.getHighlighter(project);
+    final SyntaxHighlighter highlighter = fileType.getHighlighter(project, virtualFile);
     final Lexer highlightingLexer = highlighter != null ? highlighter.getHighlightingLexer() : null;
     if (fileType instanceof LanguageFileType) {
       final Language lang = ((LanguageFileType)fileType).getLanguage();
@@ -410,7 +410,7 @@ public class IdTableBuilding {
       textLength = document.getTextLength();
     }
 
-    final IdCacheBuilder cacheBuilder = getCacheBuilder(fileType, manager.getProject());
+    final IdCacheBuilder cacheBuilder = getCacheBuilder(fileType, manager.getProject(), virtualFile);
 
     if (cacheBuilder==null) return null;
 

@@ -23,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Controls the syntax highlighting of a file.
  *
- * @see com.intellij.lang.Language#getSyntaxHighlighter(com.intellij.openapi.project.Project)
- * @see FileType#getHighlighter(com.intellij.openapi.project.Project) 
+ * @see com.intellij.lang.Language#getSyntaxHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile)
+ * @see FileType#getHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile) 
  */
 
 public interface SyntaxHighlighter {

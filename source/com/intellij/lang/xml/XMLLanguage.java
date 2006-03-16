@@ -15,7 +15,6 @@ import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.FileViewProvider;
@@ -38,9 +37,6 @@ import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -75,7 +71,7 @@ public class XMLLanguage extends CompositeLanguage {
   }
 
   @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project) {
+  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
     return new XmlFileHighlighter();
   }
 

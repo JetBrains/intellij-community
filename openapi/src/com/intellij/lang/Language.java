@@ -126,10 +126,11 @@ public abstract class Language {
    * Default implementation doesn't highlight anything.
    *
    * @param project might be necessary to gather various project settings from.
+   * @param virtualFile might be necessary to collect file specific settings
    * @return <code>SyntaxHighlighter</code> interface implementation for this particular language.
    */
   @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project) {
+  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
     return new PlainSyntaxHighlighter();
   }
 

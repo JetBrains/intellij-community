@@ -127,8 +127,7 @@ public class PsiPrimitiveType extends PsiType {
   }
 
   @Nullable
-  public PsiClassType getBoxedType(final PsiManager manager, final GlobalSearchScope resolveScope, final LanguageLevel languageLevel) {
-    if (!languageLevel.hasEnumKeywordAndAutoboxing()) return null;
+  public PsiClassType getBoxedType(final PsiManager manager, final GlobalSearchScope resolveScope) {
     final String boxedQName = ourUnboxedToQName.get(this);
 
     //[ven]previous call returns null for NULL, VOID

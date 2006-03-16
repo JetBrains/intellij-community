@@ -11,6 +11,7 @@ import com.intellij.lang.xml.XmlFindUsagesProvider;
 import com.intellij.lang.xml.XmlFoldingBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ public class DTDLanguage extends Language {
   }
 
   @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project) {
+  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
     //TODO: should be antoher?
     return new XmlFileHighlighter(true);
   }

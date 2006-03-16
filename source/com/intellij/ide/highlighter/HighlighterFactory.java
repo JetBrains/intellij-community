@@ -9,7 +9,6 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
 
 public class HighlighterFactory {
   public static LexerEditorHighlighter createJavaHighlighter(EditorColorsScheme settings, LanguageLevel languageLevel){
@@ -29,8 +28,8 @@ public class HighlighterFactory {
     return createHighlighter(new XmlFileHighlighter(), settings);
   }
 
-  public static LexerEditorHighlighter createJSPHighlighter(EditorColorsScheme settings, Project project){
-    return createHighlighter(StdFileTypes.JSP.getHighlighter(project), settings);
+  public static LexerEditorHighlighter createJSPHighlighter(EditorColorsScheme settings, Project project, VirtualFile virtualFile){
+    return createHighlighter(StdFileTypes.JSP.getHighlighter(project, virtualFile), settings);
   }
 
   public static LexerEditorHighlighter createCustomHighlighter(SyntaxTable syntaxTable, EditorColorsScheme settings){
@@ -55,7 +54,7 @@ public class HighlighterFactory {
   }
 
   public static LexerEditorHighlighter createHighlighter(FileType fileType, EditorColorsScheme settings, Project project) {
-    SyntaxHighlighter highlighter = fileType.getHighlighter(project);
+    SyntaxHighlighter highlighter = fileType.getHighlighter(project, null);
     return createHighlighter(highlighter != null ? highlighter : new PlainSyntaxHighlighter(), settings);
   }
 }
