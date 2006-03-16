@@ -7,6 +7,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
+import gnu.trove.THashSet;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -33,11 +39,42 @@ public class MoveChangesToAnotherListAction extends AnAction {
 
   public static void askAndMove(final Project project, final Change[] changes) {
     final ChangeListManager listManager = ChangeListManager.getInstance(project);
-    ChangeListChooser chooser = new ChangeListChooser(project, listManager.getChangeLists(), null);
+    final List<ChangeList> lists = listManager.getChangeLists();
+    ChangeListChooser chooser = new ChangeListChooser(project, getPreferredLists(lists, changes), guessPreferredList(lists, changes));
     chooser.show();
     ChangeList resultList = chooser.getSelectedList();
     if (resultList != null) {
       listManager.moveChangesTo(resultList, changes);
     }
+  }
+
+  private static ChangeList guessPreferredList(final List<ChangeList> lists, final Change[] changes) {
+    List<ChangeList> preferredLists = getPreferredLists(lists, changes);
+
+    for (ChangeList preferredList : preferredLists) {
+      if (preferredList.getChanges().isEmpty()) {
+        return preferredList;
+      }
+    }
+
+    if (preferredLists.size() > 0) {
+      return preferredLists.get(0);
+    }
+
+    return null;
+  }
+
+  private static List<ChangeList> getPreferredLists(final List<ChangeList> lists, final Change[] changes) {
+    List<ChangeList> preferredLists = new ArrayList<ChangeList>(lists);
+    Set<Change> changesAsSet = new THashSet<Change>(Arrays.asList(changes));
+    for (ChangeList list : lists) {
+      for (Change change : list.getChanges()) {
+        if (changesAsSet.contains(change)) {
+          preferredLists.remove(list);
+          break;
+        }
+      }
+    }
+    return preferredLists;
   }
 }
