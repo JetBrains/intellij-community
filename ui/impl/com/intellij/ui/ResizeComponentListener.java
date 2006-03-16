@@ -115,6 +115,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   public void mouseMoved(MouseEvent e) {
     Point point = new RelativePoint(e).getScreenPoint();
     final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
+    if (popupWindow == null) return;
     final int cursor = getDirection(point, popupWindow.getBounds());
     popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
     if (cursor != Cursor.DEFAULT_CURSOR){
@@ -126,6 +127,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     if (e.isConsumed()) return;
     final Point point = new RelativePoint(e).getScreenPoint();
     final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
+    if (popupWindow == null) return;
     if (myStartPoint != null) {
       popupWindow.setCursor(Cursor.getPredefinedCursor(myDirection));
       doResize(point);

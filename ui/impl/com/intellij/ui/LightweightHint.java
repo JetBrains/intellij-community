@@ -92,7 +92,7 @@ public class LightweightHint implements Hint, UserDataHolder {
     }
     else {
       myIsRealPopup = true;
-      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myComponent, focusBackComponent)
+      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myComponent, null)
         .setRequestFocus(false)
         .setResizable(myForceShowAsPopup)
         .setMovable(myForceShowAsPopup)
@@ -211,6 +211,10 @@ public class LightweightHint implements Hint, UserDataHolder {
 
   public final void removeHintListener(final HintListener listener) {
     myListenerList.remove(HintListener.class, listener);
+  }
+
+  public String getTitle() {
+    return myTitle;
   }
 
   private final class MyEscListener implements ActionListener {

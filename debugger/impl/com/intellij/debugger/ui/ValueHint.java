@@ -1,5 +1,6 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.debugger.DebuggerBundle;
@@ -13,20 +14,23 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
-import com.intellij.debugger.ui.impl.WatchDebuggerTree;
-import com.intellij.debugger.ui.impl.watch.DebuggerTree;
-import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
+import com.intellij.debugger.ui.impl.InspectDebuggerTree;
+import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
@@ -41,6 +45,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.ArrayList;
 
 /**
  * User: lex
@@ -159,8 +164,8 @@ public class ValueHint {
             final TextWithImports text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCurrentExpression.getText());
             final Value value = evaluator.evaluate(evaluationContext);
 
-            if (value instanceof PrimitiveValue) {
-              final WatchItemDescriptor descriptor = new WatchItemDescriptor(myProject, text, value, false);
+            final WatchItemDescriptor descriptor = new WatchItemDescriptor(myProject, text, value, false);
+            if (value instanceof PrimitiveValue || myType == MOUSE_OVER_HINT) {
               descriptor.setContext(evaluationContext);
               if (myType == MOUSE_OVER_HINT) {
                 // force using default renderer for mouse over hint in order to not to call accidentaly methods while rendering
@@ -170,47 +175,46 @@ public class ValueHint {
               descriptor.updateRepresentation(evaluationContext, new DescriptorLabelListener() {
                 public void labelChanged() {
                   if(myCurrentRange != null) {
-                    if(myType != MOUSE_OVER_HINT || descriptor.isValueValid()) {
-                      showHint(DebuggerTreeRenderer.getDescriptorText(descriptor, true));
+                    if( myType != MOUSE_OVER_HINT || descriptor.isValueValid()) {
+                      final SimpleColoredText simpleColoredText = DebuggerTreeRenderer.getDescriptorText(descriptor, true);
+                      if (!(value instanceof PrimitiveValue)){
+                        simpleColoredText.append("(" + DebuggerBundle.message("active.tooltip.suggestion") + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+                      }
+                      showHint(simpleColoredText);
                     }
                   }
                 }
               });
             } else {
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  final WatchDebuggerTree tree = new WatchDebuggerTree(myProject);
-                  tree.getModel().addTreeModelListener(new TreeModelListener() {
-                    public void treeNodesChanged(TreeModelEvent e) {
-                      resize(e.getTreePath(), tree);
-                    }
+              final InspectDebuggerTree tree = new InspectDebuggerTree(myProject);
+              tree.getModel().addTreeModelListener(new TreeModelListener() {
+                public void treeNodesChanged(TreeModelEvent e) {
+                  resize(e.getTreePath(), tree);
+                }
 
-                    public void treeNodesInserted(TreeModelEvent e) {
-                      resize(e.getTreePath(), tree);
-                    }
+                public void treeNodesInserted(TreeModelEvent e) {
+                  resize(e.getTreePath(), tree);
+                }
 
-                    public void treeNodesRemoved(TreeModelEvent e) {
-                      //do nothing
-                    }
+                public void treeNodesRemoved(TreeModelEvent e) {
+                  //do nothing
+                }
 
-                    public void treeStructureChanged(TreeModelEvent e) {
-                      resize(e.getTreePath(), tree);
-                    }
-                  });
-                  tree.addTreeExpansionListener(new TreeExpansionListener() {
-                    public void treeExpanded(TreeExpansionEvent event) {
-                      resize(event.getPath(), tree);
-                    }
-
-                    public void treeCollapsed(TreeExpansionEvent event) {
-                      //do nothing
-                    }
-                  });
-                  tree.addWatch(text);
-                  tree.rebuild(getDebuggerContext());
-                  showHint(tree, myCurrentExpression.getText());
+                public void treeStructureChanged(TreeModelEvent e) {
+                  resize(e.getTreePath(), tree);
                 }
               });
+              tree.addTreeExpansionListener(new TreeExpansionListener() {
+                public void treeExpanded(TreeExpansionEvent event) {
+                  resize(event.getPath(), tree);
+                }
+
+                public void treeCollapsed(TreeExpansionEvent event) {
+                  //do nothing
+                }
+              });
+              tree.setInspectDescriptor(descriptor);
+              showHint(tree, debuggerContext, myCurrentExpression.getText(), new ActiveTooltipComponent(tree, myCurrentExpression.getText()));
             }
           }
           catch (EvaluateException e) {
@@ -242,30 +246,36 @@ public class ValueHint {
     popupWindow.repaint();
   }
 
-  private void showHint(final WatchDebuggerTree tree, final String title) {
+  private void showHint(final InspectDebuggerTree tree, final DebuggerContextImpl debuggerContext, final String title, final ActiveTooltipComponent component) {
     DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
       public void run() {
         if(myShowHint) {
-          JScrollPane pane = ScrollPaneFactory.createScrollPane(tree);
-          myCurrentHint = new LightweightHint(pane);
+          tree.rebuild(debuggerContext);
+          if (myCurrentHint != null){
+            myCurrentHint.hide();
+          }
+          component.updateToolbar();
+          myCurrentHint = new LightweightHint(component);
           myCurrentHint.setForceShowAsPopup(true);
-          myCurrentHint.setTitle(DebuggerBundle.message("active.tooltip.title", title));
-          
+          setTitle(title);
+
           //Editor may be disposed before later invokator process this action
           if(myEditor.getComponent().getRootPane() == null) return;
           myCurrentHint.show(myEditor.getContentComponent(), myPoint.x, myPoint.y, myEditor.getContentComponent());
 
           updateInitialBounds(tree);
 
-          if(myType == MOUSE_CLICK_HINT) {
-            tree.requestFocusInWindow();
-          }
+          tree.requestFocusInWindow();
         }
       }
     });
   }
 
-  private void updateInitialBounds(final WatchDebuggerTree tree) {
+  private void setTitle(final String title) {
+    myCurrentHint.setTitle(DebuggerBundle.message("active.tooltip.title", title));
+  }
+
+  private void updateInitialBounds(final InspectDebuggerTree tree) {
     final Window popupWindow = SwingUtilities.windowForComponent(myCurrentHint.getComponent());
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
@@ -307,10 +317,10 @@ public class ValueHint {
   }
 
   // call inside ReadAction only
-  private boolean canProcess(PsiExpression expression) {
+  private static boolean canProcess(PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {
       PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
-      return (qualifier == null)? true : canProcess(qualifier);
+      return qualifier == null || canProcess(qualifier);
     }
     return !(expression instanceof PsiMethodCallExpression);
   }
@@ -424,5 +434,119 @@ public class ValueHint {
 
   private static Cursor hintCursor() {
     return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+  }
+
+  private class ActiveTooltipComponent extends JPanel {
+    private static final int HISTORY_SIZE = 11;
+    private ArrayList<Pair<NodeDescriptorImpl, String>> myHistory = new ArrayList<Pair<NodeDescriptorImpl, String>>();
+    private InspectDebuggerTree myTree;
+    private int myCurrentIndex = -1;
+    private JPanel myToolbarPanel = new JPanel(new BorderLayout());
+    public ActiveTooltipComponent(InspectDebuggerTree tree, final String title) {
+      super(new BorderLayout());
+      myTree = tree;
+      myHistory.add(Pair.create(myTree.getInspectDescriptor(), title));
+      add(ScrollPaneFactory.createScrollPane(tree), BorderLayout.CENTER);
+      add(myToolbarPanel, BorderLayout.NORTH);
+    }
+
+    public void updateToolbar() {
+      DefaultActionGroup group = new DefaultActionGroup();
+      group.add(createSetRoot());
+
+      AnAction back = createGoBackAction();
+      group.add(back);
+
+      AnAction forward = createGoForwardAction();
+      group.add(forward);
+
+      final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+      myToolbarPanel.removeAll();
+      myToolbarPanel.add(actionToolbar.getComponent(), BorderLayout.NORTH);
+      myToolbarPanel.repaint();
+    }
+    
+    private AnAction createGoForwardAction(){
+      return new AnAction(CodeInsightBundle.message("quick.definition.forward"), null, IconLoader.getIcon("/actions/forward.png")){
+        public void actionPerformed(AnActionEvent e) {
+          if (myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1){
+            myCurrentIndex ++;
+            updateHintAccordingToHistory(myHistory.get(myCurrentIndex));
+          }
+        }
+
+
+        public void update(AnActionEvent e) {
+          e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1);
+        }
+      };
+    }
+
+
+    private AnAction createGoBackAction(){
+      return new AnAction(CodeInsightBundle.message("quick.definition.back"), null, IconLoader.getIcon("/actions/back.png")){
+        public void actionPerformed(AnActionEvent e) {
+          if (myHistory.size() > 1 && myCurrentIndex > 0) {
+            myCurrentIndex--;
+            updateHintAccordingToHistory(myHistory.get(myCurrentIndex));
+          }
+        }
+
+
+        public void update(AnActionEvent e) {
+          e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex > 0);
+        }
+      };
+    }
+
+    private void updateHintAccordingToHistory(Pair<NodeDescriptorImpl, String> descriptorWithTitle){
+      final NodeDescriptorImpl descriptor = descriptorWithTitle.first;
+      final String title = descriptorWithTitle.second;
+      final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(myProject)).getContext();
+      context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
+        public void threadAction() {
+          myTree.setInspectDescriptor(descriptor);
+          showHint(myTree, context, title, ActiveTooltipComponent.this);
+        }
+      });
+    }
+
+
+    private AnAction createSetRoot() {
+      final String title = DebuggerBundle.message("active.tooltip.set.root.title");
+      return new AnAction(title, title, IconLoader.getIcon("/modules/unmarkWebroot.png")) {
+        public void actionPerformed(AnActionEvent e) {
+          final TreePath path = myTree.getSelectionPath();
+          if (path == null) return;
+          final Object node = path.getLastPathComponent();
+          if (node instanceof DebuggerTreeNodeImpl) {
+            final DebuggerTreeNodeImpl debuggerTreeNode = (DebuggerTreeNodeImpl)node;
+            final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(myProject)).getContext();
+            context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
+              public void threadAction() {
+                try {
+                  final NodeDescriptorImpl descriptor = debuggerTreeNode.getDescriptor();
+                  final TextWithImports evaluationText = DebuggerTreeNodeExpression.createEvaluationText(debuggerTreeNode, context);
+                  final String title = evaluationText.getText();
+                  if (myCurrentIndex < HISTORY_SIZE) {
+                    if (myCurrentIndex != -1) {
+                      myCurrentIndex += 1;
+                    } else {
+                      myCurrentIndex = 1;
+                    }
+                    myHistory.add(myCurrentIndex, Pair.create(descriptor, title));
+                  }
+                  myTree.setInspectDescriptor(descriptor);
+                  showHint(myTree, context, title, ActiveTooltipComponent.this);
+                }
+                catch (final EvaluateException e1) {
+                  LOG.debug(e1);
+                }
+              }
+            });
+          }
+        }
+      };
+    }
   }
 }
