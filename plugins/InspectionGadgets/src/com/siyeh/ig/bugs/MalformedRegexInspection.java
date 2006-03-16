@@ -56,8 +56,14 @@ public class MalformedRegexInspection extends ExpressionInspection{
 
     @NotNull
     public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "malformed.regular.expression.problem.descriptor");
+        if (infos.length == 0) {
+            return InspectionGadgetsBundle.message(
+                    "malformed.regular.expression.problem.descriptor1");
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "malformed.regular.expression.problem.descriptor2",
+                    infos[0]);
+        }
     }
 
     public boolean isEnabledByDefault(){
@@ -102,7 +108,7 @@ public class MalformedRegexInspection extends ExpressionInspection{
             try{
                 Pattern.compile(value);
             } catch(PatternSyntaxException e){
-                registerError(regexArg);
+                registerError(regexArg, e.getDescription());
             } catch(NullPointerException e){
                 registerError(regexArg); // due to a bug in the sun regex code
             }
