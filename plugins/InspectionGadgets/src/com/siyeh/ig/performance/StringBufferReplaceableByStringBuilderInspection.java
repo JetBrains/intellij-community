@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -85,9 +86,7 @@ public class StringBufferReplaceableByStringBuilderInspection
 
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
-            final PsiManager manager = variable.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(variable);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }

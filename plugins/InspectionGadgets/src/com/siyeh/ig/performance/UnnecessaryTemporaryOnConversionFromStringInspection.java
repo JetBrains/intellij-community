@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -100,9 +101,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
         final String canonicalType = type.getCanonicalText();
         final String conversionName = s_conversionMap.get(canonicalType);
         if (TypeUtils.typeEquals("java.lang.Boolean", type)) {
-            final PsiManager manager = location.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(location);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return qualifierType + '.' + conversionName + '(' +
                         arg.getText() + ").booleanValue()";

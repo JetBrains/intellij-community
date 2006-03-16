@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -763,9 +764,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
 
         public void visitForStatement(@NotNull PsiForStatement forStatement){
             super.visitForStatement(forStatement);
-            final PsiManager manager = forStatement.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(forStatement);
             if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }

@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,8 +54,7 @@ public class CloneUtils{
         if(parameters.length != 0){
             return false;
         }
-        final PsiManager manager = method.getManager();
-        final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
+        final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
         if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
             //for 1.5 and after, clone may be covariant
             final PsiType returnType = method.getReturnType();

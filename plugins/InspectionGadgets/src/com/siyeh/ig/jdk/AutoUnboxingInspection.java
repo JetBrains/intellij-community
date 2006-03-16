@@ -25,6 +25,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -218,9 +219,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
 
         public void visitElement(PsiElement element) {
-            final PsiManager manager = element.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }

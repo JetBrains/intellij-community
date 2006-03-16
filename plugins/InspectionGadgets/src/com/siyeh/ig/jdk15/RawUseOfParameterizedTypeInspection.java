@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
@@ -154,9 +155,7 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
         private boolean hasNeededLanguageLevel(
                 @NotNull PsiElement element) {
-            final PsiManager manager = element.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
             return languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
         }
     }

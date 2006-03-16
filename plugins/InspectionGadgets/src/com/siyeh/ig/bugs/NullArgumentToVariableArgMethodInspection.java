@@ -18,6 +18,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -56,9 +57,8 @@ public class NullArgumentToVariableArgMethodInspection
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
-            final PsiManager manager = call.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
             if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
                 return;
             }

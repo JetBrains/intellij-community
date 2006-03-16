@@ -22,6 +22,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.HardcodedMethodConstants;
@@ -360,9 +361,7 @@ public class WhileCanBeForeachInspection extends StatementInspection {
         public void visitWhileStatement(
                 @NotNull PsiWhileStatement whileStatement) {
             super.visitWhileStatement(whileStatement);
-            final PsiManager manager = whileStatement.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(whileStatement);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }

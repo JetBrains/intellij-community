@@ -17,6 +17,7 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -114,9 +115,7 @@ public class StandardVariableNamesInspection extends VariableInspection {
             if (expectedType.equals(typeText)) {
                 return;
             }
-            final PsiManager manager = variable.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(variable);
             if (!LanguageLevel.JDK_1_4.equals(languageLevel) &&
                     LanguageLevel.JDK_1_5.equals(languageLevel)) {
                 final PsiPrimitiveType unboxedType =

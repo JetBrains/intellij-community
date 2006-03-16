@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -126,9 +127,7 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
                 parseMethodCall = "Long.parseLong(System.getProperty("
                                   + argText + "))";
             } else{
-                final PsiManager manager = call.getManager();
-                final LanguageLevel languageLevel =
-                        manager.getEffectiveLanguageLevel();
+                final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
                 if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
                     parseMethodCall = "Boolean.valueOf(System.getProperty("
                                       + argText + ")).booleanValue()";

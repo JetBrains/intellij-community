@@ -17,6 +17,7 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -60,9 +61,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention {
       replaceExpression(newExpression, methodCallExpression);
     }
     else {
-      final PsiManager manager = exp.getManager();
-      final LanguageLevel languageLevel =
-        manager.getEffectiveLanguageLevel();
+      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(exp);
       if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
         expString.append("new StringBuffer()");
       }

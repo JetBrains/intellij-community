@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -116,9 +117,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             extends BaseInspectionVisitor {
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
-            final PsiManager manager = expression.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
@@ -161,9 +160,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
 
         public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
-            final PsiManager manager = expression.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }

@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.util.IncorrectOperationException;
@@ -84,9 +85,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             super.visitClass(aClass);
-            final PsiManager manager = aClass.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(aClass);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
@@ -100,9 +99,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection {
         }
 
         public void visitMethod(@NotNull PsiMethod method) {
-            final PsiManager manager = method.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
@@ -116,9 +113,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection {
         }
 
         public void visitField(@NotNull PsiField field) {
-            final PsiManager manager = field.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(field);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }

@@ -18,6 +18,7 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
@@ -53,9 +54,7 @@ public class ExtendsAnnotationInspection extends ClassInspection {
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
-            final PsiManager manager = aClass.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(aClass);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }

@@ -18,6 +18,7 @@ package com.siyeh.ig.jdk15;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -142,9 +143,7 @@ public class IndexOfReplaceableByContainsInspection
             extends BaseInspectionVisitor {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
-            final PsiManager manager = expression.getManager();
-            final LanguageLevel languageLevel =
-                    manager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
             if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
                 return;
             }

@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -82,9 +83,7 @@ public class BooleanConstructorInspection extends ExpressionInspection{
             final PsiExpression[] args = argList.getExpressions();
             final PsiExpression arg = args[0];
             final String text = arg.getText();
-            final PsiManager psiManager = expression.getManager();
-            final LanguageLevel languageLevel =
-                    psiManager.getEffectiveLanguageLevel();
+            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
             @NonNls final String newExpression;
             if(PsiKeyword.TRUE.equals(text) ||
                     TRUE.equalsIgnoreCase(text)){
