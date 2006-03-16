@@ -60,7 +60,6 @@ class ExportToHTMLManager {
     if(exportToHTMLSettings.OUTPUT_DIRECTORY == null) {
       final VirtualFile projectFile = project.getProjectFile();
       if (projectFile != null) {
-        //noinspection HardCodedStringLiteral
         exportToHTMLSettings.OUTPUT_DIRECTORY = projectFile.getParent().getPresentableUrl() + File.separator + "exportToHTML";
       }
       else {

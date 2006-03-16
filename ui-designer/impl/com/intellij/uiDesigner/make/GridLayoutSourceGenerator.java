@@ -24,7 +24,6 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
                                       final String variable) {
     if (container.isXY()) {
       if (container.getComponentCount() != 0) {
-        //noinspection HardCodedStringLiteral
         throw new IllegalStateException("only empty xys are accepted");
       }
       // no layout needed
@@ -56,11 +55,9 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
         generator.endMethod();
       }
       else if (container.isXY()) {
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("XY is not supported");
       }
       else {
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown layout: " + container.getLayout());
       }
     }

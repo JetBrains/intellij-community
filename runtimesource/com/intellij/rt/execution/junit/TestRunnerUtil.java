@@ -51,7 +51,6 @@ public class TestRunnerUtil {
         return testPackage;
       }
       catch (Exception e) {
-        //noinspection HardCodedStringLiteral
         runner.runFailed(MessageFormat.format(ourBundle.getString("junit.runner.error"), new Object[] {e.toString()}));
         return null;
       }
@@ -73,12 +72,10 @@ public class TestRunnerUtil {
       if (clazz == null) {
         clazz = suiteClassName;
       }
-      //noinspection HardCodedStringLiteral
       runner.runFailed(MessageFormat.format(ourBundle.getString("junit.class.not.found"), new Object[] {clazz}));
       return null;
     }
     catch (Exception e) {
-      //noinspection HardCodedStringLiteral
       runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[] {e.toString()}));
       return null;
     }
@@ -103,18 +100,15 @@ public class TestRunnerUtil {
           return testSuite;
         }
         catch(ClassCastException e1) {
-          //noinspection HardCodedStringLiteral
           runner.runFailed(MessageFormat.format(ourBundle.getString("junit.class.not.derived"), new Object[] {testClass.getName()}));
           return null;
         }
         catch (Exception e1) {
-          //noinspection HardCodedStringLiteral
           runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[] {e1.toString()}));
           return null;
         }
       }
       catch (Exception e) {
-        //noinspection HardCodedStringLiteral
         runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[] {e.toString()}));
         return null;
       }
@@ -130,7 +124,6 @@ public class TestRunnerUtil {
       return new TestSuite(testClass);
     }
     if (! Modifier.isStatic(suiteMethod.getModifiers())) {
-      //noinspection HardCodedStringLiteral
       runFailed(ourBundle.getString("junit.suite.must.be.static"));
       return null;
     }
@@ -141,13 +134,11 @@ public class TestRunnerUtil {
         return test;
     }
     catch (InvocationTargetException e) {
-      //noinspection HardCodedStringLiteral
       runner.runFailed(MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"),
                                             new Object[] {e.getTargetException().toString()}));
       return null;
     }
     catch (IllegalAccessException e) {
-      //noinspection HardCodedStringLiteral
       runner.runFailed(MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"),
                                             new Object[] {e.toString()}));
       return null;

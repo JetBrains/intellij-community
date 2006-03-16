@@ -53,7 +53,6 @@ class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
 
   public String getReportText() {
     StringBuffer buf = new StringBuffer();
-    //noinspection HardCodedStringLiteral
     appendNode(buf, myUsageView.getModelRoot(), SystemProperties.getLineSeparator(), "");
     return buf.toString();
   }

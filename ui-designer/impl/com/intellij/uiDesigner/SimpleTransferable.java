@@ -49,7 +49,6 @@ public final class SimpleTransferable<T> implements Transferable {
     DataFlavor result = ourDataFlavorMap.get(dataClass.getName());
     if (result == null) {
       try {
-        //noinspection HardCodedStringLiteral
         result = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType);
         ourDataFlavorMap.put(dataClass.getName(), result);
       }

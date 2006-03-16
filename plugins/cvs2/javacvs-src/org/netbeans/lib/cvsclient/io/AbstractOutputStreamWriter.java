@@ -75,7 +75,6 @@ public abstract class AbstractOutputStreamWriter extends Writer {
 
 	// Utils ==================================================================
 
-	@SuppressWarnings({"HardCodedStringLiteral"})
         private void ensureOpen() throws IOException {
 		if (outputStream == null) {
 			throw new IOException("Stream closed");

@@ -481,7 +481,6 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
     return computeConstantValue(new THashSet<PsiVariable>());
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
     PsiExpression initializer = getInitializer();

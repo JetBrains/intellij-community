@@ -27,7 +27,6 @@ public class UserDataHolderBase implements UserDataHolder, Cloneable{
   private Map<Key,Object> myUserMap = null;
 
   private static final Object USER_MAP_LOCK = new Object();
-  @SuppressWarnings({"HardCodedStringLiteral"})
   protected static final Key<HashMap<Key,Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
   protected Object clone(){

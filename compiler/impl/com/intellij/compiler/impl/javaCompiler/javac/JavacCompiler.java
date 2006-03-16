@@ -302,7 +302,6 @@ public class JavacCompiler extends ExternalCompiler {
     if (ApplicationManager.getApplication().isUnitTestMode() && JavacSettings.getInstance(myProject).isTestsUseExternalCompiler()) {
       final String jdkHomePath = System.getProperty(CompilerConfiguration.TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME, null);
       if (jdkHomePath == null) {
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("[TEST-MODE] Cannot determine home directory for JDK to use javac from");
       }
       // when running under Mock JDK use VM executable from the JDK on which the tests run

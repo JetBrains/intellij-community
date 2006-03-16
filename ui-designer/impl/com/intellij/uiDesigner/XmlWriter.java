@@ -27,7 +27,6 @@ public final class XmlWriter{
     myElementNames = new Stack<String>();
     myElementHasBody = new Stack<Boolean>();
     myBuffer = new StringBuffer();
-    //noinspection HardCodedStringLiteral
     myBuffer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
   }
 

@@ -130,7 +130,6 @@ final class BindToExistingBeanStep extends StepAdapter{
         return myData.myBindings[row].myBeanProperty;
       }
       else{
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }
@@ -273,7 +272,6 @@ final class BindToExistingBeanStep extends StepAdapter{
           return new BeanProperty(fieldName, fieldType);
         }
         else{
-          //noinspection HardCodedStringLiteral
           throw new IllegalArgumentException("unknown selectedItem: " + selectedItem);
         }
       }

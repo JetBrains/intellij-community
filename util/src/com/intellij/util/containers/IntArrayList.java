@@ -124,7 +124,6 @@ public class IntArrayList implements Cloneable {
 
   public void add(int index, int element) {
     if (index > mySize || index < 0){
-      //noinspection HardCodedStringLiteral
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
 

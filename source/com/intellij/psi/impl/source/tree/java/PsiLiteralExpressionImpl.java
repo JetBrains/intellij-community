@@ -393,7 +393,6 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     visitor.visitLiteralExpression(this);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "PsiLiteralExpression:" + getText();
   }

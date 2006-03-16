@@ -308,7 +308,6 @@ public final class Painter {
       return Cursor.SE_RESIZE_CURSOR;
     }
     else {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown resizeMask: " + resizeMask);
     }
   }

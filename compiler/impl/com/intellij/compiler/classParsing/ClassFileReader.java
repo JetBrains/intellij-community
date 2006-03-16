@@ -94,10 +94,10 @@ public class ClassFileReader {
       if (name.indexOf('$') < 0 && name.indexOf('<') < 0) { // skip synthetic methods
         myMethods.add(method);
       }
-      else //noinspection HardCodedStringLiteral
-        if (CONSTRUCTOR_NAME.equals(name)) { // store constructors
-          myMethods.add(method);
-        }
+      else
+      if (CONSTRUCTOR_NAME.equals(name)) { // store constructors
+        myMethods.add(method);
+      }
     }
 
     final ClsAttributeTable attributeTable = readAttributes(ptr);

@@ -309,7 +309,6 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
     return mySettingsStack.getSettingsPanel(currentScheme);
   }
 
-  @SuppressWarnings({"SynchronizeOnThis"})
   public void reset() {
     mySettingsStack.removeAllSchemes();
     initCombobox();

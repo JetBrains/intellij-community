@@ -325,7 +325,6 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public PsiReference[] getReferencesByElement(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof XmlAttribute &&

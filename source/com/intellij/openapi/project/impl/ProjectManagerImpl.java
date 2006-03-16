@@ -62,7 +62,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
    * This flag is required by SaveAndSynchHandler. We do not save
    * anything while project is being opened.
    */
-  @SuppressWarnings({"UNUSED_SYMBOL"})
   private int myCountOfProjectsBeingOpen;
 
   private boolean myIsInRefresh;

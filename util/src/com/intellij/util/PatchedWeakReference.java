@@ -54,7 +54,6 @@ public class PatchedWeakReference extends WeakReference{
   /**
    * public for being accessible from the degenerator as timer stuff does not work.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void processQueue() {
     boolean haveClearedRefs = false;
     while(true){

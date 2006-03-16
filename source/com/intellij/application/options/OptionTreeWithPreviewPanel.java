@@ -1,12 +1,12 @@
 package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
@@ -14,6 +14,8 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -25,9 +27,6 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -426,7 +425,6 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
     }
 
     private Font getMyFont() {
-      //noinspection HardCodedStringLiteral
       Font font = UIUtil.getTreeFont();
       return new Font(font.getName(), Font.BOLD, font.getSize());
     }

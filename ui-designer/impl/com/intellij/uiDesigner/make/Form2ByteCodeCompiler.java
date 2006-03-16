@@ -57,7 +57,6 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
   @NotNull
   public static URLClassLoader createClassLoader(final String classPath){
     if (classPath == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("classPath cannot be null");
     }
     final ArrayList<URL> urls = new ArrayList<URL>();

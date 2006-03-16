@@ -337,7 +337,6 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
         final JTabbedPane tabbedPane = getTabbedPane();
         final int i = tabbedPane.indexOfComponent(delegee);
         if (i == -1) {
-          //noinspection HardCodedStringLiteral
           throw new IllegalArgumentException("cannot find tab for " + child);
         }
 
@@ -383,7 +382,6 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       final JComponent delegee = component.getDelegee();
       final int i = tabbedPane.indexOfComponent(delegee);
       if (i == -1) {
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("cannot find tab for " + component);
       }
       final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(RadTabbedPane.this);

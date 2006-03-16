@@ -313,7 +313,6 @@ public class SetValueAction extends DebuggerAction {
     DebuggerTreeRenderer.getDescriptorTitle(node.getDescriptor()).appendToComponent(label);
     editorPanel.add(label);
 
-    //noinspection HardCodedStringLiteral
     final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(
       debuggerContext.getProject(),
       PositionUtil.getContextElement(debuggerContext),

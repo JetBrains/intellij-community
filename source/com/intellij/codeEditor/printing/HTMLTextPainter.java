@@ -91,7 +91,6 @@ class HTMLTextPainter {
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
     if(hIterator.atEnd()) return;
     OutputStreamWriter writer;
-    //noinspection HardCodedStringLiteral
     try {
       writer = new OutputStreamWriter(new FileOutputStream(myHTMLFileName), "UTF-8");
     }

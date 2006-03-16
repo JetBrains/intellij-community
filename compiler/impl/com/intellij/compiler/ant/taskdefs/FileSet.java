@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NonNls;
 public class FileSet extends Tag{
 
   public FileSet(@NonNls final String dir) {
-    //noinspection HardCodedStringLiteral
     super("fileset", new Pair[] {pair("dir", dir)});
   }
 

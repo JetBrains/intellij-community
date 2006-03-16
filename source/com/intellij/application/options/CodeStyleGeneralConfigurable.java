@@ -332,7 +332,6 @@ public class CodeStyleGeneralConfigurable implements Configurable {
             return settings.INNER_CLASSES_ORDER_WEIGHT;
           }
           else {
-            //noinspection HardCodedStringLiteral
             throw new IllegalArgumentException("unexpected " + o);
           }
         }
@@ -358,7 +357,6 @@ public class CodeStyleGeneralConfigurable implements Configurable {
           settings.INNER_CLASSES_ORDER_WEIGHT = weight;
         }
         else {
-          //noinspection HardCodedStringLiteral
           throw new IllegalArgumentException("unexpected " + o);
         }
       }

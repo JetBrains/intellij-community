@@ -327,7 +327,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     PsiMethod[] testMethods = testClass.getMethods();
     for (PsiMethod psiMethod : testMethods) {
       @NonNls final String name = psiMethod.getName();
-      //noinspection ConstantConditions
       if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) &&
           !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
           name.startsWith("test") || "suite".equals(name)) {

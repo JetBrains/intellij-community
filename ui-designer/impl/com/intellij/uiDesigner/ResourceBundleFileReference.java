@@ -47,7 +47,6 @@ final class ResourceBundleFileReference extends ReferenceInForm {
     return PropertiesUtil.getPropertiesFile(getRangeText(), module);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public PsiElement handleElementRename(final String newElementName){
     final String currentName = getRangeText();
     final int slashIndex = currentName.lastIndexOf('/');

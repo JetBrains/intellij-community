@@ -140,7 +140,6 @@ final class BindToNewBeanStep extends StepAdapter{
         return binding.myBeanProperty;
       }
       else{
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }
@@ -151,7 +150,6 @@ final class BindToNewBeanStep extends StepAdapter{
         binding.myBeanProperty = (BeanProperty)value;
       }
       else{
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }

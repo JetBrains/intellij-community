@@ -54,7 +54,6 @@ public class NamePathComponent extends JPanel{
     myTfPath.setPreferredSize(new Dimension(200, myTfPath.getPreferredSize().height));
 
     myNameLabel = new JLabel(nameLabelText);
-    //noinspection HardCodedStringLiteral
     myNameLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     myNameLabel.setLabelFor(myTfName);
     this.add(myNameLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));

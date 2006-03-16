@@ -38,7 +38,6 @@ public final class FormProperty {
       !byte.class.getName().equals(componentPropertyClassName) &&
       !short.class.getName().equals(componentPropertyClassName)
     ){
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown componentPropertyClassName: " +componentPropertyClassName);
     }
 

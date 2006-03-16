@@ -37,7 +37,6 @@ public class SmartList<E> extends AbstractList<E> {
 
   public E get(int index) {
     if (index < 0 || index >= mySize) {
-      //noinspection HardCodedStringLiteral
       throw new IndexOutOfBoundsException("index= " + index + ". Must be index > 0 && index < " + mySize);
     }
     if (mySize == 1) {
@@ -88,7 +87,6 @@ public class SmartList<E> extends AbstractList<E> {
 
   public E set(final int index, final E element) {
     if (index < 0 || index >= mySize) {
-      //noinspection HardCodedStringLiteral
       throw new IndexOutOfBoundsException("index= " + index + ". Must be index > 0 && index < " + mySize);
     }
     final E oldValue;

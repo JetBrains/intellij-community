@@ -236,7 +236,7 @@ public abstract class LightPsiFileImpl extends ElementBase implements PsiFileEx 
     return getManager().getSearchHelper().getUseScope(this);
   }
 
-  @SuppressWarnings({"ConstantConditions"}) // Default implementation just to make sure it compiles.
+  // Default implementation just to make sure it compiles.
   public ItemPresentation getPresentation() {
     return null;
   }

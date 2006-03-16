@@ -50,7 +50,6 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       }
     }
     else{
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown element: "+element);
     }
   }
@@ -70,7 +69,6 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       }
     }
     else{
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown element: "+element);
     }
   }
@@ -84,7 +82,6 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       return new ComponentPtrDescriptor(parentDescriptor,(ComponentPtr)element);
     }
     else{
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown element: "+element);
     }
   }

@@ -384,7 +384,6 @@ public final class FormSourceCodeGenerator {
         pushIcon((IconDescriptor) value);
       }
       else {
-        //noinspection HardCodedStringLiteral
         throw new RuntimeException("unexpected property class: " + propertyClass);
       }
 

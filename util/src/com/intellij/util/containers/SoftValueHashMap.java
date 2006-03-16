@@ -75,7 +75,6 @@ public final class SoftValueHashMap<K,V> implements Map<K,V>{
   }
 
   public void putAll(Map<? extends K, ? extends V> t) {
-    //noinspection HardCodedStringLiteral
     throw new RuntimeException("method not implemented");
   }
 
@@ -96,7 +95,6 @@ public final class SoftValueHashMap<K,V> implements Map<K,V>{
   }
 
   public boolean containsValue(Object value) {
-    //noinspection HardCodedStringLiteral
     throw new RuntimeException("method not implemented");
   }
 
@@ -105,12 +103,10 @@ public final class SoftValueHashMap<K,V> implements Map<K,V>{
   }
 
   public Collection<V> values() {
-    //noinspection HardCodedStringLiteral
     throw new RuntimeException("method not implemented");
   }
 
   public Set<Map.Entry<K, V>> entrySet() {
-    //noinspection HardCodedStringLiteral
     throw new RuntimeException("method not implemented");
   }
 }

@@ -27,7 +27,6 @@ public final class BorderTypeEditor extends ComboBoxPropertyEditor{
 
   public JComponent getComponent(final RadComponent ignored, final Object value, final boolean inplace){
     if(!(value instanceof BorderType)){
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("wrong value: "+value);
     }
     myCbx.setSelectedItem(value);

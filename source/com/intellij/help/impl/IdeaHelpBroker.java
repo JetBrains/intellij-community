@@ -239,7 +239,6 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * displayed.
    * @return Point the location of the presentation.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public Point getLocation() throws UnsupportedOperationException{
     if(jhelp==null){
       throw new java.awt.IllegalComponentStateException("presentation not displayed");
@@ -283,7 +282,6 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * displayed.
    * @return Point the location of the presentation.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public Dimension getSize() throws UnsupportedOperationException{
     if(jhelp==null){
       throw new java.awt.IllegalComponentStateException("presentation not displayed");
@@ -323,7 +321,6 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @param id A string that identifies the topic to show for the loaded (top) HelpSet
    * @exception BadIDException The ID is not valid for the HelpSet
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void setCurrentID(String id) throws BadIDException{
     try{
       setCurrentID(ID.create(id,myHelpSet));

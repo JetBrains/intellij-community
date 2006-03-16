@@ -658,7 +658,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     public void setValueAt(final Object newValue, final int row, final int column){
       if (column != 1){
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("wrong index: " + column);
       }
       final Property property=myProperties.get(row);
@@ -811,7 +810,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         return component;
       }
       else{
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("wrong column: "+column);
       }
 
@@ -863,7 +861,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     public void setEditor(final PropertyEditor editor){
       if (editor == null) {
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("editor cannot be null");
       }
       myEditor = editor;

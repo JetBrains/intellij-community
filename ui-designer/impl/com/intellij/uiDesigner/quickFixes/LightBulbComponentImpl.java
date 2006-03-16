@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.text.MessageFormat;
 
 /**
  * [vova] This class should be inner but due to bugs in "beta" generics compiler
@@ -28,7 +27,6 @@ final class LightBulbComponentImpl extends JComponent{
       throw new IllegalArgumentException();
     }
     if (backgroundImage == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("backgroundImage cannot be null");
     }
     myManager = manager;

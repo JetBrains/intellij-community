@@ -48,7 +48,6 @@ public class CoModifiableList<T> extends AbstractList<T> {
 
   public void forEach(InnerIterator<T> innerIterator) {
     if (myAfterIteratingElements != null) {
-      //noinspection HardCodedStringLiteral
       throw new RuntimeException("Nested iterations aren't supported");
     }
     try {

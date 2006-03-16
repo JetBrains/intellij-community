@@ -29,7 +29,6 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer> 
   public Object getValue(final RadContainer component) {
     final AbstractLayout layoutManager=(AbstractLayout) component.getLayout();
     if (!(layoutManager instanceof GridLayoutManager)) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("grid layout expected: "+layoutManager);
     }
     final GridLayoutManager gridLayoutManager = (GridLayoutManager)layoutManager;
@@ -39,7 +38,6 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer> 
   protected void setValueImpl(final RadContainer component,final Object value) throws Exception {
     final AbstractLayout layoutManager=(AbstractLayout) component.getLayout();
     if (!(layoutManager instanceof GridLayoutManager)) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("grid layout expected: "+layoutManager);
     }
     final GridLayoutManager gridLayoutManager = (GridLayoutManager)layoutManager;

@@ -7,7 +7,6 @@ import com.intellij.compiler.ant.Tag;
  * @author Eugene Zhuravlev
  *         Date: Mar 19, 2004
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class AntCall extends Tag{
 
   public AntCall(final String target) {

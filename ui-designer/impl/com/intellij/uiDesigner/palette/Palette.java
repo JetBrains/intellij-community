@@ -571,7 +571,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
         @NonNls final String name = descriptor.getName();
 
-        //noinspection HardCodedStringLiteral
         if (
           name.equals("preferredSize") ||
           name.equals("minimumSize") ||
@@ -591,7 +590,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
             property = createIntEnumProperty(name, readMethod, writeMethod, enumPairs);
           }
           else if (JLabel.class.isAssignableFrom(aClass)) { // special handling for javax.swing.JLabel
-            //noinspection HardCodedStringLiteral
             if (JLabel.class.isAssignableFrom(aClass) && ("displayedMnemonic".equals(name) || "displayedMnemonicIndex".equals(name)))
             { // skip JLabel#displayedMnemonic and JLabel#displayedMnemonicIndex
               continue;
@@ -601,7 +599,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
             }
           }
           else if (AbstractButton.class.isAssignableFrom(aClass)) {  // special handling AbstractButton subclasses
-            //noinspection HardCodedStringLiteral
             if ("mnemonic".equals(name) || "displayedMnemonicIndex".equals(name)) { // AbstractButton#mnemonic
               continue;
             }

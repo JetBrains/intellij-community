@@ -48,7 +48,6 @@ public final class IntEnumEditor extends PropertyEditor {
         return myCbx;
       }
     }
-    //noinspection HardCodedStringLiteral
     throw new IllegalArgumentException("unknown value: " + value);
   }
 

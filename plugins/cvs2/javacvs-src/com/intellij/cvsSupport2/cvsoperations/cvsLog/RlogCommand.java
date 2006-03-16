@@ -103,7 +103,6 @@ public class RlogCommand extends AbstractCommand {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private String getCVSArguments() {
     final StringBuffer cvsArguments = new StringBuffer();
-    //noinspection HardCodedStringLiteral
     if (myHeadersOnly) {
       cvsArguments.append("-h ");
     }

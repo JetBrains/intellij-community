@@ -15,9 +15,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -33,8 +32,8 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +90,6 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   public String getName() {
-    //noinspection ConstantConditions
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }

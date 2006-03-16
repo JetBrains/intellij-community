@@ -11,7 +11,6 @@ final class MyEditorState implements FileEditorState{
 
   public MyEditorState(final long modificationStamp, final String[] selectedComponents){
     if (selectedComponents == null){
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("selectedComponents cannot be null");
     }
     myDocumentModificationStamp = modificationStamp;

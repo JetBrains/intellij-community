@@ -49,7 +49,7 @@ public class WeakReferenceArray <T> {
   private void checkThread() {}
 
   private void checkRange(int index) {
-    if (index >= mySize) //noinspection HardCodedStringLiteral
+    if (index >= mySize)
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
   }
 

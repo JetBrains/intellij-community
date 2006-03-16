@@ -99,12 +99,10 @@ public class ExtConnection extends ConnectionOnProcess {
     GeneralCommandLine command = new GeneralCommandLine();
     command.setExePath(config.CVS_RSH);
     command.addParameter(host);
-    //noinspection HardCodedStringLiteral
     command.addParameter("-l");
     command.addParameter(userName);
 
     if (config.PRIVATE_KEY_FILE.length() > 0) {
-      //noinspection HardCodedStringLiteral
       command.addParameter("-i");
       command.addParameter(config.PRIVATE_KEY_FILE);
     }

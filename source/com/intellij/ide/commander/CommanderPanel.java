@@ -266,13 +266,11 @@ public class CommanderPanel extends JPanel {
     removeAll();
 
     myTitlePanel = new JPanel(new BorderLayout());
-    //noinspection HardCodedStringLiteral
     myTitlePanel.setBackground(UIUtil.getControlColor());
     myTitlePanel.setOpaque(true);
 
     myParentTitle = new MyTitleLabel(myTitlePanel);
     myParentTitle.setText(" ");
-    //noinspection HardCodedStringLiteral
     myParentTitle.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     myParentTitle.setForeground(Color.black);
     myParentTitle.setUI(new RightAlignedLabelUI());

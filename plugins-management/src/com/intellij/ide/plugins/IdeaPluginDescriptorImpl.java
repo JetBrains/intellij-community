@@ -197,7 +197,6 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    //noinspection HardCodedStringLiteral
     throw new WriteExternalException("Not supported");
   }
 

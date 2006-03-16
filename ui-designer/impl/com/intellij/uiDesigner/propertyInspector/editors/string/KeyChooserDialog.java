@@ -186,7 +186,6 @@ public final class KeyChooserDialog extends DialogWrapper{
         return UIDesignerBundle.message("column.value");
       }
       else{
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }
@@ -199,7 +198,6 @@ public final class KeyChooserDialog extends DialogWrapper{
         return String.class;
       }
       else{
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }
@@ -212,7 +210,6 @@ public final class KeyChooserDialog extends DialogWrapper{
         return myPairs.get(row).getSecond();
       }
       else{
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }

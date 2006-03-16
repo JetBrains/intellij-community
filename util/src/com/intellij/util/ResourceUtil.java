@@ -45,7 +45,6 @@ public class ResourceUtil {
       if (url == null) continue;
 
       try {
-        //noinspection UNUSED_SYMBOL
         final URLConnection connection = url.openConnection();
       }
       catch (IOException e) {

@@ -18,7 +18,6 @@ package com.intellij.psi.util;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class ConstantExpressionUtil {
   public static Object computeCastTo(PsiExpression expression, PsiType castTo) {
     if (expression == null) return null;

@@ -107,12 +107,10 @@ public class ViewOfflineResultsAction extends AnAction {
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.INSPECTION).activate(null);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String getLastFilePath(Project project) {
     return PropertiesComponent.getInstance(project).getValue("last_opened_file_path");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void setLastFilePath(Project project,String path) {
     PropertiesComponent.getInstance(project).setValue("last_opened_file_path",path);
   }

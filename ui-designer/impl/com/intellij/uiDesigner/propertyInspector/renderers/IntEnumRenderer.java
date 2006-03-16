@@ -23,7 +23,6 @@ public final class IntEnumRenderer extends LabelPropertyRenderer {
         return;
       }
     }
-    //noinspection HardCodedStringLiteral
     throw new IllegalArgumentException("unknown value: " + value);
   }
 }

@@ -678,7 +678,6 @@ public class EditorOptionsPanel {
         text = ApplicationBundle.message("combobox.tab.placement.right");
       }
       else {
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown tabPlacement: " + tabPlacement);
       }
       return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);

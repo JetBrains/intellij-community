@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -14,8 +15,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.StringTokenizer;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
@@ -94,7 +93,6 @@ public class ComparingReferencesInspection extends LocalInspectionTool {
 
           if (isCheckedType(lType) || isCheckedType(rType)) {
             if (problemList[0] == null) problemList[0] = new ArrayList();
-            //noinspection HardCodedStringLiteral
             problemList[0].add(manager.createProblemDescriptor(expression,
                                                                InspectionsBundle.message("inspection.comparing.references.problem.descriptor", "#ref #loc"),
                                                                myQuickFix,
@@ -129,7 +127,6 @@ public class ComparingReferencesInspection extends LocalInspectionTool {
           return;
 
         PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
-        //noinspection HardCodedStringLiteral
         PsiMethodCallExpression equalsCall = (PsiMethodCallExpression)factory.createExpressionFromText("a.equals(b)", null);
 
         equalsCall.getMethodExpression().getQualifierExpression().replace(lExpr);
@@ -138,7 +135,6 @@ public class ComparingReferencesInspection extends LocalInspectionTool {
         PsiExpression result = (PsiExpression)binaryExpression.replace(equalsCall);
 
         if (opSign == JavaTokenType.NE) {
-          //noinspection HardCodedStringLiteral
           PsiPrefixExpression negation = (PsiPrefixExpression)factory.createExpressionFromText("!a", null);
           negation.getOperand().replace(result);
           result.replace(negation);

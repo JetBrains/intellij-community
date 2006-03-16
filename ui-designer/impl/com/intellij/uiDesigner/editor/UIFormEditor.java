@@ -13,11 +13,11 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.FormHighlightingPass;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.FormHighlightingPass;
 import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,7 +36,6 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   public UIFormEditor(final Project project, final VirtualFile file){
     final Module module = VfsUtil.getModuleForFile(project, file);
     if (module == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("no module for file " + file + " in project " + project);
     }
     myFile = file;

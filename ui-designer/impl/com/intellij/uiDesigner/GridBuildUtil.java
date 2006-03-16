@@ -168,7 +168,6 @@ public class GridBuildUtil {
         gridLayoutManager = createTwoDimensionGrid(componentsToConvert);
       }
       else {
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("invalid grid type: " + gridType);
       }
     }

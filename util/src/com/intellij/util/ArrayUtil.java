@@ -116,7 +116,6 @@ public class ArrayUtil {
   public static <T> T[] remove(@NotNull final T[] src,int idx){
     int length=src.length;
     if (idx < 0 || idx >= length) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("invalid index: " + idx);
     }
     T[] result=(T[])Array.newInstance(src.getClass().getComponentType(), length-1);

@@ -557,7 +557,6 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
 
     public void actionPerformed(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      //noinspection HardCodedStringLiteral
       JComponent button = (JComponent)presentation.getClientProperty("button");
       DefaultActionGroup group = createPopupActionGroup();
       ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TODO_VIEW_TOOLBAR,

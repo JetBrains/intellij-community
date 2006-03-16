@@ -143,7 +143,6 @@ public final class XmlReader {
         }
       }
       else {
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unexpected component: " + lwComponent);
       }
     }

@@ -24,7 +24,6 @@ public final class ComponentPtr{
 
     validate();
     if(!isValid()){
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("invalid component: "+component);
     }
   }

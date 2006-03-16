@@ -44,7 +44,6 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private SearchableOptionsRegistrar mySearchableOptionsRegistrar;
 
-  @SuppressWarnings({"UNUSED_SYMBOL"})
   public InspectionToolRegistrar(InspectionToolProvider[] providers, SearchableOptionsRegistrar searchableOptionsRegistrar) {
     mySearchableOptionsRegistrar = searchableOptionsRegistrar;
     myInspectionTools = new ArrayList<Class>();
