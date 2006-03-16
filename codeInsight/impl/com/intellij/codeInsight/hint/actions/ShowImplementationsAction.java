@@ -31,6 +31,7 @@
  */
 package com.intellij.codeInsight.hint.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -45,6 +46,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
@@ -96,14 +98,17 @@ public class ShowImplementationsAction extends AnAction {
       element = ((PsiAnonymousClass)element).getBaseClassType().resolve();
     }
 
+    String text = "";
     PsiElement[] impls = null;
     if (element != null) {
       if (element instanceof PsiPackage) return;
 
       impls = getSelfAndImplementations(editor, file, element);
+      text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
     else if (ref instanceof PsiPolyVariantReference) {
       final PsiPolyVariantReference polyReference = (PsiPolyVariantReference)ref;
+      text = polyReference.getRangeInElement().substring(polyReference.getElement().getText());
       final ResolveResult[] results = polyReference.multiResolve(false);
       final List<PsiElement> implsList = new ArrayList<PsiElement>(results.length);
 
@@ -131,14 +136,18 @@ public class ShowImplementationsAction extends AnAction {
     // search. To be removed after progress indicator will no longer be a modal dialog.
 
     final PsiElement[] implsFinal = impls;
+    final String title = text;
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             final ImplementationViewComponent component = new ImplementationViewComponent(implsFinal);
             if (component.hasElementsToShow()) {
-              final JBPopup popup = JBPopupFactory.getInstance().createComponentPopup(component, component.getPrefferedFocusableComponent(),
-                                                                                      true);
+              final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
+                .setRequestFocus(true)
+                .setResizable(true)
+                .setMovable(true)
+                .setTitle(CodeInsightBundle.message("implementation.view.title", title)).createPopup();
               popup.show(hintPosition);
               component.setHint(popup);
             }

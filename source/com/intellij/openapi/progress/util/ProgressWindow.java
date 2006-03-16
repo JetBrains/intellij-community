@@ -460,7 +460,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
         myPopup.cancel();
       }
 
-      myPopup = JBPopupFactory.getInstance().createHeavyweightComponentPopup(myPanel, myCancelButton, true);
+      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myPanel, myCancelButton)
+        .setForceHeavyweight(true)
+        .setRequestFocus(true)
+        .createPopup();
       myPopup.showInCenterOf(myParentWindow);
       StackingPopupDispatcher.onPopupHidden(myPopup); // Mouse click hiding is not necessary.
 

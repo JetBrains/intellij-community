@@ -112,6 +112,7 @@ public class ShowRecentFilesAction extends AnAction {
 
     new PopupChooserBuilder(list).
       setTitle(IdeBundle.message("title.popup.recent.files")).
+      setMovable(true).
       setItemChoosenCallback(runnable).
       addAdditionalChooseKeystroke(getAdditionalSelectKeystroke()).
       createPopup().showCenteredInCurrentWindow(project);

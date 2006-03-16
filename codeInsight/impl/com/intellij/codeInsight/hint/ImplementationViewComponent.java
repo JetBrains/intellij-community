@@ -57,10 +57,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -135,6 +137,10 @@ public class ImplementationViewComponent extends JPanel {
 
     myBinarySwitch = new CardLayout();
     myViewingPanel = new JPanel(myBinarySwitch);
+    final Border lineBorder = new EdgeBorder(EdgeBorder.EDGE_TOP);
+    final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 2, 2);
+    final Border compoundBorder = BorderFactory.createCompoundBorder(emptyBorder, lineBorder);
+    myViewingPanel.setBorder(compoundBorder);
     myViewingPanel.add(myEditor.getComponent(), TEXT_PAGE_KEY);
 
     myBinaryPanel = new JPanel(new BorderLayout());

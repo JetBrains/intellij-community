@@ -461,7 +461,9 @@ public class KeymapPanel extends JPanel {
     group.add(new AnAction(InspectionsBundle.message("inspection.tools.action.filter"), InspectionsBundle.message("inspection.tools.action.filter"), IconLoader.getIcon("/ant/filter.png")) {
       public void actionPerformed(AnActionEvent e) {
         if (myPopup == null || myPopup.getContent() == null){
-          myPopup = JBPopupFactory.getInstance().createComponentPopup(createFilteringPanel(), null, true);
+          myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(createFilteringPanel(), null)
+            .setRequestFocus(true)
+            .createPopup();
         }
         myPopup.showUnderneathOf(toolbar);
       }

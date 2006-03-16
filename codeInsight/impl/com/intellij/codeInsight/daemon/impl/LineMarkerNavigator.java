@@ -82,6 +82,7 @@ class LineMarkerNavigator {
       list.setCellRenderer(listRenderer);
       new PopupChooserBuilder(list).
         setTitle(title).
+        setMovable(true).
         setItemChoosenCallback(new Runnable() {
           public void run() {
             int[] ids = list.getSelectedIndices();

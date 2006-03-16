@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LightweightHint;
@@ -37,11 +38,10 @@ import com.intellij.xml.util.documentation.HtmlDocumentationProvider;
 import com.intellij.xml.util.documentation.XHtmlDocumentationProvider;
 import com.intellij.xml.util.documentation.XmlDocumentationProvider;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -111,7 +111,7 @@ public class JavaDocManager implements ProjectComponent {
   public void projectClosed() {
   }
 
-  public LightweightHint showJavaDocInfo(PsiElement element) {
+  public LightweightHint showJavaDocInfo(@NotNull PsiElement element) {
     myRequestFocus = false;
 
     final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
@@ -134,7 +134,7 @@ public class JavaDocManager implements ProjectComponent {
     if (oldHint != null) {
       JavaDocInfoComponent oldComponent = (JavaDocInfoComponent)oldHint.getComponent();
       PsiElement element1 = oldComponent.getElement();
-      if (element != null && element.equals(element1)) {
+      if (element.equals(element1)) {
         return oldHint;
       }
       oldHint.hide();
@@ -146,19 +146,6 @@ public class JavaDocManager implements ProjectComponent {
 
     myDocInfoHintRef = new WeakReference<LightweightHint>(hint);
 
-    Window window = WindowManager.getInstance().suggestParentWindow(myProject);
-    JLayeredPane layeredPane;
-
-    if (window instanceof JFrame) {
-      layeredPane = ((JFrame)window).getLayeredPane();
-    }
-    else if (window instanceof JDialog) {
-      layeredPane = ((JDialog)window).getLayeredPane();
-    }
-    else {
-      throw new IllegalStateException("cannot find parent window: project=" + myProject + "; window=" + window);
-    }
-
     myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
 
     if (myPreviouslyFocused == null || !(myPreviouslyFocused.getParent() instanceof ChooseByNameBase.JPanelProvider)) {
@@ -167,25 +154,13 @@ public class JavaDocManager implements ProjectComponent {
 
     hookFocus(hint);
 
-    Point p = chooseBestHintPosition(hint);
-    Dimension preferredTextFieldPanelSize = component.getPreferredSize();
-
-    component.setBounds(p.x, p.y, preferredTextFieldPanelSize.width, preferredTextFieldPanelSize.height);
-
-    final JLayeredPane _layeredPane = layeredPane;
-
-    _layeredPane.add(component, new Integer(500));
-
-    component.registerKeyboardAction(new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        _layeredPane.remove(component);
-        _layeredPane.repaint(component.getBounds());
-      }
-    },
-                                     KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                                     JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
+    hint.setForceShowAsPopup(true);
+    setTitle(hint, element);
     return hint;
+  }
+
+  private static void setTitle(final LightweightHint hint, final PsiElement element) {
+    hint.setTitle(CodeInsightBundle.message("javadoc.info.title", SymbolPresentationUtil.getSymbolPresentableText(element)));
   }
 
   public LightweightHint showJavaDocInfo(final Editor editor, PsiFile file, boolean requestFocus) {
@@ -308,6 +283,11 @@ public class JavaDocManager implements ProjectComponent {
     }
 
     myDocInfoHintRef = new WeakReference<LightweightHint>(hint);
+
+    hint.setForceShowAsPopup(true);
+    if (element instanceof PsiNamedElement) {
+      setTitle(hint, element);
+    }
 
     return hint;
   }
@@ -561,7 +541,7 @@ public class JavaDocManager implements ProjectComponent {
     return null;
   }
 
-  public void fetchDocInfo(final JavaDocProvider provider, final JavaDocInfoComponent component) {
+  public static void fetchDocInfo(final JavaDocProvider provider, final JavaDocInfoComponent component) {
     component.startWait();
 
     new Alarm().addRequest(new Runnable() {
@@ -773,7 +753,7 @@ public class JavaDocManager implements ProjectComponent {
 
     if (myEditor != null) {
       HintManager hintManager = HintManager.getInstance();
-      hintManager.showEditorHint(hint, myEditor, p,
+      hintManager.showEditorHint(hint, myEditor, HintManager.ABOVE,
                                  HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE |
                                  HintManager.HIDE_BY_TEXT_CHANGE |
                                  HintManager.HIDE_BY_SCROLLING,
@@ -787,8 +767,7 @@ public class JavaDocManager implements ProjectComponent {
       }
     }
     else if (myPreviouslyFocused != null) {
-      Dimension preferred = hint.getComponent().getPreferredSize();
-      hint.setBounds(p.x, p.y, preferred.width, preferred.height);
+      hint.show((JComponent)myPreviouslyFocused.getParent(), p.x, p.y, (JComponent)myPreviouslyFocused);
     }
   }
 

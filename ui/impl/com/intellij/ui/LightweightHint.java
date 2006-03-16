@@ -34,6 +34,9 @@ public class LightweightHint implements Hint, UserDataHolder {
   private boolean myForceLightweightPopup = false;
   private boolean mySelectingHint;
 
+  private boolean myForceShowAsPopup = false;
+  private String myTitle = null;
+
   public LightweightHint(final JComponent component) {
     LOG.assertTrue(component != null);
     myComponent = component;
@@ -41,6 +44,15 @@ public class LightweightHint implements Hint, UserDataHolder {
 
   public void setForceLightweightPopup(final boolean forceLightweightPopup) {
     myForceLightweightPopup = forceLightweightPopup;
+  }
+
+
+  public void setForceShowAsPopup(final boolean forceShowAsPopup) {
+    myForceShowAsPopup = forceShowAsPopup;
+  }
+
+  public void setTitle(final String title) {
+    myTitle = title;
   }
 
   public boolean isSelectingHint() {
@@ -65,10 +77,9 @@ public class LightweightHint implements Hint, UserDataHolder {
     LOG.assertTrue(myParentComponent.isShowing());
     myEscListener = new MyEscListener();
     myComponent.registerKeyboardAction(myEscListener, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                                       JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
+                                       JComponent.WHEN_IN_FOCUSED_WINDOW);
     final JLayeredPane layeredPane = parentComponent.getRootPane().getLayeredPane();
-    if (myForceLightweightPopup || fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y)))) {
+    if (!myForceShowAsPopup && (myForceLightweightPopup || fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y))))) {
       final Dimension preferredSize = myComponent.getPreferredSize();
       final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
 
@@ -81,7 +92,12 @@ public class LightweightHint implements Hint, UserDataHolder {
     }
     else {
       myIsRealPopup = true;
-      myPopup = JBPopupFactory.getInstance().createComponentPopup(myComponent, focusBackComponent, false);
+      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myComponent, focusBackComponent)
+        .setRequestFocus(false)
+        .setResizable(myForceShowAsPopup)
+        .setMovable(myForceShowAsPopup)
+        .setTitle(myTitle)
+        .createPopup();
       myPopup.show(new RelativePoint(myParentComponent, new Point(x, y)));
     }
   }

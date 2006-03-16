@@ -42,11 +42,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import javax.swing.*;
 
 public class SymbolPresentationUtil {
+  private SymbolPresentationUtil() {
+  }
+
   public static String getSymbolPresentableText(PsiElement element) {
     if (element instanceof PsiMethod){
       return PsiFormatUtil.formatMethod(
         (PsiMethod)element,
-          PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+        PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
         PsiFormatUtil.SHOW_TYPE
       );
     }

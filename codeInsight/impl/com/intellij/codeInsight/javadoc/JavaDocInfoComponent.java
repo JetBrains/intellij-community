@@ -127,9 +127,9 @@ public class JavaDocInfoComponent extends JPanel {
             }
         });
 
-        this.setLayout(new BorderLayout());
-        this.add(myScrollPane, BorderLayout.CENTER);
-        this.setBorder(BorderFactory.createLineBorder(Color.black));
+        setLayout(new BorderLayout());
+        add(myScrollPane, BorderLayout.CENTER);
+        myScrollPane.setBorder(BorderFactory.createEmptyBorder(0, 2, 2, 2));
 
         DefaultActionGroup group = new DefaultActionGroup();
         group.add(new BackAction());
@@ -182,9 +182,9 @@ public class JavaDocInfoComponent extends JPanel {
     private void setControlPanelVisible(boolean visible) {
         if (visible == myControlPanelVisible) return;
         if (visible) {
-            this.add(myControlPanel, BorderLayout.NORTH);
+          add(myControlPanel, BorderLayout.NORTH);
         } else {
-            this.remove(myControlPanel);
+          remove(myControlPanel);
         }
         myControlPanelVisible = visible;
     }

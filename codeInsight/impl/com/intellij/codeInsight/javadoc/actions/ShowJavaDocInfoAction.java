@@ -95,7 +95,7 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
       }
       actionPerformedImpl(project, editor);
     }
-    else if (element != null && project != null) {
+    else if (project != null) {
       if (element instanceof PsiMethod ||
           element instanceof PsiClass ||
           element instanceof PsiField ||

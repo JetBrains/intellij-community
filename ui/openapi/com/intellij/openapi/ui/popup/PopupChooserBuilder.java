@@ -39,6 +39,10 @@ public class PopupChooserBuilder {
 
   private JBPopup myPopup;
 
+  private boolean myRequestFocus = true;
+  private boolean myForceResizable = false;
+  private boolean myForceMovable = false;
+
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = list;
   }
@@ -77,10 +81,27 @@ public class PopupChooserBuilder {
     return this;
   }
 
+
+  public PopupChooserBuilder setRequestFocus(final boolean requestFocus) {
+    myRequestFocus = requestFocus;
+    return this;
+  }
+
+  public PopupChooserBuilder setResizable(final boolean forceResizable) {
+    myForceResizable = forceResizable;
+    return this;
+  }
+
+
+  public PopupChooserBuilder setMovable(final boolean forceMovable) {
+    myForceMovable = forceMovable;
+    return this;
+  }
+
   @NotNull
   public JBPopup createPopup() {
     JPanel contentPane = new JPanel(new BorderLayout());
-    if (myTitle != null) {
+    if (!myForceMovable && myTitle != null) {
       JLabel label = new JLabel(myTitle);
       label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
       label.setHorizontalAlignment(JLabel.CENTER);
@@ -125,7 +146,13 @@ public class PopupChooserBuilder {
       contentPane.add(mySouthComponent, BorderLayout.SOUTH);
     }
 
-    myPopup = JBPopupFactory.getInstance().createComponentPopup(contentPane, myChooserComponent, true);
+    myPopup = JBPopupFactory.getInstance()
+      .createComponentPopupBuilder(contentPane, myChooserComponent)
+      .setRequestFocus(myRequestFocus)
+      .setResizable(myForceResizable)
+      .setMovable(myForceMovable)
+      .setTitle(myForceMovable ? myTitle : null)
+      .createPopup();
     return myPopup;
   }
 

@@ -6,7 +6,6 @@ package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 
@@ -49,7 +48,12 @@ public class NotificationPopup {
   public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
     myBackgroud = backgroud;
     myContent = new ContentComponent(content);
-    myPopup = JBPopupFactory.getInstance().createHeavyweightComponentPopup(myContent, null, false);
+    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null)
+      .setForceHeavyweight(true)
+      .setRequestFocus(false)
+      .setResizable(false)
+      .setMovable(true)
+      .createPopup();
     final Point p = RelativePoint.getSouthEastOf(owner).getScreenPoint();
     Rectangle screen = ScreenUtil.getScreenRectangle(p.x, p.y);
 
@@ -66,13 +70,9 @@ public class NotificationPopup {
 
   private class ContentComponent extends JPanel {
     private MouseAdapter myEntranceListener;
-    private CaptionPanel myCaption;
-    private Point myLastClickedOffset;
 
     public ContentComponent(JComponent content) {
       super(new BorderLayout());
-      myCaption = new CaptionPanel();
-      add(myCaption, BorderLayout.NORTH);
       add(content, BorderLayout.CENTER);
       setBackground(myBackgroud);
 
@@ -80,37 +80,15 @@ public class NotificationPopup {
         public void mouseEntered(MouseEvent e) {
           if (myFadeInTimer.isRunning()) {
             myFadeInTimer.stop();
-            myCaption.setActive(true);
           }
         }
 
         public void mouseExited(MouseEvent e) {
           if (!myFadeInTimer.isRunning()) {
             myFadeInTimer.start();
-            myCaption.setActive(false);
           }
         }
       };
-
-      myCaption.addMouseListener(new MouseAdapter() {
-        public void mousePressed(MouseEvent e) {
-          final Point titleOffset = RelativePoint.getNorthWestOf(myCaption).getScreenPoint();
-          myLastClickedOffset = new RelativePoint(e).getScreenPoint();
-          myLastClickedOffset.x -= titleOffset.x;
-          myLastClickedOffset.y -= titleOffset.y;
-        }
-      });
-
-      myCaption.addMouseMotionListener(new MouseMotionAdapter() {
-        public void mouseDragged(MouseEvent e) {
-          final Point draggedTo = new RelativePoint(e).getScreenPoint();
-          draggedTo.x -= myLastClickedOffset.x;
-          draggedTo.y -= myLastClickedOffset.y;
-
-          final Window wnd = SwingUtilities.getWindowAncestor(myCaption);
-          wnd.setLocation(draggedTo);
-        }
-      });
     }
 
     @Override

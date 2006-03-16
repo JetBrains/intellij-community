@@ -1,5 +1,6 @@
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.actionSystem.*;
@@ -166,6 +167,10 @@ public abstract class ChooseByNameBase{
       if (myHint != null) {
         myHint.hide();
       }
+    }
+
+    public LightweightHint getHint() {
+      return myHint;
     }
   }
 
@@ -361,6 +366,7 @@ public abstract class ChooseByNameBase{
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         choosenElementMightChange();
+        updateDocumentation();
       }
     });
 
@@ -377,6 +383,15 @@ public abstract class ChooseByNameBase{
 
     if (modalityState != null) {
       rebuildList(0, 0, null, modalityState);
+    }
+  }
+
+  private void updateDocumentation() {
+    final LightweightHint hint = myTextFieldPanel.getHint();
+    final Object element = getChosenElement();
+    if (hint != null && element instanceof PsiElement){
+      myTextFieldPanel.unregisterHint();
+      myTextFieldPanel.registerHint(JavaDocManager.getInstance(myProject).showJavaDocInfo((PsiElement)element));
     }
   }
 
@@ -438,7 +453,7 @@ public abstract class ChooseByNameBase{
         doClose(false);
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-       JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+       JComponent.WHEN_IN_FOCUSED_WINDOW
     );
 
     myList.registerKeyboardAction(new AbstractAction() {
@@ -446,7 +461,7 @@ public abstract class ChooseByNameBase{
         doClose(false);
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-       JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+       JComponent.WHEN_IN_FOCUSED_WINDOW
     );
 
     if (myTextField.requestFocusInWindow() || SystemInfo.isMac) {
