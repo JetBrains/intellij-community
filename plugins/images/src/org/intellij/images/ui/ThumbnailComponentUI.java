@@ -44,7 +44,6 @@ public class ThumbnailComponentUI extends ComponentUI {
   @NonNls private static final String THUMBNAIL_COMPONENT_ERROR_STRING = "ThumbnailComponent.errorString";
 
   static {
-    //noinspection HardCodedStringLiteral
     UIManager.getDefaults().put(THUMBNAIL_COMPONENT_ERROR_STRING,
                                 IconsBundle.message("thumbnails.component.error.text"));
   }
