@@ -359,7 +359,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final ArrayList<PsiElement> results = new ArrayList<PsiElement>();
     TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        if (!COMMENT_BIT_SET.contains(element.getNode().getElementType())) return true;
+        if (element.getNode() != null && !COMMENT_BIT_SET.contains(element.getNode().getElementType())) return true;
         if (element.findReferenceAt(offsetInElement) == null) {
           results.add(element);
         }
