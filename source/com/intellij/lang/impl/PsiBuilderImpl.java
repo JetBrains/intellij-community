@@ -55,6 +55,22 @@ public class PsiBuilderImpl implements PsiBuilder {
     myLexer.start(chars, 0, text.length());
   }
 
+  /**
+   * For tests only!
+   */
+  public PsiBuilderImpl(final Lexer lexer, final TokenSet whitespaces, final TokenSet comments, CharTable charTable, CharSequence text) {
+    myWhitespaces = whitespaces;
+    myLexer = lexer;
+    myComments = comments;
+    myText = text;
+    myCharTable = charTable;
+
+    myFileLevelParsing = myCharTable == null;
+
+    char[] chars = CharArrayUtil.fromSequence(text);
+    myLexer.start(chars, 0, text.length());
+  }
+
   private class StartMarker extends ProductionMarker implements Marker {
     public IElementType myType;
     public DoneMarker myDoneMarker = null;
