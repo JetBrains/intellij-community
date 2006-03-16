@@ -2,18 +2,21 @@ package com.intellij.debugger.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
-import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
+import com.intellij.debugger.ui.impl.WatchDebuggerTree;
+import com.intellij.debugger.ui.impl.watch.DebuggerTree;
+import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -22,11 +25,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.IncorrectOperationException;
+import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -143,35 +154,129 @@ public class ValueHint {
         public void threadAction() {
           try {
             final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
+
+
+            final TextWithImports text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCurrentExpression.getText());
             final Value value = evaluator.evaluate(evaluationContext);
 
-            TextWithImports text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCurrentExpression.getText());
-            final WatchItemDescriptor descriptor = new WatchItemDescriptor(myProject, text, value, false);
-            descriptor.setContext(evaluationContext);
-            if (myType == MOUSE_OVER_HINT) {
-              // force using default renderer for mouse over hint in order to not to call accidentaly methods while rendering
-              // otherwise, if the hint is invoked explicitly, show it with the right "auto" renderer
-              descriptor.setRenderer(debuggerContext.getDebugProcess().getDefaultRenderer(value));
-            }
-            descriptor.updateRepresentation(evaluationContext, new DescriptorLabelListener() {
-              public void labelChanged() {
-                if(myCurrentRange != null) {
-                  if(myType != MOUSE_OVER_HINT || descriptor.isValueValid()) {
-                    showHint(DebuggerTreeRenderer.getDescriptorText(descriptor, true));
+            if (value instanceof PrimitiveValue) {
+              final WatchItemDescriptor descriptor = new WatchItemDescriptor(myProject, text, value, false);
+              descriptor.setContext(evaluationContext);
+              if (myType == MOUSE_OVER_HINT) {
+                // force using default renderer for mouse over hint in order to not to call accidentaly methods while rendering
+                // otherwise, if the hint is invoked explicitly, show it with the right "auto" renderer
+                descriptor.setRenderer(debuggerContext.getDebugProcess().getDefaultRenderer(value));
+              }
+              descriptor.updateRepresentation(evaluationContext, new DescriptorLabelListener() {
+                public void labelChanged() {
+                  if(myCurrentRange != null) {
+                    if(myType != MOUSE_OVER_HINT || descriptor.isValueValid()) {
+                      showHint(DebuggerTreeRenderer.getDescriptorText(descriptor, true));
+                    }
                   }
                 }
-              }
-            });
+              });
+            } else {
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  final WatchDebuggerTree tree = new WatchDebuggerTree(myProject);
+                  tree.getModel().addTreeModelListener(new TreeModelListener() {
+                    public void treeNodesChanged(TreeModelEvent e) {
+                      resize(e.getTreePath(), tree);
+                    }
+
+                    public void treeNodesInserted(TreeModelEvent e) {
+                      resize(e.getTreePath(), tree);
+                    }
+
+                    public void treeNodesRemoved(TreeModelEvent e) {
+                      //do nothing
+                    }
+
+                    public void treeStructureChanged(TreeModelEvent e) {
+                      resize(e.getTreePath(), tree);
+                    }
+                  });
+                  tree.addTreeExpansionListener(new TreeExpansionListener() {
+                    public void treeExpanded(TreeExpansionEvent event) {
+                      resize(event.getPath(), tree);
+                    }
+
+                    public void treeCollapsed(TreeExpansionEvent event) {
+                      //do nothing
+                    }
+                  });
+                  tree.addWatch(text);
+                  tree.rebuild(getDebuggerContext());
+                  showHint(tree, myCurrentExpression.getText());
+                }
+              });
+            }
           }
           catch (EvaluateException e) {
             LOG.debug(e);
           }
         }
+
       }, DebuggerManagerThreadImpl.HIGH_PRIORITY);
     }
     catch (EvaluateException e) {
       LOG.debug(e);
     }
+  }
+
+  private void resize(final TreePath path, DebuggerTree tree) {
+    if (myCurrentHint == null) return;
+    final Window popupWindow = SwingUtilities.windowForComponent(myCurrentHint.getComponent());
+    final Dimension size = tree.getPreferredSize();
+    final Point location = popupWindow.getLocation();
+    final Rectangle windowBounds = popupWindow.getBounds();
+    final Rectangle bounds = tree.getPathBounds(path);
+    final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
+    popupWindow
+      .setBounds(location.x,
+                 location.y,
+                 Math.max(Math.max(size.width, bounds.width) + 10, windowBounds.width),
+                 Math.max(size.height + treeNode.getChildCount() * bounds.height, windowBounds.height));
+    popupWindow.validate();
+    popupWindow.repaint();
+  }
+
+  private void showHint(final WatchDebuggerTree tree, final String title) {
+    DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+      public void run() {
+        if(myShowHint) {
+          JScrollPane pane = ScrollPaneFactory.createScrollPane(tree);
+          myCurrentHint = new LightweightHint(pane);
+          myCurrentHint.setForceShowAsPopup(true);
+          myCurrentHint.setTitle(DebuggerBundle.message("active.tooltip.title", title));
+          
+          //Editor may be disposed before later invokator process this action
+          if(myEditor.getComponent().getRootPane() == null) return;
+          myCurrentHint.show(myEditor.getContentComponent(), myPoint.x, myPoint.y, myEditor.getContentComponent());
+
+          updateInitialBounds(tree);
+
+          if(myType == MOUSE_CLICK_HINT) {
+            tree.requestFocusInWindow();
+          }
+        }
+      }
+    });
+  }
+
+  private void updateInitialBounds(final WatchDebuggerTree tree) {
+    final Window popupWindow = SwingUtilities.windowForComponent(myCurrentHint.getComponent());
+    final Dimension size = tree.getPreferredSize();
+    final Point location = popupWindow.getLocation();
+    final Rectangle windowBounds = popupWindow.getBounds();
+    popupWindow
+      .setBounds(location.x,
+                 location.y,
+                 Math.max(size.width + 250, windowBounds.width),
+                 Math.max(size.height, windowBounds.height));
+    popupWindow.validate();
+    popupWindow.repaint();
   }
 
   private void showHint(final SimpleColoredText text) {
@@ -183,7 +288,7 @@ public class ValueHint {
           HintManager hintManager = HintManager.getInstance();
 
           //Editor may be disposed before later invokator process this action
-          if(myEditor.getComponent() == null || myEditor.getComponent().getRootPane() == null) return;
+          if(myEditor.getComponent().getRootPane() == null) return;
 
           Point p = hintManager.getHintPosition(myCurrentHint, myEditor, myEditor.xyToLogicalPosition(myPoint), HintManager.UNDER);
           hintManager.showEditorHint(
