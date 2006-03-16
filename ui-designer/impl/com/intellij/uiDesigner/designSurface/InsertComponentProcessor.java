@@ -17,15 +17,18 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.make.PsiNestedFormLoader;
 import com.intellij.uiDesigner.palette.ComponentItem;
-import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.palette.ComponentItemDialog;
+import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import com.intellij.uiDesigner.radComponents.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
@@ -41,6 +44,8 @@ public final class InsertComponentProcessor extends EventProcessor {
   private boolean mySticky;
   private RadComponent myInsertedComponent;
   private GridInsertProcessor myGridInsertProcessor;
+  private ComponentItem myComponentToInsert;
+  private DropLocation myLastLocation;
 
   public InsertComponentProcessor(@NotNull final GuiEditor editor) {
     myEditor = editor;
@@ -56,7 +61,34 @@ public final class InsertComponentProcessor extends EventProcessor {
     mySticky = sticky;
   }
 
-  protected void processKeyEvent(final KeyEvent e) {}
+  public void setComponentToInsert(final ComponentItem componentToInsert) {
+    myComponentToInsert = componentToInsert;
+  }
+
+  public void setLastLocation(final DropLocation location) {
+    myLastLocation = location;
+    if (location.canDrop(getComponentToInsert())) {
+      location.placeFeedback(myEditor.getActiveDecorationLayer(), getComponentToInsert());
+    }
+  }
+
+  protected void processKeyEvent(final KeyEvent e) {
+    if (e.getID() == KeyEvent.KEY_PRESSED) {
+      if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+        if (myLastLocation != null) {
+          myEditor.getMainProcessor().stopCurrentProcessor();
+          processComponentInsert(getComponentToInsert(), myLastLocation);
+        }
+      }
+      else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+        myEditor.getMainProcessor().stopCurrentProcessor();
+        myEditor.getActiveDecorationLayer().removeFeedback();
+      }
+      else {
+        myLastLocation = moveDropLocation(myEditor, myLastLocation, getComponentToInsert(), e);
+      }
+    }
+  }
 
   @NotNull
   private static String suggestBinding(final GuiEditor editor, @NotNull final String componentClassName){
@@ -67,13 +99,12 @@ public final class InsertComponentProcessor extends EventProcessor {
     return getUniqueBinding(editor.getRootContainer(), shortClassName);
   }
 
-  public static String getShortClassName(final String componentClassName) {
+  public static String getShortClassName(@NonNls final String componentClassName) {
     final int lastDotIndex = componentClassName.lastIndexOf('.');
     String shortClassName = componentClassName.substring(lastDotIndex + 1);
 
     // Here is euristic. Chop first 'J' letter for standard Swing classes.
     // Without 'J' bindings look better.
-    //noinspection HardCodedStringLiteral
     if(
       shortClassName.length() > 1 && Character.isUpperCase(shortClassName.charAt(1)) &&
       componentClassName.startsWith("javax.swing.") &&
@@ -143,16 +174,30 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   protected void processMouseEvent(final MouseEvent e){
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-      final ComponentItem item = myPaletteManager.getActiveItem(ComponentItem.class);
-      processComponentInsert(e.getPoint(), null, item);
+      processComponentInsert(e.getPoint(), null, getComponentToInsert());
     }
+    else if (e.getID() == MouseEvent.MOUSE_MOVED) {
+      myLastLocation = myGridInsertProcessor.processDragEvent(e.getPoint(), getComponentToInsert());
+      if (myLastLocation.canDrop(getComponentToInsert())) {
+        setCursor(FormEditingUtil.getCopyDropCursor());
+      }
+      else {
+        setCursor(FormEditingUtil.getMoveNoDropCursor());
+      }
+    }
+  }
+
+  private ComponentItem getComponentToInsert() {
+    return (myComponentToInsert != null)
+           ? myComponentToInsert
+           : myPaletteManager.getActiveItem(ComponentItem.class);
   }
 
   // either point or targetContainer is null
   public void processComponentInsert(@Nullable final Point point, @Nullable final RadContainer targetContainer, final ComponentItem item) {
     final DropLocation location = (point != null)
-      ? GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), point, item)
-      : new GridDropLocation(targetContainer, 0, 0);
+                                  ? GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), point)
+                                  : new GridDropLocation(targetContainer, 0, 0);
 
     processComponentInsert(item, location);
   }
@@ -213,6 +258,7 @@ public final class InsertComponentProcessor extends EventProcessor {
         null
       );
     }
+    myComponentToInsert = null;
   }
 
   private boolean validateNestedFormInsert(final ComponentItem item) {
@@ -340,5 +386,9 @@ public final class InsertComponentProcessor extends EventProcessor {
       return myGridInsertProcessor.processMouseMoveEvent(e.getPoint(), false, componentItem);
     }
     return FormEditingUtil.getMoveNoDropCursor();
+  }
+
+  @Override public boolean needMousePressed() {
+    return true;
   }
 }

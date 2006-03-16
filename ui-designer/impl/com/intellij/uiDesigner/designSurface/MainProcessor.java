@@ -74,6 +74,10 @@ public final class MainProcessor extends EventProcessor{
     }
   }
 
+  public Point getLastMousePosition() {
+    return myLastMousePosition;
+  }
+
   protected void processMouseEvent(final MouseEvent e){
     myLastMousePosition = e.getPoint();
 
@@ -327,6 +331,12 @@ public final class MainProcessor extends EventProcessor{
     myCurrentProcessor.processMouseEvent(new MouseEvent(myEditor, MouseEvent.MOUSE_MOVED, 0, 0,
                                                         myLastMousePosition.x, myLastMousePosition.y,
                                                         1, false));
+  }
+
+  public void startInsertProcessor(final ComponentItem componentToInsert, final DropLocation location) {
+    myInsertComponentProcessor.setComponentToInsert(componentToInsert);
+    myInsertComponentProcessor.setLastLocation(location);
+    myCurrentProcessor = myInsertComponentProcessor;
   }
 
   public void stopCurrentProcessor() {

@@ -28,7 +28,7 @@ public class GridInsertProcessor {
     myEditor = editor;
   }
 
-  @NotNull static DropLocation getDropLocation(RadRootContainer rootContainer, Point aPoint, ComponentDragObject dragObject) {
+  @NotNull public static DropLocation getDropLocation(RadRootContainer rootContainer, Point aPoint) {
     int EPSILON = 4;
     RadContainer container = FormEditingUtil.getRadContainerAt(rootContainer, aPoint.x, aPoint.y, EPSILON);
     // to facilitate initial component adding, increase stickiness if there is one container at top level
@@ -53,7 +53,7 @@ public class GridInsertProcessor {
   }
 
   public DropLocation processDragEvent(Point pnt, ComponentDragObject dragObject) {
-    final DropLocation dropLocation = getDropLocation(myEditor.getRootContainer(), pnt, dragObject);
+    final DropLocation dropLocation = getDropLocation(myEditor.getRootContainer(), pnt);
     LOG.info("GridInsertProcessor.processDragEvent(): dropLocation " + dropLocation.toString());
     if (dropLocation.canDrop(dragObject)) {
       dropLocation.placeFeedback(myEditor.getActiveDecorationLayer(), dragObject);

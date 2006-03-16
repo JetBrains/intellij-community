@@ -239,7 +239,7 @@ class DesignDropTargetListener implements DropTargetListener {
     final int dropY = dropPoint.y;
     final ArrayList<RadComponent> dclComponents = dcl.getComponents();
     final int componentCount = dclComponents.size();
-    DropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), dropPoint, dcl);
+    DropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), dropPoint);
     if (isDropOnChild(dcl, location)) {
       setDraggingState(dcl, false);
       return false;

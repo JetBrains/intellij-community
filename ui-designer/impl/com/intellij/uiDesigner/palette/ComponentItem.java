@@ -200,7 +200,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
     return myClassName;
   }
 
-  private String getClassShortName() {
+  public String getClassShortName() {
     final int lastDotIndex = myClassName.lastIndexOf('.');
     if (lastDotIndex != -1 && lastDotIndex != myClassName.length() - 1/*not the last char in class name*/) {
       return myClassName.substring(lastDotIndex + 1).replace('$', '.');

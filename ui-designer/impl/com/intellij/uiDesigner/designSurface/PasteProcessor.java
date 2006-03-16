@@ -78,28 +78,8 @@ public class PasteProcessor extends EventProcessor {
         endPaste();
       }
       else {
-        DropLocation.Direction dir = directionFromKey(e.getKeyCode());
-        if (dir != null && myLastLocation != null) {
-          DropLocation adjacentLocation = myLastLocation.getAdjacentLocation(dir);
-          while(adjacentLocation != null && !adjacentLocation.canDrop(myPastedComponentList)) {
-            adjacentLocation = adjacentLocation.getAdjacentLocation(dir);
-          }
-          if (adjacentLocation != null && adjacentLocation.canDrop(myPastedComponentList)) {
-            adjacentLocation.placeFeedback(myEditor.getActiveDecorationLayer(), myPastedComponentList);
-            myLastLocation = adjacentLocation;
-          }
-        }
+        myLastLocation = moveDropLocation(myEditor, myLastLocation, myPastedComponentList, e);
       }
-    }
-  }
-
-  private static DropLocation.Direction directionFromKey(final int keyCode) {
-    switch(keyCode) {
-      case KeyEvent.VK_RIGHT: return DropLocation.Direction.RIGHT;
-      case KeyEvent.VK_LEFT: return DropLocation.Direction.LEFT;
-      case KeyEvent.VK_UP: return DropLocation.Direction.UP;
-      case KeyEvent.VK_DOWN: return DropLocation.Direction.DOWN;
-      default: return null;
     }
   }
 
@@ -119,8 +99,8 @@ public class PasteProcessor extends EventProcessor {
   }
 
   private void processMousePressed(final MouseEvent e) {
-    DropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), e.getPoint(),
-                                                                myPastedComponentList);
+    DropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), e.getPoint()
+    );
     doPaste(location);
   }
 
