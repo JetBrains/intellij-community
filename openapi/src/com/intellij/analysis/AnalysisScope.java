@@ -544,7 +544,7 @@ public class AnalysisScope {
   }
 
   private void processModule(final Set<String> result, final Module module) {
-    final Project project = myModule.getProject();
+    final Project project = module.getProject();
     final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(project, Profile.INSPECTION);
     LOG.assertTrue(profileManager != null);
     final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
