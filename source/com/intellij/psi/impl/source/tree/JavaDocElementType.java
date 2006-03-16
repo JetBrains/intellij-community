@@ -52,7 +52,8 @@ public interface JavaDocElementType {
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
-      final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), manager.getEffectiveLanguageLevel());
+      //no higher java language level features are allowed in javadoc
+      final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), LanguageLevel.JDK_1_3);
       return context.getJavadocParsing().parseDocCommentText(manager, chars, 0, chars.length);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {
