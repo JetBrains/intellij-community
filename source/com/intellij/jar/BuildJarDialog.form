@@ -1,36 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.jar.BuildJarDialog">
-  <grid id="2f03e" binding="myPanel" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="2f03e" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="138" y="83" width="214" height="272"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+      <xy x="138" y="83" width="214" height="428"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <component id="57a88" class="javax.swing.JCheckBox" binding="myBuildJarsOnMake">
         <constraints>
-          <xy x="2" y="2" width="111" height="22"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/IdeBundle" key="jar.build.on.make"/>
         </properties>
       </component>
-      <grid id="1ac16" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="1ac16" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="2" y="29" width="210" height="241"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
           <splitpane id="70aa">
             <constraints>
-              <xy x="2" y="2" width="206" height="237"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0">
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
                 <preferred-size width="200" height="200"/>
               </grid>
             </constraints>
@@ -39,7 +35,7 @@
             </properties>
             <border type="none"/>
             <children>
-              <grid id="603c0" binding="myModuleSettingsPanel" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="603c0" binding="myModuleSettingsPanel" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="5" left="5" bottom="5" right="5"/>
                 <constraints>
                   <splitpane position="right"/>
@@ -47,11 +43,12 @@
                 <properties/>
                 <border type="none" title-resource-bundle="messages/IdeBundle" title-key="jar.build.module.0.jar.settings"/>
                 <children>
-                  <xy id="a3d48" binding="myEditorPanel" hgap="-1" vgap="-1">
+                  <xy id="a3d48" binding="myEditorPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <xy x="12" y="133" width="182" height="20"/>
-                      <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+                      <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                        <minimum-size width="-1" height="100"/>
+                      </grid>
                     </constraints>
                     <properties/>
                     <border type="none"/>
@@ -59,8 +56,7 @@
                   </xy>
                   <component id="85dcb" class="com.intellij.openapi.ui.LabeledComponent" binding="myJarFilePathComponent">
                     <constraints>
-                      <xy x="12" y="26" width="182" height="36"/>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
@@ -69,8 +65,7 @@
                   </component>
                   <component id="d106c" class="com.intellij.openapi.ui.LabeledComponent" binding="myMainClassComponent">
                     <constraints>
-                      <xy x="12" y="67" width="182" height="36"/>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0"/>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
@@ -79,8 +74,7 @@
                   </component>
                   <component id="9bc53" class="javax.swing.JLabel">
                     <constraints>
-                      <xy x="12" y="111" width="83" height="14"/>
-                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text resource-bundle="messages/IdeBundle" key="jar.build.include.in.jar.file"/>
@@ -88,7 +82,7 @@
                   </component>
                 </children>
               </grid>
-              <grid id="cf86b" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="cf86b" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="5" left="5" bottom="5" right="5"/>
                 <constraints>
                   <splitpane position="left"/>
@@ -96,11 +90,12 @@
                 <properties/>
                 <border type="none" title-resource-bundle="messages/IdeBundle" title-key="jar.build.modules.to.jar"/>
                 <children>
-                  <grid id="a223d" binding="myModulesPanel" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                  <grid id="a223d" binding="myModulesPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <xy x="12" y="26" width="182" height="24"/>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                        <minimum-size width="-1" height="100"/>
+                      </grid>
                     </constraints>
                     <properties/>
                     <border type="none"/>
