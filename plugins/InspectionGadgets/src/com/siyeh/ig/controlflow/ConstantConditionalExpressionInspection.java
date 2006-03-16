@@ -50,7 +50,7 @@ public class ConstantConditionalExpressionInspection
                 (PsiConditionalExpression)infos[0];
         return InspectionGadgetsBundle.message(
                 "constant.conditional.expression.problem.descriptor",
-                '\'' + exp.getText(), calculateReplacementExpression(exp));
+                exp.getText(), calculateReplacementExpression(exp));
     }
 
     static String calculateReplacementExpression(

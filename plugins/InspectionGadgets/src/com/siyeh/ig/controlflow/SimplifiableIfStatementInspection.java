@@ -39,7 +39,7 @@ public class SimplifiableIfStatementInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryConditionalExpressionVisitor();
+        return new SimplifiableIfStatementVisitor();
     }
 
     @NotNull
@@ -143,10 +143,11 @@ public class SimplifiableIfStatementInspection
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new TrivialConditionalFix();
+        return new SimplifiableIfStatementFix();
     }
 
-    private static class TrivialConditionalFix extends InspectionGadgetsFix {
+    private static class SimplifiableIfStatementFix
+            extends InspectionGadgetsFix {
 
         public String getName() {
             return InspectionGadgetsBundle.message(
@@ -164,7 +165,7 @@ public class SimplifiableIfStatementInspection
         }
     }
 
-    private static class UnnecessaryConditionalExpressionVisitor
+    private static class SimplifiableIfStatementVisitor
             extends BaseInspectionVisitor {
 
         public void visitIfStatement(PsiIfStatement statement) {

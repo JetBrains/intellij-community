@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -73,6 +74,9 @@ public class ClassNameDiffersFromFileNameInspection extends ClassInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
+            if (PsiUtil.isInJspFile(aClass)) {
+                return;
+            }
             final PsiElement parent = aClass.getParent();
             if (!(parent instanceof PsiJavaFile)) {
                 return;

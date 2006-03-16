@@ -76,10 +76,11 @@ public class SimplifiableConditionalExpressionInspection
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new TrivialConditionalFix();
+        return new SimplifiableConditionalFix();
     }
 
-    private static class TrivialConditionalFix extends InspectionGadgetsFix {
+    private static class SimplifiableConditionalFix
+            extends InspectionGadgetsFix {
 
         public String getName() {
             return InspectionGadgetsBundle.message(

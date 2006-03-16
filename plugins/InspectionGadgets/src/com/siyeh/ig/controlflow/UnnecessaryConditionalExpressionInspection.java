@@ -73,10 +73,11 @@ public class UnnecessaryConditionalExpressionInspection
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new TrivialConditionalFix();
+        return new UnnecessaryConditionalFix();
     }
 
-    private static class TrivialConditionalFix extends InspectionGadgetsFix {
+    private static class UnnecessaryConditionalFix 
+            extends InspectionGadgetsFix {
 
         public String getName() {
             return InspectionGadgetsBundle.message(

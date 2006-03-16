@@ -55,11 +55,13 @@ public class CyclomaticComplexityInspection extends MethodMetricInspection {
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final CyclomaticComplexityVisitor visitor =
                     new CyclomaticComplexityVisitor();
             method.accept(visitor);
             final int complexity = visitor.getComplexity();
-
             if (complexity <= getLimit()) {
                 return;
             }

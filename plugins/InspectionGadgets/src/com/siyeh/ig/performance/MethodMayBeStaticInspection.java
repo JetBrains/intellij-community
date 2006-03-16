@@ -101,7 +101,7 @@ public class MethodMayBeStaticInspection extends MethodInspection{
                 method.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }
-            if(method.isConstructor()){
+            if(method.isConstructor() || method.getNameIdentifier() == null) {
                 return;
             }
             if(m_ignoreEmptyMethods && MethodUtils.isEmpty(method)){
@@ -125,8 +125,8 @@ public class MethodMayBeStaticInspection extends MethodInspection{
             if(TestUtils.isJUnitTestMethod(method)){
                 return;
             }
-            final PsiMethod superMethod = method.findDeepestSuperMethod();
-            if(superMethod != null){
+            final PsiMethod[] superMethods = method.findDeepestSuperMethods();
+            if(superMethods.length > 0){
                 return;
             }
             if(MethodUtils.isOverridden(method)){
