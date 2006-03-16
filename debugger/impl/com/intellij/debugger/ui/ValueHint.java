@@ -40,7 +40,6 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -189,11 +188,11 @@ public class ValueHint {
               final InspectDebuggerTree tree = new InspectDebuggerTree(myProject);
               tree.getModel().addTreeModelListener(new TreeModelListener() {
                 public void treeNodesChanged(TreeModelEvent e) {
-                  resize(e.getTreePath(), tree);
+                  //do nothing
                 }
 
                 public void treeNodesInserted(TreeModelEvent e) {
-                  resize(e.getTreePath(), tree);
+                  //do nothing
                 }
 
                 public void treeNodesRemoved(TreeModelEvent e) {
@@ -206,7 +205,7 @@ public class ValueHint {
               });
               tree.addTreeExpansionListener(new TreeExpansionListener() {
                 public void treeExpanded(TreeExpansionEvent event) {
-                  resize(event.getPath(), tree);
+                  //resize(event.getPath(), tree);
                 }
 
                 public void treeCollapsed(TreeExpansionEvent event) {
@@ -236,12 +235,11 @@ public class ValueHint {
     final Point location = popupWindow.getLocation();
     final Rectangle windowBounds = popupWindow.getBounds();
     final Rectangle bounds = tree.getPathBounds(path);
-    final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
     popupWindow
       .setBounds(location.x,
                  location.y,
                  Math.max(Math.max(size.width, bounds.width) + 10, windowBounds.width),
-                 Math.max(size.height + treeNode.getChildCount() * bounds.height, windowBounds.height));
+                 Math.max(tree.getRowCount() * bounds.height + 55, windowBounds.height));
     popupWindow.validate();
     popupWindow.repaint();
   }
