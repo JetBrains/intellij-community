@@ -101,8 +101,10 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
       LOG.error(e);
     }
     finally {
-      final PostprocessReformatingAspect component = project.getComponent(PostprocessReformatingAspect.class);
-      component.doPostponedFormatting();
+      if (project != null) { // TODO[ik]. Commands can be executed with project == null.
+        final PostprocessReformatingAspect component = project.getComponent(PostprocessReformatingAspect.class);
+        component.doPostponedFormatting();
+      }
       _fireCommandFinished();
     }
   }
