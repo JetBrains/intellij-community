@@ -396,9 +396,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     else if (parent instanceof PsiAssignmentExpression && methodCall.equals(((PsiAssignmentExpression)parent).getRExpression())) {
       type = ((PsiAssignmentExpression)parent).getLExpression().getType();
     }
-    else if (parent instanceof PsiTypeCastExpression && methodCall.equals(((PsiTypeCastExpression)parent).getOperand())) {
-      type = ((PsiTypeCastExpression)parent).getType();
-    }
     else if (parent instanceof PsiReturnStatement) {
       PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
       if (method != null) {

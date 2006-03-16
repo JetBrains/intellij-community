@@ -771,7 +771,7 @@ public final class PsiUtil {
     PsiExpression[] args = argList == null ? PsiExpression.EMPTY_ARRAY : argList.getExpressions();
     final PsiParameter[] parms = method.getParameterList().getParameters();
 
-    if (!method.isVarArgs()) {
+    if (!method.isVarArgs() || (argList != null && getLanguageLevel(argList).compareTo(LanguageLevel.JDK_1_5) < 0)) {
       if (args.length != parms.length) return false;
 
       for (int i = 0; i < args.length; i++) {
