@@ -84,8 +84,8 @@ public class DependencyInspection extends BaseLocalInspectionTool {
     if (file == null) return null;
     if (file.getViewProvider().getPsi(StdLanguages.JAVA) == null) return null;
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(file.getProject());
-    final DependencyRule[] dependencyRules = validationManager.getApplicableRules(file);
-    if (dependencyRules.length == 0) return null;
+    if (!validationManager.hasRules()) return null;
+    if (validationManager.getApplicableRules(file).length == 0) return null;
     final ArrayList<ProblemDescriptor> problems =  new ArrayList<ProblemDescriptor>();
     ForwardDependenciesBuilder builder = new ForwardDependenciesBuilder(file.getProject(), new AnalysisScope(file));
         builder.analyzeFileDependencies(file, new DependenciesBuilder.DependencyProcessor() {
