@@ -61,6 +61,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private String myActionName;
   private List<ChangeList> myChangeLists;
   private FileStatusListener myFileStatusListener;
+  private final ChangeListManager myChangeListManager;
+  private final Map<Change, ChangeList> myChangeListsMap = new HashMap<Change, ChangeList>();
 
   private static void commit(Project project, List<ChangeList> list, final List<Change> changes) {
     new CommitChangeListDialog(project, list, changes).show();
@@ -255,6 +257,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     restoreState();
 
     init();
+    myChangeListManager = null;
   }
 
 
@@ -344,6 +347,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
 
   private void rebuildList() {
+    final ChangeListManager manager = ChangeListManager.getInstance(myProject);
+    myChangeListsMap.clear();
+    for (Change change : myAllChanges) {
+      myChangeListsMap.put(change, manager.getChangeList(change));
+    }
+
     final DefaultListModel listModel = (DefaultListModel)myChangesList.getModel();
     listModel.removeAllElements();
     for (Change change : getCurrentDisplayedChanges()) {
@@ -700,13 +709,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private Collection<Change> filterBySelectedChangeList(final Collection<Change> changes) {
     List<Change> filtered = new ArrayList<Change>();
-    final ChangeListManager manager = ChangeListManager.getInstance(myProject);
     for (Change change : changes) {
-      if (manager.getChangeList(change) == mySelectedChangeList) {
+      if (getList(change) == mySelectedChangeList) {
         filtered.add(change);
       }
     }
     return filtered;
+  }
+
+  private ChangeList getList(final Change change) {
+    return myChangeListsMap.get(change);
   }
 
   public List<AbstractVcs> getAffectedVcses() {
