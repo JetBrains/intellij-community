@@ -36,8 +36,6 @@ import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
@@ -201,15 +199,6 @@ public class ValueHint {
 
                 public void treeStructureChanged(TreeModelEvent e) {
                   resize(e.getTreePath(), tree);
-                }
-              });
-              tree.addTreeExpansionListener(new TreeExpansionListener() {
-                public void treeExpanded(TreeExpansionEvent event) {
-                  //resize(event.getPath(), tree);
-                }
-
-                public void treeCollapsed(TreeExpansionEvent event) {
-                  //do nothing
                 }
               });
               tree.setInspectDescriptor(descriptor);
