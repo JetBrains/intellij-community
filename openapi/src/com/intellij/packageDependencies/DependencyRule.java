@@ -15,11 +15,11 @@
  */
 package com.intellij.packageDependencies;
 
+import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.ComplementPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.analysis.AnalysisScopeBundle;
 
 public class DependencyRule {
   private NamedScope myFromScope;
@@ -37,8 +37,16 @@ public class DependencyRule {
     DependencyValidationManager holder = DependencyValidationManager.getInstance(from.getProject());
     return (myDenyRule
             ? myFromScope.getValue().contains(from, holder)
-            : new ComplementPackageSet(myFromScope.getValue()).contains(from, holder)) &&
-                                                                                       myToScope.getValue().contains(to, holder);
+            : new ComplementPackageSet(myFromScope.getValue()).contains(from, holder))
+           && myToScope.getValue().contains(to, holder);
+  }
+
+  public boolean isApplicable(PsiFile file){
+    if (myFromScope == null || myToScope == null) return false;
+    DependencyValidationManager holder = DependencyValidationManager.getInstance(file.getProject());
+    return (myDenyRule
+            ? myFromScope.getValue().contains(file, holder)
+            : new ComplementPackageSet(myFromScope.getValue()).contains(file, holder));
   }
 
   public String getDisplayText() {

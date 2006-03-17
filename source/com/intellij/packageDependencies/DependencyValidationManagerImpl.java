@@ -125,6 +125,18 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return result.toArray(new DependencyRule[result.size()]);
   }
 
+  public
+  @NotNull
+  DependencyRule[] getApplicableRules(PsiFile file) {
+    ArrayList<DependencyRule> result = new ArrayList<DependencyRule>();
+    for (DependencyRule dependencyRule : myRules) {
+      if (dependencyRule.isApplicable(file)) {
+        result.add(dependencyRule);
+      }
+    }
+    return result.toArray(new DependencyRule[result.size()]);
+  }
+
 
   public DependencyRule[] getAllRules() {
     return myRules.toArray(new DependencyRule[myRules.size()]);

@@ -20,11 +20,11 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -82,9 +82,10 @@ public class DependencyInspection extends BaseLocalInspectionTool {
   @Nullable
   public ProblemDescriptor[] checkFile(final PsiFile file, final InspectionManager manager, boolean isOnTheFly) {
     if (file == null) return null;
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return null;
+    if (file.getViewProvider().getPsi(StdLanguages.JAVA) == null) return null;
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(file.getProject());
+    final DependencyRule[] dependencyRules = validationManager.getApplicableRules(file);
+    if (dependencyRules.length == 0) return null;
     final ArrayList<ProblemDescriptor> problems =  new ArrayList<ProblemDescriptor>();
     ForwardDependenciesBuilder builder = new ForwardDependenciesBuilder(file.getProject(), new AnalysisScope(file));
         builder.analyzeFileDependencies(file, new DependenciesBuilder.DependencyProcessor() {
