@@ -2,6 +2,8 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
@@ -24,6 +26,7 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.util.CharTable;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -39,6 +42,18 @@ public class Factory implements Constants {
 
   public static void addElementFactory(TreeElementFactory factory) {
     ourElementFactories.add(factory);
+  }
+
+  public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, PsiFile originalFile) {
+    final LeafElement newElement;
+    final DummyHolder dummyHolder = new DummyHolder(manager, table, type.getLanguage());
+    dummyHolder.setOriginalFile(originalFile);
+    dummyHolder.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, PsiUtil.getLanguageLevel(originalFile));
+    final FileElement holderElement = dummyHolder.getTreeElement();
+    newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, -1, holderElement.getCharTable());
+    TreeUtil.addChildren(holderElement, newElement);
+    newElement.putCopyableUserData(CodeEditUtil.GENERATED_FLAG, true);
+    return newElement;
   }
 
   public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager) {

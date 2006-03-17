@@ -114,7 +114,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
         if(reparseable.isParsable(newTextStr, project)){
           final ChameleonElement chameleon =
             (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText, textRange.getStartOffset(),
-                                                              textRange.getEndOffset() + lengthShift, charTable, file.getManager());
+                                                              textRange.getEndOffset() + lengthShift, charTable, file.getManager(), fileImpl);
           ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon).getTreeParent());
           return;
         }
