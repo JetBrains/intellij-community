@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.util.IncorrectOperationException;
@@ -42,6 +43,7 @@ public class CodeFormatterFacade implements Constants {
     }
 
     if (element instanceof CompositeElement) {
+      ChameleonTransforming.transformChildren(element);
       for (ASTNode elem = element.getFirstChildNode(); elem != null; elem = elem.getTreeNext()) {
         result = formatComments(elem, result.getStartOffset(), result.getEndOffset());
       }
