@@ -153,6 +153,7 @@ public abstract class Intention implements IntentionAction{
                 return element;
             } else{
                 element = element.getParent();
+                if (element instanceof PsiFile) break;
             }
         }
         return null;
