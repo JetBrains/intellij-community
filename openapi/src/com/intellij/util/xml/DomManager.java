@@ -52,5 +52,7 @@ public abstract class DomManager implements ProjectComponent {
 
   public abstract <T extends DomElement> T createMockElement(Class<T> aClass, final Module module, final boolean physical);
 
+  public abstract boolean isMockElement(DomElement element);
+
   public abstract <T extends DomElement> T createStableValue(Factory<T> provider);
 }

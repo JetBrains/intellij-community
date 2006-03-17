@@ -20,6 +20,7 @@ package com.intellij.util.xml;
  * @author peter
  */
 public interface StableElement {
+  void revalidate();
   void invalidate();
   DomElement getWrappedElement();
 }

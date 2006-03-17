@@ -4,13 +4,12 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Condition;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -43,8 +42,8 @@ import java.util.*;
  * @author peter
  */
 public class DomManagerImpl extends DomManager implements ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomManagerImpl");
   static final Key<Module> MODULE = Key.create("NameStrategy");
+  static final Key<Object> MOCK = Key.create("MockElement");
   private static final Key<DomNameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
@@ -340,7 +339,13 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     final XmlFile file = (XmlFile)PsiManager.getInstance(myProject).getElementFactory().createFileFromText("a.xml", StdFileTypes.XML, "", 0, physical);
     final DomFileElementImpl<T> fileElement = getFileElement(file, aClass, "root");
     fileElement.putUserData(MODULE, module);
+    fileElement.putUserData(MOCK, new Object());
     return fileElement.getRootElement();
+  }
+
+  public final boolean isMockElement(DomElement element) {
+    final DomFileElement<?> root = element.getRoot();
+    return root.getUserData(MOCK) != null;
   }
 
   public <T extends DomElement> T createStableValue(final Factory<T> provider) {
@@ -366,13 +371,13 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         return method.invoke(this, args);
       }
 
-      if (isNotValid()) {
+      if (isNotValid(myCachedValue)) {
         if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
           return null;
         }
 
         myCachedValue = myProvider.create();
-        if (isNotValid()) {
+        if (isNotValid(myCachedValue)) {
           if (method != null && "isValid".equals(method.getName()) && DomElement.class.equals(method.getDeclaringClass())) {
             return Boolean.FALSE;
           }
@@ -383,21 +388,33 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       return method.invoke(myCachedValue, args);
     }
 
+    public final void revalidate() {
+      final T t = myProvider.create();
+      if (!isNotValid(t) && !t.equals(myCachedValue)) {
+        doInvalidate();
+        myCachedValue = t;
+      }
+    }
+
+    private void doInvalidate() {
+      getDomInvocationHandler(myCachedValue).detach(true);
+    }
+
     public final void invalidate() {
-      if (!isNotValid()) {
-        getDomInvocationHandler(myCachedValue).detach(true);
+      if (!isNotValid(myCachedValue)) {
+        doInvalidate();
       }
     }
 
     public final DomElement getWrappedElement() {
-      if (isNotValid()) {
+      if (isNotValid(myCachedValue)) {
         myCachedValue = myProvider.create();
       }
       return myCachedValue;
     }
 
-    private boolean isNotValid() {
-      return myCachedValue == null || !myCachedValue.isValid();
+    private boolean isNotValid(final T t) {
+      return t == null || !t.isValid();
     }
   }
 }
