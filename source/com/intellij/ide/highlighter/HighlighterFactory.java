@@ -41,7 +41,7 @@ public class HighlighterFactory {
   }
 
   public static LexerEditorHighlighter createHighlighter(Project project, VirtualFile file) {
-    return createHighlighter(project, file.getFileType());
+    return createHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), project);
   }
 
   public static LexerEditorHighlighter createHighlighter(Project project, FileType fileType) {
@@ -55,6 +55,11 @@ public class HighlighterFactory {
 
   public static LexerEditorHighlighter createHighlighter(FileType fileType, EditorColorsScheme settings, Project project) {
     SyntaxHighlighter highlighter = fileType.getHighlighter(project, null);
+    return createHighlighter(highlighter != null ? highlighter : new PlainSyntaxHighlighter(), settings);
+  }
+
+  public static LexerEditorHighlighter createHighlighter(VirtualFile vFile, EditorColorsScheme settings, Project project) {
+    SyntaxHighlighter highlighter = vFile.getFileType().getHighlighter(project, vFile);
     return createHighlighter(highlighter != null ? highlighter : new PlainSyntaxHighlighter(), settings);
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
@@ -163,7 +164,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
   private Editor createEditor(){
     Editor editor=EditorFactory.getInstance().createEditor(myDocument, myProject);
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
-    EditorHighlighter highlighter=HighlighterFactory.createHighlighter(myProject, myFile.getName());
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myFile, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
     ((EditorEx) editor).setHighlighter(highlighter);
     ((EditorEx) editor).setFile(myFile);
 
