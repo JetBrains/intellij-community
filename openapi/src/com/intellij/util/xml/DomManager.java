@@ -54,5 +54,12 @@ public abstract class DomManager implements ProjectComponent {
 
   public abstract boolean isMockElement(DomElement element);
 
+  /**
+   * Creates DOM element of needed type, that is wrapper around real DOM element. Once the wrapped element
+   * becomes invalid, a new value is requested from provider parameter, so there's a possibility to
+   * restore the functionality.
+   * @param provider
+   * @return stable DOM element
+   */
   public abstract <T extends DomElement> T createStableValue(Factory<T> provider);
 }

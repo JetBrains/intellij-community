@@ -53,5 +53,14 @@ following annotations:
   name
   is inferred using DomNameStrategy subclasses. The default is HyphenNameStrategy, which splits the
   camelhump name and joins the resulting words with "-". Another standard strategy is JavaNameStrategy,
-  that preserves the camel humps.
+  that preserves the camel humps. Name strategy can be specified by @NameStrategy annotation.
 <p>
+  DomElement's may have implementation for some methods, that are not directly connected with XML structure.
+  An implementation class should be abstract class implementing this interface with only needed methods.
+  Implementation classes can be specified via @Implementation annotation, or in DomManager.
+<p>
+  DomElement's are created in DomManager, specifying an XML file, root tag name and root DonElement class.
+  Also one can create mock DOM elements, that are not connected with any disk XML file. One can copy contents
+  from one DOM element to another using DomElement.copyFrom() method.
+<p>
+  See our Java EE models for examples.
