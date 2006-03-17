@@ -4,14 +4,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -35,6 +36,7 @@ public class CompilerPathsEx extends CompilerPaths {
     }
 
     protected void acceptDirectory(final VirtualFile file, final String fileRoot, final String filePath) {
+      ProgressManager.getInstance().checkCanceled();
       final VirtualFile[] children = file.getChildren();
       for (final VirtualFile child : children) {
         final String name = child.getName();
