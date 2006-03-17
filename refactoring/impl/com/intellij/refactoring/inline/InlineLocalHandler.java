@@ -140,7 +140,7 @@ class InlineLocalHandler {
       );
       int occurrencesCount = toInlines.size();
       String occurencesString = RefactoringBundle.message("occurences.string", occurrencesCount);
-      final String question = RefactoringBundle.message("inline.local.variable.prompt", localName) + occurencesString;
+      final String question = RefactoringBundle.message("inline.local.variable.prompt", localName) + " " + occurencesString;
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(
         REFACTORING_NAME,
         question,
