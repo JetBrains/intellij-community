@@ -458,6 +458,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private LanguageLevel getLanguageLevelInner() {
     final VirtualFile virtualFile = getVirtualFile();
     if (virtualFile == null) {
+      final PsiFile originalFile = getOriginalFile();
+      if (originalFile instanceof PsiJavaFile && originalFile != this) return ((PsiJavaFile)originalFile).getLanguageLevel();
       return getManager().getEffectiveLanguageLevel();
     }
     final Project project = getProject();
@@ -466,17 +468,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       return module.getEffectiveLanguageLevel();
     }
     else {
-      final PsiFile originalFile = (PsiFile)getOriginalElement();
+      final PsiFile originalFile = getOriginalFile();
       if (originalFile instanceof PsiJavaFile && originalFile != this) return ((PsiJavaFile)originalFile).getLanguageLevel();
     }
 
     return PsiManager.getInstance(project).getEffectiveLanguageLevel();
   }
-
-
-  /*public PsiElement getOriginalElement() {
-    final PsiClass[] classes = getClasses();
-    if (classes.length > 0) return classes[0].getOriginalElement().getContainingFile();
-    return this;
-  }*/
 }

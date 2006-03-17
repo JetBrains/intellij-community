@@ -62,7 +62,8 @@ public class CacheUtil {
         }
         */
         PsiElementFactoryImpl factory = (PsiElementFactoryImpl)psiFile.getManager().getElementFactory();
-        fileCopy = factory.createFileFromText(psiFile.getName(), fileType, text, psiFile.getModificationStamp(), false);
+        fileCopy = factory.createFileFromText(psiFile.getName(), fileType, text, psiFile.getModificationStamp(), false, false);
+        ((PsiFileImpl)fileCopy).setOriginalFile(psiFile);
       }
     }
     else {

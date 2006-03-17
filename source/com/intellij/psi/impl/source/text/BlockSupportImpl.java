@@ -3,19 +3,22 @@ package com.intellij.psi.impl.source.text;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.jsp.JspFileViewProvider;
-import com.intellij.lang.jsp.JspFileViewProviderImpl;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
-import com.intellij.psi.impl.source.*;
+import com.intellij.psi.impl.source.CodeFragmentElement;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.tabular.ParsingUtil;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.Grammar;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.GrammarUtil;
@@ -25,6 +28,7 @@ import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IErrorCounterChameleonElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayCharSequence;
 
 import java.util.Set;
 
@@ -222,7 +226,9 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     else{
       final PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
       final PsiElementFactoryImpl factory = (PsiElementFactoryImpl)manager.getElementFactory();
-      final PsiFileImpl newFile = (PsiFileImpl)factory.createFileFromText(fileType, fileImpl.getName(), newFileText, 0, textLength);
+      final CharArrayCharSequence seq = new CharArrayCharSequence(newFileText, 0, textLength);
+      final PsiFileImpl newFile = (PsiFileImpl)factory.createFileFromText(fileImpl.getName(), fileType, seq, fileImpl.getModificationStamp(), true, false);
+      newFile.setOriginalFile(fileImpl);
       final ASTNode newFileElement = newFile.getNode();
       final RepositoryManager repositoryManager = manager.getRepositoryManager();
       final FileElement fileElement = (FileElement)fileImpl.getNode();
