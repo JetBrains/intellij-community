@@ -27,10 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
@@ -224,11 +221,12 @@ public class ValueHint {
     final Point location = popupWindow.getLocation();
     final Rectangle windowBounds = popupWindow.getBounds();
     final Rectangle bounds = tree.getPathBounds(path);
-    popupWindow
-      .setBounds(location.x,
-                 location.y,
-                 Math.max(Math.max(size.width, bounds.width) + 10, windowBounds.width),
-                 Math.max(tree.getRowCount() * bounds.height + 55, windowBounds.height));
+    final Rectangle targetBounds = new Rectangle(location.x,
+                                                 location.y,
+                                                 Math.max(Math.max(size.width, bounds.width) + 20, windowBounds.width),
+                                                 Math.max(tree.getRowCount() * bounds.height + 55, windowBounds.height));
+    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
+    popupWindow.setBounds(targetBounds);
     popupWindow.validate();
     popupWindow.repaint();
   }
@@ -267,11 +265,12 @@ public class ValueHint {
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
     final Rectangle windowBounds = popupWindow.getBounds();
-    popupWindow
-      .setBounds(location.x,
-                 location.y,
-                 Math.max(size.width + 250, windowBounds.width),
-                 Math.max(size.height, windowBounds.height));
+    final Rectangle targetBounds = new Rectangle(location.x,
+                                                 location.y,
+                                                 Math.max(size.width + 250, windowBounds.width),
+                                                 Math.max(size.height, windowBounds.height));
+    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
+    popupWindow.setBounds(targetBounds);
     popupWindow.validate();
     popupWindow.repaint();
   }
