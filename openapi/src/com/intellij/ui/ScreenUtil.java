@@ -86,4 +86,28 @@ public class ScreenUtil {
       aRectangle.y = (int) screen.getMinY();
     }
   }
+
+  public static void cropRectangleToFitTheScreen(Rectangle aRectangle) {
+    int screenX = aRectangle.x;
+    int screenY = aRectangle.y;
+    Rectangle screen = getScreenRectangle(screenX, screenY);
+
+    if (aRectangle.getMaxX() > screen.getMaxX()) {
+      aRectangle.width = (int) screen.getMaxX() - aRectangle.x;
+    }
+
+
+    if (aRectangle.getMinX() < screen.getMinX()) {
+      aRectangle.x = (int) screen.getMinX();
+    }
+
+    if (aRectangle.getMaxY() > screen.getMaxY()) {
+      aRectangle.height = (int) screen.getMaxY() - aRectangle.y;
+    }
+
+    if (aRectangle.getMinY() < screen.getMinY()) {
+      aRectangle.y = (int) screen.getMinY();
+    }
+  }
+
 }
