@@ -194,9 +194,12 @@ public abstract class PsiClassType extends PsiType {
   @NotNull
   public abstract LanguageLevel getLanguageLevel();
 
-  public void setLanguageLevel(final LanguageLevel languageLevel) {
-    myLanguageLevel = languageLevel;
-  }
+  /**
+   * Functional style setter preserving original type's language level
+   * @param languageLevel level to obtain class type with
+   * @return type with requested language level
+   */
+  public abstract PsiClassType setLanguageLevel(final LanguageLevel languageLevel);
 
   /**
    * Represents the result of resolving a reference to a Java class.

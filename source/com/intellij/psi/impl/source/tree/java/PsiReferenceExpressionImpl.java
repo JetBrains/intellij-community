@@ -258,7 +258,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     if (ret == null) return null;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(this);
     if (ret instanceof PsiClassType) {
-      ((PsiClassType)ret).setLanguageLevel(languageLevel);
+      ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
     }
 
     if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {

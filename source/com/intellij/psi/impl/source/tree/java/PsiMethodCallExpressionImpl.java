@@ -60,10 +60,10 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
       }
     }
 
-    final PsiType ret = method.getReturnType();
+    PsiType ret = method.getReturnType();
     if (ret == null) return null;
     if (ret instanceof PsiClassType) {
-      ((PsiClassType)ret).setLanguageLevel(languageLevel);
+      ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
     }
     if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
       final PsiSubstitutor substitutor = result.getSubstitutor();

@@ -40,6 +40,12 @@ public class PsiClassReferenceType extends PsiClassType {
     return PsiUtil.getLanguageLevel(myReference);
   }
 
+  public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
+    final PsiClassReferenceType copy = new PsiClassReferenceType(myReference);
+    copy.myLanguageLevel = languageLevel;
+    return copy;
+  }
+
   public PsiClass resolve() {
     return resolveGenerics().getElement();
   }
