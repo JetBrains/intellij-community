@@ -108,9 +108,18 @@ public class PsiScopesUtil {
       if (qualifier instanceof PsiExpression || qualifier instanceof PsiJavaCodeReferenceElement){
         if(qualifier instanceof PsiExpression){
           type = ((PsiExpression)qualifier).getType();
-          final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(type);
-          target = result.getElement();
-          substitutor = result.getSubstitutor();
+          if (type instanceof PsiArrayType) {
+            final PsiClass arrayClass = factory.getArrayClass();
+            target = arrayClass;
+            final PsiTypeParameter[] arrayTypeParameters = arrayClass.getTypeParameters();
+            if (arrayTypeParameters.length > 0) {
+              substitutor = substitutor.put(arrayTypeParameters[0], ((PsiArrayType)type).getComponentType());
+            }
+          } else {
+            final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(type);
+            target = result.getElement();
+            substitutor = result.getSubstitutor();
+          }
         }
 
         if(type == null && qualifier instanceof PsiJavaCodeReferenceElement) {
@@ -139,17 +148,12 @@ public class PsiScopesUtil {
             else target = null;
           }
           else if(target instanceof PsiClass){
-            type = factory.createType((PsiClass)target,substitutor, PsiUtil.getLanguageLevel(ref));
             processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
           }
           final PsiType[] types = referenceElement.getTypeParameters();
           if(target instanceof PsiClass) {
             substitutor = ((PsiSubstitutorEx)substitutor).inplacePutAll((PsiClass)target, types);
           }
-        }
-
-        if (type instanceof PsiArrayType){
-          target = factory.getArrayClass();
         }
       }
 
