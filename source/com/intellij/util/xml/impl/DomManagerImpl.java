@@ -141,10 +141,12 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return invocationCache;
   }
 
-  @Nullable
   public static DomInvocationHandler getDomInvocationHandler(DomElement proxy) {
     final InvocationHandler handler = AdvancedProxy.getInvocationHandler(proxy);
-    return handler instanceof DomInvocationHandler ? (DomInvocationHandler)handler : null;
+    if (handler instanceof StableInvocationHandler) {
+      return getDomInvocationHandler(((StableInvocationHandler)handler).getWrappedElement());
+    }
+    return (DomInvocationHandler)handler;
   }
 
   final DomElement createDomElement(final DomInvocationHandler handler) {
@@ -342,74 +344,60 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public <T extends DomElement> T createStableValue(final Factory<T> provider) {
-    return createStableValue(provider.create(), provider, new Condition<T>() {
-      public boolean value(final T object) {
-        return object.isValid();
-      }
-    });
+    final T initial = provider.create();
+    final InvocationHandler handler = new StableInvocationHandler<T>(initial, provider);
+    final Set<Class> intf = new HashSet<Class>();
+    intf.addAll(Arrays.asList(initial.getClass().getInterfaces()));
+    intf.add(StableElement.class);
+    return AdvancedProxy.createProxy((Class<? extends T>)initial.getClass().getSuperclass(), intf.toArray(new Class[intf.size()]), handler, Collections.<JavaMethodSignature>emptySet());
   }
 
-  private static <T extends DomElement> T createStableValue(final T initial, final Factory<T> provider, final Condition<T> validity) {
-    final InvocationHandler handler = new InvocationHandler() {
-      private T myCachedValue = initial;
+  private static class StableInvocationHandler<T extends DomElement> implements InvocationHandler, StableElement {
+    private T myCachedValue;
+    private final Factory<T> myProvider;
 
-      @Nullable
-      private T getValidCachedValue() {
-        if (!validity.value(myCachedValue)) {
-          myCachedValue = provider.create();
-        }
-        return myCachedValue != null && myCachedValue.isValid() ? myCachedValue : null;
+    public StableInvocationHandler(final T initial, final Factory<T> provider) {
+      myProvider = provider;
+      myCachedValue = initial;
+    }
+
+    public final Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
+      if (StableElement.class.equals(method.getDeclaringClass())) {
+        return method.invoke(this, args);
       }
 
-      public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-        if (!validity.value(myCachedValue)) {
-          if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
-            return null;
+      if (isNotValid()) {
+        if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
+          return null;
+        }
+
+        myCachedValue = myProvider.create();
+        if (isNotValid()) {
+          if (method != null && "isValid".equals(method.getName()) && DomElement.class.equals(method.getDeclaringClass())) {
+            return Boolean.FALSE;
           }
-
-          myCachedValue = provider.create();
-          if (myCachedValue == null || !myCachedValue.isValid()) {
-            if ("isValid".equals(method.getName()) && DomElement.class.equals(method.getDeclaringClass())) {
-              return Boolean.FALSE;
-            }
-            throw new AssertionError("Calling methods on invalid value");
-          }
+          throw new AssertionError("Calling methods on invalid value");
         }
-
-        final Object o = method.invoke(myCachedValue, args);
-        if (o instanceof DomElement) {
-          return createStableChildValue((DomElement)o);
-        }
-
-        if (o instanceof List) {
-          List list = (List)o;
-          if (list.isEmpty() || !(list.get(0) instanceof DomElement)) return list;
-          return ContainerUtil.map2List(list, new Function() {
-            public Object fun(final Object s) {
-              return createStableChildValue((DomElement)s);
-            }
-          });
-        }
-
-        return o;
       }
 
-      private DomElement createStableChildValue(final DomElement element) {
-        final String tagName = element.getXmlElementName();
-        final DomChildrenDescription childDescription = myCachedValue.getGenericInfo().getChildDescription(tagName);
-        final int i = childDescription.getValues(myCachedValue).indexOf(element);
-        assert i >= 0;
-        return createStableValue(element, new Factory<DomElement>() {
-          public DomElement create() {
-            final T t = getValidCachedValue();
-            if (t == null) return null;
-            final List<? extends DomElement> list = childDescription.getValues(t);
-            return list.size() > i ? list.get(i) : null;
-          }
-        }, INVALID);
+      return method.invoke(myCachedValue, args);
+    }
+
+    public final void invalidate() {
+      if (!isNotValid()) {
+        getDomInvocationHandler(myCachedValue).detach(true);
       }
-    };
-    return AdvancedProxy.createProxy((Class<? extends T>)initial.getClass().getSuperclass(), initial.getClass().getInterfaces(), handler, Collections.<JavaMethodSignature>emptySet());
+    }
+
+    public final DomElement getWrappedElement() {
+      if (isNotValid()) {
+        myCachedValue = myProvider.create();
+      }
+      return myCachedValue;
+    }
+
+    private boolean isNotValid() {
+      return myCachedValue == null || !myCachedValue.isValid();
+    }
   }
-
 }

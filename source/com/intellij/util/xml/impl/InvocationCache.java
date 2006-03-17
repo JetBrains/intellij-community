@@ -46,7 +46,7 @@ public class InvocationCache {
             final DomElement proxy = handler.getProxy();
             if (proxy == o) return true;
             if (!(o instanceof DomElement)) return false;
-            if (DomManagerImpl.getDomInvocationHandler((DomElement)o) == null) {
+            if (!(AdvancedProxy.getInvocationHandler(proxy) instanceof DomInvocationHandler)) {
               return o.equals(proxy);
             }
             return false;
