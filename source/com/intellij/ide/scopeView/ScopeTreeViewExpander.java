@@ -2,7 +2,9 @@ package com.intellij.ide.scopeView;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.PsiClassChildrenSource;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.DependencyNodeComparator;
 import com.intellij.packageDependencies.ui.DirectoryNode;
 import com.intellij.packageDependencies.ui.FileNode;
@@ -46,6 +48,8 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
           final FileNode fileNode = (FileNode)childNode;
           final PsiElement file = fileNode.getPsiElement();
           if (file instanceof PsiJavaFile) {
+            final VirtualFile virtualFile = ((PsiJavaFile)file).getVirtualFile();
+            if (virtualFile == null || virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.CLASS) return;
             final PsiClass[] psiClasses = ((PsiJavaFile)file).getClasses();
             if (classNodes == null) {
               classNodes = new HashSet<ClassNode>();
