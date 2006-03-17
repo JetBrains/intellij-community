@@ -102,12 +102,7 @@ public class AnalysisScope {
     myModule = null;
     myScope = null;
     myElement = psiDirectory;
-    if (psiDirectory.getPackage() != null) {
-      myType = DIRECTORY;
-    }
-    else {
-      myType = INVALID;
-    }
+    myType = DIRECTORY;    
   }
 
   public AnalysisScope(PsiPackage psiPackage) {
