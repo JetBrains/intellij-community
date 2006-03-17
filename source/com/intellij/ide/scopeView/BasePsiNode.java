@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,22 +32,6 @@ public class BasePsiNode<T extends PsiMember> extends PackageDependenciesNode {
   public PsiElement getPsiElement() {
     final PsiElement element = myPsiElementPointer.getElement();
     return element != null && element.isValid() ? element : null;
-  }
-
-
-  public String toString() {
-    final PsiMethod method = (PsiMethod)myPsiElementPointer.getElement();
-    if (method == null || !method.isValid()) return "";
-    String name = PsiFormatUtil.formatMethod(
-      method,
-      PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_PARAMETERS,
-      PsiFormatUtil.SHOW_TYPE
-    );
-    int c = name.indexOf('\n');
-    if (c > -1) {
-      name = name.substring(0, c - 1);
-    }
-    return name;
   }
 
   public Icon getOpenIcon() {

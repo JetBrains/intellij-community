@@ -14,7 +14,7 @@ public class ClassNode extends BasePsiNode<PsiClass>{
 
   public String toString() {
     final PsiClass aClass = (PsiClass)getPsiElement();
-    return aClass != null && aClass.isValid() ? ClassPresentationUtil.getNameForClass(aClass, false) : null;
+    return aClass != null && aClass.isValid() ? ClassPresentationUtil.getNameForClass(aClass, false) : "";
   }
 
   public int getWeight() {
