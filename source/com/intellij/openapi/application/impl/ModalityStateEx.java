@@ -16,7 +16,7 @@ public class ModalityStateEx extends ModalityState {
       myModalEntities = new WeakReference[modalEntities.length];
       for (int i = 0; i < modalEntities.length; i++) {
         Object entity = modalEntities[i];
-        myModalEntities[i] = new WeakReference(entity);
+        myModalEntities[i] = new WeakReference<Object>(entity);
       }
     }
     else{
@@ -29,9 +29,9 @@ public class ModalityStateEx extends ModalityState {
   }
 
   ModalityStateEx appendEnitity(Object anEntity){
-    ArrayList list = new ArrayList();
-    for (int i = 0; i < myModalEntities.length; i++) {
-      Object entity = myModalEntities[i].get();
+    ArrayList<Object> list = new ArrayList<Object>();
+    for (WeakReference modalEntity : myModalEntities) {
+      Object entity = modalEntity.get();
       if (entity == null) continue;
       list.add(entity);
     }
@@ -40,8 +40,8 @@ public class ModalityStateEx extends ModalityState {
   }
 
   private static boolean contains(WeakReference[] array, Object o){
-    for (int i = 0; i < array.length; i++) {
-      Object o1 = array[i].get();
+    for (WeakReference reference : array) {
+      Object o1 = reference.get();
       if (o1 == null) continue;
       if (o1.equals(o)) return true;
     }
@@ -49,8 +49,8 @@ public class ModalityStateEx extends ModalityState {
   }
 
   public boolean dominates(ModalityState anotherState){
-    for (int i = 0; i < myModalEntities.length; i++) {
-      Object entity = myModalEntities[i].get();
+    for (WeakReference modalEntity : myModalEntities) {
+      Object entity = modalEntity.get();
       if (entity == null) continue;
       if (!contains(((ModalityStateEx)anotherState).myModalEntities, entity)) return true; // I have entity which is absent in anotherState
     }
