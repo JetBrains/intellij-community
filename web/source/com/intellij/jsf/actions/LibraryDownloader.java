@@ -4,36 +4,35 @@
 
 package com.intellij.jsf.actions;
 
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.fileChooser.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.javaee.J2EEBundle;
-import com.intellij.util.io.UrlConnectionUtil;
-import com.intellij.util.net.IOExceptionDialog;
-import com.intellij.util.net.HttpConfigurable;
 import com.intellij.ide.IdeBundle;
-
-import java.net.URL;
-import java.net.HttpURLConnection;
-import java.io.*;
-import java.util.List;
-import java.util.ArrayList;
-
-import org.jetbrains.annotations.Nullable;
+import com.intellij.javaee.J2EEBundle;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.io.UrlConnectionUtil;
+import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -55,6 +54,14 @@ public class LibraryDownloader {
   }
 
   public VirtualFile[] download() {
+    final VirtualFile dir = chooseDirectoryForLibraries();
+    if (dir != null) {
+      return doDownload(dir);
+    }
+    return VirtualFile.EMPTY_ARRAY;
+  }
+
+  private VirtualFile[] doDownload(final VirtualFile dir) {
     HttpConfigurable.getInstance().setAuthenticator();
     final List<Pair<LibraryInfo, File>> downloadedFiles = new ArrayList<Pair<LibraryInfo, File>>();
     final Exception[] exception = new Exception[]{null};
@@ -81,30 +88,18 @@ public class LibraryDownloader {
     }, J2EEBundle.message("progress.download.libraries.title"), true, myProject);
 
     if (exception[0] == null) {
-      final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getDirectoryChooserDescriptor(J2EEBundle.message("dialog.directory.for.libraries.title"));
-
-      final VirtualFile[] files;
-      if (myProject != null) {
-        files = FileChooser.chooseFiles(myProject, descriptor);
+      try {
+        return moveToDir(downloadedFiles, dir);
       }
-      else {
-        files = FileChooser.chooseFiles(myParent, descriptor);
-      }
-
-      if (files.length > 0) {
-        try {
-          return moveToDir(downloadedFiles, files[0]);
+      catch (IOException e) {
+        final String title = J2EEBundle.message("progress.download.libraries.title");
+        if (myProject != null) {
+          Messages.showErrorDialog(myProject, title, e.getMessage());
         }
-        catch (IOException e) {
-          final String title = J2EEBundle.message("progress.download.libraries.title");
-          if (myProject != null) {
-            Messages.showErrorDialog(myProject, title, e.getMessage());
-          }
-          else {
-            Messages.showErrorDialog(myParent, title, e.getMessage());
-          }
-          return VirtualFile.EMPTY_ARRAY;
+        else {
+          Messages.showErrorDialog(myParent, title, e.getMessage());
         }
+        return VirtualFile.EMPTY_ARRAY;
       }
     }
 
@@ -114,10 +109,24 @@ public class LibraryDownloader {
                                                                  J2EEBundle.message("progress.download.libraries.title"),
                                                                  J2EEBundle.message("error.library.download.failed"));
       if (tryAgain) {
-        return download();
+        return doDownload(dir);
       }
     }
     return VirtualFile.EMPTY_ARRAY;
+  }
+
+  private VirtualFile chooseDirectoryForLibraries() {
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getDirectoryChooserDescriptor(J2EEBundle.message("dialog.directory.for.libraries.title"));
+
+    final VirtualFile[] files;
+    if (myProject != null) {
+      files = FileChooser.chooseFiles(myProject, descriptor);
+    }
+    else {
+      files = FileChooser.chooseFiles(myParent, descriptor);
+    }
+
+    return files.length > 0 ? files[0] : null;
   }
 
   private static VirtualFile[] moveToDir(final List<Pair<LibraryInfo, File>> downloadedFiles, final VirtualFile dir) throws IOException {
@@ -145,7 +154,7 @@ public class LibraryDownloader {
     File file = new File(dir, baseName);
     int count = 1;
     while (file.exists()) {
-      file = new File(dir, prefix + (count++) + suffix);
+      file = new File(dir, prefix + count++ + suffix);
     }
     return file;
   }
