@@ -57,7 +57,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
         // Set background and grid default options
         Options options = OptionsManager.getInstance().getOptions();
         EditorOptions editorOptions = options.getEditorOptions();
-        ImageZoomModel zoomModel = imageEditor.getZoomModel();
         GridOptions gridOptions = editorOptions.getGridOptions();
         TransparencyChessboardOptions transparencyChessboardOptions = editorOptions.getTransparencyChessboardOptions();
         imageEditor.setGridVisible(gridOptions.isShowDefault());

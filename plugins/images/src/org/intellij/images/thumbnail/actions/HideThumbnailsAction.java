@@ -25,7 +25,7 @@ import org.intellij.images.thumbnail.actionSystem.AbstractThumbnailViewAction;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final public class HideThumbnailsAction extends AbstractThumbnailViewAction {
+public final class HideThumbnailsAction extends AbstractThumbnailViewAction {
     public void actionPerformed(ThumbnailView thumbnailView, AnActionEvent e) {
         thumbnailView.setVisible(false);
     }

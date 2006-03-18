@@ -17,13 +17,20 @@
 package org.intellij.images.thumbnail.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.ide.CopyPasteManagerEx;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.util.DeleteHandler;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailsActions;
@@ -38,6 +45,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -47,10 +56,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
-    private final VFSListener vfsListener = new VFSListener();
+    private final VirtualFileListener vfsListener = new VFSListener();
     private final OptionsChangeListener optionsListener = new OptionsChangeListener();
 
+    private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[] {};
+
     private final ThumbnailViewImpl thumbnailView;
+    private final CopyPasteSupport copyPasteSupport;
+    private final DeleteProvider deleteProvider = new DeleteHandler.DefaultDeleteProvider();
     private ThumbnailListCellRenderer cellRenderer;
     private JList list;
 
@@ -58,6 +71,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         super(new BorderLayout());
 
         this.thumbnailView = thumbnailView;
+        this.copyPasteSupport = new CopyPasteSupport(thumbnailView.getProject(), this);
     }
 
     private void createUI() {
@@ -85,7 +99,9 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             list.setCellRenderer(cellRenderer);
             list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-            list.addMouseListener(new ThumbnailsMouseAdapter());
+            ThumbnailsMouseAdapter mouseListener = new ThumbnailsMouseAdapter();
+            list.addMouseListener(mouseListener);
+            list.addMouseMotionListener(mouseListener);
 
             ThumbnailComponentUI componentUI = (ThumbnailComponentUI)UIManager.getUI(cellRenderer);
             Dimension preferredSize = componentUI.getPreferredSize(cellRenderer);
@@ -117,30 +133,35 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     public void refresh() {
         createUI();
+        if (list != null) {
+            DefaultListModel model = (DefaultListModel)list.getModel();
+            model.clear();
+            VirtualFile root = thumbnailView.getRoot();
+            if (root.isValid() && root.isDirectory()) {
+                Set<VirtualFile> files = findFiles(root.getChildren());
+                VirtualFile[] virtualFiles = files.toArray(VirtualFile.EMPTY_ARRAY);
+                Arrays.sort(
+                    virtualFiles, new Comparator<VirtualFile>() {
+                    public int compare(VirtualFile o1, VirtualFile o2) {
+                        if (o1.isDirectory() && !o2.isDirectory()) {
+                            return -1;
+                        }
+                        if (o2.isDirectory() && !o1.isDirectory()) {
+                            return 1;
+                        }
 
-        DefaultListModel model = (DefaultListModel)list.getModel();
-        model.clear();
-
-        Set<VirtualFile> files = findFiles(thumbnailView.getRoot().getChildren());
-        VirtualFile[] virtualFiles = files.toArray(VirtualFile.EMPTY_ARRAY);
-        Arrays.sort(
-            virtualFiles, new Comparator<VirtualFile>() {
-            public int compare(VirtualFile o1, VirtualFile o2) {
-                if (o1.isDirectory() && !o2.isDirectory()) {
-                    return -1;
+                        return o1.getPath().toLowerCase().compareTo(o2.getPath().toLowerCase());
+                    }
                 }
-                if (o2.isDirectory() && !o1.isDirectory()) {
-                    return 1;
-                }
+                );
 
-                return o1.getPath().toLowerCase().compareTo(o2.getPath().toLowerCase());
+                model.ensureCapacity(model.size() + virtualFiles.length + 1);
+                for (VirtualFile virtualFile : virtualFiles) {
+                    model.addElement(virtualFile);
+                }
+            } else {
+                thumbnailView.setVisible(false);
             }
-        }
-        );
-
-        model.ensureCapacity(model.size() + virtualFiles.length);
-        for (VirtualFile virtualFile : virtualFiles) {
-            model.addElement(virtualFile);
         }
     }
 
@@ -176,7 +197,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         return false;
     }
 
-    public @NotNull VirtualFile[] getSelection() {
+    @NotNull
+    public VirtualFile[] getSelection() {
         Object[] selectedValues = list.getSelectedValues();
         if (selectedValues != null) {
             VirtualFile[] files = new VirtualFile[selectedValues.length];
@@ -188,7 +210,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         return VirtualFile.EMPTY_ARRAY;
     }
 
-    private static final class ThumbnailListCellRenderer extends ThumbnailComponent
+    private final class ThumbnailListCellRenderer extends ThumbnailComponent
         implements ListCellRenderer {
         private final ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
 
@@ -198,7 +220,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             if (value instanceof VirtualFile) {
                 VirtualFile file = (VirtualFile)value;
                 setFileName(file.getName());
-                setToolTipText(file.getPath());
+                setToolTipText(IfsUtil.getReferencePath(thumbnailView.getProject(), file));
                 setDirectory(file.isDirectory());
                 if (file.isDirectory()) {
                     int imagesCount = 0;
@@ -257,16 +279,21 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     private Set<VirtualFile> findFiles(VirtualFile file) {
-        ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
-        Set<VirtualFile> files = new HashSet<VirtualFile>(1);
-        if (file.isDirectory()) {
-            if (thumbnailView.isRecursive()) {
-                files.addAll(findFiles(file.getChildren()));
-            } else if (isImagesInDirectory(file)) {
+        Set<VirtualFile> files = new HashSet<VirtualFile>(0);
+        ProjectRootManager rootManager = ProjectRootManager.getInstance(thumbnailView.getProject());
+        boolean projectIgnored = rootManager.getFileIndex().isIgnored(file);
+
+        if (!projectIgnored && !FileTypeManager.getInstance().isFileIgnored(file.getName())) {
+            ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
+            if (file.isDirectory()) {
+                if (thumbnailView.isRecursive()) {
+                    files.addAll(findFiles(file.getChildren()));
+                } else if (isImagesInDirectory(file)) {
+                    files.add(file);
+                }
+            } else if (typeManager.isImage(file)) {
                 files.add(file);
             }
-        } else if (typeManager.isImage(file)) {
-            files.add(file);
         }
         return files;
     }
@@ -275,6 +302,10 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
         VirtualFile[] files = dir.getChildren();
         for (VirtualFile file : files) {
+            if (file.isDirectory()) {
+                // We can be sure for fast searching
+                return true;
+            }
             if (typeManager.isImage(file)) {
                 return true;
             }
@@ -282,70 +313,141 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         return false;
     }
 
-    private final class ThumbnailsMouseAdapter extends MouseAdapter {
-        public void mousePressed(MouseEvent e) {
-            super.mousePressed(e);
+    private final class ThumbnailsMouseAdapter extends MouseAdapter implements MouseMotionListener {
+        public void mouseDragged(MouseEvent e) {
             Point point = e.getPoint();
             int index = list.locationToIndex(point);
-            if (index != -1 && list.getSelectedIndex() != index) {
-                list.setSelectedIndex(index);
+            if (index != -1) {
+                Rectangle cellBounds = list.getCellBounds(index, index);
+                if (!cellBounds.contains(point) &&
+                        (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
+                    list.clearSelection();
+                    e.consume();
+                }
+            }
+        }
+
+        public void mouseMoved(MouseEvent e) {
+        }
+
+
+        public void mousePressed(MouseEvent e) {
+            Point point = e.getPoint();
+            int index = list.locationToIndex(point);
+            if (index != -1) {
+                Rectangle cellBounds = list.getCellBounds(index, index);
+                if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
+                    list.clearSelection();
+                    e.consume();
+                }
             }
         }
 
         public void mouseClicked(MouseEvent e) {
-            if (MouseEvent.BUTTON1 == e.getButton() && e.getClickCount() == 2) {
-                // Double click
-                VirtualFile selected = (VirtualFile)list.getSelectedValue();
-                if (selected.isDirectory()) {
-                    thumbnailView.setRoot(selected);
-                } else {
-                    FileEditorManager fileEditorManager = FileEditorManager.getInstance(thumbnailView.getProject());
-                    fileEditorManager.openFile(selected, true);
+            Point point = e.getPoint();
+            int index = list.locationToIndex(point);
+            if (index != -1) {
+                Rectangle cellBounds = list.getCellBounds(index, index);
+                if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
+                    index = -1;
+                    list.clearSelection();
                 }
-                e.consume();
             }
-            if (MouseEvent.BUTTON3 == e.getButton() && e.getClickCount() == 1) {
-                // Single right click
-                ActionManager actionManager = ActionManager.getInstance();
-                ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailsActions.GROUP_POPUP);
-                ActionPopupMenu menu = actionManager.createActionPopupMenu(ThumbnailsActions.ACTION_PLACE, actionGroup);
-                JPopupMenu popupMenu = menu.getComponent();
-                popupMenu.pack();
-                popupMenu.show(e.getComponent(), e.getX(), e.getY());
+            if (index != -1) {
+                if (MouseEvent.BUTTON1 == e.getButton() && e.getClickCount() == 2) {
+                    // Double click
+                    list.setSelectedIndex(index);
+                    VirtualFile selected = (VirtualFile)list.getSelectedValue();
+                    if (selected != null) {
+                        if (selected.isDirectory()) {
+                            thumbnailView.setRoot(selected);
+                        } else {
+                            FileEditorManager fileEditorManager = FileEditorManager.getInstance(thumbnailView.getProject());
+                            fileEditorManager.openFile(selected, true);
+                        }
+                        e.consume();
+                    }
+                }
+                if (MouseEvent.BUTTON3 == e.getButton() && e.getClickCount() == 1) {
+                    // Ensure that we have selection
+                    if ((KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
+                        // Ctrl is not pressed
+                        list.setSelectedIndex(index);
+                    } else {
+                        // Ctrl is pressed
+                        list.getSelectionModel().addSelectionInterval(index, index);
+                    }
+                    // Single right click
+                    ActionManager actionManager = ActionManager.getInstance();
+                    ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailsActions.GROUP_POPUP);
+                    ActionPopupMenu menu = actionManager.createActionPopupMenu(ThumbnailsActions.ACTION_PLACE, actionGroup);
+                    JPopupMenu popupMenu = menu.getComponent();
+                    popupMenu.pack();
+                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
 
-                e.consume();
+                    e.consume();
+                }
             }
         }
-
     }
 
     @Nullable public Object getData(String dataId) {
-        if (DataConstants.PROJECT.equals(dataId)) {
+        if (DataConstantsEx.PROJECT.equals(dataId)) {
             return thumbnailView.getProject();
-        } else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
+        } else if (DataConstantsEx.VIRTUAL_FILE.equals(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
-            return selectedFiles != null && selectedFiles.length > 0 ? selectedFiles[0] : null;
-        } else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+            return selectedFiles.length > 0 ? selectedFiles[0] : null;
+        } else if (DataConstantsEx.VIRTUAL_FILE_ARRAY.equals(dataId)) {
             return getSelectedFiles();
-        } else if (DataConstants.NAVIGATABLE.equals(dataId)) {
+        } else if (DataConstantsEx.PSI_FILE.equals(dataId)) {
+            return getData(DataConstantsEx.PSI_ELEMENT);
+        } else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
-            return new ThumbnailNavigatable(selectedFiles != null && selectedFiles.length > 0 ? selectedFiles[0] : null);
-        } else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+            return selectedFiles.length > 0 ? PsiManager.getInstance(thumbnailView.getProject()).findFile(selectedFiles[0]) : null;
+        } else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+            return getSelectedElements();
+        } else if (DataConstantsEx.NAVIGATABLE.equals(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
-            if (selectedFiles != null) {
-                Navigatable[] navigatables = new Navigatable[selectedFiles.length];
-                for (int i = 0; i < selectedFiles.length; i++) {
-                    VirtualFile selectedFile = selectedFiles[i];
-                    navigatables[i] = new ThumbnailNavigatable(selectedFile);
+            return new ThumbnailNavigatable(selectedFiles.length > 0 ? selectedFiles[0] : null);
+        } else if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+            return copyPasteSupport.getCopyProvider();
+        } else if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+            return copyPasteSupport.getCutProvider();
+        } else if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+            return copyPasteSupport.getPasteProvider();
+        } else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+            return deleteProvider;
+        } else if (DataConstantsEx.NAVIGATABLE_ARRAY.equals(dataId)) {
+            VirtualFile[] selectedFiles = getSelectedFiles();
+            Set<Navigatable> navigatables = new HashSet<Navigatable>(selectedFiles.length);
+            for (VirtualFile selectedFile : selectedFiles) {
+                if (!selectedFile.isDirectory()) {
+                    navigatables.add(new ThumbnailNavigatable(selectedFile));
                 }
-                return navigatables;
             }
-            return null;
+            return navigatables.toArray(EMPTY_NAVIGATABLE_ARRAY);
         }
 
         return null;
     }
 
+
+    @NotNull
+    private PsiElement[] getSelectedElements() {
+        VirtualFile[] selectedFiles = getSelectedFiles();
+        Set<PsiElement> psiElements = new HashSet<PsiElement>(selectedFiles.length);
+        PsiManager psiManager = PsiManager.getInstance(thumbnailView.getProject());
+        for (VirtualFile file : selectedFiles) {
+            PsiFile psiFile = psiManager.findFile(file);
+            PsiElement element = psiFile != null ? psiFile : psiManager.findDirectory(file);
+            if (element != null) {
+                psiElements.add(element);
+            }
+        }
+        return psiElements.toArray(PsiElement.EMPTY_ARRAY);
+    }
+
+    @NotNull
     private VirtualFile[] getSelectedFiles() {
         if (list != null) {
             Object[] selectedValues = list.getSelectedValues();
@@ -357,7 +459,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 return files;
             }
         }
-        return null;
+        return VirtualFile.EMPTY_ARRAY;
     }
 
     public void dispose() {
@@ -409,9 +511,20 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
         public void fileDeleted(VirtualFileEvent event) {
             VirtualFile file = event.getFile();
+            if (VfsUtil.isAncestor(file, thumbnailView.getRoot(), false)) {
+                refresh();
+            }
             if (list != null) {
                 ((DefaultListModel)list.getModel()).removeElement(file);
             }
+        }
+
+        public void fileCreated(VirtualFileEvent event) {
+            refresh();
+        }
+
+        public void fileMoved(VirtualFileMoveEvent event) {
+            refresh();
         }
     }
 
@@ -435,6 +548,16 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private class FocusRequester extends MouseAdapter {
         public void mouseClicked(MouseEvent e) {
             requestFocus();
+        }
+    }
+
+    private final class CopyPasteSupport extends CopyPasteManagerEx.CopyPasteDelegator {
+        public CopyPasteSupport(Project project, JComponent component) {
+            super(project, component);
+        }
+
+        protected PsiElement[] getSelectedElements() {
+            return ThumbnailViewUI.this.getSelectedElements();
         }
     }
 }

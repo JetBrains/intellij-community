@@ -41,8 +41,19 @@ public interface ImageDocument {
      */
     void setValue(BufferedImage image);
 
+    /**
+     * Return image format.
+     * @return Format name
+     */
+    String getFormat();
+
+    /**
+     * Set image format.
+     * @param format Format from ImageIO (GIF, PNG, JPEG etc)
+     */
+    void setFormat(String format);
+
     void addChangeListener(ChangeListener listener);
 
     void removeChangeListener(ChangeListener listener);
-
 }

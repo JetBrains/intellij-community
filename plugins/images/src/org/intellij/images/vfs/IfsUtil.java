@@ -17,8 +17,16 @@
 package org.intellij.images.vfs;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.reference.SoftReference;
+import com.intellij.javaee.web.WebUtil;
+import com.intellij.javaee.web.WebModuleProperties;
+import com.intellij.javaee.web.WebRoot;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +38,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.util.Iterator;
 
 /**
@@ -47,6 +56,8 @@ public final class IfsUtil {
      *
      * @param file File
      * @return true if file image is loaded.
+     *
+     * @throws java.io.IOException
      */
     private static boolean refresh(@NotNull VirtualFile file) throws IOException {
         Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
@@ -83,15 +94,59 @@ public final class IfsUtil {
         return false;
     }
 
-    public static @Nullable BufferedImage getImage(@NotNull VirtualFile file) throws IOException {
+    @Nullable
+    public static BufferedImage getImage(@NotNull VirtualFile file) throws IOException {
         refresh(file);
         SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
         return imageRef != null ? imageRef.get() : null;
     }
 
-    public static @Nullable String getFormat(@NotNull VirtualFile file) throws IOException {
+    @Nullable
+    public static String getFormat(@NotNull VirtualFile file) throws IOException {
         refresh(file);
         return file.getUserData(FORMAT_KEY);
     }
 
+    public static String getReferencePath(Project project, VirtualFile file) {
+        File ioFile = VfsUtil.virtualToIoFile(file);
+        StringBuilder pathBuffer = new StringBuilder();
+        WebModuleProperties wmp = WebUtil.getWebModuleProperties(project, file);
+        if (wmp != null) {
+            WebRoot root = WebUtil.findParentWebRoot(file, wmp.getWebRoots(true));
+            if (root != null && root.getFile() != null) {
+                File base = VfsUtil.virtualToIoFile(root.getFile());
+                if (base.equals(ioFile)) {
+                    pathBuffer.append(file.getPath());
+                } else {
+                    pathBuffer.append("/");
+                    pathBuffer.append(FileUtil.getRelativePath(base, ioFile));
+                }
+            }
+        }
+        ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+        ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
+        VirtualFile sourceRoot = fileIndex.getSourceRootForFile(file);
+        if (sourceRoot != null) {
+            File base = VfsUtil.virtualToIoFile(sourceRoot);
+            if (base.equals(ioFile)) {
+                pathBuffer.append(file.getPath());
+            } else {
+                pathBuffer.append("/");
+                pathBuffer.append(FileUtil.getRelativePath(base, ioFile));
+            }
+        }
+        VirtualFile root = fileIndex.getContentRootForFile(file);
+        if (root != null) {
+            File base = VfsUtil.virtualToIoFile(root);
+            if (base.equals(ioFile)) {
+                pathBuffer.append(file.getPath());
+            } else {
+                pathBuffer.append("/");
+                pathBuffer.append(FileUtil.getRelativePath(base, ioFile));
+            }
+        } else {
+            pathBuffer.append(file.getPath());
+        }
+        return FileUtil.toSystemIndependentName(pathBuffer.toString());
+    }
 }

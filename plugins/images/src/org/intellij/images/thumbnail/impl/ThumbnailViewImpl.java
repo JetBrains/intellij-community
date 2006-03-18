@@ -18,11 +18,14 @@ package org.intellij.images.thumbnail.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiManager;
 import org.intellij.images.thumbnail.ThumbnailView;
+import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,7 +87,8 @@ final class ThumbnailViewImpl implements ThumbnailView {
         return false;
     }
 
-    public @NotNull VirtualFile[] getSelection() {
+    @NotNull
+    public VirtualFile[] getSelection() {
         if (isVisible()) {
             return getUI().getSelection();
         }
@@ -114,6 +118,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
     public void setVisible(boolean visible) {
         toolWindow.setAvailable(visible, null);
         if (visible) {
+            setTitle();
             getUI().refresh();
         } else {
             getUI().dispose();
@@ -122,8 +127,13 @@ final class ThumbnailViewImpl implements ThumbnailView {
 
     private void updateUI() {
         if (isVisible()) {
+            setTitle();
             getUI().refresh();
         }
+    }
+
+    private void setTitle() {
+        toolWindow.setTitle(root != null ? IfsUtil.getReferencePath(project, root) : null);
     }
 
     @NotNull public Project getProject() {

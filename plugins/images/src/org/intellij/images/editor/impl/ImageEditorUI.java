@@ -15,18 +15,26 @@
  */
 package org.intellij.images.editor.impl;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.CopyPasteManagerEx;
+import com.intellij.ide.util.DeleteHandler;
 import org.intellij.images.IconsBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageZoomModel;
+import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.options.*;
 import org.intellij.images.ui.ImageComponent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -37,23 +45,32 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 
 /**
  * Image editor UI
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorUI extends JPanel {
+final class ImageEditorUI extends JPanel implements DataProvider {
     @NonNls private static final String IMAGE_PANEL = "image";
     @NonNls private static final String ERROR_PANEL = "error";
+
+    private final ImageEditor editor;
+    private final DeleteProvider deleteProvider = new DeleteHandler.DefaultDeleteProvider();
+    private final CopyPasteSupport copyPasteSupport;
 
     private final ImageZoomModel zoomModel = new ImageZoomModelImpl();
     private final ImageWheelAdapter wheelAdapter = new ImageWheelAdapter();
     private final ChangeListener changeListener = new DocumentChangeListener();
     private final ImageComponent imageComponent = new ImageComponent();
     private final JPanel contentPanel;
+    private final JLabel infoLabel;
 
-    ImageEditorUI(EditorOptions editorOptions) {
+    ImageEditorUI(ImageEditor editor, EditorOptions editorOptions) {
+        this.editor = editor;
+        copyPasteSupport = new CopyPasteSupport(editor.getProject(), this);
+
         ImageDocument document = imageComponent.getDocument();
         document.addChangeListener(changeListener);
 
@@ -88,8 +105,8 @@ final class ImageEditorUI extends JPanel {
             ImageEditorActions.ACTION_PLACE, actionGroup, true
         );
 
-        JComponent component = actionToolbar.getComponent();
-        component.addMouseListener(new FocusRequester());
+        JComponent toolbarPanel = actionToolbar.getComponent();
+        toolbarPanel.addMouseListener(new FocusRequester());
 
         JLabel errorLabel = new JLabel(
             IconsBundle.message("error.broken.image.file.format"),
@@ -103,8 +120,36 @@ final class ImageEditorUI extends JPanel {
         contentPanel.add(scrollPane, IMAGE_PANEL);
         contentPanel.add(errorPanel, ERROR_PANEL);
 
-        add(component, BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(toolbarPanel, BorderLayout.WEST);
+        infoLabel = new JLabel((String)null, JLabel.RIGHT);
+        topPanel.add(infoLabel, BorderLayout.EAST);
+
+        add(topPanel, BorderLayout.NORTH);
         add(contentPanel, BorderLayout.CENTER);
+
+        updateInfo();
+    }
+
+    private void updateInfo() {
+        ImageDocument document = imageComponent.getDocument();
+        BufferedImage image = document.getValue();
+        if (image != null) {
+            ColorModel colorModel = image.getColorModel();
+            String format = document.getFormat();
+            if (format == null) {
+                format = IconsBundle.message("unknown.format");
+            } else {
+                format = format.toUpperCase();
+            }
+            VirtualFile file = editor.getFile();
+            infoLabel.setText(
+                    IconsBundle.message("image.info",
+                            image.getWidth(), image.getHeight(), format,
+                            colorModel.getPixelSize(), file != null ? StringUtil.formatFileSize(file.getLength()) : ""));
+        } else {
+            infoLabel.setText(null);
+        }
     }
 
     JComponent getContentComponent() {
@@ -246,6 +291,8 @@ final class ImageEditorUI extends JPanel {
             CardLayout layout = (CardLayout)contentPanel.getLayout();
             layout.show(contentPanel, value != null ? IMAGE_PANEL : ERROR_PANEL);
 
+            updateInfo();
+
             revalidate();
             repaint();
         }
@@ -257,7 +304,7 @@ final class ImageEditorUI extends JPanel {
         }
     }
 
-    private final static class EditorMouseAdapter extends MouseAdapter {
+    private static final class EditorMouseAdapter extends MouseAdapter {
         public void mouseClicked(MouseEvent e) {
             if (MouseEvent.BUTTON3 == e.getButton() && e.getClickCount() == 1) {
                 // Single right click
@@ -270,6 +317,44 @@ final class ImageEditorUI extends JPanel {
 
                 e.consume();
             }
+        }
+    }
+
+
+    @Nullable
+    public Object getData(String dataId) {
+
+        if (DataConstantsEx.PROJECT.equals(dataId)) {
+            return editor.getProject();
+        } else if (DataConstantsEx.VIRTUAL_FILE.equals(dataId)) {
+            return editor.getFile();
+        } else if (DataConstantsEx.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+            return new VirtualFile[] {editor.getFile()};
+        } else if (DataConstantsEx.PSI_FILE.equals(dataId)) {
+            return getData(DataConstantsEx.PSI_ELEMENT);
+        } else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+            VirtualFile file = editor.getFile();
+            return file != null ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
+        } else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+            return new PsiElement[] {(PsiElement) getData(DataConstants.PSI_ELEMENT)};
+        } else if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+            return copyPasteSupport.getCopyProvider();
+        } else if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+            return copyPasteSupport.getCutProvider();
+        } else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+            return deleteProvider;
+        }
+
+        return null;
+    }
+
+    private final class CopyPasteSupport extends CopyPasteManagerEx.CopyPasteDelegator {
+        public CopyPasteSupport(Project project, JComponent component) {
+            super(project, component);
+        }
+
+        protected PsiElement[] getSelectedElements() {
+            return (PsiElement[]) getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
         }
     }
 }

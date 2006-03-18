@@ -85,15 +85,17 @@ public final class EditExternalyAction extends AnAction {
     }
 
     private boolean isImages(VirtualFile[] files) {
+        boolean isImagesFound = false;
         if (files != null) {
             ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
             for (VirtualFile file : files) {
-                if (!(file.getFileSystem() instanceof LocalFileSystem) || !typeManager.isImage(file)) {
+                boolean isImage = typeManager.isImage(file);
+                isImagesFound |= isImage;
+                if (!(file.getFileSystem() instanceof LocalFileSystem) || !isImage) {
                     return false;
                 }
             }
-            return true;
         }
-        return false;
+        return isImagesFound;
     }
 }

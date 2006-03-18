@@ -42,7 +42,7 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
     private final Project project;
     private final VirtualFile file;
     private final ImageEditorUI editorUI;
-    private boolean disposed = false;
+    private boolean disposed;
 
     ImageEditorImpl(Project project, VirtualFile file) {
         this.project = project;
@@ -50,7 +50,7 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
 
         // Options
         Options options = OptionsManager.getInstance().getOptions();
-        editorUI = new ImageEditorUI(options.getEditorOptions());
+        editorUI = new ImageEditorUI(this, options.getEditorOptions());
         options.addPropertyChangeListener(optionsChangeListener);
 
         setValue(file);
@@ -62,6 +62,7 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
             BufferedImage previousImage = document.getValue();
             BufferedImage image = IfsUtil.getImage(file);
             document.setValue(image);
+            document.setFormat(IfsUtil.getFormat(file));
             if (image != null && previousImage == null) {
                 // Set smart zooming behaviour on open
                 Options options = OptionsManager.getInstance().getOptions();

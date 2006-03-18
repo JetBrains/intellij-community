@@ -185,6 +185,7 @@ public class ImageComponent extends JComponent {
     private static final class ImageDocumentImpl implements ImageDocument {
         private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(0);
         private BufferedImage image;
+        private String format;
         private Image renderer;
 
         public Image getRenderer() {
@@ -198,6 +199,16 @@ public class ImageComponent extends JComponent {
         public void setValue(BufferedImage image) {
             this.image = image;
             this.renderer = image != null ? Toolkit.getDefaultToolkit().createImage(image.getSource()) : null;
+            fireChangeEvent(new ChangeEvent(this));
+        }
+
+        public String getFormat() {
+            return format;
+        }
+
+
+        public void setFormat(String format) {
+            this.format = format;
             fireChangeEvent(new ChangeEvent(this));
         }
 

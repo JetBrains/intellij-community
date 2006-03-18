@@ -5,7 +5,6 @@
     <version>1.1</version>
     <idea-version since-build="3378"/>
   
-  <resource-bundle xmlns="">org.intellij.images.IconsBundle</resource-bundle>
     <resource-bundle>org.intellij.images.IconsBundle</resource-bundle>
 
     <extensions xmlns="com.intellij">
@@ -76,12 +75,15 @@
         <group id="Images.EditorPopupMenu">
             <reference id="CutCopyPasteGroup" />
             <separator/>
+            <reference id="FindUsages" />
+            <reference id="RefactoringMenu" />
+            <separator />
             <reference id="Images.EditorToolbar"/>
-            <separator/>
-            <reference id="AddToFavorites" />
             <separator/>
             <reference id="CloseEditor" />
             <separator/>
+            <reference id="AddToFavorites" />
+            <separator />
             <reference id="VersionControlsGroup" />
             <separator />
             <reference id="ExternalToolsGroup" />
@@ -105,15 +107,20 @@
                     icon="/actions/cancel.png"/>
         </group>
         <group id="Images.ThumbnailsPopupMenu">
-            <reference id="EditSource"/>
-            <separator />
             <reference id="CutCopyPasteGroup" />
+            <reference id="EditSource" />
             <separator />
             <reference id="Images.ThumbnailsToolbar"/>
             <separator/>
+            <reference id="FindUsages" />
+            <reference id="RefactoringMenu" />
+            <separator />
             <reference id="AddToFavorites" />
-            <separator/>
+            <separator />
+            <reference id="$Delete" />
+            <separator />
             <reference id="VersionControlsGroup" />
+            <reference id="CompareTwoFiles" />
             <separator />
             <reference id="ExternalToolsGroup" />
         </group>
