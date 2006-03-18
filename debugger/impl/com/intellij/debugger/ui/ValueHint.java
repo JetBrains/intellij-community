@@ -23,11 +23,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
@@ -67,6 +70,7 @@ public class ValueHint {
   private final Point myPoint;
 
   private LightweightHint myCurrentHint = null;
+  private JBPopup myPopup = null;
   private TextRange myCurrentRange = null;
   private RangeHighlighter myHighlighter = null;
   private Cursor myStoredCursor = null;
@@ -215,8 +219,8 @@ public class ValueHint {
   }
 
   private void resize(final TreePath path, DebuggerTree tree) {
-    if (myCurrentHint == null) return;
-    final Window popupWindow = SwingUtilities.windowForComponent(myCurrentHint.getComponent());
+    if (myPopup == null) return;
+    final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
     final Rectangle windowBounds = popupWindow.getBounds();
@@ -231,41 +235,37 @@ public class ValueHint {
     popupWindow.repaint();
   }
 
-  private void showHint(final InspectDebuggerTree tree, final DebuggerContextImpl debuggerContext, final String title, final ActiveTooltipComponent component) {
+  private void showHint(final InspectDebuggerTree tree,
+                        final DebuggerContextImpl debuggerContext,
+                        final String title,
+                        final ActiveTooltipComponent component) {
     DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
       public void run() {
-        if(myShowHint) {
-          tree.rebuild(debuggerContext);
-          if (myCurrentHint != null){
-            myCurrentHint.hide();
-          }
-          component.updateToolbar();
-          myCurrentHint = new LightweightHint(component);
-          myCurrentHint.setForceShowAsPopup(true);
-          setTitle(title);
-
-          //Editor may be disposed before later invokator process this action
-          if(myEditor.getComponent().getRootPane() == null) return;
-          myCurrentHint.show(myEditor.getContentComponent(), myPoint.x, myPoint.y, myEditor.getContentComponent());
-
-          updateInitialBounds(tree);
-
-          SwingUtilities.invokeLater(new Runnable(){
-            public void run() {
-              tree.requestFocusInWindow();  
-            }
-          });
+        tree.rebuild(debuggerContext);
+        if (myPopup != null) {
+          myPopup.cancel();
         }
+        component.updateToolbar();
+        myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, tree)
+          .setRequestFocus(true)
+          .setTitle(title)
+          .setResizable(true)
+          .setMovable(true)
+          .createPopup();
+
+        //Editor may be disposed before later invokator process this action
+        if (myEditor.getComponent().getRootPane() == null) return;
+        myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
+
+        updateInitialBounds(tree);
       }
     });
   }
 
-  private void setTitle(final String title) {
-    myCurrentHint.setTitle(DebuggerBundle.message("active.tooltip.title", title));
-  }
+
 
   private void updateInitialBounds(final InspectDebuggerTree tree) {
-    final Window popupWindow = SwingUtilities.windowForComponent(myCurrentHint.getComponent());
+    final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
     final Rectangle windowBounds = popupWindow.getBounds();

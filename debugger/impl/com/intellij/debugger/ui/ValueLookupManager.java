@@ -4,9 +4,9 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
 
 public class ValueLookupManager implements EditorMouseMotionListener, EditorMouseListener, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.ValueLookupManager");
@@ -102,25 +101,18 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
   }
 
   public void mouseReleased(EditorMouseEvent e) {
-    //To change body of implemented methods use Options | File Templates.
   }
 
   public void mouseClicked(EditorMouseEvent e) {
-    if(isAltMask(e.getMouseEvent().getModifiers() & ~(java.awt.event.InputEvent.BUTTON1_MASK)) && (e.getMouseEvent().getButton() == MouseEvent.BUTTON1)){
-      showHint(e.getEditor(), e.getMouseEvent().getPoint(), ValueHint.MOUSE_CLICK_HINT);
-    }
   }
 
   public void mouseExited(EditorMouseEvent e) {
-    //To change body of implemented methods use Options | File Templates.
   }
 
   public void mouseEntered(EditorMouseEvent e) {
-    //To change body of implemented methods use Options | File Templates.
   }
 
   public void mousePressed(EditorMouseEvent e) {
-    //To change body of implemented methods use Options | File Templates.
   }
 
 

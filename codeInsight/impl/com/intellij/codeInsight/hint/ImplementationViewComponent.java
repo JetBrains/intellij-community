@@ -157,14 +157,6 @@ public class ImplementationViewComponent extends JPanel {
     JPanel toolbarPanel = new JPanel(new FlowLayout());
     toolbarPanel.add(toolbar.getComponent());
 
-    registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myHint != null) {
-          myHint.cancel();
-        }
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
     if (myElements.length > 1) {
       myFileChooser = new JComboBox(files.toArray(new FileDescriptor[files.size()]));
       myFileChooser.setRenderer(new DefaultListCellRenderer() {
