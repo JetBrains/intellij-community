@@ -27,6 +27,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -149,8 +150,7 @@ public class IntentionHintComponent extends JPanel {
       return new IntentionListStep(quickFixes, intentions){
         @SuppressWarnings({"HardCodedStringLiteral"})
         public String getTitle() {
-          final String name = action.getToolName();
-          return name != null ? name.replaceAll("<", "&lt;").replaceAll(">", "&gt;") : null;
+          return XmlUtil.escapeString(action.getToolName());
         }
       };
     }
