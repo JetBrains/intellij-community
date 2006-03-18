@@ -238,9 +238,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
       if (!(classElement instanceof PsiClass)) return null;
       Map<PsiTypeParameter, PsiType> resurrected = new HashMap<PsiTypeParameter, PsiType>();
       final Set<Map.Entry<SmartPsiElementPointer, SmartTypePointer>> set = myMap.entrySet();
-      for (Iterator<Map.Entry<SmartPsiElementPointer, SmartTypePointer>> iterator = set.iterator();
-           iterator.hasNext();) {
-        Map.Entry<SmartPsiElementPointer, SmartTypePointer> entry = iterator.next();
+      for (Map.Entry<SmartPsiElementPointer, SmartTypePointer> entry : set) {
         PsiElement element = entry.getKey().getElement();
         if (element instanceof PsiTypeParameter) {
           resurrected.put(((PsiTypeParameter)element), entry.getValue().getType());
@@ -276,8 +274,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
       final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)mySmartPsiElementPointer.getElement();
       final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
       if (referenceElement != null) {
-        final PsiClassType type = factory.createType(referenceElement);
-        myType = type;
+        myType = factory.createType(referenceElement);
       }
       else {
         try {
@@ -323,7 +320,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
         classType = ((PsiClassReferenceType)classType).createImmediateCopy();
       }
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-      final com.intellij.util.containers.HashMap<SmartPsiElementPointer, SmartTypePointer> map = new com.intellij.util.containers.HashMap<SmartPsiElementPointer, SmartTypePointer>();
+      final HashMap<SmartPsiElementPointer, SmartTypePointer> map = new HashMap<SmartPsiElementPointer, SmartTypePointer>();
       final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
       while (iterator.hasNext()) {
         PsiTypeParameter typeParameter = iterator.next();
