@@ -250,7 +250,11 @@ public class ValueHint {
 
           updateInitialBounds(tree);
 
-          tree.requestFocusInWindow();
+          SwingUtilities.invokeLater(new Runnable(){
+            public void run() {
+              tree.requestFocusInWindow();  
+            }
+          });
         }
       }
     });
