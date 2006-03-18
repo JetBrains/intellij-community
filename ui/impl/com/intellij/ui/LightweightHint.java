@@ -93,7 +93,7 @@ public class LightweightHint implements Hint, UserDataHolder {
     else {
       myIsRealPopup = true;
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myComponent, null)
-        .setRequestFocus(myForceShowAsPopup)
+        .setRequestFocus(false)
         .setResizable(myForceShowAsPopup)
         .setMovable(myForceShowAsPopup)
         .setTitle(myTitle)
