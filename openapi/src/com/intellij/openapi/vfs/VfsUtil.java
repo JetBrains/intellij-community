@@ -15,17 +15,17 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.util.PathUtil;
-import com.intellij.javaee.ExternalResourceManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -449,7 +449,7 @@ public class VfsUtil {
     while (true) {
       String token = tokenizer.nextToken();
       if (tokenizer.hasMoreTokens()) {
-        VirtualFile childDir = toDir.findChild(token);
+        VirtualFile childDir = curDir.findChild(token);
         if (childDir == null) {
           childDir = curDir.createChildDirectory(requestor, token);
         }
