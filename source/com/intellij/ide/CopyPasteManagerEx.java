@@ -1,16 +1,17 @@
 package com.intellij.ide;
 
+import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -19,7 +20,7 @@ import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.Patches;
+import com.intellij.ui.UIHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -187,7 +188,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     return false;
   }
 
-  public abstract static class CopyPasteDelegator {
+  public abstract static class CopyPasteDelegator implements UIHelper.CopyPasteSupport {
     private Project myProject;
     private JComponent myKeyReceiver;
     private MyEditable myEditable;

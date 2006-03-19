@@ -2,10 +2,13 @@ package com.intellij.peer.impl;
 
 import com.intellij.execution.runners.ProcessProxyFactory;
 import com.intellij.execution.runners.ProcessProxyFactoryImpl;
+import com.intellij.ide.CopyPasteManagerEx;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.util.DeleteHandler;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
@@ -198,6 +201,18 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
       final PsiExpressionCodeFragment fragment = PsiManager.getInstance(project).getElementFactory().createExpressionCodeFragment(text, context, type, true);
       final Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
       return new EditorTextField(document, project, StdFileTypes.JAVA);
+    }
+
+    public CopyPasteSupport createPsiBasedCopyPasteSupport(Project project, JComponent keyReceiver, final PsiElementSelector dataSelector) {
+      return new CopyPasteManagerEx.CopyPasteDelegator(project, keyReceiver) {
+        protected PsiElement[] getSelectedElements() {
+          return dataSelector.getSelectedElements();
+        }
+      };
+    }
+
+    public DeleteProvider createPsiBasedDeleteProvider() {
+      return new DeleteHandler.DefaultDeleteProvider();
     }
 
     private static String getPsiElementText(PsiElement psiElement) {

@@ -21,26 +21,6 @@ public interface DataConstantsEx extends DataConstants {
    */
   @NonNls String INSPECTION_VIEW = "inspectionView";
   /**
-   * Returns com.intellij.psi.PsiElement[]
-   */
-  @NonNls String PSI_ELEMENT_ARRAY = "psi.Element.array";
-  /**
-   * Returns com.intellij.ide.CopyProvider
-   */
-  @NonNls String COPY_PROVIDER = "copyProvider";
-  /**
-   * Returns com.intellij.ide.CutProvider
-   */
-  @NonNls String CUT_PROVIDER = "cutProvider";
-  /**
-   * Returns com.intellij.ide.PasteProvider
-   */
-  @NonNls String PASTE_PROVIDER = "pasteProvider";
-  /**
-   * Returns com.intellij.ide.DeleteProvider
-   */
-  @NonNls String DELETE_ELEMENT_PROVIDER = "deleteElementProvider";
-  /**
    * Returns TreeExpander
    */
   @NonNls String TREE_EXPANDER = "treeExpander";
