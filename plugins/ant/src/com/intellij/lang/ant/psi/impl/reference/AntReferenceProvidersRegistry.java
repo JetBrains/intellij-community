@@ -1,8 +1,10 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.impl.AntCallImpl;
 import com.intellij.lang.ant.psi.impl.AntProjectImpl;
 import com.intellij.lang.ant.psi.impl.AntTargetImpl;
+import com.intellij.lang.ant.psi.impl.reference.providers.AntCallTargetReferenceProvider;
 import com.intellij.lang.ant.psi.impl.reference.providers.AntDefaultTargetReferenceProvider;
 import com.intellij.lang.ant.psi.impl.reference.providers.AntDependsTargetReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
@@ -19,6 +21,7 @@ public class AntReferenceProvidersRegistry {
     ourProviders = new HashMap<Class, GenericReferenceProvider[]>();
     ourProviders.put(AntProjectImpl.class, new GenericReferenceProvider[]{new AntDefaultTargetReferenceProvider()});
     ourProviders.put(AntTargetImpl.class, new GenericReferenceProvider[]{new AntDependsTargetReferenceProvider()});
+    ourProviders.put(AntCallImpl.class, new GenericReferenceProvider[]{new AntCallTargetReferenceProvider()});
   }
 
   private AntReferenceProvidersRegistry() {

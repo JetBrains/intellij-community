@@ -1,0 +1,6 @@
+<project default="main">
+<target name="main">
+<antcall target="<ref>a"/>
+</target>
+<target name="a"/>
+</project>

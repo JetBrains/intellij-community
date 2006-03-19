@@ -21,7 +21,7 @@ public class AntDefaultTargetReferenceProvider extends AntTargetReferenceProvide
     final int offsetInPosition = attr.getValueElement().getTextRange().getStartOffset() - project.getTextRange().getStartOffset() + 1;
     final String attrValue = attr.getValue();
     return new PsiReference[]{
-      new AntTargetReference(this, project, attrValue, new TextRange(offsetInPosition, offsetInPosition + attrValue.length()), null)};
+      new AntTargetReference(this, project, attrValue, new TextRange(offsetInPosition, offsetInPosition + attrValue.length()), attr)};
   }
 
   @NotNull
