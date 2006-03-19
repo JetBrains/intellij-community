@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.psi.AntCall;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
@@ -17,6 +18,7 @@ import java.util.List;
 public class AntTargetImpl extends AntElementImpl implements AntTarget {
 
   private AntTarget[] myDependsTargets;
+  private AntCall[] myCalls;
 
   public AntTargetImpl(AntProject parent, final XmlTag tag) {
     super(parent, tag);
@@ -47,6 +49,11 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
+  }
+
+  @NotNull
+  public XmlTag getSourceElement() {
+    return (XmlTag)super.getSourceElement();
   }
 
   @Nullable
@@ -88,11 +95,28 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
   }
 
   @NotNull
-  public XmlTag getSourceElement() {
-    return (XmlTag)super.getSourceElement();
+  public AntCall[] getAntCalls() {
+    if (myCalls == null) {
+      List<AntCall> calls = new ArrayList<AntCall>();
+      for (AntElement element : getChildren()) {
+        if (element instanceof AntCall) {
+          calls.add((AntCall)element);
+        }
+      }
+      myCalls = calls.toArray(new AntCall[calls.size()]);
+    }
+    return myCalls;
   }
 
   protected AntElement[] getChildrenInner() {
-    return AntElement.EMPTY_ARRAY;
+    final XmlTag[] tags = getSourceElement().getSubTags();
+    final List<AntElement> children = new ArrayList<AntElement>();
+    for (final XmlTag tag : tags) {
+      @NonNls final String tagName = tag.getName();
+      if ("antcall".equals(tagName)) {
+        children.add(new AntCallImpl(this, tag));
+      }
+    }
+    return children.toArray(new AntElement[children.size()]);
   }
 }

@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
+import com.intellij.lang.ant.psi.AntCall;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
@@ -10,24 +11,32 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 
 public class AntTargetReference extends GenericReference {
 
   private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.ANT_TARGET);
 
-  private AntElement myAntElement;
-  private String myText;
-  private TextRange myTextRange;
+  private final AntElement myAntElement;
+  private final String myText;
+  private final TextRange myTextRange;
+  private final XmlAttribute myAttribute;
 
-  public AntTargetReference(GenericReferenceProvider provider, final AntElement antElement, final String str, final TextRange textRange) {
+  public AntTargetReference(GenericReferenceProvider provider,
+                            final AntElement antElement,
+                            final String str,
+                            final TextRange textRange,
+                            final XmlAttribute attribute) {
     super(provider);
     myAntElement = antElement;
     myText = str;
     myTextRange = textRange;
+    myAttribute = attribute;
   }
 
-  public PsiElement getElement() {
+  public AntElement getElement() {
     return myAntElement;
   }
 
@@ -40,14 +49,29 @@ public class AntTargetReference extends GenericReference {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final PsiElement element = getElement();
-    if (element instanceof AntProject) {
-      final AntProject project = (AntProject)element;
-      project.getSourceElement().setAttribute("default", newElementName);
-      project.subtreeChanged();
+    final AntElement element = getElement();
+    if (element instanceof AntProject || element instanceof AntCall) {
+      myAttribute.setValue(newElementName);
+      element.subtreeChanged();
     }
     else if (element instanceof AntTarget) {
-
+      int start = getElementStartOffset() + getReferenceStartOffset() - getAttributeValueStartOffset();
+      final String value = myAttribute.getValue();
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        if (start > 0) {
+          builder.append(value.substring(0, start));
+        }
+        builder.append(newElementName);
+        if (value.length() > start + myTextRange.getLength()) {
+          builder.append(value.substring(start + myTextRange.getLength()));
+        }
+        myAttribute.setValue(builder.toString());
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
+      }
+      element.subtreeChanged();
     }
     return element;
   }
@@ -82,5 +106,17 @@ public class AntTargetReference extends GenericReference {
 
   public boolean needToCheckAccessibility() {
     return false;
+  }
+
+  private int getElementStartOffset() {
+    return getElement().getTextRange().getStartOffset();
+  }
+
+  private int getReferenceStartOffset() {
+    return getRangeInElement().getStartOffset();
+  }
+
+  private int getAttributeValueStartOffset() {
+    return myAttribute.getValueElement().getTextRange().getStartOffset() + 1;
   }
 }

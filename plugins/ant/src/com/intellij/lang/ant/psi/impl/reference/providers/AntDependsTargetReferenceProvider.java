@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
-import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.openapi.util.TextRange;
@@ -15,22 +14,13 @@ public class AntDependsTargetReferenceProvider extends AntTargetReferenceProvide
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
-    return getReferencesByElement(element, AntTargetReference.getReferenceType());
-  }
-
-  @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     final AntTarget target = (AntTarget)element;
     final XmlAttribute attr = ((XmlTag)target.getSourceElement()).getAttribute("depends", null);
     if (attr == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final int offsetInProject = attr.getValueElement().getTextRange().getStartOffset() - target.getTextRange().getStartOffset() + 1;
-    return getReferencesByString(attr.getValue(), target, type, offsetInProject);
-  }
-
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+    int offsetInPosition = attr.getValueElement().getTextRange().getStartOffset() - target.getTextRange().getStartOffset() + 1;
+    final String str = attr.getValue();
     final String[] targets = str.split(",");
     final int length = targets.length;
     if (length == 0) {
@@ -38,11 +28,20 @@ public class AntDependsTargetReferenceProvider extends AntTargetReferenceProvide
     }
     PsiReference[] result = new PsiReference[length];
     for (int i = 0; i < result.length; i++) {
-      final String target = targets[i];
-      result[i] = new AntTargetReference(this, (AntElement)position, target,
-                                         new TextRange(offsetInPosition, offsetInPosition + target.length()));
-      offsetInPosition += target.length() + 1;
+      final String t = targets[i];
+      result[i] = new AntTargetReference(this, target, t, new TextRange(offsetInPosition, offsetInPosition + t.length()), attr);
+      offsetInPosition += t.length() + 1;
     }
     return result;
+  }
+
+  @NotNull
+  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
+    return getReferencesByElement(element);
+  }
+
+  @NotNull
+  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+    return getReferencesByElement(position);
   }
 }
