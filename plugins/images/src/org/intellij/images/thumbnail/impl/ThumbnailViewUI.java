@@ -16,21 +16,20 @@
  */
 package org.intellij.images.thumbnail.impl;
 
+import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.*;
+import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ide.CopyPasteManagerEx;
-import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.util.DeleteHandler;
+import com.intellij.psi.PsiManager;
+import com.intellij.ui.UIHelper;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailsActions;
@@ -43,9 +42,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
@@ -62,8 +61,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[] {};
 
     private final ThumbnailViewImpl thumbnailView;
-    private final CopyPasteSupport copyPasteSupport;
-    private final DeleteProvider deleteProvider = new DeleteHandler.DefaultDeleteProvider();
+    private final UIHelper.CopyPasteSupport copyPasteSupport;
+    private final DeleteProvider deleteProvider;
     private ThumbnailListCellRenderer cellRenderer;
     private JList list;
 
@@ -71,7 +70,16 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         super(new BorderLayout());
 
         this.thumbnailView = thumbnailView;
-        this.copyPasteSupport = new CopyPasteSupport(thumbnailView.getProject(), this);
+
+        final UIHelper uiHelper = PeerFactory.getInstance().getUIHelper();
+        copyPasteSupport = uiHelper.createPsiBasedCopyPasteSupport(thumbnailView.getProject(), this, new UIHelper.PsiElementSelector() {
+            public PsiElement[] getSelectedElements() {
+                return (PsiElement[]) getData(DataConstants.PSI_ELEMENT_ARRAY);
+            }
+        });
+
+        deleteProvider = uiHelper.createPsiBasedDeleteProvider();
+
     }
 
     private void createUI() {
@@ -548,16 +556,6 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private class FocusRequester extends MouseAdapter {
         public void mouseClicked(MouseEvent e) {
             requestFocus();
-        }
-    }
-
-    private final class CopyPasteSupport extends CopyPasteManagerEx.CopyPasteDelegator {
-        public CopyPasteSupport(Project project, JComponent component) {
-            super(project, component);
-        }
-
-        protected PsiElement[] getSelectedElements() {
-            return ThumbnailViewUI.this.getSelectedElements();
         }
     }
 }
