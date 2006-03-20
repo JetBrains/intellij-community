@@ -384,6 +384,34 @@ public class FormatterImpl extends FormatterEx
 
   }
 
+  public void adjustTextRange(final FormattingModel model,
+                              final CodeStyleSettings settings,
+                              final CodeStyleSettings.IndentOptions indentOptions,
+                              final TextRange affectedRange) {
+    disableFormatting();
+    try {
+      final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRange,
+                                                            true);
+      LeafBlockWrapper current = processor.getFirstTokenBlock();
+      while (current != null) {
+        WhiteSpace whiteSpace = current.getWhiteSpace();
+
+        if (!whiteSpace.isReadOnly()) {
+          if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
+            whiteSpace.setReadOnly(true);
+          } else {
+            whiteSpace.setReadOnly(false);
+          }
+        }
+        current = current.getNextBlock();
+      }
+      processor.format(model);
+    } finally {
+      enableFormatting();
+    }
+
+  }
+  
   public void saveIndents(final FormattingModel model, final TextRange affectedRange,
                           IndentInfoStorage storage,
                           final CodeStyleSettings settings,

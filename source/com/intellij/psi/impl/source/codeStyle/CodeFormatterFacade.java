@@ -3,20 +3,29 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.Block;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
+import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class CodeFormatterFacade implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
@@ -60,6 +69,53 @@ public class CodeFormatterFacade implements Constants {
     }
 
     return element;
+  }
+
+  public static void adjustWhiteSpaceBefore(@NotNull ASTNode node,
+                                     @NotNull final Document document) {
+
+    final PsiElement psi = node.getPsi();
+
+    final Project project = psi.getProject();
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    final PsiFile file = documentManager.getPsiFile(document);
+
+    documentManager.commitDocument(document);
+
+    
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final FormattingModelBuilder builder = file.getViewProvider().getBaseLanguage().getFormattingModelBuilder();
+    final FormattingModelBuilder elementBuilder = psi.getLanguage().getFormattingModelBuilder();
+
+    if (builder != null && elementBuilder != null) {
+      ASTNode firstNonSpaceLeaf = TreeUtil.findFirstLeaf(node);
+      while (firstNonSpaceLeaf != null && firstNonSpaceLeaf.getElementType() == ElementType.WHITE_SPACE) {
+        firstNonSpaceLeaf = TreeUtil.nextLeaf(firstNonSpaceLeaf);
+      }
+      if (firstNonSpaceLeaf != null) {
+        final int startOffset = firstNonSpaceLeaf.getStartOffset();
+        final int endOffset = node.getTextRange().getEndOffset();
+        if (startOffset < endOffset) {
+
+          FormattingModel model = builder.createModel(file, settings);
+
+          if (model instanceof PsiBasedFormattingModel) {
+            ((PsiBasedFormattingModel)model).doNotUseallTrees();
+          }
+          Block block = model.getRootBlock();
+          if (block instanceof XmlBlock && file.getLanguage() != StdLanguages.JAVA) {
+            ((XmlBlock)block).getPolicy().dontProcessJavaTree();
+          }
+
+          final DocumentBasedFormattingModel documentModelWrapper =
+            new DocumentBasedFormattingModel(model.getRootBlock(), document, project, settings, file.getFileType(), file);
+
+          FormatterEx.getInstanceEx().adjustTextRange(documentModelWrapper, settings,
+                                                      settings.getIndentOptions(file.getFileType()),
+                                                      new TextRange(startOffset, endOffset));
+        }
+      }
+    }
   }
 
   public ASTNode processRange(final ASTNode element, final int startOffset, final int endOffset) {
@@ -108,8 +164,8 @@ public class CodeFormatterFacade implements Constants {
           FormattingModel originalModel = builder.createModel(file, mySettings);
           Project project = file.getProject();
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
-            PsiDocumentManager.getInstance(project).getDocument(file),
-            project, mySettings, fileType, file);
+                                                                         PsiDocumentManager.getInstance(project).getDocument(file),
+                                                                         project, mySettings, fileType, file);
 
           FormatterEx.getInstanceEx().format(model, mySettings,
                                              mySettings.getIndentOptions(fileType), range, headWhitespace);

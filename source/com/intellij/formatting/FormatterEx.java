@@ -87,6 +87,11 @@ public abstract class FormatterEx{
   public abstract void formatAroundRange(final FormattingModel model, final CodeStyleSettings settings,
                                          final TextRange textRange, final FileType fileType);
 
+  public abstract void adjustTextRange(FormattingModel model,
+                                       CodeStyleSettings settings,
+                                       CodeStyleSettings.IndentOptions indentOptions,
+                                       TextRange affectedRange);
+
   public interface IndentInfoStorage {
     void saveIndentInfo(IndentInfo info, int startOffset);
 
