@@ -10,7 +10,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
-public class AntDependsTargetReferenceProvider extends AntTargetReferenceProviderBase {
+public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBase {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {

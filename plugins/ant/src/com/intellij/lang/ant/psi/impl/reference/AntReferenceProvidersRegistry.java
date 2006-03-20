@@ -4,9 +4,8 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.impl.AntCallImpl;
 import com.intellij.lang.ant.psi.impl.AntProjectImpl;
 import com.intellij.lang.ant.psi.impl.AntTargetImpl;
-import com.intellij.lang.ant.psi.impl.reference.providers.AntCallTargetReferenceProvider;
-import com.intellij.lang.ant.psi.impl.reference.providers.AntDefaultTargetReferenceProvider;
-import com.intellij.lang.ant.psi.impl.reference.providers.AntDependsTargetReferenceProvider;
+import com.intellij.lang.ant.psi.impl.reference.providers.AntSingleTargetReferenceProvider;
+import com.intellij.lang.ant.psi.impl.reference.providers.AntTargetListReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.util.containers.HashMap;
 
@@ -19,9 +18,9 @@ public class AntReferenceProvidersRegistry {
 
   static {
     ourProviders = new HashMap<Class, GenericReferenceProvider[]>();
-    ourProviders.put(AntProjectImpl.class, new GenericReferenceProvider[]{new AntDefaultTargetReferenceProvider()});
-    ourProviders.put(AntTargetImpl.class, new GenericReferenceProvider[]{new AntDependsTargetReferenceProvider()});
-    ourProviders.put(AntCallImpl.class, new GenericReferenceProvider[]{new AntCallTargetReferenceProvider()});
+    ourProviders.put(AntProjectImpl.class, new GenericReferenceProvider[]{new AntSingleTargetReferenceProvider()});
+    ourProviders.put(AntTargetImpl.class, new GenericReferenceProvider[]{new AntTargetListReferenceProvider()});
+    ourProviders.put(AntCallImpl.class, new GenericReferenceProvider[]{new AntSingleTargetReferenceProvider()});
   }
 
   private AntReferenceProvidersRegistry() {
