@@ -308,6 +308,12 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
   }
 
   public final void reset() {
+    if (myCollectionPanel != null) {
+      final JTable table = myCollectionPanel.getTable();
+      if (table.isEditing()) {
+        table.getCellEditor().cancelCellEditing();
+      }
+    }
     myData.clear();
     myData.addAll(getData());
     if (myCollectionPanel != null) {
