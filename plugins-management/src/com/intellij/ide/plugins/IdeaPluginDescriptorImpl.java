@@ -2,7 +2,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.InvalidDataException;
@@ -43,7 +42,7 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
   private Element myProjectComponents = null;
   private Element myModuleComponents = null;
   private boolean myDeleted = false;
-  private IdeaClassLoader myLoader;
+  private ClassLoader myLoader;
   private HelpSetPath[] myHelpSets;
   private int myFormatVersion = 1;
   private List<Element> myExtensions;
@@ -51,11 +50,13 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
   private String myDescriptionChildText;
   private String myDownloadCounter;
   private long myDate;
+  private boolean myUseIdeaClassLoader;
 
   @NonNls private static final String ATTRIBUTE_URL = "url";
   @NonNls private static final String ELEMENT_NAME = "name";
   @NonNls private static final String ELEMENT_ID = "id";
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
+  @NonNls private static final String ATTRIBUTE_USE_IDEA_CLASSLOADER = "use-idea-classloader";
   @NonNls private static final String ELEMENT_RESOURCE_BUNDLE = "resource-bundle";
   @NonNls private static final String ELEMENT_DESCRIPTION = "description";
   @NonNls private static final String ELEMENT_CHANGE_NOTES = "change-notes";
@@ -105,6 +106,8 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
         LOG.error(new PluginException("Invalid value in plugin.xml format version: " + internalVersionString, e, myId));
       }
     }
+    myUseIdeaClassLoader = element.getAttributeValue(ATTRIBUTE_USE_IDEA_CLASSLOADER) != null &&
+                           Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_USE_IDEA_CLASSLOADER));
 
     myResourceBundleBaseName = element.getChildText(ELEMENT_RESOURCE_BUNDLE);
 
@@ -169,7 +172,7 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
     myActionsElement = element.getChild(ELEMENT_ACTIONS);
   }
 
-  private String loadDescription(final String descriptionChildText, @Nullable final ResourceBundle bundle, final PluginId id) {
+  private static String loadDescription(final String descriptionChildText, @Nullable final ResourceBundle bundle, final PluginId id) {
     if (bundle == null) {
       return descriptionChildText;
     }
@@ -309,7 +312,7 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
     myDeleted = deleted;
   }
 
-  public void setLoader(IdeaClassLoader loader) {
+  public void setLoader(ClassLoader loader) {
     myLoader = loader;
 
     //Now we're ready to load root area extensions
@@ -402,6 +405,10 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
 
   public String getVendorLogoPath() {
     return myVendorLogoPath;
+  }
+
+  public boolean getUseIdeaClassLoader() {
+    return myUseIdeaClassLoader;
   }
 
   public void setVendorLogoPath(final String vendorLogoPath) {

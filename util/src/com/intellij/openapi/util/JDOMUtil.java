@@ -25,6 +25,7 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -296,7 +297,7 @@ public class JDOMUtil {
     return (buffer == null) ? text : buffer.toString();
   }
 
-  public static List<Element> getChildrenFromAllNamespaces(final Element element, final String name) {
+  public static List<Element> getChildrenFromAllNamespaces(final Element element, @NonNls final String name) {
     final ArrayList<Element> result = new ArrayList<Element>();
     final List children = element.getChildren();
     for (final Object aChildren : children) {

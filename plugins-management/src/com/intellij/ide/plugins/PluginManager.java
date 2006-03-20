@@ -127,9 +127,9 @@ public class PluginManager {
       final ClassLoader[] parentLoaders = dependentPluginIds.length > 0
                                           ? getParentLoaders(idToDescriptorMap, dependentPluginIds)
                                           : new ClassLoader[]{parentLoader};
-      final IdeaClassLoader pluginClassLoader = createPluginClassLoader(classPath.toArray(new File[classPath.size()]),
-                                                                        pluginDescriptor.getPluginId(), parentLoaders,
-                                                                        pluginDescriptor.getPath());
+      final ClassLoader pluginClassLoader = createPluginClassLoader(classPath.toArray(new File[classPath.size()]),
+                                                                        parentLoaders,
+                                                                        pluginDescriptor);
       pluginDescriptor.setLoader(pluginClassLoader);
       pluginDescriptor.registerExtensions();
     }
@@ -277,7 +277,7 @@ public class PluginManager {
           }
           catch (Exception e) {
             e.printStackTrace();
-            getLogger().error(e);
+            getLogger().error("Error while accessing " + ourMainClass + "." + ourMethodName + " with arguments: " + Arrays.asList(ourArguments), e);
           }
         }
       };
@@ -614,10 +614,40 @@ public class PluginManager {
     }
   }
 
-  private static IdeaClassLoader createPluginClassLoader(final File[] classPath,
-                                                         final PluginId pluginId,
+  private static ClassLoader createPluginClassLoader(final File[] classPath,
                                                          final ClassLoader[] parentLoaders,
-                                                         File pluginRoot) {
+                                                         IdeaPluginDescriptor pluginDescriptor) {
+
+    if (pluginDescriptor.getUseIdeaClassLoader()) {
+      try {
+        final ClassLoader loader = PluginManager.class.getClassLoader();
+        final Method addUrlMethod = loader.getClass().getDeclaredMethod("addURL", URL.class);
+
+
+        for (File aClassPath : classPath) {
+          final File file = aClassPath.getCanonicalFile();
+          addUrlMethod.invoke(loader,  file.toURL());
+        }
+
+        return loader;
+      }
+      catch (NoSuchMethodException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+      catch (IOException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+      catch (IllegalAccessException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+      catch (InvocationTargetException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+    }
+
+    PluginId pluginId = pluginDescriptor.getPluginId();
+    File pluginRoot = pluginDescriptor.getPath();
+
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     try {
       final List<URL> urls = new ArrayList<URL>(classPath.length);
@@ -680,7 +710,7 @@ public class PluginManager {
     }
   }
 
-  private void addIDEALibraries(List<URL> classpathElements) {
+  private static void addIDEALibraries(List<URL> classpathElements) {
     final String ideaHomePath = PathManager.getHomePath();
     addAllFromLibFolder(ideaHomePath, classpathElements);
   }
@@ -730,7 +760,7 @@ public class PluginManager {
     return name.endsWith(".jar") || name.endsWith(".zip");
   }
 
-  private void addAdditionalClassPath(List<URL> classPath) {
+  private static void addAdditionalClassPath(List<URL> classPath) {
     try {
       //noinspection HardCodedStringLiteral
       final StringTokenizer tokenizer = new StringTokenizer(System.getProperty("idea.additional.classpath", ""), File.pathSeparator, false);

@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.source.jsp.tagLibrary;
+package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -8,7 +8,7 @@ import java.io.*;
 import java.net.URL;
 
 class FileLoader extends Loader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.jsp.tagLibrary.FileLoader");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.lang.FileLoader");
   Resource getResource(final String name, boolean flag) {
     try {
       final URL url = new URL(getBaseURL(), name);

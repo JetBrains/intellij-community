@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.source.jsp.tagLibrary;
+package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NonNls;
 import sun.misc.Resource;

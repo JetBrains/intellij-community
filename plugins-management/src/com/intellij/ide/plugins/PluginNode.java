@@ -279,4 +279,8 @@ public class PluginNode implements IdeaPluginDescriptor
     public Element getModuleComponents()  { return null; }
     public HelpSetPath[] getHelpSets()  { return null; }
     public String getVendorLogoPath()  { return null; }
+
+  public boolean getUseIdeaClassLoader() {
+    return false;
+  }
 }
