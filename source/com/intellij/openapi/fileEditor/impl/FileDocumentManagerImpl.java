@@ -204,6 +204,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     try{
       Writer writer = null;
       VirtualFile file = getFile(document);
+      if(file instanceof MockVirtualFile) return;
 
       if (file == null || !file.isValid()){
         myUnsavedDocuments.remove(document);
