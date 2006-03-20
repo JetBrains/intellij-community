@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurableWithChangeSupport;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -26,6 +27,7 @@ import org.intellij.images.IconsBundle;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
@@ -36,7 +38,7 @@ import java.beans.PropertyChangeListener;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport implements ApplicationComponent, PropertyChangeListener {
+public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport implements SearchableConfigurable, ApplicationComponent, PropertyChangeListener {
     @NonNls private static final String NAME = "Images.OptionsConfigurable";
     private static final String DISPLAY_NAME = IconsBundle.message("settings.page.name");
     private OptionsUIForm uiForm;
@@ -112,4 +114,18 @@ public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport 
         OptionsConfigurabe component = application.getComponent(OptionsConfigurabe.class);
         ShowSettingsUtil.getInstance().editConfigurable(project, component);
     }
+
+  @NonNls
+  public String getId() {
+    return "Images";
+  }
+
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
+  }
 }
