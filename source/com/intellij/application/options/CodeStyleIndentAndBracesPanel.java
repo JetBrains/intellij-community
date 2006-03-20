@@ -235,11 +235,11 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
     return optionGroup.createPanel();
   }
 
-  private JCheckBox createCheckBox(String text) {
+  private static JCheckBox createCheckBox(String text) {
     return new JCheckBox(text);
   }
 
-  private JComboBox createForceBracesCombo() {
+  private static JComboBox createForceBracesCombo() {
     return new JComboBox(BRACE_FORCE_OPTIONS);
   }
 
@@ -263,7 +263,7 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
     return 0;
   }
 
-  private JComboBox createBraceStyleCombo() {
+  private static JComboBox createBraceStyleCombo() {
     return new JComboBox(BRACE_PLACEMENT_OPTIONS);
   }
 
@@ -286,7 +286,7 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
     return BRACE_PLACEMENT_VALUES[0];
   }
 
-  private JPanel createPreviewPanel() {
+  private static JPanel createPreviewPanel() {
     JPanel p = new JPanel(new BorderLayout());
     p.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
     return p;
