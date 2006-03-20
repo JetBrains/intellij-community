@@ -9,9 +9,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
@@ -54,20 +56,24 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
   public void reparseRange(PsiFile file, int startOffset, int endOffset, String newTextS) throws IncorrectOperationException{
     LOG.assertTrue(file.isValid());
     final PsiFileImpl psiFile = (PsiFileImpl)file;
-    final CompositeElement element = psiFile.calcTreeElement();
-    char[] newText = newTextS.toCharArray();
-    int fileLength = element.getTextLength();
-    int lengthShift = newText.length - (endOffset - startOffset);
+    final Document document = psiFile.getViewProvider().getDocument();
+    document.replaceString(startOffset, endOffset, newTextS);
+    PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(document);
 
-    final PsiFileImpl fileImpl = (PsiFileImpl)file;
-    final char[] newFileText = lengthShift > 0 ? new char[fileLength + lengthShift] : new char[fileLength];
-    SourceUtil.toBuffer(fileImpl.getTreeElement(), newFileText, 0);
-
-    System.arraycopy(newFileText, endOffset, newFileText, endOffset + lengthShift, fileLength - endOffset);
-    System.arraycopy(newText, 0, newFileText, startOffset, newText.length);
-
-    if(startOffset > 0) startOffset--;
-    reparseRangeInternal(file, startOffset, endOffset, lengthShift, newFileText);
+    //final CompositeElement element = psiFile.calcTreeElement();
+    //char[] newText = newTextS.toCharArray();
+    //int fileLength = element.getTextLength();
+    //int lengthShift = newText.length - (endOffset - startOffset);
+    //
+    //final PsiFileImpl fileImpl = (PsiFileImpl)file;
+    //final char[] newFileText = lengthShift > 0 ? new char[fileLength + lengthShift] : new char[fileLength];
+    //SourceUtil.toBuffer(fileImpl.getTreeElement(), newFileText, 0);
+    //
+    //System.arraycopy(newFileText, endOffset, newFileText, endOffset + lengthShift, fileLength - endOffset);
+    //System.arraycopy(newText, 0, newFileText, startOffset, newText.length);
+    //
+    //if(startOffset > 0) startOffset--;
+    //reparseRangeInternal(file, startOffset, endOffset, lengthShift, newFileText);
   }
 
 
