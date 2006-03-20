@@ -1,9 +1,9 @@
 package com.intellij.cvsSupport2.cvshandlers;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.io.FileUtil;
 import org.netbeans.lib.cvsclient.admin.EntriesHandler;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.text.MessageFormat;
 
 public class IOFilesBasedDirectoryPruner {
   private final List<File> myFiles = new ArrayList<File>();
@@ -46,28 +45,16 @@ public class IOFilesBasedDirectoryPruner {
 
     boolean canPrune = true;
 
-    File adminDirectory = null;
-
+    if (!new File(file, CvsUtil.CVS).isDirectory()) return false;
     for (File subFile : subFiles) {
-      if (isAdminDirectory(subFile)) {
-        adminDirectory = subFile;
-      }
-      else {
+      if (!isAdminDirectory(subFile)) {
         canPrune &= execute(subFile);
       }
     }
 
-    if (adminDirectory == null) return false;
-
     canPrune &= !containsFileEntries(file);
 
-    if (canPrune) {
-      return FileUtil.delete(file);
-    } else {
-      return false;
-    }
-
-
+    return canPrune && FileUtil.delete(file);
   }
 
   private boolean containsFileEntries(final File file) {
