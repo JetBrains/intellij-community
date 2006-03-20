@@ -261,8 +261,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
   }
 
   public static TextAttributesKey getScopeTextAttributeKey(final String scope) {
-    TextAttributesKey textAttributesKey = TextAttributesKey.find("SCOPE_KEY_" + scope);
-    return textAttributesKey;
+    return TextAttributesKey.find("SCOPE_KEY_" + scope);
   }
 
   private static ColorAndFontDescription addEditorSettingDescription(ArrayList<EditorSchemeAttributeDescriptor> array,
@@ -324,7 +323,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
       super(name, group,
             scheme.getAttributes(key) == null
             ? new TextAttributes()
-            : (TextAttributes)scheme.getAttributes(key).clone(),
+            : scheme.getAttributes(key).clone(),
             key, scheme);
       this.key = key;
       myAttributesToApply = scheme.getAttributes(key);
