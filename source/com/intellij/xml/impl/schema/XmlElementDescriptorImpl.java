@@ -139,7 +139,25 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
-    return getElementsDescriptors();
+    final XmlElementDescriptor[] elementsDescriptors = getElementsDescriptors();
+
+    if (elementsDescriptors.length == 0) {
+      final TypeDescriptor type = getType();
+
+      if (type instanceof ComplexTypeDescriptor) {
+        final ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
+
+        if (descriptor.canContainTag(context.getLocalName(), context.getNamespace())) {
+          final XmlNSDescriptor nsDescriptor = getNSDescriptor();
+
+          if (nsDescriptor != null) {
+            return nsDescriptor.getRootElementsDescriptors(((XmlFile)context.getContainingFile()).getDocument());
+          }
+        }
+      }
+
+    }
+    return elementsDescriptors;
   }
 
   private XmlElementDescriptor[] getElementsDescriptors() {
