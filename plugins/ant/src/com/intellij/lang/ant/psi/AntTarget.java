@@ -12,6 +12,8 @@ public interface AntTarget extends AntElement, PsiNamedElement {
   @NotNull
   AntTarget[] getDependsTargets();
 
+  void setDependsTargets(@NotNull AntTarget[] targets);
+
   @NotNull
   AntCall[] getAntCalls();
 }

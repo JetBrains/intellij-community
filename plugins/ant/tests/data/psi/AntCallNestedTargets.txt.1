@@ -1,0 +1,7 @@
+AntFile:AntCallNestedTargets.ant
+  AntProject: null
+    AntTarget: A
+      AntCall to AntTarget: B -> [ C D ]
+        AntTarget: C('<target name="C"/>')
+        AntTarget: D('<target name="D"/>')
+    AntTarget: B -> [ C D ]('<target name="B"/>')

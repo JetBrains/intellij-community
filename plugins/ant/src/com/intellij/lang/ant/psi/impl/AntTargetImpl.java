@@ -20,7 +20,7 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
   private AntTarget[] myDependsTargets;
   private AntCall[] myCalls;
 
-  public AntTargetImpl(AntProject parent, final XmlTag tag) {
+  public AntTargetImpl(AntElement parent, final XmlTag tag) {
     super(parent, tag);
   }
 
@@ -92,6 +92,10 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
       }
     }
     return myDependsTargets;
+  }
+
+  public void setDependsTargets(@NotNull AntTarget[] targets) {
+    myDependsTargets = targets;
   }
 
   @NotNull
