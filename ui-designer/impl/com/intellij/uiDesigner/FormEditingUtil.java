@@ -544,7 +544,7 @@ public final class FormEditingUtil {
     });
   }
 
-  public static void clearSelection(final RadContainer container){
+  public static void clearSelection(@NotNull final RadContainer container){
     container.setSelected(false);
 
     for (int i = 0; i < container.getComponentCount(); i++) {
