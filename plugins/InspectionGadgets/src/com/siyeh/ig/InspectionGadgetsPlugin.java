@@ -15,8 +15,10 @@
 */
 package com.siyeh.ig;
 
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.abstraction.*;
@@ -78,8 +80,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
                                                 InspectionToolProvider{
 
     private static final int NUM_INSPECTIONS = 520;
-    private final List<Class<? extends LocalInspectionTool>> m_inspectionClasses =
-            new ArrayList<Class<? extends LocalInspectionTool>>(NUM_INSPECTIONS);
+    private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
+            new ArrayList<Class<? extends InspectionProfileEntry>>(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
             "src/inspectionDescriptions/";
     private final InspectionGadgetsTelemetry telemetry =
@@ -283,6 +285,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             registerThreadingInspections();
             registerVerboseInspections();
             registerVisibilityInspections();
+            m_inspectionClasses.add(BooleanMethodIsAlwaysInvertedInspection.class);
         }
         final int numInspections = m_inspectionClasses.size();
         final Class<? extends LocalInspectionTool>[] classArray =
