@@ -128,8 +128,9 @@ public interface PsiClass
    * Returns the list of class types for the classes and interfaces extended or
    * implemented by the class.
    *
-   * @return the list of class types for the classes or interfaces. The returned
-   *         list always contains at least one element, for the type of the java.lang.Object class.
+   * @return the list of class types for the classes or interfaces.
+   *         For the class with no explicit extends list, the returned list always contains at least one element for the java.lang.Object type.
+   *         If psiClass is java.lang.Object, returned list is empty.
    */
   @NotNull PsiClassType[] getSuperTypes();
 

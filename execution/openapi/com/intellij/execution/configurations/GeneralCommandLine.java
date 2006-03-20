@@ -191,13 +191,16 @@ public class GeneralCommandLine {
               throw new CantRunException(J2EEBundle.message("run.configuration.cannot.find.vm.executable"));
             }
             commandLine.setExePath(exePath);
-            commandLine.addParameters(javaParameters.getVMParametersList().getList());
-            Charset charset = javaParameters.getCharset();
-            if (charset == null) charset = CharsetToolkit.getIDEOptionsCharset();
-            if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset();
-            commandLine.setCharset(charset);
+            ParametersList parametersList = javaParameters.getVMParametersList();
+            commandLine.addParameters(parametersList.getList());
+            if (!parametersList.hasProperty("file.encoding")) {
+              Charset charset = javaParameters.getCharset();
+              if (charset == null) charset = CharsetToolkit.getIDEOptionsCharset();
+              if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset();
+              commandLine.setCharset(charset);
+            }
 
-            if(!javaParameters.getVMParametersList().hasParameter("-classpath") && !javaParameters.getVMParametersList().hasParameter("-cp")){
+            if(!parametersList.hasParameter("-classpath") && !parametersList.hasParameter("-cp")){
               commandLine.addParameter("-classpath");
               commandLine.addParameter(javaParameters.getClassPath().getPathsString());
             }

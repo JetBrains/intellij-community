@@ -5,7 +5,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -443,8 +443,7 @@ public class HighlightUtil {
     }
     if (expression == null) return false;
     PsiType rType = expression.getType();
-    if (rType == null || toType == null) return false;
-    return TypeConversionUtil.areTypesConvertible(rType, toType);
+    return rType != null && toType != null && TypeConversionUtil.areTypesConvertible(rType, toType);
   }
 
 
@@ -465,7 +464,7 @@ public class HighlightUtil {
   }
 
   @Nullable
-  private static HighlightInfo checkAssignability(PsiType lType, PsiType rType, PsiExpression expression, PsiElement elementToHighlight) {
+  static HighlightInfo checkAssignability(PsiType lType, PsiType rType, PsiExpression expression, PsiElement elementToHighlight) {
     TextRange textRange = elementToHighlight.getTextRange();
     return checkAssignability(lType, rType, expression, textRange);
   }
@@ -478,7 +477,9 @@ public class HighlightUtil {
     else if (TypeConversionUtil.areTypesAssignmentCompatible(lType, expression)) {
       return GenericsHighlightUtil.checkRawToGenericAssignment(lType, rType, expression);
     }
-
+    if (rType == null) {
+      rType = expression.getType();
+    }
     HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange);
     if (rType != null && expression != null && isCastIntentionApplicable(expression, lType)) {
       QuickFixAction.registerQuickFixAction(highlightInfo, new AddTypeCastFix(lType, expression));
@@ -944,9 +945,12 @@ public class HighlightUtil {
     if (qualifier != null && aClass.isInterface()) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, HighlightClassUtil.CLASS_EXPECTED);
     }
-    if (HighlightClassUtil.hasEnclosingInstanceInScope(aClass, expr, false)) return null;
+    if (!HighlightClassUtil.hasEnclosingInstanceInScope(aClass, expr, false)) {
+      return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
+    }
 
-    return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
+    return null;
+
   }
 
   static String buildProblemWithStaticDescription(PsiElement refElement) {
@@ -1349,7 +1353,6 @@ public class HighlightUtil {
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, type, description);
   }
 
-
   @Nullable
   public static HighlightInfo checkMemberReferencedBeforeConstructorCalled(PsiElement expression) {
     if (expression.getParent() instanceof PsiJavaCodeReferenceElement) return null;
@@ -1357,21 +1360,40 @@ public class HighlightUtil {
     String resolvedName;
     if (expression instanceof PsiJavaCodeReferenceElement) {
       PsiElement resolved = ((PsiJavaCodeReferenceElement)expression).advancedResolve(true).getElement();
-
+      if (resolved == null && isSuperMethodCall(expression.getParent())) {
+        PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
+        if (qualifier instanceof PsiReferenceExpression) {
+          resolved = ((PsiReferenceExpression)qualifier).resolve();
+          expression = qualifier;
+        }
+        else if (qualifier instanceof PsiThisExpression) {
+          resolved = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class);
+          expression = qualifier;
+        }
+      }
       if (resolved instanceof PsiField) {
         PsiField referencedField = (PsiField)resolved;
         if (referencedField.hasModifierProperty(PsiModifier.STATIC)) return null;
         referencedClass = referencedField.getContainingClass();
-        resolvedName = PsiFormatUtil
-          .formatVariable(referencedField, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
+        resolvedName = PsiFormatUtil.formatVariable(referencedField, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
       }
       else if (resolved instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)resolved;
         if (method.hasModifierProperty(PsiModifier.STATIC)) return null;
-        if (PsiKeyword.SUPER.equals(expression.getText()) || PsiKeyword.THIS.equals(expression.getText())) return null;
-        referencedClass = method.getContainingClass();
-        resolvedName =
-          PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, 0);
+        PsiElement nameElement = expression instanceof PsiThisExpression ? expression : ((PsiJavaCodeReferenceElement)expression).getReferenceNameElement();
+        String name = nameElement == null ? null : nameElement.getText();
+        if (PsiKeyword.SUPER.equals(name) || PsiKeyword.THIS.equals(name)) {
+          PsiElement qualifier = expression instanceof PsiThisExpression ? expression : ((PsiJavaCodeReferenceElement)expression).getQualifier();
+          if (!(qualifier instanceof PsiExpression)) return null;
+          PsiType type = ((PsiExpression)qualifier).getType();
+          if (type == null) return null;
+          referencedClass = PsiUtil.resolveClassInType(type);
+          resolvedName = qualifier.getText();
+        }
+        else {
+          referencedClass = method.getContainingClass();
+          resolvedName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, 0);
+        }
       }
       else if (resolved instanceof PsiClass) {
         PsiClass aClass = (PsiClass)resolved;
@@ -1395,9 +1417,15 @@ public class HighlightUtil {
       return null;
     }
 
-    // check if expression inside super()/this() call
+    return checkReferenceToOurInstanceInsideThisOrSuper(expression, referencedClass, resolvedName);
+  }
+
+  private static HighlightInfo checkReferenceToOurInstanceInsideThisOrSuper(final PsiElement expression,
+                                                                            final PsiClass referencedClass,
+                                                                            final String resolvedName) {
     PsiElement element = expression.getParent();
     while (element != null) {
+      // check if expression inside super()/this() call
       if (isSuperOrThisMethodCall(element)) {
         PsiElement parentClass = new PsiMatcherImpl(element)
           .parent(PsiMatcherImpl.hasClass(PsiExpressionStatement.class))
@@ -1412,6 +1440,7 @@ public class HighlightUtil {
 
         // only this class/superclasses instance methods are not allowed to call
         PsiClass aClass = (PsiClass)parentClass;
+        if (PsiUtil.isInnerClass(aClass) && referencedClass == aClass.getContainingClass()) return null;
         // field or method should be declared in this class or super
         if (!InheritanceUtil.isInheritorOrSelf(aClass, referencedClass, true)) return null;
         // and point to our instance
@@ -1419,12 +1448,54 @@ public class HighlightUtil {
             !thisOrSuperReference(((PsiReferenceExpression)expression).getQualifierExpression(), aClass)) {
           return null;
         }
-        String description = JavaErrorMessages.message("member.referenced.before.constructor.called", resolvedName);
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, description);
+        return createMemberReferencedError(resolvedName, expression.getTextRange());
       }
       element = element.getParent();
     }
     return null;
+  }
+
+  private static HighlightInfo createMemberReferencedError(@NonNls final String resolvedName, TextRange textRange) {
+    String description = JavaErrorMessages.message("member.referenced.before.constructor.called", resolvedName);
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
+  }
+
+  public static HighlightInfo checkImplicitThisReferenceBeforeSuper(PsiClass aClass) {
+    if (aClass instanceof PsiAnonymousClass) return null;
+    PsiClass superClass = aClass.getSuperClass();
+    if (superClass == null || !PsiUtil.isInnerClass(superClass)) return null;
+    PsiClass outerClass = superClass.getContainingClass();
+    if (!InheritanceUtil.isInheritorOrSelf(aClass, outerClass, true)) {
+      return null;
+    }
+    // 'this' can be used as an (implicit) super() qualifier
+    PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) {
+      TextRange range = com.intellij.codeInsight.ClassUtil.getClassDeclarationTextRange(aClass);
+      return createMemberReferencedError(aClass.getName()+".this", range);
+    }
+    for (PsiMethod constructor : constructors) {
+      if (!isSuperCalled(constructor)) {
+        return createMemberReferencedError(aClass.getName()+".this", getMethodDeclarationTextRange(constructor));
+      }
+    }
+    return null;
+  }
+
+  private static boolean isSuperCalled(final PsiMethod constructor) {
+    final PsiCodeBlock body = constructor.getBody();
+    if (body == null) return false;
+    final PsiStatement[] statements = body.getStatements();
+    if (statements.length == 0) return false;
+    final PsiStatement statement = statements[0];
+    final PsiElement element = new PsiMatcherImpl(statement)
+        .dot(PsiMatcherImpl.hasClass(PsiExpressionStatement.class))
+        .firstChild(PsiMatcherImpl.hasClass(PsiMethodCallExpression.class))
+        .firstChild(PsiMatcherImpl.hasClass(PsiReferenceExpression.class))
+        .firstChild(PsiMatcherImpl.hasClass(PsiKeyword.class))
+        .dot(PsiMatcherImpl.hasText(PsiKeyword.SUPER))
+        .getElement();
+    return element != null;
   }
 
   public static boolean isSuperOrThisMethodCall(PsiElement element) {
@@ -1432,6 +1503,12 @@ public class HighlightUtil {
     PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
     String name = methodExpression.getReferenceName();
     return PsiKeyword.SUPER.equals(name) || PsiKeyword.THIS.equals(name);
+  }
+  public static boolean isSuperMethodCall(PsiElement element) {
+    if (!(element instanceof PsiMethodCallExpression)) return false;
+    PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
+    String name = methodExpression.getReferenceName();
+    return PsiKeyword.SUPER.equals(name);
   }
 
   private static boolean thisOrSuperReference(PsiExpression qualifierExpression, PsiClass aClass) {
@@ -1448,8 +1525,7 @@ public class HighlightUtil {
     }
     if (qualifier == null) return true;
     PsiElement resolved = qualifier.resolve();
-    if (!(resolved instanceof PsiClass)) return false;
-    return InheritanceUtil.isInheritorOrSelf(aClass, (PsiClass)resolved, true);
+    return resolved instanceof PsiClass && InheritanceUtil.isInheritorOrSelf(aClass, (PsiClass)resolved, true);
   }
 
 
@@ -1981,8 +2057,7 @@ public class HighlightUtil {
   public static boolean isSerializable(PsiClass aClass) {
     PsiManager manager = aClass.getManager();
     PsiClass serializableClass = manager.findClass("java.io.Serializable", aClass.getResolveScope());
-    if (serializableClass == null) return false;
-    return aClass.isInheritor(serializableClass, true);
+    return serializableClass != null && aClass.isInheritor(serializableClass, true);
   }
 
   public static boolean isSerializationImplicitlyUsedField(PsiField field) {
@@ -2006,5 +2081,4 @@ public class HighlightUtil {
     QuickFixAction.registerQuickFixAction(info, new RemoveQualifierFix(qualifier, expression, (PsiClass)resolved));
     return info;
   }
-
 }

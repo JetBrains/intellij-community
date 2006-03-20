@@ -16,7 +16,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -177,8 +176,9 @@ public class HighlightControlFlowUtil {
 
   private static void visitConstructorChain(PsiMethod constructor, ConstructorVisitorInfo info) {
     while (true) {
-      if (constructor == null || constructor.getBody() == null) return;
+      if (constructor == null) return;
       final PsiCodeBlock body = constructor.getBody();
+      if (body == null) return;
       final PsiStatement[] statements = body.getStatements();
       if (statements.length == 0) return;
       final PsiStatement statement = statements[0];

@@ -31,8 +31,7 @@ public class ClassUtil {
 
   public static String extractClassName(String fqName) {
     int i = fqName.lastIndexOf('.');
-    String className = i == -1 ? fqName : fqName.substring(i + 1);
-    return className;
+    return i == -1 ? fqName : fqName.substring(i + 1);
   }
 
   public static String createNewClassQualifiedName(String qualifiedName, String className) {

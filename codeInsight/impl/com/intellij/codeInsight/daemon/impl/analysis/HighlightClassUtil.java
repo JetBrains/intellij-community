@@ -23,10 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiMatcherImpl;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -146,7 +143,7 @@ public class HighlightClassUtil {
     String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null) return null;
     int numOfClassesToFind = 2;
-    if (qualifiedName.indexOf("$") != -1) {
+    if (qualifiedName.contains("$")) {
       qualifiedName = qualifiedName.replaceAll("\\$", ".");
       numOfClassesToFind = 1;
     }
@@ -462,17 +459,19 @@ public class HighlightClassUtil {
 
   //@top
   public static HighlightInfo checkClassDoesNotCallSuperConstructorOrHandleExceptions(PsiClass aClass,
-                                                                                      RefCountHolder refCountHolder) {
+                                                                                      RefCountHolder refCountHolder,
+                                                                                      final PsiResolveHelper resolveHelper) {
     if (aClass.isEnum()) return null;
     // check only no-ctr classes. Problem with specific constructor will be highlighted inside it
     if (aClass.getConstructors().length != 0) return null;
     // find no-args base class ctr
     TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
-    return checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, textRange, PsiClassType.EMPTY_ARRAY);
+    return checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, resolveHelper, textRange, PsiClassType.EMPTY_ARRAY);
   }
 
   public static HighlightInfo checkBaseClassDefaultConstructorProblem(PsiClass aClass,
                                                                       RefCountHolder refCountHolder,
+                                                                      PsiResolveHelper resolveHelper,
                                                                       TextRange textRange,
                                                                       PsiClassType[] handledExceptions) {
     PsiClass baseClass = aClass.getSuperClass();
@@ -480,7 +479,6 @@ public class HighlightClassUtil {
     PsiMethod[] constructors = baseClass.getConstructors();
     if (constructors.length == 0) return null;
 
-    PsiResolveHelper resolveHelper = aClass.getManager().getResolveHelper();
     for (PsiMethod constructor : constructors) {
       if (resolveHelper.isAccessible(constructor, aClass, null)) {
         if (constructor.getParameterList().getParameters().length == 0 ||
@@ -726,8 +724,7 @@ public class HighlightClassUtil {
   public static boolean isExternalizable(PsiClass aClass) {
     PsiManager manager = aClass.getManager();
     PsiClass externalizableClass = manager.findClass("java.io.Externalizable", aClass.getResolveScope());
-    if (externalizableClass == null) return false;
-    return aClass.isInheritor(externalizableClass, true);
+    return externalizableClass != null && aClass.isInheritor(externalizableClass, true);
   }
 
   //todo topdown
@@ -751,7 +748,6 @@ public class HighlightClassUtil {
     return place == aClass;
   }
 
-  //@top
   public static HighlightInfo checkCreateInnerClassFromStaticContext(PsiNewExpression expression) {
     PsiType type = expression.getType();
     if (type == null || type instanceof PsiArrayType || type instanceof PsiPrimitiveType) return null;
@@ -762,28 +758,45 @@ public class HighlightClassUtil {
       if (aClass == null) return null;
     }
 
-    if (!PsiUtil.isInnerClass(aClass)) {
-      return null;
-    }
-    PsiClass outerClass;
-    if (aClass instanceof PsiAnonymousClass) {
-      outerClass = ((PsiAnonymousClass)aClass).getBaseClassType().resolve();
-    }
-    else {
-      outerClass = aClass.getContainingClass();
-    }
-
+    if (!PsiUtil.isInnerClass(aClass)) return null;
+    PsiClass outerClass = aClass.getContainingClass();
     if (outerClass == null) return null;
+
     PsiElement placeToSearchEnclosingFrom;
-    if (expression.getQualifier() != null) {
-      PsiType qtype = expression.getQualifier().getType();
+    PsiExpression qualifier = expression.getQualifier();
+    if (qualifier != null) {
+      PsiType qtype = qualifier.getType();
       placeToSearchEnclosingFrom = PsiUtil.resolveClassInType(qtype);
     }
     else {
       placeToSearchEnclosingFrom = expression;
     }
+
     if (hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true)) return null;
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, expression);
+  }
+
+  public static HighlightInfo checkQualifiedSuper(PsiMethodCallExpression superCall) {
+    if (!HighlightUtil.isSuperMethodCall(superCall)) return null;
+    PsiMethod ctr = PsiTreeUtil.getParentOfType(superCall, PsiMethod.class, true, PsiMember.class);
+    if (ctr == null) return null;
+    PsiClass targetClass = ctr.getContainingClass().getSuperClass();
+    if (targetClass == null) return null;
+    PsiExpression qualifier = superCall.getMethodExpression().getQualifierExpression();
+    if (PsiUtil.isInnerClass(targetClass)) {
+      PsiClass outerClass = targetClass.getContainingClass();
+      if (qualifier == null) {
+        return createNotQualifiedError(outerClass, superCall.getTextRange());
+      }
+      PsiClassType outerType = superCall.getManager().getElementFactory().createType(outerClass);
+      return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
+    }
+    return null;
+  }
+
+  private static HighlightInfo createNotQualifiedError(final PsiClass outerClass, TextRange textRange) {
+    String description = JavaErrorMessages.message("inner.class.creation.must.be.qualified", outerClass.getQualifiedName());
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
   }
 
   public static HighlightInfo reportIllegalEnclosingUsage(PsiElement place,
@@ -811,4 +824,5 @@ public class HighlightClassUtil {
     }
     return null;
   }
+
 }

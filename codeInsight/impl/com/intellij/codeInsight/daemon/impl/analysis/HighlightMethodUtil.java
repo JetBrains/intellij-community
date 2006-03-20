@@ -492,8 +492,7 @@ public class HighlightMethodUtil {
   private static String getContainingClassName(final MethodCandidateInfo methodCandidate) {
     PsiMethod method = methodCandidate.getElement();
     PsiClass containingClass = method.getContainingClass();
-    String name = containingClass == null ? method.getContainingFile().getName() : HighlightUtil.formatClass(containingClass, false);
-    return name;
+    return containingClass == null ? method.getContainingFile().getName() : HighlightUtil.formatClass(containingClass, false);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -754,7 +753,9 @@ public class HighlightMethodUtil {
   }
 
   //@top
-  public static HighlightInfo checkConstructorCallBaseclassConstructor(PsiMethod constructor, RefCountHolder refCountHolder) {
+  public static HighlightInfo checkConstructorCallsBaseClassConstructor(PsiMethod constructor,
+                                                                        RefCountHolder refCountHolder,
+                                                                        PsiResolveHelper resolveHelper) {
     if (!constructor.isConstructor()) return null;
     PsiClass aClass = constructor.getContainingClass();
     if (aClass == null) return null;
@@ -772,7 +773,7 @@ public class HighlightMethodUtil {
     if (element != null) return null;
     TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(constructor);
     PsiClassType[] handledExceptions = constructor.getThrowsList().getReferencedTypes();
-    HighlightInfo info = HighlightClassUtil.checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, textRange, handledExceptions);
+    HighlightInfo info = HighlightClassUtil.checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, resolveHelper, textRange, handledExceptions);
     if (info != null) {
       QuickFixAction.registerQuickFixAction(info, new InsertSuperFix(constructor));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddDefaultConstructorFix(aClass.getSuperClass()));
@@ -1124,10 +1125,6 @@ public class HighlightMethodUtil {
             highlightInfo = GenericsHighlightUtil.checkGenericCallWithRawArguments(result, (PsiCallExpression)constructorCall);
           }
           if (highlightInfo != null) return highlightInfo;
-
-          /*if (classReference != null) {
-            return DeprecationInspection.checkDeprecated(constructor, classReference);
-          }*/
         }
       }
     }
@@ -1159,33 +1156,32 @@ public class HighlightMethodUtil {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiType returnType = method.getReturnType();
     if ("readObjectNoData".equals(name)) {
-      if (parameters.length != 0) return false;
-      if (!TypeConversionUtil.isVoidType(returnType)) return false;
-      return HighlightUtil.isSerializable(aClass);
+      return parameters.length == 0 && TypeConversionUtil.isVoidType(returnType) && HighlightUtil.isSerializable(aClass);
     }
     if ("readObject".equals(name)) {
-      if (parameters.length != 1) return false;
-      if (!parameters[0].getType().equalsToText("java.io.ObjectInputStream")) return false;
-      if (!TypeConversionUtil.isVoidType(returnType)) return false;
-      if (!method.hasModifierProperty(PsiModifier.PRIVATE)) return false;
-      return HighlightUtil.isSerializable(aClass);
+      return parameters.length == 1
+             && parameters[0].getType().equalsToText("java.io.ObjectInputStream")
+             && TypeConversionUtil.isVoidType(returnType) && method.hasModifierProperty(PsiModifier.PRIVATE)
+             && HighlightUtil.isSerializable(aClass);
     }
     if ("readResolve".equals(name)) {
-      if (parameters.length != 0) return false;
-      if (returnType == null || !returnType.equalsToText("java.lang.Object")) return false;
-      return HighlightUtil.isSerializable(aClass);
+      return parameters.length == 0
+             && returnType != null
+             && returnType.equalsToText("java.lang.Object")
+             && HighlightUtil.isSerializable(aClass);
     }
     if ("writeReplace".equals(name)) {
-      if (parameters.length != 0) return false;
-      if (returnType == null || !returnType.equalsToText("java.lang.Object")) return false;
-      return HighlightUtil.isSerializable(aClass);
+      return parameters.length == 0
+             && returnType != null
+             && returnType.equalsToText("java.lang.Object")
+             && HighlightUtil.isSerializable(aClass);
     }
     if ("writeObject".equals(name)) {
-      if (parameters.length != 1) return false;
-      if (!TypeConversionUtil.isVoidType(returnType)) return false;
-      if (!parameters[0].getType().equalsToText("java.io.ObjectOutputStream")) return false;
-      if (!method.hasModifierProperty(PsiModifier.PRIVATE)) return false;
-      return HighlightUtil.isSerializable(aClass);
+      return parameters.length == 1
+             && TypeConversionUtil.isVoidType(returnType)
+             && parameters[0].getType().equalsToText("java.io.ObjectOutputStream")
+             && method.hasModifierProperty(PsiModifier.PRIVATE)
+             && HighlightUtil.isSerializable(aClass);
     }
     return false;
   }

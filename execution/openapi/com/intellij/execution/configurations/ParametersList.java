@@ -21,22 +21,23 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ParametersList implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ParametersList");
   private List<String> myParameters = new ArrayList<String>();
   private Map<String, String> myMacroMap = null;
 
-  public ParametersList() {
-
-  }
-
   public boolean hasParameter(@NonNls final String param) {
     return myParameters.contains(param);
+  }
+  public boolean hasProperty(@NonNls final String name) {
+    for (@NonNls String parameter : myParameters) {
+      if (parameter.startsWith("-D"+name+"=")) return true;
+    }
+    return false;
   }
 
   public String getParametersString() {

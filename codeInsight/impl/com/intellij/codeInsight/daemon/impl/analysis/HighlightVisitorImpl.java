@@ -5,11 +5,10 @@ import com.intellij.codeInsight.daemon.impl.*;
 import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -21,7 +20,6 @@ import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
@@ -172,6 +170,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInterfaceMultipleInheritance(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkDuplicateTopLevelClass(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumMustNotBeLocal(aClass));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkImplicitThisReferenceBeforeSuper(aClass));
   }
 
   public void visitClassInitializer(PsiClassInitializer initializer) {
@@ -517,9 +516,10 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
   }
 
-  public void visitMethodCallExpression(PsiMethodCallExpression expr) {
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumSuperConstructorCall(expr));
-    if (!myHolder.hasErrorResults()) visitExpression(expr);
+  public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumSuperConstructorCall(expression));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkQualifiedSuper(expression));
+    if (!myHolder.hasErrorResults()) visitExpression(expression);
   }
 
   public void visitModifierList(PsiModifierList list) {
@@ -544,7 +544,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       PsiClass aClass = method.getContainingClass();
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodMustHaveBody(method, aClass));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkDuplicateMethod(aClass, method));
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkConstructorCallBaseclassConstructor(method, myRefCountHolder));
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkConstructorCallsBaseClassConstructor(method, myRefCountHolder, myResolveHelper));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkStaticMethodOverride(method));
     }
     else if (parent instanceof PsiClass) {
@@ -552,7 +552,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkDuplicateNestedClass(aClass));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassMustBeAbstract(aClass));
       if (!myHolder.hasErrorResults()) {
-        myHolder.add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, myRefCountHolder));
+        myHolder.add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, myRefCountHolder, myResolveHelper));
       }
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass));
       if (!myHolder.hasErrorResults()) myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
