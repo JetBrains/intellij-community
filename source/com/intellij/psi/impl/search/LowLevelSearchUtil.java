@@ -53,10 +53,10 @@ public class LowLevelSearchUtil {
               if (!processor.execute(run.getPsi(), start)) return false;
             }
             prev = run;
-            if (run == scope) break;
+            if (run == node) break;
             run = run.getTreeParent();
           }
-          assert run == scope;
+          assert run == node;
         }
         else {
           PsiElement leafElement;
