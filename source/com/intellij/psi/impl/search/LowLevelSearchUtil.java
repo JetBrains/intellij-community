@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.search;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -32,9 +33,9 @@ public class LowLevelSearchUtil {
     do {
       int i = searchWord(buffer, startOffset, endOffset, searcher);
       if (i >= 0) {
-
-        if (scope instanceof TreeElement) {
-          LeafElement leafNode = ((TreeElement)scope).findLeafElementAt(i);
+        final ASTNode node = scope.getNode();
+        if (node != null) {
+          LeafElement leafNode = (LeafElement)node.findLeafElementAt(i);
           if (leafNode == null) return true;
           int start = i - leafNode.getStartOffset() + scopeStartOffset;
           LOG.assertTrue(start >= 0);
@@ -62,7 +63,7 @@ public class LowLevelSearchUtil {
           if(scope instanceof PsiFile)
             leafElement = ((PsiFile)scope).getViewProvider().findElementAt(i, scope.getLanguage());
           else
-            leafElement = scope.findElementAt(i); 
+            leafElement = scope.findElementAt(i);
           if (leafElement == null) return true;
           int start = i - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
           LOG.assertTrue(start >= 0);
