@@ -4,10 +4,7 @@ import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.RedundantSuppressInspection;
-import com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection;
-import com.intellij.codeInspection.suspiciousNameCombination.SuspiciousNameCombinationInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
-import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 import com.intellij.codeInspection.canBeStatic.CanBeStaticInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
@@ -18,6 +15,7 @@ import com.intellij.codeInspection.dependencyViolation.DependencyInspection;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection;
+import com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
 import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
@@ -35,10 +33,11 @@ import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
+import com.intellij.codeInspection.suspiciousNameCombination.SuspiciousNameCombinationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
+import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;
 import com.intellij.codeInspection.unneededThrows.RedundantThrows;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
-import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
@@ -113,7 +112,6 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       HtmlStyleLocalInspection.class,
       RequiredAttributesInspection.class,
       DefaultFileTemplateUsageInspection.class,
-      BooleanMethodIsAlwaysInvertedInspection.class,
       UnnecessaryModuleDependencyInspection.class,
       UnhandledExceptionInJSP.class,
       RedundantSuppressInspection.class,
