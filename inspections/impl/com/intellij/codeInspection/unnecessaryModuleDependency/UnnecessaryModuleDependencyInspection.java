@@ -24,7 +24,7 @@ import java.util.Set;
 public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
 
   public RefGraphAnnotator getAnnotator(final RefManager refManager) {
-    return new UnnessecaryModuleDependencyAnnotator(refManager);
+    return new UnnecessaryModuleDependencyAnnotator(refManager);
   }
 
   public boolean isGraphNeeded() {
@@ -38,7 +38,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       final Module[] declaredDependencies = ModuleRootManager.getInstance(module).getDependencies();
       if (declaredDependencies != null){
         List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
-        final Set<Module> modules = refModule.getUserData(UnnessecaryModuleDependencyAnnotator.DEPENDENCIES);
+        final Set<Module> modules = refModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
         for (Module dependency : declaredDependencies) {
           if (modules == null || !modules.contains(dependency)) {
             descriptors.add(manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName()), null));

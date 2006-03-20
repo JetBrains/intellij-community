@@ -19,12 +19,12 @@ import java.util.Set;
  * User: anna
  * Date: 09-Jan-2006
  */
-public class UnnessecaryModuleDependencyAnnotator extends RefGraphAnnotator {
+public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
   public static final Key<Set<Module>> DEPENDENCIES = Key.create("inspection.dependencies");
 
   private RefManager myManager;
 
-  public UnnessecaryModuleDependencyAnnotator(final RefManager manager) {
+  public UnnecessaryModuleDependencyAnnotator(final RefManager manager) {
     myManager = manager;
   }
 
