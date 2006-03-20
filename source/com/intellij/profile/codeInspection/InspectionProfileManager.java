@@ -18,6 +18,7 @@ package com.intellij.profile.codeInspection;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,6 +45,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
   @NonNls private static final String BASE_PROFILE_ATTR = "base_profile";
+  private InspectionToolRegistrar myRegistrar;
 
   public static InspectionProfileManager getInstance() {
     return ApplicationManager.getApplication().getComponent(InspectionProfileManager.class);
@@ -51,7 +53,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
 
   @NonNls private static final String CONFIG_FILE_EXTENSION = ".xml";
 
-  public InspectionProfileManager() {
+  public InspectionProfileManager(InspectionToolRegistrar registrar) {
     super(Profile.INSPECTION,
           new Computable<Profile>() {
             public Profile compute() {
@@ -59,6 +61,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
             }
           },
           "inspection");
+    myRegistrar = registrar;
     initProfiles();
   }
 
@@ -100,7 +103,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
 
     for (File file : files) {
       try {
-        InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file);
+        InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file, myRegistrar);
         profile.load();
         addProfile(profile);
       }

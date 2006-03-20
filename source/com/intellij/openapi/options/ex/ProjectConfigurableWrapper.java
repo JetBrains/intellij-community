@@ -3,9 +3,12 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -13,7 +16,7 @@ import java.io.File;
 /**
  * @author max
  */
-public class ProjectConfigurableWrapper implements Configurable {
+public class ProjectConfigurableWrapper implements SearchableConfigurable {
   private Project myProject;
   private Configurable myDelegate;
 
@@ -71,5 +74,19 @@ public class ProjectConfigurableWrapper implements Configurable {
 
   public Icon getIcon() {
     return myDelegate.getIcon();
+  }
+
+  @NonNls
+  public String getId() {
+    return myDelegate instanceof SearchableConfigurable ? ((SearchableConfigurable)myDelegate).getId() : "";
+  }
+
+  public boolean clearSearch() {
+    return myDelegate instanceof SearchableConfigurable && ((SearchableConfigurable)myDelegate).clearSearch();
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return myDelegate instanceof SearchableConfigurable ? ((SearchableConfigurable)myDelegate).enableSearch(option) : null;  
   }
 }

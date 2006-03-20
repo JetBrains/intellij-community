@@ -5,15 +5,12 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -106,8 +103,6 @@ public class EditorOptionsPanel {
 
   private TabbedPaneWrapper myTabbedPaneWrapper;
 
-  private GlassPanel myGlassPanel;
-
   public JComponent getTabbedPanel() {
     return myTabbedPaneWrapper.getComponent();
   }
@@ -163,13 +158,11 @@ public class EditorOptionsPanel {
     myTabbedPaneWrapper = new TabbedPaneWrapper();
     myTabbedPaneWrapper.addTab(ApplicationBundle.message("tab.editor.settings.behavior"), myBehaviourPanel);
     myTabbedPaneWrapper.addTab(ApplicationBundle.message("tab.editor.settings.appearance"), myAppearancePanel);
-    myGlassPanel = new GlassPanel(myTabbedPaneWrapper.getComponent());
   }
 
 
 
   public void reset() {
-    myTabbedPaneWrapper.getComponent().getRootPane().setGlassPane(myGlassPanel);
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
@@ -644,14 +637,6 @@ public class EditorOptionsPanel {
       LOG.assertTrue(false);
       return -1;
     }
-  }
-
-  public Runnable showOption(final SearchableConfigurable configurable, final String option) {
-    return SearchUtil.lightOptions(configurable, option, myTabbedPaneWrapper.getComponent(), myTabbedPaneWrapper, myGlassPanel);
-  }
-
-  public void clearSearch() {
-    myGlassPanel.clear();
   }
 
   private static final class MyTabsPlacementComboBoxRenderer extends DefaultListCellRenderer {

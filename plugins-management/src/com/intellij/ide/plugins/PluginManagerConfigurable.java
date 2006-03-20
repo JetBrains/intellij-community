@@ -1,7 +1,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -9,11 +8,11 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -37,7 +36,6 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   public boolean TREE_VIEW = false;
 
   private PluginManagerMain myPluginManagerMain;
-  private GlassPanel myGlassPanel;
 
   public static PluginManagerConfigurable getInstance() {
     return ApplicationManager.getApplication().getComponent(PluginManagerConfigurable.class);
@@ -65,7 +63,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   }
 
   public void reset() {
-    myPluginManagerMain.getMainPanel().getRootPane().setGlassPane(myGlassPanel);
+
   }
 
   public String getHelpTopic() {
@@ -78,8 +76,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
 
   public JComponent createComponent() {
     if (myPluginManagerMain == null) {
-      myPluginManagerMain = new PluginManagerMain( new MyInstalledProvider() );
-      myGlassPanel = new GlassPanel(myPluginManagerMain.getMainPanel());
+      myPluginManagerMain = new PluginManagerMain( new MyInstalledProvider() );      
     }
 
     return myPluginManagerMain.getMainPanel();
@@ -123,15 +120,16 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
     }
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myPluginManagerMain.getMainPanel(), option, myGlassPanel);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

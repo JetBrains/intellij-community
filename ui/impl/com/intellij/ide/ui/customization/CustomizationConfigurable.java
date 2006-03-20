@@ -1,13 +1,12 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -17,7 +16,6 @@ import javax.swing.*;
  */
 public class CustomizationConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private CustomizableActionsPanel myPanel;
-  private GlassPanel myGlassPanel;
 
   public CustomizationConfigurable() {
 
@@ -25,7 +23,6 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
 
   public JComponent createComponent() {
     myPanel = new CustomizableActionsPanel();
-    myGlassPanel = new GlassPanel(myPanel.getPanel());
     return myPanel.getPanel();
   }
 
@@ -46,7 +43,6 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
   }
 
   public void reset() {
-    myPanel.getPanel().getRootPane().setGlassPane(myGlassPanel);
     myPanel.reset();
   }
 
@@ -67,15 +63,16 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
   public void disposeComponent() {
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myPanel.getPanel(), option, myGlassPanel);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

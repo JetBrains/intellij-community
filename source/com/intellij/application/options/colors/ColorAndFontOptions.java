@@ -31,6 +31,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -588,16 +589,18 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     }
   }
 
-  public Runnable showOption(String option) {
-    return myPanel.showOption(this, option);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
+  public boolean clearSearch() {
     myPanel.clearSearch();
+    return true;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return myPanel.showOption(this, option);
   }
 
   public Map<String, String> processListOptions(){

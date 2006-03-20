@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -52,15 +53,16 @@ public class EditorOptions implements SearchableConfigurable, ApplicationCompone
     return "EditorOptions";
   }
 
-  public Runnable showOption(String option) {
-    return myPanel.showOption(this, option);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myPanel.clearSearch();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

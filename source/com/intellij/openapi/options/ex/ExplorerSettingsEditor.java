@@ -3,6 +3,8 @@ package com.intellij.openapi.options.ex;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -12,15 +14,12 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.FilterComponent;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
@@ -32,6 +31,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -42,7 +42,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -66,13 +65,14 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   private final Map<Configurable, Dimension> myConfigurable2PrefSize;
   private JButton myHelpButton;
   private JPanel myComponentPanel;
-  private FilterComponent mySearchField;
+  private SearchUtil.MyTextField mySearchField;
   private Set<Configurable> myOptionContainers = null;
   private Alarm myShowHintAlarm = new Alarm();
   private JTree myTree;
   @NonNls final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ex.ExplorerSettingsEditor");
 
+  private JBPopup [] myPopup = new JBPopup[1];
   public ExplorerSettingsEditor(Project project, ConfigurableGroup[] group) {
     super(project, true);
     myProject = project;
@@ -179,6 +179,9 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   }
 
   protected final void dispose() {
+    if (myPopup[0] != null) {
+      myPopup[0].cancel();
+    }
     rememberLastUsedPage();
 
     for (ConfigurableGroup myGroup : myGroups) {
@@ -353,51 +356,35 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    mySearchField = new FilterComponent("SEARCH_OPTION", 5, false, false) {
-      public void filter() {
+    mySearchField = new SearchUtil.MyTextField();
+    mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
         final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-        final @NonNls String searchPattern = mySearchField.getFilter();
+        final @NonNls String searchPattern = mySearchField.getText();
         if (searchPattern != null && searchPattern.length() > 0) {
           myOptionContainers = optionsRegistrar.getConfigurables(myGroups, searchPattern, CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS);
         } else {
           myOptionContainers = null;
         }
-        if (myOptionContainers != null && myOptionContainers.isEmpty()){
-          myShowHintAlarm.cancelAllRequests();
-          myShowHintAlarm.addRequest(new Runnable() {
-            public void run() {
-              final String filter = mySearchField.getFilter();
-              if (filter == null || filter.length() == 0) return;
-              final List<String> hints = optionsRegistrar.findPossibleExtension(filter);
-              if (hints.size() > 0) {
-                final ListPopup listPopup = JBPopupFactory.getInstance()
-                  .createWizardStep(new BaseListPopupStep<String>("", hints) {
-                    public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-                      mySearchField.setFilter(selectedValue);
-                      mySearchField.filter();
-                      return FINAL_CHOICE;
-                    }
-                  });
-                listPopup.showUnderneathOf(mySearchField);
-                SwingUtilities.invokeLater(new Runnable(){
-                  public void run() {
-                    mySearchField.requestFocusInWindow();
-                  }
-                });
-              }
-            }
-          }, 300, ModalityState.defaultModalityState());
-        }
+        myShowHintAlarm.cancelAllRequests();
+        myShowHintAlarm.addRequest(new Runnable() {
+          public void run() {
+            SearchUtil.showHintPopup(mySearchField,
+                                     optionsRegistrar,
+                                     myPopup,
+                                     myShowHintAlarm,
+                                     myProject);
+          }
+        }, 300, ModalityState.defaultModalityState());
         initToolbar();
         TreeUtil.expandAll(myTree);
-        if (mySelectedConfigurable instanceof SearchableConfigurable){
-          selectOption((SearchableConfigurable)mySelectedConfigurable);
+        if (mySelectedConfigurable instanceof DefaultSearchableConfigurable){
+          selectOption((DefaultSearchableConfigurable)mySelectedConfigurable);
         }
         myComponentPanel.revalidate();
         myComponentPanel.repaint();
       }
-    };
-    mySearchField.reset();
+    });
     final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
     panel.add(Box.createHorizontalBox(), gc);
 
@@ -501,6 +488,9 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     myKeySelectedConfigurableIndex = index;
     JComponent component = myInitializedConfigurables2Component.get(configurable);
     if (component == null) {
+      if (configurable instanceof SearchableConfigurable){
+        configurable = new DefaultSearchableConfigurable((SearchableConfigurable)configurable);
+      }
       component = configurable.createComponent();
       myInitializedConfigurables2Component.put(configurable, component);
     }
@@ -529,20 +519,17 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
     requestFocusForMainPanel();
     myComponentPanel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-    if (configurable instanceof SearchableConfigurable){
-      selectOption((SearchableConfigurable)configurable);
+    if (configurable instanceof DefaultSearchableConfigurable){
+      selectOption((DefaultSearchableConfigurable)configurable);
     }
   }
 
-  private void selectOption(final SearchableConfigurable searchableConfigurable) {
+  private void selectOption(final DefaultSearchableConfigurable searchableConfigurable) {
     searchableConfigurable.clearSearch();
     if (myOptionContainers == null || myOptionContainers.isEmpty()) return; //do not highlight current editor when nothing can be selected
-    @NonNls final String filter = mySearchField.getFilter();
+    @NonNls final String filter = mySearchField.getText();
     if (filter != null && filter.length() > 0 ){
-      final Runnable runnable = searchableConfigurable.showOption(filter);
-      if (runnable != null){
-        runnable.run();
-      }
+      searchableConfigurable.enableSearch(filter);
     }
   }
 

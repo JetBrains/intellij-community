@@ -1,15 +1,14 @@
 package com.intellij.openapi.localVcs.impl;
 
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.localVcs.LocalVcsBundle;
 import com.intellij.openapi.localVcs.LvcsConfiguration;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -35,7 +34,6 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
   private JLabel myHistoryLengthLabel;
   private JPanel myPanel;
   private static final int MILLIS_IN_DAY = 1000 * 60 * 60 * 24;
-  private GlassPanel myGlassPanel;
 
   public LvcsConfigurable() {
   }
@@ -81,7 +79,6 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
     gc.fill = GridBagConstraints.BOTH;
     myPanel.add(Box.createHorizontalBox(), gc);
 
-    myGlassPanel = new GlassPanel(myPanel);
     return myPanel;
   }
 
@@ -173,7 +170,6 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
   }
 
   public void reset() {
-    myPanel.getRootPane().setGlassPane(myGlassPanel);
 
     LvcsConfiguration c = LvcsConfiguration.getInstance();
     myCbEnabled.setSelected(c.LOCAL_VCS_ENABLED);
@@ -257,15 +253,16 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
     }
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myPanel, option, myGlassPanel);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

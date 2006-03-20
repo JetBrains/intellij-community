@@ -69,6 +69,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
   private String myEnabledTool = null;
   @NonNls private static final String USED_LEVELS = "used_levels";
+  private InspectionToolRegistrar myRegistrar;
 
 //private String myBaseProfileName;
 
@@ -83,6 +84,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   InspectionProfileImpl(InspectionProfileImpl inspectionProfile) {
     super(inspectionProfile.getName());
+    myRegistrar = inspectionProfile.myRegistrar;
     myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(inspectionProfile.myDisplayLevelMap);
     myTools = new HashMap<String, InspectionTool>();
     myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
@@ -93,13 +95,17 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     mySource = inspectionProfile;
   }
 
-  public InspectionProfileImpl(final String inspectionProfile, final File file) {
+  public InspectionProfileImpl(final String inspectionProfile, 
+                               final File file,
+                               final InspectionToolRegistrar registrar) {
     super(inspectionProfile, file);
+    myRegistrar = registrar;
   }
 
   public InspectionProfileImpl(@NonNls String name) {
     super(name);
     myInitialized = true;
+    myRegistrar = InspectionToolRegistrar.getInstance();
   }
 
   public InspectionProfile getParentProfile() {
@@ -371,7 +377,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (myBaseProfile != null){
       myBaseProfile.initInspectionTools();
     }
-    final InspectionTool[] tools = InspectionToolRegistrar.getInstance().createTools();
+    final InspectionTool[] tools = myRegistrar.createTools();
     for (InspectionTool tool : tools) {
       myTools.put(tool.getShortName(), tool);
     }
@@ -474,10 +480,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public boolean isToolEnabled(HighlightDisplayKey key) {
     final ToolState toolState = getToolState(key);
-    if (toolState != null) {
-      return toolState.isEnabled();
-    }
-    return false;
+    return toolState != null && toolState.isEnabled();    
   }
 
   public boolean isExecutable() {

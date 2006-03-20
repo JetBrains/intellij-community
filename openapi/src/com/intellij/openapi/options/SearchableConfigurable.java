@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: 08-Feb-2006
  */
 public interface SearchableConfigurable extends Configurable {
-  @Nullable Runnable showOption(String option);
   @NonNls String getId();
-  void clearSearch();  
+  boolean clearSearch();
+  @Nullable Runnable enableSearch(String option);
 }

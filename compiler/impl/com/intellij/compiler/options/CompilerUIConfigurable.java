@@ -3,12 +3,9 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.RmicSettings;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -40,7 +37,6 @@ public class CompilerUIConfigurable implements Configurable {
   private JCheckBox myCbAssertNotNull;
 
   private final TabbedPaneWrapper myTabbedPane;
-  private GlassPanel myGlassPanel;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
@@ -68,12 +64,10 @@ public class CompilerUIConfigurable implements Configurable {
     deployGroup.add(myDeploy);
     deployGroup.add(myDoNotDeploy);
 
-    myGlassPanel = new GlassPanel(myPanel);
   }
 
 
   public void reset() {
-    myPanel.getRootPane().setGlassPane(myGlassPanel);
 
     myExcludeFromCompilePanel.reset();
 
@@ -215,13 +209,5 @@ public class CompilerUIConfigurable implements Configurable {
   }
 
   public void disposeUIResources() {
-  }
-
-  public Runnable showOption(final SearchableConfigurable configurable, final String option) {
-    return SearchUtil.lightOptions(configurable, myPanel, option, myGlassPanel);
-  }
-
-  public void clearSearch() {
-    myGlassPanel.clear();
   }
 }

@@ -2,7 +2,7 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
-import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.javaee.J2EEFileTemplateNames;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -19,8 +18,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
-import com.intellij.javaee.J2EEFileTemplateNames;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -60,7 +59,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
   private static final String INCLUDES_TITLE = IdeBundle.message("tab.filetemplates.includes");
   private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
   private static final String J2EE_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
-  private GlassPanel myGlassPanel;
 
   public void disposeComponent() {
   }
@@ -337,7 +335,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
     myMainPanel.setMinimumSize(new Dimension(400, 300));
     myMainPanel.setPreferredSize(new Dimension(700, 500));
 
-    myGlassPanel = new GlassPanel(myMainPanel);
     return myMainPanel;
   }
 
@@ -696,7 +693,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
   }
 
   public void reset() {
-    myMainPanel.getRootPane().setGlassPane(myGlassPanel);
     myEditor.reset();
     initLists();
     myModified = false;
@@ -719,15 +715,16 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
     createTemplate(preferredName, extension, text);
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, option, myMainPanel, myTabbedPane, myGlassPanel);
-  }
-
   public String getId() {
     return "fileTemplates";
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

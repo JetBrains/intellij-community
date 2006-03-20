@@ -3,6 +3,8 @@ package com.intellij.openapi.options.ex;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -13,13 +15,10 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.ui.FilterComponent;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
@@ -27,9 +26,9 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -53,9 +52,10 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
   private int mySelectedGroup = 0;
 
   private Set<Configurable> myOptionContainers = null;
-  private FilterComponent mySearchField;
+  private SearchUtil.MyTextField mySearchField;
   private GlassPanel myGlassPanel;
   private Alarm myShowHintAlarm = new Alarm();
+  private JBPopup[] myPopup = new JBPopup[1];
 
   public ControlPanelSettingsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     super(project, true);
@@ -290,18 +290,21 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
       actualConfigurable = new ProjectConfigurableWrapper(myProject, configurable);
     }
 
-    final SingleConfigurableEditor configurableEditor =
-      new SingleConfigurableEditor(myProject, actualConfigurable, createDimensionKey(configurable));
-    if (configurable instanceof SearchableConfigurable){
-      ((SearchableConfigurable)configurable).clearSearch();
-      @NonNls final String filter = mySearchField.getFilter();
+    if (actualConfigurable instanceof SearchableConfigurable){
+      actualConfigurable = new DefaultSearchableConfigurable((SearchableConfigurable)actualConfigurable);
+      ((DefaultSearchableConfigurable)actualConfigurable).clearSearch();
+      @NonNls final String filter = mySearchField.getText();
       if (filter != null && filter.length() > 0 ){
-        final Runnable runnable = ((SearchableConfigurable)configurable).showOption(filter);
-        if (runnable != null){
-          runnable.run();
-        }
+        final DefaultSearchableConfigurable finalConfigurable = (DefaultSearchableConfigurable)actualConfigurable;
+        SwingUtilities.invokeLater(new Runnable (){
+          public void run() {
+            finalConfigurable.enableSearch(filter);
+          }
+        });
       }
     }
+    final SingleConfigurableEditor configurableEditor =
+      new SingleConfigurableEditor(myProject, actualConfigurable, createDimensionKey(configurable));
     configurableEditor.show();
   }
 
@@ -312,48 +315,39 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
   }
 
 
+  protected void dispose() {
+    if (myPopup[0] != null){
+      myPopup[0].cancel();
+    }
+    super.dispose();
+  }
+
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    mySearchField = new FilterComponent("SEARCH_OPTION", 5, false, false) {
-      public void filter() {
+    mySearchField = new SearchUtil.MyTextField();
+    mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
         myGlassPanel.clear();
         final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-        final @NonNls String searchPattern = mySearchField.getFilter();
+        final @NonNls String searchPattern = mySearchField.getText();
         if (searchPattern != null && searchPattern.length() > 0) {
           myOptionContainers = optionsRegistrar.getConfigurables(myGroups, searchPattern, CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS);
         } else {
           myOptionContainers = null;
         }
-        if (myOptionContainers != null && myOptionContainers.isEmpty()){
-          myShowHintAlarm.cancelAllRequests();
-          myShowHintAlarm.addRequest(new Runnable() {
-            public void run() {
-              final String filter = mySearchField.getFilter();
-              if (filter == null || filter.length() == 0) return;
-              final List<String> hints = optionsRegistrar.findPossibleExtension(filter);
-              if (hints.size() > 0) {
-                final ListPopup listPopup = JBPopupFactory.getInstance()
-                  .createWizardStep(new BaseListPopupStep<String>("", hints) {
-                    public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-                      mySearchField.setFilter(selectedValue);
-                      mySearchField.filter();
-                      return FINAL_CHOICE;
-                    }
-                  });
-                listPopup.showUnderneathOf(mySearchField);
-                SwingUtilities.invokeLater(new Runnable(){
-                  public void run() {
-                    mySearchField.requestFocusInWindow();
-                  }
-                });
-              }
-            }
-          }, 300, ModalityState.defaultModalityState());
-        }
+        myShowHintAlarm.cancelAllRequests();
+        myShowHintAlarm.addRequest(new Runnable() {
+          public void run() {
+            SearchUtil.showHintPopup(mySearchField,
+                                     optionsRegistrar,
+                                     myPopup,
+                                     myShowHintAlarm,
+                                     myProject);
+          }
+        }, 300, ModalityState.defaultModalityState());
         myPanel.repaint();
       }
-    };
-    mySearchField.reset();
+    });
     final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
     panel.add(Box.createHorizontalBox(), gc);
 

@@ -1,13 +1,12 @@
 package com.intellij.application.options.pathMacros;
 
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -19,11 +18,9 @@ public class PathMacroConfigurable implements SearchableConfigurable, Applicatio
   @NonNls
   public static final String HELP_ID = "preferences.pathVariables";
   private PathMacroListEditor myEditor;
-  private GlassPanel myGlassPanel;
 
   public JComponent createComponent() {
     myEditor = new PathMacroListEditor();
-    myGlassPanel = new GlassPanel(myEditor.getPanel());
     return myEditor.getPanel();
   }
 
@@ -32,7 +29,6 @@ public class PathMacroConfigurable implements SearchableConfigurable, Applicatio
   }
 
   public void reset() {
-    myEditor.getPanel().getRootPane().setGlassPane(myGlassPanel);
     myEditor.reset();
   }
 
@@ -66,15 +62,16 @@ public class PathMacroConfigurable implements SearchableConfigurable, Applicatio
   public void disposeComponent() {
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myEditor.getPanel(), option, myGlassPanel);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

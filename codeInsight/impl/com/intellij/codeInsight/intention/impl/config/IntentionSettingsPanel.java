@@ -37,16 +37,16 @@ public class IntentionSettingsPanel {
       protected List<IntentionActionMetaData> filterModel(String filter, final boolean force) {
         final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
         if (filter == null || filter.length() == 0) return list;
-        final List<IntentionActionMetaData> result = new ArrayList<IntentionActionMetaData>();
+        List<IntentionActionMetaData> result = new ArrayList<IntentionActionMetaData>();
         for (IntentionActionMetaData metaData : list) {
-          if (isIntentionAccepted(metaData, filter, true)){
+          if (isIntentionAccepted(metaData, filter, force)){
             result.add(metaData);
           }
         }
         final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
         if (force && result.isEmpty()){
           if (filters.size() > 1){
-            filterModel(filter, false);
+            result = filterModel(filter, false);
           }
         }
         return result;

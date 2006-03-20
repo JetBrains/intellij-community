@@ -1,15 +1,14 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -25,7 +24,6 @@ import java.util.Hashtable;
  */
 public class AppearanceConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private MyComponent myComponent;
-  private GlassPanel myGlassPanel;
 
   public AppearanceConfigurable() {
   }
@@ -82,7 +80,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myTransparencyPanel.setVisible(WindowManagerEx.getInstanceEx().isAlphaModeSupported());
 
-    myGlassPanel = new GlassPanel(myComponent.myPanel);
 
     return myComponent.myPanel;
   }
@@ -183,7 +180,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   }
 
   public void reset() {
-    myComponent.myPanel.getRootPane().setGlassPane(myGlassPanel);
     UISettings settings = UISettings.getInstance();
 
     myComponent.myFontCombo.setSelectedItem(settings.FONT_FACE);
@@ -347,15 +343,16 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     }
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myComponent.myPanel, option, myGlassPanel);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

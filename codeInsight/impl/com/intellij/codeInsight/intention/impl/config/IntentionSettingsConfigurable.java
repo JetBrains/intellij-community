@@ -74,7 +74,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
   public void initComponent() {
   }
 
-  public Runnable showOption(String option) {
+  public Runnable enableSearch(String option) {
     return myPanel.showOption(this, option);
   }
 
@@ -82,7 +82,9 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
     return getHelpTopic();
   }
 
-  public void clearSearch() {
+  public boolean clearSearch() {
     myPanel.clearSearch();
+    return true;
   }
+
 }

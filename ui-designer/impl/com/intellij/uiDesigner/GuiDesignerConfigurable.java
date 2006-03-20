@@ -1,17 +1,15 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.DispatchThreadProgressWindow;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -19,6 +17,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
 import com.intellij.uiDesigner.radComponents.RadLayoutManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -30,7 +29,6 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.GuiDesignerConfigurable");
   private final Project myProject;
   private MyGeneralUI myGeneralUI;
-  private GlassPanel myGlassPanel;
 
   /**
    * Invoked by reflection
@@ -72,7 +70,6 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
 
     myGeneralUI = new MyGeneralUI();
 
-    myGlassPanel = new GlassPanel(myGeneralUI.myPanel);
     return myGeneralUI.myPanel;
   }
 
@@ -115,7 +112,6 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
   }
 
   public void reset() {
-    myGeneralUI.myPanel.getRootPane().setGlassPane(myGlassPanel);
     final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
 
     /*general*/
@@ -211,15 +207,16 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     }
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myGeneralUI.myPanel, option, myGlassPanel);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

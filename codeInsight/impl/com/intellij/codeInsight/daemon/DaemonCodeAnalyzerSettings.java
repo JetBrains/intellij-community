@@ -17,10 +17,11 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   @NonNls private static final String PROFILE_ATT = "profile";
   @NonNls public static final String DEFAULT_PROFILE_ATT = "Default";
   @NonNls public static final String PROFILE_COPY_NAME = "copy";
+  private InspectionProfileManager myManager;
 
 
-  @SuppressWarnings({"RedundantNoArgConstructor"})
-  public DaemonCodeAnalyzerSettings() {
+  public DaemonCodeAnalyzerSettings(InspectionProfileManager manager) {
+    myManager = manager;
   }
 
   public static DaemonCodeAnalyzerSettings getInstance() {
@@ -73,7 +74,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   }
 
   public Object clone() {
-    DaemonCodeAnalyzerSettings settings = new DaemonCodeAnalyzerSettings();
+    DaemonCodeAnalyzerSettings settings = new DaemonCodeAnalyzerSettings(myManager);
     settings.AUTOREPARSE_DELAY = AUTOREPARSE_DELAY;
     settings.SHOW_ADD_IMPORT_HINTS = SHOW_ADD_IMPORT_HINTS;
     settings.SHOW_METHOD_SEPARATORS = SHOW_METHOD_SEPARATORS;
@@ -84,12 +85,12 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     InspectionProfileConvertor.getInstance().storeEditorHighlightingProfile(element);
-    InspectionProfileManager.getInstance().setRootProfile(element.getAttributeValue(PROFILE_ATT));
+    myManager.setRootProfile(element.getAttributeValue(PROFILE_ATT));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
-    element.setAttribute(PROFILE_ATT, InspectionProfileManager.getInstance().getRootProfile().getName());
+    element.setAttribute(PROFILE_ATT, myManager.getRootProfile().getName());
   }
 
   public boolean isImportHintEnabled() {

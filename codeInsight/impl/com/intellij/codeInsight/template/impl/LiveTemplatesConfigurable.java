@@ -1,18 +1,16 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class LiveTemplatesConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private TemplateListPanel myPanel;
-  private GlassPanel myGlassPanel;
 
   public String getComponentName() {
     return "LiveTemplatesConfigurable";
@@ -33,7 +31,6 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
 
   public JComponent createComponent() {
     myPanel = new TemplateListPanel();
-    myGlassPanel = new GlassPanel(myPanel);
     return myPanel;
   }
 
@@ -46,7 +43,6 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
   }
 
   public void reset() {
-    myPanel.getRootPane().setGlassPane(myGlassPanel);
     myPanel.reset();
   }
 
@@ -65,15 +61,16 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
     return "editing.templates";
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myPanel, option, myGlassPanel);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

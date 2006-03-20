@@ -590,6 +590,8 @@ public class KeymapPanel extends JPanel {
   }
 
   public void showOption(String option){
+    createFilteringPanel();
+    myFilterComponent.setFilter(option);
     myActionsTree.filter(option, getCurrentQuickListIds());
   }
 

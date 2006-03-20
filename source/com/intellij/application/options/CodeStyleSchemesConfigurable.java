@@ -1,6 +1,7 @@
 package com.intellij.application.options;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -459,20 +460,26 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
     getActivePanel().selectTab(pageToSelect);
   }
 
-  public Runnable showOption(final String option) {
-    myOption = option;
-    return null;
-  }
-
   public String getId() {
     return "preferences.sourceCode";
   }
 
-  public void clearSearch() {
+  public boolean clearSearch() {
     myGlassPanel.clear();
+    return true;
   }
 
-  public HashSet<Pair<String,String>> processOptions() {
+  @Nullable
+  public Runnable enableSearch(String option) {
+    myOption = option;
+    return new Runnable (){
+      public void run() {
+        //do nothing
+      }
+    };
+  }
+
+  public HashSet<OptionDescription> processOptions() {
     return getActivePanel().processOptions();
   }
 }

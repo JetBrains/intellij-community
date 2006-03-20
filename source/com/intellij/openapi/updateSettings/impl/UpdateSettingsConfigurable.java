@@ -2,14 +2,12 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CheckForUpdateAction;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
@@ -17,6 +15,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ui.MappingListCellRenderer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -53,11 +52,9 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   public boolean CHECK_NEEDED = true;
   public String CHECK_PERIOD = WEEKLY;
   public long LAST_TIME_CHECKED = 0;
-  private GlassPanel myGlassPanel;
 
   public JComponent createComponent() {
     myUpdatesSettingsPanel = new UpdatesSettingsPanel();
-    myGlassPanel = new GlassPanel(myUpdatesSettingsPanel.myPanel);
     return myUpdatesSettingsPanel.myPanel;
   }
 
@@ -91,7 +88,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   }
 
   public void reset() {
-    myUpdatesSettingsPanel.myPanel.getRootPane().setGlassPane(myGlassPanel);
     myUpdatesSettingsPanel.myCbCheckForUpdates.setSelected(CHECK_NEEDED);
     myUpdatesSettingsPanel.myPeriodCombo.setSelectedItem(CHECK_PERIOD);
     myUpdatesSettingsPanel.myPeriodCombo.setEnabled(myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected());
@@ -181,15 +177,16 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myUpdatesSettingsPanel.myPanel, option, myGlassPanel);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

@@ -1,6 +1,5 @@
 package com.intellij.ide;
 
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.impl.external.DiffOptionsForm;
@@ -10,12 +9,12 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.util.net.HTTPProxySettingsPanel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -30,7 +29,6 @@ import java.util.Vector;
 public class GeneralSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private DiffOptionsForm myDiffOptions;
   private MyComponent myComponent;
-  private GlassPanel myGlassPanel;
 
   public static GeneralSettingsConfigurable getInstance() {
     return ApplicationManager.getApplication().getComponent(GeneralSettingsConfigurable.class);
@@ -161,7 +159,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     myComponent.myIgnoreFilesField.setText("##### ##############");
     setupCharsetComboModel(myComponent.myCharsetNameCombo);
 
-    myGlassPanel = new GlassPanel(myComponent.myPanel);
     return myComponent.myPanel;
   }
 
@@ -189,7 +186,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
   }
 
   public void reset() {
-    myComponent.myPanel.getRootPane().setGlassPane(myGlassPanel);
     GeneralSettings settings = GeneralSettings.getInstance();
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     myComponent.myBrowserPathField.setText(settings.getBrowserPath());
@@ -312,15 +308,16 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     return myDiffOptions;
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myComponent.myPanel, option, myGlassPanel);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

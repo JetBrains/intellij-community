@@ -20,10 +20,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * User: anna
@@ -39,7 +41,7 @@ public abstract class SearchableOptionsRegistrar{
 
   public abstract String getInnerPath(SearchableConfigurable configurable, String option);
 
-  public abstract void addOption(SearchableConfigurable configurable, String option, String path);
+  public abstract void addOption(SearchableConfigurable configurable, String option, String path, String hit);
 
   public abstract boolean isStopWord(String word);
 
@@ -47,7 +49,7 @@ public abstract class SearchableOptionsRegistrar{
 
   public abstract Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable);
 
-  public abstract List<String> findPossibleExtension(@NotNull String prefix);
+  public abstract Map<String, TreeSet<OptionDescription>> findPossibleExtension(@NotNull String prefix, final Project project);
 
 
   public abstract Set<String> getProcessedWordsWithoutStemming(@NotNull String text);

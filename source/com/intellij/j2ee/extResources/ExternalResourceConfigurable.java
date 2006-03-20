@@ -1,14 +1,13 @@
 package com.intellij.j2ee.extResources;
 
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.javaee.J2EEBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -23,7 +22,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   private List<String> myIgnoredUrls;
   private AddEditRemovePanel<EditLocationDialog.Pair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
-  private GlassPanel myGlassPanel;
 
   public ExternalResourceConfigurable() {
   }
@@ -108,7 +106,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     myPanel.add(myIgnorePanel,
                 new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(5, 2, 4, 2), 0, 0));
 
-    myGlassPanel = new GlassPanel(myPanel);
 
     return myPanel;
   }
@@ -133,7 +130,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   }
 
   public void reset() {
-    myPanel.getRootPane().setGlassPane(myGlassPanel);
 
     myPairs = new ArrayList<EditLocationDialog.Pair>();
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
@@ -265,15 +261,17 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myPanel, option, myGlassPanel);
-  }
 
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

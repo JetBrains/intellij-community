@@ -3,13 +3,11 @@ package com.intellij.ide.todo.configurable;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.search.TodoAttributes;
@@ -19,6 +17,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -54,7 +53,6 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   private PatternsTableModel myPatternsModel;
   private List<TodoFilter> myFilters;
   private FiltersTableModel myFiltersModel;
-  private GlassPanel myGlassPanel;
 
   /**
    * Invoked by reflection
@@ -375,7 +373,6 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
                                                      new Insets(5, 2, 4, 2), 0, 0));
 
     myPanel.setPreferredSize(new Dimension(Math.max(700, myPanel.getPreferredSize().width), myPanel.getPreferredSize().height));
-    myGlassPanel = new GlassPanel(myPanel);
     return myPanel;
   }
 
@@ -464,7 +461,6 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   }
 
   public void reset() {
-    myPanel.getRootPane().setGlassPane(myGlassPanel);
     // Patterns
     myPatterns.clear();
     TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();
@@ -507,15 +503,16 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     }
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myPanel, option, myGlassPanel);
-  }
-
   public String getId() {
     return getHelpTopic();
   }
 
-  public void clearSearch() {
-    myGlassPanel.clear();
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }
