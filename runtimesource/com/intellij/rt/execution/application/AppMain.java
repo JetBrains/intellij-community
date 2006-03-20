@@ -42,7 +42,7 @@ public class AppMain {
     }
   }
 
-  public static void main(String[] args) throws Throwable, NoSuchMethodException, IllegalAccessException {
+  public static void main(String[] args) throws Throwable {
 
     final int portNumber = Integer.getInteger(PROPERTY_PORT_NUMBER).intValue();
     Thread t = new Thread(
