@@ -147,7 +147,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       if (type instanceof ComplexTypeDescriptor) {
         final ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
 
-        if (descriptor.canContainTag(context.getLocalName(), context.getNamespace())) {
+        if (context != null && descriptor.canContainTag(context.getLocalName(), context.getNamespace())) {
           final XmlNSDescriptor nsDescriptor = getNSDescriptor();
 
           if (nsDescriptor != null) {
