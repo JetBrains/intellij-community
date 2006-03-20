@@ -368,8 +368,11 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         }
       }
     }
-    else if(PsiKeyword.SYNCHRONIZED.equals(myLookupItem.getLookupString())
-             || PsiKeyword.CATCH.equals(myLookupItem.getLookupString())
+    else if (PsiKeyword.SYNCHRONIZED.equals(myLookupItem.getLookupString())) {
+      final PsiElement place = myFile.findElementAt(myStartOffset);
+      hasParms = PsiTreeUtil.getParentOfType(place, PsiMember.class, PsiCodeBlock.class) instanceof PsiCodeBlock;
+    }
+    else if(PsiKeyword.CATCH.equals(myLookupItem.getLookupString())
              || PsiKeyword.SWITCH.equals(myLookupItem.getLookupString()))
       hasParms = true;
     else if (insertingAnnotationWithParameters()) {
