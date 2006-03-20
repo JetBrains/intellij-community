@@ -29,12 +29,9 @@ public class CodeStyleImportsPanel extends JPanel {
   private CodeStyleSettings.ImportLayoutTable.PackageEntry myOtherPackageEntry = null;
 
   private Table myImportLayoutTable;
-  private JButton myAddBlankLineButton;
-  private JButton myAddPackageToImportLayoutButton;
   private JButton myMoveUpButton;
   private JButton myMoveDownButton;
   private JButton myRemovePackageFromImportLayoutButton;
-  private JButton myAddPackageToPackagesButton;
   private JButton myRemovePackageFromPackagesButton;
   private Table myPackageTable;
   private CodeStyleSettings mySettings;
@@ -153,11 +150,11 @@ public class CodeStyleImportsPanel extends JPanel {
   private JPanel createImportLayoutButtonsPanel() {
     JPanel tableButtonsPanel = new JPanel(new VerticalFlowLayout());
 
-    myAddPackageToImportLayoutButton = new JButton(ApplicationBundle.message("button.add.package"));
-    tableButtonsPanel.add(myAddPackageToImportLayoutButton);
+    JButton addPackageToImportLayoutButton = new JButton(ApplicationBundle.message("button.add.package"));
+    tableButtonsPanel.add(addPackageToImportLayoutButton);
 
-    myAddBlankLineButton = new JButton(ApplicationBundle.message("button.add.blank"));
-    tableButtonsPanel.add(myAddBlankLineButton);
+    JButton addBlankLineButton = new JButton(ApplicationBundle.message("button.add.blank"));
+    tableButtonsPanel.add(addBlankLineButton);
 
     myMoveUpButton = new JButton(ApplicationBundle.message("button.move.up"));
     tableButtonsPanel.add(myMoveUpButton);
@@ -168,7 +165,7 @@ public class CodeStyleImportsPanel extends JPanel {
     myRemovePackageFromImportLayoutButton = new JButton(ApplicationBundle.message("button.remove"));
     tableButtonsPanel.add(myRemovePackageFromImportLayoutButton);
 
-    myAddPackageToImportLayoutButton.addActionListener(
+    addPackageToImportLayoutButton.addActionListener(
       new ActionListener(){
         public void actionPerformed(ActionEvent e){
           addPackageToImportLayouts();
@@ -176,7 +173,7 @@ public class CodeStyleImportsPanel extends JPanel {
       }
     );
 
-    myAddBlankLineButton.addActionListener(
+    addBlankLineButton.addActionListener(
       new ActionListener(){
         public void actionPerformed(ActionEvent e){
           addBlankLine();
@@ -215,13 +212,13 @@ public class CodeStyleImportsPanel extends JPanel {
     JPanel tableButtonsPanel = new JPanel(new VerticalFlowLayout());
     tableButtonsPanel.setBorder(BorderFactory.createEmptyBorder(4,4,4,4));
 
-    myAddPackageToPackagesButton = new JButton(ApplicationBundle.message("button.add.package.p"));
-    tableButtonsPanel.add(myAddPackageToPackagesButton);
+    JButton addPackageToPackagesButton;addPackageToPackagesButton = new JButton(ApplicationBundle.message("button.add.package.p"));
+    tableButtonsPanel.add(addPackageToPackagesButton);
 
     myRemovePackageFromPackagesButton = new JButton(ApplicationBundle.message("button.remove.r"));
     tableButtonsPanel.add(myRemovePackageFromPackagesButton);
 
-    myAddPackageToPackagesButton.addActionListener(
+    addPackageToPackagesButton.addActionListener(
       new ActionListener(){
         public void actionPerformed(ActionEvent e){
           addPackageToPackages();
@@ -456,8 +453,7 @@ public class CodeStyleImportsPanel extends JPanel {
       }
     );
 
-    JScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myPackageTable);
-    return scrollpane;
+    return ScrollPaneFactory.createScrollPane(myPackageTable);
   }
 
   private void updateButtons(){
@@ -580,8 +576,7 @@ public class CodeStyleImportsPanel extends JPanel {
       }
     );
 
-    JScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myImportLayoutTable);
-    return scrollpane;
+    return ScrollPaneFactory.createScrollPane(myImportLayoutTable);
   }
 
   public void reset() {
@@ -646,11 +641,13 @@ public class CodeStyleImportsPanel extends JPanel {
       mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myClassCountField.getText());
     }
     catch(NumberFormatException e){
+      //just a bad number
     }
     try{
       mySettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myNamesCountField.getText());
     }
     catch(NumberFormatException e){
+      //just a bad number
     }
 
     mySettings.IMPORT_LAYOUT_TABLE.copyFrom(myImportLayoutList);

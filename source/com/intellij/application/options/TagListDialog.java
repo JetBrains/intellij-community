@@ -1,16 +1,15 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class TagListDialog extends DialogWrapper{
   private JPanel myPanel = new JPanel(new BorderLayout());
@@ -36,8 +35,8 @@ public class TagListDialog extends DialogWrapper{
   private void updateData() {
     final DefaultListModel model = ((DefaultListModel)myList.getModel());
     model.clear();
-    for (Iterator<String> iterator = myData.iterator(); iterator.hasNext();) {
-      model.addElement(iterator.next());
+    for (String data : myData) {
+      model.addElement(data);
     }
   }
 
@@ -84,7 +83,7 @@ public class TagListDialog extends DialogWrapper{
           myData.remove(selectedIndex);
           updateData();
           if (selectedIndex >= myData.size()) {
-            selectedIndex = selectedIndex - 1;
+            selectedIndex -= 1;
           }
           if (selectedIndex >= 0) {
             myList.setSelectedIndex(selectedIndex);

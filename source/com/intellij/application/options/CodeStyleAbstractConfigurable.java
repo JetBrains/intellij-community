@@ -78,12 +78,7 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    if (myPanel != null) {
-      return myPanel.isModified(mySettings);
-    }
-    else {
-      return false;
-    }
+    return myPanel != null && myPanel.isModified(mySettings);
   }
 
   public void disposeUIResources() {

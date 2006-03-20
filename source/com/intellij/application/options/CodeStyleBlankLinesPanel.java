@@ -96,7 +96,7 @@ public class CodeStyleBlankLinesPanel extends CodeStyleAbstractPanel {
     return optionGroup.createPanel();
   }
 
-  private JPanel createPreviewPanel() {
+  private static JPanel createPreviewPanel() {
     JPanel panel = new JPanel();
     panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
     panel.setPreferredSize(new Dimension(200, 0));
@@ -126,17 +126,17 @@ public class CodeStyleBlankLinesPanel extends CodeStyleAbstractPanel {
   }
 
   protected void resetImpl(final CodeStyleSettings settings) {
-    myKeepBlankLinesInDeclarations.setText("" + settings.KEEP_BLANK_LINES_IN_DECLARATIONS);
-    myKeepBlankLinesInCode.setText("" + settings.KEEP_BLANK_LINES_IN_CODE);
-    myKeepBlankLinesBeforeRBrace.setText("" + settings.KEEP_BLANK_LINES_BEFORE_RBRACE);
-    myBlankLinesBeforePackage.setText("" + settings.BLANK_LINES_BEFORE_PACKAGE);
-    myBlankLinesAfterPackage.setText("" + settings.BLANK_LINES_AFTER_PACKAGE);
-    myBlankLinesBeforeImports.setText("" + settings.BLANK_LINES_BEFORE_IMPORTS);
-    myBlankLinesAfterImports.setText("" + settings.BLANK_LINES_AFTER_IMPORTS);
-    myBlankLinesAroundClass.setText("" + settings.BLANK_LINES_AROUND_CLASS);
-    myBlankLinesAroundField.setText("" + settings.BLANK_LINES_AROUND_FIELD);
-    myBlankLinesAroundMethod.setText("" + settings.BLANK_LINES_AROUND_METHOD);
-    myBlankLinesAfterClassHeader.setText("" + settings.BLANK_LINES_AFTER_CLASS_HEADER);
+    myKeepBlankLinesInDeclarations.setText(String.valueOf(settings.KEEP_BLANK_LINES_IN_DECLARATIONS));
+    myKeepBlankLinesInCode.setText(String.valueOf(settings.KEEP_BLANK_LINES_IN_CODE));
+    myKeepBlankLinesBeforeRBrace.setText(String.valueOf(settings.KEEP_BLANK_LINES_BEFORE_RBRACE));
+    myBlankLinesBeforePackage.setText(String.valueOf(settings.BLANK_LINES_BEFORE_PACKAGE));
+    myBlankLinesAfterPackage.setText(String.valueOf(settings.BLANK_LINES_AFTER_PACKAGE));
+    myBlankLinesBeforeImports.setText(String.valueOf(settings.BLANK_LINES_BEFORE_IMPORTS));
+    myBlankLinesAfterImports.setText(String.valueOf(settings.BLANK_LINES_AFTER_IMPORTS));
+    myBlankLinesAroundClass.setText(String.valueOf(settings.BLANK_LINES_AROUND_CLASS));
+    myBlankLinesAroundField.setText(String.valueOf(settings.BLANK_LINES_AROUND_FIELD));
+    myBlankLinesAroundMethod.setText(String.valueOf(settings.BLANK_LINES_AROUND_METHOD));
+    myBlankLinesAfterClassHeader.setText(String.valueOf(settings.BLANK_LINES_AFTER_CLASS_HEADER));
 
   }
 
@@ -184,11 +184,12 @@ public class CodeStyleBlankLinesPanel extends CodeStyleAbstractPanel {
       }
     }
     catch (NumberFormatException e) {
+      //bad number entered
     }
     return ret;
   }
 
-  private JTextField createTextField() {
+  private static JTextField createTextField() {
 
     return new JTextField(6);
   }

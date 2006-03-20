@@ -108,7 +108,7 @@ public abstract class CodeStyleAbstractPanel {
     myUserActivityWatcher.register(component);
   }
 
-  private final Editor createEditor() {
+  private Editor createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     myTextToReformat = getPreviewText();
     Document editorDocument = editorFactory.createDocument(myTextToReformat);
@@ -221,7 +221,7 @@ public abstract class CodeStyleAbstractPanel {
     }
   }
 
-  protected int getIndexForWrapping(int value) {
+  protected static int getIndexForWrapping(int value) {
     for (int i = 0; i < ourWrappings.length; i++) {
       int ourWrapping = ourWrappings[i];
       if (ourWrapping == value) return i;
@@ -241,7 +241,7 @@ public abstract class CodeStyleAbstractPanel {
 
   protected abstract void resetImpl(final CodeStyleSettings settings);
 
-  protected void fillWrappingCombo(final JComboBox wrapCombo) {
+  protected static void fillWrappingCombo(final JComboBox wrapCombo) {
     wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.do.not.wrap"));
     wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.wrap.if.long"));
     wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.chop.down.if.long"));
