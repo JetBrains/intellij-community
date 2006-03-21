@@ -95,7 +95,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   }
 
   public boolean isModified() {
-    return myPluginManagerMain != null? myPluginManagerMain.isRequireShutdown() : false;
+    return myPluginManagerMain != null && myPluginManagerMain.isRequireShutdown();
   }
 
   public Icon getIcon() {
