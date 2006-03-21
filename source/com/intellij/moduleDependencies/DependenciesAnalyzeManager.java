@@ -71,14 +71,6 @@ public class DependenciesAnalyzeManager implements JDOMExternalizable, ProjectCo
 
   }
 
-  public boolean isForwardDirection() {
-    return myForwardDirection;
-  }
-
-  public void setForwardDirection(final boolean forwardDirection) {
-    myForwardDirection = forwardDirection;
-  }
-
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }

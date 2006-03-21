@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.cyclicDependencies.CyclicGraphUtil;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -24,6 +25,7 @@ import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -40,7 +42,7 @@ import java.util.List;
  * Date: Feb 10, 2005
  */
 public class ModulesDependenciesPanel extends JPanel implements ModuleRootListener{
-
+  @NonNls private static final String DIRECTION = "FORWARD_ANALIZER";
   private Content myContent;
   private Project myProject;
   private Tree myLeftTree;
@@ -105,22 +107,27 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     appendDependenciesAction(group);
 
-    group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.direction"), "", DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png")){
+    group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.direction"), "", isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png")){
       public boolean isSelected(AnActionEvent e) {
-        return DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection();
+        return isForwardDirection();
       }
 
       public void setSelected(AnActionEvent e, boolean state) {
-        DependenciesAnalyzeManager.getInstance(myProject).setForwardDirection(state);
+        PropertiesComponent.getInstance(myProject).setValue(DIRECTION, String.valueOf(state));
         initLeftTreeModel();
       }
 
       public void update(final AnActionEvent e) {
-        e.getPresentation().setIcon(DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png"));
+        e.getPresentation().setIcon(isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png"));
       }
     });
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     return toolbar.getComponent();
+  }
+
+  private boolean isForwardDirection() {
+    final String value = PropertiesComponent.getInstance(myProject).getValue(DIRECTION);
+    return value == null || Boolean.parseBoolean(value);
   }
 
   private static void appendDependenciesAction(final DefaultActionGroup group) {
@@ -323,7 +330,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
         return Arrays.asList(ModuleRootManager.getInstance(module).getDependencies()).iterator();
       }
     }));
-    if (DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection()){
+    if (isForwardDirection()){
       return graph;
     } else {
       return new Graph<Module>(){
@@ -381,10 +388,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     }
 
     public boolean equals(Object object) {
-      if (!(object instanceof MyUserObject)){
-        return false;
-      }
-      return myModule.equals(((MyUserObject)object).getModule());
+      return object instanceof MyUserObject && myModule.equals(((MyUserObject)object).getModule());      
     }
 
     public int hashCode() {
