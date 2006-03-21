@@ -15,11 +15,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.uiDesigner.LoaderFactory;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
-import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,13 +56,14 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
    * Do not access this field directly. Use {@link #getToolTipText()} instead.
    */
   final String myToolTipText;
-  private final HashMap<String, StringDescriptor> myPropertyName2intitialValue;
+  private final HashMap<String, StringDescriptor> myPropertyName2initialValue;
   /** Whether item is removable or not */
   private final boolean myRemovable;
 
   private boolean myAutoCreateBinding;
   private boolean myCanAttachLabel;
   private boolean myAnyComponent;
+  private Dimension myInitialSize;
 
   @NotNull private Project myProject;
 
@@ -83,7 +86,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
 
     myToolTipText = toolTipText;
     myDefaultConstraints = defaultConstraints;
-    myPropertyName2intitialValue = propertyName2initialValue;
+    myPropertyName2initialValue = propertyName2initialValue;
 
     myRemovable = removable;
   }
@@ -113,7 +116,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
       myIconPath,
       myToolTipText,
       (GridConstraints)myDefaultConstraints.clone(),
-      (HashMap<String, StringDescriptor>)myPropertyName2intitialValue.clone(),
+      (HashMap<String, StringDescriptor>)myPropertyName2initialValue.clone(),
       myRemovable,
       myAutoCreateBinding,
       myCanAttachLabel
@@ -242,7 +245,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
    * in all places where it's needed explicitly.
    */
   public Object getInitialValue(final IntrospectedProperty property){
-    return myPropertyName2intitialValue.get(property.getName());
+    return myPropertyName2initialValue.get(property.getName());
   }
 
   /**
@@ -250,7 +253,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
    * This method never returns <code>null</code>.
    */
   HashMap<String, StringDescriptor> getInitialValues(){
-    return myPropertyName2intitialValue;
+    return myPropertyName2initialValue;
   }
 
   public boolean isAutoCreateBinding() {
@@ -282,9 +285,9 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
       return false;
     }
     if (myIconPath != null ? !myIconPath.equals(componentItem.myIconPath) : componentItem.myIconPath != null) return false;
-    if (myPropertyName2intitialValue != null
-        ? !myPropertyName2intitialValue.equals(componentItem.myPropertyName2intitialValue)
-        : componentItem.myPropertyName2intitialValue != null) {
+    if (myPropertyName2initialValue != null
+        ? !myPropertyName2initialValue.equals(componentItem.myPropertyName2initialValue)
+        : componentItem.myPropertyName2initialValue != null) {
       return false;
     }
     if (myToolTipText != null ? !myToolTipText.equals(componentItem.myToolTipText) : componentItem.myToolTipText != null) return false;
@@ -298,7 +301,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
     result = 29 * result + (myDefaultConstraints != null ? myDefaultConstraints.hashCode() : 0);
     result = 29 * result + (myIconPath != null ? myIconPath.hashCode() : 0);
     result = 29 * result + (myToolTipText != null ? myToolTipText.hashCode() : 0);
-    result = 29 * result + (myPropertyName2intitialValue != null ? myPropertyName2intitialValue.hashCode() : 0);
+    result = 29 * result + (myPropertyName2initialValue != null ? myPropertyName2initialValue.hashCode() : 0);
     return result;
   }
 
@@ -373,6 +376,40 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
 
   public Point getDelta(int componentIndex) {
     return null;
+  }
+
+  @NotNull
+  public Dimension getInitialSize(final JComponent parent) {
+    if (myInitialSize != null) {
+      return myInitialSize;
+    }
+    myInitialSize = new Dimension(myDefaultConstraints.myPreferredSize);
+    if (myInitialSize.width <= 0 || myInitialSize.height <= 0) {
+      try {
+        Class aClass = Class.forName(getClassName(), true, LoaderFactory.getInstance(myProject).getProjectClassLoader());
+        RadAtomicComponent component = new RadAtomicComponent(aClass, "", Palette.getInstance(myProject));
+        component.initDefaultProperties(this);
+        final JComponent delegee = component.getDelegee();
+        if (parent != null) {
+          final Font font = parent.getFont();
+          delegee.setFont(font);
+        }
+        Dimension prefSize = delegee.getPreferredSize();
+        Dimension minSize = delegee.getMinimumSize();
+        if (myInitialSize.width <= 0) {
+          myInitialSize.width = prefSize.width;
+        }
+        if (myInitialSize.height <= 0) {
+          myInitialSize.height = prefSize.height;
+        }
+        myInitialSize.width = Math.max(myInitialSize.width, minSize.width);
+        myInitialSize.height = Math.max(myInitialSize.height, minSize.height);
+      }
+      catch (Exception e) {
+        LOG.debug(e);
+      }
+    }
+    return myInitialSize;
   }
 
   public static ComponentItem createAnyComponentItem(final Project project) {

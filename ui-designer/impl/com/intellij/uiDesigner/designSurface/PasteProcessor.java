@@ -7,14 +7,17 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.GuiEditorUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.awt.*;
 import java.util.ArrayList;
 
 /**
@@ -158,6 +161,14 @@ public class PasteProcessor extends EventProcessor {
 
     public Point getDelta(int componentIndex) {
       return new Point(myDX [componentIndex], myDY [componentIndex]);
+    }
+
+    @NotNull
+    public Dimension getInitialSize(final JComponent parent) {
+      if (myComponentsToPaste.size() == 1) {
+        return myComponentsToPaste.get(0).getSize();
+      }
+      return new Dimension(-1, -1);
     }
   }
 }

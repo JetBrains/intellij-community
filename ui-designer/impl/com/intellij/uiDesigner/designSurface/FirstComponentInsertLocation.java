@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Dimension;
 
 /**
  * @author yole
@@ -43,10 +44,10 @@ public class FirstComponentInsertLocation extends GridDropLocation {
     Rectangle rc = new Rectangle();
     if (myTargetPoint.x < midX1) {
       rc.x = myCellRect.x;
-      rc.width = midX1 - myCellRect.x;
+      rc.width = initialWidth(dragObject, midX1 - myCellRect.x);
     }
     else if (myTargetPoint.x < midX2) {
-      if ((dragObject.getHSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) {
+      if (!isInsertTwoSpacers(dragObject.getHSizePolicy())) {
         rc.x = myCellRect.x;
         rc.width = myCellRect.width;
       }
@@ -56,16 +57,16 @@ public class FirstComponentInsertLocation extends GridDropLocation {
       }
     }
     else {
-      rc.x = midX2;
-      rc.width = myCellRect.width - (midX2 - myCellRect.x);
+      rc.width = initialWidth(dragObject, myCellRect.width - (midX2 - myCellRect.x));
+      rc.x = myCellRect.width - rc.width;
     }
 
     if (myTargetPoint.y < midY1) {
       rc.y = myCellRect.y;
-      rc.height = midY1 - myCellRect.y;
+      rc.height = initialHeight(dragObject, midY1 - myCellRect.y);
     }
     else if (myTargetPoint.y < midY2) {
-      if ((dragObject.getVSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) {
+      if (!isInsertTwoSpacers(dragObject.getVSizePolicy())) {
         rc.y = myCellRect.y;
         rc.height = myCellRect.height;
       }
@@ -75,13 +76,33 @@ public class FirstComponentInsertLocation extends GridDropLocation {
       }
     }
     else {
-      rc.y = midY2;
-      rc.height = myCellRect.height - (midY2 - myCellRect.y);
+      rc.height = initialHeight(dragObject, myCellRect.height - (midY2 - myCellRect.y));
+      rc.y = myCellRect.height - rc.height;
     }
 
     feedbackLayer.putFeedback(myContainer.getDelegee(), rc);
   }
 
+  private static boolean isInsertTwoSpacers(int sizePolicy) {
+    // return (sizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
+    return false;
+  }
+
+  private int initialWidth(ComponentDragObject dragObject, int defaultSize) {
+    Dimension initialSize = dragObject.getInitialSize(getContainer().getDelegee());
+    if (initialSize.width > 0) {
+      return initialSize.width;
+    }
+    return defaultSize;
+  }
+
+  private int initialHeight(ComponentDragObject dragObject, int defaultSize) {
+    Dimension initialSize = dragObject.getInitialSize(getContainer().getDelegee());
+    if (initialSize.height > 0) {
+      return initialSize.height;
+    }
+    return defaultSize;
+  }
 
   @Override public void processDrop(final GuiEditor editor,
                                     final RadComponent[] components,
@@ -104,20 +125,20 @@ public class FirstComponentInsertLocation extends GridDropLocation {
     InsertComponentProcessor icp = new InsertComponentProcessor(editor);
 
     if (myTargetPoint.x < midX1 ||
-        (myTargetPoint.x < midX2 && (hSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) == 0)) {
+        (myTargetPoint.x < midX2 && isInsertTwoSpacers(hSizePolicy))) {
       insertSpacer(icp, hSpacerItem, GridInsertMode.ColumnAfter);
     }
     if (myTargetPoint.x > midX2 ||
-        (myTargetPoint.x > midX1 && (hSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) == 0)) {
+        (myTargetPoint.x > midX1 && isInsertTwoSpacers(hSizePolicy))) {
       insertSpacer(icp, hSpacerItem, GridInsertMode.ColumnBefore);
     }
 
     if (myTargetPoint.y < midY1 ||
-        (myTargetPoint.y < midY2 && (vSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) == 0)) {
+        (myTargetPoint.y < midY2 && isInsertTwoSpacers(vSizePolicy))) {
       insertSpacer(icp, vSpacerItem, GridInsertMode.RowAfter);
     }
     if (myTargetPoint.y > midY2 ||
-        (myTargetPoint.y > midY1 && (vSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) == 0)) {
+        (myTargetPoint.y > midY1 && isInsertTwoSpacers(vSizePolicy))) {
       insertSpacer(icp, vSpacerItem, GridInsertMode.RowBefore);
     }
   }

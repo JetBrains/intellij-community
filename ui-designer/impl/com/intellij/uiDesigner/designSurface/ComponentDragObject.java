@@ -4,6 +4,9 @@
 
 package com.intellij.uiDesigner.designSurface;
 
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -18,4 +21,5 @@ public interface ComponentDragObject {
   int getRowSpan(int componentIndex);
   int getColSpan(int componentIndex);
   Point getDelta(int componentIndex);
+  @NotNull Dimension getInitialSize(final JComponent parent);
 }

@@ -37,8 +37,10 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
 
     public void rootsChanged(final ModuleRootEvent event) {
       myModule2ClassLoader.clear();
+      myProjectClassLoader = null;
     }
   };
+  private ClassLoader myProjectClassLoader = null;
 
   public static LoaderFactory getInstance(final Project project) {
     return project.getComponent(LoaderFactory.class);
@@ -74,7 +76,6 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
   public void writeExternal(final Element element) {
   }
 
-
   @NotNull public ClassLoader getLoader(final VirtualFile formFile) {
     final Module module = VfsUtil.getModuleForFile(myProject, formFile);
     if (module == null) {
@@ -88,6 +89,22 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
 
     final String runClasspath = ProjectRootsTraversing.collectRoots(module, ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
 
+    final ClassLoader classLoader = createClassLoader(runClasspath);
+
+    myModule2ClassLoader.put(module, classLoader);
+
+    return classLoader;      
+  }
+
+  @NotNull public ClassLoader getProjectClassLoader() {
+    if (myProjectClassLoader == null) {
+      final String runClasspath = ProjectRootsTraversing.collectRoots(myProject, ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
+      myProjectClassLoader = createClassLoader(runClasspath);
+    }
+    return myProjectClassLoader;
+  }
+
+  private static ClassLoader createClassLoader(final String runClasspath) {
     final ArrayList<URL> urls = new ArrayList<URL>();
     final StringTokenizer tokenizer = new StringTokenizer(runClasspath, File.pathSeparator);
     while (tokenizer.hasMoreTokens()) {
@@ -108,10 +125,6 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
 
     final URL[] _urls = urls.toArray(new URL[urls.size()]);
     //final URLClassLoader classLoader = new URLClassLoader(_urls, null);
-    final ClassLoader classLoader = new IdeaClassLoader(Arrays.asList(_urls), null);
-
-    myModule2ClassLoader.put(module, classLoader);
-
-    return classLoader;      
+    return (ClassLoader)new IdeaClassLoader(Arrays.asList(_urls), null);
   }
 }

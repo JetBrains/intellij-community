@@ -161,6 +161,10 @@ public abstract class RadComponent implements IComponent {
    * sets default component's constraints.
    */
   public void init(final GuiEditor editor, @NotNull final ComponentItem item) {
+    initDefaultProperties(item);
+  }
+
+  public void initDefaultProperties(@NotNull final ComponentItem item) {
     final IntrospectedProperty[] properties = getPalette().getIntrospectedProperties(myClass);
     for (final IntrospectedProperty property : properties) {
       final Object initialValue = item.getInitialValue(property);

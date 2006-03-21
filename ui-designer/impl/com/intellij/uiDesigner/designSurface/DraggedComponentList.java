@@ -6,6 +6,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.core.GridConstraints;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -226,6 +227,14 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
 
   public Point getDelta(int componentIndex) {
     return null;
+  }
+
+  @NotNull
+  public Dimension getInitialSize(final JComponent parent) {
+    if (myOriginalBounds.length == 1) {
+      return myOriginalBounds [0].getSize();
+    }
+    return new Dimension(-1, -1);
   }
 
   public RadContainer[] getOriginalParents() {
