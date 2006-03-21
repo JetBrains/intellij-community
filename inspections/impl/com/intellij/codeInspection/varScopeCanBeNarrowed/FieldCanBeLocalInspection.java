@@ -260,7 +260,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       while (element != null && element.getParent() != anchorBlock) {
         element = element.getParent();
       }
-      return firstElement;
+      return element;
     }
 
     private static PsiElement getFirstElement(Collection<PsiReference> refs) {
