@@ -234,11 +234,7 @@ public class PluginNode implements IdeaPluginDescriptor
 
     public boolean equals(Object object)
     {
-        if (object instanceof PluginNode)
-        {
-            return name.equals(((PluginNode)object).getName());
-        }
-        return false;
+      return object instanceof PluginNode && name.equals(((PluginNode) object).getName());
     }
 
     public List<PluginId> getDepends()
