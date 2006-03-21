@@ -1,6 +1,6 @@
 package com.intellij.testFramework;
 
-import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
+import com.intellij.javaee.JavaeeModuleProperties;
 import com.intellij.javaee.make.ModuleBuildProperties;
 import com.intellij.javaee.make.ModuleBuildPropertiesEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -112,9 +112,9 @@ public abstract class ModuleTestCase extends IdeaTestCase {
       module.doInitJdomExternalizable(ModuleBuildPropertiesEx.class, moduleBuildProperties);
     }
 
-    J2EEModuleProperties moduleProperties = J2EEModuleProperties.getInstance(module);
+    JavaeeModuleProperties moduleProperties = JavaeeModuleProperties.getInstance(module);
     if (moduleProperties != null){
-      module.doInitJdomExternalizable(J2EEModuleProperties.class, moduleProperties);
+      module.doInitJdomExternalizable(JavaeeModuleProperties.class, moduleProperties);
     }
   }
 }

@@ -20,10 +20,10 @@
     <option name="settings" hit="  Check option above on for per-project code style configuration or use global code style. Global code style settings can be configured in IDE Settings/Global Code Style  " />
     <option name="style" hit="  Check option above on for per-project code style configuration or use global code style. Global code style settings can be configured in IDE Settings/Global Code Style  " />
     <option name="use" hit="  Check option above on for per-project code style configuration or use global code style. Global code style settings can be configured in IDE Settings/Global Code Style  " />
-    <option name="ejb-name" path="J2EE Names" hit="  tag: " />
-    <option name="filter-name" path="J2EE Names" hit="  tag: " />
-    <option name="servlet-name" path="J2EE Names" hit="  tag: " />
-    <option name="tag" path="J2EE Names" hit="  tag: " />
+    <option name="ejb-name" path="Java EE Names" hit="  tag: " />
+    <option name="filter-name" path="Java EE Names" hit="  tag: " />
+    <option name="servlet-name" path="Java EE Names" hit="  tag: " />
+    <option name="tag" path="Java EE Names" hit="  tag: " />
     <option name="br" path="General.Java" hit=" Do not indent top level class members " />
     <option name="class" path="General.Java" hit=" Do not indent top level class members " />
     <option name="html" path="General.Java" hit=" Do not indent top level class members " />
@@ -113,28 +113,28 @@
     <option name="control" path="Alignment and Braces" hit="Control statement in one line" />
     <option name="line" path="Alignment and Braces" hit="Control statement in one line" />
     <option name="statement" path="Alignment and Braces" hit="Control statement in one line" />
-    <option name="class" path="J2EE Names" hit="Default PK Class:" />
-    <option name="default" path="J2EE Names" hit="Default PK Class:" />
-    <option name="pk" path="J2EE Names" hit="Default PK Class:" />
+    <option name="class" path="Java EE Names" hit="Default PK Class:" />
+    <option name="default" path="Java EE Names" hit="Default PK Class:" />
+    <option name="pk" path="Java EE Names" hit="Default PK Class:" />
     <option name="children" path="HTML" hit="Do not indent children of:" />
     <option name="indent" path="HTML" hit="Do not indent children of:" />
-    <option name="class" path="J2EE Names" hit="EJB Class: " />
-    <option name="ejb" path="J2EE Names" hit="EJB Class: " />
+    <option name="class" path="Java EE Names" hit="EJB Class: " />
+    <option name="ejb" path="Java EE Names" hit="EJB Class: " />
     <option name="edit" hit="Edit Global Settings..." />
     <option name="global" hit="Edit Global Settings..." />
     <option name="settings" hit="Edit Global Settings..." />
     <option name="enable" path="JavaDoc" hit="Enable JavaDoc formatting" />
     <option name="formatting" path="JavaDoc" hit="Enable JavaDoc formatting" />
     <option name="javadoc" path="JavaDoc" hit="Enable JavaDoc formatting" />
-    <option name="bean" path="J2EE Names" hit="Entity Bean" />
-    <option name="entity" path="J2EE Names" hit="Entity Bean" />
+    <option name="bean" path="Java EE Names" hit="Entity Bean" />
+    <option name="entity" path="Java EE Names" hit="Entity Bean" />
     <option name="export" hit="Export..." />
     <option name="extends" path="Alignment and Braces" hit="Extends list" />
     <option name="list" path="Alignment and Braces" hit="Extends list" />
     <option name="field" path="Code Generation" hit="Field:" />
-    <option name="filter" path="J2EE Names" hit="Filter" />
-    <option name="class" path="J2EE Names" hit="Filter Class: " />
-    <option name="filter" path="J2EE Names" hit="Filter Class: " />
+    <option name="filter" path="Java EE Names" hit="Filter" />
+    <option name="class" path="Java EE Names" hit="Filter Class: " />
+    <option name="filter" path="Java EE Names" hit="Filter Class: " />
     <option name="final" path="Code Generation" hit="Final modifier" />
     <option name="modifier" path="Code Generation" hit="Final modifier" />
     <option name="statement" path="Alignment and Braces" hit="For statement" />
@@ -149,8 +149,8 @@
     <option name="general" path="General.XML" hit="General.XML" />
     <option name="xml" path="General.XML" hit="General.XML" />
     <option name="html" path="HTML" hit="HTML" />
-    <option name="home" path="J2EE Names" hit="Home Interface: " />
-    <option name="interface" path="J2EE Names" hit="Home Interface: " />
+    <option name="home" path="Java EE Names" hit="Home Interface: " />
+    <option name="interface" path="Java EE Names" hit="Home Interface: " />
     <option name="import" path="Imports" hit="Import Layout" />
     <option name="layout" path="Imports" hit="Import Layout" />
     <option name="import" hit="Import..." />
@@ -171,8 +171,8 @@
     <option name="insert" path="HTML" hit="Insert new line before:" />
     <option name="line" path="HTML" hit="Insert new line before:" />
     <option name="new" path="HTML" hit="Insert new line before:" />
-    <option name="j2ee" path="J2EE Names" hit="J2EE Names" />
-    <option name="names" path="J2EE Names" hit="J2EE Names" />
+    <option name="j2ee" path="Java EE Names" hit="Java EE Names" />
+    <option name="names" path="Java EE Names" hit="Java EE Names" />
     <option name="imports" path="Imports" hit="JSP imports layout" />
     <option name="jsp" path="Imports" hit="JSP imports layout" />
     <option name="layout" path="Imports" hit="JSP imports layout" />
@@ -212,14 +212,14 @@
     <option name="line" path="General" hit="Line separator (for new files):" />
     <option name="new" path="General" hit="Line separator (for new files):" />
     <option name="separator" path="General" hit="Line separator (for new files):" />
-    <option name="listener" path="J2EE Names" hit="Listener" />
-    <option name="class" path="J2EE Names" hit="Listener Class: " />
-    <option name="listener" path="J2EE Names" hit="Listener Class: " />
-    <option name="home" path="J2EE Names" hit="Local Home Interface: " />
-    <option name="interface" path="J2EE Names" hit="Local Home Interface: " />
-    <option name="local" path="J2EE Names" hit="Local Home Interface: " />
-    <option name="interface" path="J2EE Names" hit="Local Interface: " />
-    <option name="local" path="J2EE Names" hit="Local Interface: " />
+    <option name="listener" path="Java EE Names" hit="Listener" />
+    <option name="class" path="Java EE Names" hit="Listener Class: " />
+    <option name="listener" path="Java EE Names" hit="Listener Class: " />
+    <option name="home" path="Java EE Names" hit="Local Home Interface: " />
+    <option name="interface" path="Java EE Names" hit="Local Home Interface: " />
+    <option name="local" path="Java EE Names" hit="Local Home Interface: " />
+    <option name="interface" path="Java EE Names" hit="Local Interface: " />
+    <option name="local" path="Java EE Names" hit="Local Interface: " />
     <option name="local" path="Code Generation" hit="Local variable:" />
     <option name="variable" path="Code Generation" hit="Local variable:" />
     <option name="final" path="Code Generation" hit="Make generated local variables final" />
@@ -231,9 +231,9 @@
     <option name="generated" path="Code Generation" hit="Make generated parameters final" />
     <option name="make" path="Code Generation" hit="Make generated parameters final" />
     <option name="parameters" path="Code Generation" hit="Make generated parameters final" />
-    <option name="bean" path="J2EE Names" hit="Message Driven Bean" />
-    <option name="driven" path="J2EE Names" hit="Message Driven Bean" />
-    <option name="message" path="J2EE Names" hit="Message Driven Bean" />
+    <option name="bean" path="Java EE Names" hit="Message Driven Bean" />
+    <option name="driven" path="Java EE Names" hit="Message Driven Bean" />
+    <option name="message" path="Java EE Names" hit="Message Driven Bean" />
     <option name="declaration" path="Alignment and Braces" hit="Method declaration:" />
     <option name="method" path="Alignment and Braces" hit="Method declaration:" />
     <option name="method" path="Alignment and Braces" hit="Method parameters" />
@@ -271,14 +271,14 @@
     <option name="page" path="Imports" hit="Prefer one import statement per page directive" />
     <option name="prefer" path="Imports" hit="Prefer one import statement per page directive" />
     <option name="statement" path="Imports" hit="Prefer one import statement per page directive" />
-    <option name="prefix" path="J2EE Names" hit="Prefix:" />
+    <option name="prefix" path="Java EE Names" hit="Prefix:" />
     <option name="preview" path="General" hit="Preview" />
     <option name="code" hit="Project Code Style" />
     <option name="project" hit="Project Code Style" />
     <option name="style" hit="Project Code Style" />
     <option name="emove" path="Imports" hit="R emove" />
-    <option name="interface" path="J2EE Names" hit="Remote Interface: " />
-    <option name="remote" path="J2EE Names" hit="Remote Interface: " />
+    <option name="interface" path="Java EE Names" hit="Remote Interface: " />
+    <option name="remote" path="Java EE Names" hit="Remote Interface: " />
     <option name="before" path="HTML" hit="Remove new line before:" />
     <option name="line" path="HTML" hit="Remove new line before:" />
     <option name="new" path="HTML" hit="Remove new line before:" />
@@ -286,14 +286,14 @@
     <option name="columns" path="General" hit="Right margin (columns):" />
     <option name="margin" path="General" hit="Right margin (columns):" />
     <option name="right" path="General" hit="Right margin (columns):" />
-    <option name="endpoint" path="J2EE Names" hit="Service Endpoint Interface: " />
-    <option name="interface" path="J2EE Names" hit="Service Endpoint Interface: " />
-    <option name="service" path="J2EE Names" hit="Service Endpoint Interface: " />
-    <option name="servlet" path="J2EE Names" hit="Servlet" />
-    <option name="class" path="J2EE Names" hit="Servlet Class: " />
-    <option name="servlet" path="J2EE Names" hit="Servlet Class: " />
-    <option name="bean" path="J2EE Names" hit="Session Bean" />
-    <option name="session" path="J2EE Names" hit="Session Bean" />
+    <option name="endpoint" path="Java EE Names" hit="Service Endpoint Interface: " />
+    <option name="interface" path="Java EE Names" hit="Service Endpoint Interface: " />
+    <option name="service" path="Java EE Names" hit="Service Endpoint Interface: " />
+    <option name="servlet" path="Java EE Names" hit="Servlet" />
+    <option name="class" path="Java EE Names" hit="Servlet Class: " />
+    <option name="servlet" path="Java EE Names" hit="Servlet Class: " />
+    <option name="bean" path="Java EE Names" hit="Session Bean" />
+    <option name="session" path="Java EE Names" hit="Session Bean" />
     <option name="blocks" path="Alignment and Braces" hit="Simple blocks in one line" />
     <option name="line" path="Alignment and Braces" hit="Simple blocks in one line" />
     <option name="simple" path="Alignment and Braces" hit="Simple blocks in one line" />
@@ -307,7 +307,7 @@
     <option name="treatment" path="Alignment and Braces" hit="Special &quot;else if&quot; treatment" />
     <option name="field" path="Code Generation" hit="Static field:" />
     <option name="static" path="Code Generation" hit="Static field:" />
-    <option name="suffix" path="J2EE Names" hit="Suffix:" />
+    <option name="suffix" path="Java EE Names" hit="Suffix:" />
     <option name="size" path="General.Java" hit="Tab size" />
     <option name="tab" path="General.Java" hit="Tab size" />
     <option name="indents" path="General" hit="Tabs and Indents" />
@@ -318,8 +318,8 @@
     <option name="text" path="HTML" hit="Text elements:" />
     <option name="list" path="Alignment and Braces" hit="Throws list" />
     <option name="throws" path="Alignment and Braces" hit="Throws list" />
-    <option name="object" path="J2EE Names" hit="Transfer Object: " />
-    <option name="transfer" path="J2EE Names" hit="Transfer Object: " />
+    <option name="object" path="Java EE Names" hit="Transfer Object: " />
+    <option name="transfer" path="Java EE Names" hit="Transfer Object: " />
     <option name="character" path="General.Java" hit="Use Tab Character" />
     <option name="tab" path="General.Java" hit="Use Tab Character" />
     <option name="use" path="General.Java" hit="Use Tab Character" />
@@ -438,10 +438,10 @@
     <option name="company" path="Imports" hit="   " />
     <option name="import" path="Imports" hit="   " />
     <option name="page" path="Imports" hit="   " />
-    <option name="ejb-name" path="J2EE Names" hit="  tag: " />
-    <option name="filter-name" path="J2EE Names" hit="  tag: " />
-    <option name="servlet-name" path="J2EE Names" hit="  tag: " />
-    <option name="tag" path="J2EE Names" hit="  tag: " />
+    <option name="ejb-name" path="Java EE Names" hit="  tag: " />
+    <option name="filter-name" path="Java EE Names" hit="  tag: " />
+    <option name="servlet-name" path="Java EE Names" hit="  tag: " />
+    <option name="tag" path="Java EE Names" hit="  tag: " />
     <option name="br" path="General.Java" hit=" Do not indent top level class members " />
     <option name="class" path="General.Java" hit=" Do not indent top level class members " />
     <option name="html" path="General.Java" hit=" Do not indent top level class members " />
@@ -531,24 +531,24 @@
     <option name="control" path="Alignment and Braces" hit="Control statement in one line" />
     <option name="line" path="Alignment and Braces" hit="Control statement in one line" />
     <option name="statement" path="Alignment and Braces" hit="Control statement in one line" />
-    <option name="class" path="J2EE Names" hit="Default PK Class:" />
-    <option name="default" path="J2EE Names" hit="Default PK Class:" />
-    <option name="pk" path="J2EE Names" hit="Default PK Class:" />
+    <option name="class" path="Java EE Names" hit="Default PK Class:" />
+    <option name="default" path="Java EE Names" hit="Default PK Class:" />
+    <option name="pk" path="Java EE Names" hit="Default PK Class:" />
     <option name="children" path="HTML" hit="Do not indent children of:" />
     <option name="indent" path="HTML" hit="Do not indent children of:" />
-    <option name="class" path="J2EE Names" hit="EJB Class: " />
-    <option name="ejb" path="J2EE Names" hit="EJB Class: " />
+    <option name="class" path="Java EE Names" hit="EJB Class: " />
+    <option name="ejb" path="Java EE Names" hit="EJB Class: " />
     <option name="enable" path="JavaDoc" hit="Enable JavaDoc formatting" />
     <option name="formatting" path="JavaDoc" hit="Enable JavaDoc formatting" />
     <option name="javadoc" path="JavaDoc" hit="Enable JavaDoc formatting" />
-    <option name="bean" path="J2EE Names" hit="Entity Bean" />
-    <option name="entity" path="J2EE Names" hit="Entity Bean" />
+    <option name="bean" path="Java EE Names" hit="Entity Bean" />
+    <option name="entity" path="Java EE Names" hit="Entity Bean" />
     <option name="extends" path="Alignment and Braces" hit="Extends list" />
     <option name="list" path="Alignment and Braces" hit="Extends list" />
     <option name="field" path="Code Generation" hit="Field:" />
-    <option name="filter" path="J2EE Names" hit="Filter" />
-    <option name="class" path="J2EE Names" hit="Filter Class: " />
-    <option name="filter" path="J2EE Names" hit="Filter Class: " />
+    <option name="filter" path="Java EE Names" hit="Filter" />
+    <option name="class" path="Java EE Names" hit="Filter Class: " />
+    <option name="filter" path="Java EE Names" hit="Filter Class: " />
     <option name="final" path="Code Generation" hit="Final modifier" />
     <option name="modifier" path="Code Generation" hit="Final modifier" />
     <option name="statement" path="Alignment and Braces" hit="For statement" />
@@ -563,8 +563,8 @@
     <option name="general" path="General.XML" hit="General.XML" />
     <option name="xml" path="General.XML" hit="General.XML" />
     <option name="html" path="HTML" hit="HTML" />
-    <option name="home" path="J2EE Names" hit="Home Interface: " />
-    <option name="interface" path="J2EE Names" hit="Home Interface: " />
+    <option name="home" path="Java EE Names" hit="Home Interface: " />
+    <option name="interface" path="Java EE Names" hit="Home Interface: " />
     <option name="import" path="Imports" hit="Import Layout" />
     <option name="layout" path="Imports" hit="Import Layout" />
     <option name="imports" path="Imports" hit="Imports" />
@@ -584,8 +584,8 @@
     <option name="insert" path="HTML" hit="Insert new line before:" />
     <option name="line" path="HTML" hit="Insert new line before:" />
     <option name="new" path="HTML" hit="Insert new line before:" />
-    <option name="j2ee" path="J2EE Names" hit="J2EE Names" />
-    <option name="names" path="J2EE Names" hit="J2EE Names" />
+    <option name="j2ee" path="Java EE Names" hit="Java EE Names" />
+    <option name="names" path="Java EE Names" hit="Java EE Names" />
     <option name="imports" path="Imports" hit="JSP imports layout" />
     <option name="jsp" path="Imports" hit="JSP imports layout" />
     <option name="layout" path="Imports" hit="JSP imports layout" />
@@ -625,14 +625,14 @@
     <option name="line" path="General" hit="Line separator (for new files):" />
     <option name="new" path="General" hit="Line separator (for new files):" />
     <option name="separator" path="General" hit="Line separator (for new files):" />
-    <option name="listener" path="J2EE Names" hit="Listener" />
-    <option name="class" path="J2EE Names" hit="Listener Class: " />
-    <option name="listener" path="J2EE Names" hit="Listener Class: " />
-    <option name="home" path="J2EE Names" hit="Local Home Interface: " />
-    <option name="interface" path="J2EE Names" hit="Local Home Interface: " />
-    <option name="local" path="J2EE Names" hit="Local Home Interface: " />
-    <option name="interface" path="J2EE Names" hit="Local Interface: " />
-    <option name="local" path="J2EE Names" hit="Local Interface: " />
+    <option name="listener" path="Java EE Names" hit="Listener" />
+    <option name="class" path="Java EE Names" hit="Listener Class: " />
+    <option name="listener" path="Java EE Names" hit="Listener Class: " />
+    <option name="home" path="Java EE Names" hit="Local Home Interface: " />
+    <option name="interface" path="Java EE Names" hit="Local Home Interface: " />
+    <option name="local" path="Java EE Names" hit="Local Home Interface: " />
+    <option name="interface" path="Java EE Names" hit="Local Interface: " />
+    <option name="local" path="Java EE Names" hit="Local Interface: " />
     <option name="local" path="Code Generation" hit="Local variable:" />
     <option name="variable" path="Code Generation" hit="Local variable:" />
     <option name="final" path="Code Generation" hit="Make generated local variables final" />
@@ -644,9 +644,9 @@
     <option name="generated" path="Code Generation" hit="Make generated parameters final" />
     <option name="make" path="Code Generation" hit="Make generated parameters final" />
     <option name="parameters" path="Code Generation" hit="Make generated parameters final" />
-    <option name="bean" path="J2EE Names" hit="Message Driven Bean" />
-    <option name="driven" path="J2EE Names" hit="Message Driven Bean" />
-    <option name="message" path="J2EE Names" hit="Message Driven Bean" />
+    <option name="bean" path="Java EE Names" hit="Message Driven Bean" />
+    <option name="driven" path="Java EE Names" hit="Message Driven Bean" />
+    <option name="message" path="Java EE Names" hit="Message Driven Bean" />
     <option name="declaration" path="Alignment and Braces" hit="Method declaration:" />
     <option name="method" path="Alignment and Braces" hit="Method declaration:" />
     <option name="method" path="Alignment and Braces" hit="Method parameters" />
@@ -684,11 +684,11 @@
     <option name="page" path="Imports" hit="Prefer one import statement per page directive" />
     <option name="prefer" path="Imports" hit="Prefer one import statement per page directive" />
     <option name="statement" path="Imports" hit="Prefer one import statement per page directive" />
-    <option name="prefix" path="J2EE Names" hit="Prefix:" />
+    <option name="prefix" path="Java EE Names" hit="Prefix:" />
     <option name="preview" path="Imports" hit="Preview" />
     <option name="emove" path="Imports" hit="R emove" />
-    <option name="interface" path="J2EE Names" hit="Remote Interface: " />
-    <option name="remote" path="J2EE Names" hit="Remote Interface: " />
+    <option name="interface" path="Java EE Names" hit="Remote Interface: " />
+    <option name="remote" path="Java EE Names" hit="Remote Interface: " />
     <option name="before" path="HTML" hit="Remove new line before:" />
     <option name="line" path="HTML" hit="Remove new line before:" />
     <option name="new" path="HTML" hit="Remove new line before:" />
@@ -696,14 +696,14 @@
     <option name="columns" path="General" hit="Right margin (columns):" />
     <option name="margin" path="General" hit="Right margin (columns):" />
     <option name="right" path="General" hit="Right margin (columns):" />
-    <option name="endpoint" path="J2EE Names" hit="Service Endpoint Interface: " />
-    <option name="interface" path="J2EE Names" hit="Service Endpoint Interface: " />
-    <option name="service" path="J2EE Names" hit="Service Endpoint Interface: " />
-    <option name="servlet" path="J2EE Names" hit="Servlet" />
-    <option name="class" path="J2EE Names" hit="Servlet Class: " />
-    <option name="servlet" path="J2EE Names" hit="Servlet Class: " />
-    <option name="bean" path="J2EE Names" hit="Session Bean" />
-    <option name="session" path="J2EE Names" hit="Session Bean" />
+    <option name="endpoint" path="Java EE Names" hit="Service Endpoint Interface: " />
+    <option name="interface" path="Java EE Names" hit="Service Endpoint Interface: " />
+    <option name="service" path="Java EE Names" hit="Service Endpoint Interface: " />
+    <option name="servlet" path="Java EE Names" hit="Servlet" />
+    <option name="class" path="Java EE Names" hit="Servlet Class: " />
+    <option name="servlet" path="Java EE Names" hit="Servlet Class: " />
+    <option name="bean" path="Java EE Names" hit="Session Bean" />
+    <option name="session" path="Java EE Names" hit="Session Bean" />
     <option name="blocks" path="Alignment and Braces" hit="Simple blocks in one line" />
     <option name="line" path="Alignment and Braces" hit="Simple blocks in one line" />
     <option name="simple" path="Alignment and Braces" hit="Simple blocks in one line" />
@@ -717,7 +717,7 @@
     <option name="treatment" path="Alignment and Braces" hit="Special &quot;else if&quot; treatment" />
     <option name="field" path="Code Generation" hit="Static field:" />
     <option name="static" path="Code Generation" hit="Static field:" />
-    <option name="suffix" path="J2EE Names" hit="Suffix:" />
+    <option name="suffix" path="Java EE Names" hit="Suffix:" />
     <option name="size" path="General.XML" hit="Tab size" />
     <option name="tab" path="General.Java" hit="Tab size" />
     <option name="indents" path="General" hit="Tabs and Indents" />
@@ -728,8 +728,8 @@
     <option name="text" path="HTML" hit="Text elements:" />
     <option name="list" path="Alignment and Braces" hit="Throws list" />
     <option name="throws" path="Alignment and Braces" hit="Throws list" />
-    <option name="object" path="J2EE Names" hit="Transfer Object: " />
-    <option name="transfer" path="J2EE Names" hit="Transfer Object: " />
+    <option name="object" path="Java EE Names" hit="Transfer Object: " />
+    <option name="transfer" path="Java EE Names" hit="Transfer Object: " />
     <option name="character" path="General.Other" hit="Use Tab Character" />
     <option name="tab" path="General.JSP" hit="Use Tab Character" />
     <option name="use" path="General.JSP" hit="Use Tab Character" />
@@ -1079,7 +1079,7 @@
     <option name="file" hit="File Templates" />
     <option name="templates" hit="File Templates" />
     <option name="includes" path="Includes" hit="Includes" />
-    <option name="j2ee" path="J2EE" hit="J2EE" />
+    <option name="j2ee" path="Java EE" hit="Java EE" />
     <option name="name" hit="Name:" />
     <option name="reformat" hit="Reformat according to style" />
     <option name="style" hit="Reformat according to style" />
@@ -1286,13 +1286,13 @@
     <option name="favorites" hit="Add selected node to favorites" />
     <option name="node" hit="Add selected node to favorites" />
     <option name="selected" hit="Add selected node to favorites" />
-    <option name="add" hit="Add the file into exploded deployment directory or J2EE archive" />
-    <option name="archive" hit="Add the file into exploded deployment directory or J2EE archive" />
-    <option name="deployment" hit="Add the file into exploded deployment directory or J2EE archive" />
-    <option name="directory" hit="Add the file into exploded deployment directory or J2EE archive" />
-    <option name="exploded" hit="Add the file into exploded deployment directory or J2EE archive" />
-    <option name="file" hit="Add the file into exploded deployment directory or J2EE archive" />
-    <option name="j2ee" hit="Add the file into exploded deployment directory or J2EE archive" />
+    <option name="add" hit="Add the file into exploded deployment directory or Java EE archive" />
+    <option name="archive" hit="Add the file into exploded deployment directory or Java EE archive" />
+    <option name="deployment" hit="Add the file into exploded deployment directory or Java EE archive" />
+    <option name="directory" hit="Add the file into exploded deployment directory or Java EE archive" />
+    <option name="exploded" hit="Add the file into exploded deployment directory or Java EE archive" />
+    <option name="file" hit="Add the file into exploded deployment directory or Java EE archive" />
+    <option name="j2ee" hit="Add the file into exploded deployment directory or Java EE archive" />
     <option name="add" hit="Add the file to Perforce" />
     <option name="file" hit="Add the file to Perforce" />
     <option name="perforce" hit="Add the file to Perforce" />

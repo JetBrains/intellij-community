@@ -18,7 +18,7 @@ package com.intellij.javaee.make;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
+import com.intellij.javaee.JavaeeModuleProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ public abstract class ModuleBuildProperties {
   public abstract J2EEBuildParticipant getBuildParticipant();
 
   @Nullable
-  public abstract UnnamedConfigurable getBuildConfigurable(J2EEModuleProperties moduleProperties, ModifiableRootModel rootModel);
+  public abstract UnnamedConfigurable getBuildConfigurable(JavaeeModuleProperties moduleProperties, ModifiableRootModel rootModel);
 
   public String getPresentableName() {
     return getModule().getName();

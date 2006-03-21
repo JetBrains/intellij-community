@@ -8,8 +8,8 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
-import com.intellij.j2ee.j2eeDom.VerificationException;
+import com.intellij.javaee.JavaeeModuleProperties;
+import com.intellij.javaee.VerificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
@@ -158,9 +158,9 @@ public class CachedValueImpl<T> implements CachedValue<T> {
       if (containingFile == null) return -1;
       return containingFile.getModificationStamp();
     }
-    else if (dependency instanceof J2EEModuleProperties) {
+    else if (dependency instanceof JavaeeModuleProperties) {
       try {
-        ((J2EEModuleProperties)dependency).getMainDeploymentDescriptor().checkIsValid();
+        ((JavaeeModuleProperties)dependency).getMainDeploymentDescriptor().checkIsValid();
       }
       catch (VerificationException e) {
         return -1;

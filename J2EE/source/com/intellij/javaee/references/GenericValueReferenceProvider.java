@@ -3,7 +3,7 @@
  */
 package com.intellij.javaee.references;
 
-import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
+import com.intellij.javaee.JavaeeModuleProperties;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.psi.PsiElement;
@@ -33,7 +33,7 @@ public abstract class GenericValueReferenceProvider implements PsiReferenceProvi
     final Module module = ModuleUtil.findModuleForPsiElement(element);
     if (module == null) return GenericReference.EMPTY_ARRAY;
 
-    final J2EEModuleProperties properties = J2EEModuleProperties.getInstance(module);
+    final JavaeeModuleProperties properties = JavaeeModuleProperties.getInstance(module);
     if (properties == null) return GenericReference.EMPTY_ARRAY;
 
     properties.ensureDomLoaded();

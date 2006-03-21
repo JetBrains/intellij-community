@@ -3,7 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
+import com.intellij.javaee.ReadOnlyDeploymentDescriptorModificationException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.xml.DomElement;

@@ -12,7 +12,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
-import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
+import com.intellij.javaee.ReadOnlyDeploymentDescriptorModificationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;

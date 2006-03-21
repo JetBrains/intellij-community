@@ -15,7 +15,7 @@
  */
 package com.intellij.javaee.ui;
 
-import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
+import com.intellij.javaee.ReadOnlyDeploymentDescriptorModificationException;
 
 import java.util.ArrayList;
 import java.util.List;

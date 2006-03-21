@@ -1,6 +1,6 @@
 package com.intellij.compiler;
 
-import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
+import com.intellij.javaee.JavaeeModuleProperties;
 import com.intellij.javaee.model.JavaeeApplicationModel;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +34,7 @@ public final class ModuleCompilerUtil {
       return ModuleRootManager.getInstance(module).getDependencies();
     }
     List<Module> result = new ArrayList<Module>();
-    final com.intellij.javaee.model.xml.application.Application root = ((JavaeeApplicationModel)J2EEModuleProperties.getInstance(module)).getRoot();
+    final com.intellij.javaee.model.xml.application.Application root = ((JavaeeApplicationModel)JavaeeModuleProperties.getInstance(module)).getRoot();
     if (root == null) {
       return Module.EMPTY_ARRAY;
     }

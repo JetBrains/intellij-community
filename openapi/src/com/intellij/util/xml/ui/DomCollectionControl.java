@@ -3,7 +3,7 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
+import com.intellij.javaee.ReadOnlyDeploymentDescriptorModificationException;
 import com.intellij.javaee.ui.Warning;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
