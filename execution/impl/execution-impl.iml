@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntry type="module" module-name="ui-designer-impl" />
+    <orderEntry type="module" module-name="debugger-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

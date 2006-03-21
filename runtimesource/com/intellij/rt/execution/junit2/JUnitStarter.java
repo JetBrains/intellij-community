@@ -81,7 +81,7 @@ public class JUnitStarter {
 
   private static void junitVersionChecks() throws ClassNotFoundException {
     Class.forName("junit.framework.ComparisonFailure");
-    JUnitStarter.getAgentClass();
+    getAgentClass();
     new TestRunner().setPrinter(new IdeaJUnitAgent.MockResultPrinter());
   }
 
@@ -90,7 +90,6 @@ public class JUnitStarter {
     PrintStream oldErr = System.err;
     int result;
     try {
-      String encoding = System.getProperty("file.encoding");
       System.setOut(new PrintStream(out));
       System.setErr(new PrintStream(err));
       SegmentedStreamsUser testRunner = (SegmentedStreamsUser) getAgentClass().newInstance();
