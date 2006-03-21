@@ -241,7 +241,7 @@ public final class StringEditorDialog extends DialogWrapper{
     private JRadioButton myRbResourceBundle;
     private JPanel myCardHolder;
     private JPanel myPanel;
-    private JTextField myTfValue;
+    private JTextArea myTfValue;
     private JCheckBox myNoI18nCheckbox;
     private TextFieldWithBrowseButton myTfBundleName;
     private TextFieldWithBrowseButton myTfKey;
