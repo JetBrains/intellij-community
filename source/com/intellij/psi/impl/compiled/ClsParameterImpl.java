@@ -105,36 +105,35 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   }
 
   private String getMirrorName() {
-  synchronized (PsiLock.LOCK) {
-    if (myMirrorName == null) {
-      @NonNls String name = getName();
-      if (name != null) return name;
+    synchronized (PsiLock.LOCK) {
+      if (myMirrorName == null) {
+        @NonNls String name = getName();
+        if (name != null) return name;
 
-      String[] nameSuggestions = getManager().getCodeStyleManager().suggestVariableName(VariableKind.PARAMETER, null,
-                                                                                        null, getType())
-      .names;
-      name = "p";
-      if (nameSuggestions.length > 0) {
-        name = nameSuggestions[0];
-      }
+        String[] nameSuggestions = getManager().getCodeStyleManager().suggestVariableName(VariableKind.PARAMETER, null,
+            null, getType())
+            .names;
+        name = "p";
+        if (nameSuggestions.length > 0) {
+          name = nameSuggestions[0];
+        }
 
-      PsiParameter[] parms = ((PsiParameterList)getParent()).getParameters();
-      AttemptsLoop:
-      while (true) {
-        for (PsiParameter parm : parms) {
-          if (parm == this) break AttemptsLoop;
-          String name1 = ((ClsParameterImpl)parm).getMirrorName();
-          if (name.equals(name1)) {
-            name = nextName(name);
-            continue AttemptsLoop;
+        PsiParameter[] parms = ((PsiParameterList) getParent()).getParameters();
+        AttemptsLoop:
+        while (true) {
+          for (PsiParameter parm : parms) {
+            if (parm == this) break AttemptsLoop;
+            String name1 = ((ClsParameterImpl) parm).getMirrorName();
+            if (name.equals(name1)) {
+              name = nextName(name);
+              continue AttemptsLoop;
+            }
           }
         }
+        myMirrorName = name;
       }
-      myMirrorName = name;
     }
-  ;
-  }
-               return myMirrorName;
+    return myMirrorName;
   }
 
   private static String nextName(String name) {
@@ -185,11 +184,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   }
 
   public boolean isVarArgs() {
-    if (((PsiMethod)myParent.getParent()).isVarArgs()) {
-      return myIdx == myParent.getParameters().length - 1;
-    }
-
-    return false;
+    return ((PsiMethod) myParent.getParent()).isVarArgs() && myIdx == myParent.getParameters().length - 1;
   }
 
   @NotNull

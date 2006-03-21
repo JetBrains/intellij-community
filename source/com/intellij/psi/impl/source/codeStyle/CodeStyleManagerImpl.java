@@ -31,6 +31,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -791,7 +792,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         longTypeName = "java.lang.Object";
       }
       String name = map.nameByType(longTypeName);
-      if (name != null) {
+      if (name != null && PsiManager.getInstance(myProject).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
         return new String[]{name};
       }
     }
@@ -1309,7 +1310,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
       suggestion = changeIfNotIdentifier(suggestion + getSuffixByVariableKind(variableKind));
 
-      list.add(suggestion);
+      if (PsiManager.getInstance(myProject).getNameHelper().isIdentifier(suggestion, LanguageLevel.HIGHEST)) {
+        list.add(suggestion);
+      }
     }
 
     return list.toArray(new String[list.size()]);
