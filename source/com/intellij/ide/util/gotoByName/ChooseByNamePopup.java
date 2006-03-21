@@ -12,8 +12,12 @@ import java.util.List;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent{
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
-  private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final String initialText) {
-    super(project, model, initialText);
+  private Component myOldFocusOwner = null;
+  private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup) {
+    super(project, model, oldPopup != null ? oldPopup.myTextField.getText() : null);
+    if (oldPopup != null) { //inherit old focus owner
+      myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
+    }
   }
 
   protected void initUI(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
@@ -21,6 +25,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     //LaterInvocator.enterModal(myTextFieldPanel);
     if (myInitialText != null) {
       rebuildList(0, 0, null, ModalityState.current());
+    }
+    if (myOldFocusOwner != null){
+      myPreviouslyFocusedComponent = myOldFocusOwner;
+      myOldFocusOwner = null;
     }
   }
 
@@ -159,9 +167,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     final ChooseByNamePopup newPopup;
     final ChooseByNamePopup oldPopup = project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
-      final String initialText = oldPopup.myTextField.getText();
       oldPopup.close(false);
-      newPopup = new ChooseByNamePopup(project, model, initialText);
+      newPopup = new ChooseByNamePopup(project, model, oldPopup);
     } else {
       newPopup = new ChooseByNamePopup(project, model, null);
     }
