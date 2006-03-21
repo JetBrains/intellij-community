@@ -63,33 +63,33 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private long myLastTimeEditorWasTypedIn = 0;
   @NonNls private static final String ACTION_ELEMENT_NAME = "action";
   @NonNls private static final String GROUP_ELEMENT_NAME = "group";
-  @NonNls protected static final String ACTIONS_ELEMENT_NAME = "actions";
-  @NonNls protected static final String CLASS_ATTR_NAME = "class";
-  @NonNls protected static final String ID_ATTR_NAME = "id";
-  @NonNls protected static final String INTERNAL_ATTR_NAME = "internal";
-  @NonNls protected static final String ICON_ATTR_NAME = "icon";
-  @NonNls protected static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
-  @NonNls protected static final String SHORTCUT_ELEMENT_NAME = "keyboard-shortcut";
-  @NonNls protected static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
-  @NonNls protected static final String DESCRIPTION = "description";
-  @NonNls protected static final String TEXT = "text";
-  @NonNls protected static final String POPAP_ATTR_NAME = "popup";
-  @NonNls protected static final String SEPARATOR_ELEMENT_NAME = "separator";
-  @NonNls protected static final String REFERENCE_ELEMENT_NAME = "reference";
-  @NonNls protected static final String GROUPID_ATTR_NAME = "group-id";
-  @NonNls protected static final String ANCHOR_ELEMENT_NAME = "anchor";
-  @NonNls protected static final String FIRST = "first";
-  @NonNls protected static final String LAST = "last";
-  @NonNls protected static final String BEFORE = "before";
-  @NonNls protected static final String AFTER = "after";
-  @NonNls protected static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
-  @NonNls protected static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
-  @NonNls protected static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
-  @NonNls protected static final String KEYMAP_ATTR_NAME = "keymap";
-  @NonNls protected static final String KEYSTROKE_ATTR_NAME = "keystroke";
-  @NonNls protected static final String REF_ATTR_NAME = "ref";
+  @NonNls static final String ACTIONS_ELEMENT_NAME = "actions";
+  @NonNls static final String CLASS_ATTR_NAME = "class";
+  @NonNls static final String ID_ATTR_NAME = "id";
+  @NonNls static final String INTERNAL_ATTR_NAME = "internal";
+  @NonNls static final String ICON_ATTR_NAME = "icon";
+  @NonNls static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
+  @NonNls static final String SHORTCUT_ELEMENT_NAME = "keyboard-shortcut";
+  @NonNls static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
+  @NonNls static final String DESCRIPTION = "description";
+  @NonNls static final String TEXT = "text";
+  @NonNls static final String POPAP_ATTR_NAME = "popup";
+  @NonNls static final String SEPARATOR_ELEMENT_NAME = "separator";
+  @NonNls static final String REFERENCE_ELEMENT_NAME = "reference";
+  @NonNls static final String GROUPID_ATTR_NAME = "group-id";
+  @NonNls static final String ANCHOR_ELEMENT_NAME = "anchor";
+  @NonNls static final String FIRST = "first";
+  @NonNls static final String LAST = "last";
+  @NonNls static final String BEFORE = "before";
+  @NonNls static final String AFTER = "after";
+  @NonNls static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
+  @NonNls static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
+  @NonNls static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
+  @NonNls static final String KEYMAP_ATTR_NAME = "keymap";
+  @NonNls static final String KEYSTROKE_ATTR_NAME = "keystroke";
+  @NonNls static final String REF_ATTR_NAME = "ref";
   @NonNls private static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
-  @NonNls protected static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
+  @NonNls static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myId2Action = new THashMap<String, Object>();
@@ -314,15 +314,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     presentation.setDescription(loadDescriptionForElement(element, bundle, id, ACTION_ELEMENT_NAME));
 
     // icon
-    String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
-    if (iconPath != null) {
-      try {
-        final Class actionClass = Class.forName(className, true, loader);
-        presentation.setIcon(IconLoader.getIcon(iconPath, actionClass));
-      }
-      catch (ClassNotFoundException ignored) {
-      }
-    }
+    setIcon(element.getAttributeValue(ICON_ATTR_NAME), className, loader, presentation);
+
     // process all links and key bindings if any
     for (final Object o : element.getChildren()) {
       Element e = (Element)o;
@@ -347,6 +340,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     // register action
     registerAction(id, stub, pluginId);
     return stub;
+  }
+
+  private static void setIcon(final String iconPath, final String className, final ClassLoader loader, final Presentation presentation) {
+    if (iconPath != null) {
+      try {
+        final Class actionClass = Class.forName(className, true, loader);
+        presentation.setIcon(IconLoader.getIcon(iconPath, actionClass));
+      }
+      catch (ClassNotFoundException ignored) {
+        //load with idea class loader
+      }
+    }
   }
 
   private static String loadDescriptionForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
@@ -420,10 +425,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       String description = loadDescriptionForElement(element, bundle, id, GROUP_ELEMENT_NAME);
       presentation.setDescription(description);
       // icon
-      String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
-      if (iconPath != null) {
-        presentation.setIcon(IconLoader.getIcon(iconPath));
-      }
+      setIcon(element.getAttributeValue(ICON_ATTR_NAME), className, loader, presentation);
       // popup
       String popup = element.getAttributeValue(POPAP_ATTR_NAME);
       if (popup != null) {
