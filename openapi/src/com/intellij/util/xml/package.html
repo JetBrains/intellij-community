@@ -63,4 +63,17 @@ following annotations:
   Also one can create mock DOM elements, that are not connected with any disk XML file. One can copy contents
   from one DOM element to another using DomElement.copyFrom() method.
 <p>
-  See our Java EE models for examples.
+  DomElementVisitor subclasses can have methods like "visitTypeName(TypeName element)" where TypeName is
+  some DomElement subclass. Then such methods will be called in DomElement.accept().
+<p>
+  There's some kind of reflection, getting information about supported fixed and collection children.
+  It's obtained via DomManager.getGenericInfo() or DomElement.getGenericInfo().
+<p>
+  Standard way of representing children with tag value only is using GenericDomValue&lt;T>, which has method
+  T getValue().
+<p>
+  If one has simple accessor method returning non-standard type, or GenericDomValue parameterized by non-standard type
+  (standard types are String, PsiClass, Integer, Boolean), one should specify Converter by @Convert annotation near
+  the method that gets this type or GenericDomValue.
+<p>
+  See our Java EE and Weblogic models for examples.

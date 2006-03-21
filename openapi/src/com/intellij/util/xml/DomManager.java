@@ -57,7 +57,7 @@ public abstract class DomManager implements ProjectComponent {
   /**
    * Creates DOM element of needed type, that is wrapper around real DOM element. Once the wrapped element
    * becomes invalid, a new value is requested from provider parameter, so there's a possibility to
-   * restore the functionality.
+   * restore the functionality. The resulting element will also implement StableElement interface.
    * @param provider
    * @return stable DOM element
    */

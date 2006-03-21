@@ -3,6 +3,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Factory;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
@@ -33,31 +34,32 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     if (domElement == null) return;
 
     final java.util.List<DomChildrenDescription> childrenDescriptions = domElement.getGenericInfo().getChildrenDescriptions();
-    for (DomChildrenDescription description : childrenDescriptions) {
+    for (final DomChildrenDescription description : childrenDescriptions) {
       final JComponent boundComponent = getBoundComponent(description);
       if (boundComponent != null) {
         if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {
-          final java.util.List<GenericDomValue> values = (java.util.List<GenericDomValue>)description.getValues(domElement);
-          if (values.size() == 1) {
+          if ((description.getValues(domElement)).size() == 1) {
             DomUIControl control;
+            final GenericDomValue element = domElement.getManager().createStableValue(new Factory<GenericDomValue>() {
+              public GenericDomValue create() {
+                return (GenericDomValue)description.getValues(domElement).get(0);
+              }
+            });
             if (boundComponent instanceof BigStringComponent) {
-              control = new BigStringControl(new DomFixedWrapper(values.get(0)));
+              control = new BigStringControl(new DomFixedWrapper(element));
             } else {
-              control = DomUIFactory.createControl(values.get(0));
+              control = DomUIFactory.createControl(element);
             }
 
             doBind(control, boundComponent);
           }
           else {
             //todo not bound
-            for (int i = 0; i < values.size(); i++) {
 
-            }
           }
         }
         else if (description instanceof DomCollectionChildDescription) {
-          DomUIControl control = DomUIFactory.getDomUIFactory().createCollectionControl(domElement, (DomCollectionChildDescription)description);
-          doBind(control, boundComponent);
+          doBind(DomUIFactory.getDomUIFactory().createCollectionControl(domElement, (DomCollectionChildDescription)description), boundComponent);
         }
       }
     }
