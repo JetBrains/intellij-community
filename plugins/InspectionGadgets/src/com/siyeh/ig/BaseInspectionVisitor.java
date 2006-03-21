@@ -66,7 +66,9 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
 
     protected void registerMethodError(PsiMethod method, Object... infos){
         final PsiElement nameIdentifier = method.getNameIdentifier();
-        registerError(nameIdentifier, infos);
+        if (nameIdentifier != null) {
+          registerError(nameIdentifier, infos);
+        }
     }
 
     protected void registerVariableError(PsiVariable variable, Object... infos){
