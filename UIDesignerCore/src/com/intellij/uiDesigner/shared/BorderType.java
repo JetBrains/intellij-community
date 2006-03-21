@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.shared;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import java.awt.Color;
 
 /**
  * @author Vladimir Kondratyev
@@ -26,13 +27,14 @@ public final class BorderType {
   public static final BorderType BEVEL_LOWERED = new BorderType("bevel-lowered", "Bevel Lowered", BorderFactory.createLoweredBevelBorder(), "createLoweredBevelBorder");
   public static final BorderType BEVEL_RAISED = new BorderType("bevel-raised", "Bevel Raised", BorderFactory.createRaisedBevelBorder(), "createRaisedBevelBorder");
   public static final BorderType ETCHED = new BorderType("etched", "Etched", BorderFactory.createEtchedBorder(), "createEtchedBorder");
+  public static final BorderType LINE = new BorderType("line", "Line", BorderFactory.createLineBorder(Color.BLACK), "createLineBorder");
 
   private final String myId;
   private final String myName;
   private final Border myBorder;
   private final String myBorderFactoryMethodName;
 
-  private BorderType(final String id,final String name,final Border border,final String borderFactoryMethodName){
+  private BorderType(final String id, final String name, final Border border, final String borderFactoryMethodName) {
     myId=id;
     myName=name;
     myBorder=border;
@@ -83,6 +85,9 @@ public final class BorderType {
     }
     else if(ETCHED.getId().equals(name)){
       return ETCHED;
+    }
+    else if (LINE.getId().equals(name)) {
+      return LINE;
     }
     else{
       throw new IllegalArgumentException("unknown type: "+name);

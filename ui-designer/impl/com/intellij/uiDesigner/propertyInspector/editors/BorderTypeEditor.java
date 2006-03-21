@@ -10,7 +10,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class BorderTypeEditor extends ComboBoxPropertyEditor{
+public final class BorderTypeEditor extends ComboBoxPropertyEditor {
   public BorderTypeEditor(){
     myCbx.setModel(
       new DefaultComboBoxModel(
@@ -18,7 +18,8 @@ public final class BorderTypeEditor extends ComboBoxPropertyEditor{
           BorderType.NONE,
           BorderType.BEVEL_LOWERED,
           BorderType.BEVEL_RAISED,
-          BorderType.ETCHED
+          BorderType.ETCHED,
+          BorderType.LINE
         }
       )
     );

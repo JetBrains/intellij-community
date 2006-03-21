@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Color;
 
 /**
  * @author yole
@@ -545,8 +546,17 @@ public class AsmCodeGenerator {
         generator.loadLocal(componentLocal);
 
         if (!borderNone) {
-          generator.invokeStatic(Type.getType(BorderFactory.class),
-                                 new Method(borderFactoryMethodName, Type.getType(Border.class), new Type[0]));
+          if (borderType.equals(BorderType.LINE)) {
+            Type colorType = Type.getType(Color.class);
+            generator.getStatic(colorType, "black", colorType);
+            generator.invokeStatic(Type.getType(BorderFactory.class),
+                                   new Method(borderFactoryMethodName, Type.getType(Border.class),
+                                              new Type[] { Type.getType(Color.class) } ));
+          }
+          else {
+            generator.invokeStatic(Type.getType(BorderFactory.class),
+                                   new Method(borderFactoryMethodName, Type.getType(Border.class), new Type[0]));
+          }
           AsmCodeGenerator.pushPropValue(generator, "java.lang.String", borderTitle);
           // use BorderFactory.createTitledBorder(Border, String)
           generator.invokeStatic(Type.getType(BorderFactory.class),
