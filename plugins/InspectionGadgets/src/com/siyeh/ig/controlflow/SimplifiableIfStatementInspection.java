@@ -157,11 +157,19 @@ public class SimplifiableIfStatementInspection
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
-            final PsiIfStatement statement =
+            final PsiIfStatement ifStatement =
                     (PsiIfStatement)element.getParent();
             final String newStatement =
-                    calculateReplacementStatement(statement);
-            replaceStatement(statement, newStatement);
+                    calculateReplacementStatement(ifStatement);
+            if (ifStatement.getElseBranch() == null) {
+                final PsiElement nextStatement =
+                        PsiTreeUtil.skipSiblingsForward(ifStatement,
+                                PsiWhiteSpace.class);
+                if (nextStatement != null) {
+                    nextStatement.delete();
+                }
+            }
+            replaceStatement(ifStatement, newStatement);
         }
     }
 
