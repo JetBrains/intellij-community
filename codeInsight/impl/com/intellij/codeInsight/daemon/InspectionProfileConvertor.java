@@ -34,8 +34,6 @@ public class InspectionProfileConvertor {
   private String myAdditionalJavadocTags;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsConvertor");
 
-  private static InspectionProfileConvertor ourInstance = null;
-
   @NonNls private static final String INSPECTIONS_TAG = "inspections";
   @NonNls private static final String NAME_ATT = "name";
   @NonNls private static final String INSP_TOOL_TAG = "inspection_tool";
@@ -49,16 +47,11 @@ public class InspectionProfileConvertor {
   @NonNls private static final String DEFAULT_XML = "Default.xml";
   @NonNls private static final String XML_EXTENSION = ".xml";
   @NonNls public static final String LEVEL_ATT = "level";
+  private InspectionProfileManager myManager;
 
-  private InspectionProfileConvertor() {
+  public InspectionProfileConvertor(InspectionProfileManager manager) {
+    myManager = manager;
     renameOldDefaultsProfile();
-  }
-
-  public static InspectionProfileConvertor getInstance() {
-    if (ourInstance == null) {
-      ourInstance = new InspectionProfileConvertor();
-    }
-    return ourInstance;
   }
 
   private boolean retrieveOldSettings(Element element) {
@@ -97,7 +90,7 @@ public class InspectionProfileConvertor {
       final ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
 
       fillErrorLevels(editorProfileModel);
-      editorProfileModel.commit(InspectionProfileManager.getInstance());
+      editorProfileModel.commit(myManager);
     }
   }
 
@@ -119,8 +112,8 @@ public class InspectionProfileConvertor {
     return rootElement;
   }
 
-  private static void renameOldDefaultsProfile() {
-    final File profileDirectory = InspectionProfileManager.getInstance().getProfileDirectory();
+  private void renameOldDefaultsProfile() {
+    final File profileDirectory = myManager.getProfileDirectory();
     final File[] files = profileDirectory.listFiles(new FileFilter() {
       public boolean accept(File pathname) {
         return pathname.getPath().endsWith(File.separator + DEFAULT_XML);

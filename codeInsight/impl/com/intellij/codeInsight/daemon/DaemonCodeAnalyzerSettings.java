@@ -84,7 +84,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    InspectionProfileConvertor.getInstance().storeEditorHighlightingProfile(element);
+    new InspectionProfileConvertor(myManager).storeEditorHighlightingProfile(element);
     myManager.setRootProfile(element.getAttributeValue(PROFILE_ATT));
   }
 
