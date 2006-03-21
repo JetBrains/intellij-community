@@ -15,11 +15,11 @@
  */
 package org.jetbrains.idea.devkit.build;
 
-import com.intellij.j2ee.j2eeDom.DeploymentDescriptorFactory;
-import com.intellij.j2ee.j2eeDom.J2EEDeploymentItem;
-import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
+import com.intellij.javaee.JavaeeModuleProperties;
 import com.intellij.javaee.make.ModuleBuildProperties;
 import com.intellij.javaee.make.J2EEBuildParticipant;
+import com.intellij.javaee.DeploymentDescriptorFactory;
+import com.intellij.javaee.JavaeeDeploymentItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
@@ -45,7 +45,7 @@ import java.io.File;
 
 public class PluginModuleBuildProperties extends ModuleBuildProperties implements ModuleComponent, JDOMExternalizable {
   private Module myModule;
-  private J2EEDeploymentItem myPluginXML;
+  private JavaeeDeploymentItem myPluginXML;
   private VirtualFilePointer myPluginXMLPointer;
   private VirtualFilePointer myManifestFilePointer;
   private boolean myUseUserManifest = false;
@@ -96,7 +96,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   @Nullable
-  public UnnamedConfigurable getBuildConfigurable(J2EEModuleProperties moduleProperties, ModifiableRootModel rootModel) {
+  public UnnamedConfigurable getBuildConfigurable(JavaeeModuleProperties moduleProperties, ModifiableRootModel rootModel) {
     return null;
   }
 
@@ -132,7 +132,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     }
   }
 
-  public J2EEDeploymentItem getPluginXML() {
+  public JavaeeDeploymentItem getPluginXML() {
     if (myPluginXML == null) {
       myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
       myPluginXML.setUrl(getPluginXMLPointer().getUrl());
