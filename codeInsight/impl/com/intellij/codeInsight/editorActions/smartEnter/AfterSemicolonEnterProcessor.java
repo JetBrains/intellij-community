@@ -34,6 +34,14 @@ public class AfterSemicolonEnterProcessor implements EnterProcessor {
           elementEndOffset = commaOffset + 1;
         }
       }
+
+      if (errorOffset >= 0 && errorOffset < elementEndOffset) {
+        final CharSequence text = editor.getDocument().getCharsSequence();
+        if (text.charAt(errorOffset) == ' ' && text.charAt(errorOffset + 1) == ';') {
+          errorOffset++;
+        }
+      }
+
       editor.getCaretModel().moveToOffset(errorOffset >= 0 ? errorOffset : elementEndOffset);
       return isModified;
     }
