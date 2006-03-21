@@ -349,7 +349,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         presentation.setIcon(IconLoader.getIcon(iconPath, actionClass));
       }
       catch (ClassNotFoundException ignored) {
-        //load with idea class loader
+        //try to find icon in idea class path
+        presentation.setIcon(IconLoader.getIcon(iconPath));
       }
     }
   }
