@@ -65,8 +65,7 @@ public class EnvVariablesTable extends Observable {
   private final TableView myTableVeiw;
   private boolean myIsEnabled = true;
 
-  public EnvVariablesTable(List<EnvironmentVariable> variables) {
-    myVariables.addAll(variables);
+  public EnvVariablesTable() {
     myTableVeiw = new TableView(new ListTableModel((new ColumnInfo[]{NAME, VALUE})));
     myTableVeiw.getTableViewModel().setSortable(false);
     myPanel.add(ScrollPaneFactory.createScrollPane(myTableVeiw.getComponent()), BorderLayout.CENTER);
@@ -106,8 +105,10 @@ public class EnvVariablesTable extends Observable {
 
   public void setValues(List<EnvironmentVariable> envVariables) {
     myVariables.clear();
-    myVariables.addAll(envVariables);
-    myTableVeiw.getTableViewModel().setItems(envVariables);
+    for (EnvironmentVariable envVariable : envVariables) {
+      myVariables.add(envVariable.clone());
+    }
+    myTableVeiw.getTableViewModel().setItems(myVariables);
   }
 
   public List<EnvironmentVariable> getEnvironmentVariables() {

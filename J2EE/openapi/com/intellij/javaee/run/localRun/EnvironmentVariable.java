@@ -22,7 +22,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-public class EnvironmentVariable implements JDOMExternalizable {
+public class EnvironmentVariable implements JDOMExternalizable, Cloneable {
   public String NAME;
   public String VALUE;
   public boolean IS_PREDEFINED;
