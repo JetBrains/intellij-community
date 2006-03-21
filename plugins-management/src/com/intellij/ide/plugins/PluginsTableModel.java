@@ -2,9 +2,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Hashtable;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,8 +13,8 @@ import java.util.Hashtable;
  */
 public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
 {
-    public static Hashtable<PluginId, Object> NewVersions2Plugins = new Hashtable<PluginId, Object>();
-    private static Hashtable<PluginId, String> UpdateVersions = new Hashtable<PluginId, String>();
+    public static Map<PluginId, Integer> NewVersions2Plugins = new HashMap<PluginId, Integer>();
+    private static Map<PluginId, String> UpdateVersions = new HashMap<PluginId, String>();
 
     public PluginsTableModel(SortableProvider sortableProvider)
     {
