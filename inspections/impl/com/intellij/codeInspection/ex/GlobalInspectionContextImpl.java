@@ -110,7 +110,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         public void contentRemoved(ContentManagerEvent event) {
           if (event.getContent() == myContent){
             if (myView != null) {
-              GlobalInspectionContextImpl.this.close();
+              GlobalInspectionContextImpl.this.close(false);
             }
             myContent = null;
           }
@@ -677,10 +677,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
 
     InspectionResultsView view = new InspectionResultsView(myProject, RUN_WITH_EDITOR_PROFILE ? null : getCurrentProfile(), scope, this);
-    if (!view.update()) {
+    if (!view.update() && !getUIOptions().SHOW_ONLY_DIFF) {
       Messages.showMessageDialog(myProject, InspectionsBundle.message("inspection.no.problems.message"),
                                  InspectionsBundle.message("inspection.no.problems.dialog.title"), Messages.getInformationIcon());
-      close();
+      close(true);
     }
     else {
       addView(view);
@@ -856,8 +856,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  public void close() {
-    if (myView == null || myView.isRerun()) return;
+  public void close(boolean noSuspisiousCodeFound) {
+    if (!noSuspisiousCodeFound && (myView == null || myView.isRerun())) return;
     final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
     managerEx.closeRunningContext(this);
     managerEx.getUIOptions().save(myUIOptions);

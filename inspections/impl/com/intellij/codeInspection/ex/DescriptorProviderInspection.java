@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -196,13 +197,28 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   }
 
   public boolean hasReportedProblems() {
-    final boolean hasProblems = myProblemElements.size() > 0;
-    if (hasProblems) return true;
     final GlobalInspectionContextImpl context = getContext();
-    if (context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){
-      return myOldProblemElements != null && myOldProblemElements.size() > 0;
+    if (context != null && context.getUIOptions().SHOW_ONLY_DIFF){
+      for (CommonProblemDescriptor descriptor : myProblemToElements.keySet()) {
+        if (getProblemStatus(descriptor) != FileStatus.NOT_CHANGED){
+          return true;
+        }
+      }
+      if (myOldProblemElements != null){
+        for (RefEntity entity : myOldProblemElements.keySet()) {
+          if (entity instanceof RefElement && getElementStatus((RefElement)entity) != FileStatus.NOT_CHANGED){
+            return true;
+          }
+        }
+      }
+      return false;
+    } else {
+      if (myProblemElements.size() > 0) return true;
     }
-    return hasProblems;
+    return context != null &&
+           context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN &&
+           myOldProblemElements != null &&
+           myOldProblemElements.size() > 0;
   }
 
   public void updateContent() {
@@ -267,15 +283,18 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   private void buildTreeNode(final List<InspectionTreeNode> content,
                              final HashMap<String, Set<RefElement>> packageContents,
                              final HashMap<RefEntity, CommonProblemDescriptor[]> problemElements) {
+    final GlobalInspectionContextImpl context = getContext();
     Set<String> packages = packageContents.keySet();
     for (String p : packages) {
       InspectionPackageNode pNode = new InspectionPackageNode(p);
       Set<RefElement> elements = packageContents.get(p);
       for (RefElement refElement : elements) {
+        if (context != null && context.getUIOptions().SHOW_ONLY_DIFF && getElementStatus(refElement) == FileStatus.NOT_CHANGED) continue;
         final RefElementNode elemNode = addNodeToParent(refElement, pNode);
         final CommonProblemDescriptor[] problems = problemElements.get(refElement);
         if (problems != null) {
           for (CommonProblemDescriptor problem : problems) {
+            if (context != null && context.getUIOptions().SHOW_ONLY_DIFF && getProblemStatus(problem) == FileStatus.NOT_CHANGED) continue;
             elemNode.add(new ProblemDescriptionNode(refElement, problem, !(this instanceof DuplicatePropertyInspection), this));
           }
           if (problems.length == 1){
@@ -374,7 +393,16 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   }
 
   private static boolean contains(CommonProblemDescriptor descriptor, Collection<CommonProblemDescriptor> descriptors){
+    PsiElement element = null;
+    if (descriptor instanceof ProblemDescriptor){
+      element = ((ProblemDescriptor)descriptor).getPsiElement();
+    }
     for (CommonProblemDescriptor problemDescriptor : descriptors) {
+      if (problemDescriptor instanceof ProblemDescriptor){
+        if (!Comparing.equal(element, ((ProblemDescriptor)problemDescriptor).getPsiElement())){
+          continue;
+        }
+      }
       if (Comparing.strEqual(problemDescriptor.getDescriptionTemplate(), descriptor.getDescriptionTemplate())){
         return true;
       }

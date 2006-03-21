@@ -42,11 +42,13 @@ public abstract class FilteringInspectionTool extends InspectionTool {
 
   private void buildTreeNode(final List<InspectionTreeNode> content,
                              final HashMap<String, Set<RefElement>> packageContents) {
+    final GlobalInspectionContextImpl context = getContext();
     Set<String> packages = packageContents.keySet();
     for (String p : packages) {
       InspectionPackageNode pNode = new InspectionPackageNode(p);
       Set<RefElement> elements = packageContents.get(p);
       for (RefElement refElement : elements) {
+        if (context != null && context.getUIOptions().SHOW_ONLY_DIFF && getElementStatus(refElement) == FileStatus.NOT_CHANGED) continue;
         if (packageContents != myPackageContents) {
           final Set<RefElement> currentElements = myPackageContents.get(p);
           if (currentElements != null){
@@ -83,10 +85,28 @@ public abstract class FilteringInspectionTool extends InspectionTool {
   protected abstract void resetFilter();
 
   public boolean hasReportedProblems() {
-    final boolean hasProblems = myPackageContents.size() > 0;
-    if (hasProblems) return true;
-    if (isOldProblemsIncluded(getContext())) return myOldPackageContents.size() > 0;
-    return hasProblems;
+    final GlobalInspectionContextImpl context = getContext();
+    if (context != null && context.getUIOptions().SHOW_ONLY_DIFF){
+      return containsOnlyDiff(myPackageContents) ||
+             myOldPackageContents != null && containsOnlyDiff(myOldPackageContents);
+    } else {
+      if (myPackageContents.size() > 0) return true;
+    }
+    return isOldProblemsIncluded(context) && myOldPackageContents.size() > 0;
+  }
+
+  private boolean containsOnlyDiff(final HashMap<String, Set<RefElement>> packageContents) {
+    for (String packageName : packageContents.keySet()) {
+      final Set<RefElement> refElements = packageContents.get(packageName);
+      if (refElements != null){
+        for (RefElement refElement : refElements) {
+          if (getElementStatus(refElement) != FileStatus.NOT_CHANGED){
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   public Map<String, Set<RefElement>> getPackageContent() {

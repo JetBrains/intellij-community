@@ -231,6 +231,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createShowOutdatedProblemsAction(this));
+    specialGroup.add(myGlobalInspectionContext.getUIOptions().createShowDiffOnlyAction(this));
     specialGroup.add(new EditSettingsAction());
     specialGroup.add(new DisableInspectionAction());
     specialGroup.add(new InvokeQuickFixAction(this));
@@ -723,7 +724,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myGlobalInspectionContext.close();
+      myGlobalInspectionContext.close(true);
     }
   }
 

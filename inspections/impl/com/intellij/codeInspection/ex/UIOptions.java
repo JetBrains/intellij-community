@@ -28,6 +28,7 @@ public class UIOptions implements JDOMExternalizable {
   public int SCOPE_TYPE = 1;
   public String CUSTOM_SCOPE_NAME = "";
   public final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
+  public boolean SHOW_ONLY_DIFF = false;
 
   public UIOptions() {
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
@@ -120,9 +121,33 @@ public class UIOptions implements JDOMExternalizable {
 
       public void setSelected(AnActionEvent e, boolean state) {
         SHOW_DIFF_WITH_PREVIOUS_RUN = state;
+        if (!SHOW_DIFF_WITH_PREVIOUS_RUN) {
+          SHOW_ONLY_DIFF = false;
+        }
         view.update();
       }
     };
   }
 
+  public AnAction createShowDiffOnlyAction(final InspectionResultsView view) {
+    return new ToggleAction(InspectionsBundle.message("inspection.filter.show.diff.only.action.text"),
+                            InspectionsBundle.message("inspection.filter.show.diff.only.action.text"),
+                            IconLoader.getIcon("/actions/showChangesOnly.png")) {
+
+
+      public boolean isSelected(AnActionEvent e) {
+        return SHOW_ONLY_DIFF;
+      }
+
+      public void setSelected(AnActionEvent e, boolean state) {
+        SHOW_ONLY_DIFF = state;
+        view.update();
+      }
+
+      public void update(final AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabled(SHOW_DIFF_WITH_PREVIOUS_RUN);
+      }
+    };
+  }
 }
