@@ -8,10 +8,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.util.ui.MappingListCellRenderer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +30,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 
-public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent, JDOMExternalizable {
   private UpdatesSettingsPanel myUpdatesSettingsPanel;
   private boolean myCheckNowEnabled = true;
   @NonNls public static final String ON_START_UP = "On every start";
