@@ -51,10 +51,8 @@ import java.util.Set;
 public final class StringEditorDialog extends DialogWrapper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.StringEditorDialog");
 
-  @NonNls
-  private static final String CARD_STRING = "string";
-  @NonNls
-  private static final String CARD_BUNDLE = "bundle";
+  @NonNls private static final String CARD_STRING = "string";
+  @NonNls private static final String CARD_BUNDLE = "bundle";
 
   private final Module myModule;
   private RadRootContainer myRootContainer;
@@ -88,7 +86,7 @@ public final class StringEditorDialog extends DialogWrapper{
 
   public JComponent getPreferredFocusedComponent() {
     if(myForm.myRbString.isSelected()){
-      return myForm.myStringCard.myTfValue;
+      return myForm.myTfValue;
     }
     else{
       return super.getPreferredFocusedComponent();
@@ -99,7 +97,7 @@ public final class StringEditorDialog extends DialogWrapper{
     if (myForm.myRbResourceBundle.isSelected()) {
       final StringDescriptor descriptor = getDescriptor();
       if (descriptor != null && descriptor.getKey().length() > 0) {
-        final String value = myForm.myResourceBundleCard.myTfValue.getText();
+        final String value = myForm.myTfRbValue.getText();
         final PropertiesFile propFile = getPropertiesFile(descriptor);
         if (propFile != null && propFile.findPropertyByKey(descriptor.getKey()) == null) {
           saveCreatedProperty(propFile, descriptor.getKey(), value);
@@ -199,19 +197,19 @@ public final class StringEditorDialog extends DialogWrapper{
   @Nullable
   StringDescriptor getDescriptor(){
     if(myForm.myRbString.isSelected()){ // plain value
-      final String value = myForm.myStringCard.myTfValue.getText();
+      final String value = myForm.myTfValue.getText();
       if(myValue == null && value.length() == 0){
         return null;
       }
       else{
         final StringDescriptor stringDescriptor = StringDescriptor.create(value);
-        stringDescriptor.setNoI18n(myForm.myStringCard.myNoI18nCheckbox.isSelected());
+        stringDescriptor.setNoI18n(myForm.myNoI18nCheckbox.isSelected());
         return stringDescriptor;
       }
     }
     else{ // bundled value
-      final String bundleName = myForm.myResourceBundleCard.myTfBundleName.getText();
-      final String key = myForm.myResourceBundleCard.myTfKey.getText();
+      final String bundleName = myForm.myTfBundleName.getText();
+      final String key = myForm.myTfKey.getText();
       return new StringDescriptor(bundleName, key);
     }
   }
@@ -224,12 +222,12 @@ public final class StringEditorDialog extends DialogWrapper{
     final CardLayout cardLayout = (CardLayout)myForm.myCardHolder.getLayout();
     if(descriptor == null || descriptor.getValue() != null){ // trivial descriptor
       myForm.myRbString.setSelected(true);
-      myForm.myStringCard.setDescriptor(descriptor);
+      myForm.showStringDescriptor(descriptor);
       cardLayout.show(myForm.myCardHolder, CARD_STRING);
     }
     else{ // bundled property
       myForm.myRbResourceBundle.setSelected(true);
-      myForm.myResourceBundleCard.setDescriptor(descriptor);
+      myForm.showResourceBundleDescriptor(descriptor);
       cardLayout.show(myForm.myCardHolder, CARD_BUNDLE);
     }
   }
@@ -243,27 +241,19 @@ public final class StringEditorDialog extends DialogWrapper{
     private JRadioButton myRbResourceBundle;
     private JPanel myCardHolder;
     private JPanel myPanel;
-    /** Card with editor for row string value */
-    private final MyStringCard myStringCard;
-    /** Card with editor for value defined via resource bundle */
-    private final MyResourceBundleCard myResourceBundleCard;
+    private JTextField myTfValue;
+    private JCheckBox myNoI18nCheckbox;
+    private TextFieldWithBrowseButton myTfBundleName;
+    private TextFieldWithBrowseButton myTfKey;
+    private JTextField myTfRbValue;
+    private JLabel myLblKey;
+    private JLabel myLblBundleName;
 
     public MyForm() {
-      myStringCard = new MyStringCard();
-      myResourceBundleCard = new MyResourceBundleCard();
-
-      final ButtonGroup buttonGroup = new ButtonGroup();
-      buttonGroup.add(myRbString);
-      buttonGroup.add(myRbResourceBundle);
-
-      final CardLayout cardLayout = new CardLayout();
-      myCardHolder.setLayout(cardLayout);
-      myCardHolder.add(myStringCard.myPanel, CARD_STRING);
-      myCardHolder.add(myResourceBundleCard.myPanel, CARD_BUNDLE);
-
       myRbString.addActionListener(
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
+            CardLayout cardLayout = (CardLayout) myCardHolder.getLayout();
             cardLayout.show(myCardHolder, CARD_STRING);
           }
         }
@@ -276,41 +266,19 @@ public final class StringEditorDialog extends DialogWrapper{
               myDefaultBundleInitialized = true;
               Set<String> bundleNames = FormEditingUtil.collectUsedBundleNames(myRootContainer);
               if (bundleNames.size() > 0) {
-                myResourceBundleCard.myTfBundleName.setText(bundleNames.toArray(new String[bundleNames.size()]) [0]);
+                myTfBundleName.setText(bundleNames.toArray(new String[bundleNames.size()]) [0]);
               }
             }
+            CardLayout cardLayout = (CardLayout) myCardHolder.getLayout();
             cardLayout.show(myCardHolder, CARD_BUNDLE);
           }
         }
       );
-    }
-  }
 
-  private final class MyStringCard{
-    private JTextField myTfValue;
-    private JPanel myPanel;
-    private JLabel myLblValue;
-    private JCheckBox myNoI18nCheckbox;
-
-    public MyStringCard() {
-      myLblValue.setLabelFor(myTfValue);
+      setupResourceBundleCard();
     }
 
-    public void setDescriptor(@Nullable final StringDescriptor descriptor){
-      myTfValue.setText(ReferenceUtil.resolve(myModule, descriptor, myLocale));
-      myNoI18nCheckbox.setSelected(descriptor != null ? descriptor.isNoI18n() : false);
-    }
-  }
-
-  private final class MyResourceBundleCard{
-    private TextFieldWithBrowseButton myTfKey;
-    private JTextField myTfValue;
-    private JPanel myPanel;
-    private TextFieldWithBrowseButton myTfBundleName;
-    private JLabel myLblBundleName;
-    private JLabel myLblKey;
-
-    public MyResourceBundleCard() {
+    private void setupResourceBundleCard() {
       // Enable keyboard pressing
       myTfBundleName.registerKeyboardAction(
         new AbstractAction() {
@@ -326,7 +294,7 @@ public final class StringEditorDialog extends DialogWrapper{
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
             Project project = myModule.getProject();
-            final String bundleNameText = MyResourceBundleCard.this.myTfBundleName.getText().replace('/', '.');
+            final String bundleNameText = myTfBundleName.getText().replace('/', '.');
             PsiFile initialPropertiesFile = PropertiesUtil.getPropertiesFile(bundleNameText, myModule, myLocale);
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myModule);
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
@@ -401,19 +369,23 @@ public final class StringEditorDialog extends DialogWrapper{
               return;
             }
             myTfKey.setText(descriptor.getKey());
-            myTfValue.setText(descriptor.getResolvedValue());
+            myTfRbValue.setText(descriptor.getResolvedValue());
           }
         }
       );
     }
 
-    public void setDescriptor(@NotNull final StringDescriptor descriptor){
+    public void showStringDescriptor(@Nullable final StringDescriptor descriptor) {
+      myTfValue.setText(ReferenceUtil.resolve(myModule, descriptor, myLocale));
+      myNoI18nCheckbox.setSelected(descriptor != null && descriptor.isNoI18n());
+    }
+
+    public void showResourceBundleDescriptor(@NotNull final StringDescriptor descriptor) {
       final String key = descriptor.getKey();
       LOG.assertTrue(key != null);
       myTfBundleName.setText(descriptor.getBundleName());
       myTfKey.setText(key);
-      myTfValue.setText(ReferenceUtil.resolve(myModule, descriptor, myLocale));
+      myTfRbValue.setText(ReferenceUtil.resolve(myModule, descriptor, myLocale));
     }
   }
-
 }
