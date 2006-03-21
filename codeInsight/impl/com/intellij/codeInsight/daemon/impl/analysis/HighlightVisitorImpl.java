@@ -518,7 +518,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumSuperConstructorCall(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkQualifiedSuper(expression));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkSuperQualifierType(expression));
     if (!myHolder.hasErrorResults()) visitExpression(expression);
   }
 

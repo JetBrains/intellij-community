@@ -776,27 +776,19 @@ public class HighlightClassUtil {
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, expression);
   }
 
-  public static HighlightInfo checkQualifiedSuper(PsiMethodCallExpression superCall) {
+  public static HighlightInfo checkSuperQualifierType(PsiMethodCallExpression superCall) {
     if (!HighlightUtil.isSuperMethodCall(superCall)) return null;
     PsiMethod ctr = PsiTreeUtil.getParentOfType(superCall, PsiMethod.class, true, PsiMember.class);
     if (ctr == null) return null;
     PsiClass targetClass = ctr.getContainingClass().getSuperClass();
     if (targetClass == null) return null;
     PsiExpression qualifier = superCall.getMethodExpression().getQualifierExpression();
-    if (PsiUtil.isInnerClass(targetClass)) {
+    if (qualifier != null && PsiUtil.isInnerClass(targetClass)) {
       PsiClass outerClass = targetClass.getContainingClass();
-      if (qualifier == null) {
-        return createNotQualifiedError(outerClass, superCall.getTextRange());
-      }
       PsiClassType outerType = superCall.getManager().getElementFactory().createType(outerClass);
       return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
     }
     return null;
-  }
-
-  private static HighlightInfo createNotQualifiedError(final PsiClass outerClass, TextRange textRange) {
-    String description = JavaErrorMessages.message("inner.class.creation.must.be.qualified", outerClass.getQualifiedName());
-    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
   }
 
   public static HighlightInfo reportIllegalEnclosingUsage(PsiElement place,
