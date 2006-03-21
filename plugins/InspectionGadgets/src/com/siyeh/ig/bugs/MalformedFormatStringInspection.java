@@ -19,27 +19,17 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class MalformedFormatStringInspection extends ExpressionInspection{
-    /**
-     * @noinspection StaticCollection
-     */
-    @NonNls
-    private static final Set<String> formatMethodNames = new HashSet<String>(5);
-
-    static{
-      formatMethodNames.add("format");
-      formatMethodNames.add("printf");
-    }
+public class MalformedFormatStringInspection extends BaseInspection{
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
@@ -83,6 +73,25 @@ public class MalformedFormatStringInspection extends ExpressionInspection{
 
     private static class MalformedFormatStringVisitor
             extends BaseInspectionVisitor{
+
+        /** @noinspection StaticCollection */
+        @NonNls
+        private static final Set<String> formatMethodNames =
+                new HashSet<String>(2);
+
+        /** @noinspection StaticCollection */
+        private static final Set<String> formatClassNames =
+                new HashSet<String>(4);
+
+        static{
+            formatMethodNames.add("format");
+            formatMethodNames.add("printf");
+
+            formatClassNames.add("java.io.PrintWriter");
+            formatClassNames.add("java.io.PrintStream");
+            formatClassNames.add("java.util.Formatter");
+            formatClassNames.add("java.lang.String");
+        }
 
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
@@ -161,8 +170,7 @@ public class MalformedFormatStringInspection extends ExpressionInspection{
                 return false;
             }
             final String className = containingClass.getQualifiedName();
-            return "java.io.PrintWriter".equals(className) ||
-                    "java.io.PrintStream".equals(className);
+            return formatClassNames.contains(className);
         }
     }
 }

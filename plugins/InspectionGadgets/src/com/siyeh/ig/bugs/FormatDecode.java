@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.siyeh.ig.bugs;
+
 import com.intellij.psi.PsiType;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings({"CollectionDeclaredAsConcreteClass", "ObjectEquality", "HardCodedStringLiteral"})
 class FormatDecode{
+
     private static final String FORMAT_SPECIFIER =
             "%(\\d+\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])";
 
@@ -31,90 +33,15 @@ class FormatDecode{
         super();
     }
 
-    private static final Validator ALL_VALIDATOR = new Validator(){
-        public boolean valid(PsiType type){
-            return true;
-        }
+    private static final Validator ALL_VALIDATOR = new AllValidator();
 
-        public String type(){
-            return "any";
-        }
-    };
+    private static final Validator DATE_VALIDATOR = new DateValidator();
 
-    private static final Validator DATE_VALIDATOR = new Validator(){
-        public boolean valid(PsiType type){
-            final String text = type.getCanonicalText();
+    private static final Validator CHAR_VALIDATOR = new CharValidator();
 
-          if (type == PsiType.LONG || "java.lang.Long".equals(text)) {
-            return true;
-          }
-          if ("java.util.Date".equals(text) || "java.util.Calendar".equals(text)) {
-            return true;
-          }
-            return false;
-        }
+    private static final Validator INT_VALIDATOR = new IntValidator();
 
-        public String type(){
-            return "Date/Time";
-        }
-    };
-    private static final Validator CHAR_VALIDATOR = new Validator(){
-        public boolean valid(PsiType type){
-            final String text = type.getCanonicalText();
-          if (type == PsiType.CHAR || "java.lang.Character".equals(text)) {
-            return true;
-          }
-            return false;
-        }
-
-        public String type(){
-            return "char";
-        }
-    };
-    private static final Validator INT_VALIDATOR = new Validator(){
-        public boolean valid(PsiType type){
-            final String text = type.getCanonicalText();
-          if (type == PsiType.INT || "java.lang.Integer".equals(text)) {
-            return true;
-          }
-          if (type == PsiType.LONG || "java.lang.Long".equals(text)) {
-            return true;
-          }
-          if (type == PsiType.SHORT || "java.lang.Short".equals(text)) {
-            return true;
-          }
-          if (type == PsiType.BYTE || "java.lang.Byte".equals(text)) {
-            return true;
-          }
-          if ("java.math.BigInteger".equals(text)) {
-            return true;
-          }
-            return false;
-        }
-
-        public String type(){
-            return "integer type";
-        }
-    };
-    private static final Validator FLOAT_VALIDATOR = new Validator(){
-        public boolean valid(PsiType type){
-            final String text = type.getCanonicalText();
-          if (type == PsiType.DOUBLE || "java.lang.Double".equals(text)) {
-            return true;
-          }
-          if (type == PsiType.FLOAT || "java.lang.Float".equals(text)) {
-            return true;
-          }
-          if ("java.math.BigDecimal".equals(text)) {
-            return true;
-          }
-            return false;
-        }
-
-        public String type(){
-            return "floating point";
-        }
-    };
+    private static final Validator FLOAT_VALIDATOR = new FloatValidator();
 
     public static Validator[] decode(String line){
         final ArrayList<Validator> args = new ArrayList<Validator>();
@@ -129,9 +56,9 @@ class FormatDecode{
             final String spec = m.group(6);
 
             // check this first because it should not affect "implicit"
-          if ("n".equals(spec) || "%".equals(spec)) {
-            continue;
-          }
+            if ("n".equals(spec) || "%".equals(spec)) {
+                continue;
+            }
 
             if(posSpec != null){
                 final String num = posSpec.substring(0, posSpec.length() - 1);
@@ -142,11 +69,9 @@ class FormatDecode{
             // else if the flag has "<" reuse the last pos
 
             final Validator allowed;
-            if(dateSpec != null)   // a t or T
-            {
+            if(dateSpec != null) {  // a t or T
                 allowed = DATE_VALIDATOR;
-            }
-            else{
+            } else{
                 switch(Character.toLowerCase(spec.charAt(0))){
                     case 'b':
                     case 'h':
@@ -177,34 +102,104 @@ class FormatDecode{
         return args.toArray(new Validator[args.size()]);
     }
 
-    public static class UnknownFormatException extends RuntimeException {
-        public UnknownFormatException(String message) {
-          super(message);
-        }
-    }
-
-    private static void argAt(Validator val, int pos, ArrayList<Validator> args)
-    {
+    private static void argAt(Validator val, int pos, ArrayList<Validator> args){
         if(pos < args.size()){
             final Validator old = args.get(pos);
             // it's OK to overwrite ALL with something more specific
             // it's OK to ignore overwrite of something else with ALL or itself
-          if (old == ALL_VALIDATOR) {
-            args.set(pos, val);
-          }
-          else if (val != ALL_VALIDATOR && val != old) {
-            throw new DuplicateFormatFlagsException(
-              "requires both " + old.type() + " and " + val.type());
-          }
+            if (old == ALL_VALIDATOR) {
+                args.set(pos, val);
+            } else if (val != ALL_VALIDATOR && val != old) {
+                throw new DuplicateFormatFlagsException(
+                        "requires both " + old.type() + " and " + val.type());
+            }
         } else{
-            while(pos < args.size())args.add(ALL_VALIDATOR);
+            while(pos < args.size()) {
+                args.add(ALL_VALIDATOR);
+            }
             args.add(val);
         }
     }
 
+    public static class UnknownFormatException extends RuntimeException {
+
+        public UnknownFormatException(String message) {
+            super(message);
+        }
+    }
+
     public static class DuplicateFormatFlagsException extends RuntimeException {
+
         public DuplicateFormatFlagsException(String message) {
-          super(message);
+            super(message);
+        }
+    }
+
+    private static class AllValidator implements Validator {
+
+        public boolean valid(PsiType type){
+            return true;
+        }
+
+        public String type(){
+            return "any";
+        }
+    }
+
+    private static class DateValidator implements Validator {
+
+        public boolean valid(PsiType type){
+            final String text = type.getCanonicalText();
+
+            return type == PsiType.LONG || "java.lang.Long".equals(text) ||
+                    "java.util.Date".equals(text) ||
+                    "java.util.Calendar".equals(text);
+        }
+
+        public String type(){
+            return "Date/Time";
+        }
+    }
+
+    private static class CharValidator implements Validator {
+
+        public boolean valid(PsiType type){
+            final String text = type.getCanonicalText();
+            return type == PsiType.CHAR || "java.lang.Character".equals(text);
+        }
+
+        public String type(){
+            return "char";
+        }
+    }
+
+    private static class IntValidator implements Validator {
+
+        public boolean valid(PsiType type){
+            final String text = type.getCanonicalText();
+            return type == PsiType.INT || "java.lang.Integer".equals(text) ||
+                    type == PsiType.LONG || "java.lang.Long".equals(text) ||
+                    type == PsiType.SHORT || "java.lang.Short".equals(text) ||
+                    type == PsiType.BYTE || "java.lang.Byte".equals(text) ||
+                    "java.math.BigInteger".equals(text);
+        }
+
+        public String type(){
+            return "integer type";
+        }
+    }
+
+    private static class FloatValidator implements Validator {
+
+        public boolean valid(PsiType type){
+            final String text = type.getCanonicalText();
+            return type == PsiType.DOUBLE || "java.lang.Double".equals(text) ||
+                    type == PsiType.FLOAT || "java.lang.Float".equals(text) ||
+                    "java.math.BigDecimal".equals(text);
+        }
+
+        public String type(){
+            return "floating point";
         }
     }
 }
