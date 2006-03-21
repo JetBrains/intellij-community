@@ -501,7 +501,8 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
               int offset = getStartOffset(statement);
               PsiExpression caseValue = psiLabelStatement.getCaseValue();
 
-              if (caseExpression instanceof PsiReferenceExpression &&
+              if (caseValue != null &&
+                  caseExpression instanceof PsiReferenceExpression &&
                   ((PsiReferenceExpression)caseExpression).getQualifierExpression() == null &&
                   body.getManager().getConstantEvaluationHelper().computeConstantExpression(caseValue) != null) {
                 PsiExpression psiComparison = psiFactory.createExpressionFromText(
@@ -597,7 +598,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
         addGotoCatch(cd);
         return;
       }
-      else if (exceptionClass.isAssignableFrom(cd.getType())) { // Probable catch
+      else if (cd.getType().isConvertibleFrom(exceptionClass)) { // Probable catch
         addInstruction(new DupInstruction());
         pushUnknown();
         final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(-1, false, null);
