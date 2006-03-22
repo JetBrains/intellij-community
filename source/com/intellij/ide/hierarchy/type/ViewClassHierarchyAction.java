@@ -1,8 +1,8 @@
 package com.intellij.ide.hierarchy.type;
 
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.IconLoader;
 
 /**
  * @author cdr
@@ -19,6 +19,7 @@ public final class ViewClassHierarchyAction extends ChangeViewTypeActionBase {
 
   public final void update(final AnActionEvent event) {
     super.update(event);
-    event.getPresentation().setEnabled(myTypeHierarchyBrowser != null && !myTypeHierarchyBrowser.isInterface());
+    final TypeHierarchyBrowser browser = getTypeHierarchyBrowser(event.getDataContext());
+    event.getPresentation().setEnabled(browser != null && !browser.isInterface());
   }
 }
