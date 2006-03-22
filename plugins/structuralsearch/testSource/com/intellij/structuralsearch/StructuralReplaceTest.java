@@ -553,6 +553,20 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       expectedResult,
       actualResult
     );
+
+    String s4 = "if (true) System.out.println(\"1111\"); else System.out.println(\"2222\");\n" +
+                "while(true) System.out.println(\"1111\");";
+    String s5 = "System.out.println('Test);";
+    String s6 = "/* System.out.println($Test$); */";
+    String expectedResult2 = "if (true) /* System.out.println(\"1111\"); */; else /* System.out.println(\"2222\"); */;\n" +
+                             "while(true) /* System.out.println(\"1111\"); */;";
+    actualResult = replacer.testReplace(s4,s5,s6,options);
+
+    assertEquals(
+      "replace with comment",
+      expectedResult2,
+      actualResult
+    );
   }
 
   public void testSeveralStatements() {

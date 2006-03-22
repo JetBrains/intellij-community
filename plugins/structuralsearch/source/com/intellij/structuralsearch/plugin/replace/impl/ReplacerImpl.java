@@ -265,11 +265,19 @@ public class ReplacerImpl {
             }
           }
 
-          elementParent.addBefore(replacement,elementToReplace);
+          final PsiElement inserted = elementParent.addBefore(replacement,elementToReplace);
+
+          if (replacement instanceof PsiComment &&
+               ( elementParent instanceof PsiIfStatement ||
+                 elementParent instanceof PsiLoopStatement
+               )
+              ) {
+            elementParent.addAfter(createSemicolon(replacement),inserted);
+          }
         }
       } else if (statements.length > 0) {
         int i = 0;
-        while( true ) {
+        while( true ) {    // if it goes out of bounds then deep error happens
           if (!(statements[i] instanceof PsiComment ||
                 statements[i] instanceof PsiWhiteSpace
           )
@@ -616,6 +624,11 @@ public class ReplacerImpl {
     return space.getManager().getElementFactory().createWhiteSpaceFromText(" ");
   }
 
+  private static PsiElement createSemicolon(final PsiElement space) throws IncorrectOperationException {
+    final PsiStatement text = space.getManager().getElementFactory().createStatementFromText(";", null);
+    return text.getFirstChild();
+  }
+
   public static void checkSupportedReplacementPattern(Project project, String search,
                                                       String replacement, FileType fileType) throws UnsupportedPatternException {
     try {
@@ -718,7 +731,15 @@ public class ReplacerImpl {
         parent instanceof PsiExpressionList ||
         parent instanceof PsiCodeBlock ||
         parent instanceof XmlTag ||
-        parent instanceof PsiClass
+        parent instanceof PsiClass ||
+        ( parent instanceof PsiIfStatement &&
+          ( ((PsiIfStatement)parent).getThenBranch() == el ||
+            ((PsiIfStatement)parent).getElseBranch() == el
+          )
+        ) ||
+        ( parent instanceof PsiLoopStatement &&
+          ((PsiLoopStatement)parent).getBody() == el
+        )
        ) {
       listContext = true;
     }
