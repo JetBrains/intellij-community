@@ -31,6 +31,7 @@ public class AnnotationsHighlightUtil {
 
   public static HighlightInfo checkNameValuePair(PsiNameValuePair pair) {
     PsiReference ref = pair.getReference();
+    if (ref == null) return null;
     PsiMethod method = (PsiMethod)ref.resolve();
     if (method == null) {
       if (pair.getName() != null) {
@@ -131,8 +132,7 @@ public class AnnotationsHighlightUtil {
       PsiClass aClass = (PsiClass)nameRef.resolve();
       if (aClass != null) {
         if (refInterfaces.contains(aClass)) {
-          result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation.getNameReferenceElement(),
-                                                       DUPLICATE_ANNOTATION));
+          result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, DUPLICATE_ANNOTATION));
         }
 
         refInterfaces.add(aClass);
@@ -180,7 +180,7 @@ public class AnnotationsHighlightUtil {
         }
 
         String description = JavaErrorMessages.message("annotation.missing.attribute", buff);
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation.getNameReferenceElement(), description);
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, description);
       }
     }
 
