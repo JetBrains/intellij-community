@@ -10,6 +10,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,6 +34,9 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
     myLogsPanel.setLayout(new BorderLayout());
     myLogsPanel.add(myLogConfigurations.getLoggerComponent(), BorderLayout.CENTER);
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());
+    if (!ApplicationManagerEx.getApplicationEx().isInternal()) {
+      myShowSwingInspectorCheckbox.setVisible(false);
+    }
   }
 
   public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {
