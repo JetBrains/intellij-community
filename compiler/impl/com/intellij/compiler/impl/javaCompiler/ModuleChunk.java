@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.OrderedSet;
+import com.intellij.pom.java.LanguageLevel;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.io.File;
@@ -222,5 +223,10 @@ public class ModuleChunk extends Chunk<Module> {
       }
     });
     return buffer.toString();
+  }
+
+  //the check for equal language levels is done elsewhere
+  public LanguageLevel getLanguageLevel() {
+    return getModules()[0].getLanguageLevel();
   }
 }

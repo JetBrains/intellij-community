@@ -183,11 +183,11 @@ public class JikesCompiler extends ExternalCompiler {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void setupSourceVersion(final ModuleChunk chunk, final ArrayList<String> commandLine) {
+  private static void setupSourceVersion(final ModuleChunk chunk, final ArrayList<String> commandLine) {
     final ProjectJdk jdk = chunk.getJdk();
     final String versionString = jdk.getVersionString();
 
-    final LanguageLevel applicableLanguageLevel = CompilerUtil.getApplicableLanguageLevel(versionString,myProject);
+    final LanguageLevel applicableLanguageLevel = CompilerUtil.getApplicableLanguageLevel(versionString, chunk.getLanguageLevel());
     if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_5)) {
       commandLine.add("-source");
       commandLine.add("1.4"); // -source 1.5 not supported yet by jikes, so use the highest possible version

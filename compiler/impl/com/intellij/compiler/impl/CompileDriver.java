@@ -6,6 +6,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.*;
 import com.intellij.compiler.make.CacheCorruptedException;
@@ -1516,6 +1517,7 @@ public class CompileDriver {
         continue; // no need to check one-module chunks
       }
       ProjectJdk jdk = null;
+      LanguageLevel languageLevel = null;
       for (final Module module : chunkModules) {
         final ProjectJdk moduleJdk = ModuleRootManager.getInstance(module).getJdk();
         if (jdk == null) {
@@ -1523,7 +1525,17 @@ public class CompileDriver {
         }
         else {
           if (!jdk.equals(moduleJdk)) {
-            showCyclicModulesHaveDifferentJdksError(chunkModules.iterator());
+            showCyclicModulesHaveDifferentJdksError(chunkModules.toArray(new Module[chunkModules.size()]));
+            return false;
+          }
+        }
+
+        LanguageLevel moduleLanguageLevel = module.getLanguageLevel();
+        if (languageLevel == null) {
+          languageLevel = moduleLanguageLevel;
+        } else {
+          if (!languageLevel.equals(moduleLanguageLevel)) {
+            showCyclicModulesHaveDifferentLanguageLevel(chunkModules.toArray(new Module[chunkModules.size()]));
             return false;
           }
         }
@@ -1538,21 +1550,31 @@ public class CompileDriver {
     return J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, scopeModules, true);
   }
 
-  private void showCyclicModulesHaveDifferentJdksError(Iterator<Module> modulesIterator) {
-    String moduleNameToSelect = null;
+  private void showCyclicModulesHaveDifferentLanguageLevel(Module[] modulesInChunk) {
+    LOG.assertTrue(modulesInChunk.length > 0);
+    String moduleNameToSelect = modulesInChunk[0].getName();
+    final StringBuffer moduleNames = getModulesString(modulesInChunk);
+    Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.language.level", moduleNames.toString()), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+    showConfigurationDialog(moduleNameToSelect, null);
+  }
+
+  private void showCyclicModulesHaveDifferentJdksError(Module[] modulesInChunk) {
+    LOG.assertTrue(modulesInChunk.length > 0);
+    String moduleNameToSelect = modulesInChunk[0].getName();
+    final StringBuffer moduleNames = getModulesString(modulesInChunk);
+    Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames.toString()), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+    showConfigurationDialog(moduleNameToSelect, null);
+  }
+
+  private StringBuffer getModulesString(Module[] modulesInChunk) {
     final StringBuffer moduleNames = new StringBuffer();
-    while (modulesIterator.hasNext()) {
-      final Module module = modulesIterator.next();
-      if (moduleNameToSelect == null) {
-        moduleNameToSelect = module.getName();
-      }
+    for (Module module : modulesInChunk) {
       if (moduleNames.length() > 0) {
         moduleNames.append("\n");
       }
       moduleNames.append("\"").append(module.getName()).append("\"");
     }
-    Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames.toString()), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-    showConfigurationDialog(moduleNameToSelect, null);
+    return moduleNames;
   }
 
   private static boolean hasSources(Module module, boolean checkTestSources) {

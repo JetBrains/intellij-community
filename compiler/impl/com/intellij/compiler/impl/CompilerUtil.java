@@ -12,9 +12,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -181,13 +179,13 @@ public class CompilerUtil {
     }
   }
 
-  public static void addSourceCommandLineSwitch(final ProjectJdk jdk, final Project project, @NonNls final List<String> commandLine) {
+  public static void addSourceCommandLineSwitch(final ProjectJdk jdk, LanguageLevel chunkLanguageLevel, @NonNls final List<String> commandLine) {
     final String versionString = jdk.getVersionString();
     if (versionString == null || "".equals(versionString)) {
       throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
     }
 
-    final LanguageLevel applicableLanguageLevel = getApplicableLanguageLevel(versionString, project);
+    final LanguageLevel applicableLanguageLevel = getApplicableLanguageLevel(versionString, chunkLanguageLevel);
     if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_5)) {
       commandLine.add("-source");
       commandLine.add("1.5");
@@ -205,9 +203,7 @@ public class CompilerUtil {
     }
   }
 
-  public static LanguageLevel getApplicableLanguageLevel(String versionString, final Project project) {
-    LanguageLevel languageLevel = ProjectRootManagerEx.getInstanceEx(project).getLanguageLevel();
-
+  public static LanguageLevel getApplicableLanguageLevel(String versionString, LanguageLevel languageLevel) {
     final boolean isVersion1_5 = isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0") || isOfVersion(versionString, "1.6.");
     if (LanguageLevel.JDK_1_5.equals(languageLevel)) {
       if (!isVersion1_5) {

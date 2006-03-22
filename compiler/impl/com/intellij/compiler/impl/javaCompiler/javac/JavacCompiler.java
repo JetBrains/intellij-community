@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.compiler.JavacRunner;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -189,7 +190,8 @@ public class JavacCompiler extends ExternalCompiler {
       commandLine.add(JAVAC_MAIN_CLASS);
     }
 
-    CompilerUtil.addSourceCommandLineSwitch(jdk, myProject, commandLine);
+    LanguageLevel languageLevel = chunk.getLanguageLevel();
+    CompilerUtil.addSourceCommandLineSwitch(jdk, languageLevel, commandLine);
 
     commandLine.add("-verbose");
 

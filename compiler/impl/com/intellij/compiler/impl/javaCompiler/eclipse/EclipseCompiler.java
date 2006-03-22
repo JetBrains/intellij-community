@@ -136,7 +136,7 @@ public class EclipseCompiler extends ExternalCompiler {
                                     final boolean useTempFile,
                                     boolean quoteBootClasspath) throws IOException {
     final ProjectJdk jdk = chunk.getJdk();
-    CompilerUtil.addSourceCommandLineSwitch(jdk, myProject, commandLine);
+    CompilerUtil.addSourceCommandLineSwitch(jdk, chunk.getLanguageLevel(), commandLine);
 
     final String bootCp = chunk.getCompilationBootClasspath();
 
