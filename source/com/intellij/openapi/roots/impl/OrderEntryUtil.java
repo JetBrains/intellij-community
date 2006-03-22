@@ -5,6 +5,8 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 
 import java.util.Collection;
@@ -12,14 +14,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class OrderEntryUtil {
-  public static Collection<OrderEntry> getDependentOrderEntries(ModuleRootModel modifiableModel) {
+  public static Collection<OrderEntry> getDependentOrderEntries(ModuleRootModel rootModel) {
     HashSet<Module> processedModules = new HashSet<Module>();
-    processedModules.add(modifiableModel.getModule());
-    return getDependentOrderEntries(modifiableModel,processedModules);
+    processedModules.add(rootModel.getModule());
+    return getDependentOrderEntries(rootModel,processedModules);
   }
-  private static Collection<OrderEntry> getDependentOrderEntries(ModuleRootModel modifiableModel, Set<Module> processedModules) {
-    final Set<OrderEntry> orderEntries = modifiableModel.processOrder(new CollectDependentOrderEntries(processedModules), new HashSet<OrderEntry>());
-    return orderEntries;
+  private static Collection<OrderEntry> getDependentOrderEntries(ModuleRootModel rootModel, Set<Module> processedModules) {
+    return rootModel.processOrder(new CollectDependentOrderEntries(processedModules), new HashSet<OrderEntry>());
   }
 
   private static class CollectDependentOrderEntries extends RootPolicy<Set<OrderEntry>> {
@@ -68,5 +69,26 @@ public class OrderEntryUtil {
       return Comparing.equal(jdkOrderEntry1.getModule(), jdkOrderEntry2.getModule());
     }
     return false;
+  }
+
+  public static boolean equals(Library library1, Library library2) {
+    if (library1 == library2) return true;
+    if (library1 == null || library2 == null) return false;
+
+    final LibraryTable table = library1.getTable();
+    if (table != null) {
+      if (library2.getTable() != table) return false;
+      final String name = library1.getName();
+      return name != null && name.equals(library2.getName());
+    }
+
+    if (library2.getTable() != null) return false;
+
+    for (OrderRootType type : OrderRootType.ALL_TYPES) {
+      if (!Comparing.equal(library1.getUrls(type), library2.getUrls(type))) {
+        return false;
+      }
+    }
+    return true;
   }
 }
