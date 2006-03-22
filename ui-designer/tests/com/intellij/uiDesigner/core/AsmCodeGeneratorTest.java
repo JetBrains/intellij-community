@@ -104,7 +104,7 @@ public class AsmCodeGeneratorTest extends TestCase {
 
   public void testIncompatibleTypeField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestIncompatibleTypeField.form", "BindingTest.class");
-    assertEquals("Cannot bind: Incompatible types. Cannot assign javax.swing.JPanel to field BindingTest.myStringField", generator.getErrors() [0].getErrorMessage());
+    assertEquals("Cannot bind: Incompatible types: Cannot assign javax.swing.JPanel to field BindingTest.myStringField", generator.getErrors() [0].getErrorMessage());
   }
 
   public void testGridLayout() throws Exception {
