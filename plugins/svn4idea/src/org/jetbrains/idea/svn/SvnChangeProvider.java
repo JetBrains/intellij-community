@@ -14,6 +14,8 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
+import java.util.List;
+
 /**
  * @author max
  */
@@ -38,6 +40,11 @@ public class SvnChangeProvider implements ChangeProvider {
     catch (SVNException e) {
       // Ignore
     }
+  }
+
+  public List<VcsException> rollbackChanges(List<Change> changes) {
+    //TODO
+    throw new UnsupportedOperationException();    
   }
 
   private void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, boolean recursively)
