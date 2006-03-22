@@ -9,11 +9,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.*;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,8 +42,29 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   public List<VcsException> rollbackChanges(List<Change> changes) {
-    //TODO
-    throw new UnsupportedOperationException();    
+    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    for (Change change : changes) {
+      final File ioFile = ChangesUtil.getFilePath(change).getIOFile();
+      try {
+        SVNWCClient client = myVcs.createWCClient();
+        client.setEventHandler(new ISVNEventHandler() {
+          public void handleEvent(SVNEvent event, double progress) {
+            if (event.getAction() == SVNEventAction.FAILED_REVERT) {
+              exceptions.add(new VcsException("Revert failed"));
+            }
+          }
+
+          public void checkCancelled() {
+          }
+        });
+        client.doRevert(ioFile, false);
+      }
+      catch (SVNException e) {
+        exceptions.add(new VcsException(e));
+      }
+    }
+
+    return exceptions;
   }
 
   private void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, boolean recursively)
