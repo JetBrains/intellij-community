@@ -29,6 +29,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+import java.util.HashMap;
+
 public class StaticInheritanceInspection extends ClassInspection {
 
     public String getGroupDisplayName() {
@@ -56,18 +59,18 @@ public class StaticInheritanceInspection extends ClassInspection {
                 throws IncorrectOperationException {
             final PsiJavaCodeReferenceElement referenceElement =
                     (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
-            final String referencedClassName = referenceElement.getText();
             final PsiClass iface = (PsiClass)referenceElement.resolve();
             assert iface != null;
             final PsiField[] allFields = iface.getAllFields();
 
             final PsiClass implementingClass =
                     PsiTreeUtil.getParentOfType(referenceElement,
-                            PsiClass.class);
+                                                PsiClass.class);
             final PsiManager manager = referenceElement.getManager();
             final PsiSearchHelper searchHelper = manager.getSearchHelper();
             assert implementingClass != null;
             final SearchScope searchScope = implementingClass.getUseScope();
+            Map<PsiReferenceExpression, PsiField> refsToRebind = new HashMap<PsiReferenceExpression, PsiField>();
             for (final PsiField field : allFields) {
                 final PsiReference[] references =
                         searchHelper.findReferences(field, searchScope, false);
@@ -78,35 +81,20 @@ public class StaticInheritanceInspection extends ClassInspection {
                     }
                     final PsiReferenceExpression reference =
                             (PsiReferenceExpression)reference1;
-                    if (reference.isQualified()) {
-                        final PsiExpression qualifier =
-                                reference.getQualifierExpression();
-                        final String referenceName =
-                                reference.getReferenceName();
-                        if (qualifier instanceof PsiReferenceExpression) {
-                            final PsiElement referent =
-                                    ((PsiReference)qualifier).resolve();
-                            if (referent != null && !referent.equals(iface)) {
-                                replaceExpression(reference,
-                                        referencedClassName + '.' +
-                                                referenceName);
-                            }
-                        }
-                        else {
-                            replaceExpression(reference,
-                                    referencedClassName + '.' +
-                                            referenceName);
-                        }
+                    if(isQuickFixOnReadOnlyFile(reference)){
+                        continue;
                     }
-                    else {
-                        final String referenceText = reference.getText();
-                        replaceExpression(reference,
-                                referencedClassName + '.' +
-                                        referenceText);
-                    }
+                  refsToRebind.put(reference, field);
                 }
             }
             deleteElement(referenceElement);
+          for (PsiReferenceExpression reference : refsToRebind.keySet()) {
+            PsiField field = refsToRebind.get(reference);
+            PsiReferenceExpression qualified =
+              (PsiReferenceExpression)field.getManager().getElementFactory().createExpressionFromText("xxx." + reference.getText(), reference);
+            PsiReferenceExpression newReference = (PsiReferenceExpression)reference.replace(qualified);
+            ((PsiReferenceExpression)newReference.getQualifierExpression()).bindToElement(field.getContainingClass());
+          }
         }
     }
 

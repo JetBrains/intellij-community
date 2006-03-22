@@ -151,7 +151,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         }
     }
 
-    private static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement){
+    protected static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement){
         final PsiFile containingPsiFile = problemElement.getContainingFile();
         if(containingPsiFile == null){
             return false;
