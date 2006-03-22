@@ -37,8 +37,8 @@ public class JavaDocInfoComponent extends JPanel {
     private final JavaDocManager myManager;
     private PsiElement myElement;
 
-    private Stack myBackStack = new Stack();
-    private Stack myForwardStack = new Stack();
+    private Stack<Context> myBackStack = new Stack<Context>();
+    private Stack<Context> myForwardStack = new Stack<Context>();
     private ActionToolbar myToolBar;
     private boolean myIsEmpty;
     private boolean myIsShown;
@@ -65,7 +65,7 @@ public class JavaDocInfoComponent extends JPanel {
 
     private LightweightHint myHint;
 
-    private HashMap myKeyboardActions = new HashMap(); // KeyStroke --> ActionListener
+    private HashMap<KeyStroke,ActionListener> myKeyboardActions = new HashMap<KeyStroke, ActionListener>(); // KeyStroke --> ActionListener
 
     public boolean requestFocusInWindow() {
         return myScrollPane.requestFocusInWindow();
@@ -95,7 +95,7 @@ public class JavaDocInfoComponent extends JPanel {
 
             protected void processKeyEvent(KeyEvent e) {
                 KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
-                ActionListener listener = (ActionListener) myKeyboardActions.get(keyStroke);
+                ActionListener listener = myKeyboardActions.get(keyStroke);
                 if (listener != null) {
                     listener.actionPerformed(new ActionEvent(JavaDocInfoComponent.this, 0, ""));
                     e.consume();
@@ -286,7 +286,7 @@ public class JavaDocInfoComponent extends JPanel {
 
     private void goBack() {
         if (myBackStack.isEmpty()) return;
-        Context context = (Context) myBackStack.pop();
+        Context context = myBackStack.pop();
         myForwardStack.push(saveContext());
         restoreContext(context);
         updateControlState();
@@ -294,7 +294,7 @@ public class JavaDocInfoComponent extends JPanel {
 
     private void goForward() {
         if (myForwardStack.isEmpty()) return;
-        Context context = (Context) myForwardStack.pop();
+        Context context = myForwardStack.pop();
         myBackStack.push(saveContext());
         restoreContext(context);
         updateControlState();

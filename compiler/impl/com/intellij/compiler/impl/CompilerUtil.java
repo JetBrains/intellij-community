@@ -203,7 +203,7 @@ public class CompilerUtil {
     }
   }
 
-  public static LanguageLevel getApplicableLanguageLevel(String versionString, LanguageLevel languageLevel) {
+  public static @NotNull LanguageLevel getApplicableLanguageLevel(String versionString, @NotNull LanguageLevel languageLevel) {
     final boolean isVersion1_5 = isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0") || isOfVersion(versionString, "1.6.");
     if (LanguageLevel.JDK_1_5.equals(languageLevel)) {
       if (!isVersion1_5) {
