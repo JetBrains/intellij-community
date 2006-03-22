@@ -4,30 +4,27 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspElementType;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLocalVariable, PsiVariableEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl");
@@ -43,6 +40,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     myCachedName = null;
   }
 
+  @NotNull
   public final PsiIdentifier getNameIdentifier() {
     return (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.NAME);
   }
@@ -98,7 +96,6 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
 
     PsiType type = getType();
-    if (type == null) return null;
     // javac rejects all non primitive and non String constants, although JLS states constants "variables whose initializers are constant expressions"
     if (!(type instanceof PsiPrimitiveType) && !type.equalsToText("java.lang.String")) return null;
 

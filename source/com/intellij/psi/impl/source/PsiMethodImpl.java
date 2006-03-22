@@ -196,7 +196,8 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
       PsiTypeElement typeElement = getReturnTypeElement();
       if (typeElement == null) return null;
-      return SharedImplUtil.getType(typeElement, getParameterList());
+      PsiParameterList parameterList = getParameterList();
+      return SharedImplUtil.getType(typeElement, parameterList, parameterList);
     }
     else{
       if (myCachedType != null) {

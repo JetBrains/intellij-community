@@ -5,7 +5,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
@@ -121,9 +120,11 @@ public class SharedImplUtil {
   public static PsiType getType(PsiVariable variable) {
     PsiTypeElement typeElement = variable.getTypeElement();
     PsiIdentifier nameIdentifier = variable.getNameIdentifier();
-    return getType(typeElement, nameIdentifier);
+    return getType(typeElement, nameIdentifier, variable);
   }
-  public static PsiType getType(PsiTypeElement typeElement, PsiElement anchor) {
+
+  //context == null means no detached type should be created
+  public static PsiType getType(PsiTypeElement typeElement, PsiElement anchor, PsiElement context) {
     int arrayCount = 0;
     ASTNode name = SourceTreeToPsiMap.psiElementToTree(anchor);
     for (ASTNode child = name.getTreeNext(); child != null; child = child.getTreeNext()) {
@@ -140,9 +141,9 @@ public class SharedImplUtil {
         break;
       }
     }
-    PsiType type;//=typeElement.getType();
-    if (typeElement instanceof PsiTypeElementImpl) {
-      type = ((PsiTypeElementImpl)typeElement).getDetachedType(anchor);
+    PsiType type;
+    if (context != null && typeElement instanceof PsiTypeElementImpl) {
+      type = ((PsiTypeElementImpl)typeElement).getDetachedType(context);
     }
     else {
       type = typeElement.getType();
