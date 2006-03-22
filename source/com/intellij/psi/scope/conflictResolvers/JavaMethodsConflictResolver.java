@@ -113,6 +113,7 @@ outer:
     for (CandidateInfo info : conflicts) {
       if (info instanceof MethodCandidateInfo) {
         final PsiMethod method = ((MethodCandidateInfo)info).getElement();
+        if (method.isVarArgs()) return;
         if (method.getParameterList().getParameters().length == argumentsCount) {
           parametersNumberMatch = true;
         }
@@ -212,6 +213,10 @@ outer:
     final PsiParameter[] params2 = method2.getParameterList().getParameters();
 
     PsiExpression[] args = myArgumentsList.getExpressions();
+
+    //check again, now that applicability check has been performed
+    if (params1.length == args.length && params2.length != args.length) return Specifics.TRUE;
+    if (params2.length == args.length && params1.length != args.length) return Specifics.FALSE;
 
     for(int i = 0; i < args.length; i++){
       if (i >= params1.length || i >= params2.length) break;
