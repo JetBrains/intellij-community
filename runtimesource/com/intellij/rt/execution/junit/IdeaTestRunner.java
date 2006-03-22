@@ -1,9 +1,43 @@
 package com.intellij.rt.execution.junit;
 
-public interface IdeaTestRunner {
-  void clearStatus();
+import junit.framework.Test;
+import junit.framework.TestResult;
+import junit.textui.TestRunner;
 
-  Class loadSuiteClass(String suiteClassName) throws ClassNotFoundException;
+import java.io.PrintStream;
 
-  void runFailed(String message);
+public class IdeaTestRunner extends TestRunner {
+  public IdeaTestRunner(PrintStream writer) {
+    super(writer);
+  }
+
+  public static int startRunnerWithArgs(IdeaTestRunner testRunner, String[] args) {
+    try {
+      TestResult result = testRunner.start(args);
+      if (!result.wasSuccessful()) {
+        return -1;
+      }
+      return 0;
+    }
+    catch (Exception e) {
+      e.printStackTrace(System.err);
+      return -2;
+    }
+  }
+
+  public Test getTest(String suiteClassName) {
+    return TestRunnerUtil.getTestImpl(this, suiteClassName);
+  }
+
+  public void clearStatus() {
+    super.clearStatus();
+  }
+
+  public Class loadSuiteClass(String suiteClassName) throws ClassNotFoundException {
+    return super.loadSuiteClass(suiteClassName);
+  }
+
+  public void runFailed(String message) {
+    super.runFailed(message);
+  }
 }

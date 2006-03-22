@@ -3,11 +3,10 @@ package com.intellij.rt.execution.junit2;
 import com.intellij.rt.execution.junit2.segments.OutputObjectRegistryImpl;
 import com.intellij.rt.execution.junit2.segments.Packet;
 import com.intellij.rt.execution.junit2.segments.PacketProcessor;
-import com.intellij.rt.execution.junit2.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit2.states.PoolOfTestStates;
 import junit.framework.*;
 
-public class TestResultsSender implements TestListener, TestSkippingListener, PoolOfDelimiters {
+public class TestResultsSender implements TestListener, TestSkippingListener {
   private OutputObjectRegistryImpl myRegistry;
   private PacketProcessor myErr;
   private TestMeter myCurrentTestMeter;

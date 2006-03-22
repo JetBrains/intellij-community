@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 
-public class MethodLineLocation extends MethodLocation<PsiMethod> {
+public class MethodLineLocation extends MethodLocation {
   private final int myLineNumber;
 
   public MethodLineLocation(final Project project, final PsiMethod method, final Location<PsiClass> classLocation, final int lineNumber) {

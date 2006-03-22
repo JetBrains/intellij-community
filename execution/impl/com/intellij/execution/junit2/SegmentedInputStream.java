@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 
-public class SegmentedInputStream extends InputStream implements SegmentedStream {
+public class SegmentedInputStream extends InputStream {
   private PushReader mySourceStream;
   private PacketProcessor myEventsDispatcher;
   private int myStartupPassed = 0;
@@ -20,20 +20,19 @@ public class SegmentedInputStream extends InputStream implements SegmentedStream
   }
 
   public int read() throws IOException {
-    if (myStartupPassed < STARTUP_MESSAGE.length()) {
+    if (myStartupPassed < SegmentedStream.STARTUP_MESSAGE.length()) {
       return rawRead();
     } else {
-      final int result = findNextSymbol();
-      return result;
+      return findNextSymbol();
     }
   }
 
   private int rawRead() throws IOException {
-    while(myStartupPassed < STARTUP_MESSAGE.length()) {
+    while(myStartupPassed < SegmentedStream.STARTUP_MESSAGE.length()) {
       final int aChar = readNext();
-      if (aChar != STARTUP_MESSAGE.charAt(myStartupPassed)) {
+      if (aChar != SegmentedStream.STARTUP_MESSAGE.charAt(myStartupPassed)) {
         mySourceStream.pushBack(aChar);
-        mySourceStream.pushBack(STARTUP_MESSAGE.substring(0, myStartupPassed).toCharArray());
+        mySourceStream.pushBack(SegmentedStream.STARTUP_MESSAGE.substring(0, myStartupPassed).toCharArray());
         myStartupPassed = 0;
         return readNext();
       }
@@ -46,7 +45,7 @@ public class SegmentedInputStream extends InputStream implements SegmentedStream
     int nextByte;
     while (true) {
       nextByte = readNext();
-      if (nextByte != SPECIAL_SYMBOL) break;
+      if (nextByte != SegmentedStream.SPECIAL_SYMBOL) break;
       final boolean packetRead = readControlSequence();
       if (!packetRead) break;
     }
@@ -54,8 +53,8 @@ public class SegmentedInputStream extends InputStream implements SegmentedStream
   }
 
   private boolean readControlSequence() throws IOException {
-    for (int idx = 1; idx < MARKER_PREFIX.length(); idx++) {
-      if (readNext() != MARKER_PREFIX.charAt(idx)) {
+    for (int idx = 1; idx < SegmentedStream.MARKER_PREFIX.length(); idx++) {
+      if (readNext() != SegmentedStream.MARKER_PREFIX.charAt(idx)) {
         return false;
       }
     }
@@ -71,7 +70,7 @@ public class SegmentedInputStream extends InputStream implements SegmentedStream
   private char[] readMarker() throws IOException {
     int nextRead = '0';
     final StringBuffer buffer = new StringBuffer();
-    while (nextRead != ' ' && nextRead != SPECIAL_SYMBOL) {
+    while (nextRead != ' ' && nextRead != SegmentedStream.SPECIAL_SYMBOL) {
       buffer.append((char)nextRead);
       nextRead = readNext();
     }

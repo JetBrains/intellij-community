@@ -41,21 +41,23 @@ public class TestAllInPackage2 extends TestSuite {
     System.out.println(Integer.toString(testClassCount) +  " test "+ classString + " found in package \"" + packageName + "\"\n");
   }
 
-  private Test getTest(Class testCaseClass) {
+  private static Test getTest(Class testClass) {
     try {
-      Method suiteMethod = testCaseClass.getMethod("suite", new Class[0]);
+      Method suiteMethod = testClass.getMethod("suite", new Class[0]);
       Test test = (Test)suiteMethod.invoke(null, new Class[0]);
-      return attachSuiteInfo(test, testCaseClass);
-    } catch (NoSuchMethodException e) {
-      return new TestSuite(testCaseClass);
-    } catch (Exception e) {
+      return attachSuiteInfo(test, testClass);
+    }
+    catch (NoSuchMethodException e) {
+      return TestRunnerUtil.createTestFromTestClass(testClass);
+    }
+    catch (Exception e) {
       System.err.println("Failed to execute suite ()");
       e.printStackTrace();
     }
     return null;
   }
 
-  private Test attachSuiteInfo(Test test, Class testClass) {
+  private static Test attachSuiteInfo(Test test, Class testClass) {
     if (test instanceof TestSuite) {
       TestSuite testSuite = (TestSuite)test;
       if (testSuite.getName() == null)

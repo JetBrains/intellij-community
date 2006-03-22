@@ -4,77 +4,65 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
-public class SegmentedOutputStream extends OutputStream implements SegmentedStream, PacketProcessor {
-  private final PrintStreamProvider myPrintStreamProvider;
+public class SegmentedOutputStream extends OutputStream implements PacketProcessor {
+  private final PrintStream myPrintStream;
   private boolean myStarted = false;
 
-  public SegmentedOutputStream(PrintStreamProvider provider) {
-    myPrintStreamProvider = provider;
+  public SegmentedOutputStream(PrintStream transportStream) {
+    myPrintStream = transportStream;
     try {
       flush();
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       throw new RuntimeException(e.getLocalizedMessage());
     }
   }
 
-  public SegmentedOutputStream(PrintStream transportStream) {
-    this (new SimplePrintStreamProvider(transportStream));
-  }
-
   public synchronized void write(int b) throws IOException {
-    if (b == SPECIAL_SYMBOL && myStarted)
-      writeNext(b);
+    if (b == SegmentedStream.SPECIAL_SYMBOL && myStarted) writeNext(b);
     writeNext(b);
     flush();
   }
 
-  public synchronized void write(byte b[], int off, int len) throws IOException {
+  public synchronized void write(byte[] b, int off, int len) throws IOException {
     super.write(b, off, len);
   }
 
   public synchronized void flush() throws IOException {
-    getTransportStream().flush();
+    myPrintStream.flush();
   }
 
   public synchronized void close() throws IOException {
-    getTransportStream().close();
+    myPrintStream.close();
   }
 
   private void writeNext(int b) {
-    try {
-      getTransportStream().write(b);
-    } catch (IOException e) {
-      throw new RuntimeException(e.getMessage());
-    }
+    myPrintStream.write(b);
   }
 
   public synchronized void processPacket(String packet) {
     if (!myStarted)
       sendStart();
-    writeNext(MARKER_PREFIX);
+    writeNext(SegmentedStream.MARKER_PREFIX);
     String encodedPacket = Packet.encode(packet);
-    writeNext(String.valueOf(encodedPacket.length())+LENGTH_DELIMITER+encodedPacket);
+    writeNext(String.valueOf(encodedPacket.length())+SegmentedStream.LENGTH_DELIMITER+encodedPacket);
   }
 
   private void writeNext(String string) {
     try {
-      getTransportStream().write(string.getBytes());
+      myPrintStream.write(string.getBytes());
     } catch (IOException e) {
       throw new RuntimeException(e.getMessage());
     }
   }
 
   public void sendStart() {
-    writeNext(STARTUP_MESSAGE);
+    writeNext(SegmentedStream.STARTUP_MESSAGE);
     myStarted = true;
   }
 
   public void beNotStarted() {
     myStarted = false;
-  }
-
-  private OutputStream getTransportStream() {
-    return myPrintStreamProvider.getOutputStream();
   }
 
   public static interface PrintStreamProvider {

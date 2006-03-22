@@ -103,7 +103,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
       setServlet(servlet != null && psiClass.isInheritor(servlet, true));
     }
     if (!isApplet() && !isServlet()) {
-      setTestCase(JUnitUtil.isTestCaseClass(psiClass));
+      setTestCase(JUnitUtil.isTestClass(psiClass));
       for (RefClass refBase : getBaseClasses()) {
         ((RefClassImpl)refBase).setTestCase(true);
       }

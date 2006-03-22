@@ -1,6 +1,6 @@
 package com.intellij.rt.execution.junit2;
 
-import com.intellij.rt.execution.junit.TextTestRunner2;
+import com.intellij.rt.execution.junit.IdeaTestRunner;
 import com.intellij.rt.execution.junit2.segments.SegmentedOutputStream;
 import junit.textui.TestRunner;
 
@@ -85,16 +85,16 @@ public class JUnitStarter {
     new TestRunner().setPrinter(new IdeaJUnitAgent.MockResultPrinter());
   }
 
-  public static int prepareStreamsAndStart(String[] args, SegmentedOutputStream out, SegmentedOutputStream err) {
+  private static int prepareStreamsAndStart(String[] args, SegmentedOutputStream out, SegmentedOutputStream err) {
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
     int result;
     try {
       System.setOut(new PrintStream(out));
       System.setErr(new PrintStream(err));
-      SegmentedStreamsUser testRunner = (SegmentedStreamsUser) getAgentClass().newInstance();
+      IdeaJUnitAgent testRunner = (IdeaJUnitAgent) getAgentClass().newInstance();
       testRunner.setStreams(out, err);
-      result = TextTestRunner2.startRunnerWithArgs((TextTestRunner2) testRunner, args);
+      result = IdeaTestRunner.startRunnerWithArgs(testRunner, args);
     } catch (Exception e) {
       e.printStackTrace(System.err);
       result = -2;

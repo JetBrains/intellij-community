@@ -3,6 +3,7 @@ package com.intellij.rt.execution.junit;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import junit.framework.JUnit4TestAdapter;
 import junit.runner.BaseTestRunner;
 import junit.textui.TestRunner;
 
@@ -31,24 +32,27 @@ public class TestRunnerUtil {
     if (suiteClassName.startsWith("@")) {
       try {
         BufferedReader reader = new BufferedReader(new FileReader(suiteClassName.substring(1)));
-        String packageName = reader.readLine();
-        Vector vector = new Vector();
-        String line;
-        while ((line = reader.readLine()) != null) {
-          vector.addElement(line);
+        String packageName;
+        Vector vector;
+        try {
+          packageName = reader.readLine();
+          vector = new Vector();
+          String line;
+          while ((line = reader.readLine()) != null) {
+            vector.addElement(line);
+          }
         }
-        reader.close();
+        finally {
+          reader.close();
+        }
 
         // toArray cannot be used here because the class must be compilable with 1.1
-
-
         String[] classNames = new String[vector.size()];
         for (int i = 0; i < classNames.length; i++) {
           classNames[i] = (String)vector.elementAt(i);
         }
 
-        TestAllInPackage2 testPackage = new TestAllInPackage2(packageName, classNames);
-        return testPackage;
+        return new TestAllInPackage2(packageName, classNames);
       }
       catch (Exception e) {
         runner.runFailed(MessageFormat.format(ourBundle.getString("junit.runner.error"), new Object[] {e.toString()}));
@@ -121,7 +125,7 @@ public class TestRunnerUtil {
     catch (Exception e) {
       // try to extract a test suite automatically
       runner.clearStatus();
-      return new TestSuite(testClass);
+      return createTestFromTestClass(testClass);
     }
     if (! Modifier.isStatic(suiteMethod.getModifiers())) {
       runFailed(ourBundle.getString("junit.suite.must.be.static"));
@@ -146,6 +150,15 @@ public class TestRunnerUtil {
 
     runner.clearStatus();
     return test;
+  }
+
+  public static Test createTestFromTestClass(final Class testClass) {
+    if (TestCase.class.isAssignableFrom(testClass)) {
+      return new TestSuite(testClass);
+    }
+    else {
+      return new JUnit4TestAdapter(testClass);
+    }
   }
 
   private static void runFailed(String message) {

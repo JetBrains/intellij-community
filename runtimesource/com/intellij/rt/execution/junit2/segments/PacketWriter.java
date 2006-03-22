@@ -1,6 +1,6 @@
 package com.intellij.rt.execution.junit2.segments;
 
-public class PacketWriter implements PoolOfDelimiters {
+public class PacketWriter {
   private StringBuffer myBody = new StringBuffer();
 
   public void appendString(String string) {
@@ -9,7 +9,7 @@ public class PacketWriter implements PoolOfDelimiters {
 
   public void appendLong(long integer) {
     myBody.append(integer);
-    myBody.append(INTEGER_DELIMITER);
+    myBody.append(PoolOfDelimiters.INTEGER_DELIMITER);
   }
 
   public void appendLimitedString(String message) {

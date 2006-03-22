@@ -6,18 +6,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 
 import java.util.Iterator;
 
 // Author: dyoma
 
-public class MethodLocation<E extends PsiElement> extends Location<E> {
+public class MethodLocation extends Location<PsiMethod> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.info.MethodLocation");
   private final Project myProject;
-  private final E myMethod;
+  private final PsiMethod myMethod;
   private final Location<PsiClass> myClassLocation;
 
-  public MethodLocation(final Project project, final E method, final Location<PsiClass> classLocation) {
+  public MethodLocation(final Project project, final PsiMethod method, final Location<PsiClass> classLocation) {
     LOG.assertTrue(method != null);
     LOG.assertTrue(classLocation != null);
     LOG.assertTrue(project != null);
@@ -26,12 +27,12 @@ public class MethodLocation<E extends PsiElement> extends Location<E> {
     myClassLocation = classLocation;
   }
 
-  public static <T extends PsiElement> MethodLocation<T> elementInClass(final T psiElement, final PsiClass psiClass) {
+  public static MethodLocation elementInClass(final PsiMethod psiElement, final PsiClass psiClass) {
     final Location<PsiClass> classLocation = PsiLocation.fromPsiElement(psiClass);
-    return new MethodLocation<T>(classLocation.getProject(), psiElement, classLocation);
+    return new MethodLocation(classLocation.getProject(), psiElement, classLocation);
   }
 
-  public E getPsiElement() {
+  public PsiMethod getPsiElement() {
     return myMethod;
   }
 
@@ -43,21 +44,19 @@ public class MethodLocation<E extends PsiElement> extends Location<E> {
     return myClassLocation.getPsiElement();
   }
 
-  public <Ancestor extends PsiElement> Iterator<Location<? extends Ancestor>> getAncestors(final Class<Ancestor> ancestorClass,
+  public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass,
                                                                                  final boolean strict) {
-    final Iterator<Location<? extends Ancestor>> fromClass = myClassLocation.getAncestors(ancestorClass, false);
+    final Iterator<Location<T>> fromClass = myClassLocation.getAncestors(ancestorClass, false);
     if (strict) return fromClass;
-    final Location<Ancestor> thisLocation = (Location<Ancestor>)(Location)this;
-    return new Iterator<Location<? extends Ancestor>>() {
+    final Location<T> thisLocation = (Location<T>)(Location)this;
+    return new Iterator<Location<T>>() {
       private boolean myFirstStep = ancestorClass.isInstance(myMethod);
       public boolean hasNext() {
         return myFirstStep || fromClass.hasNext();
       }
 
-      public Location<? extends Ancestor> next() {
-        final Location<? extends Ancestor> location;
-        if (myFirstStep) {location = thisLocation;}
-        else {location = fromClass.next();}
+      public Location<T> next() {
+        final Location<T> location = myFirstStep ? thisLocation : fromClass.next();
         myFirstStep = false;
         return location;
       }

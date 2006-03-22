@@ -6,7 +6,7 @@ import junit.runner.BaseTestRunner;
 import java.io.*;
 import java.util.Vector;
 
-public class Packet extends PacketWriter implements PoolOfKnownObjects {
+public class Packet extends PacketWriter {
   private OutputObjectRegistry myRegistry;
   private PacketProcessor myTransport;
   public static final char ourSpecialSymbol = '$';
@@ -23,12 +23,12 @@ public class Packet extends PacketWriter implements PoolOfKnownObjects {
   }
 
   public Packet addReference(String reference) {
-    appendString(reference + REFERENCE_END);
+    appendString(reference + PoolOfDelimiters.REFERENCE_END);
     return this;
   }
 
   public Packet switchInputTo(Test test) {
-    appendString(INPUT_COSUMER);
+    appendString(PoolOfDelimiters.INPUT_COSUMER);
     return addObject(test);
   }
 
@@ -47,7 +47,7 @@ public class Packet extends PacketWriter implements PoolOfKnownObjects {
   }
 
   public Packet setTestState(Test test, int state) {
-    return addString(CHANGE_STATE).addObject(test).addLong(state);
+    return addString(PoolOfDelimiters.CHANGE_STATE).addObject(test).addLong(state);
   }
 
   public Packet addLimitedString(String message) {
@@ -65,7 +65,7 @@ public class Packet extends PacketWriter implements PoolOfKnownObjects {
     return this;
   }
 
-  private String throwableToString(final Throwable throwable) {
+  private static String throwableToString(final Throwable throwable) {
     final String tostring = throwable.toString();
     return tostring != null ? tostring : throwable.getClass().getName();
   }

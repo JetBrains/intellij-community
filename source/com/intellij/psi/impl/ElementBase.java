@@ -2,9 +2,8 @@ package com.intellij.psi.impl;
 
 import com.intellij.ant.PsiAntElement;
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.ide.IconProvider;
+import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.IconUtilEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
@@ -129,8 +128,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (element.hasModifierProperty(PsiModifier.ABSTRACT) && !((PsiClass)element).isInterface()) {
         flags |= FLAGS_ABSTRACT;
       }
-      final PsiClass testClass = aClass.getManager().findClass("junit.framework.TestCase", aClass.getResolveScope());
-      if (testClass != null && InheritanceUtil.isInheritorOrSelf(aClass, testClass, true)) {
+      if (JUnitUtil.isTestClass(aClass)) {
         flags |= FLAGS_JUNIT_TEST;
       }
     }

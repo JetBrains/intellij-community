@@ -8,7 +8,7 @@ import junit.extensions.TestDecorator;
 
 import java.util.Hashtable;
 
-public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFactory, PoolOfDelimiters {
+public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFactory {
   private Hashtable myKnownKeys = new Hashtable();
   private int myLastIndex = 0;
   private PacketProcessor myMainTransport;
@@ -39,7 +39,7 @@ public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFac
   private String sendObject(Test test) {
     String key = String.valueOf(myLastIndex++);
     myKnownKeys.put(test, key);
-    Packet packet = createPacket().addString(OBJECT_PREFIX).addReference(key);
+    Packet packet = createPacket().addString(PoolOfDelimiters.OBJECT_PREFIX).addReference(key);
     addStringRepresentation(test, packet);
     packet.addLong(test.countTestCases());
     sendViaAllTransports(packet);

@@ -9,8 +9,7 @@ import junit.framework.TestSuite;
 import java.util.Enumeration;
 import java.util.Vector;
 
-public class TreeSender implements PoolOfDelimiters {
-
+public class TreeSender {
   private static void sendNode(Test test, Packet packet) {
     Vector testCases = getTestCasesOf(test);
     packet.addObject(test).addLong(testCases.size());
@@ -33,7 +32,7 @@ public class TreeSender implements PoolOfDelimiters {
 
   public static void sendSuite(OutputObjectRegistryImpl registry, Test suite) {
     Packet packet = registry.createPacket();
-    packet.addString(TREE_PREFIX);
+    packet.addString(PoolOfDelimiters.TREE_PREFIX);
     sendNode(suite, packet);
     packet.addString("\n");
     packet.send();

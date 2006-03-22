@@ -20,17 +20,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class Location<E extends PsiElement> {
   @NonNls public static final String LOCATION = "Location";
 
   public abstract E getPsiElement();
   public abstract Project getProject();
-  public abstract <Ancestor extends PsiElement> Iterator<Location<? extends Ancestor>> getAncestors(Class<Ancestor> ancestorClass, boolean strict);
+  public abstract <T extends PsiElement> Iterator<Location<T>> getAncestors(Class<T> ancestorClass, boolean strict);
 
   public OpenFileDescriptor getOpenFileDescriptor() {
     final E psiElement = getPsiElement();
@@ -42,15 +41,15 @@ public abstract class Location<E extends PsiElement> {
   }
 
   public <Ancestor extends PsiElement> Location<Ancestor> getParent(final Class<Ancestor> parentClass) {
-    final Iterator<Location<? extends PsiElement>> ancestors = getAncestors(PsiElement.class, true);
+    final Iterator<Location<PsiElement>> ancestors = getAncestors(PsiElement.class, true);
     if (!ancestors.hasNext()) return null;
     final Location<? extends PsiElement> parent = ancestors.next();
     if (parentClass.isInstance(parent.getPsiElement())) return (Location<Ancestor>)parent;
     return null;
   }
 
-  public <Ancestor extends PsiElement> Location<? extends Ancestor> getAncestorOrSelf(final Class<Ancestor> ancestorClass) {
-    final Iterator<Location<? extends Ancestor>> ancestors = getAncestors(ancestorClass, false);
+  public <T extends PsiElement> Location<T> getAncestorOrSelf(final Class<T> ancestorClass) {
+    final Iterator<Location<T>> ancestors = getAncestors(ancestorClass, false);
     if (!ancestors.hasNext()) return null;
     return ancestors.next();
   }

@@ -5,7 +5,7 @@ import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
 
-public class SegmentReader implements PoolOfDelimiters {
+public class SegmentReader {
   private final String myString;
   private final char[] myChars;
   private int myPosition = 0;
@@ -43,7 +43,7 @@ public class SegmentReader implements PoolOfDelimiters {
   }
 
   public int readInt() {
-    final String intString = upTo(INTEGER_DELIMITER);
+    final String intString = upTo(PoolOfDelimiters.INTEGER_DELIMITER);
     return Integer.parseInt(intString);
   }
 

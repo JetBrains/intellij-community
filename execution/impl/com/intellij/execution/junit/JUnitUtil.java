@@ -9,8 +9,6 @@ import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -36,7 +34,7 @@ public class JUnitUtil {
     if (!psiMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (psiMethod.isConstructor()) return false;
     final PsiType returnType = psiMethod.getReturnType();
-    if (!returnType.equalsToText(TEST_INTERFACE) && !returnType.equalsToText(TESTSUITE_CLASS)) return false;
+    if (returnType != null && !returnType.equalsToText(TEST_INTERFACE) && !returnType.equalsToText(TESTSUITE_CLASS)) return false;
     final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     return parameters.length == 0;
   }
@@ -73,7 +71,7 @@ public class JUnitUtil {
   public static boolean isTestMethod(final Location<? extends PsiMethod> location) {
     final Location<PsiClass> aClass = location.getParent(PsiClass.class);
     if (aClass == null) return false;
-    if (!isTestCaseClass(aClass)) return false;
+    if (!isTestClass(aClass)) return false;
     final PsiMethod psiMethod = location.getPsiElement();
     if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
@@ -106,23 +104,26 @@ public class JUnitUtil {
    * @param aClassLocation
    * @return true iff aClassLocation can be used as JUnit test class.
    */
-  public static boolean isTestCaseClass(final Location<PsiClass> aClassLocation) {
-    return isTestCaseClass(aClassLocation.getPsiElement());
+  public static boolean isTestClass(final Location<? extends PsiClass> aClassLocation) {
+    return isTestClass(aClassLocation.getPsiElement());
   }
 
-  public static boolean isTestCaseClass(final PsiClass psiClass) {
+  public static boolean isTestClass(final PsiClass psiClass) {
     if (!ExecutionUtil.isRunnableClass(psiClass)) return false;
     if (isTestCaseInheritor(psiClass)) return true;
 
-    final PsiMethod[] methods = psiClass.findMethodsByName(SUITE_METHOD, false);
-    for (int i = 0; i < methods.length; i++) {
-      final PsiMethod method = methods[i];
+    for (final PsiMethod method : psiClass.getMethods()) {
       if (isSuiteMethod(method)) return true;
+      if (isTestAnnotated(method)) return true;
     }
     return false;
   }
 
-  private static PsiClass getTestCaseClass(final Location location) throws NoJUnitException {
+  private static boolean isTestAnnotated(final PsiMethod method) {
+    return method.getModifierList().findAnnotation("org.junit.Test") != null;
+  }
+
+  private static PsiClass getTestCaseClass(final Location<?> location) throws NoJUnitException {
     final Location<PsiClass> ancestorOrSelf = location.getAncestorOrSelf(PsiClass.class);
     final PsiClass aClass = ancestorOrSelf.getPsiElement();
     return getTestCaseClass(ExecutionUtil.findModule(aClass));
@@ -181,7 +182,7 @@ public class JUnitUtil {
   public static PsiMethod getTestMethod(final PsiElement element) {
     final PsiManager manager = element.getManager();
     final Location<PsiElement> location = PsiLocation.fromPsiElement(manager.getProject(), element);
-    for (Iterator<Location<? extends PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
+    for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
       final Location<? extends PsiMethod> methodLocation = iterator.next();
       if (isTestMethod(methodLocation)) return methodLocation.getPsiElement();
     }
@@ -196,10 +197,8 @@ public class JUnitUtil {
   public static <T> Collection<T> findMaximums(final Collection<T> collection, final Comparator<T> comparator) {
     final ArrayList<T> maximums = new ArrayList<T>();
     loop:
-    for (Iterator<T> iterator = collection.iterator(); iterator.hasNext();) {
-      final T candidate = iterator.next();
-      for (Iterator<T> iterator1 = collection.iterator(); iterator1.hasNext();) {
-        final T element = iterator1.next();
+    for (final T candidate : collection) {
+      for (final T element : collection) {
         if (comparator.compare(element, candidate) > 0) continue loop;
       }
       maximums.add(candidate);
@@ -220,8 +219,7 @@ public class JUnitUtil {
         }));
 
     Map<Module, Collection<Module>> result = new HashMap<Module, Collection<Module>>();
-    for (Iterator<Module> iterator = graph.getNodes().iterator(); iterator.hasNext();) {
-      final Module module = iterator.next();
+    for (final Module module : graph.getNodes()) {
       buildDependenciesForModule(module, graph, result);
     }
     return result;
@@ -272,16 +270,6 @@ public class JUnitUtil {
   }*/
 
   public static class ModuleOfClass implements Convertor<PsiClass, Module> {
-    private final ProjectFileIndex myFileIndex;
-
-    public ModuleOfClass(final ProjectFileIndex fileIndex) {
-      myFileIndex = fileIndex;
-    }
-
-    public ModuleOfClass(final Project project) {
-      this(ProjectRootManager.getInstance(project).getFileIndex());
-    }
-
     public Module convert(final PsiClass psiClass) {
       if (psiClass == null || !psiClass.isValid()) return null;
       return ModuleUtil.findModuleForPsiElement(psiClass);

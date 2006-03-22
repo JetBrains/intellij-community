@@ -3,7 +3,6 @@ package com.intellij.execution.applet;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -27,7 +26,6 @@ public class AppletConfigurationType implements LocatableConfigurationType {
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new AppletConfiguration("", project, this);
       }
-
     };
   }
 
@@ -61,18 +59,18 @@ public class AppletConfigurationType implements LocatableConfigurationType {
     RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project).createConfiguration("", getConfigurationFactories()[0]);
     final AppletConfiguration configuration = (AppletConfiguration)settings.getConfiguration();
     configuration.MAIN_CLASS_NAME = ExecutionUtil.getRuntimeQualifiedName(aClass);
-    configuration.setModule(new JUnitUtil.ModuleOfClass(project).convert(aClass));
+    configuration.setModule(new JUnitUtil.ModuleOfClass().convert(aClass));
     configuration.setName(configuration.getGeneratedName());
     return settings;
   }
 
   public boolean isConfigurationByElement(final RunConfiguration configuration, final Project project, final PsiElement element) {
     final PsiClass aClass = getAppletClass(element, PsiManager.getInstance(project));
-    if (aClass == null) return false;
-    return Comparing.equal(ExecutionUtil.getRuntimeQualifiedName(aClass), ((AppletConfiguration)configuration).MAIN_CLASS_NAME);
+    return aClass != null &&
+           Comparing.equal(ExecutionUtil.getRuntimeQualifiedName(aClass), ((AppletConfiguration)configuration).MAIN_CLASS_NAME);
   }
 
-  private PsiClass getAppletClass(PsiElement element, final PsiManager manager) {
+  private static PsiClass getAppletClass(PsiElement element, final PsiManager manager) {
     while (element != null) {
       if (element instanceof PsiClass) {
         final PsiClass aClass = (PsiClass)element;
@@ -85,7 +83,7 @@ public class AppletConfigurationType implements LocatableConfigurationType {
     return null;
   }
 
-  private boolean isAppletClass(final PsiClass aClass, final PsiManager manager) {
+  private static boolean isAppletClass(final PsiClass aClass, final PsiManager manager) {
     if (!ExecutionUtil.isRunnableClass(aClass)) return false;
 
     final Module module = ExecutionUtil.findModule(aClass);

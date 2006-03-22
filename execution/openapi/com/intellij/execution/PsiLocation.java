@@ -45,19 +45,19 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
     return myProject;
   }
 
-  public <Ancestor extends PsiElement> Iterator<Location<? extends Ancestor>> getAncestors(final Class<Ancestor> ancestorClass, final boolean strict) {
-    final Ancestor first;
-    if (!strict && ancestorClass.isInstance(myPsiElement)) first = (Ancestor)myPsiElement;
+  public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
+    final T first;
+    if (!strict && ancestorClass.isInstance(myPsiElement)) first = (T)myPsiElement;
     else first = findNext(myPsiElement, ancestorClass);
-    return new Iterator<Location<? extends Ancestor>>() {
-      private Ancestor myCurrent = first;
+    return new Iterator<Location<T>>() {
+      private T myCurrent = first;
       public boolean hasNext() {
         return myCurrent != null;
       }
 
-      public Location<? extends Ancestor> next() {
+      public Location<T> next() {
         if (myCurrent == null) throw new NoSuchElementException();
-        final PsiLocation<Ancestor> psiLocation = new PsiLocation<Ancestor>(myProject, myCurrent);
+        final PsiLocation<T> psiLocation = new PsiLocation<T>(myProject, myCurrent);
         myCurrent = findNext(myCurrent, ancestorClass);
         return psiLocation;
       }
@@ -72,7 +72,7 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
     return this;
   }
 
-  private <ElementClass extends PsiElement> ElementClass findNext(final PsiElement psiElement, final Class<ElementClass> ancestorClass) {
+  private static <ElementClass extends PsiElement> ElementClass findNext(final PsiElement psiElement, final Class<ElementClass> ancestorClass) {
     PsiElement element = psiElement;
     while ((element = element.getParent()) != null) {
       final ElementClass ancestor = safeCast(element, ancestorClass);
@@ -86,14 +86,14 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
     return psiClass != null ? new PsiLocation<PsiClass>(project, psiClass) : null;
   }
 
-  public static <ElementClass extends PsiElement> Location<ElementClass> fromPsiElement(final Project project, final ElementClass element) {
+  public static <T extends PsiElement> Location<T> fromPsiElement(final Project project, final T element) {
     if (element == null) return null;
-    return new PsiLocation<ElementClass>(project, element);
+    return new PsiLocation<T>(project, element);
   }
 
-  public static <ElementClass extends PsiElement> Location<ElementClass> fromPsiElement(final ElementClass element) {
+  public static <T extends PsiElement> Location<T> fromPsiElement(final T element) {
     if (element == null) return null;
     if (!element.isValid()) return null;
-    return new PsiLocation<ElementClass>(element.getProject(), element);
+    return new PsiLocation<T>(element.getProject(), element);
   }
 }
