@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
+import java.util.List;
+
 /**
  * @author max
  */
@@ -38,6 +40,11 @@ public class CvsChangeProvider implements ChangeProvider {
         processFile(path, builder);
       }
     }
+  }
+
+  public List<VcsException> rollbackChanges(List<Change> changes) {
+    //TODO
+    throw new UnsupportedOperationException();
   }
 
 
