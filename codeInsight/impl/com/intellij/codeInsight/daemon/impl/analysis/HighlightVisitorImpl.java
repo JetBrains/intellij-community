@@ -574,6 +574,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
   }
 
   public void visitNewExpression(PsiNewExpression expression) {

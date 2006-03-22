@@ -28,6 +28,7 @@ public class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil");
   private static final @NonNls String ANNOTATION_TARGET_MESSAGE_KEY_PREFIX = "annotation.target.";
   @NonNls private static final String PACKAGE_INFO_JAVA = "package-info.java";
+  private static String TARGET_ANNOTATION_FQ_NAME = "java.lang.annotation.Target";
 
   public static HighlightInfo checkNameValuePair(PsiNameValuePair pair) {
     PsiReference ref = pair.getReference();
@@ -244,7 +245,7 @@ public class AnnotationsHighlightUtil {
       PsiElement resolved = nameRef.resolve();
       if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
         PsiClass annotationType = (PsiClass)resolved;
-        PsiAnnotation metaAnnotation = annotationType.getModifierList().findAnnotation("java.lang.annotation.Target");
+        PsiAnnotation metaAnnotation = annotationType.getModifierList().findAnnotation(TARGET_ANNOTATION_FQ_NAME);
         if (metaAnnotation != null) {
           PsiNameValuePair[] attributes = metaAnnotation.getParameterList().getAttributes();
           if (attributes.length >= 1) {
@@ -377,6 +378,35 @@ public class AnnotationsHighlightUtil {
                                                statement.getAnnotationList().getTextRange(),
                                                JavaErrorMessages.message("invalid.package.annotation.containing.file"));
 
+    }
+    return null;
+  }
+
+  public static HighlightInfo checkTargetAnnotationDuplicates(PsiAnnotation annotation) {
+    PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+    if (nameRef == null) return null;
+    PsiElement resolved = nameRef.resolve();
+    if (!(resolved instanceof PsiClass) ||
+        !TARGET_ANNOTATION_FQ_NAME.equals(((PsiClass) resolved).getQualifiedName())) return null;
+
+    PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+    if (attributes.length < 1) return null;
+    PsiAnnotationMemberValue value = attributes[0].getValue();
+    if (!(value instanceof PsiArrayInitializerMemberValue)) return null;
+    PsiAnnotationMemberValue[] arrayInitializers = ((PsiArrayInitializerMemberValue) value).getInitializers();
+    Set<PsiElement> targets = new HashSet<PsiElement>();
+    for (PsiAnnotationMemberValue initializer : arrayInitializers) {
+      if (initializer instanceof PsiReferenceExpression) {
+        PsiElement target = ((PsiReferenceExpression) initializer).resolve();
+        if (target != null) {
+          if (targets.contains(target)) {
+            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                               initializer,
+                                               JavaErrorMessages.message("repeated.annotation.target"));
+          }
+          targets.add(target);
+        }
+      }
     }
     return null;
   }
