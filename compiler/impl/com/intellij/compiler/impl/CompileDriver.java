@@ -1530,7 +1530,7 @@ public class CompileDriver {
           }
         }
 
-        LanguageLevel moduleLanguageLevel = module.getLanguageLevel();
+        LanguageLevel moduleLanguageLevel = module.getEffectiveLanguageLevel();
         if (languageLevel == null) {
           languageLevel = moduleLanguageLevel;
         } else {
