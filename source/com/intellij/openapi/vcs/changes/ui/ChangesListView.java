@@ -58,15 +58,8 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
   private static final String UNVERSIONED_FILES_KEY = "ChangeListView.UnversionedFiles";
 
-  private static FilePath getFilePath(final Change change) {
-    ContentRevision revision = change.getAfterRevision();
-    if (revision == null) revision = change.getBeforeRevision();
-
-    return revision.getFile();
-  }
-
   private FileStatus getChangeStatus(Change change) {
-    final VirtualFile vFile = getFilePath(change).getVirtualFile();
+    final VirtualFile vFile = ChangesUtil.getFilePath(change).getVirtualFile();
     if (vFile == null) return FileStatus.DELETED;
     return FileStatusManager.getInstance(myProject).getStatus(vFile);
   }
@@ -173,7 +166,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
         Object o1 = ((Node)n1).getUserObject();
         Object o2 = ((Node)n2).getUserObject();
         if (o1 instanceof Change && o2 instanceof Change) {
-          return getFilePath((Change)o1).getName().compareToIgnoreCase(getFilePath((Change)o2).getName());
+          return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
         }
 
         if (o1 instanceof ChangeList && o2 instanceof ChangeList) {
@@ -232,7 +225,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       final HashMap<Module, Node> moduleCache = new HashMap<Module, Node>();
       for (Change change : list.getChanges()) {
         final Node node = new Node(change);
-        getFilePath(change).refresh();
+        ChangesUtil.getFilePath(change).refresh();
         model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, listNode), 0);
       }
     }
@@ -276,7 +269,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
   private static FilePath getPathForObject(Object o) {
     if (o instanceof Change) {
-      return getFilePath((Change)o);
+      return ChangesUtil.getFilePath((Change)o);
     }
     else if (o instanceof VirtualFile) {
       return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn((VirtualFile)o);
@@ -711,7 +704,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       }
       else if (object instanceof Change) {
         final Change change = (Change)object;
-        final FilePath filePath = getFilePath(change);
+        final FilePath filePath = ChangesUtil.getFilePath(change);
         append(filePath.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
         if (isShowFlatten()) {
           append(" (" + filePath.getIOFile().getParentFile().getPath() + ", " + getChangeStatus(change).getText() + ")",
@@ -774,7 +767,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       }
       else if (object instanceof Change) {
         final Change change = (Change)object;
-        final FilePath filePath = getFilePath(change);
+        final FilePath filePath = ChangesUtil.getFilePath(change);
         return filePath.getName();
       }
       else if (object instanceof VirtualFile) {

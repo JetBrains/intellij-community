@@ -260,39 +260,26 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         Runnable checkinAction = new Runnable() {
           public void run() {
             try {
-              Map<AbstractVcs, List<Change>> changesByVcs = new HashMap<AbstractVcs, List<Change>>();
-              for (Change change : myBrowser.getCurrentIncludedChanges()) {
-                final AbstractVcs vcs = getVcsForChange(change);
-                if (vcs != null) {
-                  List<Change> vcsChanges = changesByVcs.get(vcs);
-                  if (vcsChanges == null) {
-                    vcsChanges = new ArrayList<Change>();
-                    changesByVcs.put(vcs, vcsChanges);
-                  }
-                  vcsChanges.add(change);
-                }
-              }
-
               final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
+              ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.ChangesProcessor() {
+                public void processChanges(AbstractVcs vcs, List<Change> changes) {
+                  final CheckinEnvironment environment = vcs.getCheckinEnvironment();
+                  if (environment != null) {
+                    List<FilePath> paths = new ArrayList<FilePath>();
+                    for (Change change : changes) {
+                      paths.add(ChangesUtil.getFilePath(change));
+                    }
 
-              for (AbstractVcs vcs : changesByVcs.keySet()) {
-                final CheckinEnvironment environment = vcs.getCheckinEnvironment();
-                if (environment != null) {
-                  final List<Change> vcsChanges = changesByVcs.get(vcs);
-                  List<FilePath> paths = new ArrayList<FilePath>();
-                  for (Change change : vcsChanges) {
-                    paths.add(getFilePath(change));
-                  }
+                    pathsToRefresh.addAll(paths);
 
-                  pathsToRefresh.addAll(paths);
-
-                  final List<VcsException> exceptions = environment.commit(paths.toArray(new FilePath[paths.size()]), myProject, getCommitMessage());
-                  if (exceptions.size() > 0) {
-                    vcsExceptions.addAll(exceptions);
-                    changesFailedToCommit.addAll(vcsChanges);
+                    final List<VcsException> exceptions = environment.commit(paths.toArray(new FilePath[paths.size()]), myProject, getCommitMessage());
+                    if (exceptions.size() > 0) {
+                      vcsExceptions.addAll(exceptions);
+                      changesFailedToCommit.addAll(changes);
+                    }
                   }
                 }
-              }
+              });
 
               final LvcsAction lvcsAction = LocalVcs.getInstance(myProject).startAction(myActionName, "", true);
               VirtualFileManager.getInstance().refresh(true, new Runnable() {
@@ -394,17 +381,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myRootPane;
   }
 
-  private static FilePath getFilePath(final Change change) {
-    ContentRevision revision = change.getAfterRevision();
-    if (revision == null) revision = change.getBeforeRevision();
-
-    return revision.getFile();
-  }
-
   public List<AbstractVcs> getAffectedVcses() {
     Set<AbstractVcs> result = new HashSet<AbstractVcs>();
     for (Change change : myBrowser.getAllChanges()) {
-      final AbstractVcs vcs = getVcsForChange(change);
+      final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
       if (vcs != null) {
         result.add(vcs);
       }
@@ -412,23 +392,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return new ArrayList<AbstractVcs>(result);
   }
 
-  private AbstractVcs getVcsForChange(Change change) {
-    final FilePath filePath = getFilePath(change);
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    VirtualFile root = VcsDirtyScope.getRootFor(fileIndex, filePath);
-    if (root != null) {
-      return vcsManager.getVcsFor(root);
-    }
-
-    return null;
-  }
-
   public Collection<VirtualFile> getRoots() {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     Set<VirtualFile> result = new HashSet<VirtualFile>();
     for (Change change : myBrowser.getCurrentDisplayedChanges()) {
-      final FilePath filePath = getFilePath(change);
+      final FilePath filePath = ChangesUtil.getFilePath(change);
       VirtualFile root = VcsDirtyScope.getRootFor(fileIndex, filePath);
       if (root != null) {
         result.add(root);
@@ -456,7 +424,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public Collection<VirtualFile> getVirtualFiles() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (Change change: myBrowser.getCurrentIncludedChanges()) {
-      final FilePath path = getFilePath(change);
+      final FilePath path = ChangesUtil.getFilePath(change);
       final VirtualFile vFile = path.getVirtualFile();
       if (vFile != null) {
         result.add(vFile);
@@ -469,7 +437,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public Collection<File> getFiles() {
     List<File> result = new ArrayList<File>();
     for (Change change: myBrowser.getCurrentIncludedChanges()) {
-      final FilePath path = getFilePath(change);
+      final FilePath path = ChangesUtil.getFilePath(change);
       final File file = path.getIOFile();
       if (file != null) {
         result.add(file);
@@ -482,7 +450,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private FilePath[] getPaths() {
     List<FilePath> result = new ArrayList<FilePath>();
     for (Change change : myBrowser.getCurrentIncludedChanges()) {
-      result.add(getFilePath(change));
+      result.add(ChangesUtil.getFilePath(change));
     }
     return result.toArray(new FilePath[result.size()]);
   }

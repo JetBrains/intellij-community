@@ -56,7 +56,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     new ListSpeedSearch(myChangesList) {
       protected String getElementText(Object element) {
         if (element instanceof Change) {
-          return getFilePath((Change)element).getName();
+          return ChangesUtil.getFilePath((Change)element).getName();
         }
         return super.getElementText(element);
       }
@@ -122,13 +122,6 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
   }
 
-  private static FilePath getFilePath(final Change change) {
-    ContentRevision revision = change.getAfterRevision();
-    if (revision == null) revision = change.getBeforeRevision();
-
-    return revision.getFile();
-  }
-
   public Collection<Change> getAllChanges() {
     return myAllChanges;
   }
@@ -157,14 +150,14 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       myTextRenderer = new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           Change change = (Change)value;
-          final FilePath path = getFilePath(change);
+          final FilePath path = ChangesUtil.getFilePath(change);
           setIcon(path.getFileType().getIcon());
           append(path.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
           append(" (" + path.getIOFile().getParentFile().getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
 
         private Color getColor(final Change change) {
-          final FilePath path = getFilePath(change);
+          final FilePath path = ChangesUtil.getFilePath(change);
           final VirtualFile vFile = path.getVirtualFile();
           if (vFile != null) {
             return FileStatusManager.getInstance(myProject).getStatus(vFile).getColor();

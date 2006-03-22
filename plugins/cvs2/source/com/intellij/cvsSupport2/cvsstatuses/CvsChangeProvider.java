@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.cvsstatuses;
 
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
+import com.intellij.cvsSupport2.checkinProject.CvsRollbacker;
 import com.intellij.cvsSupport2.checkinProject.DirectoryContent;
 import com.intellij.cvsSupport2.checkinProject.VirtualFileEntry;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,10 +46,40 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   public List<VcsException> rollbackChanges(List<Change> changes) {
-    //TODO
-    throw new UnsupportedOperationException();
-  }
+    List<VcsException> exceptions = new ArrayList<VcsException>();
 
+    CvsRollbacker rollbacker = new CvsRollbacker(myVcs.getProject());
+    for (Change change : changes) {
+      final FilePath filePath = ChangesUtil.getFilePath(change);
+      VirtualFile parent = filePath.getVirtualFileParent();
+      String name = filePath.getName();
+
+      try {
+        switch (change.getType()) {
+          case DELETED:
+            rollbacker.rollbackFileDeleting(parent, name);
+            break;
+
+          case MODIFICATION:
+            rollbacker.rollbackFileModifying(parent, name);
+            break;
+
+          case MOVED:
+            rollbacker.rollbackFileCreating(parent, name);
+            break;
+
+          case NEW:
+            rollbacker.rollbackFileCreating(parent, name);
+            break;
+        }
+      }
+      catch (IOException e) {
+        exceptions.add(new VcsException(e));
+      }
+    }
+
+    return exceptions;
+  }
 
   private void processEntriesIn(VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively) {
     if (!scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir))) return;

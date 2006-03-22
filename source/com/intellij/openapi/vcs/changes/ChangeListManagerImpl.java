@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
+import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -155,9 +156,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     final SetDefaultChangeListAction setDefaultChangeListAction = new SetDefaultChangeListAction();
     final CommitAction commitAction = new CommitAction();
+    final RollbackAction rollbackAction = new RollbackAction();
 
     modelActionsGroup.add(refreshAction);
     modelActionsGroup.add(commitAction);
+    modelActionsGroup.add(rollbackAction);
     modelActionsGroup.add(newChangeListAction);
     modelActionsGroup.add(removeChangeListAction);
     modelActionsGroup.add(setDefaultChangeListAction);
@@ -185,6 +188,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     DefaultActionGroup menuGroup = new DefaultActionGroup();
     menuGroup.add(refreshAction);
     menuGroup.add(commitAction);
+    menuGroup.add(rollbackAction);
     menuGroup.add(newChangeListAction);
     menuGroup.add(removeChangeListAction);
     menuGroup.add(setDefaultChangeListAction);
@@ -651,29 +655,29 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
+  @Nullable
+  private ChangeList getChangeListIfOnlyOne(Change[] changes) {
+    if (changes == null || changes.length == 0) {
+      return null;
+    }
+
+    ChangeList selectedList = null;
+    for (Change change : changes) {
+      final ChangeList list = getChangeList(change);
+      if (selectedList == null) {
+        selectedList = list;
+      }
+      else if (selectedList != list) {
+        return null;
+      }
+    }
+    return selectedList;
+  }
+
   public class CommitAction extends AnAction {
     public CommitAction() {
       super(VcsBundle.message("changes.action.commit.text"), VcsBundle.message("changes.action.commit.description"),
             IconLoader.getIcon("/actions/execute.png"));
-    }
-
-    @Nullable
-    private ChangeList getChangeListIfOnlyOne(Change[] changes) {
-      if (changes == null || changes.length == 0) {
-        return null;
-      }
-
-      ChangeList selectedList = null;
-      for (Change change : changes) {
-        final ChangeList list = getChangeList(change);
-        if (selectedList == null) {
-          selectedList = list;
-        }
-        else if (selectedList != list) {
-          return null;
-        }
-      }
-      return selectedList;
     }
 
     public void update(AnActionEvent e) {
@@ -687,6 +691,26 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       if (list == null) return;
 
       CommitChangeListDialog.commitChanges(myProject, Arrays.asList(changes));
+    }
+  }
+
+  public class RollbackAction extends AnAction {
+    public RollbackAction() {
+      super("Rollback", "Rollback selected changes",
+            IconLoader.getIcon("/actions/rollback.png"));
+    }
+
+    public void update(AnActionEvent e) {
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      e.getPresentation().setEnabled(getChangeListIfOnlyOne(changes) != null);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      final ChangeList list = getChangeListIfOnlyOne(changes);
+      if (list == null) return;
+
+      RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes));
     }
   }
 
