@@ -17,17 +17,14 @@ public class Java15CompletionData extends JavaCompletionData {
       final CompletionVariant variant = new CompletionVariant(PsiImportList.class, new LeftNeighbour(new TextFilter (PsiKeyword.IMPORT)));
       variant.addCompletion(PsiKeyword.STATIC, TailType.SPACE);
 
-      this.registerVariant(variant);
+      registerVariant(variant);
     }
 
     {
       final ElementFilter position = new AndFilter(new LeftNeighbour(new TextFilter("@")),
                                                    new NotFilter(new SuperParentFilter(
-                                                     new OrFilter(new ElementFilter[] {
-                                                       new ClassFilter(PsiNameValuePair.class),
-                                                       new ClassFilter(PsiParameterList.class)
-                                                     }
-                                                     )))
+                                                     new OrFilter(new ClassFilter(PsiNameValuePair.class),
+                                                         new ClassFilter(PsiParameterList.class))))
                                                    );
 
       final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, position);
@@ -39,11 +36,9 @@ public class Java15CompletionData extends JavaCompletionData {
     }
 
     {
-      final ElementFilter position = new OrFilter(new ElementFilter[]{
-        END_OF_BLOCK,
-        new LeftNeighbour(new TextFilter(MODIFIERS_LIST)),
-        new StartElementFilter()
-      });
+      final ElementFilter position = new OrFilter(END_OF_BLOCK,
+          new LeftNeighbour(new TextFilter(MODIFIERS_LIST)),
+          new StartElementFilter());
 
       final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, position);
       variant.includeScopeClass(PsiClass.class);
@@ -105,7 +100,7 @@ public class Java15CompletionData extends JavaCompletionData {
       variant.includeScopeClass(PsiVariable.class, true);
       variant.addCompletion(PsiKeyword.SUPER, TailType.SPACE);
       variant.addCompletion(PsiKeyword.EXTENDS, TailType.SPACE);
-      this.registerVariant(variant);
+      registerVariant(variant);
     }
   }
 }

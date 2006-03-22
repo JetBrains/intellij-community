@@ -113,7 +113,6 @@ outer:
     for (CandidateInfo info : conflicts) {
       if (info instanceof MethodCandidateInfo) {
         final PsiMethod method = ((MethodCandidateInfo)info).getElement();
-        if (method.isVarArgs()) return; //Do not filter if there is at least one varargs method
         if (method.getParameterList().getParameters().length == argumentsCount) {
           parametersNumberMatch = true;
         }

@@ -1,7 +1,6 @@
 package com.intellij.psi.filters;
 
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 
@@ -19,7 +18,7 @@ import java.util.List;
 
 public class OrFilter
  implements ElementFilter{
-  private List myFilters = new ArrayList();
+  private List<ElementFilter> myFilters = new ArrayList<ElementFilter>();
 
   public OrFilter(){}
 
@@ -40,8 +39,8 @@ public class OrFilter
   public boolean isAcceptable(Object element, PsiElement context){
     if(myFilters.isEmpty())
       return true;
-    for (Object myFilter : myFilters) {
-      final ElementFilter elementFilter = (ElementFilter)myFilter;
+    for (Object filter : myFilters) {
+      final ElementFilter elementFilter = (ElementFilter)filter;
       if (elementFilter.isAcceptable(element, context)) {
         return true;
       }
@@ -65,12 +64,6 @@ public class OrFilter
     throws InvalidDataException{
     myFilters = FilterUtil.readFilterGroup(element);
   }
-
-  public void writeExternal(Element element)
-    throws WriteExternalException{
-    throw new WriteExternalException("Filter data could _not_ be written");
-  }
-
 
   public String toString(){
     String ret = "(";

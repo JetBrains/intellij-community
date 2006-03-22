@@ -1,7 +1,6 @@
 package com.intellij.psi.filters;
 
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 
@@ -17,13 +16,13 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class AndFilter implements ElementFilter{
-  private List myFilters = new ArrayList();
+  private List<ElementFilter> myFilters = new ArrayList<ElementFilter>();
 
   public AndFilter(ElementFilter filter1, ElementFilter filter2){
     this(new ElementFilter[]{filter1, filter2});
   }
 
-  public AndFilter(ElementFilter[] filters){
+  public AndFilter(ElementFilter... filters){
     for (ElementFilter filter : filters) {
       addFilter(filter);
     }
@@ -60,11 +59,6 @@ public class AndFilter implements ElementFilter{
   public void readExternal(Element element)
     throws InvalidDataException{
     myFilters = FilterUtil.readFilterGroup(element);
-  }
-
-  public void writeExternal(Element element)
-    throws WriteExternalException{
-    throw new WriteExternalException("Filter data could _not_ be written");
   }
 
   public String toString(){

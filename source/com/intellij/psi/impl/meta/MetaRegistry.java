@@ -17,6 +17,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.impl.schema.NamedObjectDescriptor;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -59,7 +63,7 @@ public class MetaRegistry {
               new NamespaceFilter(SCHEMA_URIS),
               new ClassFilter(XmlDocument.class)
           ),
-          com.intellij.xml.impl.schema.XmlNSDescriptorImpl.class
+          XmlNSDescriptorImpl.class
       );
 
       addMetadataBinding(
@@ -67,7 +71,7 @@ public class MetaRegistry {
               new NamespaceFilter(SCHEMA_URIS),
               new TextFilter("schema")
           ),
-          com.intellij.xml.impl.schema.XmlNSDescriptorImpl.class
+          XmlNSDescriptorImpl.class
       );
     }
     {
@@ -93,7 +97,7 @@ public class MetaRegistry {
           new NamespaceFilter(SCHEMA_URIS),
           new TextFilter("element")
       ),
-                         com.intellij.xml.impl.schema.XmlElementDescriptorImpl.class);
+                         XmlElementDescriptorImpl.class);
     }
 
     {
@@ -102,7 +106,7 @@ public class MetaRegistry {
               new NamespaceFilter(SCHEMA_URIS),
               new TextFilter("attribute")
           ),
-          com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl.class
+          XmlAttributeDescriptorImpl.class
       );
     }
 
@@ -133,12 +137,9 @@ public class MetaRegistry {
     {
       addMetadataBinding(
           new AndFilter(
-              new ElementFilter[] {
-                new ClassFilter(XmlDocument.class),
-                new TargetNamespaceFilter(XmlUtil.XHTML_URI),
-                new NamespaceFilter(SCHEMA_URIS),
-              }
-          ),
+              new ClassFilter(XmlDocument.class),
+              new TargetNamespaceFilter(XmlUtil.XHTML_URI),
+              new NamespaceFilter(SCHEMA_URIS)),
           RelaxedNsXmlNSDescriptor.class
       );
     }
@@ -232,7 +233,7 @@ public class MetaRegistry {
           new NamespaceFilter(SCHEMA_URIS),
           new TextFilter(new String[] {"complexType","simpleType", "group","attributeGroup" })
       ),
-                         com.intellij.xml.impl.schema.NamedObjectDescriptor.class);
+                         NamedObjectDescriptor.class);
     }
     
     RegisterInPsi.metaData();
@@ -240,7 +241,7 @@ public class MetaRegistry {
 
   public static final Key<SoftReference<CachedValue<PsiMetaData>>> META_DATA_KEY = Key.create("META DATA KEY");
 
-  public static final void bindDataToElement(final PsiElement element, final PsiMetaData data){
+  public static void bindDataToElement(final PsiElement element, final PsiMetaData data){
     SoftReference<CachedValue<PsiMetaData>> value = new SoftReference<CachedValue<PsiMetaData>>(
       element.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiMetaData>() {
       public CachedValueProvider.Result<PsiMetaData> compute() {
@@ -253,7 +254,7 @@ public class MetaRegistry {
 
   private final static SoftReference<CachedValue<PsiMetaData>> NULL = new SoftReference<CachedValue<PsiMetaData>>(null);
 
-  public static final PsiMetaData getMeta(final PsiElement element) {
+  public static PsiMetaData getMeta(final PsiElement element) {
     ProgressManager.getInstance().checkCanceled();
     PsiMetaData ret = null;
     SoftReference<CachedValue<PsiMetaData>> value = element.getUserData(META_DATA_KEY);
