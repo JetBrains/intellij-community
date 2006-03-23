@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 /**
  * @author ven
+ * @noinspection HardCodedStringLiteral
  */
 public class NotNullVerifyingInstrumenter extends ClassAdapter {
 
@@ -27,6 +28,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
     final String signature,
     final String[] exceptions) {
     final Type[] args = Type.getArgumentTypes(desc);
+    final Type returnType = Type.getReturnType(desc);
     MethodVisitor v = cv.visitMethod(access,
                                      name,
                                      desc,
@@ -45,8 +47,8 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
         av = mv.visitParameterAnnotation(parameter,
                                          anno,
                                          visible);
-        if (anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
-          //noinspection unchecked
+        if (args[parameter].getSort() == Type.OBJECT &&
+            anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
           myNotNullParams.add(new Integer(parameter));
         }
         return av;
@@ -55,7 +57,8 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
       public AnnotationVisitor visitAnnotation(String anno,
                                                boolean isRuntime) {
         final AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
-        if (anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
+        if (returnType.getSort() == Type.OBJECT &&
+            anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
           myIsNotNull = true;
         }
 
