@@ -161,6 +161,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     modelActionsGroup.add(refreshAction);
     modelActionsGroup.add(commitAction);
+
+    for (CommitExecutor executor : myExecutors) {
+      modelActionsGroup.add(new CommitUsingExecutorAction(executor));
+    }
+
     modelActionsGroup.add(rollbackAction);
     modelActionsGroup.add(newChangeListAction);
     modelActionsGroup.add(removeChangeListAction);
@@ -188,7 +193,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     DefaultActionGroup menuGroup = new DefaultActionGroup();
     menuGroup.add(refreshAction);
+
     menuGroup.add(commitAction);
+    for (CommitExecutor executor : myExecutors) {
+      modelActionsGroup.add(new CommitUsingExecutorAction(executor));
+    }
+
     menuGroup.add(rollbackAction);
     menuGroup.add(newChangeListAction);
     menuGroup.add(removeChangeListAction);
