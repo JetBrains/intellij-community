@@ -7,6 +7,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
@@ -14,14 +15,13 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -48,21 +48,15 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
   public LogConfigurationPanel() {
     myModel = new ListTableModel<LogFileOptions>(new ColumnInfo[]{IS_SHOW, FILE, IS_SKIP_CONTENT});
     myFilesTable = new TableView(myModel);
-    final TableCellRenderer booleanCellRenderer = new TableCellRenderer() {
-      public Component getTableCellRendererComponent(JTable table, Object value,
-                                                     boolean isSelected, boolean hasFocus,
-                                                     int row, int column) {
-        final Component component = myFilesTable.getDefaultRenderer(Boolean.class)
-          .getTableCellRendererComponent(table, value, isSelected, hasFocus,
-                                         row, column);
-        if (component instanceof JComponent) {
-          ((JComponent)component).setBorder(null);
-        }
-        return component;
-      }
-    };
-    myFilesTable.getColumnModel().getColumn(0).setCellRenderer(booleanCellRenderer);
-    myFilesTable.getColumnModel().getColumn(2).setCellRenderer(booleanCellRenderer);
+    final JTableHeader tableHeader = myFilesTable.getTableHeader();
+    final FontMetrics fontMetrics = tableHeader.getFontMetrics(tableHeader.getFont());
+
+    int preferredWidth = fontMetrics.stringWidth(" " + IS_SHOW.getName() + " ") + 4;
+    setUpColumnWidth(tableHeader, preferredWidth, 0);
+
+    preferredWidth = fontMetrics.stringWidth(" " + IS_SKIP_CONTENT.getName() + " ") + 4;
+    setUpColumnWidth(tableHeader, preferredWidth, 2);
+
     myFilesTable.setColumnSelectionAllowed(false);
     myFilesTable.setShowGrid(false);
     myFilesTable.setDragEnabled(false);
@@ -118,6 +112,15 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     myWholePanel.setPreferredSize(new Dimension(-1, 150));
   }
 
+  private void setUpColumnWidth(final JTableHeader tableHeader, final int preferredWidth, int columnIdx) {
+    myFilesTable.getColumnModel().getColumn(columnIdx).setCellRenderer(new BooleanTableCellRenderer());
+    final TableColumn tableColumn = tableHeader.getColumnModel().getColumn(columnIdx);
+    tableColumn.setWidth(preferredWidth);
+    tableColumn.setPreferredWidth(preferredWidth);
+    tableColumn.setMinWidth(preferredWidth);
+    tableColumn.setMaxWidth(preferredWidth);
+  }
+
   protected void resetEditorFrom(final RunConfigurationBase configuration) {
     clearModel();
     ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>();
@@ -142,6 +145,7 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     }
   }
 
+  @NotNull
   protected JComponent createEditor() {
     return myWholePanel;
   }
@@ -244,11 +248,6 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     public void setValue(LogFileOptions element, Boolean checked){
       element.setEnable(checked.booleanValue());
     }
-
-    public int getWidth(final JTable table) {
-      FontMetrics metrics = table.getFontMetrics(table.getFont());
-      return metrics.stringWidth(NAME) + 15;
-    }
   }
 
   private static class MyIsSkippColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
@@ -272,11 +271,6 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
 
     public void setValue(LogFileOptions element, Boolean skipped){
       element.setSkipContent(skipped.booleanValue());
-    }
-
-    public int getWidth(final JTable table) {
-      FontMetrics metrics = table.getFontMetrics(table.getFont());
-      return metrics.stringWidth(NAME) + 15;
     }
   }
 
