@@ -49,19 +49,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private List<CheckinHandler> myHandlers = new ArrayList<CheckinHandler>();
   private String myActionName;
   private Project myProject;
+  private final CommitExecutor myExecutor;
 
-  private static void commit(Project project, List<ChangeList> list, final List<Change> changes) {
-    new CommitChangeListDialog(project, list, changes).show();
-  }
-
-  public static void commitFiles(final Project project, Collection<VirtualFile> directoriesOrFiles) {
-    final ChangeListManager manager = ChangeListManager.getInstance(project);
-    final Collection<Change> changes = new HashSet<Change>();
-    for (VirtualFile file : directoriesOrFiles) {
-      changes.addAll(manager.getChangesIn(file));
-    }
-
-    commitChanges(project, changes);
+  private static void commit(Project project, List<ChangeList> list, final List<Change> changes, final CommitExecutor executor) {
+    new CommitChangeListDialog(project, list, changes, executor).show();
   }
 
   public static void commitPaths(final Project project, Collection<FilePath> paths) {
@@ -74,7 +65,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     commitChanges(project, changes);
   }
 
-  public static void commitChanges(final Project project, final Collection<Change> changes) {
+  public static void commitChanges(final Project project, final Collection<Change> changes, final CommitExecutor executor) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
@@ -88,16 +79,24 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       lists.add(manager.getChangeList(change));
     }
 
-    commit(project, new ArrayList<ChangeList>(lists), new ArrayList<Change>(changes));
+    commit(project, new ArrayList<ChangeList>(lists), new ArrayList<Change>(changes), executor);
   }
 
-  private CommitChangeListDialog(final Project project, List<ChangeList> changeLists, final List<Change> changes) {
+  public static void commitChanges(final Project project, final Collection<Change> changes) {
+    commitChanges(project, changes, null);
+  }
+
+  private CommitChangeListDialog(final Project project,
+                                 List<ChangeList> changeLists,
+                                 final List<Change> changes,
+                                 final CommitExecutor executor) {
     super(project, true);
     myProject = project;
+    myExecutor = executor;
 
     myBrowser = new ChangesBrowser(project, changeLists, changes);
 
-    myActionName = VcsBundle.message("commit.dialog.title");
+    myActionName = myExecutor != null ? myExecutor.getActionDescription() : VcsBundle.message("commit.dialog.title");
 
     myAdditionalOptionsPanel = new JPanel();
     myCommitMessageArea = new CommitMessage();
@@ -108,21 +107,31 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myAdditionalOptionsPanel.setLayout(new BorderLayout());
     Box optionsBox = Box.createVerticalBox();
 
-    Box vcsCommitOptions = Box.createVerticalBox();
     boolean hasVcsOptions = false;
-    final List<AbstractVcs> vcses = getAffectedVcses();
-    for (AbstractVcs vcs : vcses) {
-      final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
-      if (checkinEnvironment != null) {
-        final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanelForCheckinProject(this);
-        if (options != null) {
-          JPanel vcsOptions = new JPanel(new BorderLayout());
-          vcsOptions.add(options.getComponent());
-          vcsOptions.setBorder(IdeBorderFactory.createTitledHeaderBorder(vcs.getDisplayName()));
-          vcsCommitOptions.add(vcsOptions);
-          myAdditionalComponents.add(options);
-          hasVcsOptions = true;
+    Box vcsCommitOptions = Box.createVerticalBox();
+    if (myExecutor == null) {
+      hasVcsOptions = false;
+      final List<AbstractVcs> vcses = getAffectedVcses();
+      for (AbstractVcs vcs : vcses) {
+        final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+        if (checkinEnvironment != null) {
+          final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanelForCheckinProject(this);
+          if (options != null) {
+            JPanel vcsOptions = new JPanel(new BorderLayout());
+            vcsOptions.add(options.getComponent());
+            vcsOptions.setBorder(IdeBorderFactory.createTitledHeaderBorder(vcs.getDisplayName()));
+            vcsCommitOptions.add(vcsOptions);
+            myAdditionalComponents.add(options);
+            hasVcsOptions = true;
+          }
         }
+      }
+    }
+    else {
+      final JComponent ui = myExecutor.getAdditionalConfigurationUI();
+      if (ui != null) {
+        vcsCommitOptions.add(ui);
+        hasVcsOptions = true;
       }
     }
 
@@ -188,6 +197,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private String getCommitActionName() {
+    if (myExecutor != null) {
+      return myExecutor.getActionText();
+    }
+
     String name = null;
     for (AbstractVcs vcs : getAffectedVcses()) {
       final CheckinEnvironment env = vcs.getCheckinEnvironment();
@@ -257,54 +270,66 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
         final List<Change> changesFailedToCommit = new ArrayList<Change>();
 
-        Runnable checkinAction = new Runnable() {
-          public void run() {
-            try {
-              final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
-              ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.ChangesProcessor() {
-                public void processChanges(AbstractVcs vcs, List<Change> changes) {
-                  final CheckinEnvironment environment = vcs.getCheckinEnvironment();
-                  if (environment != null) {
-                    List<FilePath> paths = new ArrayList<FilePath>();
-                    for (Change change : changes) {
-                      paths.add(ChangesUtil.getFilePath(change));
-                    }
-
-                    pathsToRefresh.addAll(paths);
-
-                    final List<VcsException> exceptions = environment.commit(paths.toArray(new FilePath[paths.size()]), myProject, getCommitMessage());
-                    if (exceptions.size() > 0) {
-                      vcsExceptions.addAll(exceptions);
-                      changesFailedToCommit.addAll(changes);
-                    }
-                  }
-                }
-              });
-
-              final LvcsAction lvcsAction = LocalVcs.getInstance(myProject).startAction(myActionName, "", true);
-              VirtualFileManager.getInstance().refresh(true, new Runnable() {
-                public void run() {
-                  lvcsAction.finish();
-                  FileStatusManager.getInstance(myProject).fileStatusesChanged();
-                  for (FilePath path : pathsToRefresh) {
-                    VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
-                  }
-                }
-              });
-              AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, myActionName);
-            }
-            finally {
-              commitCompleted(vcsExceptions, changesFailedToCommit, VcsConfiguration.getInstance(myProject), myHandlers, getCommitMessage());
-            }
-          }
-        };
-
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(checkinAction, myActionName, true, myProject);
+        ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(checkinAction(vcsExceptions, changesFailedToCommit), myActionName, true, myProject);
       }
     };
 
     AbstractVcsHelper.getInstance(myProject).optimizeImportsAndReformatCode(getVirtualFiles(),
                                                                             VcsConfiguration.getInstance(myProject), checkinAction, true);
+  }
+
+  private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit) {
+    if (myExecutor != null) {
+      return new Runnable() {
+        public void run() {
+          myExecutor.execute(myBrowser.getCurrentIncludedChanges(), getCommitMessage());
+        }
+      };
+    }
+
+    return new Runnable() {
+      public void run() {
+        try {
+          final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
+          ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.ChangesProcessor() {
+            public void processChanges(AbstractVcs vcs, List<Change> changes) {
+              final CheckinEnvironment environment = vcs.getCheckinEnvironment();
+              if (environment != null) {
+                List<FilePath> paths = new ArrayList<FilePath>();
+                for (Change change : changes) {
+                  paths.add(ChangesUtil.getFilePath(change));
+                }
+
+                pathsToRefresh.addAll(paths);
+
+                final List<VcsException> exceptions =
+                  environment.commit(paths.toArray(new FilePath[paths.size()]), myProject, getCommitMessage());
+                if (exceptions.size() > 0) {
+                  vcsExceptions.addAll(exceptions);
+                  changesFailedToCommit.addAll(changes);
+                }
+              }
+            }
+          });
+
+          final LvcsAction lvcsAction = LocalVcs.getInstance(myProject).startAction(myActionName, "", true);
+          VirtualFileManager.getInstance().refresh(true, new Runnable() {
+            public void run() {
+              lvcsAction.finish();
+              FileStatusManager.getInstance(myProject).fileStatusesChanged();
+              for (FilePath path : pathsToRefresh) {
+                VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
+              }
+            }
+          });
+          AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, myActionName);
+        }
+        finally {
+          commitCompleted(vcsExceptions, changesFailedToCommit, VcsConfiguration.getInstance(myProject), myHandlers, getCommitMessage());
+        }
+      }
+    };
   }
 
   private void commitCompleted(final List<VcsException> allExceptions,

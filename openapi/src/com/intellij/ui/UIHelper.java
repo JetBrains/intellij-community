@@ -20,6 +20,9 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserComponent;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -82,4 +85,6 @@ public interface UIHelper {
   CopyPasteSupport createPsiBasedCopyPasteSupport(Project project, JComponent keyReceiver, PsiElementSelector dataSelector);
 
   DeleteProvider createPsiBasedDeleteProvider();
+
+  ChangesBrowserComponent createChangesBrowser(Project project, java.util.List<ChangeList> lists, java.util.List<Change> changes);
 }

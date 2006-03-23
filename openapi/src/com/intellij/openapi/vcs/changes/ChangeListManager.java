@@ -48,4 +48,6 @@ public abstract class ChangeListManager {
 
   public abstract void addChangeListListner(ChangeListListener listener);
   public abstract void removeChangeListListner(ChangeListListener listener);
+
+  public abstract void registerCommitExecutor(CommitExecutor executor);
 }

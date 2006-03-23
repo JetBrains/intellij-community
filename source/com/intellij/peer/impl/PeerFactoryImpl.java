@@ -34,6 +34,10 @@ import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserComponent;
 import com.intellij.openapi.vcs.impl.FileStatusFactoryImpl;
 import com.intellij.openapi.vcs.ui.impl.CheckinPanelRootNode;
 import com.intellij.openapi.vcs.ui.impl.checkinProjectPanel.CheckinPanelTreeTable;
@@ -213,6 +217,10 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
 
     public DeleteProvider createPsiBasedDeleteProvider() {
       return new DeleteHandler.DefaultDeleteProvider();
+    }
+
+    public ChangesBrowserComponent createChangesBrowser(Project project, java.util.List<ChangeList> lists, java.util.List<Change> changes) {
+      return new ChangesBrowser(project, lists, changes);
     }
 
     private static String getPsiElementText(PsiElement psiElement) {

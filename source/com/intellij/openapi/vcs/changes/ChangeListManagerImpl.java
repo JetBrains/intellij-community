@@ -89,6 +89,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NonNls private static final String ATT_CHANGE_TYPE = "type";
   @NonNls private static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
   @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
+  private List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
 
   public ChangeListManagerImpl(final Project project, ProjectLevelVcsManager vcsManager) {
     myProject = project;
@@ -674,6 +675,28 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return selectedList;
   }
 
+  private class CommitUsingExecutorAction extends AnAction {
+    private CommitExecutor myExecutor;
+
+    public CommitUsingExecutorAction(CommitExecutor executor) {
+      super(executor.getActionText(), executor.getActionDescription(), executor.getActionIcon());
+      myExecutor = executor;
+    }
+
+    public void update(AnActionEvent e) {
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      e.getPresentation().setEnabled(getChangeListIfOnlyOne(changes) != null);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      final ChangeList list = getChangeListIfOnlyOne(changes);
+      if (list == null) return;
+
+      CommitChangeListDialog.commitChanges(myProject, Arrays.asList(changes), myExecutor);
+    }
+  }
+
   public class CommitAction extends AnAction {
     public CommitAction() {
       super(VcsBundle.message("changes.action.commit.text"), VcsBundle.message("changes.action.commit.description"),
@@ -765,6 +788,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public void removeChangeListListner(ChangeListListener listener) {
     myListeners.removeListener(listener);
+  }
+
+  public void registerCommitExecutor(CommitExecutor executor) {
+    myExecutors.add(executor);
   }
 
   @SuppressWarnings({"unchecked"})

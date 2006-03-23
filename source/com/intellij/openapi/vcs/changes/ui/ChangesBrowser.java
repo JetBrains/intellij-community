@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class ChangesBrowser extends JPanel implements DataProvider {
+public class ChangesBrowser extends JPanel implements ChangesBrowserComponent {
   private JList myChangesList;
   private ChangeList mySelectedChangeList;
   private Collection<Change> myAllChanges;
@@ -129,6 +129,10 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     headerPanel.add(new ChangeListChooser(changeLists1), BorderLayout.EAST);
     headerPanel.add(createToolbar(), BorderLayout.WEST);
     add(headerPanel, BorderLayout.NORTH);
+  }
+
+  public JComponent getContentComponent() {
+    return this;
   }
 
   public void dispose() {
