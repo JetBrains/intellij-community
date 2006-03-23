@@ -18,18 +18,18 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class ObjectToStringInspection extends ExpressionInspection {
+public class ObjectToStringInspection extends BaseInspection {
 
     public String getDisplayName() {
       return InspectionGadgetsBundle.message(
@@ -131,15 +131,17 @@ public class ObjectToStringInspection extends ExpressionInspection {
                 return;
             }
             final PsiClass referencedClass = classType.resolve();
-            if(referencedClass == null) {
+            if(referencedClass == null ||
+               referencedClass instanceof PsiTypeParameter) {
                 return;
             }
             if(referencedClass.isEnum() || referencedClass.isInterface()) {
                 return;
             }
-            if(!hasGoodToString(referencedClass, new HashSet<PsiClass>())) {
-                registerError(expression);
+            if (hasGoodToString(referencedClass, new HashSet<PsiClass>())) {
+                return;
             }
+            registerError(expression);
         }
 
         private static boolean hasGoodToString(PsiClass aClass,
