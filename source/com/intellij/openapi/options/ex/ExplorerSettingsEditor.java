@@ -182,6 +182,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     if (myPopup[0] != null) {
       myPopup[0].cancel();
     }
+    myAlarm.cancelAllRequests();
     rememberLastUsedPage();
 
     for (ConfigurableGroup myGroup : myGroups) {
