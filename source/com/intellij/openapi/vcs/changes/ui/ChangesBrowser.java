@@ -72,6 +72,19 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
+    myChangesList.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        includeSelection();
+      }
+
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), JComponent.WHEN_FOCUSED);
+
+    myChangesList.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        excludeSelection();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_FOCUSED);
+
     final int checkboxWidth = new JCheckBox().getPreferredSize().width;
 
     myChangesList.addMouseListener(new MouseAdapter() {
@@ -262,6 +275,27 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     if (values != null) {
       for (Object value : values) {
         toggleChange((Change)value);
+      }
+    }
+    myChangesList.repaint();
+  }
+
+  private void includeSelection() {
+    final Object[] values = myChangesList.getSelectedValues();
+    if (values != null) {
+      for (Object value : values) {
+        myIncludedChanges.add((Change)value);
+      }
+    }
+    myChangesList.repaint();
+  }
+
+  @SuppressWarnings({"SuspiciousMethodCalls"})
+  private void excludeSelection() {
+    final Object[] values = myChangesList.getSelectedValues();
+    if (values != null) {
+      for (Object value : values) {
+        myIncludedChanges.remove(value);
       }
     }
     myChangesList.repaint();
