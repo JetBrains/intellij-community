@@ -1,15 +1,15 @@
 package com.intellij.openapi.vcs.changes;
 
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collection;
 
 /**
  * @author max
  */
 public interface CommitExecutor {
+  @NotNull
   Icon getActionIcon();
 
   @Nls
@@ -18,8 +18,6 @@ public interface CommitExecutor {
   @Nls
   String getActionDescription();
 
-  @Nullable
-  JComponent getAdditionalConfigurationUI();
-
-  void execute(Collection<Change> changes, String commitMessage);
+  @NotNull
+  CommitSession createCommitSession();
 }

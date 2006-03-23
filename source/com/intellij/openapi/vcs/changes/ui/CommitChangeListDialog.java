@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.Alarm;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private List<CheckinHandler> myHandlers = new ArrayList<CheckinHandler>();
   private String myActionName;
   private Project myProject;
-  private final CommitExecutor myExecutor;
+  private final CommitSession mySession;
+  private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private static void commit(Project project, List<ChangeList> list, final List<Change> changes, final CommitExecutor executor) {
     new CommitChangeListDialog(project, list, changes, executor).show();
@@ -92,11 +94,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                  final CommitExecutor executor) {
     super(project, true);
     myProject = project;
-    myExecutor = executor;
+    mySession = executor != null ? executor.createCommitSession() : null;
 
     myBrowser = new ChangesBrowser(project, changeLists, changes);
 
-    myActionName = myExecutor != null ? myExecutor.getActionDescription() : VcsBundle.message("commit.dialog.title");
+    myActionName = executor != null ? executor.getActionDescription() : VcsBundle.message("commit.dialog.title");
 
     myAdditionalOptionsPanel = new JPanel();
     myCommitMessageArea = new CommitMessage();
@@ -109,7 +111,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     boolean hasVcsOptions = false;
     Box vcsCommitOptions = Box.createVerticalBox();
-    if (myExecutor == null) {
+    if (executor == null) {
       hasVcsOptions = false;
       final List<AbstractVcs> vcses = getAffectedVcses();
       for (AbstractVcs vcs : vcses) {
@@ -128,7 +130,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }
     else {
-      final JComponent ui = myExecutor.getAdditionalConfigurationUI();
+      final JComponent ui = mySession.getAdditionalConfigurationUI();
       if (ui != null) {
         vcsCommitOptions.add(ui);
         hasVcsOptions = true;
@@ -180,11 +182,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myAdditionalOptionsPanel.add(optionsBox, BorderLayout.NORTH);
     }
 
-    setOKButtonText(getCommitActionName());
+    setOKButtonText(executor != null ? executor.getActionText() : getCommitActionName());
 
     setTitle(myActionName);
 
     restoreState();
+
+    myOKButtonUpdateAlarm.addRequest(new Runnable() {
+      public void run() {
+        myOKButtonUpdateAlarm.cancelAllRequests();
+        myOKButtonUpdateAlarm.addRequest(this, 300, ModalityState.stateForComponent(myBrowser));
+        updateButtons();
+      }
+    }, 300, ModalityState.stateForComponent(myBrowser));
 
     init();
   }
@@ -193,14 +203,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   protected void dispose() {
     super.dispose();
+    myOKButtonUpdateAlarm.cancelAllRequests();
     myBrowser.dispose();
   }
 
   private String getCommitActionName() {
-    if (myExecutor != null) {
-      return myExecutor.getActionText();
-    }
-
     String name = null;
     for (AbstractVcs vcs : getAffectedVcses()) {
       final CheckinEnvironment env = vcs.getCheckinEnvironment();
@@ -242,6 +249,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return true;
   }
 
+
+  public void doCancelAction() {
+    if (mySession != null) {
+      mySession.executionCanceled();
+    }
+
+    super.doCancelAction();
+  }
+
   protected void doOKAction() {
     if (!checkComment()) {
       return;
@@ -280,10 +296,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit) {
-    if (myExecutor != null) {
+    if (mySession != null) {
       return new Runnable() {
         public void run() {
-          myExecutor.execute(myBrowser.getCurrentIncludedChanges(), getCommitMessage());
+          mySession.execute(myBrowser.getCurrentIncludedChanges(), getCommitMessage());
         }
       };
     }
@@ -435,7 +451,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public boolean hasDiffs() {
-    return true;
+    return !myBrowser.getCurrentIncludedChanges().isEmpty();
   }
 
   public void addSelectionChangeListener(SelectionChangeListener listener) {
@@ -513,6 +529,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     for (RefreshableOnComponent component : myAdditionalComponents) {
       component.restoreState();
     }
+  }
+
+  private void updateButtons() {
+    setOKActionEnabled(hasDiffs() &&
+                       (mySession == null || mySession.canExecute(myBrowser.getCurrentIncludedChanges(), getCommitMessage())));
   }
 
   @NonNls
