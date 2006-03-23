@@ -122,4 +122,12 @@ public class RollbackChangesDialog extends DialogWrapper {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(rollbackAction, "Rollback", true, myProject);
   }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myBrowser.getPrefferedFocusComponent();
+  }
+
+  protected String getDimensionServiceKey() {
+    return "RollbackCahgnesDialog";
+  }
 }
