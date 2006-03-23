@@ -66,16 +66,16 @@ public class ShowRecentFilesAction extends AnAction {
               return;
             }
             Object[] values = list.getSelectedValues();
-            for (int i = 0; i < values.length; i++) {
-              VirtualFile file=(VirtualFile)values[i];
+            for (Object value : values) {
+              VirtualFile file = (VirtualFile) value;
               model.removeElement(file);
-              if(model.getSize() > 0) {
-                if(model.getSize()==index){
-                  list.setSelectedIndex(model.getSize()-1);
+              if (model.getSize() > 0) {
+                if (model.getSize() == index) {
+                  list.setSelectedIndex(model.getSize() - 1);
                 } else if (model.getSize() > index) {
                   list.setSelectedIndex(index);
                 }
-              }else{
+              } else {
                 list.clearSelection();
               }
               EditorHistoryManager.getInstance(project).removeFile(file);
@@ -87,8 +87,8 @@ public class ShowRecentFilesAction extends AnAction {
     Runnable runnable = new Runnable() {
       public void run() {
         Object[] values = list.getSelectedValues();
-        for (int i = 0; i < values.length; i++) {
-          VirtualFile file = (VirtualFile)values[i];
+        for (Object value : values) {
+          VirtualFile file = (VirtualFile) value;
           FileEditorManager.getInstance(project).openFile(file, true);
         }
       }
@@ -120,10 +120,9 @@ public class ShowRecentFilesAction extends AnAction {
 
   private static KeyStroke getAdditionalSelectKeystroke() {
     Shortcut[] shortcuts=KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EDIT_SOURCE);
-    for (int i = 0; i < shortcuts.length; i++) {
-      Shortcut shortcut = shortcuts[i];
+    for (Shortcut shortcut : shortcuts) {
       if (shortcut instanceof KeyboardShortcut) {
-        return ((KeyboardShortcut)shortcut).getFirstKeyStroke();
+        return ((KeyboardShortcut) shortcut).getFirstKeyStroke();
       }
     }
     return null;
