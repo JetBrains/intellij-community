@@ -62,7 +62,7 @@ public class ChangeListChooser extends DialogWrapper {
       }
     });
 
-    if (myExistingLists.size() > 1 && defaultSelection != null) {
+    if (defaultSelection != null) {
       myRbExisting.setSelected(true);
     }
     else {

@@ -363,9 +363,9 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     };
 
     diffAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D,
-                                                                                                                        SystemInfo.isMac
-                                                                                                                        ? KeyEvent.META_DOWN_MASK
-                                                                                                                        : KeyEvent.CTRL_DOWN_MASK)), getRootPane());
+                                                                                      SystemInfo.isMac
+                                                                                      ? KeyEvent.META_DOWN_MASK
+                                                                                      : KeyEvent.CTRL_DOWN_MASK)), getRootPane());
 
     moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), getRootPane());
 
