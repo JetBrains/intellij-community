@@ -1,9 +1,11 @@
 package com.intellij.errorreport.bean;
 
-import com.intellij.errorreport.Util;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
@@ -55,11 +57,21 @@ public class ExceptionBean {
       stackTrace = baos.toString();
 
       try {
-        hashCode = Util.md5(stackTrace, "stack-trace");
+        hashCode = md5(stackTrace, "stack-trace");
       } catch (NoSuchAlgorithmException e) {
         hashCode = null;
       }
     }
+  }
+
+  private static String md5 (String buffer, @NonNls String key)
+    throws NoSuchAlgorithmException {
+    //noinspection HardCodedStringLiteral
+    MessageDigest md5 = MessageDigest.getInstance("MD5");
+    md5.update(buffer.getBytes());
+    byte [] code = md5.digest(key.getBytes());
+    BigInteger bi = new BigInteger(code).abs();
+    return bi.abs().toString(16);
   }
 
   public String getStackTrace() {
