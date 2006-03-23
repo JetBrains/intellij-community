@@ -37,6 +37,18 @@ public class Comparing {
     }
   }
 
+  public static <T> boolean equal(T[] arr1, T[] arr2){
+    return Arrays.equals(arr1, arr2);
+  }
+
+  public static boolean equal(CharSequence s1, CharSequence s2) {
+    return equal(s1, s2, false);
+  }
+
+  public static boolean equal(String arg1, String arg2) {
+    return equal(arg1, arg2, false);
+  }
+
   public static boolean equal(CharSequence s1, CharSequence s2, boolean ignoreCase) {
     if (s1 == s2) return true;
     if (s1 == null || s2 == null) return false;
