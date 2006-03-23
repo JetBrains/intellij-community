@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class ChangesBrowser extends JPanel implements ChangesBrowserComponent {
+public class ChangesBrowser extends JPanel implements DataProvider{
   private JList myChangesList;
   private ChangeList mySelectedChangeList;
   private Collection<Change> myAllChanges;
