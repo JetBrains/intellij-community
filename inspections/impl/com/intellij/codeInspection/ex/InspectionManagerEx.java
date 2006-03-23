@@ -164,6 +164,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   public static PsiElement getElementToolSuppressedIn(PsiElement place, String toolId) {
+    if (place == null) return null;
     PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class);
     if (statement != null) {
       PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class);
