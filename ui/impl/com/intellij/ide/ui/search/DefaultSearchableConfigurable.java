@@ -80,6 +80,11 @@ public class DefaultSearchableConfigurable implements Configurable {
   }
 
   public void disposeUIResources() {
+    myGlassPanel = null;
+    final JRootPane pane = myComponent.getRootPane();
+    if (pane != null){
+      pane.setGlassPane(null);
+    }
     myDelegate.disposeUIResources();
   }
 }

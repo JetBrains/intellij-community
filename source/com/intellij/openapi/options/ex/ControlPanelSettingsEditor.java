@@ -319,6 +319,11 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     if (myPopup[0] != null){
       myPopup[0].cancel();
     }
+    myGlassPanel = null;
+    final JRootPane pane = myPanel.getRootPane();
+    if (pane != null){
+      pane.setGlassPane(null);
+    }
     super.dispose();
   }
 
