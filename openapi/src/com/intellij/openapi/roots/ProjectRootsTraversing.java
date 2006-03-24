@@ -28,7 +28,6 @@ import com.intellij.util.PathsList;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 public class ProjectRootsTraversing {
@@ -71,8 +70,8 @@ public class ProjectRootsTraversing {
 
   private static void traverseOrder(Project project, RootPolicy<TraverseState> policy, TraverseState state) {
     final Module[] sortedModules = ModuleManager.getInstance(project).getSortedModules();
-    for (int i = 0; i < sortedModules.length; i++) {
-      traverseOrder(sortedModules[i], policy, state);
+    for (Module sortedModule : sortedModules) {
+      traverseOrder(sortedModule, policy, state);
     }
   }
 
@@ -107,8 +106,8 @@ public class ProjectRootsTraversing {
     }
 
     public void addAll(VirtualFile[] items) {
-      for (int i = 0; i < items.length; i++) {
-        add(items[i]);
+      for (VirtualFile item : items) {
+        add(item);
       }
     }
 
@@ -141,13 +140,11 @@ public class ProjectRootsTraversing {
     }
 
     public void addAllUrls(String[] urls) {
-      for (int i = 0; i < urls.length; i++)
-        addUrl(urls[i]);
+      for (String url : urls) addUrl(url);
     }
 
     public void addAllUrls(List<String> urls) {
-      for (Iterator<String> iterator = urls.iterator(); iterator.hasNext();) {
-        String url = iterator.next();
+      for (String url : urls) {
         addUrl(url);
       }
     }

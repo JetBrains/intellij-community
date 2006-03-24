@@ -1,10 +1,10 @@
 package com.intellij.rt.execution.junit2.segments;
 
 import com.intellij.rt.execution.junit.TestAllInPackage2;
+import junit.extensions.TestDecorator;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import junit.extensions.TestDecorator;
 
 import java.util.Hashtable;
 
@@ -53,12 +53,17 @@ public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFac
   }
 
   private static void addStringRepresentation(Test test, Packet packet) {
-    if (test instanceof TestCase) {
-      addTestMethod(test, packet);
-    } else if (test instanceof TestAllInPackage2) {
+    /*if (test instanceof Junit4TestMethodAdapter) {
+      addTestMethod(packet, ((Junit4TestMethodAdapter)test).getName(), ((Junit4TestMethodAdapter)test).getClassName());
+    }
+    else */if (test instanceof TestCase) {
+      addTestMethod(packet, ((TestCase)test).getName(), test.getClass().getName());
+    }
+    else if (test instanceof TestAllInPackage2) {
       TestAllInPackage2 allInPackage = (TestAllInPackage2)test;
       addAllInPackage(packet, allInPackage.getName());
-    } else if (test instanceof TestSuite) {
+    }
+    else if (test instanceof TestSuite) {
       TestSuite testSuite = (TestSuite)test;
       String fullName = testSuite.getName();
       if (fullName == null) {
@@ -66,8 +71,10 @@ public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFac
         return;
       }
       addTestClass(packet, fullName);
-    } else
+    }
+    else {
       addUnknownTest(packet, test);
+    }
   }
 
   private static void addTestClass(Packet packet, String className) {
@@ -89,12 +96,11 @@ public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFac
         addLimitedString(name);
   }
 
-  private static void addTestMethod(Test test, Packet packet) {
-    TestCase testCase = (TestCase)test;
+  private static void addTestMethod(Packet packet, String methodName, String className) {
     packet.
         addLimitedString(PoolOfTestTypes.TEST_METHOD).
-        addLimitedString(testCase.getName()).
-        addLimitedString(testCase.getClass().getName());
+        addLimitedString(methodName).
+        addLimitedString(className);
   }
 
   public void forget(Test test) {

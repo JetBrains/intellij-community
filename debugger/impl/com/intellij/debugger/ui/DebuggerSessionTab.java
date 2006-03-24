@@ -66,7 +66,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
   private static final Icon FRAME_ICON = IconLoader.getIcon("/debugger/frame.png");
   private static final Icon WATCHES_ICON = IconLoader.getIcon("/debugger/watches.png");
 
-  private static Key CONTENT_KIND = Key.create("ContentKind");
+  private static Key<Key> CONTENT_KIND = Key.create("ContentKind");
   public static Key CONSOLE_CONTENT = Key.create("ConsoleContent");
   public static Key THREADS_CONTENT = Key.create("ThreadsContent");
   public static Key FRAME_CONTENT = Key.create("FrameContent");
@@ -136,7 +136,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
                 final Content watchView = findContent(WATCHES_CONTENT);
                 if (frameView != null) {
                   Content content = myViewsContentManager.getSelectedContent();
-                  if ((content == null || content.equals(frameView) || content.equals(watchView))) {
+                  if (content == null || content.equals(frameView) || content.equals(watchView)) {
                     return;
                   }
                   showFramePanel();
@@ -167,12 +167,11 @@ public class DebuggerSessionTab implements LogConsoleManager {
       }
     };
 
-    TabbedPaneContentUI ui = new TabbedPaneContentUI(JTabbedPane.TOP);
+    TabbedPaneContentUI ui = new TabbedPaneContentUI(SwingConstants.TOP);
     myViewsContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(ui, false, getProject());
 
-    Content content;
-    content = PeerFactory.getInstance().getContentFactory().createContent(myThreadsPanel,
-                                                                          DebuggerBundle.message("debugger.session.tab.threads.title"), false);
+    Content content = PeerFactory.getInstance().getContentFactory()
+      .createContent(myThreadsPanel, DebuggerBundle.message("debugger.session.tab.threads.title"), false);
     content.setIcon(THREADS_ICON);
     content.putUserData(CONTENT_KIND, THREADS_CONTENT);
     myViewsContentManager.addContent(content);
@@ -195,7 +194,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
         if (selectedContent != null) {
           JComponent component = selectedContent.getComponent();
           if (component instanceof DebuggerPanel) {
-            DebuggerPanel panel = ((DebuggerPanel)component);
+            DebuggerPanel panel = (DebuggerPanel)component;
             if (panel.isNeedsRefresh()) {
               panel.rebuildWhenVisible();
             }
@@ -324,8 +323,9 @@ public class DebuggerSessionTab implements LogConsoleManager {
         Content content = findContent(WATCHES_CONTENT);
         if (content != null) {
           int count = myWatchPanel.getWatchTree().getWatchCount();
-          String displayName = (count > 0) ? (DebuggerBundle.message("debugger.session.tab.watches.title.with.size", count)) : DebuggerBundle
-            .message("debugger.session.tab.watches.title");
+          String displayName = count > 0
+                               ? DebuggerBundle.message("debugger.session.tab.watches.title.with.size", count)
+                               : DebuggerBundle.message("debugger.session.tab.watches.title");
           content.setDisplayName(displayName);
         }
       }
@@ -340,11 +340,10 @@ public class DebuggerSessionTab implements LogConsoleManager {
     myWatchPanel.getWatchTree().getModel().addTreeModelListener(updater);
   }
 
-  private ActionToolbar createSecondToolbar() {
+  private static ActionToolbar createSecondToolbar() {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
-    AnAction action;
-    action = actionManager.getAction(DebuggerActions.STEP_OVER);
+    AnAction action = actionManager.getAction(DebuggerActions.STEP_OVER);
     if (action != null) group.add(action);
     action = actionManager.getAction(DebuggerActions.STEP_INTO);
     if (action != null) group.add(action);
@@ -393,7 +392,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     if (myViewsContentManager != null) {
       Content[] contents = myViewsContentManager.getContents();
       for (Content content : contents) {
-        Key kind = (Key)content.getUserData(CONTENT_KIND);
+        Key kind = content.getUserData(CONTENT_KIND);
         if (key.equals(kind)) {
           return content;
         }
@@ -433,15 +432,16 @@ public class DebuggerSessionTab implements LogConsoleManager {
     getDebugProcess().setSuspendPolicy(reuseSession.getDebugProcess().getSuspendPolicy());
     DebuggerTreeNodeImpl[] watches = reuseSession.getWatchPanel().getWatchTree().getWatches();
 
-    for (int i = 0; i < watches.length; i++) {
-      DebuggerTreeNodeImpl watch = watches[i];
+    for (DebuggerTreeNodeImpl watch : watches) {
       getWatchPanel().getWatchTree().addWatch((WatchItemDescriptor)watch.getDescriptor());
     }
   }
 
   protected void toFront() {
-    ((WindowManagerImpl)WindowManager.getInstance()).getFrame(getProject()).toFront();
-    ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(myRunner, myRunContentDescriptor);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ((WindowManagerImpl)WindowManager.getInstance()).getFrame(getProject()).toFront();
+      ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(myRunner, myRunContentDescriptor);
+    }
   }
 
   public RunContentDescriptor getRunContentDescriptor() {

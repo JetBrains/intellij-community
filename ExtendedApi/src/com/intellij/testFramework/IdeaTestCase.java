@@ -10,6 +10,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
@@ -221,9 +222,11 @@ import java.util.HashSet;
       }
       super.tearDown();
 
-      final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
+      EditorFactory editorFactory = EditorFactory.getInstance();
+      final Editor[] allEditors = editorFactory.getAllEditors();
+      ((EditorFactoryImpl)editorFactory).validateEditorsAreReleased(getProject());
       for (Editor editor : allEditors) {
-        EditorFactory.getInstance().releaseEditor(editor);
+        editorFactory.releaseEditor(editor);
       }
       assertEquals(0, allEditors.length);
     }

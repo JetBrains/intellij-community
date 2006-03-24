@@ -53,7 +53,7 @@ public class ApplicationConfigurationProducer extends RuntimeConfigurationProduc
     return settings;
   }
 
-  private PsiMethod findMain(PsiElement element) {
+  private static PsiMethod findMain(PsiElement element) {
     PsiMethod method;
     while ((method = getContainingMethod(element)) != null)
       if (ApplicationConfigurationType.isMainMethod(method)) return method;

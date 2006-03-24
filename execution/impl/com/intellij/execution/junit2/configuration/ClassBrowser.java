@@ -113,7 +113,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
         }
 
         public boolean isAccepted(final PsiClass aClass) {
-          return (filter == null || filter.isAccepted(aClass));
+          return filter == null || filter.isAccepted(aClass);
         }
       };
     }

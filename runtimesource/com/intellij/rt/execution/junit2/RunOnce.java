@@ -34,7 +34,7 @@ public class RunOnce extends TestResult {
     }
   }
 
-  private String keyOf(TestCase test) {
+  private static String keyOf(TestCase test) {
     return test.getClass().getName() + NOT_ALLOWED_IN_ID +
            test.getName() + NOT_ALLOWED_IN_ID +
            test.toString();

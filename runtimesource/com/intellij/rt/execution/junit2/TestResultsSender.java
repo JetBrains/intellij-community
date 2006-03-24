@@ -4,6 +4,7 @@ import com.intellij.rt.execution.junit2.segments.OutputObjectRegistryImpl;
 import com.intellij.rt.execution.junit2.segments.Packet;
 import com.intellij.rt.execution.junit2.segments.PacketProcessor;
 import com.intellij.rt.execution.junit2.states.PoolOfTestStates;
+import com.intellij.rt.execution.junit.Junit4TestMethodAdapter;
 import junit.framework.*;
 
 public class TestResultsSender implements TestListener, TestSkippingListener {
@@ -18,8 +19,15 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
   }
 
   public synchronized void addError(Test test, Throwable throwable) {
-    stopMeter(test);
-    prepareDefectPacket(test, PoolOfTestStates.ERROR_INDEX, throwable).send();
+    if (throwable == Junit4TestMethodAdapter.IGNORED) {
+      startTest(test);
+      stopMeter(test);
+      prepareIgnoredPacket(test, PoolOfTestStates.IGNORED_INDEX).send();
+    }
+    else {
+      stopMeter(test);
+      prepareDefectPacket(test, PoolOfTestStates.ERROR_INDEX, throwable).send();
+    }
   }
 
   public synchronized void addFailure(Test test, AssertionFailedError assertion) {
@@ -27,7 +35,7 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
     createExceptionNotification(assertion).createPacket(myRegistry, test).send();
   }
 
-  private PacketFactory createExceptionNotification(AssertionFailedError assertion) {
+  private static PacketFactory createExceptionNotification(AssertionFailedError assertion) {
     if (assertion instanceof KnownException) return ((KnownException)assertion).getPacketFactory();
     if (!(assertion instanceof ComparisonFailure))
       return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
@@ -35,15 +43,17 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
   }
 
   private Packet prepareDefectPacket(Test test, int state, Throwable assertion) {
-    Packet packet = myRegistry.createPacket().
+    return myRegistry.createPacket().
             setTestState(test, state).
             addThrowable(assertion);
-    return packet;
+  }
+  private Packet prepareIgnoredPacket(Test test, int state) {
+    return myRegistry.createPacket().setTestState(test, state);
   }
 
   public synchronized void endTest(Test test) {
     stopMeter(test);
-    Packet packet = myRegistry.createPacket().setTestState(test, PoolOfTestStates.COMPLITE_INDEX);
+    Packet packet = myRegistry.createPacket().setTestState(test, PoolOfTestStates.COMPLETE_INDEX);
     myCurrentTestMeter.writeTo(packet);
     packet.send();
     myRegistry.forget(test);

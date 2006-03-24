@@ -42,13 +42,15 @@ public class TestAllInPackage2 extends TestSuite {
   }
 
   private static Test getTest(Class testClass) {
+    Junit4ClassSuite junit4Suite = new Junit4ClassSuite(testClass);
+    if (junit4Suite.testCount() != 0) return junit4Suite;
     try {
       Method suiteMethod = testClass.getMethod("suite", new Class[0]);
       Test test = (Test)suiteMethod.invoke(null, new Class[0]);
       return attachSuiteInfo(test, testClass);
     }
     catch (NoSuchMethodException e) {
-      return TestRunnerUtil.createTestFromTestClass(testClass);
+      return new TestSuite(testClass);
     }
     catch (Exception e) {
       System.err.println("Failed to execute suite ()");

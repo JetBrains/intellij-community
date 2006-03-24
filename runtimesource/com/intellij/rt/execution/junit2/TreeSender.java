@@ -13,14 +13,17 @@ public class TreeSender {
   private static void sendNode(Test test, Packet packet) {
     Vector testCases = getTestCasesOf(test);
     packet.addObject(test).addLong(testCases.size());
-    for (Enumeration each = testCases.elements(); each.hasMoreElements();)
-      sendNode((Test)each.nextElement(), packet);
+    for (int i = 0; i < testCases.size(); i++) {
+      Test nextTest = (Test)testCases.get(i);
+      sendNode(nextTest, packet);
+    }
   }
 
   private static Vector getTestCasesOf(Test test) {
     Vector testCases = new Vector();
     if (test instanceof TestSuite) {
       TestSuite testSuite = (TestSuite)test;
+
       for (Enumeration each = testSuite.tests(); each.hasMoreElements();) {
         Object childTest = each.nextElement();
         if (childTest instanceof TestSuite && !((TestSuite)childTest).tests().hasMoreElements()) continue;

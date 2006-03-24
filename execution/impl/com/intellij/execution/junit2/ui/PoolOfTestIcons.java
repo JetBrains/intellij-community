@@ -10,4 +10,5 @@ public interface PoolOfTestIcons {
   Icon NOT_RAN = TestsUIUtil.loadIcon("testNotRan");
   Icon LOADING_ICON = TestsUIUtil.loadIcon("loadingTree");
   Icon TERMINATED_ICON = TestsUIUtil.loadIcon("testTerminated");
+  Icon IGNORED_ICON = TestsUIUtil.loadIcon("testIgnored");
 }

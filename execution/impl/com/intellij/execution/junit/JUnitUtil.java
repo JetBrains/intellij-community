@@ -18,6 +18,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -26,7 +27,6 @@ public class JUnitUtil {
   @NonNls private static final String TESTCASE_CLASS = "junit.framework.TestCase";
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
-  @NonNls private static final String SUITE_METHOD = "suite";
 
   public static boolean isSuiteMethod(final PsiMethod psiMethod) {
     if (psiMethod == null) return false;
@@ -73,19 +73,19 @@ public class JUnitUtil {
     if (aClass == null) return false;
     if (!isTestClass(aClass)) return false;
     final PsiMethod psiMethod = location.getPsiElement();
+    if (isTestAnnotated(psiMethod)) return true;
     if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (psiMethod.getParameterList().getParameters().length > 0) return false;
-    if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && SUITE_METHOD.equals(psiMethod.getName())) return false;
+    if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && BaseTestRunner.SUITE_METHODNAME.equals(psiMethod.getName())) return false;
     final PsiClass testCaseClass;
     try {
       testCaseClass = getTestCaseClass(location);
     } catch (NoJUnitException e) {
       return false;
     }
-    if (!psiMethod.getContainingClass().isInheritor(testCaseClass, true)) return false;
-    return true;
+    return psiMethod.getContainingClass().isInheritor(testCaseClass, true);
   }
 
   private static boolean isTestCaseInheritor(final PsiClass aClass) {

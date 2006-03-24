@@ -13,22 +13,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 
 class PreferedProducerFind {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.PreferedProducerFind");
 
-  public RunnerAndConfigurationSettingsImpl createConfiguration(final Location location, final ConfigurationContext context) {
+  public static RunnerAndConfigurationSettingsImpl createConfiguration(final Location location, final ConfigurationContext context) {
     LOG.assertTrue(location != null);
     final RuntimeConfigurationProducer preferedProducer = findPreferedProducer(location, context);
     if (preferedProducer != null) {
       return preferedProducer.getConfiguration();
     }
     final ConfigurationType[] factories = RunManager.getInstance(location.getProject()).getConfigurationFactories();
-    for(int i = 0; i < factories.length; i++){
-      final ConfigurationType type = factories[i];
+    for (final ConfigurationType type : factories) {
       if (type instanceof LocatableConfigurationType) {
-        final RunnerAndConfigurationSettingsImpl configuration = (RunnerAndConfigurationSettingsImpl)((LocatableConfigurationType)type).createConfigurationByLocation(location);
+        final RunnerAndConfigurationSettingsImpl configuration =
+          (RunnerAndConfigurationSettingsImpl)((LocatableConfigurationType)type).createConfigurationByLocation(location);
         if (configuration != null) {
           return configuration;
         }
@@ -37,13 +36,12 @@ class PreferedProducerFind {
     return null;
   }
 
-  public RuntimeConfigurationProducer findPreferedProducer(final Location location, final ConfigurationContext context) {
+  public static RuntimeConfigurationProducer findPreferedProducer(final Location location, final ConfigurationContext context) {
     final ArrayList<RuntimeConfigurationProducer> prototypes = new ArrayList<RuntimeConfigurationProducer>();
     prototypes.addAll(Arrays.asList(JUnitConfigurationProducer.PROTOTYPES));
     prototypes.add(ApplicationConfigurationProducer.PROTOTYPE);
     final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<RuntimeConfigurationProducer>();
-    for (Iterator<RuntimeConfigurationProducer> iterator = prototypes.iterator(); iterator.hasNext();) {
-      final RuntimeConfigurationProducer prototype = iterator.next();
+    for (final RuntimeConfigurationProducer prototype : prototypes) {
       final RuntimeConfigurationProducer producer = prototype.createProducer(location, context);
       if (producer.getConfiguration() != null) {
         LOG.assertTrue(producer.getSourceElement() != null, producer.toString());

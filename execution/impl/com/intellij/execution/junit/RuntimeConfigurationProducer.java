@@ -13,7 +13,7 @@ import com.intellij.psi.PsiMethod;
 import java.util.Comparator;
 
 public abstract class RuntimeConfigurationProducer implements Comparable {
-  public static final Comparator COMPARATOR = new ProducerComparator();
+  public static final Comparator<RuntimeConfigurationProducer> COMPARATOR = new ProducerComparator();
   protected static final int PREFERED = -1;
   private final ConfigurationFactory myConfigurationFactory;
   private RunnerAndConfigurationSettingsImpl myConfiguration;

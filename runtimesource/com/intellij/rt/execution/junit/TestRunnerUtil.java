@@ -1,11 +1,9 @@
 package com.intellij.rt.execution.junit;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import junit.framework.JUnit4TestAdapter;
+import junit.framework.*;
 import junit.runner.BaseTestRunner;
 import junit.textui.TestRunner;
+import org.junit.internal.runners.TestIntrospector;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -86,7 +84,15 @@ public class TestRunnerUtil {
 
     if (methodName != null) {
       runner.clearStatus();
-
+      try {
+        Method method = testClass.getMethod(methodName, new Class[0]);
+        if (method != null && /*method.getAnnotation(Test.class) != null*/ new TestIntrospector(testClass).getTestMethods(org.junit.Test.class).contains(method)) {
+          return new Junit4TestMethodAdapter(testClass, methodName);
+        }
+      }
+      catch (NoSuchMethodException e) {
+        // ignore
+      }
       try {
         Constructor constructor = testClass.getConstructor(new Class[]{String.class});
         TestCase test = (TestCase)constructor.newInstance(new Object[]{methodName});
@@ -118,6 +124,12 @@ public class TestRunnerUtil {
       }
     }
 
+    Junit4ClassSuite junit4ClassSuite = new Junit4ClassSuite(testClass);
+    if (junit4ClassSuite.testCount() != 0) {
+      runner.clearStatus();
+      return junit4ClassSuite;
+    }
+
     Method suiteMethod;
     try {
       suiteMethod = testClass.getMethod(BaseTestRunner.SUITE_METHODNAME, new Class[0]);
@@ -125,7 +137,7 @@ public class TestRunnerUtil {
     catch (Exception e) {
       // try to extract a test suite automatically
       runner.clearStatus();
-      return createTestFromTestClass(testClass);
+      return new TestSuite(testClass);
     }
     if (! Modifier.isStatic(suiteMethod.getModifiers())) {
       runFailed(ourBundle.getString("junit.suite.must.be.static"));
@@ -150,15 +162,6 @@ public class TestRunnerUtil {
 
     runner.clearStatus();
     return test;
-  }
-
-  public static Test createTestFromTestClass(final Class testClass) {
-    if (TestCase.class.isAssignableFrom(testClass)) {
-      return new TestSuite(testClass);
-    }
-    else {
-      return new JUnit4TestAdapter(testClass);
-    }
   }
 
   private static void runFailed(String message) {

@@ -4,7 +4,6 @@ import com.intellij.rt.execution.junit2.states.PoolOfTestStates;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public abstract class Filter {
@@ -17,21 +16,17 @@ public abstract class Filter {
 
   public abstract boolean shouldAccept(TestProxy test);
 
-  public List select(final List tests) {
-    final ArrayList result = new ArrayList();
-    for (Iterator iterator = tests.iterator(); iterator.hasNext();) {
-      final TestProxy test = (TestProxy) iterator.next();
-      if (shouldAccept(test))
-        result.add(test);
+  public List<TestProxy> select(final List<TestProxy> tests) {
+    final ArrayList<TestProxy> result = new ArrayList<TestProxy>();
+    for (final TestProxy test : tests) {
+      if (shouldAccept(test)) result.add(test);
     }
     return result;
   }
 
-  public TestProxy detectIn(final Collection collection) {
-    for (Iterator iterator = collection.iterator(); iterator.hasNext();) {
-      final TestProxy test = (TestProxy) iterator.next();
-      if (shouldAccept(test))
-        return test;
+  public TestProxy detectIn(final Collection<TestProxy> collection) {
+    for (final TestProxy test : collection) {
+      if (shouldAccept(test)) return test;
     }
     return null;
   }
