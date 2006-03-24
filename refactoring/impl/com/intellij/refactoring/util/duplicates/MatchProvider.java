@@ -5,6 +5,7 @@
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -17,4 +18,6 @@ public interface MatchProvider {
   List<Match> getDuplicates();
 
   boolean hasDuplicates();
+
+  @NotNull String getConfirmDuplicatePrompt(Match match);
 }

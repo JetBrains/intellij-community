@@ -37,6 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -90,6 +91,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private String myMethodVisibility = PsiModifier.PRIVATE;
   private boolean myGenerateConditionalExit;
   private PsiStatement myFirstExitStatementCopy;
+  private PsiMethod myExtractedMethod;
 
   public ExtractMethodProcessor(Project project,
                                 Editor editor,
@@ -308,11 +310,11 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     final DuplicatesFinder duplicatesFinder;
     if (myExpression != null) {
-      duplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), new ArrayList<PsiVariable>(), false);
+      duplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), new ArrayList<PsiVariable>());
       myDuplicates = duplicatesFinder.findDuplicates(myTargetClass);
     }
     else {
-      duplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), Arrays.asList(myOutputVariables), false);
+      duplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), Arrays.asList(myOutputVariables));
       myDuplicates = duplicatesFinder.findDuplicates(myTargetClass);
     }
 
@@ -562,9 +564,9 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     adjustFinalParameters(newMethod);
 
-    newMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
+    myExtractedMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
     if (myNeedChangeContext) {
-      ChangeContextUtil.decodeContextInfo(newMethod, myTargetClass, RefactoringUtil.createThisExpression(myManager, null));
+      ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringUtil.createThisExpression(myManager, null));
     }
 
     return methodCall;
@@ -629,6 +631,9 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public void processMatch(Match match) throws IncorrectOperationException {
+    if (RefactoringUtil.isInStaticContext(match.getMatchStart())) {
+      myExtractedMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+    }
     final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression());
     final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
 
@@ -958,5 +963,13 @@ public class ExtractMethodProcessor implements MatchProvider {
   public boolean hasDuplicates() {
     final List<Match> duplicates = getDuplicates();
     return duplicates != null && !duplicates.isEmpty();
+  }
+
+  @NotNull
+  public String getConfirmDuplicatePrompt(Match match) {
+    if (RefactoringUtil.isInStaticContext(match.getMatchStart()) && !myExtractedMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
+    }
+    return RefactoringBundle.message("replace.this.code.fragment");
   }
 }

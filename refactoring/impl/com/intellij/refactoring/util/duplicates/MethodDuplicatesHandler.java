@@ -19,8 +19,10 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,7 +75,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       }
     }
     duplicatesFinder = new DuplicatesFinder(pattern, Arrays.asList(method.getParameterList().getParameters()),
-                                            new ArrayList<PsiVariable>(), !method.hasModifierProperty(PsiModifier.STATIC));
+                                            new ArrayList<PsiVariable>());
 
     final List<Match> duplicates = duplicatesFinder.findDuplicates(file);
     if (duplicates.isEmpty()) {
@@ -120,6 +122,9 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
 
     public void processMatch(Match match) throws IncorrectOperationException {
+      if (RefactoringUtil.isInStaticContext(match.getMatchStart())) {
+        myMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+      }
       final PsiElementFactory factory = myMethod.getManager().getElementFactory();
       final boolean needQualifier = match.getInstanceExpression() != null;
       final @NonNls String text = needQualifier ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
@@ -141,6 +146,14 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
 
     public boolean hasDuplicates() {
       return myDuplicates.isEmpty();
+    }
+
+    @NotNull
+    public String getConfirmDuplicatePrompt(Match match) {
+      if (RefactoringUtil.isInStaticContext(match.getMatchStart()) && !myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
+    }
+    return RefactoringBundle.message("replace.this.code.fragment");
     }
   }
 }

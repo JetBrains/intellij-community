@@ -21,54 +21,54 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.text.MessageFormat;
 
 /**
  * @author dsl
  */
 public class DuplicatesImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.DuplicatesImpl");
+
+  private DuplicatesImpl() {}
+
   public static void invoke(final Project project, Editor editor, final String commandName, final MatchProvider provider) {
     final List<Match> duplicates = provider.getDuplicates();
-    for (Iterator<Match> iterator = duplicates.iterator(); iterator.hasNext();) {
-      final Match match = iterator.next();
+    for (final Match match : duplicates) {
       final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
       highlightMatch(project, editor, match, highlighters);
       final TextRange textRange = match.getTextRange();
       final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
       expandAllRegionsCoveringRange(project, editor, textRange);
       editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
-      final int matchAnswer = Messages.showYesNoCancelDialog(project, RefactoringBundle.message("replace.this.code.fragment"),
-                                                             RefactoringBundle.message("process.duplicates.title"), Messages.getQuestionIcon());
+      String prompt = provider.getConfirmDuplicatePrompt(match);
+      final int matchAnswer = Messages.showYesNoCancelDialog(project, prompt,
+          RefactoringBundle.message("process.duplicates.title"), Messages.getQuestionIcon());
       HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
       if (matchAnswer == 0) {
         CommandProcessor.getInstance().executeCommand(
             project, new Runnable() {
-                  public void run() {
-                    final Runnable action = new Runnable() {
-                      public void run() {
-                        try {
-                          provider.processMatch(match);
-                        } catch (IncorrectOperationException e) {
-                          LOG.error(e);
-                        }
-                      }
-                    };
-                    ApplicationManager.getApplication().runWriteAction(action);
-                  }
-                },
+          public void run() {
+            final Runnable action = new Runnable() {
+              public void run() {
+                try {
+                  provider.processMatch(match);
+                } catch (IncorrectOperationException e) {
+                  LOG.error(e);
+                }
+              }
+            };
+            ApplicationManager.getApplication().runWriteAction(action);
+          }
+        },
             commandName,
             null
         );
 
-      }
-      else if (matchAnswer == 2) {
+      } else if (matchAnswer == 2) {
         break;
       }
     }
@@ -77,8 +77,7 @@ public class DuplicatesImpl {
   private static void expandAllRegionsCoveringRange(final Project project, Editor editor, final TextRange textRange) {
     final FoldRegion[] foldRegions = CodeFoldingManager.getInstance(project).getFoldRegionsAtOffset(editor, textRange.getStartOffset());
     boolean anyCollapsed = false;
-    for (int i = 0; i < foldRegions.length; i++) {
-      final FoldRegion foldRegion = foldRegions[i];
+    for (final FoldRegion foldRegion : foldRegions) {
       if (!foldRegion.isExpanded()) {
         anyCollapsed = true;
         break;
@@ -87,8 +86,7 @@ public class DuplicatesImpl {
     if (anyCollapsed) {
       editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
         public void run() {
-          for (int i = 0; i < foldRegions.length; i++) {
-            final FoldRegion foldRegion = foldRegions[i];
+          for (final FoldRegion foldRegion : foldRegions) {
             if (!foldRegion.isExpanded()) {
               foldRegion.setExpanded(true);
             }

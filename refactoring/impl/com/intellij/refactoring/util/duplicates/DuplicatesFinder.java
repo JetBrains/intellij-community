@@ -24,7 +24,6 @@ public class DuplicatesFinder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.DuplicatesFinder");
   private static final Key<PsiVariable> PARAMETER = Key.create("PARAMETER");
   private final PsiElement[] myPattern;
-  private final boolean mySkipStaticContext;
   private final List<? extends PsiVariable> myParameters;
   private final List<? extends PsiVariable> myOutputParameters;
   private final List<PsiElement> myPatternAsList;
@@ -32,14 +31,13 @@ public class DuplicatesFinder {
 
   public DuplicatesFinder(PsiElement[] pattern,
                           List<? extends PsiVariable> parameters,
-                          List<? extends PsiVariable> outputParameters,
-                          boolean maintainStaticContext) {
+                          List<? extends PsiVariable> outputParameters
+  ) {
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;
     myPatternAsList = Arrays.asList(myPattern);
     myParameters = parameters;
     myOutputParameters = outputParameters;
-    mySkipStaticContext = maintainStaticContext && !RefactoringUtil.isInStaticContext(myPattern[0]);
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(pattern[0]);
     try {
@@ -139,9 +137,7 @@ public class DuplicatesFinder {
     }
   }
 
-
   private void findPatternOccurrences(List<Match> array, PsiElement scope) {
-    if (mySkipStaticContext && RefactoringUtil.isInStaticContext(scope)) return;
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       final Match match = isDuplicateFragment(child);
