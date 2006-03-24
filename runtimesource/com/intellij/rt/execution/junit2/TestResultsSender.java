@@ -19,7 +19,11 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
   }
 
   public synchronized void addError(Test test, Throwable throwable) {
-    if (throwable == Junit4TestMethodAdapter.IGNORED) {
+    if (throwable instanceof AssertionError) {
+      // junit4 makes no distinction between errors and failures
+      doAddFailure(test, (AssertionError)throwable);
+    }
+    else if (throwable == Junit4TestMethodAdapter.IGNORED) {
       startTest(test);
       stopMeter(test);
       prepareIgnoredPacket(test, PoolOfTestStates.IGNORED_INDEX).send();
@@ -31,15 +35,20 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
   }
 
   public synchronized void addFailure(Test test, AssertionFailedError assertion) {
+    doAddFailure(test, assertion);
+  }
+
+  private void doAddFailure(final Test test, final AssertionError assertion) {
     stopMeter(test);
     createExceptionNotification(assertion).createPacket(myRegistry, test).send();
   }
 
-  private static PacketFactory createExceptionNotification(AssertionFailedError assertion) {
+  private static PacketFactory createExceptionNotification(AssertionError assertion) {
     if (assertion instanceof KnownException) return ((KnownException)assertion).getPacketFactory();
-    if (!(assertion instanceof ComparisonFailure))
-      return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
-    return ComparisonDetailsExtractor.create((ComparisonFailure)assertion);
+    if (assertion instanceof ComparisonFailure || assertion instanceof org.junit.ComparisonFailure) {
+      return ComparisonDetailsExtractor.create(assertion);
+    }
+    return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
   }
 
   private Packet prepareDefectPacket(Test test, int state, Throwable assertion) {

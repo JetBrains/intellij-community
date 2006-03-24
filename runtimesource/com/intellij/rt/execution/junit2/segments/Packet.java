@@ -67,7 +67,7 @@ public class Packet extends PacketWriter {
 
   private static String throwableToString(final Throwable throwable) {
     final String tostring = throwable.toString();
-    return tostring != null ? tostring : throwable.getClass().getName();
+    return tostring == null ? throwable.getClass().getName() : tostring;
   }
 
   private static String makeNewLinesCompatibleWithJUnit(String string) {

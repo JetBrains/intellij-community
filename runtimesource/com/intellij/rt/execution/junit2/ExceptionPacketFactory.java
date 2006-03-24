@@ -14,10 +14,9 @@ public class ExceptionPacketFactory implements PacketFactory {
   }
 
   public Packet createPacket(OutputObjectRegistryImpl registry, Test test) {
-    Packet packet = registry.createPacket().
+    return registry.createPacket().
         setTestState(test, myState).
         addThrowable(myAssertion);
-    return packet;
   }
 
   protected void setState(int state) { myState = state; }

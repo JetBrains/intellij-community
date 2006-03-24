@@ -28,17 +28,18 @@ class ComparisonDetailsExtractor extends ExceptionPacketFactory {
     } catch (Throwable e) {}
   }
 
-  public ComparisonDetailsExtractor(ComparisonFailure assertion, String expected, String actual) {
+  public ComparisonDetailsExtractor(Throwable assertion, String expected, String actual) {
     super(PoolOfTestStates.COMPARISON_FAILURE, assertion);
     myActual = actual;
     myExpected = expected;
   }
 
-  public static ExceptionPacketFactory create(ComparisonFailure assertion) {
+  public static ExceptionPacketFactory create(AssertionError assertion) {
     try {
-      return new ComparisonDetailsExtractor(assertion, (String)EXPECTED_FIELD.get(assertion),
-                                            (String)ACTUAL_FIELD.get(assertion));
-    } catch (Throwable e) {
+      String expected = assertion instanceof ComparisonFailure ? (String)EXPECTED_FIELD.get(assertion) : ((org.junit.ComparisonFailure)assertion).getExpected();
+      String actual = assertion instanceof ComparisonFailure ? (String)ACTUAL_FIELD.get(assertion)  : ((org.junit.ComparisonFailure)assertion).getActual();
+      return new ComparisonDetailsExtractor(assertion, expected, actual); }
+    catch (Throwable e) {
       return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
     }
   }
