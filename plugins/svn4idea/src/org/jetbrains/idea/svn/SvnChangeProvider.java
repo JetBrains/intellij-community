@@ -105,6 +105,9 @@ public class SvnChangeProvider implements ChangeProvider {
       else if (statusType == SVNStatusType.STATUS_DELETED) {
         builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs), null));
       }
+      else if (statusType == SVNStatusType.STATUS_MISSING) {
+        builder.processLocallyDeletedFile(filePath.getIOFile());
+      }
     }
   }
 
