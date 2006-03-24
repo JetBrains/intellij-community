@@ -3,6 +3,7 @@ package com.intellij.psi.formatter.java;
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -35,6 +36,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     mySettings = settings;
     myImportHelper = new ImportHelper(mySettings);
 
+    if (myChild1.getPsi().getLanguage() != StdLanguages.JAVA ||
+      myChild2.getPsi().getLanguage() != StdLanguages.JAVA) {
+      return;
+    }
+    
     if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && ElementType.COMMENT_BIT_SET.contains(myChild2.getElementType())) {
       myResult = Spacing
         .createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
@@ -53,10 +59,22 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
             myResult = Spacing
               .createSpacing(1, Integer.MIN_VALUE, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
           }
+          else if (myChild1.getElementType() == ElementType.C_STYLE_COMMENT){
+            myResult = null;
+          }
+          else if (!shouldKeepSpace(myParent)){
+            myResult = Spacing.createSpacing(0, 0, 0, true, 0);
+          }
         }
       }
     }
 
+  }
+
+  private static boolean shouldKeepSpace(final PsiElement parent) {
+    final IElementType type = parent.getNode().getElementType();
+    return type == JavaDocElementType.DOC_COMMENT || type == JavaDocElementType.DOC_TAG
+      || type == JavaDocElementType.DOC_INLINE_TAG;
   }
 
   private void init(final ASTNode child) {
@@ -258,6 +276,12 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   }
 
 
+  public void visitEnumConstantInitializer(PsiEnumConstantInitializer enumConstantInitializer) {
+    if (myRole2 == ChildRole.EXTENDS_LIST || myRole2 == ChildRole.IMPLEMENTS_LIST) {
+      createSpaceInCode(true);
+    }
+  }
+
   public void visitImportList(PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild1.getElementType()) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild2.getElementType())) {
@@ -438,8 +462,13 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     }
 
     else if (myRole1 == ChildRole.NONE || myRole2 == ChildRole.NONE) {
-      if (myChild1.getElementType() == ElementType.END_OF_LINE_COMMENT) {
-        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      final IElementType firstElementType = myChild1.getElementType();
+      if (
+        firstElementType == ElementType.END_OF_LINE_COMMENT
+        ||
+        firstElementType == ElementType.C_STYLE_COMMENT) {
+        myResult = Spacing.createDependentLFSpacing(0, 1, myParent.getTextRange(), 
+                                                    mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else {
         myResult = null;
@@ -650,9 +679,12 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     else if (myRole1 == ChildRole.MODIFIER_LIST) {
       createSpaceInCode(true);
     }
-    else if (myRole2 == ChildRole.TYPE_REFERENCE) {
+    else if (myRole2 == ChildRole.TYPE_REFERENCE || myRole1 == ChildRole.TYPE_REFERENCE) {
       createSpaceInCode(true);
     }
+    else if (myRole2 == ChildRole.TYPE || myRole1 == ChildRole.TYPE) {
+      createSpaceInCode(true);
+    }    
     else if (myChild2.getElementType() == ElementType.SEMICOLON) {
       createSpaceProperty(false, false, 0);
     }
@@ -665,10 +697,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
       return;
     }
 
+    
     if (myRole2 == ChildRole.PARAMETER_LIST) {
       createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
     }
-    else if (myRole1 == ChildRole.PARAMETER_LIST && myRole2 == ChildRole.THROWS_LIST) {
+    else if (myRole1 == ChildRole.PARAMETER_LIST && myRole2 == ChildRole.THROWS_LIST || myRole1 == ChildRole.TYPE_PARAMETER_LIST) {
       createSpaceInCode(true);
     }
     else if (myRole2 == ChildRole.METHOD_BODY) {
@@ -695,7 +728,9 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     else if (myChild2.getElementType() == ElementType.SEMICOLON) {
       createSpaceInCode(false);
     }
-
+    else if (myRole1 == ChildRole.TYPE) {
+      createSpaceInCode(true);
+    }
   }
 
   private void processModifierList() {
@@ -989,8 +1024,20 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     }
   }
 
-  public void visitTypeParameter(PsiTypeParameter classParameter) {
-    createSpaceInCode(true);
+  public void visitTypeParameter(PsiTypeParameter classParameter) {    
+    createSpaceInCode(true);    
+  }
+
+  public void visitTypeElement(PsiTypeElement type) {
+    if (myChild2.getElementType() == ElementType.ELLIPSIS) {
+      createSpaceInCode(false);
+    }
+    else if (myChild2.getElementType() == ElementType.LBRACKET || myChild2.getElementType() == ElementType.RBRACKET) {
+      createSpaceInCode(false);
+    }
+    else {
+      createSpaceInCode(true);
+    }
   }
 
   public void visitDeclarationStatement(PsiDeclarationStatement declarationStatement) {
@@ -1004,6 +1051,9 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   public void visitTypeParameterList(PsiTypeParameterList list) {
     if (myRole2 == ChildRole.GT_IN_TYPE_LIST) {
       createSpaceInCode(false);
+    }
+    else if (myRole1 == ChildRole.COMMA) {
+      createSpaceInCode(true);
     }
   }
 
@@ -1071,6 +1121,12 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     if (myRole2 == ChildRole.ARGUMENT_LIST) {
       createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
     }
+    else if (myRole2 == ChildRole.ANONYMOUS_CLASS) {
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CLASS_LBRACE,
+                                      mySettings.METHOD_BRACE_STYLE, 
+                                      enumConstant.getTextRange(),
+                                      mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
+    }
   }
 
   public void visitDocTag(PsiDocTag tag) {
@@ -1079,4 +1135,21 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     }
   }
 
+
+  public void visitAssertStatement(PsiAssertStatement statement) {
+    if (myChild1.getElementType() == ElementType.COLON){
+      createSpaceInCode(mySettings.SPACE_AFTER_COLON);
+    }
+    else if (myChild2.getElementType() == ElementType.COLON) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_COLON
+      );
+    }
+  }
+
+
+  public void visitParameter(PsiParameter parameter) {
+    if (myRole1 == ChildRole.TYPE) {
+      createSpaceInCode(true);
+    }
+  }
 }
