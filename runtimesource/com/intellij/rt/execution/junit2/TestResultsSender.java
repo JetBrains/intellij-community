@@ -48,7 +48,7 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
             addThrowable(assertion);
   }
   private Packet prepareIgnoredPacket(Test test, int state) {
-    return myRegistry.createPacket().setTestState(test, state);
+    return myRegistry.createPacket().setTestState(test, state).addObject(test);
   }
 
   public synchronized void endTest(Test test) {
