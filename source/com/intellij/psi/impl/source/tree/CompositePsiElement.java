@@ -66,6 +66,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public PsiFile getContainingFile() {
+    if (!isValid()) throw new PsiInvalidElementAccessException(this);
     return SharedImplUtil.getContainingFile(this);
   }
 

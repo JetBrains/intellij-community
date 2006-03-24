@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,6 @@ import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 
 //TODO: rename/regroup?
 

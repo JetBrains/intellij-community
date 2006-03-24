@@ -117,6 +117,7 @@ public class OuterLanguageElement extends LeafElement implements PsiElement{
   }
 
   public PsiFile getContainingFile() {
+    if (!isValid()) throw new PsiInvalidElementAccessException(this);
     return SharedImplUtil.getContainingFile(this);
   }
 

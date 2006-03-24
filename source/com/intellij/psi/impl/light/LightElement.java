@@ -2,10 +2,11 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.util.IncorrectOperationException;
@@ -40,7 +41,7 @@ public abstract class LightElement extends PsiElementBase {
   }
 
   public PsiFile getContainingFile(){
-    return null;
+    throw new PsiInvalidElementAccessException(this);
   }
 
   public TextRange getTextRange(){

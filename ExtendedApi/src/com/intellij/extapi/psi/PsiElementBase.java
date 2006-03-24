@@ -91,6 +91,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
   }
 
   public PsiFile getContainingFile() {
+    if (!isValid()) throw new PsiInvalidElementAccessException(this);
     final PsiElement parent = getParent();
     return (parent != null) ? parent.getContainingFile() : null;
   }

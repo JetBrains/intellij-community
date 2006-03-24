@@ -107,6 +107,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public PsiFile getContainingFile() {
+    if (!isValid()) throw new PsiInvalidElementAccessException(this);
     PsiElement parent = getParent();
     if (parent == null) return null;
     return parent.getContainingFile();

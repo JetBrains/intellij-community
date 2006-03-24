@@ -54,6 +54,7 @@ public class OwnBufferLeafPsiElement extends OwnBufferLeafElementImpl implements
   }
 
   public PsiFile getContainingFile() {
+    if (!isValid()) throw new PsiInvalidElementAccessException(this);
     return SharedImplUtil.getContainingFile(this);
   }
 
