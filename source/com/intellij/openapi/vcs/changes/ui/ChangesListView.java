@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -56,7 +57,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   private boolean myShowFlatten = false;
   @NonNls private static final String ROOT_NODE_VALUE = "root";
 
-  private static final String UNVERSIONED_FILES_KEY = "ChangeListView.UnversionedFiles";
+  @NonNls private static final String UNVERSIONED_FILES_KEY = "ChangeListView.UnversionedFiles";
 
   private FileStatus getChangeStatus(Change change) {
     final VirtualFile vFile = ChangesUtil.getFilePath(change).getVirtualFile();
@@ -147,10 +148,10 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     myShowFlatten = showFlatten;
   }
 
-  public void updateModel(List<ChangeList> changeLists, List<VirtualFile> unversionedFiles) {
+  public void updateModel(List<ChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<File> locallyDeletedFiles) {
     storeState();
 
-    final DefaultTreeModel model = buildModel(changeLists, unversionedFiles);
+    final DefaultTreeModel model = buildModel(changeLists, unversionedFiles, locallyDeletedFiles);
     setModel(model);
 
     sortNodes();
@@ -165,6 +166,10 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       public int compare(final Object n1, final Object n2) {
         Object o1 = ((Node)n1).getUserObject();
         Object o2 = ((Node)n2).getUserObject();
+
+        final int classdiff = getNodeClassWeight(o1) - getNodeClassWeight(o2);
+        if (classdiff != 0) return classdiff;
+
         if (o1 instanceof Change && o2 instanceof Change) {
           return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
         }
@@ -181,7 +186,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
           return ((FilePath)o1).getPath().compareToIgnoreCase(((FilePath)o2).getPath());
         }
 
-        return getNodeClassWeight(o1) - getNodeClassWeight(o2);
+        return 0;
       }
 
       private int getNodeClassWeight(Object userObject) {
@@ -190,23 +195,16 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
           return 2;
         }
 
-        if (userObject instanceof Module) {
-          return 3;
-        }
+        if (userObject instanceof Module) return 3;
 
         if (userObject instanceof FilePath) {
-          return 4;
-        }
-
-        if (userObject instanceof Change) {
+          if (((FilePath)userObject).isDirectory()) return 4;
           return 5;
         }
 
-        if (userObject instanceof VirtualFile) {
-          return 6;
-        }
-
-        return 7;
+        if (userObject instanceof Change) return 6;
+        if (userObject instanceof VirtualFile) return 7;
+        return 8;
       }
 
     });
@@ -214,7 +212,9 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     model.nodeStructureChanged((TreeNode)model.getRoot());
   }
 
-  private DefaultTreeModel buildModel(final List<ChangeList> changeLists, final List<VirtualFile> unversionedFiles) {
+  private DefaultTreeModel buildModel(final List<ChangeList> changeLists,
+                                      final List<VirtualFile> unversionedFiles,
+                                      final List<File> locallyDeletedFiles) {
     Node root = new Node(ROOT_NODE_VALUE);
     final DefaultTreeModel model = new DefaultTreeModel(root);
 
@@ -241,6 +241,18 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       }
     }
 
+    if (!locallyDeletedFiles.isEmpty()) {
+      Node locallyDeletedNode = new Node("Locally Deleted");
+      model.insertNodeInto(locallyDeletedNode, root, root.getChildCount());
+      final VcsContextFactory factory = PeerFactory.getInstance().getVcsContextFactory();
+      final HashMap<FilePath, Node> foldersCache = new HashMap<FilePath, Node>();
+      final HashMap<Module, Node> moduleCache = new HashMap<Module, Node>();
+      for (File file : locallyDeletedFiles) {
+        final Node node = new Node(factory.createFilePathOn(file));
+        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, locallyDeletedNode), 0);
+      }
+    }
+
     collapseDirectories(model, root);
 
     return model;
@@ -249,7 +261,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   private static void collapseDirectories(DefaultTreeModel model, Node node) {
     if (node.getUserObject() instanceof FilePath && node.getChildCount() == 1) {
       final Node child = (Node)node.getChildAt(0);
-      if (child.getUserObject() instanceof FilePath) {
+      if (child.getUserObject() instanceof FilePath && ((FilePath)child.getUserObject()).isDirectory()) {
         Node parent = (Node)node.getParent();
         final int idx = parent.getIndex(node);
         model.removeNodeFromParent(node);
@@ -367,13 +379,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     if (paths != null) {
       for (TreePath path : paths) {
         Node node = (Node)path.getLastPathComponent();
-        final Object userObject = node.getUserObject();
-        if (userObject instanceof VirtualFile) {
-          final VirtualFile file = (VirtualFile)userObject;
-          if (file.isValid()) {
-            files.add(file);
-          }
-        }
+        files.addAll(getAllFilesUnder(node));
       }
     }
     return files;
@@ -411,6 +417,8 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     List<PsiElement> elements = new ArrayList<PsiElement>();
     final PsiManager manager = PsiManager.getInstance(myProject);
     List<VirtualFile> files = (List<VirtualFile>)dataContext.getData(UNVERSIONED_FILES_KEY);
+    if (files == null) return PsiElement.EMPTY_ARRAY;
+
     for (VirtualFile file : files) {
       if (file.isDirectory()) {
         final PsiDirectory psiDir = manager.findDirectory(file);
@@ -425,7 +433,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
         }
       }
     }
-    return (PsiElement[])elements.toArray(new PsiElement[elements.size()]);
+    return elements.toArray(new PsiElement[elements.size()]);
   }
 
   @NotNull
@@ -465,6 +473,23 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     return changes;
   }
 
+  private static List<VirtualFile> getAllFilesUnder(final Node node) {
+    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final Enumeration enumeration = node.breadthFirstEnumeration();
+    while (enumeration.hasMoreElements()) {
+      Node child = (Node)enumeration.nextElement();
+      final Object value = child.getUserObject();
+      if (value instanceof VirtualFile) {
+        final VirtualFile file = (VirtualFile)value;
+        if (file.isValid()) {
+          files.add(file);
+        }
+      }
+    }
+
+    return files;
+  }
+
   @NotNull
   private ChangeList[] getSelectedChangeLists() {
     Set<ChangeList> lists = new HashSet<ChangeList>();
@@ -490,8 +515,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
   public class DragSource implements DnDSource {
     public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-      if (action != DnDAction.MOVE) return false;
-      return getSelectedChanges().length > 0;
+      return action == DnDAction.MOVE && getSelectedChanges().length > 0;
     }
 
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
@@ -732,8 +756,17 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
         final FilePath path = (FilePath)object;
         append(getRelativePath(safeCastToFilePath(((Node)node.getParent()).getUserObject()), path),
                SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        appendCount(node);
-        setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
+        if (path.isDirectory()) {
+          appendCount(node);
+          setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
+        }
+        else {
+          if (isShowFlatten()) {
+            final FilePath parent = getParentPath(path);
+            append(" (" + parent.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+          setIcon(path.getFileType().getIcon());
+        }
       }
       else if (object instanceof Module) {
         final Module module = (Module)object;
@@ -792,7 +825,8 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
     public Node(Object userObject) {
       super(userObject);
-      if (userObject instanceof Change || userObject instanceof VirtualFile) {
+      if (userObject instanceof Change || userObject instanceof VirtualFile ||
+          userObject instanceof FilePath && !((FilePath)userObject).isDirectory()) {
         count = 1;
       }
     }

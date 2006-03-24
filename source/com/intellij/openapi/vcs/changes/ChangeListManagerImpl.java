@@ -66,6 +66,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private boolean SHOW_FLATTEN_MODE = true;
 
   private UnversionedFilesHolder myUnversionedFilesHolder = new UnversionedFilesHolder();
+  private DeletedFilesHolder myDeletedFilesHolder = new DeletedFilesHolder();
   private final List<ChangeList> myChangeLists = new ArrayList<ChangeList>();
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -322,8 +323,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               }
             });
 
-            final UnversionedFilesHolder workingHolderCopy = myUnversionedFilesHolder.copy();
-            workingHolderCopy.cleanScope(scope);
+            final UnversionedFilesHolder unversionedHolder = myUnversionedFilesHolder.copy();
+            unversionedHolder.cleanScope(scope);
+
+            final DeletedFilesHolder deletedHolder = myDeletedFilesHolder.copy();
+            deletedHolder.cleanScope(scope);
 
             try {
               final AbstractVcs vcs = myVcsManager.getVcsFor(scope.getScopeRoot());
@@ -356,9 +360,21 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
                     public void processUnversionedFile(VirtualFile file) {
                       if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-                        workingHolderCopy.addFile(file);
+                        unversionedHolder.addFile(file);
                         scheduleRefresh();
                       }
+                    }
+
+                    public void processLocallyDeletedFile(File file) {
+                      if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                        deletedHolder.addFile(file);
+                        scheduleRefresh();
+                      }
+                    }
+
+
+                    public void processModifiedWithoutEditing(VirtualFile file) {
+                      //TODO:
                     }
                   }, null); // TODO: make real indicator
                 }
@@ -374,7 +390,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               }
             }
 
-            myUnversionedFilesHolder = workingHolderCopy;
+            myUnversionedFilesHolder = unversionedHolder;
+            myDeletedFilesHolder = deletedHolder;
             scheduleRefresh();
           }
         }
@@ -410,7 +427,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private void refreshView() {
     if (myDisposed) return;
-    myView.updateModel(getChangeListsCopy(), new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()));
+    myView.updateModel(getChangeListsCopy(),
+                       new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()),
+                       new ArrayList<File>(myDeletedFilesHolder.getFiles()));
   }
 
   private List<ChangeList> getChangeListsCopy() {

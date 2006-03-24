@@ -5,6 +5,7 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.checkinProject.CvsRollbacker;
 import com.intellij.cvsSupport2.checkinProject.DirectoryContent;
 import com.intellij.cvsSupport2.checkinProject.VirtualFileEntry;
+import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -87,6 +88,10 @@ public class CvsChangeProvider implements ChangeProvider {
 
     for (VirtualFile file : dirContent.getUnknownFiles()) {
       builder.processUnversionedFile(file);
+    }
+
+    for (Entry entry : dirContent.getDeletedFiles()) {
+      builder.processLocallyDeletedFile(CvsVfsUtil.getFileFor(dir, entry.getFileName()));
     }
 
     /*
