@@ -101,10 +101,11 @@ public class ClassWithMultipleLoggersInspection extends ClassInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new ClassWithoutLoggerVisitor();
+        return new ClassWithMultipleLoggersVisitor();
     }
 
-    private class ClassWithoutLoggerVisitor extends BaseInspectionVisitor {
+    private class ClassWithMultipleLoggersVisitor
+            extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             //no recursion to avoid drilldown

@@ -67,8 +67,8 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
         loggerClassNameField.setText(loggerClassName);
         loggerClassNameField.setColumns(100);
         loggerClassNameField.setInputVerifier(new RegExInputVerifier());
-
         final DocumentListener listener = new DocumentListener() {
+
             public void changedUpdate(DocumentEvent e) {
                 textChanged();
             }
@@ -106,10 +106,10 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new ClassWithoutLoggerVisitor();
+        return new NonStaticFinalLoggerVisitor();
     }
 
-    private class ClassWithoutLoggerVisitor extends BaseInspectionVisitor {
+    private class NonStaticFinalLoggerVisitor extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             //no recursion to avoid drilldown

@@ -113,6 +113,9 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
 
         public void visitMethod(@NotNull PsiMethod method){
             //no drilldown
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             if(!method.hasModifierProperty(PsiModifier.PUBLIC)){
                 return;
             }
