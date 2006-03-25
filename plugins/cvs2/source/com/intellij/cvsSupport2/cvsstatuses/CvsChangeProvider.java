@@ -1,12 +1,18 @@
 package com.intellij.cvsSupport2.cvsstatuses;
 
 import com.intellij.cvsSupport2.CvsVcs2;
+import com.intellij.cvsSupport2.actions.AddFileOrDirectoryAction;
+import com.intellij.cvsSupport2.actions.RemoveLocallyFileOrDirectoryAction;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.checkinProject.CvsRollbacker;
 import com.intellij.cvsSupport2.checkinProject.DirectoryContent;
 import com.intellij.cvsSupport2.checkinProject.VirtualFileEntry;
+import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
+import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
+import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -17,8 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -80,6 +88,23 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     return exceptions;
+  }
+
+  public List<VcsException> scheduleMissingFileForDeletion(List<File> files) {
+    final Project project = myVcs.getProject();
+    final CvsHandler handler = RemoveLocallyFileOrDirectoryAction.getDefaultHandler(project, files);
+    final CvsOperationExecutor executor = new CvsOperationExecutor(project);
+    executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
+    return Collections.emptyList();
+  }
+
+
+  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
+    final Project project = myVcs.getProject();
+    final CvsHandler handler = AddFileOrDirectoryAction.getDefaultHandler(project, files.toArray(new VirtualFile[files.size()]));
+    final CvsOperationExecutor executor = new CvsOperationExecutor(project);
+    executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
+    return Collections.emptyList();
   }
 
   private void processEntriesIn(VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively) {

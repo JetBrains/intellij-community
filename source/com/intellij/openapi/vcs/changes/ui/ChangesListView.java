@@ -57,7 +57,8 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   private boolean myShowFlatten = false;
   @NonNls private static final String ROOT_NODE_VALUE = "root";
 
-  @NonNls private static final String UNVERSIONED_FILES_KEY = "ChangeListView.UnversionedFiles";
+  @NonNls public static final String UNVERSIONED_FILES_KEY = "ChangeListView.UnversionedFiles";
+  @NonNls public static final String MISSING_FILES_KEY = "ChangeListView.MissingFiles";
 
   private FileStatus getChangeStatus(Change change) {
     final VirtualFile vFile = ChangesUtil.getFilePath(change).getVirtualFile();
@@ -369,6 +370,9 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     else if (UNVERSIONED_FILES_KEY.equals(dataId)) {
       return getSelectedUnversionedFiles();
     }
+    else if (MISSING_FILES_KEY.equals(dataId)) {
+      return getSelectedMissingFiles();
+    }
 
     return null;
   }
@@ -380,6 +384,18 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       for (TreePath path : paths) {
         Node node = (Node)path.getLastPathComponent();
         files.addAll(getAllFilesUnder(node));
+      }
+    }
+    return files;
+  }
+
+  private List<File> getSelectedMissingFiles() {
+    List<File> files = new ArrayList<File>();
+    final TreePath[] paths = getSelectionPaths();
+    if (paths != null) {
+      for (TreePath path : paths) {
+        Node node = (Node)path.getLastPathComponent();
+        files.addAll(getAllIOFilesUnder(node));
       }
     }
     return files;
@@ -484,6 +500,21 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
         if (file.isValid()) {
           files.add(file);
         }
+      }
+    }
+
+    return files;
+  }
+
+  private static List<File> getAllIOFilesUnder(final Node node) {
+    List<File> files = new ArrayList<File>();
+    final Enumeration enumeration = node.breadthFirstEnumeration();
+    while (enumeration.hasMoreElements()) {
+      Node child = (Node)enumeration.nextElement();
+      final Object value = child.getUserObject();
+      if (child.isLeaf() && value instanceof FilePath) {
+        final FilePath file = (FilePath)value;
+        files.add(file.getIOFile());
       }
     }
 

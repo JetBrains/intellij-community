@@ -308,8 +308,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       public void run() {
         try {
           final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
-          ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.ChangesProcessor() {
-            public void processChanges(AbstractVcs vcs, List<Change> changes) {
+          ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.PerVcsProcessor<Change>() {
+            public void process(AbstractVcs vcs, List<Change> changes) {
               final CheckinEnvironment environment = vcs.getCheckinEnvironment();
               if (environment != null) {
                 List<FilePath> paths = new ArrayList<FilePath>();

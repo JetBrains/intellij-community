@@ -7,7 +7,9 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.peer.PeerFactory;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -24,7 +26,18 @@ public class ChangesUtil {
   }
 
   public static AbstractVcs getVcsForChange(Change change, final Project project) {
-    final FilePath filePath = getFilePath(change);
+    return getVcsForPath(getFilePath(change), project);
+  }
+
+  public static AbstractVcs getVcsForFile(VirtualFile file, Project project) {
+    return getVcsForPath(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file), project);
+  }
+
+  public static AbstractVcs getVcsForFile(File file, Project project) {
+    return getVcsForPath(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file), project);
+  }
+
+  private static AbstractVcs getVcsForPath(final FilePath filePath, final Project project) {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile root = VcsDirtyScope.getRootFor(fileIndex, filePath);
@@ -35,27 +48,55 @@ public class ChangesUtil {
     return null;
   }
 
-  public interface ChangesProcessor {
-    void processChanges(AbstractVcs vcs, List<Change> changes);
+  public interface PerVcsProcessor<T> {
+    void process(AbstractVcs vcs, List<T> items);
   }
 
-  public static void processChangesByVcs(Project project, Collection<Change> changes, ChangesProcessor processor) {
-    Map<AbstractVcs, List<Change>> changesByVcs = new HashMap<AbstractVcs, List<Change>>();
+  public interface VcsSeparator<T> {
+    AbstractVcs getVcsFor(T item);
+  }
 
-    for (Change change : changes) {
-      final AbstractVcs vcs = getVcsForChange(change, project);
+  public static <T> void processItemsByVcs(Collection<T> items, VcsSeparator<T> separator, PerVcsProcessor<T> processor) {
+    Map<AbstractVcs, List<T>> changesByVcs = new HashMap<AbstractVcs, List<T>>();
+
+    for (T item : items) {
+      final AbstractVcs vcs = separator.getVcsFor(item);
       if (vcs != null) {
-        List<Change> vcsChanges = changesByVcs.get(vcs);
+        List<T> vcsChanges = changesByVcs.get(vcs);
         if (vcsChanges == null) {
-          vcsChanges = new ArrayList<Change>();
+          vcsChanges = new ArrayList<T>();
           changesByVcs.put(vcs, vcsChanges);
         }
-        vcsChanges.add(change);
+        vcsChanges.add(item);
       }
     }
 
-    for (Map.Entry<AbstractVcs, List<Change>> entry : changesByVcs.entrySet()) {
-      processor.processChanges(entry.getKey(), entry.getValue());
+    for (Map.Entry<AbstractVcs, List<T>> entry : changesByVcs.entrySet()) {
+      processor.process(entry.getKey(), entry.getValue());
     }
+  }
+
+  public static void processChangesByVcs(final Project project, Collection<Change> changes, PerVcsProcessor<Change> processor) {
+    processItemsByVcs(changes, new VcsSeparator<Change>() {
+      public AbstractVcs getVcsFor(final Change item) {
+        return getVcsForChange(item, project);
+      }
+    }, processor);
+  }
+
+  public static void processVirtualFilesByVcs(final Project project, Collection<VirtualFile> files, PerVcsProcessor<VirtualFile> processor) {
+    processItemsByVcs(files, new VcsSeparator<VirtualFile>() {
+      public AbstractVcs getVcsFor(final VirtualFile item) {
+        return getVcsForFile(item, project);
+      }
+    }, processor);
+  }
+
+  public static void processIOFilesByVcs(final Project project, Collection<File> files, PerVcsProcessor<File> processor) {
+    processItemsByVcs(files, new VcsSeparator<File>() {
+      public AbstractVcs getVcsFor(final File item) {
+        return getVcsForFile(item, project);
+      }
+    }, processor);
   }
 }

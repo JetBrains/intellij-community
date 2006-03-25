@@ -15,10 +15,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
@@ -209,6 +206,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     menuGroup.addSeparator();
     menuGroup.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
     menuGroup.add(new DeleteAction());
+    menuGroup.add(new ScheduleForAdditionAction());
+    menuGroup.add(new ScheduleForRemovalAction());
     menuGroup.addSeparator();
     menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
 
@@ -763,6 +762,83 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       if (list == null) return;
 
       RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes));
+    }
+  }
+
+  public class ScheduleForAdditionAction extends AnAction {
+    public ScheduleForAdditionAction() {
+      super("Add to VCS", "Schedule selected files to be added to VCS",
+            IconLoader.getIcon("/actions/include.png"));
+    }
+
+    public void update(AnActionEvent e) {
+      List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
+      boolean enabled = files != null && !files.isEmpty();
+      e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setVisible(enabled);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
+      if (files == null) return;
+
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
+            public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
+              final ChangeProvider provider = vcs.getChangeProvider();
+              if (provider != null) {
+                provider.scheduleUnversionedFilesForAddition(files);
+              }
+            }
+          });
+        }
+      }, "Adding files to VCS", true, myProject);
+
+      for (VirtualFile file : files) {
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
+        FileStatusManager.getInstance(myProject).fileStatusChanged(file);
+      }
+
+      scheduleRefresh();
+    }
+  }
+
+  public class ScheduleForRemovalAction extends AnAction {
+    public ScheduleForRemovalAction() {
+      super("Remove from VCS", "Schedule selected files to be removed from VCS",
+            IconLoader.getIcon("/actions/exclude.png"));
+    }
+
+    public void update(AnActionEvent e) {
+      List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      boolean enabled = files != null && !files.isEmpty();
+      e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setVisible(enabled);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      if (files == null) return;
+
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          ChangesUtil.processIOFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<File>() {
+            public void process(final AbstractVcs vcs, final List<File> items) {
+              final ChangeProvider provider = vcs.getChangeProvider();
+              if (provider != null) {
+                provider.scheduleMissingFileForDeletion(files);
+              }
+            }
+          });
+        }
+      }, "Removing files from VCS", true, myProject);
+
+      for (File file : files) {
+        FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
+      }
+      scheduleRefresh();
     }
   }
 

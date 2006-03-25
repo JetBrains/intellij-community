@@ -1,15 +1,13 @@
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsRemove.ui.AbstractDeleteConfirmationDialog;
 import com.intellij.cvsSupport2.ui.Options;
-import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.cvsoperations.cvsRemove.ui.AbstractDeleteConfirmationDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.OptionsDialog;
+import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.util.ui.OptionsDialog;
 
 import java.io.File;
@@ -37,12 +35,23 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
-    Collection<File> filesToRemove = getFilesToRemove(context);
+    Project project = context.getProject();
+    final boolean showDialog = myOptions.isToBeShown(project) || OptionsDialog.shiftIsPressed(context.getModifiers());
 
+    return getCvsHandler(project, getFilesToRemove(context), showDialog, myOptions);
+  }
+
+  public static CvsHandler getDefaultHandler(Project project, Collection<File> files) {
+    return getCvsHandler(project, files, true, Options.NULL);
+  }
+
+  private static CvsHandler getCvsHandler(final Project project,
+                                          final Collection<File> filesToRemove,
+                                          final boolean showDialog,
+                                          final Options dialogOptions) {
     ArrayList<File> files = new ArrayList<File>();
 
-    for (Iterator each = filesToRemove.iterator(); each.hasNext();) {
-      File file = (File)each.next();
+    for (final File file : filesToRemove) {
       if (CvsUtil.fileIsLocallyAdded(file)) {
         CvsUtil.removeEntryFor(file);
       }
@@ -52,12 +61,11 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
     }
 
     if (files.isEmpty()) return CvsHandler.NULL;
-    Project project = context.getProject();
     Collection<File> filesToBeRemoved = files;
-    if (myOptions.isToBeShown(project)  || OptionsDialog.shiftIsPressed(context.getModifiers())) {
+    if (showDialog) {
       AbstractDeleteConfirmationDialog dialog = AbstractDeleteConfirmationDialog.createDialog(project,
                                                                                               files,
-                                                                                              myOptions);
+                                                                                              dialogOptions);
 
       dialog.show();
       if (!dialog.isOK()) return CvsHandler.NULL;

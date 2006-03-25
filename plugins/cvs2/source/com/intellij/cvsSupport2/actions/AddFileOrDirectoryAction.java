@@ -66,21 +66,35 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
-    ArrayList<VirtualFile> filesToAdd = collectFilesToAdd(context.getSelectedFiles());
+    Project project = context.getProject();
+    boolean showDialog = myOptions.isToBeShown(project) || OptionsDialog.shiftIsPressed(context.getModifiers());
+
+    return getCvsHandler(project, context.getSelectedFiles(), !myIsAutomaticallyAction, showDialog, myOptions);
+  }
+
+  public static CvsHandler getDefaultHandler(Project project, VirtualFile[] files) {
+    return getCvsHandler(project, files, true, true, Options.NULL);
+  }
+
+  private static CvsHandler getCvsHandler(final Project project,
+                                          final VirtualFile[] files,
+                                          final boolean includeAllRoots,
+                                          final boolean showDialog,
+                                          final Options dialogOptions) {
+    ArrayList<VirtualFile> filesToAdd = collectFilesToAdd(files);
     if (filesToAdd.isEmpty()) return CvsHandler.NULL;
     LOG.assertTrue(!filesToAdd.isEmpty());
 
-    Project project = context.getProject();
-    Collection<AddedFileInfo> roots = new CreateTreeOnFileList(filesToAdd,  project, !myIsAutomaticallyAction).getRoots();
+    Collection<AddedFileInfo> roots = new CreateTreeOnFileList(filesToAdd,  project, includeAllRoots).getRoots();
 
     if (roots.size() == 0){
       LOG.assertTrue(false, filesToAdd.toString());
     }
 
-    if (myOptions.isToBeShown(project) || OptionsDialog.shiftIsPressed(context.getModifiers())){
-      AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(context.getProject(),
-            roots,
-            myOptions);
+    if (showDialog){
+      AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project,
+                                                                              roots,
+                                                                              dialogOptions);
       dialog.show();
 
       if (!dialog.isOK()) return CvsHandler.NULL;
@@ -90,7 +104,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     return CommandCvsHandler.createAddFilesHandler(roots);
   }
 
-  private ArrayList<VirtualFile> collectFilesToAdd(final VirtualFile[] files) {
+  private static ArrayList<VirtualFile> collectFilesToAdd(final VirtualFile[] files) {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
       addFilesToCollection(result, file);
@@ -98,7 +112,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     return result;
   }
 
-  private void addFilesToCollection(Collection<VirtualFile> collection, VirtualFile file) {
+  private static void addFilesToCollection(Collection<VirtualFile> collection, VirtualFile file) {
     if (DeletedCVSDirectoryStorage.isAdminDir(file)) return;
     collection.add(file);
     VirtualFile[] children = file.getChildren();

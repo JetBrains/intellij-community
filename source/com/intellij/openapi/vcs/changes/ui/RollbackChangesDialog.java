@@ -92,8 +92,8 @@ public class RollbackChangesDialog extends DialogWrapper {
     Runnable rollbackAction = new Runnable() {
       public void run() {
         final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
-        ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.ChangesProcessor() {
-          public void processChanges(AbstractVcs vcs, List<Change> changes) {
+        ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.PerVcsProcessor<Change>() {
+          public void process(AbstractVcs vcs, List<Change> changes) {
             final ChangeProvider environment = vcs.getChangeProvider();
             if (environment != null) {
               pathsToRefresh.addAll(getFilePathes(changes));

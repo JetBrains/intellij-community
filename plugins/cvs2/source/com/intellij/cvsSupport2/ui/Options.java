@@ -52,5 +52,9 @@ public interface Options {
     }
   };
 
+  Options NULL = new Options() {
+    public boolean isToBeShown(Project project) { return true; }
+    public void setToBeShown(boolean value, Project project, boolean onOk) {}
+  };
 }
 
