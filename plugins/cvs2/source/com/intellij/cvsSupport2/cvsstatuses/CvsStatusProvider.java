@@ -90,7 +90,7 @@ public class CvsStatusProvider {
     if (entry.isRemoved()) {
       return FileStatus.DELETED;
     }
-    return FileStatus.UNKNOWN;
+    return FileStatus.DELETED_FROM_FS;
   }
 
   private static FileStatus getFileStatusForAbsentEntry(VirtualFile file) {

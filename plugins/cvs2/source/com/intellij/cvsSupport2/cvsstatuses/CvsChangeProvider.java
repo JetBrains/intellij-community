@@ -126,11 +126,6 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     */
 
-    for (Entry deletedEntry : dirContent.getDeletedFiles()) {
-      final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir, deletedEntry.getFileName());
-      builder.processChange(new Change(new CvsUpToDateRevision(filePath), null));
-    }
-
     for (VirtualFileEntry fileEntry : dirContent.getFiles()) {
       processFile(dir, fileEntry.getVirtualFile(), fileEntry.getEntry(), builder);
     }
@@ -169,6 +164,12 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     else if (status == FileStatus.DELETED) {
       builder.processChange(new Change(new CvsUpToDateRevision(filePath), null));
+    }
+    else if (status == FileStatus.DELETED_FROM_FS) {
+      builder.processLocallyDeletedFile(filePath.getIOFile());
+    }
+    else if (status == FileStatus.UNKNOWN) {
+      builder.processUnversionedFile(filePath.getVirtualFile());
     }
   }
 

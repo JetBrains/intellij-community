@@ -1,13 +1,14 @@
 package com.intellij.cvsSupport2;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsInfo;
+import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsRootParser;
 import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.util.CvsFileUtil;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
@@ -16,11 +17,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.CvsBundle;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.admin.Entries;
 import org.netbeans.lib.cvsclient.admin.EntriesHandler;
 import org.netbeans.lib.cvsclient.admin.Entry;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
@@ -539,6 +539,11 @@ public class CvsUtil {
   }
 
   public static boolean fileExistsInCvs(VirtualFile file) {
+    if (file.isDirectory()) {
+      final VirtualFile child = file.findChild(CVS);
+      if (child != null && child.isDirectory()) return true;
+    }
+
     Entry entry = CvsEntriesManager.getInstance().getEntryFor(file);
     if (entry == null) return false;
     return !entry.isAddedFile();

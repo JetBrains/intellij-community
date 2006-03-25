@@ -782,18 +782,14 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
       if (files == null) return;
 
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
-            public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
-              final ChangeProvider provider = vcs.getChangeProvider();
-              if (provider != null) {
-                provider.scheduleUnversionedFilesForAddition(files);
-              }
-            }
-          });
+      ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
+        public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
+          final ChangeProvider provider = vcs.getChangeProvider();
+          if (provider != null) {
+            provider.scheduleUnversionedFilesForAddition(files);
+          }
         }
-      }, "Adding files to VCS", true, myProject);
+      });
 
       for (VirtualFile file : files) {
         VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
@@ -821,18 +817,14 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
       if (files == null) return;
 
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          ChangesUtil.processIOFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<File>() {
-            public void process(final AbstractVcs vcs, final List<File> items) {
-              final ChangeProvider provider = vcs.getChangeProvider();
-              if (provider != null) {
-                provider.scheduleMissingFileForDeletion(files);
-              }
-            }
-          });
+      ChangesUtil.processIOFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<File>() {
+        public void process(final AbstractVcs vcs, final List<File> items) {
+          final ChangeProvider provider = vcs.getChangeProvider();
+          if (provider != null) {
+            provider.scheduleMissingFileForDeletion(files);
+          }
         }
-      }, "Removing files from VCS", true, myProject);
+      });
 
       for (File file : files) {
         FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);

@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.actions;
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
@@ -20,9 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.OptionsDialog;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 /**
  * author: lesya
@@ -107,8 +106,28 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
   private static ArrayList<VirtualFile> collectFilesToAdd(final VirtualFile[] files) {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
+      List<VirtualFile> parentsToAdd = new ArrayList<VirtualFile>();
+      VirtualFile parent = file.getParent();
+      do {
+        if (parent == null || CvsUtil.fileExistsInCvs(parent) || result.contains(parent)) break;
+        parentsToAdd.add(parent);
+        parent = parent.getParent();
+      }
+      while (true);
+
+      if (parent != null) {
+        result.addAll(parentsToAdd);
+      }
+
       addFilesToCollection(result, file);
     }
+
+    Collections.sort(result, new Comparator<VirtualFile>() {
+      public int compare(final VirtualFile o1, final VirtualFile o2) {
+        return o1.getPath().compareTo(o2.getPath());
+      }
+    });
+
     return result;
   }
 
