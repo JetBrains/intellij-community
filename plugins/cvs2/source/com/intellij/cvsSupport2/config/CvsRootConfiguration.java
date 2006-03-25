@@ -16,6 +16,7 @@ import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.openapi.cvsIntegration.CvsRepository;
 import com.intellij.openapi.cvsIntegration.CvsResult;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
@@ -25,11 +26,13 @@ import org.netbeans.lib.cvsclient.ValidRequestsExpectedException;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
+import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.IOException;
 import java.util.List;
 
 public class CvsRootConfiguration extends AbstractConfiguration implements CvsEnvironment, Cloneable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.CvsRootConfiguration");
 
   public String CVS_ROOT = "";
   public String PATH_TO_WORKING_FOLDER = "";
@@ -160,6 +163,9 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
           catch (ProcessCanceledException ex) {
             result.setIsCanceled();
           }
+          catch (BugLog.BugException e) {
+            LOG.error(e);
+          }          
           catch (Exception e) {
             result.addError(new CvsException(e, cvsRootProvider.getCvsRootAsString()));
           }

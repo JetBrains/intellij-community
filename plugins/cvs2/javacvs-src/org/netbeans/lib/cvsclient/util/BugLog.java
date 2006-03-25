@@ -63,7 +63,7 @@ public class BugLog {
 
         // Inner classes ==========================================================
 
-        private static final class BugException extends RuntimeException {
+        public static final class BugException extends RuntimeException {
                 private BugException(@NonNls String message) {
                         super(message);
                 }
