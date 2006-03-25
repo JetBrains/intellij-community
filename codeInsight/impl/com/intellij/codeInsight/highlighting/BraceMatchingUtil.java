@@ -38,6 +38,8 @@ public class BraceMatchingUtil {
   private static final int PAIRED_TOKEN_GROUP = 4;
   private static final int DOC_TOKEN_GROUP = 5;
 
+  private BraceMatchingUtil() {}
+
   public static boolean isAfterClassLikeIdentifierOrDot(final int offset, final Editor editor) {
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
     if (iterator.getStart() > 0) iterator.retreat();
@@ -275,11 +277,8 @@ public class BraceMatchingUtil {
                  isEndOfSingleHtmlTag(text, iterator)
                );
       }
-      else if (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
-        return isJspJspxStructuralBrace(tokenType);
-      }
-      else{
-        return false;
+      else {
+        return fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX && isJspJspxStructuralBrace(tokenType);
       }
     }
 
@@ -581,34 +580,29 @@ public class BraceMatchingUtil {
 
   public static boolean isStructuralBraceToken(FileType fileType, HighlighterIterator iterator,CharSequence text) {
     BraceMatcher matcher = getBraceMatcher(fileType);
-    if (matcher!=null) return matcher.isStructuralBrace(iterator, text, fileType);
-    return false;
+    return matcher != null && matcher.isStructuralBrace(iterator, text, fileType);
   }
 
   private static boolean isEndOfSingleHtmlTag(CharSequence text,HighlighterIterator iterator) {
     String tagName = getTagName(text,iterator);
-    if (tagName!=null) return HtmlUtil.isSingleHtmlTag(tagName);
-    return false;
+    return tagName != null && HtmlUtil.isSingleHtmlTag(tagName);
   }
 
   public static boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType){
     final BraceMatcher braceMatcher = getBraceMatcher(fileType);
 
-    if (braceMatcher!=null) return braceMatcher.isLBraceToken(iterator, fileText, fileType);
-    return false;
+    return braceMatcher != null && braceMatcher.isLBraceToken(iterator, fileText, fileType);
   }
 
   public static boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType){
     final BraceMatcher braceMatcher = getBraceMatcher(fileType);
 
-    if (braceMatcher!=null) return braceMatcher.isRBraceToken(iterator, fileText, fileType);
-    return false;
+    return braceMatcher != null && braceMatcher.isRBraceToken(iterator, fileText, fileType);
   }
 
   public static boolean isPairBraces(IElementType tokenType1, IElementType tokenType2, FileType fileType){
     BraceMatcher matcher = getBraceMatcher(fileType);
-    if (matcher!=null) return matcher.isPairBraces(tokenType1, tokenType2);
-    return false;
+    return matcher != null && matcher.isPairBraces(tokenType1, tokenType2);
   }
 
   private static int getTokenGroup(IElementType tokenType, FileType fileType){
