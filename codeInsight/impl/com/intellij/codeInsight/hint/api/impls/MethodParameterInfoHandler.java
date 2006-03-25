@@ -362,7 +362,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
   }
 
   public void updateUI(final Object p, final ParameterInfoUIContext context) {
-    if (p instanceof CandidateInfo) updateMethodPresentation((PsiMethod)((CandidateInfo)p).getElement(),null, context);
+    if (p instanceof CandidateInfo) {
+      CandidateInfo info = (CandidateInfo) p;
+      updateMethodPresentation((PsiMethod)info.getElement(), info.getSubstitutor(), context);
+    }
     else updateMethodPresentation((PsiMethod)p,null,context);
   }
 
