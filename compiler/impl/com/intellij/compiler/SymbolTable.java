@@ -29,7 +29,7 @@ public class SymbolTable {
       myTrie = new PersistentStringEnumerator(file);
     }
     catch (PersistentStringEnumerator.CorruptedException e) {
-      throw new CacheCorruptedException(CompilerBundle.message("error.compiler.caches.corrupted"));
+      throw new CacheCorruptedException(CompilerBundle.message("error.compiler.caches.corrupted"), e);
     }
     catch (IOException e) {
       throw new CacheCorruptedException(e);

@@ -6,7 +6,6 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.*;
 import com.intellij.compiler.make.CacheCorruptedException;
@@ -48,6 +47,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -73,7 +73,6 @@ public class CompileDriver {
   private Map<Module, String> myModuleOutputPaths = new HashMap<Module, String>();
   private Map<Module, String> myModuleTestOutputPaths = new HashMap<Module, String>();
 
-  private CompileDriver.ExitStatus myExitStatus = null;
   private ProjectRootManager myProjectRootManager;
   private static final @NonNls String VERSION_FILE_NAME = "version.dat";
   private static final @NonNls String LOCK_FILE_NAME = "in_progress.dat";
@@ -390,6 +389,16 @@ public class CompileDriver {
     public static final ExitStatus UP_TO_DATE = new ExitStatus("UP_TO_DATE");
   }
 
+  private static class ExitException extends Exception{
+    private final ExitStatus myStatus;
+    public ExitException(ExitStatus status) {
+      myStatus = status;
+    }
+    public ExitStatus getExitStatus() {
+      return myStatus;
+    }
+  }
+
   private ExitStatus doCompile(CompileContextImpl context, boolean isRebuild, final boolean forceCompile, final boolean trackDependencies,
                                final Set<File> outputDirectories) {
     try {
@@ -424,45 +433,26 @@ public class CompileDriver {
 
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
 
-      didSomething |= generateSources(compilerManager, context, forceCompile);
-      if (myExitStatus != null) {
-        return myExitStatus;
-      }
-
-      didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, forceCompile, true);
-      if (myExitStatus != null) {
-        return myExitStatus;
-      }
-
       try {
+        didSomething |= generateSources(compilerManager, context, forceCompile);
+
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, forceCompile, true);
+
         didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies, outputDirectories);
-        if (myExitStatus != null) {
-          return myExitStatus;
-        }
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild, false);
-        if (myExitStatus != null) {
-          return myExitStatus;
-        }
 
         // explicitly passing forceCompile = false because in scopes that is narrower than ProjectScope it is impossible
         // to understand whether the class to be processed is in scope or not. Otherwise compiler may process its items even if
         // there were changes in completely independent files.
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild, false);
-        if (myExitStatus != null) {
-          return myExitStatus;
-        }
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory, isRebuild, true);
-        if (myExitStatus != null) {
-          return myExitStatus;
-        }
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, Validator.class, myProcessingCompilerAdapterFactory, forceCompile, true);
-        if (myExitStatus != null) {
-          return myExitStatus;
-        }
-
+      }
+      catch (ExitException e) {
+        return e.getExitStatus();
       }
       finally {
         // drop in case it has not been dropped yet.
@@ -503,14 +493,13 @@ public class CompileDriver {
     }
   }
 
-  private boolean generateSources(final CompilerManager compilerManager, CompileContextImpl context, final boolean forceCompile) {
+  private boolean generateSources(final CompilerManager compilerManager, CompileContextImpl context, final boolean forceCompile) throws ExitException{
     boolean didSomething = false;
 
     final SourceGeneratingCompiler[] sourceGenerators = compilerManager.getCompilers(SourceGeneratingCompiler.class);
     for (final SourceGeneratingCompiler sourceGenerator : sourceGenerators) {
       if (context.getProgressIndicator().isCanceled()) {
-        myExitStatus = ExitStatus.CANCELLED;
-        return false;
+        throw new ExitException(ExitStatus.CANCELLED);
       }
 
       final boolean generatedSomething = generateOutput(context, sourceGenerator, forceCompile);
@@ -518,8 +507,7 @@ public class CompileDriver {
       dropInternalCache(sourceGenerator);
 
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-        myExitStatus = ExitStatus.ERRORS;
-        return false;
+        throw new ExitException(ExitStatus.ERRORS);
       }
       didSomething |= generatedSomething;
     }
@@ -530,7 +518,7 @@ public class CompileDriver {
                             final CompilerManager compilerManager,
                             final boolean forceCompile,
                             boolean isRebuild,
-                            final boolean trackDependencies, final Set<File> outputDirectories) {
+                            final boolean trackDependencies, final Set<File> outputDirectories) throws ExitException {
 
     boolean didSomething = false;
 
@@ -543,8 +531,7 @@ public class CompileDriver {
 
     for (final TranslatingCompiler translator : translators) {
       if (context.getProgressIndicator().isCanceled()) {
-        myExitStatus = ExitStatus.CANCELLED;
-        return false;
+        throw new ExitException(ExitStatus.CANCELLED);
       }
 
       final boolean compiledSomething = compileSources(context, snapshot, translator, forceCompile, isRebuild, trackDependencies, outputDirectories);
@@ -554,8 +541,7 @@ public class CompileDriver {
       dropInternalCache(translator);
 
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-        myExitStatus = ExitStatus.ERRORS;
-        return false;
+        throw new ExitException(ExitStatus.ERRORS);
       }
 
       didSomething |= compiledSomething;
@@ -572,7 +558,7 @@ public class CompileDriver {
                                                 Class<? extends FileProcessingCompiler> fileProcessingCompilerClass,
                                                 FileProcessingCompilerAdapterFactory factory,
                                                 boolean forceCompile,
-                                                final boolean checkScope) {
+                                                final boolean checkScope) throws ExitException {
     LOG.assertTrue(FileProcessingCompiler.class.isAssignableFrom(fileProcessingCompilerClass));
     boolean didSomething = false;
     final FileProcessingCompiler[] compilers = compilerManager.getCompilers(fileProcessingCompilerClass);
@@ -580,8 +566,7 @@ public class CompileDriver {
       try {
         for (final FileProcessingCompiler compiler : compilers) {
           if (context.getProgressIndicator().isCanceled()) {
-            myExitStatus = ExitStatus.CANCELLED;
-            return false;
+            throw new ExitException(ExitStatus.CANCELLED);
           }
 
           final boolean processedSomething = processFiles(factory.create(context, compiler), forceCompile, checkScope);
@@ -589,8 +574,7 @@ public class CompileDriver {
           dropInternalCache(compiler);
 
           if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-            myExitStatus = ExitStatus.ERRORS;
-            return false;
+            throw new ExitException(ExitStatus.ERRORS);
           }
 
           didSomething |= processedSomething;
