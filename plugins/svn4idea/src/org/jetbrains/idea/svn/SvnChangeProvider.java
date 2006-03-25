@@ -1,9 +1,11 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +60,52 @@ public class SvnChangeProvider implements ChangeProvider {
           }
         });
         client.doRevert(ioFile, false);
+      }
+      catch (SVNException e) {
+        exceptions.add(new VcsException(e));
+      }
+    }
+
+    return exceptions;
+  }
+
+  public List<VcsException> scheduleMissingFileForDeletion(List<File> files) {
+    List<VcsException> exceptions = new ArrayList<VcsException>();
+    final SVNWCClient wcClient;
+    try {
+      wcClient = myVcs.createWCClient();
+    }
+    catch (SVNException e) {
+      exceptions.add(new VcsException(e));
+      return exceptions;
+    }
+
+    for (File file : files) {
+      try {
+        wcClient.doDelete(file, true, false);
+      }
+      catch (SVNException e) {
+        exceptions.add(new VcsException(e));
+      }
+    }
+
+    return exceptions;
+  }
+
+  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
+    List<VcsException> exceptions = new ArrayList<VcsException>();
+    final SVNWCClient wcClient;
+    try {
+      wcClient = myVcs.createWCClient();
+    }
+    catch (SVNException e) {
+      exceptions.add(new VcsException(e));
+      return exceptions;
+    }
+
+    for (VirtualFile file : files) {
+      try {
+        wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, true, true, false);
       }
       catch (SVNException e) {
         exceptions.add(new VcsException(e));
