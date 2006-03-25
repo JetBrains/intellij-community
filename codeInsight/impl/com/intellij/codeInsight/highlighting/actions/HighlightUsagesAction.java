@@ -3,7 +3,6 @@ package com.intellij.codeInsight.highlighting.actions;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -31,17 +30,8 @@ public class HighlightUsagesAction extends AnAction {
       project,
       new Runnable() {
         public void run() {
-          final Runnable action = new Runnable() {
-            public void run() {
-              PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-              new HighlightUsagesHandler().invoke(project, editor, psiFile);
-            }
-          };
-          if (new HighlightUsagesHandler().startInWriteAction()) {
-            ApplicationManager.getApplication().runWriteAction(action);
-          } else {
-            action.run();
-          }
+          PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+          new HighlightUsagesHandler().invoke(project, editor, psiFile);
         }
       },
       commandName,

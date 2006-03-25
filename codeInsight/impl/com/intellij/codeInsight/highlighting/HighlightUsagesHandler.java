@@ -142,8 +142,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       doHighlightElements(HighlightManager.getInstance(myProject), myEditor, myExitStatements, attributes);
 
       setupFindModel(myProject);
-      String buffer = CodeInsightBundle.message("status.bar.exit.points.highlighted.message", myExitStatements.length);
-      WindowManager.getInstance().getStatusBar(myProject).setInfo(buffer.toString());
+      String message = CodeInsightBundle.message("status.bar.exit.points.highlighted.message", myExitStatements.length);
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(message);
     }
   }
 
@@ -262,10 +262,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         });
       }
     }
-  }
-
-  public boolean startInWriteAction() {
-    return false;
   }
 
   protected Runnable createHighlightAction(final Project project, PsiFile file, PsiElement target, final Editor editor) {
