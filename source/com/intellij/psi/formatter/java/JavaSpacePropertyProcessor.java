@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -272,6 +273,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
 
     else if (myRole2 == ChildRole.ARGUMENT_LIST) {
       createSpaceInCode(false);
+    }
+    else if (myRole2 == ChildRole.RBRACE) {
+      myResult = Spacing
+        .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);      
     }
   }
 
