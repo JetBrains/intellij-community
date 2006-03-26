@@ -11,20 +11,20 @@ import java.util.*;
  * Time: 3:51:58 PM
  * To change this template use Options | File Templates.
  */
-public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
+public class PluginsTableModel extends PluginTableModel
 {
     public static Map<PluginId, Integer> NewVersions2Plugins = new HashMap<PluginId, Integer>();
     private static Map<PluginId, String> UpdateVersions = new HashMap<PluginId, String>();
 
     public PluginsTableModel(SortableProvider sortableProvider)
     {
-        super(new PluginManagerColumnInfo [] {
+        super(sortableProvider,
             new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_STATUS, sortableProvider),
             new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_NAME, sortableProvider),
             new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DOWNLOADS, sortableProvider),
             new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DATE, sortableProvider),
             new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_CATEGORY, sortableProvider)
-        }, sortableProvider);
+        );
 
         view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
         sortByColumn(sortableProvider.getSortColumn());

@@ -75,7 +75,7 @@ public class PluginManagerMain
   private JButton btnCancel;
   private JLabel mySynchStatus;
 
-  private PluginTable<IdeaPluginDescriptor> pluginTable;
+  private PluginTable pluginTable;
   private ArrayList<IdeaPluginDescriptor> pluginsList;
 
   private boolean requireShutdown = false;
@@ -90,7 +90,7 @@ public class PluginManagerMain
     myChangeNotesTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
     genericModel = new PluginsTableModel(installedProvider);
-    pluginTable = new PluginTable<IdeaPluginDescriptor>( genericModel );
+    pluginTable = new PluginTable( genericModel );
 
     installedScrollPane.getViewport().setBackground(pluginTable.getBackground());
     installedScrollPane.getViewport().setView(pluginTable);
@@ -586,9 +586,9 @@ public class PluginManagerMain
     }
   }
 
-  private static class MySpeedSearchBar extends SpeedSearchBase<PluginTable<IdeaPluginDescriptor>>
+  private static class MySpeedSearchBar extends SpeedSearchBase<PluginTable>
   {
-    public MySpeedSearchBar( PluginTable<IdeaPluginDescriptor> cmp ){ super( cmp );  }
+    public MySpeedSearchBar( PluginTable cmp ){ super( cmp );  }
 
     public int getSelectedIndex()                 {   return myComponent.getSelectedRow();    }
     public Object[] getAllElements()              {   return myComponent.getElements();       }

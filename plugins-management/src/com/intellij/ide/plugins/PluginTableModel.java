@@ -14,12 +14,12 @@ import java.util.List;
  * Time: 4:16:50 PM
  * To change this template use Options | File Templates.
  */
-abstract public class PluginTableModel <T> extends AbstractTableModel implements SortableColumnModel {
-  protected PluginManagerColumnInfo [] columns;
+abstract public class PluginTableModel extends AbstractTableModel implements SortableColumnModel {
+  protected PluginManagerColumnInfo[] columns;
   protected SortableProvider sortableProvider;
-  protected List<T> view;
+  protected List<IdeaPluginDescriptor> view;
 
-  public PluginTableModel(PluginManagerColumnInfo[] columns, SortableProvider sortableProvider) {
+  public PluginTableModel(SortableProvider sortableProvider, PluginManagerColumnInfo... columns) {
     this.columns = columns;
     this.sortableProvider = sortableProvider;
   }
@@ -28,7 +28,7 @@ abstract public class PluginTableModel <T> extends AbstractTableModel implements
     return columns.length;
   }
 
-  public ColumnInfo[] getColumnInfos() {
+  public ColumnInfo<IdeaPluginDescriptor, String>[] getColumnInfos() {
     return columns;
   }
 
@@ -52,8 +52,8 @@ abstract public class PluginTableModel <T> extends AbstractTableModel implements
     return sortableProvider.getSortOrder();
   }
 
-  public T getObjectAt (int row) {
-    return (T)view.get(row);
+  public IdeaPluginDescriptor getObjectAt (int row) {
+    return view.get(row);
   }
 
   public int getRowCount() {

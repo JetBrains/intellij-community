@@ -21,7 +21,7 @@ import java.util.Date;
  * Time: 2:55:50 PM
  * To change this template use Options | File Templates.
  */
-class PluginManagerColumnInfo extends ColumnInfo {
+class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   public static final int COLUMN_STATUS = 0;
   public static final int COLUMN_NAME = 1;
   public static final int COLUMN_DOWNLOADS = 2;
@@ -60,24 +60,22 @@ class PluginManagerColumnInfo extends ColumnInfo {
     mySortableProvider = sortableProvider;
   }
 
-  public Object valueOf(Object o)
+  public String valueOf(IdeaPluginDescriptor base)
   {
-    IdeaPluginDescriptor base = (IdeaPluginDescriptor) o;
-
     if( columnIdx == COLUMN_NAME )
       return base.getName();
     else
     if( columnIdx == COLUMN_DOWNLOADS )
     {
       //  Base class IdeaPluginDescriptor does not declare this field.
-      return (o instanceof PluginNode) ? ((PluginNode)o).getDownloads() :
-                                         ((IdeaPluginDescriptorImpl)o).getDownloads();
+      return (base instanceof PluginNode) ? ((PluginNode)base).getDownloads() :
+                                         ((IdeaPluginDescriptorImpl)base).getDownloads();
     }
     if( columnIdx == COLUMN_DATE )
     {
       //  Base class IdeaPluginDescriptor does not declare this field.
-      long date = (o instanceof PluginNode) ? ((PluginNode)o).getDate() :
-                                              ((IdeaPluginDescriptorImpl)o).getDate();
+      long date = (base instanceof PluginNode) ? ((PluginNode)base).getDate() :
+                                              ((IdeaPluginDescriptorImpl)base).getDate();
       if( date != 0 )
         return DateFormat.getDateInstance(DateFormat.MEDIUM).format( new Date( date ));
       else
@@ -91,7 +89,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
       return "";
   }
 
-  public Comparator getComparator()
+  public Comparator<IdeaPluginDescriptor> getComparator()
   {
     final boolean sortDirection = (mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING);
 
@@ -99,8 +97,8 @@ class PluginManagerColumnInfo extends ColumnInfo {
     {
       case COLUMN_STATUS:
         //  Return GetRealNodeEstate as is for availabe plugins and "State" for installed ones.
-        return new Comparator() {
-          public int compare(Object o1, Object o2) {
+        return new Comparator<IdeaPluginDescriptor>() {
+          public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
             if (o1 instanceof PluginNode && o2 instanceof IdeaPluginDescriptorImpl) {
               return sortDirection ? -1 : 1;
             }
@@ -141,21 +139,21 @@ class PluginManagerColumnInfo extends ColumnInfo {
         };
 
       case COLUMN_NAME:
-        return new Comparator() {
-          public int compare(Object o1, Object o2)
+        return new Comparator<IdeaPluginDescriptor>() {
+          public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2)
           {
-              String name1 = ((IdeaPluginDescriptor)(sortDirection ? o1 : o2)).getName();
-              String name2 = ((IdeaPluginDescriptor)(sortDirection ? o2 : o1)).getName();
+              String name1 = (sortDirection ? o1 : o2).getName();
+              String name2 = (sortDirection ? o2 : o1).getName();
               return compareStrings( name1, name2 );
           }
         };
 
       case COLUMN_DOWNLOADS:
-        return new Comparator() {
-          public int compare(Object o1, Object o2) {
+        return new Comparator<IdeaPluginDescriptor>() {
+          public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
             if( !sortDirection )
             {
-              Object swap = o2; o2 = o1; o1 = swap;
+              IdeaPluginDescriptor swap = o2; o2 = o1; o1 = swap;
             }
             String count1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDownloads() :
                                                          ((IdeaPluginDescriptorImpl)o1).getDownloads();
@@ -172,20 +170,20 @@ class PluginManagerColumnInfo extends ColumnInfo {
         };
 
         case COLUMN_CATEGORY:
-          return new Comparator() {
-            public int compare(Object o1, Object o2) {
-                String cat1 = ((IdeaPluginDescriptor)(sortDirection ? o1 : o2)).getCategory();
-                String cat2 = ((IdeaPluginDescriptor)(sortDirection ? o2 : o1)).getCategory();
+          return new Comparator<IdeaPluginDescriptor>() {
+            public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+                String cat1 = (sortDirection ? o1 : o2).getCategory();
+                String cat2 = (sortDirection ? o2 : o1).getCategory();
                 return compareStrings( cat1, cat2 );
             }
           };
 
       case COLUMN_DATE:
-        return new Comparator() {
-          public int compare(Object o1, Object o2) {
+        return new Comparator<IdeaPluginDescriptor>() {
+          public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
             if( !sortDirection )
             {
-              Object swap = o2; o2 = o1; o1 = swap;
+              IdeaPluginDescriptor swap = o2; o2 = o1; o1 = swap;
             }
             long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() :
                                                       ((IdeaPluginDescriptorImpl)o1).getDate();
@@ -200,8 +198,8 @@ class PluginManagerColumnInfo extends ColumnInfo {
         };
 
       default:
-        return new Comparator () {
-          public int compare(Object o, Object o1) {
+        return new Comparator<IdeaPluginDescriptor> () {
+          public int compare(IdeaPluginDescriptor o, IdeaPluginDescriptor o1) {
             return 0;
           }
         };
@@ -290,7 +288,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
         return PluginNode.STATUS_MISSING;
     }
 
-  public TableCellRenderer getRenderer(Object o)
+  public TableCellRenderer getRenderer(IdeaPluginDescriptor o)
   {
       return new PluginTableCellRenderer();
   }
@@ -308,7 +306,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                      boolean hasFocus, int row, int column)
       {
-        Object descriptor = ((PluginTable<IdeaPluginDescriptor>)table).getObjectAt(row);
+        Object descriptor = ((PluginTable)table).getObjectAt(row);
         if (column == 0)
         {
           setHorizontalAlignment( SwingConstants.CENTER );
@@ -334,7 +332,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
               if( descriptor instanceof IdeaPluginDescriptorImpl )
               {
                 setEnabled( !((IdeaPluginDescriptorImpl)descriptor).isDeleted() );
-                
+
                 if(((IdeaPluginDescriptorImpl)descriptor).isDeleted())
                   setForeground( Color.lightGray );
                 else

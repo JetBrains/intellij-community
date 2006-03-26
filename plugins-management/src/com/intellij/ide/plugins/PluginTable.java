@@ -16,8 +16,7 @@ import java.awt.event.MouseEvent;
  * Time: 4:19:20 PM
  * To change this template use Options | File Templates.
  */
-//public class PluginTable <T> extends Table {
-public class PluginTable <T> extends JTable {
+public class PluginTable extends JTable {
   public PluginTable(final PluginTableModel model)
   {
     super(model);
@@ -69,12 +68,12 @@ public class PluginTable <T> extends JTable {
     setShowGrid(false);
   }
 
-  public T getObjectAt (int row) {
-    return ((PluginTableModel <T>)getModel()).getObjectAt(row);
+  public IdeaPluginDescriptor getObjectAt (int row) {
+    return ((PluginTableModel)getModel()).getObjectAt(row);
   }
 
-  public T getSelectedObject () {
-    T o = null;
+  public IdeaPluginDescriptor getSelectedObject () {
+    IdeaPluginDescriptor o = null;
     if (getSelectedRowCount() > 0) {
       o = getObjectAt(getSelectedRow());
     }
@@ -82,6 +81,6 @@ public class PluginTable <T> extends JTable {
   }
 
   public Object [] getElements () {
-    return ((PluginTableModel<T>)getModel()).view.toArray();
+    return ((PluginTableModel)getModel()).view.toArray();
   }
 }
