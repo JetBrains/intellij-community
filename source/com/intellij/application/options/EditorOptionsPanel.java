@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
@@ -116,6 +117,10 @@ public class EditorOptionsPanel {
         }
       }
     );
+
+    if (SystemInfo.isMac) {
+      myCbEnableWheelFontChange.setText(ApplicationBundle.message("checkbox.enable.ctrl.mousewheel.changes.font.size.macos"));
+    }
 
     myReformatOnPasteCombo.addItem(NO_REFORMAT);
     myReformatOnPasteCombo.addItem(INDENT_BLOCK);
