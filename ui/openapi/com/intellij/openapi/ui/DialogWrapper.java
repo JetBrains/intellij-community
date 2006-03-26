@@ -76,7 +76,7 @@ public abstract class DialogWrapper {
 
   private boolean myClosed = false;
 
-  private static Object ourLock = new Object();
+  private static final Object ourLock = new Object();
   private Action myYesAction = null;
   private Action myNoAction = null;
 
