@@ -11,6 +11,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -106,11 +107,11 @@ public class ChangesBrowser extends JPanel implements DataProvider{
 
     myFileStatusListener = new FileStatusListener() {
       public void fileStatusesChanged() {
-        myChangesList.repaint();
+        repaintData();
       }
 
       public void fileStatusChanged(VirtualFile virtualFile) {
-        myChangesList.repaint();
+        repaintData();
       }
     };
 
@@ -229,7 +230,7 @@ public class ChangesBrowser extends JPanel implements DataProvider{
       else {
         myIncludedChanges.remove(myChange);
       }
-      myChangesList.repaint();
+      repaintData();
     }
   }
 
@@ -275,34 +276,29 @@ public class ChangesBrowser extends JPanel implements DataProvider{
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
   private void toggleSelection() {
-    final Object[] values = myChangesList.getSelectedValues();
-    if (values != null) {
-      for (Object value : values) {
-        toggleChange((Change)value);
-      }
+    for (Change value : getSelectedChanges()) {
+      toggleChange(value);
     }
+    repaintData();
+  }
+
+  private void repaintData() {
     myChangesList.repaint();
   }
 
   private void includeSelection() {
-    final Object[] values = myChangesList.getSelectedValues();
-    if (values != null) {
-      for (Object value : values) {
-        myIncludedChanges.add((Change)value);
-      }
+    for (Change change : getSelectedChanges()) {
+      myIncludedChanges.add(change);
     }
-    myChangesList.repaint();
+    repaintData();
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
   private void excludeSelection() {
-    final Object[] values = myChangesList.getSelectedValues();
-    if (values != null) {
-      for (Object value : values) {
-        myIncludedChanges.remove(value);
-      }
+    for (Change change : getSelectedChanges()) {
+      myIncludedChanges.remove(change);
     }
-    myChangesList.repaint();
+    repaintData();
   }
 
   private void toggleChange(Change value) {
@@ -312,7 +308,7 @@ public class ChangesBrowser extends JPanel implements DataProvider{
     else {
       myIncludedChanges.add(value);
     }
-    myChangesList.repaint();
+    repaintData();
   }
 
   private class ChangeListChooser extends JPanel {
@@ -405,6 +401,7 @@ public class ChangesBrowser extends JPanel implements DataProvider{
     return myChangesList;
   }
 
+  @NotNull
   private Change[] getSelectedChanges() {
     final Object[] o = myChangesList.getSelectedValues();
     final Change[] changes = new Change[o.length];

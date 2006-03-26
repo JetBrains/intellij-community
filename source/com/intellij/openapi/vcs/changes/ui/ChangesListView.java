@@ -9,34 +9,34 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatusListener;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.*;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SmartExpander;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -55,25 +55,18 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   private FileStatusListener myFileStatusManager;
   private TreeState myTreeState;
   private boolean myShowFlatten = false;
-  @NonNls private static final String ROOT_NODE_VALUE = "root";
 
   @NonNls public static final String UNVERSIONED_FILES_KEY = "ChangeListView.UnversionedFiles";
   @NonNls public static final String MISSING_FILES_KEY = "ChangeListView.MissingFiles";
 
-  private FileStatus getChangeStatus(Change change) {
-    final VirtualFile vFile = ChangesUtil.getFilePath(change).getVirtualFile();
-    if (vFile == null) return FileStatus.DELETED;
-    return FileStatusManager.getInstance(myProject).getStatus(vFile);
-  }
-
   public ChangesListView(final Project project) {
     myProject = project;
 
-    getModel().setRoot(new Node(ROOT_NODE_VALUE));
+    getModel().setRoot(new ChangesBrowserNode(TreeModelBuilder.ROOT_NODE_VALUE));
 
     setShowsRootHandles(true);
     setRootVisible(false);
-    setCellRenderer(new NodeRenderer());
+
     new TreeSpeedSearch(this, new NodeToTextConvertor());
     SmartExpander.installOn(this);
 
@@ -134,11 +127,11 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   }
 
   private void storeState() {
-    myTreeState = TreeState.createOn(this, (Node)getModel().getRoot());
+    myTreeState = TreeState.createOn(this, (ChangesBrowserNode)getModel().getRoot());
   }
 
   private void restoreState() {
-    myTreeState.applyTo(this, (Node)getModel().getRoot());
+    myTreeState.applyTo(this, (ChangesBrowserNode)getModel().getRoot());
   }
 
   public boolean isShowFlatten() {
@@ -152,191 +145,14 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   public void updateModel(List<ChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<File> locallyDeletedFiles) {
     storeState();
 
-    final DefaultTreeModel model = buildModel(changeLists, unversionedFiles, locallyDeletedFiles);
+    TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
+    final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles);
     setModel(model);
+    setCellRenderer(new NodeRenderer(myProject, isShowFlatten()));
 
-    sortNodes();
-    expandPath(new TreePath(((Node)model.getRoot()).getPath()));
+    expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
 
     restoreState();
-  }
-
-  private void sortNodes() {
-    DefaultTreeModel model = getModel();
-    TreeUtil.sort(getModel(), new Comparator() {
-      public int compare(final Object n1, final Object n2) {
-        Object o1 = ((Node)n1).getUserObject();
-        Object o2 = ((Node)n2).getUserObject();
-
-        final int classdiff = getNodeClassWeight(o1) - getNodeClassWeight(o2);
-        if (classdiff != 0) return classdiff;
-
-        if (o1 instanceof Change && o2 instanceof Change) {
-          return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
-        }
-
-        if (o1 instanceof ChangeList && o2 instanceof ChangeList) {
-          return ((ChangeList)o1).getDescription().compareToIgnoreCase(((ChangeList)o2).getDescription());
-        }
-
-        if (o1 instanceof VirtualFile && o2 instanceof VirtualFile) {
-          return ((VirtualFile)o1).getName().compareToIgnoreCase(((VirtualFile)o2).getName());
-        }
-
-        if (o1 instanceof FilePath && o2 instanceof FilePath) {
-          return ((FilePath)o1).getPath().compareToIgnoreCase(((FilePath)o2).getPath());
-        }
-
-        return 0;
-      }
-
-      private int getNodeClassWeight(Object userObject) {
-        if (userObject instanceof ChangeList) {
-          if (((ChangeList)userObject).isDefault()) return 1;
-          return 2;
-        }
-
-        if (userObject instanceof Module) return 3;
-
-        if (userObject instanceof FilePath) {
-          if (((FilePath)userObject).isDirectory()) return 4;
-          return 5;
-        }
-
-        if (userObject instanceof Change) return 6;
-        if (userObject instanceof VirtualFile) return 7;
-        return 8;
-      }
-
-    });
-
-    model.nodeStructureChanged((TreeNode)model.getRoot());
-  }
-
-  private DefaultTreeModel buildModel(final List<ChangeList> changeLists,
-                                      final List<VirtualFile> unversionedFiles,
-                                      final List<File> locallyDeletedFiles) {
-    Node root = new Node(ROOT_NODE_VALUE);
-    final DefaultTreeModel model = new DefaultTreeModel(root);
-
-    for (ChangeList list : changeLists) {
-      Node listNode = new Node(list);
-      model.insertNodeInto(listNode, root, 0);
-      final HashMap<FilePath, Node> foldersCache = new HashMap<FilePath, Node>();
-      final HashMap<Module, Node> moduleCache = new HashMap<Module, Node>();
-      for (Change change : list.getChanges()) {
-        final Node node = new Node(change);
-        ChangesUtil.getFilePath(change).refresh();
-        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, listNode), 0);
-      }
-    }
-
-    if (!unversionedFiles.isEmpty()) {
-      Node unversionedNode = new Node(VcsBundle.message("changes.nodetitle.unversioned.files"));
-      model.insertNodeInto(unversionedNode, root, root.getChildCount());
-      final HashMap<FilePath, Node> foldersCache = new HashMap<FilePath, Node>();
-      final HashMap<Module, Node> moduleCache = new HashMap<Module, Node>();
-      for (VirtualFile file : unversionedFiles) {
-        final Node node = new Node(file);
-        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, unversionedNode), 0);
-      }
-    }
-
-    if (!locallyDeletedFiles.isEmpty()) {
-      Node locallyDeletedNode = new Node("Locally Deleted");
-      model.insertNodeInto(locallyDeletedNode, root, root.getChildCount());
-      final VcsContextFactory factory = PeerFactory.getInstance().getVcsContextFactory();
-      final HashMap<FilePath, Node> foldersCache = new HashMap<FilePath, Node>();
-      final HashMap<Module, Node> moduleCache = new HashMap<Module, Node>();
-      for (File file : locallyDeletedFiles) {
-        final Node node = new Node(factory.createFilePathOn(file));
-        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, locallyDeletedNode), 0);
-      }
-    }
-
-    collapseDirectories(model, root);
-
-    return model;
-  }
-
-  private static void collapseDirectories(DefaultTreeModel model, Node node) {
-    if (node.getUserObject() instanceof FilePath && node.getChildCount() == 1) {
-      final Node child = (Node)node.getChildAt(0);
-      if (child.getUserObject() instanceof FilePath && ((FilePath)child.getUserObject()).isDirectory()) {
-        Node parent = (Node)node.getParent();
-        final int idx = parent.getIndex(node);
-        model.removeNodeFromParent(node);
-        model.removeNodeFromParent(child);
-        model.insertNodeInto(child, parent, idx);
-        collapseDirectories(model, parent);
-      }
-    }
-    else {
-      final Enumeration children = node.children();
-      while (children.hasMoreElements()) {
-        Node child = (Node)children.nextElement();
-        collapseDirectories(model, child);
-      }
-    }
-  }
-
-  private static FilePath getPathForObject(Object o) {
-    if (o instanceof Change) {
-      return ChangesUtil.getFilePath((Change)o);
-    }
-    else if (o instanceof VirtualFile) {
-      return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn((VirtualFile)o);
-    }
-    else if (o instanceof FilePath) {
-      return (FilePath)o;
-    }
-
-    return null;
-  }
-
-  private Node getParentNodeFor(Node node, Map<FilePath, Node> folderNodesCache, Map<Module, Node> moduleNodesCache, Node rootNode) {
-    if (isShowFlatten()) {
-      return rootNode;
-    }
-
-    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-    final FilePath path = getPathForObject(node.getUserObject());
-
-    final VirtualFile rootFolder = VcsDirtyScope.getRootFor(index, path);
-    if (rootFolder == null) {
-      return rootNode;
-    }
-
-    if (path.getVirtualFile() == rootFolder) {
-      Module module = index.getModuleForFile(rootFolder);
-      return getNodeForModule(module, moduleNodesCache, rootNode);
-    }
-
-    FilePath parentPath = getParentPath(path);
-
-    Node parentNode = folderNodesCache.get(parentPath);
-    if (parentNode == null) {
-      parentNode = new Node(parentPath);
-      Node grandPa = getParentNodeFor(parentNode, folderNodesCache, moduleNodesCache, rootNode);
-      getModel().insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
-      folderNodesCache.put(parentPath, parentNode);
-    }
-
-    return parentNode;
-  }
-
-  private static FilePath getParentPath(final FilePath path) {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getIOFile().getParentFile());
-  }
-
-  private Node getNodeForModule(final Module module, final Map<Module, Node> moduleNodesCache, Node root) {
-    Node node = moduleNodesCache.get(module);
-    if (node == null) {
-      node = new Node(module);
-      getModel().insertNodeInto(node, root, root.getChildCount());
-      moduleNodesCache.put(module, node);
-    }
-    return node;
   }
 
   @Nullable
@@ -382,7 +198,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
       for (TreePath path : paths) {
-        Node node = (Node)path.getLastPathComponent();
+        ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
         files.addAll(getAllFilesUnder(node));
       }
     }
@@ -394,7 +210,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
       for (TreePath path : paths) {
-        Node node = (Node)path.getLastPathComponent();
+        ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
         files.addAll(getAllIOFilesUnder(node));
       }
     }
@@ -463,7 +279,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return new Change[0];
     for (TreePath path : paths) {
-      Node node = (Node)path.getLastPathComponent();
+      ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
       final Object userObject = node.getUserObject();
       if (userObject instanceof Change) {
         changes.add((Change)userObject);
@@ -476,11 +292,11 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     return changes.toArray(new Change[changes.size()]);
   }
 
-  private static List<Change> getAllChangesUnder(final Node node) {
+  private static List<Change> getAllChangesUnder(final ChangesBrowserNode node) {
     List<Change> changes = new ArrayList<Change>();
     final Enumeration enumeration = node.breadthFirstEnumeration();
     while (enumeration.hasMoreElements()) {
-      Node child = (Node)enumeration.nextElement();
+      ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
       final Object value = child.getUserObject();
       if (value instanceof Change) {
         changes.add((Change)value);
@@ -489,11 +305,11 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     return changes;
   }
 
-  private static List<VirtualFile> getAllFilesUnder(final Node node) {
+  private static List<VirtualFile> getAllFilesUnder(final ChangesBrowserNode node) {
     List<VirtualFile> files = new ArrayList<VirtualFile>();
     final Enumeration enumeration = node.breadthFirstEnumeration();
     while (enumeration.hasMoreElements()) {
-      Node child = (Node)enumeration.nextElement();
+      ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
       final Object value = child.getUserObject();
       if (value instanceof VirtualFile) {
         final VirtualFile file = (VirtualFile)value;
@@ -506,11 +322,11 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     return files;
   }
 
-  private static List<File> getAllIOFilesUnder(final Node node) {
+  private static List<File> getAllIOFilesUnder(final ChangesBrowserNode node) {
     List<File> files = new ArrayList<File>();
     final Enumeration enumeration = node.breadthFirstEnumeration();
     while (enumeration.hasMoreElements()) {
-      Node child = (Node)enumeration.nextElement();
+      ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
       final Object value = child.getUserObject();
       if (child.isLeaf() && value instanceof FilePath) {
         final FilePath file = (FilePath)value;
@@ -529,7 +345,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     if (paths == null) return new ChangeList[0];
 
     for (TreePath path : paths) {
-      Node node = (Node)path.getLastPathComponent();
+      ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
       final Object userObject = node.getUserObject();
       if (userObject instanceof ChangeList) {
         lists.add((ChangeList)userObject);
@@ -693,12 +509,12 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       if (dropPath == null) return false;
 
       Object object;
-      Node dropNode = (Node)dropPath.getLastPathComponent();
+      ChangesBrowserNode dropNode = (ChangesBrowserNode)dropPath.getLastPathComponent();
       do {
         if (dropNode == null || dropNode.isRoot()) return false;
         object = dropNode.getUserObject();
         if (object instanceof ChangeList) break;
-        dropNode = (Node)dropNode.getParent();
+        dropNode = (ChangesBrowserNode)dropNode.getParent();
       }
       while (true);
 
@@ -738,92 +554,9 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     }
   }
 
-  private class NodeRenderer extends ColoredTreeCellRenderer {
-    public void customizeCellRenderer(JTree tree,
-                                      Object value,
-                                      boolean selected,
-                                      boolean expanded,
-                                      boolean leaf,
-                                      int row,
-                                      boolean hasFocus) {
-      Node node = (Node)value;
-      Object object = node.getUserObject();
-      if (object instanceof ChangeList) {
-        final ChangeList list = ((ChangeList)object);
-        append(list.getDescription(),
-               list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-        appendCount(node);
-        if (list.isInUpdate()) {
-          append(" " + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-      }
-      else if (object instanceof Change) {
-        final Change change = (Change)object;
-        final FilePath filePath = ChangesUtil.getFilePath(change);
-        append(filePath.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
-        if (isShowFlatten()) {
-          append(" (" + filePath.getIOFile().getParentFile().getPath() + ", " + getChangeStatus(change).getText() + ")",
-                 SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-
-        if (filePath.isDirectory()) {
-          setIcon(Icons.DIRECTORY_CLOSED_ICON);
-        }
-        else {
-          setIcon(filePath.getFileType().getIcon());
-        }
-      }
-      else if (object instanceof VirtualFile) {
-        final VirtualFile file = (VirtualFile)object;
-        append(file.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.COLOR_UNKNOWN));
-        if (isShowFlatten() && file.isValid()) {
-          final VirtualFile parentFile = file.getParent();
-          assert parentFile != null;
-          append(" (" + parentFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-        setIcon(file.getFileType().getIcon());
-      }
-      else if (object instanceof FilePath) {
-        final FilePath path = (FilePath)object;
-        append(getRelativePath(safeCastToFilePath(((Node)node.getParent()).getUserObject()), path),
-               SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        if (path.isDirectory()) {
-          appendCount(node);
-          setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
-        }
-        else {
-          if (isShowFlatten()) {
-            final FilePath parent = getParentPath(path);
-            append(" (" + parent.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
-          setIcon(path.getFileType().getIcon());
-        }
-      }
-      else if (object instanceof Module) {
-        final Module module = (Module)object;
-
-        append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        appendCount(node);
-        setIcon(module.getModuleType().getNodeIcon(expanded));
-      }
-      else {
-        append(object.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        appendCount(node);
-      }
-    }
-
-    private void appendCount(final Node node) {
-      append(" " + VcsBundle.message("changes.nodetitle.changecount", node.getCount()), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-    }
-
-    private Color getColor(final Change change) {
-      return getChangeStatus(change).getColor();
-    }
-  }
-
   private static class NodeToTextConvertor implements Convertor<TreePath, String> {
     public String convert(final TreePath path) {
-      Node node = (Node)path.getLastPathComponent();
+      ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
       final Object object = node.getUserObject();
       if (object instanceof ChangeList) {
         final ChangeList list = ((ChangeList)object);
@@ -848,30 +581,6 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       }
 
       return node.toString();
-    }
-  }
-
-  private static class Node extends DefaultMutableTreeNode {
-    private int count = -1;
-
-    public Node(Object userObject) {
-      super(userObject);
-      if (userObject instanceof Change || userObject instanceof VirtualFile ||
-          userObject instanceof FilePath && !((FilePath)userObject).isDirectory()) {
-        count = 1;
-      }
-    }
-
-    public int getCount() {
-      if (count == -1) {
-        count = 0;
-        final Enumeration nodes = children();
-        while (nodes.hasMoreElements()) {
-          Node child = (Node)nodes.nextElement();
-          count += child.getCount();
-        }
-      }
-      return count;
     }
   }
 }
