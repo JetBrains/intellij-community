@@ -30,7 +30,7 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
 
   protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
 
-    return CvsConnectionUtil.createExtConnection(this, getExtConfiguration(), cvsRootConfiguration.SSH_CONFIGURATION,
+    return CvsConnectionUtil.createExtConnection(this, getExtConfiguration(), mySshSettings,
                                                  SSHPasswordProviderImpl.getInstance(), 
                                                  cvsRootConfiguration.PROXY_SETTINGS,
                                                  errorRegistry,
