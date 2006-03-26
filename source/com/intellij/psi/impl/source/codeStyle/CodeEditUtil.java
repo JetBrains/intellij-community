@@ -5,6 +5,7 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -581,7 +582,7 @@ public class CodeEditUtil {
                 ((PsiBasedFormattingModel)model).doNotUseallTrees();
               }
               Block block = model.getRootBlock();
-              if (block instanceof XmlBlock && file.getLanguage() != StdLanguages.JAVA) {
+              if (block instanceof XmlBlock && !isJavaFile(file)) {
                 ((XmlBlock)block).getPolicy().dontProcessJavaTree();
               }
 
@@ -599,6 +600,11 @@ public class CodeEditUtil {
         settings.HTML_KEEP_WHITESPACES = keepWhiteSpaces;
       }
     }
+  }
+
+  private static boolean isJavaFile(final PsiFile file) {
+    final Language language = file.getLanguage();
+    return language == StdLanguages.JAVA || language == JspxFileViewProvider.JAVA_HOLDER_METHOD_TREE_LANGUAGE;
   }
 
   private static boolean isLineComment(final ASTNode prevNonWSElement) {
