@@ -20,12 +20,12 @@ import java.awt.*;
 /**
  * @author max
  */
-class NodeRenderer extends ColoredTreeCellRenderer {
+class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private final boolean myShowFlatten;
   private final Project myProject;
 
 
-  public NodeRenderer(final Project project, final boolean showFlatten) {
+  public ChangeBrowserNodeRenderer(final Project project, final boolean showFlatten) {
     myShowFlatten = showFlatten;
     myProject = project;
   }

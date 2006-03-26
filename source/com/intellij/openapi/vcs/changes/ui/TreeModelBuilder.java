@@ -224,8 +224,8 @@ public class TreeModelBuilder {
   }
 
   private ChangesBrowserNode getNodeForModule(Module module,
-                                Map<Module, ChangesBrowserNode> moduleNodesCache,
-                                ChangesBrowserNode root) {
+                                              Map<Module, ChangesBrowserNode> moduleNodesCache,
+                                              ChangesBrowserNode root) {
     ChangesBrowserNode node = moduleNodesCache.get(module);
     if (node == null) {
       node = new ChangesBrowserNode(module);

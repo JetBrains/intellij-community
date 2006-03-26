@@ -5,7 +5,10 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 /**
  * @author max
@@ -31,5 +34,50 @@ public class ChangesBrowserNode extends DefaultMutableTreeNode {
       }
     }
     return count;
+  }
+
+  public List<Change> getAllChangesUnder() {
+    List<Change> changes = new ArrayList<Change>();
+    final Enumeration enumeration = breadthFirstEnumeration();
+    while (enumeration.hasMoreElements()) {
+      ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
+      final Object value = child.getUserObject();
+      if (value instanceof Change) {
+        changes.add((Change)value);
+      }
+    }
+    return changes;
+  }
+
+  public List<VirtualFile> getAllFilesUnder() {
+    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final Enumeration enumeration = breadthFirstEnumeration();
+    while (enumeration.hasMoreElements()) {
+      ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
+      final Object value = child.getUserObject();
+      if (value instanceof VirtualFile) {
+        final VirtualFile file = (VirtualFile)value;
+        if (file.isValid()) {
+          files.add(file);
+        }
+      }
+    }
+
+    return files;
+  }
+
+  public List<File> getAllIOFilesUnder() {
+    List<File> files = new ArrayList<File>();
+    final Enumeration enumeration = breadthFirstEnumeration();
+    while (enumeration.hasMoreElements()) {
+      ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
+      final Object value = child.getUserObject();
+      if (child.isLeaf() && value instanceof FilePath) {
+        final FilePath file = (FilePath)value;
+        files.add(file.getIOFile());
+      }
+    }
+
+    return files;
   }
 }

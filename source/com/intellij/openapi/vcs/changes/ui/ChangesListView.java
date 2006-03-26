@@ -40,8 +40,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -148,7 +150,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
     final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles);
     setModel(model);
-    setCellRenderer(new NodeRenderer(myProject, isShowFlatten()));
+    setCellRenderer(new ChangeBrowserNodeRenderer(myProject, isShowFlatten()));
 
     expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
 
@@ -199,7 +201,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     if (paths != null) {
       for (TreePath path : paths) {
         ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-        files.addAll(getAllFilesUnder(node));
+        files.addAll(node.getAllFilesUnder());
       }
     }
     return files;
@@ -211,7 +213,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     if (paths != null) {
       for (TreePath path : paths) {
         ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-        files.addAll(getAllIOFilesUnder(node));
+        files.addAll(node.getAllIOFilesUnder());
       }
     }
     return files;
@@ -278,63 +280,13 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return new Change[0];
+
     for (TreePath path : paths) {
       ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-      final Object userObject = node.getUserObject();
-      if (userObject instanceof Change) {
-        changes.add((Change)userObject);
-      }
-      else if (userObject instanceof FilePath || userObject instanceof Module) {
-        changes.addAll(getAllChangesUnder(node));
-      }
+      changes.addAll(node.getAllChangesUnder());
     }
 
     return changes.toArray(new Change[changes.size()]);
-  }
-
-  private static List<Change> getAllChangesUnder(final ChangesBrowserNode node) {
-    List<Change> changes = new ArrayList<Change>();
-    final Enumeration enumeration = node.breadthFirstEnumeration();
-    while (enumeration.hasMoreElements()) {
-      ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
-      final Object value = child.getUserObject();
-      if (value instanceof Change) {
-        changes.add((Change)value);
-      }
-    }
-    return changes;
-  }
-
-  private static List<VirtualFile> getAllFilesUnder(final ChangesBrowserNode node) {
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
-    final Enumeration enumeration = node.breadthFirstEnumeration();
-    while (enumeration.hasMoreElements()) {
-      ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
-      final Object value = child.getUserObject();
-      if (value instanceof VirtualFile) {
-        final VirtualFile file = (VirtualFile)value;
-        if (file.isValid()) {
-          files.add(file);
-        }
-      }
-    }
-
-    return files;
-  }
-
-  private static List<File> getAllIOFilesUnder(final ChangesBrowserNode node) {
-    List<File> files = new ArrayList<File>();
-    final Enumeration enumeration = node.breadthFirstEnumeration();
-    while (enumeration.hasMoreElements()) {
-      ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
-      final Object value = child.getUserObject();
-      if (child.isLeaf() && value instanceof FilePath) {
-        final FilePath file = (FilePath)value;
-        files.add(file.getIOFile());
-      }
-    }
-
-    return files;
   }
 
   @NotNull
