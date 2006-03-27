@@ -5,12 +5,16 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.inspections.FormInspectionUtil;
+import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +26,8 @@ import java.util.List;
  * @author yole
  */
 public class DuplicateComponentsAction extends AbstractGuiEditorAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.DuplicateComponentsAction");
+
   public DuplicateComponentsAction() {
     super(true);
   }
@@ -47,10 +53,31 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
         copy.getConstraints().setRow(row+rowSpan);
         copy.getConstraints().setRowSpan(rowSpan);
         parent.addComponent(copy);
+        copyBinding(editor, c, copy);
         duplicates.add(copy);
       }
     }
     GuiEditorUtil.selectComponents(duplicates);
+  }
+
+  private static void copyBinding(final GuiEditor editor, final RadComponent c, final RadComponent copy) {
+    if (c.getBinding() != null) {
+      String binding = null;
+      String text = FormInspectionUtil.getText(c.getModule(), copy);
+      if (text != null) {
+        binding = BindingProperty.suggestBindingFromText(copy, text);
+      }
+      if (binding == null) {
+        binding = InsertComponentProcessor.suggestBinding(editor, c.getComponentClassName());
+      }
+      try {
+        new BindingProperty(editor.getProject()).setValue(copy, binding);
+      }
+      catch (Exception e1) {
+        LOG.error(e1);
+      }
+      copy.setDefaultBinding(true);
+    }
   }
 
   private static boolean isSpaceBelowEmpty(final RadComponent component) {

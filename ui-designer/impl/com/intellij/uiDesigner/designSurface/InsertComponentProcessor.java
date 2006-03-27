@@ -91,7 +91,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   @NotNull
-  private static String suggestBinding(final GuiEditor editor, @NotNull final String componentClassName){
+  public static String suggestBinding(final GuiEditor editor, @NotNull final String componentClassName){
     String shortClassName = getShortClassName(componentClassName);
 
     LOG.assertTrue(shortClassName.length() > 0);
