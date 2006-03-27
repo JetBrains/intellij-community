@@ -17,7 +17,6 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
@@ -43,11 +42,7 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
 
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference){
         super.visitReferenceElement(reference);
-        final PsiElement parent =
-                PsiTreeUtil.getParentOfType(reference, PsiNewExpression.class);
-        if(parent == null){
-            return;
-        }
+
         final PsiElement resolvedElement = reference.resolve();
         if(!(resolvedElement instanceof PsiClass)){
             return;
@@ -72,12 +67,8 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         final PsiElement element = expression.resolve();
-        if(element instanceof PsiField){
-            if (isFieldStaticallyAccessible((PsiField) element)){
-                return;
-            }
-        } else if(element instanceof PsiMethod){
-            if (isMethodStaticallyAccessible((PsiMethod) element)){
+        if(element instanceof PsiMember){
+            if (isMemberStaticallyAccessible((PsiMember) element)){
                 return;
             }
         } else {
@@ -107,13 +98,16 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
                                                   methodContainingClass, true);
     }
 
-    private boolean isFieldStaticallyAccessible(PsiField field){
-        if(field.hasModifierProperty(PsiModifier.STATIC)){
+    private boolean isMemberStaticallyAccessible(PsiMember member){
+        if(m_method.equals(member)){
+            return true;
+        }
+        if(member.hasModifierProperty(PsiModifier.STATIC)){
             return true;
         }
         final PsiClass referenceContainingClass = m_method.getContainingClass();
-        final PsiClass fieldContainingClass = field.getContainingClass();
+        final PsiClass containingClass = member.getContainingClass();
         return !InheritanceUtil.isCorrectDescendant(referenceContainingClass,
-                                                  fieldContainingClass, true);
+                                                  containingClass, true);
     }
 }
