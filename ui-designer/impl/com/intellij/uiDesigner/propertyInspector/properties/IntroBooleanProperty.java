@@ -2,21 +2,19 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.BooleanEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.BooleanRenderer;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IntroBooleanProperty extends IntrospectedProperty {
+public final class IntroBooleanProperty extends IntrospectedProperty<Boolean> {
   private final BooleanRenderer myRenderer;
   private final BooleanEditor myEditor;
 
@@ -30,12 +28,12 @@ public final class IntroBooleanProperty extends IntrospectedProperty {
     return myEditor;
   }
 
-  public void write(final Object value, final XmlWriter writer){
+  public void write(final Boolean value, final XmlWriter writer){
     writer.addAttribute("value", value.toString());
   }
 
   @NotNull
-  public PropertyRenderer getRenderer(){
+  public PropertyRenderer<Boolean> getRenderer(){
     return myRenderer;
   }
 }

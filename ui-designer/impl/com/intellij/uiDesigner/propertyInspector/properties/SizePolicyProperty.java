@@ -46,7 +46,7 @@ public abstract class SizePolicyProperty extends Property<RadComponent, Integer>
     return myChildren;
   }
 
-  @NotNull public final PropertyRenderer getRenderer(){
+  @NotNull public final PropertyRenderer<Integer> getRenderer(){
     return myRenderer;
   }
 
@@ -95,7 +95,7 @@ public abstract class SizePolicyProperty extends Property<RadComponent, Integer>
     }
 
     @NotNull
-    public final PropertyRenderer getRenderer(){
+    public final PropertyRenderer<Boolean> getRenderer(){
       return myRenderer;
     }
 

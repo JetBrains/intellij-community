@@ -2,21 +2,19 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.DoubleEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.DoubleRenderer;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IntroDoubleProperty extends IntrospectedProperty{
+public final class IntroDoubleProperty extends IntrospectedProperty<Double> {
   private final DoubleRenderer myRenderer;
   private final DoubleEditor myEditor;
 
@@ -27,7 +25,7 @@ public final class IntroDoubleProperty extends IntrospectedProperty{
   }
 
   @NotNull
-  public PropertyRenderer getRenderer(){
+  public PropertyRenderer<Double> getRenderer(){
     return myRenderer;
   }
 
@@ -35,8 +33,7 @@ public final class IntroDoubleProperty extends IntrospectedProperty{
     return myEditor;
   }
 
-  public void write(final Object value, final XmlWriter writer){
-    final Double aDouble = (Double)value;
-    writer.addAttribute("value", aDouble.toString());
+  public void write(final Double value, final XmlWriter writer){
+    writer.addAttribute("value", value.toString());
   }
 }

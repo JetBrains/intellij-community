@@ -49,7 +49,7 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer, 
   protected abstract void setGridLayoutPropertyValue(GridLayoutManager gridLayoutManager, boolean booleanValue);
 
   @NotNull
-  public PropertyRenderer getRenderer(){
+  public PropertyRenderer<Boolean> getRenderer(){
     return myRenderer;
   }
 
@@ -58,7 +58,7 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer, 
   }
 
   @Override public boolean isModified(final RadContainer component) {
-    return ((Boolean) getValue(component)).booleanValue();
+    return getValue(component).booleanValue();
   }
 
   @Override public void resetValue(RadContainer component) throws Exception {

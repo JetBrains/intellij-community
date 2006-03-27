@@ -37,7 +37,7 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
   }
 
   @NotNull
-  public final PropertyRenderer getRenderer(){
+  public final PropertyRenderer<Insets> getRenderer(){
     return myRenderer;
   }
 

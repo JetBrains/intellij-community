@@ -555,7 +555,7 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
-  private final class MyBorderTitleProperty extends Property{
+  private final class MyBorderTitleProperty extends Property<RadContainer, StringDescriptor> {
     private final StringEditor myEditor;
 
     public MyBorderTitleProperty() {
@@ -567,19 +567,16 @@ public class RadContainer extends RadComponent implements IContainer {
       return myEditor.getPreferredSize();
     }
 
-    /**
-     * @return {@link StringDescriptor}
-     */
-    public Object getValue(final RadComponent component) {
+    public StringDescriptor getValue(final RadContainer component) {
       return myBorderTitle;
     }
 
-    protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
-      setBorderTitle((StringDescriptor)value);
+    protected void setValueImpl(final RadContainer container, final StringDescriptor value) throws Exception {
+      setBorderTitle(value);
     }
 
     @NotNull
-    public PropertyRenderer getRenderer() {
+    public PropertyRenderer<StringDescriptor> getRenderer() {
       return null;
     }
 

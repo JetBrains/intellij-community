@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author Anton Katilin
@@ -40,9 +41,13 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
    * <b>Do not overide this method without serious reason!</b>
    */
   public V getValue(final RadComponent component){
+    //noinspection unchecked
+    return (V)invokeGetter(component);
+  }
+
+  protected Object invokeGetter(final RadComponent component) {
     try {
-      //noinspection unchecked
-      return (V) myReadMethod.invoke(component.getDelegee(), EMPTY_OBJECT_ARRAY);
+      return myReadMethod.invoke(component.getDelegee(), EMPTY_OBJECT_ARRAY);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -53,6 +58,10 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
    * <b>Do not overide this method without serious reason!</b>
    */
   protected void setValueImpl(final RadComponent component,final V value) throws Exception{
+    invokeSetter(component, value);
+  }
+
+  protected void invokeSetter(final RadComponent component, final Object value) throws IllegalAccessException, InvocationTargetException {
     myWriteMethod.invoke(component.getDelegee(), value);
   }
 
@@ -73,7 +82,7 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
 
   @Override public void resetValue(RadComponent component) throws Exception {
     final V defaultValue = getDefaultValue(component);
-    myWriteMethod.invoke(component.getDelegee(), defaultValue);
+    invokeSetter(component, defaultValue);
     markTopmostModified(component, false);
   }
 

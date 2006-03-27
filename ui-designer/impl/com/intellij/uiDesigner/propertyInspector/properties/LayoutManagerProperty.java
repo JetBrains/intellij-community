@@ -18,11 +18,7 @@ import javax.swing.*;
  * @author yole
  */
 public class LayoutManagerProperty extends Property<RadContainer, String> {
-  private PropertyRenderer myRenderer = new LabelPropertyRenderer() {
-    protected void customize(Object value) {
-      setText((String) value);
-    }
-  };
+  private PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>();
 
   private static class LayoutManagerEditor extends ComboBoxPropertyEditor {
     public LayoutManagerEditor() {
@@ -63,7 +59,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
     newLayoutManager.changeContainerLayout(component, component.getLayout());
   }
 
-  @NotNull public PropertyRenderer getRenderer() {
+  @NotNull public PropertyRenderer<String> getRenderer() {
     return myRenderer;
   }
 

@@ -8,8 +8,8 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.BorderTypeEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.BorderTypeRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.shared.BorderType;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,12 @@ import org.jetbrains.annotations.NotNull;
 public final class BorderProperty extends Property<RadContainer, BorderType> {
   private Project myProject;
   private final Property[] myChildren;
-  private final BorderTypeRenderer myRenderer;
+
+  private final PropertyRenderer<BorderType> myRenderer = new LabelPropertyRenderer<BorderType>() {
+    protected void customize(final BorderType value) {
+      setText(value.getName());
+    }
+  };
 
   public BorderProperty(final Project project){
     super(null, "border");
@@ -30,7 +35,6 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
       new MyTypeProperty(),
       new MyTitleProperty()
     };
-    myRenderer=new BorderTypeRenderer();
   }
 
   public BorderType getValue(final RadContainer component){
@@ -46,7 +50,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   }
 
   @NotNull
-  public PropertyRenderer getRenderer(){
+  public PropertyRenderer<BorderType> getRenderer(){
     return myRenderer;
   }
 
@@ -67,7 +71,6 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
    * Border type subproperty
    */
   private final class MyTypeProperty extends Property<RadContainer, BorderType> {
-    BorderTypeRenderer myRenderer;
     BorderTypeEditor myEditor;
 
     public MyTypeProperty(){
@@ -83,10 +86,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     @NotNull
-    public PropertyRenderer getRenderer() {
-      if (myRenderer == null) {
-        myRenderer = new BorderTypeRenderer();
-      }
+    public PropertyRenderer<BorderType> getRenderer() {
       return myRenderer;
     }
 
@@ -127,7 +127,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     protected void setValueImpl(final RadContainer component,final StringDescriptor value) throws Exception {
-      StringDescriptor title=(StringDescriptor)value;
+      StringDescriptor title=value;
       if(title != null && ReferenceUtil.resolve(component, title).length()==0){
         title=null;
       }
@@ -135,7 +135,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     @NotNull
-    public PropertyRenderer getRenderer() {
+    public PropertyRenderer<StringDescriptor> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new StringRenderer();
       }

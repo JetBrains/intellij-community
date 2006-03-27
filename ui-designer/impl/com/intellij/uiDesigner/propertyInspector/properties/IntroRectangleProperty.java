@@ -18,7 +18,7 @@ import java.lang.reflect.Method;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IntroRectangleProperty extends IntrospectedProperty{
+public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle> {
   private final RectangleRenderer myRenderer;
   private final Property[] myChildren;
 
@@ -33,12 +33,11 @@ public final class IntroRectangleProperty extends IntrospectedProperty{
     };
   }
 
-  public void write(final Object value,final XmlWriter writer){
-    final Rectangle r=(Rectangle)value;
-    writer.addAttribute("x",r.x);
-    writer.addAttribute("y",r.y);
-    writer.addAttribute("width",r.width);
-    writer.addAttribute("height",r.height);
+  public void write(final Rectangle value,final XmlWriter writer){
+    writer.addAttribute("x",value.x);
+    writer.addAttribute("y",value.y);
+    writer.addAttribute("width",value.width);
+    writer.addAttribute("height",value.height);
   }
 
   @NotNull
@@ -47,7 +46,7 @@ public final class IntroRectangleProperty extends IntrospectedProperty{
   }
 
   @NotNull
-  public PropertyRenderer getRenderer(){
+  public PropertyRenderer<Rectangle> getRenderer(){
     return myRenderer;
   }
 

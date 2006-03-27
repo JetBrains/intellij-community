@@ -6,17 +6,16 @@ import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRenderer;
-
-import java.awt.*;
-import java.lang.reflect.Method;
-
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.Insets;
+import java.lang.reflect.Method;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IntroInsetsProperty extends IntrospectedProperty{
+public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
   private final Property[] myChildren;
   private final InsetsPropertyRenderer myRenderer;
 
@@ -31,12 +30,11 @@ public final class IntroInsetsProperty extends IntrospectedProperty{
     myRenderer=new InsetsPropertyRenderer();
   }
 
-  public void write(final Object value,final XmlWriter writer){
-    final Insets insets=(Insets)value;
-    writer.addAttribute("top",insets.top);
-    writer.addAttribute("left",insets.left);
-    writer.addAttribute("bottom",insets.bottom);
-    writer.addAttribute("right",insets.right);
+  public void write(final Insets value, final XmlWriter writer) {
+    writer.addAttribute("top",value.top);
+    writer.addAttribute("left",value.left);
+    writer.addAttribute("bottom",value.bottom);
+    writer.addAttribute("right",value.right);
   }
 
   @NotNull
@@ -45,7 +43,7 @@ public final class IntroInsetsProperty extends IntrospectedProperty{
   }
 
   @NotNull
-  public PropertyRenderer getRenderer(){
+  public PropertyRenderer<Insets> getRenderer(){
     return myRenderer;
   }
 

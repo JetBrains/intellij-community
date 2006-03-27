@@ -116,7 +116,7 @@ public class RadFlowLayoutManager extends RadLayoutManager {
       flowLayout.setAlignment(value.intValue());
     }
 
-    @NotNull public PropertyRenderer getRenderer() {
+    @NotNull public PropertyRenderer<Integer> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new IntEnumRenderer(myPairs);
       }

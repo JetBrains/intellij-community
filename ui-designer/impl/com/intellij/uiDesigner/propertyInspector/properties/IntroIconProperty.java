@@ -21,15 +21,14 @@ import java.lang.reflect.Method;
 /**
  * @author yole
  */
-public class IntroIconProperty extends IntrospectedProperty {
+public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroIconProperty_";
 
-  private LabelPropertyRenderer myRenderer = new LabelPropertyRenderer() {
-    protected void customize(Object value) {
+  private LabelPropertyRenderer<IconDescriptor> myRenderer = new LabelPropertyRenderer<IconDescriptor>() {
+    protected void customize(IconDescriptor value) {
       if (value != null) {
-        IconDescriptor descriptor = (IconDescriptor) value;
-        setIcon(descriptor.getIcon());
-        setText(descriptor.getIconPath());
+        setIcon(value.getIcon());
+        setText(value.getIconPath());
       }
     }
   };
@@ -41,12 +40,11 @@ public class IntroIconProperty extends IntrospectedProperty {
     myEditor = new IconEditor();
   }
 
-  public void write(@NotNull Object value, XmlWriter writer) {
-    IconDescriptor descriptor = (IconDescriptor) value;
-    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, descriptor.getIconPath());
+  public void write(@NotNull IconDescriptor value, XmlWriter writer) {
+    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, value.getIconPath());
   }
 
-  @NotNull public PropertyRenderer getRenderer() {
+  @NotNull public PropertyRenderer<IconDescriptor> getRenderer() {
     return myRenderer;
   }
 
@@ -54,22 +52,21 @@ public class IntroIconProperty extends IntrospectedProperty {
     return myEditor;
   }
 
-  @Override public Object getValue(final RadComponent component) {
-    return component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
+  @Override public IconDescriptor getValue(final RadComponent component) {
+    return (IconDescriptor)component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
   }
 
-  @Override protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
-    IconDescriptor descriptor = (IconDescriptor) value;
-    component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), descriptor);
-    if (descriptor != null) {
-      if (descriptor.getIcon() == null) {
+  @Override protected void setValueImpl(final RadComponent component, final IconDescriptor value) throws Exception {
+    component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
+    if (value != null) {
+      if (value.getIcon() == null) {
         VirtualFile iconFile = ModuleUtil.findResourceFileInDependents(component.getModule(),
-                                                                       descriptor.getIconPath());
+                                                                       value.getIconPath());
         if (iconFile != null) {
-          loadIconFromFile(iconFile, descriptor);          
+          loadIconFromFile(iconFile, value);
         }
       }
-      super.setValueImpl(component, descriptor.getIcon());
+      invokeSetter(component, value.getIcon());
     }
   }
 

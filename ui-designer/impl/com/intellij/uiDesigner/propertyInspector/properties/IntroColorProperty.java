@@ -21,7 +21,7 @@ import java.lang.reflect.Method;
 /**
  * @author yole
  */
-public class IntroColorProperty extends IntrospectedProperty {
+public class IntroColorProperty extends IntrospectedProperty<ColorDescriptor> {
   private ColorRenderer myColorRenderer = new ColorRenderer();
   private ColorEditor myColorEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroColorProperty_";
@@ -31,7 +31,7 @@ public class IntroColorProperty extends IntrospectedProperty {
     myColorEditor = new ColorEditor(name);
   }
 
-  @NotNull public PropertyRenderer getRenderer() {
+  @NotNull public PropertyRenderer<ColorDescriptor> getRenderer() {
     return myColorRenderer;
   }
 
@@ -39,36 +39,34 @@ public class IntroColorProperty extends IntrospectedProperty {
     return myColorEditor;
   }
 
-  public void write(@NotNull Object value, XmlWriter writer) {
-    ColorDescriptor colorDescriptor = (ColorDescriptor) value;
-    Color color = colorDescriptor.getColor();
+  public void write(@NotNull ColorDescriptor value, XmlWriter writer) {
+    Color color = value.getColor();
     if (color != null) {
       writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_COLOR, color.getRGB());
     }
-    else if (colorDescriptor.getSwingColor() != null) {
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SWING_COLOR, colorDescriptor.getSwingColor());
+    else if (value.getSwingColor() != null) {
+      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SWING_COLOR, value.getSwingColor());
     }
-    else if (colorDescriptor.getSystemColor() != null) {
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SYSTEM_COLOR, colorDescriptor.getSystemColor());
+    else if (value.getSystemColor() != null) {
+      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SYSTEM_COLOR, value.getSystemColor());
     }
-    else if (colorDescriptor.getAWTColor() != null) {
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_AWT_COLOR, colorDescriptor.getAWTColor());
+    else if (value.getAWTColor() != null) {
+      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_AWT_COLOR, value.getAWTColor());
     }
   }
 
-  @Override public Object getValue(final RadComponent component) {
-    final Object colorDescriptor = component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
+  @Override public ColorDescriptor getValue(final RadComponent component) {
+    final ColorDescriptor colorDescriptor = (ColorDescriptor)component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
     if (colorDescriptor == null) {
-      return new ColorDescriptor((Color) super.getValue(component));
+      return new ColorDescriptor((Color) invokeGetter(component));
     }
     return colorDescriptor;
   }
 
-  @Override protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
-    ColorDescriptor colorDescriptor = (ColorDescriptor) value;
-    component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), colorDescriptor);
-    if (colorDescriptor != null && colorDescriptor.isColorSet()) {
-      super.setValueImpl(component, colorDescriptor.getResolvedColor());
+  @Override protected void setValueImpl(final RadComponent component, final ColorDescriptor value) throws Exception {
+    component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
+    if (value != null && value.isColorSet()) {
+      invokeSetter(component, value.getResolvedColor());
     }
   }
 

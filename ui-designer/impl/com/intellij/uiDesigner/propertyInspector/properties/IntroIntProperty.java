@@ -14,8 +14,8 @@ import java.lang.reflect.Method;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IntroIntProperty extends IntrospectedProperty {
-  private final PropertyRenderer myRenderer;
+public final class IntroIntProperty extends IntrospectedProperty<Integer> {
+  private final PropertyRenderer<Integer> myRenderer;
   private final PropertyEditor myEditor;
 
   public IntroIntProperty(final String name, final Method readMethod, final Method writeMethod){
@@ -26,7 +26,7 @@ public final class IntroIntProperty extends IntrospectedProperty {
     final String name,
     final Method readMethod,
     final Method writeMethod,
-    final PropertyRenderer renderer,
+    final PropertyRenderer<Integer> renderer,
     final PropertyEditor editor
   ){
     super(name, readMethod, writeMethod);
@@ -35,7 +35,7 @@ public final class IntroIntProperty extends IntrospectedProperty {
   }
 
   @NotNull
-  public PropertyRenderer getRenderer(){
+  public PropertyRenderer<Integer> getRenderer(){
     return myRenderer;
   }
 
@@ -43,7 +43,7 @@ public final class IntroIntProperty extends IntrospectedProperty {
     return myEditor;
   }
 
-  public void write(final Object value, final XmlWriter writer){
-    writer.addAttribute("value", ((Integer)value).intValue());
+  public void write(final Integer value, final XmlWriter writer){
+    writer.addAttribute("value", value.intValue());
   }
 }

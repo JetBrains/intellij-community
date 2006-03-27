@@ -192,12 +192,8 @@ public class RadCardLayoutManager extends RadLayoutManager {
     }
   }
 
-  private static class CardNameProperty extends Property {
-    private LabelPropertyRenderer myRenderer = new LabelPropertyRenderer() {
-      protected void customize(Object value) {
-        setText((String) value);
-      }
-    };
+  private static class CardNameProperty extends Property<RadComponent, String> {
+    private LabelPropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>();
 
     private AbstractTextFieldEditor myEditor = new AbstractTextFieldEditor() {
       protected void setValueFromComponent(RadComponent component, Object value) {
@@ -215,13 +211,13 @@ public class RadCardLayoutManager extends RadLayoutManager {
       super(null, "Card Name");
     }
 
-    public Object getValue(final RadComponent component) {
-      return component.getCustomLayoutConstraints();
+    public String getValue(final RadComponent component) {
+      return (String) component.getCustomLayoutConstraints();
     }
 
-    protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
+    protected void setValueImpl(final RadComponent component, final String value) throws Exception {
       if (!value.equals(component.getCustomLayoutConstraints())) {
-        if (cardExists(component.getParent(), (String) value)) {
+        if (cardExists(component.getParent(), value)) {
           throw new Exception(UIDesignerBundle.message("error.card.already.exists", value));
         }
         component.setCustomLayoutConstraints(value);
@@ -229,7 +225,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
     }
 
     @NotNull
-    public PropertyRenderer getRenderer() {
+    public PropertyRenderer<String> getRenderer() {
       return myRenderer;
     }
 

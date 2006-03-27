@@ -299,7 +299,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
 
     @NotNull
-    public PropertyRenderer getRenderer() {
+    public PropertyRenderer<StringDescriptor> getRenderer() {
       return myRenderer;
     }
 

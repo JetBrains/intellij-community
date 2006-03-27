@@ -23,13 +23,7 @@ import java.awt.event.ItemEvent;
  * @author yole
  */
 public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> {
-  private LabelPropertyRenderer myRenderer = new LabelPropertyRenderer() {
-    protected void customize(Object value) {
-      RadButtonGroup group = (RadButtonGroup) value;
-      setText(group == null ? "" : group.getName());
-    }
-  };
-
+  private LabelPropertyRenderer<RadButtonGroup> myRenderer = new LabelPropertyRenderer<RadButtonGroup>();
   private ComboBoxPropertyEditor myEditor = new MyPropertyEditor();
 
   public ButtonGroupProperty() {
@@ -55,7 +49,7 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
     radRootContainer.setGroupForComponent(component, value);
   }
 
-  @NotNull public PropertyRenderer getRenderer() {
+  @NotNull public PropertyRenderer<RadButtonGroup> getRenderer() {
     return myRenderer;
   }
 

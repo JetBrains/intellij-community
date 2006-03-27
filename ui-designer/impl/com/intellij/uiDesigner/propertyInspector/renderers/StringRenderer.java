@@ -6,14 +6,11 @@ import com.intellij.uiDesigner.lw.StringDescriptor;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class StringRenderer extends LabelPropertyRenderer{
-  public StringRenderer() {
-  }
+public final class StringRenderer extends LabelPropertyRenderer<StringDescriptor> {
 
-  protected void customize(final Object value) {
+  protected void customize(final StringDescriptor value) {
     if (value != null) {
-      final StringDescriptor descriptor = (StringDescriptor)value;
-      setText(descriptor.getResolvedValue());
+      setText(value.getResolvedValue());
     }
     else{
       setText(null);

@@ -13,7 +13,7 @@ import javax.swing.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer<V> {
+public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer<V> {
   public LabelPropertyRenderer(){
     setOpaque(true);
   }
@@ -42,5 +42,7 @@ public abstract class LabelPropertyRenderer<V> extends JLabel implements Propert
    * attributes. Note, that background and foreground colors are already
    * set.
    */
-  protected abstract void customize(V value);
+  protected void customize(V value) {
+    setText(value == null ? "" : value.toString());
+  }
 }

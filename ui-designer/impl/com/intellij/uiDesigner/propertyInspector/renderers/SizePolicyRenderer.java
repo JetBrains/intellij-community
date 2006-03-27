@@ -7,15 +7,15 @@ import com.intellij.uiDesigner.UIDesignerBundle;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class SizePolicyRenderer extends LabelPropertyRenderer{
+public final class SizePolicyRenderer extends LabelPropertyRenderer<Integer> {
   private final StringBuffer myBuffer;
 
   public SizePolicyRenderer(){
     myBuffer=new StringBuffer();
   }
 
-  protected void customize(final Object value){
-    final int policy=((Integer)value).intValue();
+  protected void customize(final Integer value){
+    final int policy=value.intValue();
     myBuffer.setLength(0);
 
     if((policy & GridConstraints.SIZEPOLICY_CAN_SHRINK) != 0){

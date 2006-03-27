@@ -25,7 +25,7 @@ import java.lang.reflect.Method;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IntroStringProperty extends IntrospectedProperty{
+public final class IntroStringProperty extends IntrospectedProperty<StringDescriptor> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.IntroStringProperty");
 
   /**
@@ -44,7 +44,7 @@ public final class IntroStringProperty extends IntrospectedProperty{
   }
 
   @NotNull
-  public PropertyRenderer getRenderer() {
+  public PropertyRenderer<StringDescriptor> getRenderer() {
     return myRenderer;
   }
 
@@ -104,7 +104,7 @@ public final class IntroStringProperty extends IntrospectedProperty{
    *
    * @return instance of {@link StringDescriptor}
    */
-  public Object getValue(final RadComponent component) {
+  public StringDescriptor getValue(final RadComponent component) {
     // 1. resource bundle
     {
       final StringDescriptor descriptor = getName2Descriptor(component).get(getName());
@@ -149,24 +149,23 @@ public final class IntroStringProperty extends IntrospectedProperty{
     return result;
   }
 
-  protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
+  protected void setValueImpl(final RadComponent component, final StringDescriptor value) throws Exception {
     // 1. Put value into map
-    final StringDescriptor descriptor = (StringDescriptor)value;
-    if(descriptor == null || (descriptor.getBundleName() == null && !descriptor.isNoI18n())) {
+    if(value == null || (value.getBundleName() == null && !value.isNoI18n())) {
       getName2Descriptor(component).remove(getName());
     }
     else{
-      getName2Descriptor(component).put(getName(), descriptor);
+      getName2Descriptor(component).put(getName(), value);
     }
 
     // 2. Apply real string value to JComponent peer
     final JComponent delegee = component.getDelegee();
-    final String resolvedValue = (descriptor != null && descriptor.getValue() != null)
-                                 ? descriptor.getValue()
-                                 : ReferenceUtil.resolve(component, descriptor);
+    final String resolvedValue = (value != null && value.getValue() != null)
+                                 ? value.getValue()
+                                 : ReferenceUtil.resolve(component, value);
 
-    if (descriptor != null) {
-      descriptor.setResolvedValue(resolvedValue);
+    if (value != null) {
+      value.setResolvedValue(resolvedValue);
     }
 
     if(SwingProperties.TEXT.equals(getName())) {
@@ -195,16 +194,16 @@ public final class IntroStringProperty extends IntrospectedProperty{
         }
       }
       else {
-        super.setValueImpl(component, resolvedValue);
+        invokeSetter(component, resolvedValue);
       }
     }
     else{
-      super.setValueImpl(component, resolvedValue);
+      invokeSetter(component, resolvedValue);
     }
   }
 
   public void refreshValue(RadComponent component) {
-    StringDescriptor descriptor = (StringDescriptor) getValue(component);
+    StringDescriptor descriptor = getValue(component);
     descriptor.setResolvedValue(null);
     try {
       setValueImpl(component, descriptor);
@@ -214,9 +213,8 @@ public final class IntroStringProperty extends IntrospectedProperty{
     }
   }
 
-  public void write(@NotNull final Object value, final XmlWriter writer) {
-    final StringDescriptor descriptor = (StringDescriptor)value;
-    writer.writeStringDescriptor(descriptor,
+  public void write(@NotNull final StringDescriptor value, final XmlWriter writer) {
+    writer.writeStringDescriptor(value,
                                  UIFormXmlConstants.ATTRIBUTE_VALUE,
                                  UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE,
                                  UIFormXmlConstants.ATTRIBUTE_KEY);

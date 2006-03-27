@@ -22,7 +22,7 @@ import java.lang.reflect.Method;
 /**
  * @author yole
  */
-public class IntroFontProperty extends IntrospectedProperty {
+public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   private MyFontRenderer myFontRenderer = new MyFontRenderer();
   private FontEditor myFontEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroFontProperty_";
@@ -32,20 +32,19 @@ public class IntroFontProperty extends IntrospectedProperty {
     myFontEditor = new FontEditor(name);
   }
 
-  public void write(@NotNull Object value, XmlWriter writer) {
-    FontDescriptor descriptor = (FontDescriptor) value;
-    Font font = descriptor.getFont();
+  public void write(@NotNull FontDescriptor value, XmlWriter writer) {
+    Font font = value.getFont();
     if (font != null) {
       writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_NAME, font.getName());
       writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SIZE, font.getSize());
       writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_STYLE, font.getStyle());
     }
-    else if (descriptor.getSwingFont() != null) {
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SWING_FONT, descriptor.getSwingFont());
+    else if (value.getSwingFont() != null) {
+      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SWING_FONT, value.getSwingFont());
     }
   }
 
-  @NotNull public PropertyRenderer getRenderer() {
+  @NotNull public PropertyRenderer<FontDescriptor> getRenderer() {
     return myFontRenderer;
   }
 
@@ -53,19 +52,18 @@ public class IntroFontProperty extends IntrospectedProperty {
     return myFontEditor;
   }
 
-  @Override public Object getValue(final RadComponent component) {
-    final Object fontDescriptor = component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
+  @Override public FontDescriptor getValue(final RadComponent component) {
+    final FontDescriptor fontDescriptor = (FontDescriptor) component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
     if (fontDescriptor == null) {
-      return new FontDescriptor((Font) super.getValue(component));
+      return new FontDescriptor((Font) invokeGetter(component));
     }
     return fontDescriptor;
   }
 
-  @Override protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
-    FontDescriptor fontDescriptor = (FontDescriptor) value;
-    component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), fontDescriptor);
-    if (fontDescriptor != null) {
-      super.setValueImpl(component, fontDescriptor.getResolvedFont());
+  @Override protected void setValueImpl(final RadComponent component, final FontDescriptor value) throws Exception {
+    component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
+    if (value != null) {
+      invokeSetter(component, value.getResolvedFont());
     }
   }
 

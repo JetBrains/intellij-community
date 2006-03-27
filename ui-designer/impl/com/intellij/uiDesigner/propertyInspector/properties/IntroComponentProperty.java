@@ -22,7 +22,7 @@ import java.lang.reflect.Method;
  * The value of the property is the string ID of the referenced component.
  * @author yole
  */
-public class IntroComponentProperty extends IntrospectedProperty {
+public class IntroComponentProperty extends IntrospectedProperty<String> {
   private ComponentRenderer myRenderer = new ComponentRenderer();
   private ComponentEditor myEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroComponentProperty_";
@@ -32,7 +32,7 @@ public class IntroComponentProperty extends IntrospectedProperty {
     myEditor = new ComponentEditor(propertyType, filter);
   }
 
-  @NotNull public PropertyRenderer getRenderer() {
+  @NotNull public PropertyRenderer<String> getRenderer() {
     return myRenderer;
   }
 
@@ -40,20 +40,20 @@ public class IntroComponentProperty extends IntrospectedProperty {
     return myEditor;
   }
 
-  public void write(@NotNull Object value, XmlWriter writer) {
-    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, (String) value);
+  public void write(@NotNull String value, XmlWriter writer) {
+    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, value);
   }
 
-  @Override public Object getValue(final RadComponent component) {
-    return component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
+  @Override public String getValue(final RadComponent component) {
+    return (String) component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
   }
 
-  @Override protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
+  @Override protected void setValueImpl(final RadComponent component, final String value) throws Exception {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
     if (getName().equals(SwingProperties.LABEL_FOR)) {
       String text = FormInspectionUtil.getText(component.getModule(), component);
       if (text != null) {
-        RadComponent valueComponent = FormEditingUtil.findComponentAnywhere(component, (String) value);
+        RadComponent valueComponent = FormEditingUtil.findComponentAnywhere(component, value);
         if (valueComponent != null) {
           BindingProperty.checkCreateBindingFromText(valueComponent, text);
         }

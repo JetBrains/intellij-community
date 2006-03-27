@@ -1,23 +1,24 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GuiEditorUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -25,12 +26,13 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.editors.BindingEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.BindingRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
-import com.intellij.util.Query;
-import com.intellij.util.Processor;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.CommonBundle;
+import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,13 +48,16 @@ public final class BindingProperty extends Property<RadComponent, String> {
 
   private final Project myProject;
 
-  private final BindingRenderer myRenderer;
+  private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
+    protected void customize(final String value) {
+      setText(value);
+    }
+  };
   private final BindingEditor myEditor;
 
   public BindingProperty(final Project project){
     super(null, "binding");
     myProject = project;
-    myRenderer = new BindingRenderer();
     myEditor = new BindingEditor(project);
   }
 
@@ -61,7 +66,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   @NotNull
-  public PropertyRenderer getRenderer(){
+  public PropertyRenderer<String> getRenderer(){
     return myRenderer;
   }
 
