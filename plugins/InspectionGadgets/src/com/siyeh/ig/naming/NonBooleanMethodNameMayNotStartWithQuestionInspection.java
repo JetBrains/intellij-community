@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jdom.Element;
@@ -42,14 +43,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class NonBooleanMethodNameMayNotStartWithQuestionInspection
-        extends MethodInspection{
+        extends BaseInspection {
 
     /** @noinspection PublicField*/
     @NonNls public String nameCheckString =
-            "is,can,has,should,could,will,shall,check,contains,equals,add,put," +
-            "remove,startsWith,endsWith";
-
-    private final RenameFix fix = new RenameFix();
+            "is,can,has,should,could,will,shall,check,contains,equals," +
+            "startsWith,endsWith";
 
     private List<Object> nameList = new ArrayList<Object>(32);
     private final Object lock = new Object();
@@ -116,7 +115,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
@@ -128,6 +127,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
     }
 
     private class QuestionableNameVisitor extends BaseInspectionVisitor{
+
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             final PsiType returnType = method.getReturnType();
