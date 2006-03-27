@@ -1,41 +1,46 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FileStatusListener;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.Icons;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
 /**
  * @author max
  */
-public class ChangesBrowser extends JPanel implements DataProvider{
-  private JList myChangesList;
+public class ChangesBrowser extends JPanel implements DataProvider {
+  private ChangesTreeList myViewer;
   private ChangeList mySelectedChangeList;
   private Collection<Change> myAllChanges;
-  private Collection<Change> myIncludedChanges;
   private FileStatusListener myFileStatusListener;
   private final Map<Change, ChangeList> myChangeListsMap = new HashMap<Change, ChangeList>();
   private Project myProject;
+
+  @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
   public ChangesBrowser(final Project project, List<ChangeList> changeLists, final List<Change> changes) {
     super(new BorderLayout());
 
     myProject = project;
-    final List<ChangeList> changeLists1;changeLists1 = changeLists;
     myAllChanges = new ArrayList<Change>();
 
     ChangeList initalListSelection = null;
@@ -50,60 +55,14 @@ public class ChangesBrowser extends JPanel implements DataProvider{
       initalListSelection = changeLists.get(0);
     }
 
-    myIncludedChanges = new HashSet<Change>(changes);
-
-    myChangesList = new JList(new DefaultListModel());
-
-    new ListSpeedSearch(myChangesList) {
-      protected String getElementText(Object element) {
-        if (element instanceof Change) {
-          return ChangesUtil.getFilePath((Change)element).getName();
-        }
-        return super.getElementText(element);
-      }
-    };
-
-    setSelectedList(initalListSelection);
-
-    myChangesList.setCellRenderer(new MyListCellRenderer());
-
-    myChangesList.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        toggleSelection();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
-
-    myChangesList.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        includeSelection();
-      }
-
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), JComponent.WHEN_FOCUSED);
-
-    myChangesList.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        excludeSelection();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_FOCUSED);
-
-    final int checkboxWidth = new JCheckBox().getPreferredSize().width;
-
-    myChangesList.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        final int idx = myChangesList.locationToIndex(e.getPoint());
-        if (idx >= 0) {
-          final Rectangle baseRect = myChangesList.getCellBounds(idx, idx);
-          baseRect.setSize(checkboxWidth, baseRect.height);
-          if (baseRect.contains(e.getPoint())) {
-            final Change currentSelection = (Change)myChangesList.getModel().getElementAt(idx);
-            toggleChange(currentSelection);
-          }
-          else if (e.getClickCount() == 2) {
-            showDiff();
-          }
-        }
+    myViewer = new ChangesTreeList(myProject, changes);
+    myViewer.setDoubleClickHandler(new Runnable() {
+      public void run() {
+        showDiff();
       }
     });
+
+    setSelectedList(initalListSelection);
 
     myFileStatusListener = new FileStatusListener() {
       public void fileStatusesChanged() {
@@ -117,19 +76,17 @@ public class ChangesBrowser extends JPanel implements DataProvider{
 
     FileStatusManager.getInstance(project).addFileStatusListener(myFileStatusListener);
 
-    myChangesList.setVisibleRowCount(10);
-    final JScrollPane pane = new JScrollPane(myChangesList);
-    pane.setPreferredSize(new Dimension(400, 400));
-
     JPanel listPanel = new JPanel(new BorderLayout());
-    listPanel.add(pane);
+    listPanel.add(myViewer);
     listPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("commit.dialog.changed.files.label")));
     add(listPanel, BorderLayout.CENTER);
 
     JPanel headerPanel = new JPanel(new BorderLayout());
-    headerPanel.add(new ChangeListChooser(changeLists1), BorderLayout.EAST);
+    headerPanel.add(new ChangeListChooser(changeLists), BorderLayout.EAST);
     headerPanel.add(createToolbar(), BorderLayout.WEST);
     add(headerPanel, BorderLayout.NORTH);
+
+    myViewer.setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
   }
 
   public JComponent getContentComponent() {
@@ -146,7 +103,7 @@ public class ChangesBrowser extends JPanel implements DataProvider{
 
   public Object getData(final String dataId) {
     if (DataConstants.CHANGES.equals(dataId)) {
-      return getSelectedChanges();
+      return myViewer.getSelectedChanges();
     }
     else if (DataConstants.CHANGE_LISTS.equals(dataId)) {
       return getSelectedChangeLists();
@@ -158,46 +115,6 @@ public class ChangesBrowser extends JPanel implements DataProvider{
     return null;
   }
 
-  private class MyListCellRenderer extends JPanel implements ListCellRenderer {
-    private final ColoredListCellRenderer myTextRenderer;
-    public final JCheckBox myCheckbox;
-
-    public MyListCellRenderer() {
-      super(new BorderLayout());
-      myCheckbox = new JCheckBox();
-      myTextRenderer = new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          Change change = (Change)value;
-          final FilePath path = ChangesUtil.getFilePath(change);
-          setIcon(path.getFileType().getIcon());
-          append(path.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
-          append(" (" + path.getIOFile().getParentFile().getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-
-        private Color getColor(final Change change) {
-          final FilePath path = ChangesUtil.getFilePath(change);
-          final VirtualFile vFile = path.getVirtualFile();
-          if (vFile != null) {
-            return FileStatusManager.getInstance(myProject).getStatus(vFile).getColor();
-          }
-          return FileStatus.DELETED.getColor();
-        }
-      };
-
-      myCheckbox.setBackground(null);
-      setBackground(null);
-
-      add(myCheckbox, BorderLayout.WEST);
-      add(myTextRenderer, BorderLayout.CENTER);
-    }
-
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      myTextRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      myCheckbox.setSelected(myIncludedChanges.contains(value));
-      return this;
-    }
-  }
-
   private class MoveAction extends MoveChangesToAnotherListAction {
     private final Change myChange;
 
@@ -207,7 +124,7 @@ public class ChangesBrowser extends JPanel implements DataProvider{
     }
 
     public void actionPerformed(AnActionEvent e) {
-      askAndMove(myProject, new Change[] {myChange});
+      askAndMove(myProject, new Change[]{myChange});
     }
   }
 
@@ -220,25 +137,22 @@ public class ChangesBrowser extends JPanel implements DataProvider{
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return myIncludedChanges.contains(myChange);
+      return myViewer.isIncluded(myChange);
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
       if (state) {
-        myIncludedChanges.add(myChange);
+        myViewer.includeChange(myChange);
       }
       else {
-        myIncludedChanges.remove(myChange);
+        myViewer.excludeChange(myChange);
       }
-      repaintData();
     }
   }
 
   private void showDiff() {
-    final int leadSelectionIndex = myChangesList.getLeadSelectionIndex();
-    final Change leadSelection = (Change)myChangesList.getModel().getElementAt(leadSelectionIndex);
-
-    Change[] changes = getSelectedChanges();
+    final Change leadSelection = myViewer.getLeadSelection();
+    Change[] changes = myViewer.getSelectedChanges();
 
     if (changes.length < 2) {
       final Collection<Change> displayedChanges = getCurrentDisplayedChanges();
@@ -250,7 +164,7 @@ public class ChangesBrowser extends JPanel implements DataProvider{
       ShowDiffAction.showDiffForChange(changes, indexInSelection, myProject, new DiffToolbarActionsFactory());
     }
     else {
-      ShowDiffAction.showDiffForChange(new Change[] {leadSelection}, 0, myProject, new DiffToolbarActionsFactory());
+      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, new DiffToolbarActionsFactory());
     }
   }
 
@@ -267,48 +181,11 @@ public class ChangesBrowser extends JPanel implements DataProvider{
       myChangeListsMap.put(change, manager.getChangeList(change));
     }
 
-    final DefaultListModel listModel = (DefaultListModel)myChangesList.getModel();
-    listModel.removeAllElements();
-    for (Change change : getCurrentDisplayedChanges()) {
-      listModel.addElement(change);
-    }
-  }
-
-  @SuppressWarnings({"SuspiciousMethodCalls"})
-  private void toggleSelection() {
-    for (Change value : getSelectedChanges()) {
-      toggleChange(value);
-    }
-    repaintData();
+    myViewer.setChangesToDisplay(getCurrentDisplayedChanges());
   }
 
   private void repaintData() {
-    myChangesList.repaint();
-  }
-
-  private void includeSelection() {
-    for (Change change : getSelectedChanges()) {
-      myIncludedChanges.add(change);
-    }
-    repaintData();
-  }
-
-  @SuppressWarnings({"SuspiciousMethodCalls"})
-  private void excludeSelection() {
-    for (Change change : getSelectedChanges()) {
-      myIncludedChanges.remove(change);
-    }
-    repaintData();
-  }
-
-  private void toggleChange(Change value) {
-    if (myIncludedChanges.contains(value)) {
-      myIncludedChanges.remove(value);
-    }
-    else {
-      myIncludedChanges.add(value);
-    }
-    repaintData();
+    myViewer.repaint();
   }
 
   private class ChangeListChooser extends JPanel {
@@ -318,7 +195,8 @@ public class ChangesBrowser extends JPanel implements DataProvider{
       chooser.setRenderer(new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final ChangeList l = ((ChangeList)value);
-          append(l.getDescription(), l.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          append(l.getDescription(),
+                 l.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       });
 
@@ -362,28 +240,33 @@ public class ChangesBrowser extends JPanel implements DataProvider{
       }
     };
 
-    diffAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D,
-                                                                                      SystemInfo.isMac
-                                                                                      ? KeyEvent.META_DOWN_MASK
-                                                                                      : KeyEvent.CTRL_DOWN_MASK)), getRootPane());
+    diffAction.registerCustomShortcutSet(
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
+      myViewer);
 
-    moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), getRootPane());
+    moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
+
+    ToggleShowDirectoriesAction directoriesAction = new ToggleShowDirectoriesAction();
+    directoriesAction.registerCustomShortcutSet(
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
+      myViewer);
 
     toolBarGroup.add(diffAction);
     toolBarGroup.add(moveAction);
+    toolBarGroup.add(directoriesAction);
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolBarGroup, true).getComponent();
   }
 
-  public Collection<Change> getCurrentDisplayedChanges() {
+  public List<Change> getCurrentDisplayedChanges() {
     return filterBySelectedChangeList(myAllChanges);
   }
 
-  public Collection<Change> getCurrentIncludedChanges() {
-    return filterBySelectedChangeList(myIncludedChanges);
+  public List<Change> getCurrentIncludedChanges() {
+    return filterBySelectedChangeList(myViewer.getIncludedChanges());
   }
 
-  private Collection<Change> filterBySelectedChangeList(final Collection<Change> changes) {
+  private List<Change> filterBySelectedChangeList(final Collection<Change> changes) {
     List<Change> filtered = new ArrayList<Change>();
     for (Change change : changes) {
       if (getList(change) == mySelectedChangeList) {
@@ -398,25 +281,15 @@ public class ChangesBrowser extends JPanel implements DataProvider{
   }
 
   public JComponent getPrefferedFocusComponent() {
-    return myChangesList;
-  }
-
-  @NotNull
-  private Change[] getSelectedChanges() {
-    final Object[] o = myChangesList.getSelectedValues();
-    final Change[] changes = new Change[o.length];
-    for (int i = 0; i < changes.length; i++) {
-      changes[i] = (Change)o[i];
-    }
-    return changes;
+    return myViewer;
   }
 
   private ChangeList[] getSelectedChangeLists() {
-    return new ChangeList[] {mySelectedChangeList};
+    return new ChangeList[]{mySelectedChangeList};
   }
 
   private VirtualFile[] getSelectedFiles() {
-    final Change[] changes = getSelectedChanges();
+    final Change[] changes = myViewer.getSelectedChanges();
     ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
@@ -428,5 +301,22 @@ public class ChangesBrowser extends JPanel implements DataProvider{
       }
     }
     return files.toArray(new VirtualFile[files.size()]);
+  }
+
+  public class ToggleShowDirectoriesAction extends ToggleAction {
+    public ToggleShowDirectoriesAction() {
+      super(VcsBundle.message("changes.action.show.directories.text"),
+            VcsBundle.message("changes.action.show.directories.description"),
+            Icons.DIRECTORY_CLOSED_ICON);
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return !PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY);
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      PropertiesComponent.getInstance(myProject).setValue(FLATTEN_OPTION_KEY, String.valueOf(!state));
+      myViewer.setShowFlatten(!state);
+    }
   }
 }
