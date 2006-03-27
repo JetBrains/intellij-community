@@ -36,7 +36,6 @@ import java.io.File;
 
 public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
   private final Comp myComponent;
-  private final MyDoClickAction myDoClickAction;
   private final FixedSizeButton myBrowseButton;
   private boolean myButtonEnabled = true;
 
@@ -53,8 +52,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
     myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
 
     // FixedSizeButton isn't focusable but it should be selectable via keyboard.
-    myDoClickAction = new MyDoClickAction(myBrowseButton);
-    myDoClickAction.registerShortcut(myComponent);
+    new MyDoClickAction(myBrowseButton).registerShortcut(myComponent);
   }
 
   public final Comp getChildComponent() {
