@@ -46,7 +46,7 @@ public class UseParentLayoutProperty extends Property<RadComponent, Boolean> {
     }
   }
 
-  @NotNull public PropertyRenderer getRenderer() {
+  @NotNull public PropertyRenderer<Boolean> getRenderer() {
     return myRenderer;
   }
 

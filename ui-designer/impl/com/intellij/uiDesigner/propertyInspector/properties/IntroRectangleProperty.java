@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -9,11 +8,11 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.RectangleRenderer;
-
-import java.awt.*;
-import java.lang.reflect.Method;
-
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.Rectangle;
+import java.lang.reflect.Method;
 
 /**
  * @author Anton Katilin

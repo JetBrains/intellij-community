@@ -24,7 +24,7 @@ public abstract class AbstractIntProperty<T extends RadComponent> extends Proper
     myEditor = new IntEditor(defaultValue);
   }
 
-  @NotNull public PropertyRenderer getRenderer() {
+  @NotNull public PropertyRenderer<Integer> getRenderer() {
     return myRenderer;
   }
 

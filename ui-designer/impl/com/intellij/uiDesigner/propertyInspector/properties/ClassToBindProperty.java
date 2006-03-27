@@ -49,7 +49,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
   }
 
   @NotNull
-  public PropertyRenderer getRenderer(){
+  public PropertyRenderer<String> getRenderer(){
     return myRenderer;
   }
 

@@ -15,7 +15,7 @@ import java.awt.*;
  * This renderer is used both as PropertyRenderer and as cell renderer in the color chooser pane list.
  * @author yole
  */
-public class ColorRenderer extends ColoredListCellRenderer implements PropertyRenderer {
+public class ColorRenderer extends ColoredListCellRenderer implements PropertyRenderer<ColorDescriptor> {
   private ColorDescriptor myColorDescriptor;
   private Icon myEmptyIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/empty.png");
 
@@ -23,13 +23,13 @@ public class ColorRenderer extends ColoredListCellRenderer implements PropertyRe
     setOpaque(true);
   }
 
-  public JComponent getComponent(RadComponent component, Object value, boolean selected, boolean hasFocus) {
+  public JComponent getComponent(RadComponent component, ColorDescriptor value, boolean selected, boolean hasFocus) {
     prepareComponent(value, selected);
     return this;
   }
 
-  private void prepareComponent(final Object value, final boolean selected) {
-    myColorDescriptor = (ColorDescriptor) value;
+  private void prepareComponent(final ColorDescriptor value, final boolean selected) {
+    myColorDescriptor = value;
     clear();
     setIcon(myEmptyIcon);
     setBackground(selected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
@@ -51,6 +51,6 @@ public class ColorRenderer extends ColoredListCellRenderer implements PropertyRe
   }
 
   protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-    prepareComponent(value, selected);
+    prepareComponent((ColorDescriptor) value, selected);
   }
 }

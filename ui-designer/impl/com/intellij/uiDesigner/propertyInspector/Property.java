@@ -109,7 +109,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
    * @return property's renderer.
    */
   @NotNull
-  public abstract PropertyRenderer getRenderer();
+  public abstract PropertyRenderer<V> getRenderer();
 
   /**
    * @return property's editor. The method allows to return <code>null</code>.

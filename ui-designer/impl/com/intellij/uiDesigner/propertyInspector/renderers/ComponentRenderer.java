@@ -17,13 +17,12 @@ import javax.swing.*;
  * combo box.
  * @author yole
  */
-public class ComponentRenderer extends ColoredListCellRenderer implements PropertyRenderer {
-  public JComponent getComponent(final RadComponent component, Object value, boolean selected, boolean hasFocus) {
+public class ComponentRenderer extends ColoredListCellRenderer implements PropertyRenderer<String> {
+  public JComponent getComponent(final RadComponent component, String value, boolean selected, boolean hasFocus) {
     clear();
     setBackground(selected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
-    String valueId = (String) value;
-    if (valueId != null && valueId.length() > 0) {
-      RadComponent target = FormEditingUtil.findComponentAnywhere(component, valueId);
+    if (value != null && value.length() > 0) {
+      RadComponent target = FormEditingUtil.findComponentAnywhere(component, value);
       if (target != null) {
         renderComponent(target, selected);
       }

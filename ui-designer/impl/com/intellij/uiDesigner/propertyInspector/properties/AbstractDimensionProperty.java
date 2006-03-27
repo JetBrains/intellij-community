@@ -38,7 +38,7 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
   }
 
   @NotNull
-  public final PropertyRenderer getRenderer(){
+  public final PropertyRenderer<Dimension> getRenderer(){
     return myRenderer;
   }
 

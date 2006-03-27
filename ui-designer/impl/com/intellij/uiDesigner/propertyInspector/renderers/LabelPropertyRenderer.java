@@ -13,12 +13,12 @@ import javax.swing.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class LabelPropertyRenderer extends JLabel implements PropertyRenderer{
+public abstract class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer<V> {
   public LabelPropertyRenderer(){
     setOpaque(true);
   }
 
-  public final JComponent getComponent(final RadComponent component, final Object value, final boolean selected, final boolean hasFocus){
+  public final JComponent getComponent(final RadComponent component, final V value, final boolean selected, final boolean hasFocus){
     // Reset text and icon
     setText(null);
     setIcon(null);
@@ -42,5 +42,5 @@ public abstract class LabelPropertyRenderer extends JLabel implements PropertyRe
    * attributes. Note, that background and foreground colors are already
    * set.
    */
-  protected abstract void customize(Object value);
+  protected abstract void customize(V value);
 }

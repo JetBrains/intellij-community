@@ -8,14 +8,14 @@ import javax.swing.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public interface PropertyRenderer {
+public interface PropertyRenderer<V> {
   /**
    * @return <code>JComponent</code> to represent the <code>value</code>
    * somewhere in UI (for example in the JList of in the JTree). To be
    * consistent with other UI additional parameter abount selection and
    * focus are also passed.
    */
-  JComponent getComponent(RadComponent component, Object value, boolean selected, boolean hasFocus);
+  JComponent getComponent(RadComponent component, V value, boolean selected, boolean hasFocus);
 
   /**
    * Renderer should update UI of all its internal components to fit current
