@@ -7,8 +7,8 @@
 package com.intellij.lang.properties.psi;
 
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

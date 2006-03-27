@@ -6,9 +6,9 @@ import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +25,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
   @NotNull
   public FileType getFileType() {
     return getViewProvider().getVirtualFile().getFileType();
+  }
+
+  public VirtualFile getVirtualFile() {
+    return getSourceElement().getVirtualFile();
   }
 
   @NotNull
@@ -46,7 +50,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
   @Nullable
   public AntProject getAntProject() {
     if(myProject != null) return myProject;
-    final XmlFile baseFile = (XmlFile)getSourceElement();
+    final XmlFile baseFile = getSourceElement();
     final XmlTag tag = baseFile.getDocument().getRootTag();
     return myProject = new AntProjectImpl(this, tag);
   }
@@ -62,14 +66,13 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
   }
 
   @NotNull
-  public XmlElement getSourceElement() {
-    return (XmlElement)getViewProvider().getPsi(StdLanguages.XML);
+  public XmlFile getSourceElement() {
+    return (XmlFile)getViewProvider().getPsi(StdLanguages.XML);
   }
 
   public AntElement getAntParent() {
     return null;
   }
-
 
   public void subtreeChanged() {
     clearCaches();

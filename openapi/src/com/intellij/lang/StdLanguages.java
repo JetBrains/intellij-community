@@ -79,4 +79,12 @@ public class StdLanguages {
    * The definition for the Text language.
    */
   public static Language TEXT;
+
+  /**
+   * The definition for the Properties language.
+   */
+  public static Language PROPERTIES;
+
+  private StdLanguages() {
+  }
 }

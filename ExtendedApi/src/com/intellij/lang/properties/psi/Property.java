@@ -8,8 +8,8 @@ package com.intellij.lang.properties.psi;
 
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface Property extends PsiNamedElement {
   @Nullable String getKey();

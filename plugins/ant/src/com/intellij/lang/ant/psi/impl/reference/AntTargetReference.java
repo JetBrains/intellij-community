@@ -24,7 +24,7 @@ public class AntTargetReference extends GenericReference {
   private final TextRange myTextRange;
   private final XmlAttribute myAttribute;
 
-  public AntTargetReference(GenericReferenceProvider provider,
+  public AntTargetReference(final GenericReferenceProvider provider,
                             final AntElement antElement,
                             final String str,
                             final TextRange textRange,

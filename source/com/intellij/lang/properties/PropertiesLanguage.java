@@ -5,11 +5,12 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
-import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
+import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.structureView.PropertiesFileStructureViewComponent;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -19,8 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ public class PropertiesLanguage extends Language {
 
   public PropertiesLanguage() {
     super("Properties", "text/properties");
+    StdLanguages.PROPERTIES = this;
   }
 
   public ParserDefinition getParserDefinition() {

@@ -115,7 +115,7 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
         children.add(new AntTargetImpl(this, tag));
       }
       else if("property".equals(tagName)) {
-        children.add(new AntPropertySetImpl(this, tag));
+        children.add(new AntPropertyImpl(this, tag));
       }
     }
     return children.toArray(new AntElement[children.size()]);
