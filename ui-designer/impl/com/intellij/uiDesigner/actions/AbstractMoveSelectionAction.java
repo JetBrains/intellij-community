@@ -25,9 +25,11 @@ abstract class AbstractMoveSelectionAction extends AnAction{
   private static final Logger LOG=Logger.getInstance("#com.intellij.uiDesigner.actions.MoveSelectionToRightAction");
 
   private final GuiEditor myEditor;
+  private final boolean myExtend;
 
-  public AbstractMoveSelectionAction(@NotNull final GuiEditor editor) {
+  public AbstractMoveSelectionAction(@NotNull final GuiEditor editor, boolean extend) {
     myEditor = editor;
+    myExtend = extend;
   }
 
   public final void actionPerformed(final AnActionEvent e) {
@@ -98,7 +100,16 @@ abstract class AbstractMoveSelectionAction extends AnAction{
 
     LOG.assertTrue(nextSelectedIndex != -1);
     final RadComponent component = components.get(nextSelectedIndex);
-    GuiEditorUtil.selectSingleComponent(component);
+    selectOrExtend(component);
+  }
+
+  private void selectOrExtend(final RadComponent component) {
+    if (myExtend) {
+      GuiEditorUtil.selectComponent(component);
+    }
+    else {
+      GuiEditorUtil.selectSingleComponent(component);
+    }
   }
 
   private void moveToFirstComponent(final JComponent rootContainerDelegee) {
@@ -155,7 +166,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
 
       final RadComponent component = parent.getComponentAtGrid(row, column);
       if (component != null && component != selectedComponent) {
-        GuiEditorUtil.selectSingleComponent(component);
+        selectOrExtend(component);
         return true;
       }
     } while(true);
