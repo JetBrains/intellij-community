@@ -1,6 +1,7 @@
 package com.intellij.rt.execution.junit2.segments;
 
 import com.intellij.rt.execution.junit.TestAllInPackage2;
+import com.intellij.rt.execution.junit.Junit4TestMethodAdapter;
 import junit.extensions.TestDecorator;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -23,13 +24,13 @@ public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFac
     myAuxilaryTransport = auxilaryTransport;
   }
 
-  public String referenceTo(Test object) {
-    while (object instanceof TestDecorator) {
-      object = ((TestDecorator)object).getTest();
+  public String referenceTo(Test test) {
+    while (test instanceof TestDecorator) {
+      test = ((TestDecorator)test).getTest();
     }
-    if (myKnownKeys.containsKey(object))
-      return (String) myKnownKeys.get(object);
-    return sendObject(object);
+    if (myKnownKeys.containsKey(test))
+      return (String) myKnownKeys.get(test);
+    return sendObject(test);
   }
 
   public Packet createPacket() {
@@ -53,10 +54,10 @@ public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFac
   }
 
   private static void addStringRepresentation(Test test, Packet packet) {
-    /*if (test instanceof Junit4TestMethodAdapter) {
+    if (test instanceof Junit4TestMethodAdapter) {
       addTestMethod(packet, ((Junit4TestMethodAdapter)test).getName(), ((Junit4TestMethodAdapter)test).getClassName());
     }
-    else */if (test instanceof TestCase) {
+    else if (test instanceof TestCase) {
       addTestMethod(packet, ((TestCase)test).getName(), test.getClass().getName());
     }
     else if (test instanceof TestAllInPackage2) {
