@@ -10,26 +10,44 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
  */
 public class AddClarifyingParenthesesIntention extends Intention {
 
-	protected
-	@NotNull
+	@NotNull protected
 	PsiElementPredicate getElementPredicate() {
 		return new AddClarifyingParenthesesPredicate();
 	}
 
 	protected void processIntention(@NotNull PsiElement element)
 			throws IncorrectOperationException {
-		final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
-		final String newExpression = createReplacementText(binaryExpression);
-		replaceExpression(newExpression, binaryExpression);
+		final PsiExpression expression = getTopLevelExpression(element);
+		if (expression == null) {
+			return;
+		}
+		final String newExpression = createReplacementText(expression);
+		replaceExpression(newExpression, expression);
 	}
 
-	private String createReplacementText(PsiExpression element) {
+	@Nullable
+	private static PsiExpression getTopLevelExpression(PsiElement element) {
+		if (!(element instanceof PsiExpression)) {
+			return null;
+		}
+		PsiExpression result = (PsiExpression)element;
+		PsiElement parent = result.getParent();
+		while (parent instanceof PsiBinaryExpression ||
+				parent instanceof PsiParenthesizedExpression) {
+			result = (PsiExpression)parent;
+			parent = result.getParent();
+		}
+		return result;
+	}
+
+	private static String createReplacementText(PsiExpression element) {
 		if (element instanceof PsiBinaryExpression) {
 			final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
 			final PsiExpression lhs = binaryExpression.getLOperand();
@@ -43,8 +61,8 @@ public class AddClarifyingParenthesesIntention extends Intention {
 				if (signText.equals(parentOperationSign.getText())) {
 					return createReplacementText(lhs) + signText + createReplacementText(rhs);
 				}
-				return "(" + createReplacementText(lhs) + signText +
-				       createReplacementText(rhs) + ")";
+				return '(' + createReplacementText(lhs) + signText +
+				       createReplacementText(rhs) + ')';
 			} else {
 				return createReplacementText(lhs) + signText +
 				       createReplacementText(rhs);
@@ -53,7 +71,7 @@ public class AddClarifyingParenthesesIntention extends Intention {
 			final PsiParenthesizedExpression parenthesizedExpression =
 					(PsiParenthesizedExpression)element;
 			final PsiExpression expression = parenthesizedExpression.getExpression();
-			return "(" + createReplacementText(expression) + ")";
+			return '(' + createReplacementText(expression) + ')';
 		}
 		return element.getText();
 	}

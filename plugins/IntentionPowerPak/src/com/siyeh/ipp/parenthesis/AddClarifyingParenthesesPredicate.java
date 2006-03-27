@@ -9,6 +9,8 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
@@ -19,15 +21,34 @@ public class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
 		if (!(element instanceof PsiBinaryExpression)) {
 			return false;
 		}
-		if (element.getParent() instanceof PsiBinaryExpression) {
-			return true;
-		}
 		final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
-		final PsiExpression lhs = binaryExpression.getLOperand();
-		if (lhs instanceof PsiBinaryExpression) {
-			return true;
+		final PsiJavaToken sign = binaryExpression.getOperationSign();
+		final IElementType tokenType = sign.getTokenType();
+		final PsiElement parent = element.getParent();
+		if (parent instanceof PsiBinaryExpression) {
+			final PsiBinaryExpression parentBinaryExpression = (PsiBinaryExpression)parent;
+			final PsiJavaToken parentSign = parentBinaryExpression.getOperationSign();
+			final IElementType parentTokenType = parentSign.getTokenType();
+			return !tokenType.equals(parentTokenType);
 		}
+		final PsiExpression lhs = binaryExpression.getLOperand();
 		final PsiExpression rhs = binaryExpression.getROperand();
-		return rhs instanceof PsiBinaryExpression;
+		if (lhs instanceof PsiBinaryExpression) {
+			final PsiBinaryExpression lhsBinaryExpression = (PsiBinaryExpression)lhs;
+			final PsiJavaToken lhsSign = lhsBinaryExpression.getOperationSign();
+			final IElementType lhsTokenType = lhsSign.getTokenType();
+			if (!tokenType.equals(lhsTokenType)) {
+				return true;
+			}
+		}
+		if (rhs instanceof PsiBinaryExpression) {
+			final PsiBinaryExpression rhsBinaryExpression = (PsiBinaryExpression)rhs;
+			final PsiJavaToken rhsSign = rhsBinaryExpression.getOperationSign();
+			final IElementType rhsTokenType = rhsSign.getTokenType();
+			if (!tokenType.equals(rhsTokenType)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
