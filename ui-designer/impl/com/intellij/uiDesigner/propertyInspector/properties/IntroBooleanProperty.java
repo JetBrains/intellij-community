@@ -24,7 +24,7 @@ public final class IntroBooleanProperty extends IntrospectedProperty<Boolean> {
     myEditor = new BooleanEditor();
   }
 
-  public PropertyEditor getEditor(){
+  public PropertyEditor<Boolean> getEditor(){
     return myEditor;
   }
 

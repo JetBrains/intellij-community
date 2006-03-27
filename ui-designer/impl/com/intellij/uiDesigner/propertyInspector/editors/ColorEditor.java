@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class ColorEditor extends PropertyEditor {
+public class ColorEditor extends PropertyEditor<ColorDescriptor> {
   private String myPropertyName;
   private TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private ColorDescriptor myValue;
@@ -47,12 +47,12 @@ public class ColorEditor extends PropertyEditor {
     });
   }
 
-  public Object getValue() throws Exception {
+  public ColorDescriptor getValue() throws Exception {
     return myValue;
   }
 
-  public JComponent getComponent(RadComponent component, Object value, boolean inplace) {
-    myValue = (ColorDescriptor) value;
+  public JComponent getComponent(RadComponent component, ColorDescriptor value, boolean inplace) {
+    myValue = value;
     myProject = component.getModule().getProject();
     updateTextField();
     return myTextField;

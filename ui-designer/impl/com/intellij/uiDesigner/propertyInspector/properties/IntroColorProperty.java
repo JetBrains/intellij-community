@@ -35,7 +35,7 @@ public class IntroColorProperty extends IntrospectedProperty<ColorDescriptor> {
     return myColorRenderer;
   }
 
-  @Nullable public PropertyEditor getEditor() {
+  @Nullable public PropertyEditor<ColorDescriptor> getEditor() {
     return myColorEditor;
   }
 

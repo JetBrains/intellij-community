@@ -50,7 +50,7 @@ public abstract class SizePolicyProperty extends Property<RadComponent, Integer>
     return myRenderer;
   }
 
-  public final PropertyEditor getEditor(){
+  public final PropertyEditor<Integer> getEditor(){
     return null;
   }
 
@@ -99,7 +99,7 @@ public abstract class SizePolicyProperty extends Property<RadComponent, Integer>
       return myRenderer;
     }
 
-    public final PropertyEditor getEditor(){
+    public final PropertyEditor<Boolean> getEditor(){
       return myEditor;
     }
   }

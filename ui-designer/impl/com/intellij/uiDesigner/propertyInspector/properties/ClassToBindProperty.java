@@ -44,7 +44,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     myEditor = new MyEditor(project);
   }
 
-  public PropertyEditor getEditor(){
+  public PropertyEditor<String> getEditor(){
     return myEditor;
   }
 
@@ -67,7 +67,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     component.setClassToBind(className);
   }
 
-  private final class MyEditor extends PropertyEditor{
+  private final class MyEditor extends PropertyEditor<String> {
     private EditorTextField myEditorTextField;
     private Document myDocument;
     private final ComponentWithBrowseButton<EditorTextField> myTfWithButton;
@@ -97,7 +97,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
       */
     }
 
-    public Object getValue() throws Exception {
+    public String getValue() throws Exception {
       final String value = myDocument.getText();
       if (value.length() == 0 && myInitialValue == null) {
         return null;
@@ -105,10 +105,9 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
       return value.replace('$', '.'); // PSI works only with dots
     }
 
-    public JComponent getComponent(final RadComponent component, final Object value, final boolean inplace) {
-      final String s = (String)value;
-      myInitialValue = s;
-      setEditorText(s != null ? s : "");
+    public JComponent getComponent(final RadComponent component, final String value, final boolean inplace) {
+      myInitialValue = value;
+      setEditorText(value != null ? value : "");
       myActionListener.setModule(component.getModule());
       return myTfWithButton;
     }

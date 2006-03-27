@@ -23,7 +23,7 @@ import java.awt.event.ActionListener;
 /**
  * @author yole
  */
-public class IconEditor extends PropertyEditor {
+public class IconEditor extends PropertyEditor<IconDescriptor> {
   private TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private IconDescriptor myValue;
   private Module myModule;
@@ -57,12 +57,12 @@ public class IconEditor extends PropertyEditor {
     });
   }
 
-  public Object getValue() throws Exception {
+  public IconDescriptor getValue() throws Exception {
     return myValue;
   }
 
-  public JComponent getComponent(RadComponent component, Object value, boolean inplace) {
-    myValue = (IconDescriptor) value;
+  public JComponent getComponent(RadComponent component, IconDescriptor value, boolean inplace) {
+    myValue = value;
     myModule = component.getModule();
     if (myValue != null) {
       myTextField.setText(myValue.getIconPath());

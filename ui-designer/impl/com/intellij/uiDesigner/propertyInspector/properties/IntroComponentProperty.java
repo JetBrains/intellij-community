@@ -36,7 +36,7 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
     return myRenderer;
   }
 
-  public PropertyEditor getEditor() {
+  public PropertyEditor<String> getEditor() {
     return myEditor;
   }
 

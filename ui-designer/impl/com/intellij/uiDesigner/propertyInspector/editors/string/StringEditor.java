@@ -25,7 +25,7 @@ import java.awt.event.ActionListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class StringEditor extends PropertyEditor{
+public final class StringEditor extends PropertyEditor<StringDescriptor> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor");
 
   private final TextFieldWithBrowseButton myTfWithButton;
@@ -98,16 +98,15 @@ public final class StringEditor extends PropertyEditor{
     return ((TextFieldWithBrowseButton)component).getTextField();
   }
 
-  public JComponent getComponent(final RadComponent component, final Object value, final boolean inplace){
-    final StringDescriptor descriptor = (StringDescriptor)value;
-    setValue(descriptor);
+  public JComponent getComponent(final RadComponent component, final StringDescriptor value, final boolean inplace){
+    setValue(value);
 
     myTfWithButton.getTextField().setBorder(null);
 
     return myTfWithButton;
   }
 
-  public Object getValue(){
+  public StringDescriptor getValue(){
     if(myValue == null || myValue.getValue() != null){ // editor is for "trivial" StringDescriptor
       final String value = myTfWithButton.getText();
       if (myValue == null && value.length() == 0) {
@@ -142,7 +141,7 @@ public final class StringEditor extends PropertyEditor{
 
       final StringEditorDialog dialog = new StringEditorDialog(
         myTfWithButton.getTextField(),
-        (StringDescriptor)getValue(), // we have pass here "live" (modified) value
+        getValue(), // we have pass here "live" (modified) value
         module,
         guiEditor.getStringDescriptorLocale(),
         guiEditor.getRootContainer()

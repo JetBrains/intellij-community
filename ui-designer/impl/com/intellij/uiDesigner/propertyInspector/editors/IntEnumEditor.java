@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
@@ -13,9 +12,7 @@ import javax.swing.event.PopupMenuListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IntEnumEditor extends PropertyEditor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor");
-
+public final class IntEnumEditor extends PropertyEditor<Integer> {
   private final JComboBox myCbx;
 
   public IntEnumEditor(@NotNull final Pair[] pairs) {
@@ -29,21 +26,18 @@ public final class IntEnumEditor extends PropertyEditor {
     SwingUtilities.updateComponentTreeUI((JComponent)myCbx.getRenderer());
   }
 
-  public final Object getValue() throws Exception {
+  public final Integer getValue() throws Exception {
     final Object selectedItem = myCbx.getSelectedItem();
     final Pair pair = (Pair)selectedItem;
     return pair.myValue;
   }
 
-  public JComponent getComponent(final RadComponent ignored, final Object value, final boolean inplace) {
-    LOG.assertTrue(value != null);
-
-    final Integer _int = (Integer)value;
+  public JComponent getComponent(final RadComponent ignored, @NotNull final Integer value, final boolean inplace) {
     // Find pair
     final ComboBoxModel model = myCbx.getModel();
     for (int i = model.getSize() - 1; i >= 0; i--) {
       final Pair pair = (Pair)model.getElementAt(i);
-      if (pair.myValue == _int.intValue()) {
+      if (pair.myValue == value.intValue()) {
         myCbx.setSelectedIndex(i);
         return myCbx;
       }

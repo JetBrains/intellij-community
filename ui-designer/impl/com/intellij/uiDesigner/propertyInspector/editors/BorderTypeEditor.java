@@ -10,7 +10,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class BorderTypeEditor extends ComboBoxPropertyEditor {
+public final class BorderTypeEditor extends ComboBoxPropertyEditor<BorderType> {
   public BorderTypeEditor(){
     myCbx.setModel(
       new DefaultComboBoxModel(
@@ -26,10 +26,7 @@ public final class BorderTypeEditor extends ComboBoxPropertyEditor {
     myCbx.setRenderer(new MyListCellRenderer());
   }
 
-  public JComponent getComponent(final RadComponent ignored, final Object value, final boolean inplace){
-    if(!(value instanceof BorderType)){
-      throw new IllegalArgumentException("wrong value: "+value);
-    }
+  public JComponent getComponent(final RadComponent ignored, final BorderType value, final boolean inplace){
     myCbx.setSelectedItem(value);
     return myCbx;
   }

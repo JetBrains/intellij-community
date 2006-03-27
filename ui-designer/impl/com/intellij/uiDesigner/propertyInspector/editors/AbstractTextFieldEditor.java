@@ -15,7 +15,7 @@ import java.awt.event.ActionEvent;
 /**
  * @author yole
  */
-public abstract class AbstractTextFieldEditor extends PropertyEditor {
+public abstract class AbstractTextFieldEditor<V> extends PropertyEditor<V> {
   protected final JTextField myTf;
 
   protected AbstractTextFieldEditor() {
@@ -27,9 +27,9 @@ public abstract class AbstractTextFieldEditor extends PropertyEditor {
     SwingUtilities.updateComponentTreeUI(myTf);
   }
 
-  protected abstract void setValueFromComponent(RadComponent component, Object value);
+  protected abstract void setValueFromComponent(RadComponent component, V value);
 
-  public JComponent getComponent(final RadComponent ignored, final Object value, final boolean inplace){
+  public JComponent getComponent(final RadComponent ignored, final V value, final boolean inplace) {
     setValueFromComponent(ignored, value);
 
     if(inplace){

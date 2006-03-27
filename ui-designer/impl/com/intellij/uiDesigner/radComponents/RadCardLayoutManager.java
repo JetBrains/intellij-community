@@ -195,12 +195,12 @@ public class RadCardLayoutManager extends RadLayoutManager {
   private static class CardNameProperty extends Property<RadComponent, String> {
     private LabelPropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>();
 
-    private AbstractTextFieldEditor myEditor = new AbstractTextFieldEditor() {
-      protected void setValueFromComponent(RadComponent component, Object value) {
+    private AbstractTextFieldEditor<String> myEditor = new AbstractTextFieldEditor<String>() {
+      protected void setValueFromComponent(RadComponent component, String value) {
         myTf.setText((String) component.getCustomLayoutConstraints());
       }
 
-      public Object getValue() throws Exception {
+      public String getValue() throws Exception {
         return myTf.getText();
       }
     };
@@ -229,7 +229,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
       return myRenderer;
     }
 
-    public PropertyEditor getEditor() {
+    public PropertyEditor<String> getEditor() {
       return myEditor;
     }
   }

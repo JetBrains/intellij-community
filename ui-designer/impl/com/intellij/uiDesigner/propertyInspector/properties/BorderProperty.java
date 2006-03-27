@@ -54,7 +54,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     return myRenderer;
   }
 
-  public PropertyEditor getEditor(){
+  public PropertyEditor<BorderType> getEditor(){
     return null;
   }
 
@@ -90,7 +90,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
       return myRenderer;
     }
 
-    public PropertyEditor getEditor() {
+    public PropertyEditor<BorderType> getEditor() {
       if (myEditor == null) {
         myEditor = new BorderTypeEditor();
       }
@@ -142,7 +142,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
       return myRenderer;
     }
 
-    public PropertyEditor getEditor() {
+    public PropertyEditor<StringDescriptor> getEditor() {
       if (myEditor == null) {
         myEditor = new StringEditor(myProject);
       }

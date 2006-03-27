@@ -50,7 +50,7 @@ public class UseParentLayoutProperty extends Property<RadComponent, Boolean> {
     return myRenderer;
   }
 
-  @Nullable public PropertyEditor getEditor() {
+  @Nullable public PropertyEditor<Boolean> getEditor() {
     return myEditor;
   }
 

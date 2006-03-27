@@ -29,7 +29,7 @@ public final class IntroDoubleProperty extends IntrospectedProperty<Double> {
     return myRenderer;
   }
 
-  public PropertyEditor getEditor(){
+  public PropertyEditor<Double> getEditor(){
     return myEditor;
   }
 

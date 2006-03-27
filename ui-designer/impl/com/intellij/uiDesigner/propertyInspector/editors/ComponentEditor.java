@@ -13,7 +13,7 @@ import java.util.ArrayList;
 /**
  * @author yole
  */
-public class ComponentEditor extends ComboBoxPropertyEditor {
+public class ComponentEditor extends ComboBoxPropertyEditor<String> {
   private Class myPropertyType;
   private Filter<RadComponent> myFilter;
   private String myOldValue;
@@ -24,11 +24,11 @@ public class ComponentEditor extends ComboBoxPropertyEditor {
     myCbx.setRenderer(new ComponentRenderer());
   }
 
-  public JComponent getComponent(RadComponent component, Object value, boolean inplace) {
+  public JComponent getComponent(RadComponent component, String value, boolean inplace) {
     RadComponent[] components = collectFilteredComponents(component);
     // components [0] = null (<none>)
     myCbx.setModel(new DefaultComboBoxModel(components));
-    myOldValue = (String) value;
+    myOldValue = value;
     if (value == null || myOldValue.length() == 0) {
       myCbx.setSelectedIndex(0);
     }
@@ -70,7 +70,7 @@ public class ComponentEditor extends ComboBoxPropertyEditor {
   }
 
   @Override
-  public Object getValue() throws Exception {
+  public String getValue() throws Exception {
     final RadComponent selection = (RadComponent)myCbx.getSelectedItem();
     if (selection == null) {
       return myOldValue == null ? null : "";

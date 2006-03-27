@@ -28,7 +28,7 @@ import java.util.Arrays;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class BindingEditor extends ComboBoxPropertyEditor{
+public final class BindingEditor extends ComboBoxPropertyEditor<String> {
 
   public BindingEditor(final Project project) {
     myCbx.setEditable(true);
@@ -134,14 +134,13 @@ public final class BindingEditor extends ComboBoxPropertyEditor{
     return names;
   }
 
-  public Object getValue() throws Exception {
-    final String value = (String)super.getValue();
+  public String getValue() throws Exception {
+    final String value = super.getValue();
     return value != null ? value.replace('$', '.') : null; // PSI works only with dots
   }
 
-  public JComponent getComponent(final RadComponent component, final Object value, final boolean inplace){
-    final String currentName = (String)value;
-    final String[] fieldNames = getFieldNames(component, currentName);
+  public JComponent getComponent(final RadComponent component, final String value, final boolean inplace){
+    final String[] fieldNames = getFieldNames(component, value);
     myCbx.setModel(new DefaultComboBoxModel(fieldNames));
     myCbx.setSelectedItem(value);
     return myCbx;

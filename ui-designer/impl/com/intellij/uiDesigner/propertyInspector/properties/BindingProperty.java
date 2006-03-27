@@ -61,7 +61,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     myEditor = new BindingEditor(project);
   }
 
-  public PropertyEditor getEditor(){
+  public PropertyEditor<String> getEditor(){
     return myEditor;
   }
 

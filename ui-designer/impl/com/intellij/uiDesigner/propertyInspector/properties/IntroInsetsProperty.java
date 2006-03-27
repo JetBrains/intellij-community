@@ -47,7 +47,7 @@ public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
     return myRenderer;
   }
 
-  public PropertyEditor getEditor(){
+  public PropertyEditor<Insets> getEditor(){
     return null;
   }
 }

@@ -16,7 +16,7 @@ import java.lang.reflect.Method;
  */
 public final class IntroIntProperty extends IntrospectedProperty<Integer> {
   private final PropertyRenderer<Integer> myRenderer;
-  private final PropertyEditor myEditor;
+  private final PropertyEditor<Integer> myEditor;
 
   public IntroIntProperty(final String name, final Method readMethod, final Method writeMethod){
     this(name, readMethod, writeMethod, new IntRenderer(), new IntEditor(Integer.MIN_VALUE));
@@ -27,7 +27,7 @@ public final class IntroIntProperty extends IntrospectedProperty<Integer> {
     final Method readMethod,
     final Method writeMethod,
     final PropertyRenderer<Integer> renderer,
-    final PropertyEditor editor
+    final PropertyEditor<Integer> editor
   ){
     super(name, readMethod, writeMethod);
     myRenderer = renderer;
@@ -39,7 +39,7 @@ public final class IntroIntProperty extends IntrospectedProperty<Integer> {
     return myRenderer;
   }
 
-  public PropertyEditor getEditor(){
+  public PropertyEditor<Integer> getEditor(){
     return myEditor;
   }
 

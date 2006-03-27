@@ -580,7 +580,7 @@ public class RadContainer extends RadComponent implements IContainer {
       return null;
     }
 
-    public PropertyEditor getEditor() {
+    public PropertyEditor<StringDescriptor> getEditor() {
       return myEditor;
     }
   }

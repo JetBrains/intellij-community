@@ -43,7 +43,7 @@ public final class IntroDimensionProperty extends IntrospectedProperty<Dimension
     return myRenderer;
   }
 
-  public PropertyEditor getEditor(){
+  public PropertyEditor<Dimension> getEditor(){
     return null;
   }
 }

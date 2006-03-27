@@ -12,7 +12,7 @@ import java.awt.event.ActionListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class BooleanEditor extends PropertyEditor{
+public final class BooleanEditor extends PropertyEditor<Boolean> {
   private final JCheckBox myCheckBox;
   private boolean myInsideChange;
 
@@ -25,15 +25,15 @@ public final class BooleanEditor extends PropertyEditor{
     SwingUtilities.updateComponentTreeUI(myCheckBox);
   }
 
-  public Object getValue() throws Exception{
-    return Boolean.valueOf(myCheckBox.isSelected());
+  public Boolean getValue() throws Exception{
+    return myCheckBox.isSelected();
   }
 
-  public JComponent getComponent(final RadComponent ignored, final Object value, final boolean inplace){
+  public JComponent getComponent(final RadComponent ignored, final Boolean value, final boolean inplace){
     myInsideChange=true;
     try{
       myCheckBox.setBackground(UIUtil.getTableBackground());
-      myCheckBox.setSelected(((Boolean)value).booleanValue());
+      myCheckBox.setSelected(value.booleanValue());
       return myCheckBox;
     }finally{
       myInsideChange=false;

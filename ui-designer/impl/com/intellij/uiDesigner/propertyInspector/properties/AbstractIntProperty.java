@@ -28,7 +28,7 @@ public abstract class AbstractIntProperty<T extends RadComponent> extends Proper
     return myRenderer;
   }
 
-  @Nullable public PropertyEditor getEditor() {
+  @Nullable public PropertyEditor<Integer> getEditor() {
     return myEditor;
   }
 

@@ -45,7 +45,7 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
   /**
    * This is not editable property (but it's children are editable)
    */
-  public final PropertyEditor getEditor(){
+  public final PropertyEditor<Dimension> getEditor(){
     return null;
   }
 

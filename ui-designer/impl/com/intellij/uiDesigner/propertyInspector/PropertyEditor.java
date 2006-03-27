@@ -1,16 +1,16 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
-import java.util.EventListener;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class PropertyEditor {
+public abstract class PropertyEditor<V> {
   private final EventListenerList myListenerList;
 
   protected PropertyEditor(){
@@ -24,7 +24,8 @@ public abstract class PropertyEditor {
    * if user enters wrong value and it cannot be applied. Note, that
    * exception's message will be shown to the user.
    */
-  public abstract Object getValue() throws Exception;
+  @Nullable
+  public abstract V getValue() throws Exception;
 
   /**
    * @param component this component can be used to prepare editor UI
@@ -45,7 +46,7 @@ public abstract class PropertyEditor {
    */
   public abstract JComponent getComponent(
     RadComponent component,
-    Object value,
+    V value,
     boolean inplace
   );
 
@@ -85,26 +86,23 @@ public abstract class PropertyEditor {
   }
 
   protected final void fireEditingCancelled(){
-    final EventListener[] listeners=myListenerList.getListeners(PropertyEditorListener.class);
-    for(int i=0;i<listeners.length;i++){
-      final PropertyEditorListener l=(PropertyEditorListener)listeners[i];
-      l.editingCanceled(this);
+    final PropertyEditorListener[] listeners=myListenerList.getListeners(PropertyEditorListener.class);
+    for (PropertyEditorListener listener : listeners) {
+      listener.editingCanceled(this);
     }
   }
 
   protected final void fireValueCommited(){
-    final EventListener[] listeners=myListenerList.getListeners(PropertyEditorListener.class);
-    for(int i=0;i<listeners.length;i++){
-      final PropertyEditorListener l=(PropertyEditorListener)listeners[i];
-      l.valueCommited(this);
+    final PropertyEditorListener[] listeners=myListenerList.getListeners(PropertyEditorListener.class);
+    for (PropertyEditorListener listener : listeners) {
+      listener.valueCommited(this);
     }
   }
 
   protected final void preferredSizeChanged(){
-    final EventListener[] listeners=myListenerList.getListeners(PropertyEditorListener.class);
-    for(int i=0;i<listeners.length;i++){
-      final PropertyEditorListener l=(PropertyEditorListener)listeners[i];
-      l.preferredSizeChanged(this);
+    final PropertyEditorListener[] listeners=myListenerList.getListeners(PropertyEditorListener.class);
+    for (PropertyEditorListener listener : listeners) {
+      listener.preferredSizeChanged(this);
     }
   }
 }

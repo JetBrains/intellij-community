@@ -303,7 +303,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       return myRenderer;
     }
 
-    public PropertyEditor getEditor() {
+    public PropertyEditor<StringDescriptor> getEditor() {
       return myEditor;
     }
   }

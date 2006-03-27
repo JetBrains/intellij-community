@@ -116,7 +116,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
    * In this case property is not editable.
    */
   @Nullable
-  public abstract PropertyEditor getEditor();
+  public abstract PropertyEditor<V> getEditor();
 
   public boolean appliesTo(T component) {
     return true;

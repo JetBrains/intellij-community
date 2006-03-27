@@ -48,7 +48,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     return myRenderer;
   }
 
-  public PropertyEditor getEditor() {
+  public PropertyEditor<StringDescriptor> getEditor() {
     return myEditor;
   }
 

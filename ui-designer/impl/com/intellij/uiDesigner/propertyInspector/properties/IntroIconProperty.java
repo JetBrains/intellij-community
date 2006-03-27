@@ -48,7 +48,7 @@ public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
     return myRenderer;
   }
 
-  @Nullable public PropertyEditor getEditor() {
+  @Nullable public PropertyEditor<IconDescriptor> getEditor() {
     return myEditor;
   }
 

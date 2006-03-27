@@ -48,7 +48,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
     return myFontRenderer;
   }
 
-  @Nullable public PropertyEditor getEditor() {
+  @Nullable public PropertyEditor<FontDescriptor> getEditor() {
     return myFontEditor;
   }
 
@@ -90,10 +90,9 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
     return result.toString();
   }
 
-  private static class MyFontRenderer extends LabelPropertyRenderer {
-    protected void customize(Object value) {
-      FontDescriptor fontDescriptor = (FontDescriptor) value;
-      setText(descriptorToString(fontDescriptor));
+  private static class MyFontRenderer extends LabelPropertyRenderer<FontDescriptor> {
+    protected void customize(FontDescriptor value) {
+      setText(descriptorToString(value));
     }
   }
 

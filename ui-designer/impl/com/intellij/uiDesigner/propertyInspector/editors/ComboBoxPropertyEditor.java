@@ -12,7 +12,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class ComboBoxPropertyEditor extends PropertyEditor{
+public abstract class ComboBoxPropertyEditor<V> extends PropertyEditor<V> {
   protected final ComboBox myCbx;
 
   public ComboBoxPropertyEditor() {
@@ -26,13 +26,15 @@ public abstract class ComboBoxPropertyEditor extends PropertyEditor{
     SwingUtilities.updateComponentTreeUI((JComponent)myCbx.getRenderer());
   }
 
-  public Object getValue() throws Exception{
+  public V getValue() throws Exception{
     if(myCbx.isEditable()){
       final Component editorComponent = myCbx.getEditor().getEditorComponent();
-      return ((JTextField)editorComponent).getText();
+      //noinspection unchecked
+      return (V)((JTextField)editorComponent).getText();
     }
     else{
-      return myCbx.getSelectedItem();
+      //noinspection unchecked
+      return (V)myCbx.getSelectedItem();
     }
   }
 

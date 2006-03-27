@@ -24,7 +24,7 @@ import java.awt.event.ItemEvent;
  */
 public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> {
   private LabelPropertyRenderer<RadButtonGroup> myRenderer = new LabelPropertyRenderer<RadButtonGroup>();
-  private ComboBoxPropertyEditor myEditor = new MyPropertyEditor();
+  private ComboBoxPropertyEditor<RadButtonGroup> myEditor = new MyPropertyEditor();
 
   public ButtonGroupProperty() {
     super(null, "Button Group");
@@ -53,7 +53,7 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
     return myRenderer;
   }
 
-  public PropertyEditor getEditor() {
+  public PropertyEditor<RadButtonGroup> getEditor() {
     return myEditor;
   }
 
@@ -65,7 +65,7 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
     setValueImpl(component, null);
   }
 
-  private static class MyPropertyEditor extends ComboBoxPropertyEditor {
+  private static class MyPropertyEditor extends ComboBoxPropertyEditor<RadButtonGroup> {
     private RadRootContainer myRootContainer;
     private RadComponent myComponent;
 
@@ -104,7 +104,7 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
     }
 
 
-    public JComponent getComponent(RadComponent component, Object value, boolean inplace) {
+    public JComponent getComponent(RadComponent component, RadButtonGroup value, boolean inplace) {
       myComponent = component;
       myRootContainer = getRootContainer(myComponent);
       updateModel();

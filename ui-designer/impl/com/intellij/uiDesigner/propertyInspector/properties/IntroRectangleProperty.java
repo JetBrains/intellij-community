@@ -50,7 +50,7 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
     return myRenderer;
   }
 
-  public PropertyEditor getEditor(){
+  public PropertyEditor<Rectangle> getEditor(){
     return null;
   }
 

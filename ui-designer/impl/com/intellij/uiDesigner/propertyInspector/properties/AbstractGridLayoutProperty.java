@@ -53,7 +53,7 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer, 
     return myRenderer;
   }
 
-  public PropertyEditor getEditor(){
+  public PropertyEditor<Boolean> getEditor(){
     return myEditor;
   }
 

@@ -123,7 +123,7 @@ public class RadFlowLayoutManager extends RadLayoutManager {
       return myRenderer;
     }
 
-    @NotNull public PropertyEditor getEditor() {
+    @NotNull public PropertyEditor<Integer> getEditor() {
       if (myEditor == null) {
         myEditor = new IntEnumEditor(myPairs);
       }

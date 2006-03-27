@@ -20,18 +20,18 @@ import javax.swing.*;
 public class LayoutManagerProperty extends Property<RadContainer, String> {
   private PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>();
 
-  private static class LayoutManagerEditor extends ComboBoxPropertyEditor {
+  private static class LayoutManagerEditor extends ComboBoxPropertyEditor<String> {
     public LayoutManagerEditor() {
       myCbx.setModel(new DefaultComboBoxModel(RadLayoutManager.getLayoutManagerNames()));
     }
 
-    public JComponent getComponent(RadComponent component, Object value, boolean inplace) {
+    public JComponent getComponent(RadComponent component, String value, boolean inplace) {
       myCbx.setSelectedItem(value);
       return myCbx;
     }
   }
 
-  private PropertyEditor myEditor = new LayoutManagerEditor();
+  private PropertyEditor<String> myEditor = new LayoutManagerEditor();
 
   public LayoutManagerProperty() {
     super(null, "Layout Manager");
@@ -63,7 +63,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
     return myRenderer;
   }
 
-  public PropertyEditor getEditor() {
+  public PropertyEditor<String> getEditor() {
     return myEditor;
   }
 }
