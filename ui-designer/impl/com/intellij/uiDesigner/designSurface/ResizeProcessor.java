@@ -159,6 +159,7 @@ public final class ResizeProcessor extends EventProcessor {
       myLastPoint=e.getPoint();
     }
     else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
+      boolean modified = false;
       myComponent.getDelegee().setVisible(true);
       myComponent.setResizing(false);
       myComponent.setSelected(true);
@@ -174,13 +175,15 @@ public final class ResizeProcessor extends EventProcessor {
           myOriginalConstraints.setRow(rcGrid.y);
           myOriginalConstraints.setColSpan(rcGrid.width);
           myOriginalConstraints.setRowSpan(rcGrid.height);
+          modified = true;
         }
       }
       myEditor.getActiveDecorationLayer().removeFeedback();
       myComponent.setDragging(false);
-      myEditor.refreshAndSave(true);
+      if (modified) {
+        myEditor.refreshAndSave(true);
+      }
     }
-
   }
 
   private Cursor getResizeCursor() {
