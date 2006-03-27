@@ -58,6 +58,9 @@ abstract class AbstractMoveSelectionAction extends AnAction{
             if(selectedComponent.equals(component)){
               return true;
             }
+            if (!GuiEditorUtil.isComponentSwitchedInView(component)) {
+              return true;
+            }
             components.add(component);
             final JComponent _delegee = component.getDelegee();
             final Point p = SwingUtilities.convertPoint(

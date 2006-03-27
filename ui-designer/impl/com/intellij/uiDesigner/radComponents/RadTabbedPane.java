@@ -408,6 +408,11 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
 
     @Override
+    public boolean isSwitchedToChild(RadContainer container, RadComponent child) {
+      return child == getSelectedTab();
+    }
+
+    @Override
     public boolean switchContainerToChild(RadContainer container, RadComponent child) {
       RadTabbedPane.this.selectTab(child);
       return true;

@@ -106,6 +106,10 @@ public abstract class RadLayoutManager {
     container.getDelegee().remove(component.getDelegee());
   }
 
+  public boolean isSwitchedToChild(RadContainer container, RadComponent child) {
+    return true;
+  }
+
   public boolean switchContainerToChild(RadContainer container, RadComponent child) {
     return false;
   }

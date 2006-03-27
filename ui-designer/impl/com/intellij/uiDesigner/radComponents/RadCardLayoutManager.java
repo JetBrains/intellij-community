@@ -94,6 +94,11 @@ public class RadCardLayoutManager extends RadLayoutManager {
   }
 
   @Override
+  public boolean isSwitchedToChild(RadContainer container, RadComponent child) {
+    return child.getDelegee().isVisible();
+  }
+
+  @Override
   public boolean switchContainerToChild(RadContainer container, RadComponent child) {
     CardLayout cardLayout = (CardLayout) container.getLayout();
     String card = (String) child.getCustomLayoutConstraints();
