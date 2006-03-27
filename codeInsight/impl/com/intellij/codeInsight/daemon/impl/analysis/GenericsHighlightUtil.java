@@ -413,7 +413,7 @@ public class GenericsHighlightUtil {
     if (PsiUtil.getLanguageLevel(elementToHighlight).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     if (!InspectionProjectProfileManager.getInstance(elementToHighlight.getProject()).getInspectionProfile(elementToHighlight).isToolEnabled(key)) return null;
-    if (!isGenericToRaw(lType, rType)) return null;
+    if (!isRawToGeneric(lType, rType)) return null;
     String description = JavaErrorMessages.message("generics.unchecked.assignment",
                                                    HighlightUtil.formatType(rType),
                                                    HighlightUtil.formatType(lType));
@@ -428,14 +428,72 @@ public class GenericsHighlightUtil {
     return highlightInfo;
   }
 
-  private static boolean isGenericToRaw(PsiType lType, PsiType rType) {
-    if (lType == null || rType == null) return false;
-    if (lType instanceof PsiArrayType && rType instanceof PsiArrayType) return isGenericToRaw(((PsiArrayType)lType).getComponentType(),
-                                                                                              ((PsiArrayType)rType).getComponentType());
-    if (!(lType instanceof PsiClassType) || !(rType instanceof PsiClassType)) return false;
-    if (!((PsiClassType)rType).isRaw()) return false;
-    final PsiClassType lClassType = (PsiClassType)lType;
-    return lClassType.hasNonTrivialParameters();
+  private static boolean isRawToGeneric(PsiType lType, PsiType rType) {
+    if (lType instanceof PsiPrimitiveType || rType instanceof PsiPrimitiveType) return false;
+    if (lType.equals(rType)) return false;
+    if (lType instanceof PsiArrayType && rType instanceof PsiArrayType) {
+      return isRawToGeneric(((PsiArrayType)lType).getComponentType(), ((PsiArrayType)rType).getComponentType());
+    }
+    if (lType instanceof PsiArrayType || rType instanceof PsiArrayType) return false;
+
+    if (rType instanceof PsiIntersectionType) {
+      final PsiType[] conjuncts = ((PsiIntersectionType)rType).getConjuncts();
+      for (PsiType type : conjuncts) {
+        if (isRawToGeneric(lType, type)) return true;
+      }
+      return false;
+    }
+
+    if (lType instanceof PsiCapturedWildcardType || rType instanceof PsiCapturedWildcardType) {
+      return false;
+    }
+
+    if (lType instanceof PsiWildcardType || rType instanceof PsiWildcardType) return false;
+
+    boolean isValidType = lType instanceof PsiClassType && rType instanceof PsiClassType;
+    if (!isValidType) {
+      LOG.error("Invalid types: rType =" + rType + ", lType=" + lType);
+    }
+    PsiClassType.ClassResolveResult lResolveResult = ((PsiClassType)lType).resolveGenerics();
+    PsiClassType.ClassResolveResult rResolveResult = ((PsiClassType)rType).resolveGenerics();
+    PsiClass lClass = lResolveResult.getElement();
+    PsiClass rClass = rResolveResult.getElement();
+    PsiSubstitutor lSubstitutor = lResolveResult.getSubstitutor();
+    PsiSubstitutor rSubstitutor = rResolveResult.getSubstitutor();
+    if (lClass == null || rClass == null) return false;
+    if (lClass instanceof PsiTypeParameter || rClass instanceof PsiTypeParameter) return true;
+    PsiClass base;
+    if (!lClass.getManager().areElementsEquivalent(lClass, rClass)) {
+      if (lClass.isInheritor(rClass, true)) {
+        base = rClass;
+        lSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(rClass, lClass, lSubstitutor);
+      }
+      else if (rClass.isInheritor(lClass, true)) {
+        base = lClass;
+        rSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(lClass, rClass, rSubstitutor);
+      }
+      else {
+        return false;
+      }
+    }
+    else {
+      base = lClass;
+    }
+
+    LOG.assertTrue(lSubstitutor != null && rSubstitutor != null);
+    Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator(base);
+    while (it.hasNext()) {
+      PsiTypeParameter parameter = it.next();
+      PsiType lTypeArg = lSubstitutor.substitute(parameter);
+      PsiType rTypeArg = rSubstitutor.substitute(parameter);
+      if (lTypeArg == null) continue;
+      if (rTypeArg == null) {
+        if (!(lTypeArg instanceof PsiWildcardType) ||
+            ((PsiWildcardType) lTypeArg).getBound() != null) return true; else continue;
+      }
+      if (isUncheckedTypeArgumentConversion(lTypeArg, rTypeArg)) return true;
+    }
+    return false;
   }
 
   public static HighlightInfo checkUncheckedTypeCast(PsiTypeCastExpression typeCast) {
@@ -449,7 +507,7 @@ public class GenericsHighlightUtil {
     if (expression == null) return null;
     final PsiType exprType = expression.getType();
     if (exprType == null) return null;
-    if (isUncheckedTypeCast(castType, exprType)) {
+    if (isRawToGeneric(castType, exprType)) {
       String description = JavaErrorMessages.message("generics.unchecked.cast",
                                                      HighlightUtil.formatType(exprType),
                                                      HighlightUtil.formatType(castType));
@@ -466,77 +524,21 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  private static boolean isUncheckedTypeCast(PsiType castType, PsiType exprType) {
-    if (exprType instanceof PsiPrimitiveType || castType instanceof PsiPrimitiveType) return false;
-    if (exprType.equals(castType)) return false;
-    if (exprType instanceof PsiArrayType && castType instanceof PsiArrayType) {
-      return isUncheckedTypeCast(((PsiArrayType)castType).getComponentType(), ((PsiArrayType)exprType).getComponentType());
+  private static boolean isUncheckedTypeArgumentConversion (PsiType lTypeArg, PsiType rTypeArg) {
+    if (lTypeArg instanceof PsiPrimitiveType || rTypeArg instanceof PsiPrimitiveType) return false;
+    if (lTypeArg.equals(rTypeArg)) return false;
+    if (lTypeArg instanceof PsiWildcardType || rTypeArg instanceof PsiWildcardType) {
+      return !lTypeArg.isAssignableFrom(rTypeArg);
     }
-    if (exprType instanceof PsiArrayType || castType instanceof PsiArrayType) return false;
+    if (lTypeArg instanceof PsiCapturedWildcardType || rTypeArg instanceof PsiCapturedWildcardType) return true;
 
-    if (exprType instanceof PsiIntersectionType) {
-      final PsiType[] conjuncts = ((PsiIntersectionType)exprType).getConjuncts();
-      for (PsiType type : conjuncts) {
-        if (isUncheckedTypeCast(castType, type)) return true;
-      }
-      return false;
+    if (lTypeArg instanceof PsiArrayType && rTypeArg instanceof PsiArrayType) {
+      return isUncheckedTypeArgumentConversion(((PsiArrayType)rTypeArg).getComponentType(), ((PsiArrayType)lTypeArg).getComponentType());
     }
-
-    boolean isValidType = exprType instanceof PsiClassType && castType instanceof PsiClassType;
-    if (!isValidType) {
-      LOG.error("Invalid types: castType =" + castType + ", exprType=" + exprType);
-    }
-    PsiClassType.ClassResolveResult resolveResult1 = ((PsiClassType)exprType).resolveGenerics();
-    PsiClassType.ClassResolveResult resolveResult2 = ((PsiClassType)castType).resolveGenerics();
-    PsiClass aClass = resolveResult1.getElement();
-    PsiClass bClass = resolveResult2.getElement();
-    PsiSubstitutor substitutor1 = resolveResult1.getSubstitutor();
-    PsiSubstitutor substitutor2 = resolveResult2.getSubstitutor();
-    if (aClass == null || bClass == null) return false;
-    if (aClass instanceof PsiTypeParameter || bClass instanceof PsiTypeParameter) return true;
-    PsiClass base;
-    if (!aClass.getManager().areElementsEquivalent(aClass, bClass)) {
-      if (aClass.isInheritor(bClass, true)) {
-        base = bClass;
-        substitutor1 = TypeConversionUtil.getSuperClassSubstitutor(bClass, aClass, substitutor1);
-      }
-      else if (bClass.isInheritor(aClass, true)) {
-        base = aClass;
-        substitutor2 = TypeConversionUtil.getSuperClassSubstitutor(aClass, bClass, substitutor2);
-      }
-      else {
-        return false;
-      }
-    }
-    else {
-      base = aClass;
-    }
-
-    LOG.assertTrue(substitutor1 != null && substitutor2 != null);
-    Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator(base);
-    while (it.hasNext()) {
-      PsiTypeParameter parameter = it.next();
-      PsiType typeArg1 = substitutor1.substitute(parameter);
-      PsiType typeArg2 = substitutor2.substitute(parameter);
-      if (typeArg2 != null && typeArg1 == null) return true;
-      if (typeArg2 == null) continue;
-      if (isUncheckedTypeArgumentConversion(typeArg1, typeArg2)) return true;
-    }
-    return false;
-  }
-
-  private static boolean isUncheckedTypeArgumentConversion (PsiType type1, PsiType type2) {
-    if (type1 instanceof PsiPrimitiveType || type2 instanceof PsiPrimitiveType) return false;
-    if (type1.equals(type2)) return false;
-    if (type1 instanceof PsiWildcardType || type2 instanceof PsiWildcardType) return true;
-    if (type1 instanceof PsiCapturedWildcardType || type2 instanceof PsiCapturedWildcardType) return true;
-    if (type1 instanceof PsiArrayType && type2 instanceof PsiArrayType) {
-      return isUncheckedTypeArgumentConversion(((PsiArrayType)type2).getComponentType(), ((PsiArrayType)type1).getComponentType());
-    }
-    if (type1 instanceof PsiArrayType || type2 instanceof PsiArrayType) return false;
-    LOG.assertTrue(type1 instanceof PsiClassType && type2 instanceof PsiClassType);
-    return ((PsiClassType)type1).resolve() instanceof PsiTypeParameter ||
-           ((PsiClassType)type2).resolve() instanceof PsiTypeParameter;
+    if (lTypeArg instanceof PsiArrayType || rTypeArg instanceof PsiArrayType) return false;
+    LOG.assertTrue(lTypeArg instanceof PsiClassType && rTypeArg instanceof PsiClassType);
+    return ((PsiClassType)lTypeArg).resolve() instanceof PsiTypeParameter ||
+           ((PsiClassType)rTypeArg).resolve() instanceof PsiTypeParameter;
   }
 
   public static HighlightInfo checkUncheckedCall(JavaResolveResult resolveResult, PsiCall call) {
@@ -955,7 +957,7 @@ public class GenericsHighlightUtil {
       final PsiType baseReturnType = substitutor.substitute(baseMethod.getReturnType());
       final PsiType overriderReturnType = overrider.getReturnType();
       if (baseReturnType == null || overriderReturnType == null) return null;
-      if (isGenericToRaw(baseReturnType, overriderReturnType)) {
+      if (isRawToGeneric(baseReturnType, overriderReturnType)) {
         final String message = JavaErrorMessages.message("unchecked.overriding.incompatibe.return.type",
                                                          HighlightUtil.formatType(overriderReturnType),
                                                          HighlightUtil.formatType(baseReturnType));

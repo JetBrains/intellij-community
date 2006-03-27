@@ -126,8 +126,11 @@ public class PsiImmediateClassType extends PsiClassType {
   }
 
   private void buildText(PsiClass aClass, StringBuffer buffer, boolean canonical, boolean internal) {
+    PsiSubstitutor substitutor = mySubstitutor;
     if (aClass instanceof PsiAnonymousClass) {
-      aClass = ((PsiAnonymousClass)aClass).getBaseClassType().resolve();
+      ClassResolveResult baseResolveResult = ((PsiAnonymousClass) aClass).getBaseClassType().resolveGenerics();
+      aClass = baseResolveResult.getElement();
+      substitutor = baseResolveResult.getSubstitutor();
       if (aClass == null) return;
     }
     PsiClass parentClass = null;
@@ -167,7 +170,7 @@ public class PsiImmediateClassType extends PsiClassType {
       for (int i = 0; i < typeParameters.length; i++) {
         PsiTypeParameter typeParameter = typeParameters[i];
         if (i > 0) pineBuffer.append(',');
-        final PsiType substitutionResult = mySubstitutor.substitute(typeParameter);
+        final PsiType substitutionResult = substitutor.substitute(typeParameter);
         if (substitutionResult == null) {
           pineBuffer = null;
           break;

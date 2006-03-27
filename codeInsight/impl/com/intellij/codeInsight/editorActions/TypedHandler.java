@@ -383,7 +383,8 @@ public class TypedHandler implements TypedActionHandler {
       if (file instanceof XmlFile){
         if(handleXmlGreater(project, editor, fileType)) return;
       }
-      else if (file instanceof PsiJavaFile && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
+      else if (file instanceof PsiJavaFile && !(file instanceof JspFile) &&
+          CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
                ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
         if (handleJavaGT(editor)) return;
       }
@@ -416,6 +417,7 @@ public class TypedHandler implements TypedActionHandler {
     //important to calculate before inserting charTyped
     boolean handleAfterJavaLT = '<' == charTyped &&
                                 file instanceof PsiJavaFile &&
+                                !(file instanceof JspFile) &&
                                 CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
                                 ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 &&
                                 BraceMatchingUtil.isAfterClassLikeIdentifierOrDot(offsetBefore, editor);

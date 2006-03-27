@@ -42,6 +42,7 @@ public class BraceMatchingUtil {
 
   public static boolean isAfterClassLikeIdentifierOrDot(final int offset, final Editor editor) {
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+    if (iterator.atEnd()) return false;
     if (iterator.getStart() > 0) iterator.retreat();
     final IElementType tokenType = iterator.getTokenType();
     if (tokenType == JavaTokenType.DOT) return true;
