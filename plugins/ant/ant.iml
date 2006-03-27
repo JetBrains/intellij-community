@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="ExtendedApi" />
     <orderEntry type="module" module-name="action-system-openapi" />
-    <orderEntry type="library" name="JUnit" level="project" />
+    <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

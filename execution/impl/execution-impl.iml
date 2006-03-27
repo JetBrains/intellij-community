@@ -23,7 +23,7 @@
     <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntry type="module" module-name="ui-designer-impl" />
     <orderEntry type="module" module-name="debugger-impl" />
-    <orderEntry type="library" name="JUnit" level="project" />
+    <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

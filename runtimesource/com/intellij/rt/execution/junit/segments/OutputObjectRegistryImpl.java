@@ -1,7 +1,7 @@
-package com.intellij.rt.execution.junit2.segments;
+package com.intellij.rt.execution.junit.segments;
 
 import com.intellij.rt.execution.junit.TestAllInPackage2;
-import com.intellij.rt.execution.junit.Junit4TestMethodAdapter;
+import com.intellij.rt.junit4.JUnit4Util;
 import junit.extensions.TestDecorator;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -13,14 +13,16 @@ public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFac
   private Hashtable myKnownKeys = new Hashtable();
   private int myLastIndex = 0;
   private PacketProcessor myMainTransport;
+  private final boolean isJUnit4;
   private PacketProcessor myAuxilaryTransport;
 
-  public OutputObjectRegistryImpl(PacketProcessor transport) {
+  public OutputObjectRegistryImpl(PacketProcessor transport, final boolean isJUnit4) {
     myMainTransport = transport;
+    this.isJUnit4 = isJUnit4;
   }
 
-  public OutputObjectRegistryImpl(PacketProcessor mainTransport, PacketProcessor auxilaryTransport) {
-    myMainTransport = mainTransport;
+  public OutputObjectRegistryImpl(PacketProcessor mainTransport, PacketProcessor auxilaryTransport, boolean isJUnit4) {
+    this(mainTransport, isJUnit4);
     myAuxilaryTransport = auxilaryTransport;
   }
 
@@ -53,9 +55,9 @@ public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFac
       packet.sendThrough(myAuxilaryTransport);
   }
 
-  private static void addStringRepresentation(Test test, Packet packet) {
-    if (test instanceof Junit4TestMethodAdapter) {
-      addTestMethod(packet, ((Junit4TestMethodAdapter)test).getName(), ((Junit4TestMethodAdapter)test).getClassName());
+  private void addStringRepresentation(Test test, Packet packet) {
+    if (isJUnit4 && JUnit4Util.isJUnit4TestMethodAdapter(test)) {
+      addTestMethod(packet, ((TestCase)test).getName(), JUnit4Util.getJUnit4MethodAdapterClassName(test));
     }
     else if (test instanceof TestCase) {
       addTestMethod(packet, ((TestCase)test).getName(), test.getClass().getName());

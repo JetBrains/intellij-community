@@ -1,7 +1,7 @@
-package com.intellij.rt.execution.junit2;
+package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit2.segments.OutputObjectRegistryImpl;
-import com.intellij.rt.execution.junit2.segments.Packet;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistryImpl;
+import com.intellij.rt.execution.junit.segments.Packet;
 import junit.framework.Test;
 
 public class ExceptionPacketFactory implements PacketFactory {

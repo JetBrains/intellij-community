@@ -54,7 +54,7 @@ public abstract class CollectUtil<E> {
     return new Select<T>(condition);
   }
 
-  public static final CollectUtil COLLECT = new CollectUtil<Object>() {
+  public static final CollectUtil<Object> COLLECT = new CollectUtil<Object>() {
     public <T> HashSet<T> toSet(Iterator<T> iterator) {
       return ContainerUtil.collectSet(iterator);
     }

@@ -18,8 +18,10 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import gnu.trove.THashSet;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -43,25 +45,26 @@ public class JUnitUtil {
     /**
      * Invoked in dispatch thread
      */
-    void found(PsiClass[] classes);
+    void found(@NotNull Collection<PsiClass> classes, final boolean isJunit4);
   }
 
   public static void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter) {
     if (isSyncSearch()) {
-      callback.found(ConfigurationUtil.getAllTestClasses(classFilter));
+      THashSet<PsiClass> classes = new THashSet<PsiClass>();
+      boolean isJUnit4 = ConfigurationUtil.findAllTestClasses(classFilter, classes);
+      callback.found(classes, isJUnit4);
       return;
     }
 
-    final PsiClass[][] result = new PsiClass[1][];
+    final THashSet<PsiClass> classes = new THashSet<PsiClass>();
+    final boolean[] isJunit4 = new boolean[1];
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        result[0] = ConfigurationUtil.getAllTestClasses(classFilter);
+        isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
       }
     }, ExecutionBundle.message("seaching.test.progress.title"), true, classFilter.getProject());
 
-    if (result[0] != null) {
-      callback.found(result[0]);
-    }
+    callback.found(classes, isJunit4[0]);
   }
 
   private static boolean isSyncSearch() {
@@ -120,7 +123,16 @@ public class JUnitUtil {
     return false;
   }
 
-  private static boolean isTestAnnotated(final PsiMethod method) {
+  public static boolean isJUnit4TestClass(final PsiClass psiClass) {
+    if (!ExecutionUtil.isRunnableClass(psiClass)) return false;
+
+    for (final PsiMethod method : psiClass.getMethods()) {
+      if (isTestAnnotated(method)) return true;
+    }
+    return false;
+  }
+
+  public static boolean isTestAnnotated(final PsiMethod method) {
     return method.getModifierList().findAnnotation("org.junit.Test") != null;
   }
 

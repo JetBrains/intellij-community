@@ -1,6 +1,6 @@
 package com.intellij.execution.junit2;
 
-import com.intellij.rt.execution.junit2.states.PoolOfTestStates;
+import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 
 import java.util.ArrayList;
 import java.util.Collection;

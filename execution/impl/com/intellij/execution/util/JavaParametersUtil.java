@@ -20,7 +20,6 @@ import com.intellij.util.containers.Convertor;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -99,7 +98,7 @@ public class JavaParametersUtil {
   private static ArrayList<CommandLineEntry> getClassPath(final Module module, final boolean withDependencies) {
     final ArrayList<CommandLineEntry> entries = new ArrayList<CommandLineEntry>();
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    moduleRootManager.processOrder(new RootPolicy() {
+    moduleRootManager.processOrder(new RootPolicy<Object>() {
       public Object visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final Object object) {
         entries.add(JavaParametersUtil.JDK_ENTRY);
         return null;
@@ -107,8 +106,7 @@ public class JavaParametersUtil {
 
       public Object visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final Object object) {
         final String[] urls = libraryOrderEntry.getUrls(OrderRootType.CLASSES_AND_OUTPUT);
-        for (int i = 0; i < urls.length; i++) {
-          final String url = urls[i];
+        for (final String url : urls) {
           entries.add(new ClassPathEntry(PathUtil.toPresentableUrl(url)));
         }
         return null;
@@ -136,8 +134,7 @@ public class JavaParametersUtil {
             }
           }
         }
-        for (Iterator<String> iterator1 = outputs.iterator(); iterator1.hasNext();) {
-          final String url = iterator1.next();
+        for (final String url : outputs) {
           entries.add(new ClassPathEntry(PathUtil.toPresentableUrl(url)));
         }
         return null;
@@ -153,10 +150,9 @@ public class JavaParametersUtil {
   private static final CommandLineEntry JDK_ENTRY = new CommandLineEntry() {
       public void addPath(final JavaParameters parameters, final ProjectJdk jdk) {
         parameters.setJdk(jdk);
-        final ArrayList<String> jdkPathes = CollectUtil.COLLECT.toList(jdk.getRootProvider().getUrls(OrderRootType.CLASSES_AND_OUTPUT),
+        final ArrayList<String> jdkPaths = CollectUtil.COLLECT.toList(jdk.getRootProvider().getUrls(OrderRootType.CLASSES_AND_OUTPUT),
                                                                        URL_TO_LOCAL_PATH);
-        for (Iterator<String> iterator = jdkPathes.iterator(); iterator.hasNext();) {
-          final String jdkPath = iterator.next();
+        for (final String jdkPath : jdkPaths) {
           parameters.getClassPath().add(jdkPath);
         }
       }

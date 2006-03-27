@@ -1,7 +1,7 @@
 package com.intellij.rt.ant.execution;
 
-import com.intellij.rt.execution.junit2.segments.PacketWriter;
-import com.intellij.rt.execution.junit2.segments.SegmentedOutputStream;
+import com.intellij.rt.execution.junit.segments.PacketWriter;
+import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.input.InputHandler;
 import org.apache.tools.ant.input.InputRequest;

@@ -1,6 +1,6 @@
 package com.intellij.execution.junit2.segments;
 
-import com.intellij.rt.execution.junit2.segments.PacketProcessor;
+import com.intellij.rt.execution.junit.segments.PacketProcessor;
 
 /**
  * @author dyoma

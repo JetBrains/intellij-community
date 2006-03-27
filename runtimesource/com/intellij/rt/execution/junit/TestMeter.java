@@ -1,6 +1,6 @@
-package com.intellij.rt.execution.junit2;
+package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit2.segments.Packet;
+import com.intellij.rt.execution.junit.segments.Packet;
 
 public class TestMeter {
   private long myStartTime;

@@ -1,6 +1,6 @@
 package com.intellij.execution.junit2.segments;
 
-import com.intellij.rt.execution.junit2.segments.PoolOfDelimiters;
+import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;

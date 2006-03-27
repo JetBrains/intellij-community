@@ -1,8 +1,8 @@
-package com.intellij.rt.execution.junit2;
+package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit2.segments.OutputObjectRegistryImpl;
-import com.intellij.rt.execution.junit2.segments.Packet;
-import com.intellij.rt.execution.junit2.states.PoolOfTestStates;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistryImpl;
+import com.intellij.rt.execution.junit.segments.Packet;
+import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import junit.framework.ComparisonFailure;
 import junit.framework.Test;
 
@@ -34,11 +34,28 @@ class ComparisonDetailsExtractor extends ExceptionPacketFactory {
     myExpected = expected;
   }
 
-  public static ExceptionPacketFactory create(AssertionError assertion) {
+  public static ExceptionPacketFactory create(Error assertion) {
     try {
-      String expected = assertion instanceof ComparisonFailure ? (String)EXPECTED_FIELD.get(assertion) : ((org.junit.ComparisonFailure)assertion).getExpected();
-      String actual = assertion instanceof ComparisonFailure ? (String)ACTUAL_FIELD.get(assertion)  : ((org.junit.ComparisonFailure)assertion).getActual();
-      return new ComparisonDetailsExtractor(assertion, expected, actual); }
+      String expected;
+      if (assertion instanceof ComparisonFailure) {
+        expected = (String)EXPECTED_FIELD.get(assertion);
+      }
+      else {
+        Field field = assertion.getClass().getDeclaredField("fExpected");
+        field.setAccessible(true);
+        expected = (String)field.get(assertion);
+      }
+      String actual;
+      if (assertion instanceof ComparisonFailure) {
+        actual = (String)ACTUAL_FIELD.get(assertion);
+      }
+      else {
+        Field field = assertion.getClass().getDeclaredField("fActual");
+        field.setAccessible(true);
+        actual = (String)field.get(assertion);
+      }
+      return new ComparisonDetailsExtractor(assertion, expected, actual);
+    }
     catch (Throwable e) {
       return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
     }

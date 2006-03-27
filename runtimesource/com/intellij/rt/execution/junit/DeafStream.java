@@ -1,4 +1,4 @@
-package com.intellij.rt.execution.junit2;
+package com.intellij.rt.execution.junit;
 
 import java.io.OutputStream;
 import java.io.IOException;

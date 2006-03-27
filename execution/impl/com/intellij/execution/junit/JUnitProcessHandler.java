@@ -11,7 +11,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.rt.execution.junit2.segments.PacketProcessor;
+import com.intellij.rt.execution.junit.segments.PacketProcessor;
 
 import java.io.IOException;
 import java.io.InputStream;

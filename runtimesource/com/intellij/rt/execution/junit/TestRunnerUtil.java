@@ -1,9 +1,13 @@
 package com.intellij.rt.execution.junit;
 
-import junit.framework.*;
+import com.intellij.rt.junit4.JUnit4Util;
+import com.intellij.rt.junit4.Junit4ClassSuite;
+import com.intellij.rt.junit4.Junit4TestMethodAdapter;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
 import junit.runner.BaseTestRunner;
 import junit.textui.TestRunner;
-import org.junit.internal.runners.TestIntrospector;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -21,13 +25,14 @@ public class TestRunnerUtil {
    */
   private static ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
 
-  public static Test getTestImpl(IdeaTestRunner runner, String suiteClassName){
-    if (suiteClassName.length() <= 0) {
+  public static Test getTestSuite(IdeaTestRunner runner, String suiteClassName){
+    if (suiteClassName.length() == 0) {
       runner.clearStatus();
       return null;
     }
 
-    if (suiteClassName.startsWith("@")) {
+    if (suiteClassName.charAt(0) == '@') {
+      // all tests in the package specified
       try {
         BufferedReader reader = new BufferedReader(new FileReader(suiteClassName.substring(1)));
         String packageName;
@@ -50,7 +55,7 @@ public class TestRunnerUtil {
           classNames[i] = (String)vector.elementAt(i);
         }
 
-        return new TestAllInPackage2(packageName, classNames);
+        return new TestAllInPackage2(packageName, classNames, runner.IS_JUNIT4);
       }
       catch (Exception e) {
         runner.runFailed(MessageFormat.format(ourBundle.getString("junit.runner.error"), new Object[] {e.toString()}));
@@ -86,7 +91,7 @@ public class TestRunnerUtil {
       runner.clearStatus();
       try {
         Method method = testClass.getMethod(methodName, new Class[0]);
-        if (method != null && /*method.getAnnotation(Test.class) != null*/ new TestIntrospector(testClass).getTestMethods(org.junit.Test.class).contains(method)) {
+        if (method != null && runner.IS_JUNIT4 && JUnit4Util.isTestMethod(method)) {
           return new Junit4TestMethodAdapter(testClass, methodName);
         }
       }
@@ -124,10 +129,12 @@ public class TestRunnerUtil {
       }
     }
 
-    Junit4ClassSuite junit4ClassSuite = new Junit4ClassSuite(testClass);
-    if (junit4ClassSuite.testCount() != 0) {
-      runner.clearStatus();
-      return junit4ClassSuite;
+    if (runner.IS_JUNIT4) {
+      Junit4ClassSuite junit4ClassSuite = new Junit4ClassSuite(testClass);
+      if (junit4ClassSuite.testCount() != 0) {
+        runner.clearStatus();
+        return junit4ClassSuite;
+      }
     }
 
     Method suiteMethod;

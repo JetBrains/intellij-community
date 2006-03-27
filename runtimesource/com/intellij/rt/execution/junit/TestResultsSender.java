@@ -1,27 +1,30 @@
-package com.intellij.rt.execution.junit2;
+package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit2.segments.OutputObjectRegistryImpl;
-import com.intellij.rt.execution.junit2.segments.Packet;
-import com.intellij.rt.execution.junit2.segments.PacketProcessor;
-import com.intellij.rt.execution.junit2.states.PoolOfTestStates;
-import com.intellij.rt.execution.junit.Junit4TestMethodAdapter;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistryImpl;
+import com.intellij.rt.execution.junit.segments.Packet;
+import com.intellij.rt.execution.junit.segments.PacketProcessor;
+import com.intellij.rt.execution.junit.states.PoolOfTestStates;
+import com.intellij.rt.junit4.Junit4TestMethodAdapter;
+import com.intellij.rt.junit4.JUnit4Util;
 import junit.framework.*;
 
 public class TestResultsSender implements TestListener, TestSkippingListener {
   private OutputObjectRegistryImpl myRegistry;
   private PacketProcessor myErr;
+  private final boolean isJunit4;
   private TestMeter myCurrentTestMeter;
   private Test myCurrentTest;
 
-  public TestResultsSender(OutputObjectRegistryImpl packetFactory, PacketProcessor segmentedErr) {
+  public TestResultsSender(OutputObjectRegistryImpl packetFactory, PacketProcessor segmentedErr, final boolean isJunit4) {
     myRegistry = packetFactory;
     myErr = segmentedErr;
+    this.isJunit4 = isJunit4;
   }
 
   public synchronized void addError(Test test, Throwable throwable) {
-    if (throwable instanceof AssertionError) {
+    if (isJunit4 && JUnit4Util.isAssertion(throwable)) {
       // junit4 makes no distinction between errors and failures
-      doAddFailure(test, (AssertionError)throwable);
+      doAddFailure(test, (Error)throwable);
     }
     else if (throwable == Junit4TestMethodAdapter.IGNORED) {
       startTest(test);
@@ -38,14 +41,14 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
     doAddFailure(test, assertion);
   }
 
-  private void doAddFailure(final Test test, final AssertionError assertion) {
+  private void doAddFailure(final Test test, final Error assertion) {
     stopMeter(test);
     createExceptionNotification(assertion).createPacket(myRegistry, test).send();
   }
 
-  private static PacketFactory createExceptionNotification(AssertionError assertion) {
+  private static PacketFactory createExceptionNotification(Error assertion) {
     if (assertion instanceof KnownException) return ((KnownException)assertion).getPacketFactory();
-    if (assertion instanceof ComparisonFailure || assertion instanceof org.junit.ComparisonFailure) {
+    if (assertion instanceof ComparisonFailure || assertion.getClass().getName().equals("org.junit.ComparisonFailure")) {
       return ComparisonDetailsExtractor.create(assertion);
     }
     return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);

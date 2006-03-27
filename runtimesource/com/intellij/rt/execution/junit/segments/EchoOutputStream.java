@@ -1,4 +1,4 @@
-package com.intellij.rt.execution.junit2.segments;
+package com.intellij.rt.execution.junit.segments;
 
 import java.io.OutputStream;
 import java.io.IOException;

@@ -1,8 +1,8 @@
 package com.intellij.execution.junit2;
 
-import com.intellij.rt.execution.junit2.segments.Packet;
-import com.intellij.rt.execution.junit2.segments.PacketProcessor;
-import com.intellij.rt.execution.junit2.segments.SegmentedStream;
+import com.intellij.rt.execution.junit.segments.Packet;
+import com.intellij.rt.execution.junit.segments.PacketProcessor;
+import com.intellij.rt.execution.junit.segments.SegmentedStream;
 
 import java.io.BufferedReader;
 import java.io.IOException;

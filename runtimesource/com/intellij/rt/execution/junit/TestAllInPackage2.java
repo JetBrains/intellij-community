@@ -1,5 +1,6 @@
 package com.intellij.rt.execution.junit;
 
+import com.intellij.rt.junit4.Junit4ClassSuite;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -9,9 +10,11 @@ import java.lang.reflect.Method;
  * @noinspection HardCodedStringLiteral
  */
 public class TestAllInPackage2 extends TestSuite {
+  private final boolean isJunit4;
 
-  public TestAllInPackage2(final String packageName, String[] classNames) {
+  public TestAllInPackage2(final String packageName, String[] classNames, final boolean is_junit4) {
     super(packageName);
+    isJunit4 = is_junit4;
 
     int testClassCount = 0;
 
@@ -41,9 +44,11 @@ public class TestAllInPackage2 extends TestSuite {
     System.out.println(Integer.toString(testClassCount) +  " test "+ classString + " found in package \"" + packageName + "\"\n");
   }
 
-  private static Test getTest(Class testClass) {
-    Junit4ClassSuite junit4Suite = new Junit4ClassSuite(testClass);
-    if (junit4Suite.testCount() != 0) return junit4Suite;
+  private Test getTest(Class testClass) {
+    if (isJunit4) {
+      Junit4ClassSuite junit4Suite = new Junit4ClassSuite(testClass);
+      if (junit4Suite.testCount() != 0) return junit4Suite;
+    }
     try {
       Method suiteMethod = testClass.getMethod("suite", new Class[0]);
       Test test = (Test)suiteMethod.invoke(null, new Class[0]);

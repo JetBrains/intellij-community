@@ -1,4 +1,4 @@
-package com.intellij.rt.execution.junit2.segments;
+package com.intellij.rt.execution.junit.segments;
 
 public class PacketWriter {
   private StringBuffer myBody = new StringBuffer();

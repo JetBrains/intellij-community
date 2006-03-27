@@ -1,8 +1,8 @@
-package com.intellij.rt.execution.junit2;
+package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit2.segments.OutputObjectRegistryImpl;
-import com.intellij.rt.execution.junit2.segments.Packet;
-import com.intellij.rt.execution.junit2.segments.PoolOfDelimiters;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistryImpl;
+import com.intellij.rt.execution.junit.segments.Packet;
+import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
