@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadLayoutManager;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -53,16 +54,13 @@ public class LayoutManagerProperty extends Property<RadContainer> {
   }
 
   protected void setValueImpl(RadContainer component, Object value) throws Exception {
-    if (component.getLayoutManager() != null && component.getLayoutManager().getName().equals(value)) {
+    final RadLayoutManager oldLayout = component.getLayoutManager();
+    if (oldLayout != null && Comparing.equal(oldLayout.getName(), value)) {
       return;
     }
 
     RadLayoutManager newLayoutManager = RadLayoutManager.createLayoutManager((String) value);
-    if (!newLayoutManager.canChangeLayout(component)) {
-      throw new Exception("It is not allowed to change layout for non-empty containers");
-    }
-
-    component.setLayoutManager(newLayoutManager);
+    newLayoutManager.changeContainerLayout(component, component.getLayout());
   }
 
   @NotNull public PropertyRenderer getRenderer() {

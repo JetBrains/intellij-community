@@ -16,6 +16,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,8 +76,12 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     return BorderLayout.CENTER;
   }
 
-  @Override public boolean canChangeLayout(final RadContainer container) {
-    return container.getComponentCount() == 0;
+
+  @Override public void changeContainerLayout(RadContainer container, LayoutManager oldLayout) throws IncorrectOperationException {
+    if (container.getComponentCount() != 0) {
+      throw new IncorrectOperationException("Only empty containers can be changed to BorderLayout");
+    }
+    super.changeContainerLayout(container, oldLayout);
   }
 
   @Override public Property[] getContainerProperties(final Project project) {

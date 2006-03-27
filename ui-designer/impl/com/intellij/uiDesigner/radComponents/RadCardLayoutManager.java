@@ -21,6 +21,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,9 +69,11 @@ public class RadCardLayoutManager extends RadLayoutManager {
     container.getDelegee().add(component.getDelegee(), component.getCustomLayoutConstraints());
   }
 
-  @Override
-  public boolean canChangeLayout(final RadContainer container) {
-    return container.getComponentCount() == 0;
+  @Override public void changeContainerLayout(RadContainer container, LayoutManager oldLayout) throws IncorrectOperationException {
+    if (container.getComponentCount() != 0) {
+      throw new IncorrectOperationException("Only empty containers can be changed to CardLayout");
+    }
+    super.changeContainerLayout(container, oldLayout);
   }
 
   @Override @NotNull

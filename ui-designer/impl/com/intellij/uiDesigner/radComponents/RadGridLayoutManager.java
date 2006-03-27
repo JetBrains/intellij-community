@@ -12,12 +12,14 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.GridBagLayout;
 
 /**
  * @author yole
@@ -29,6 +31,17 @@ public class RadGridLayoutManager extends RadLayoutManager {
 
   public LayoutManager createLayout() {
     return new GridLayoutManager(1, 1);
+  }
+
+  @Override public void changeContainerLayout(RadContainer container, LayoutManager oldLayout) throws IncorrectOperationException {
+    if (oldLayout instanceof GridLayoutManager) {
+      GridLayoutManager oldGridLayout = (GridLayoutManager) oldLayout;
+      container.setLayoutManager(this, new GridLayoutManager(oldGridLayout.getRowCount(), oldGridLayout.getColumnCount()));
+    }
+    else if (oldLayout instanceof GridBagLayout) {
+      container.setLayoutManager(this,
+                                 RadGridBagLayoutManager.gridFromGridBag(container, container.getDelegee(), oldLayout));
+    }
   }
 
   public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
@@ -81,7 +94,6 @@ public class RadGridLayoutManager extends RadLayoutManager {
       SameSizeVerticallyProperty.getInstance(project)
     };
   }
-
 
   @Override public Property[] getComponentProperties(final Project project, final RadComponent component) {
     return new Property[] {

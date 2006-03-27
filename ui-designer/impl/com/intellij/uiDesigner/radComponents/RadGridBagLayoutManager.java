@@ -33,6 +33,10 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
                                    final JComponent parent,
                                    final RadContainer container,
                                    final LayoutManager layout) {
+    container.setLayout(gridFromGridBag(container, parent, layout));
+  }
+
+  public static GridLayoutManager gridFromGridBag(final RadContainer container, final JComponent parent, final LayoutManager layout) {
     GridBagLayout gridBag = (GridBagLayout) layout;
     int[][] layoutDimensions = gridBag.getLayoutDimensions();
 
@@ -46,7 +50,7 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
       rowCount = Math.max(rowCount, constraints.gridy + constraints.gridheight);
     }
 
-    container.setLayout(new GridLayoutManager(rowCount, colCount));
+    return new GridLayoutManager(rowCount, colCount);
   }
 
   @Override

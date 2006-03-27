@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.NoDropLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -86,8 +87,8 @@ public abstract class RadLayoutManager {
     return null;
   }
 
-  public boolean canChangeLayout(final RadContainer container) {
-    return true;
+  public void changeContainerLayout(RadContainer container, LayoutManager oldLayout) throws IncorrectOperationException {
+    container.setLayoutManager(this);
   }
 
   public abstract void writeChildConstraints(final XmlWriter writer, final RadComponent child);

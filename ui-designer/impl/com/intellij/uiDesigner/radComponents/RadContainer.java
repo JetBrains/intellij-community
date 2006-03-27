@@ -417,6 +417,11 @@ public class RadContainer extends RadComponent implements IContainer {
     setLayout(myLayoutManager.createLayout());
   }
 
+  public void setLayoutManager(RadLayoutManager layoutManager, LayoutManager layout) {
+    myLayoutManager = layoutManager;
+    setLayout(layout);
+  }
+
   public RadComponent getComponentToResize(RadComponent child) {
     return child;
   }
