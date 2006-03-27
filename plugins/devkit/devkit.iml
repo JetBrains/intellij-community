@@ -13,7 +13,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="util" />
-    <orderEntry type="library" name="JUnit" level="project" />
+    <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="compiler-openapi" />

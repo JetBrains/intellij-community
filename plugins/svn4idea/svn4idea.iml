@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
-    <orderEntry type="library" name="JUnit" level="project" />
+    <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module-library">
       <library>
