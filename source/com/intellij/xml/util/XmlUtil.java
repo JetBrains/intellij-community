@@ -87,7 +87,7 @@ public class XmlUtil {
   
   private static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
   private static final String SPRING_CORE_URI2 = "http://www.springframework.org/schema/beans";
-  public static final String[] SPRING_CORE_URIS = new String[] { SPRING_CORE_URI, SPRING_CORE_URI2 };
+  public static final String[] SPRING_CORE_URIS = { SPRING_CORE_URI, SPRING_CORE_URI2 };
 
   public static final String[] HIBERNATE_URIS = {
     "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd",
@@ -99,13 +99,14 @@ public class XmlUtil {
   public static final @NonNls String SCHEMA_LOCATION_ATT = "schemaLocation";
   private static final @NonNls String JSF_URI = "http://java.sun.com/dtd/web-facesconfig_1_0.dtd";
   private static final @NonNls String JSF_URI2 = "http://java.sun.com/dtd/web-facesconfig_1_1.dtd";
-  public static final @NonNls String[] JSF_URIS = new String[] { JSF_URI, JSF_URI2 };
-  public static final @NonNls String[] WEB_XML_URIS = new String[] {
+  public static final @NonNls String[] JSF_URIS = { JSF_URI, JSF_URI2 };
+  public static final @NonNls String[] WEB_XML_URIS = {
     "http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
     "http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd",
     "http://java.sun.com/dtd/web-app_2_3.dtd",
     "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"
   };
+  public static final @NonNls String[] JSF_CORE_URIS = {JSF_CORE_URI};
 
   public static String getSchemaLocation(XmlTag tag, String namespace) {
     final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace);
