@@ -89,14 +89,15 @@ public class JUnitUtil {
   }
 
   private static boolean isTestCaseInheritor(final PsiClass aClass) {
-    final PsiClass testCaseClass;
     try {
-      testCaseClass = getTestCaseClass(PsiLocation.fromPsiElement(aClass));
+      if (!aClass.isValid()) return false;
+      Location<PsiClass> location = PsiLocation.fromPsiElement(aClass);
+      final PsiClass testCaseClass = getTestCaseClass(location);
+      return aClass.isInheritor(testCaseClass, true);
     }
     catch (NoJUnitException e) {
       return false;
     }
-    return aClass.isInheritor(testCaseClass, true);
   }
 
   /**
@@ -126,7 +127,8 @@ public class JUnitUtil {
   private static PsiClass getTestCaseClass(final Location<?> location) throws NoJUnitException {
     final Location<PsiClass> ancestorOrSelf = location.getAncestorOrSelf(PsiClass.class);
     final PsiClass aClass = ancestorOrSelf.getPsiElement();
-    return getTestCaseClass(ExecutionUtil.findModule(aClass));
+    Module module = aClass == null ? null : ExecutionUtil.findModule(aClass);
+    return getTestCaseClass(module);
   }
 
   public static PsiClass getTestCaseClass(final Module module) throws NoJUnitException {

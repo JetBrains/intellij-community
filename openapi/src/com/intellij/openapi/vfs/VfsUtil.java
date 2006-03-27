@@ -501,7 +501,7 @@ public class VfsUtil {
   }
 
   @Nullable
-  public static Module getModuleForFile(Project project, VirtualFile file){
+  public static Module getModuleForFile(@NotNull Project project, @NotNull VirtualFile file){
     return ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(file);
   }
 

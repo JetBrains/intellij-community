@@ -77,7 +77,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     }
   }
 
-  public Module getModuleForFile(VirtualFile file) {
+  public Module getModuleForFile(@NotNull VirtualFile file) {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return null;
     DirectoryIndex directoryIndex = myDirectoryIndex;
