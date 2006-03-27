@@ -495,6 +495,19 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return files;
   }
 
+  public boolean isFileAffected(final VirtualFile file) {
+    synchronized (myChangeLists) {
+      for (ChangeList list : myChangeLists) {
+        for (Change change : list.getChanges()) {
+          final ContentRevision afterRevision = change.getAfterRevision();
+          if (afterRevision != null && afterRevision.getFile().getVirtualFile() == file) return true;
+        }
+      }
+    }
+
+    return myUnversionedFilesHolder.containsFile(file);
+  }
+
   public ChangeList addChangeList(String name) {
     synchronized (myChangeLists) {
       final ChangeList list = ChangeList.createEmptyChangeList(name);

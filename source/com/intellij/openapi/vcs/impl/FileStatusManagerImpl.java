@@ -1,8 +1,8 @@
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
 
@@ -83,6 +84,10 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
     FileStatusProvider vcsStatusProvider = vcs.getFileStatusProvider();
     if (vcsStatusProvider != null) {
+      if (!ChangeListManager.getInstance(myProject).isFileAffected(virtualFile)) {
+        return isDocumentModified(virtualFile) ? FileStatus.MODIFIED : FileStatus.NOT_CHANGED;
+      }
+
       FileStatus status = vcsStatusProvider.getStatus(virtualFile);
       if (status.equals(FileStatus.NOT_CHANGED) && isDocumentModified(virtualFile)) {
         return FileStatus.MODIFIED;

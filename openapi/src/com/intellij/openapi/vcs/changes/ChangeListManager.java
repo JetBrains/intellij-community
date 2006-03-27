@@ -27,6 +27,7 @@ public abstract class ChangeListManager {
   public abstract List<File> getAffectedPaths();
   @NotNull
   public abstract List<VirtualFile> getAffectedFiles();
+  public abstract boolean isFileAffected(final VirtualFile file);
 
   public abstract ChangeList addChangeList(@NotNull String name);
   public abstract void setDefaultChangeList(@NotNull ChangeList list);
@@ -50,4 +51,5 @@ public abstract class ChangeListManager {
   public abstract void removeChangeListListner(ChangeListListener listener);
 
   public abstract void registerCommitExecutor(CommitExecutor executor);
+
 }

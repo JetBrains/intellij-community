@@ -40,4 +40,8 @@ public class UnversionedFilesHolder {
     copyHolder.myFiles.addAll(myFiles);
     return copyHolder;
   }
+
+  public synchronized boolean containsFile(final VirtualFile file) {
+    return myFiles.contains(file);
+  }
 }
