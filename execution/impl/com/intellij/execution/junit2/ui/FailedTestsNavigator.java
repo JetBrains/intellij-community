@@ -16,11 +16,11 @@ public class FailedTestsNavigator implements OccurenceNavigator, TestProxyClient
   private static final String PREVIOUS_NAME = ExecutionBundle.message("prev.faled.test.action.name");
 
   public boolean hasNextOccurence() {
-    return myModel != null ? getNextOccurenceInfo().hasNextOccurence() : false;
+    return myModel != null && getNextOccurenceInfo().hasNextOccurence();
   }
 
   public boolean hasPreviousOccurence() {
-    return myModel != null ? getPreviousOccurenceInfo().hasNextOccurence() : false;
+    return myModel != null && getPreviousOccurenceInfo().hasNextOccurence();
   }
 
   public OccurenceNavigator.OccurenceInfo goNextOccurence() {
@@ -115,8 +115,7 @@ public class FailedTestsNavigator implements OccurenceNavigator, TestProxyClient
     private int calculateSelectionIndex() {
       myAllTests = myModel.getRoot().getAllTests();
       myDefects = Filter.DEFECTIVE_LEAF.select(myAllTests);
-      final int selectionIndex = myAllTests.indexOf(myModel.getSelectedTest());
-      return selectionIndex;
+      return myAllTests.indexOf(myModel.getSelectedTest());
     }
 
     protected int getDefectsCount() {
