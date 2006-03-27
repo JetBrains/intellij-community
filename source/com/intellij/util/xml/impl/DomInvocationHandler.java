@@ -11,10 +11,7 @@ import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
@@ -92,8 +89,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   public final void copyFrom(DomElement other) {
     if (other == getProxy()) return;
     assert other.getDomElementType().equals(myType);
-    final XmlTag otherTag = other.getXmlTag();
-    if (otherTag == null) {
+    final XmlTag fromTag = other.getXmlTag();
+    if (fromTag == null) {
       if (getXmlTag() != null) {
         undefine();
       }
@@ -105,18 +102,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       final XmlTag tag = ensureTagExists();
       detach(false);
       synchronized (PsiLock.LOCK) {
-        for (final XmlAttribute attribute : tag.getAttributes()) {
-          attribute.delete();
-        }
-        for (final XmlTag xmlTag : tag.getSubTags()) {
-          xmlTag.delete();
-        }
-        for (final XmlAttribute attribute : otherTag.getAttributes()) {
-          tag.add(attribute);
-        }
-        for (final XmlTag xmlTag : otherTag.getSubTags()) {
-          tag.add(xmlTag);
-        }
+        copyTags(fromTag, tag);
       }
       attach(tag);
     }
@@ -125,6 +111,26 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
     finally {
       myManager.setChanging(b);
+    }
+  }
+
+  private void copyTags(final XmlTag fromTag, final XmlTag toTag) throws IncorrectOperationException {
+    for (final XmlAttribute attribute : toTag.getAttributes()) {
+      attribute.delete();
+    }
+    for (final XmlTag xmlTag : toTag.getSubTags()) {
+      xmlTag.delete();
+    }
+    for (final XmlAttribute attribute : fromTag.getAttributes()) {
+      toTag.add(attribute);
+    }
+    final XmlTag[] tags = fromTag.getSubTags();
+    if (tags.length > 0) {
+      for (final XmlTag xmlTag : tags) {
+        copyTags(xmlTag, (XmlTag)toTag.add(createEmptyTag(xmlTag.getName())));
+      }
+    } else {
+      toTag.getValue().setText(fromTag.getValue().getText());
     }
   }
 

@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ColumnInfo;
@@ -23,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +32,7 @@ import java.util.List;
  */
 public class DomCollectionControl<T extends DomElement> implements DomUIControl {
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
-  protected DomCollectionPanel myCollectionPanel;
+  private DomCollectionPanel myCollectionPanel;
 
   private final List<T> myData = new ArrayList<T>();
   private final DomElement myParentDomElement;
@@ -70,10 +68,6 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
 
   public boolean isEditable() {
     return myEditable;
-  }
-
-  public final ColumnInfo<T, ?>[] getColumnInfos() {
-    return myColumnInfos;
   }
 
   public void bind(JComponent component) {
@@ -117,93 +111,17 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
       myCollectionPanel = boundComponent;
     }
     myCollectionPanel.setControl(this);
-    myColumnInfos = createColumnInfos(myParentDomElement);
-
+    myCollectionPanel.initializeTable();
+    myCollectionPanel.setColumnInfos(createColumnInfos(myParentDomElement));
     reset();
-    initializeTable();
   }
 
   protected ColumnInfo[] createColumnInfos(DomElement parent) {
     return myColumnInfos;
   }
 
-  protected void initializeTable() {
-    JTable table = myCollectionPanel.getTable();
-
-    myCollectionPanel.setTableModel(new AbstractTableModel() {
-      public int getRowCount() {
-        return myData.size();
-      }
-
-      public int getColumnCount() {
-        return myColumnInfos.length;
-      }
-
-      public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return myColumnInfos[columnIndex].isCellEditable(myData.get(rowIndex));
-      }
-
-      public String getColumnName(int column) {
-        return myColumnInfos[column].getName();
-      }
-
-      public Class getColumnClass(int columnIndex) {
-        return myColumnInfos[columnIndex].getColumnClass();
-      }
-
-      public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
-        final Object oldValue = getValueAt(rowIndex, columnIndex);
-        if (!Comparing.equal(oldValue, aValue)) {
-          performWriteCommandAction(new WriteCommandAction(getProject()) {
-            protected void run(final Result result) throws Throwable {
-              ((ColumnInfo<T, Object>)myColumnInfos[columnIndex]).setValue(myData.get(rowIndex), aValue);
-            }
-          });
-        }
-      }
-
-      public Object getValueAt(int rowIndex, int columnIndex) {
-        return myColumnInfos[columnIndex].valueOf(myData.get(rowIndex));
-      }
-    });
-
-    adjustColumnWidths(table);
-    fireTableChanged();
-  }
-
-  private void adjustColumnWidths(final JTable table) {
-    for (int i = 0; i < myColumnInfos.length; i++) {
-      ColumnInfo<T, ?> columnInfo = myColumnInfos[i];
-      final TableColumn column = table.getColumnModel().getColumn(i);
-      final TableCellRenderer cellRenderer = columnInfo.getRenderer(null);
-      if (cellRenderer != null) {
-        column.setCellRenderer(cellRenderer);
-
-        int width = -1;
-        for (int j = 0; j < myData.size(); j++) {
-          T t = myData.get(j);
-          final Component component = cellRenderer.getTableCellRendererComponent(table, columnInfo.valueOf(t), false, false, j, i);
-          final int prefWidth = component.getPreferredSize().width;
-          if (prefWidth > width) {
-            width = prefWidth;
-          }
-        }
-        if (width > 0) {
-          column.setPreferredWidth(width);
-        }
-      }
-      final TableCellEditor cellEditor = columnInfo.getEditor(null);
-      if (cellEditor != null) {
-        column.setCellEditor(cellEditor);
-      }
-    }
-  }
-
   public final void columnsChanged() {
-    myColumnInfos = createColumnInfos(myParentDomElement);
-    final JTable table = myCollectionPanel.getTable();
-    ((AbstractTableModel)table.getModel()).fireTableStructureChanged();
-    adjustColumnWidths(table);
+    myCollectionPanel.setColumnInfos(createColumnInfos(myParentDomElement));
   }
 
   protected void doEdit() {
@@ -308,24 +226,10 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
   }
 
   public final void reset() {
-    if (myCollectionPanel != null) {
-      final JTable table = myCollectionPanel.getTable();
-      if (table.isEditing()) {
-        table.getCellEditor().cancelCellEditing();
-      }
-    }
     myData.clear();
     myData.addAll(getData());
     if (myCollectionPanel != null) {
-      fireTableChanged();
-    }
-  }
-
-  private void fireTableChanged() {
-    final int row = myCollectionPanel.getTable().getSelectedRow();
-    myCollectionPanel.getTableModel().fireTableDataChanged();
-    if (row >= 0 && row < myData.size()) {
-      myCollectionPanel.getTable().getSelectionModel().setSelectionInterval(row, row);
+      myCollectionPanel.setItems(myData);
     }
   }
 

@@ -94,4 +94,6 @@ public abstract class Icons {
   public static final Icon DELETE_ICON = IconLoader.getIcon("/actions/exclude.png");
   public static final Icon OPEN_EDIT_DIALOG_ICON = IconLoader.getIcon("/actions/showViewer.png");
   public static final Icon FLATTEN_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/flattenPackages.png");
+  public static final Icon ADD_TO_SECTION_ICON = IconLoader.getIcon("/general/addItemToSection.png");
+  public static final Icon EDIT_IN_SECTION_ICON = IconLoader.getIcon("/general/editItemInSection.png");
 }

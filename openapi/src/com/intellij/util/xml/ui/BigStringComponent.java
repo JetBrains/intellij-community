@@ -23,6 +23,7 @@ public class BigStringComponent extends TextFieldWithBrowseButton {
 
   public BigStringComponent(boolean hasBorder) {
     super();
+    setButtonIcon(Icons.OPEN_EDIT_DIALOG_ICON);
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         Messages.showTextAreaDialog(getTextField(), J2EEBundle.message("column.name.description"), "DescriptionDialogEditor");

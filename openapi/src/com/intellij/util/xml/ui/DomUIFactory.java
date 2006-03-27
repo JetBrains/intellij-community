@@ -40,16 +40,20 @@ public abstract class DomUIFactory implements ApplicationComponent {
 
 
   public static DomUIControl createControl(GenericDomValue element) {
-    return createGenericValueControl(DomUtil.getGenericValueType(element.getDomElementType()), element);
+    return createControl(element, false);
   }
 
-  public static DomUIControl createDescriptionControl(DomElement parent) {
-    return new BigStringControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")));
+  public static DomUIControl createControl(GenericDomValue element, boolean commitOnEveryChange) {
+    return createGenericValueControl(DomUtil.getGenericValueType(element.getDomElementType()), element, commitOnEveryChange);
   }
 
-  private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element) {
+  public static DomUIControl createDescriptionControl(DomElement parent, final boolean commitOnEveryChange) {
+    return new BigStringControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
+  }
+
+  private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element, boolean commitOnEveryChange) {
     if (type.equals(PsiClass.class)) {
-      return new PsiClassControl(new DomStringWrapper(element));
+      return new PsiClassControl(new DomStringWrapper(element), commitOnEveryChange);
     }
     if (type instanceof Class && Enum.class.isAssignableFrom((Class)type)) {
       return new ComboControl(new DomStringWrapper(element), (Class)type);
@@ -60,7 +64,7 @@ public abstract class DomUIFactory implements ApplicationComponent {
       return new BooleanControl(wrapper);
     }
     if (type.equals(String.class)) {
-      return new StringControl(wrapper);
+      return new StringControl(wrapper, commitOnEveryChange);
     }
 
     throw new IllegalArgumentException("Not supported: " + type);

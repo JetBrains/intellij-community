@@ -54,8 +54,7 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
                                                     boolean leaf,
                                                     int row,
                                                     boolean hasFocus) {
-        JComponent result = (JComponent)myBaseRenderer.getTreeCellRendererComponent(tree1, value, selected, expanded, leaf, row,
-                                                                           hasFocus);
+        JComponent result = (JComponent)myBaseRenderer.getTreeCellRendererComponent(tree1, value, selected, expanded, leaf, row, hasFocus);
         result.setOpaque(!selected);
         return result;
       }
@@ -138,11 +137,15 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     return result;
   }
 
+  protected boolean isRenderWithDefaultColors() {
+    return true;
+  }
+
   public TableCellRenderer getCellRenderer(int row, int column) {
     ColumnInfo columnInfo = getTreeViewModel().getColumnInfos()[convertColumnIndexToModel(column)];
     TableCellRenderer renderer = getRenderer(columnInfo, getTree().getPathForRow(row).getLastPathComponent());
     final TableCellRenderer baseRenderer = renderer == null ? super.getCellRenderer(row, column) : renderer;
-    return new TableCellRenderer() {
+    return isRenderWithDefaultColors() ? new TableCellRenderer() {
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,
                                                      boolean isSelected,
@@ -162,7 +165,7 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
         rendererComponent.setOpaque(isSelected);
         return rendererComponent;
       }
-    };
+    } : baseRenderer;
   }
 
   protected TableCellRenderer getRenderer(final ColumnInfo columnInfo, final Object o) {

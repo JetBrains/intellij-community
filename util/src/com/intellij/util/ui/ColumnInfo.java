@@ -38,7 +38,7 @@ public abstract class ColumnInfo <Item, Aspect> {
     return getName();
   }
 
-  public abstract Aspect valueOf(Item object);
+  public abstract Aspect valueOf(Item item);
 
   public final boolean isSortable() {
     return getComparator() != null;
@@ -64,15 +64,15 @@ public abstract class ColumnInfo <Item, Aspect> {
     return String.class;
   }
 
-  public boolean isCellEditable(Item o) {
+  public boolean isCellEditable(Item item) {
     return false;
   }
 
-  public void setValue(Item o, Aspect aValue) {
+  public void setValue(Item item, Aspect value) {
 
   }
 
-  public TableCellRenderer getRenderer(Item p0) {
+  public TableCellRenderer getRenderer(Item item) {
     return null;
   }
 

@@ -90,11 +90,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
   }
 
   protected JComboBox createMainComponent(final JComboBox boundedComponent) {
-    return initComboBox(boundedComponent == null ? new JComboBox() : boundedComponent, new Condition<String>() {
-      public boolean value(final String object) {
-        return isValidValue(object);
-      }
-    });
+    return tuneUpComboBox(boundedComponent == null ? new JComboBox() : boundedComponent, myDataFactory);
   }
 
   public boolean isValidValue(final String object) {

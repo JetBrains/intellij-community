@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.module.Module;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
@@ -103,8 +104,12 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     return convertedName;
   }
 
-  protected Project getProject() {
+  public final Project getProject() {
     return getDomElement().getManager().getProject();
+  }
+
+  public final Module getModule() {
+    return getDomElement().getModule();
   }
 
   protected void setEnabled(Component component, boolean enabled) {

@@ -68,7 +68,7 @@ public class TreeTable extends Table {
     myTreeRowHeightPropertyListener = new PropertyChangeListener() {
               public void propertyChange(PropertyChangeEvent evt) {
                 int treeRowHeight = myTree.getRowHeight();
-                if (treeRowHeight == getRowHeight()) return;
+                if (treeRowHeight == getRowHeight() - 3) return;
                 setRowHeight(treeRowHeight);
               }
             };
@@ -155,7 +155,7 @@ public class TreeTable extends Table {
   public void setRowHeight(int rowHeight) {
     super.setRowHeight(rowHeight);
     if (myTree != null && myTree.getRowHeight() < rowHeight) {
-      myTree.setRowHeight(getRowHeight());
+      myTree.setRowHeight(getRowHeight() - 3);
     }
   }
 

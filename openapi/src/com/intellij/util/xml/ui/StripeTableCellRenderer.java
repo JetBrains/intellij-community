@@ -31,7 +31,7 @@ public class StripeTableCellRenderer implements TableCellRenderer {
 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     final JComponent component = (JComponent)getRenderer(row, column).getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-    if (row % 2 == 0 && !isSelected) {
+    if (row % 2 != 0 && !isSelected) {
       component.setBackground(darken(table.getBackground()));
     } else {
       component.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());

@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ListTableModel <Item> extends TableViewModel<Item> implements ItemRemovable {
-  private final ColumnInfo[] myColumnInfos;
+  private ColumnInfo[] myColumnInfos;
   private List<Item> myItems;
   private int mySortByColumn;
   private int mySortingType = SortableColumnModel.SORT_ASCENDING;
@@ -76,6 +76,11 @@ public class ListTableModel <Item> extends TableViewModel<Item> implements ItemR
     if (rowIndex < myItems.size()) {
       myColumnInfos[columnIndex].setValue(myItems.get(rowIndex), aValue);
     }
+  }
+
+  public void setColumnInfos(final ColumnInfo[] columnInfos) {
+    myColumnInfos = columnInfos;
+    fireTableStructureChanged();
   }
 
   public List<Item> getItems() {
