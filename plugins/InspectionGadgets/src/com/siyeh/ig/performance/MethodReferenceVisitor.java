@@ -82,32 +82,16 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         m_referencesStaticallyAccessible = false;
     }
 
-    private boolean isMethodStaticallyAccessible(PsiMethod method){
-        if(m_method.equals(method)){
-            return true;
-        }
-        if(method.hasModifierProperty(PsiModifier.STATIC)){
-            return true;
-        }
-        if(method.isConstructor()){
-            return true;
-        }
-        final PsiClass referenceContainingClass = m_method.getContainingClass();
-        final PsiClass methodContainingClass = method.getContainingClass();
-        return !InheritanceUtil.isCorrectDescendant(referenceContainingClass,
-                                                  methodContainingClass, true);
-    }
-
-    private boolean isMemberStaticallyAccessible(PsiMember member){
-        if(m_method.equals(member)){
-            return true;
-        }
-        if(member.hasModifierProperty(PsiModifier.STATIC)){
-            return true;
-        }
-        final PsiClass referenceContainingClass = m_method.getContainingClass();
-        final PsiClass containingClass = member.getContainingClass();
-        return !InheritanceUtil.isCorrectDescendant(referenceContainingClass,
-                                                  containingClass, true);
-    }
+  private boolean isMemberStaticallyAccessible(PsiMember member){
+      if(m_method.equals(member)){
+          return true;
+      }
+      if(member.hasModifierProperty(PsiModifier.STATIC)){
+          return true;
+      }
+      final PsiClass referenceContainingClass = m_method.getContainingClass();
+      final PsiClass containingClass = member.getContainingClass();
+      return !InheritanceUtil.isCorrectDescendant(referenceContainingClass,
+                                                containingClass, true);
+  }
 }
