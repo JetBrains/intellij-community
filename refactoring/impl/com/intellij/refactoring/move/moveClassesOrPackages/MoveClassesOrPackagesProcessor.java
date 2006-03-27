@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -63,9 +63,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     PsiElement[] elements = new PsiElement[myElementsToMove.length];
-    for (int idx = 0; idx < myElementsToMove.length; idx++) {
-      elements[idx] = myElementsToMove[idx];
-    }
+    System.arraycopy(myElementsToMove, 0, elements, 0, myElementsToMove.length);
     return new MoveClassesOrPackagesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles, myTargetPackage
     );
   }
@@ -160,7 +158,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   private class PackageLocalsVisitor extends PsiRecursiveElementVisitor {
-    private HashMap<PsiElement,HashSet<PsiElement>> myReported = new com.intellij.util.containers.HashMap<PsiElement, HashSet<PsiElement>>();
+    private HashMap<PsiElement,HashSet<PsiElement>> myReported = new HashMap<PsiElement, HashSet<PsiElement>>();
     private final ArrayList<String> myConflicts;
 
     public PackageLocalsVisitor(ArrayList<String> conflicts) {
@@ -222,9 +220,11 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private void detectPackageLocalsMoved(final UsageInfo[] usages, final ArrayList<String> conflicts) {
 //    final HashSet reportedPackageLocalUsed = new HashSet();
     final HashSet<PsiClass> movedClasses = new HashSet<PsiClass>();
-    final HashMap<PsiClass,HashSet<PsiElement>> reportedClassToContainers = new com.intellij.util.containers.HashMap<PsiClass, HashSet<PsiElement>>();
+    final HashMap<PsiClass,HashSet<PsiElement>> reportedClassToContainers = new HashMap<PsiClass, HashSet<PsiElement>>();
     final PackageWrapper aPackage = myTargetPackage;
     for (UsageInfo usage : usages) {
+      PsiElement element = usage.getElement();
+      if (element == null) continue;
       if (usage instanceof MoveRenameUsageInfo && !(usage instanceof NonCodeUsageInfo) &&
           ((MoveRenameUsageInfo)usage).referencedElement instanceof PsiClass) {
         PsiClass aClass = (PsiClass)((MoveRenameUsageInfo)usage).referencedElement;
@@ -233,8 +233,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
         String visibility = VisibilityUtil.getVisibilityModifier(aClass.getModifierList());
         if (PsiModifier.PACKAGE_LOCAL.equals(visibility)) {
-          if (PsiTreeUtil.getParentOfType(usage.getElement(), PsiImportStatement.class) != null) continue;
-          PsiElement container = ConflictsUtil.getContainer(usage.getElement());
+          if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class) != null) continue;
+          PsiElement container = ConflictsUtil.getContainer(element);
           if (container == null) continue;
           HashSet<PsiElement> reported = reportedClassToContainers.get(aClass);
           if (reported == null) {
@@ -244,8 +244,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
           if (!reported.contains(container)) {
             reported.add(container);
-            PsiFile containingFile = usage.getElement().getContainingFile();
-            if (containingFile != null && !isInsideMoved(usage.getElement())) {
+            PsiFile containingFile = element.getContainingFile();
+            if (containingFile != null && !isInsideMoved(element)) {
               PsiDirectory directory = containingFile.getContainingDirectory();
               if (directory != null) {
                 PsiPackage usagePackage = directory.getPackage();
@@ -298,8 +298,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       ClassMemberWrapper wrapper = (ClassMemberWrapper)o;
 
       if (myElement instanceof PsiMethod) {
-        if (!(wrapper.myElement instanceof PsiMethod)) return false;
-        return MethodSignatureUtil.areSignaturesEqual((PsiMethod)myElement, (PsiMethod)wrapper.myElement);
+        return wrapper.myElement instanceof PsiMethod &&
+            MethodSignatureUtil.areSignaturesEqual((PsiMethod) myElement, (PsiMethod) wrapper.myElement);
       }
 
 
@@ -317,20 +317,18 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void findPublicClassConflicts(PsiClass aClass, MyClassInstanceReferenceVisitor instanceReferenceVisitor) {
+  private static void findPublicClassConflicts(PsiClass aClass, MyClassInstanceReferenceVisitor instanceReferenceVisitor) {
     NonPublicClassMemberWrappersSet members = new NonPublicClassMemberWrappersSet();
 
     members.addElements(aClass.getFields());
     members.addElements(aClass.getMethods());
     members.addElements(aClass.getInnerClasses());
 
-    final PsiSearchHelper searchHelper = aClass.getManager().getSearchHelper();
     RefactoringUtil.IsDescendantOf isDescendantOf = new RefactoringUtil.IsDescendantOf(aClass);
     final PsiPackage aPackage = aClass.getContainingFile().getContainingDirectory().getPackage();
     final GlobalSearchScope packageScope = GlobalSearchScope.packageScopeWithoutLibraries(aPackage, false);
     for (ClassMemberWrapper memberWrapper : members) {
-      final PsiReference[] references = searchHelper.findReferences(memberWrapper.getMember(), packageScope, false);
-      for (PsiReference reference : references) {
+      for (PsiReference reference : ReferencesSearch.search(memberWrapper.getMember(), packageScope, false).findAll()) {
         final PsiElement element = reference.getElement();
         if (element instanceof PsiReferenceExpression) {
           final PsiReferenceExpression expression = ((PsiReferenceExpression)element);
@@ -352,7 +350,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void findInstancesOfPackageLocal(final PsiClass aClass,
+  private static void findInstancesOfPackageLocal(final PsiClass aClass,
                                            final UsageInfo[] usages,
                                            final MyClassInstanceReferenceVisitor instanceReferenceVisitor) {
     ClassReferenceScanner referenceScanner = new ClassReferenceScanner(aClass) {
@@ -376,10 +374,10 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private String getNewQName(PsiElement element) {
     final String qualifiedName = myTargetPackage.getQualifiedName();
     if (element instanceof PsiClass) {
-      return qualifiedName + (qualifiedName.equals("") ? "" : ".") + ((PsiClass)element).getName();
+      return qualifiedName + (qualifiedName.length() == 0 ? "" : ".") + ((PsiClass)element).getName();
     }
     else if (element instanceof PsiPackage) {
-      return qualifiedName + (qualifiedName.equals("") ? "" : ".") + ((PsiPackage)element).getName();
+      return qualifiedName + (qualifiedName.length() == 0 ? "" : ".") + ((PsiPackage)element).getName();
     }
     else {
       LOG.assertTrue(false);
@@ -389,9 +387,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   protected void refreshElements(PsiElement[] elements) {
     LOG.assertTrue(elements.length == myElementsToMove.length);
-    for (int idx = 0; idx < elements.length; idx++) {
-      myElementsToMove[idx] = elements[idx];
-    }
+    System.arraycopy(elements, 0, myElementsToMove, 0, elements.length);
   }
 
   protected boolean isPreviewUsages(UsageInfo[] usages) {
@@ -470,7 +466,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   private class MyClassInstanceReferenceVisitor implements ClassInstanceScanner.ClassInstanceReferenceVisitor {
     private final ArrayList<String> myConflicts;
-    private final HashMap<PsiModifierListOwner,HashSet<PsiElement>> myReportedElementToContainer = new com.intellij.util.containers.HashMap<PsiModifierListOwner, HashSet<PsiElement>>();
+    private final HashMap<PsiModifierListOwner,HashSet<PsiElement>> myReportedElementToContainer = new HashMap<PsiModifierListOwner, HashSet<PsiElement>>();
     private final HashMap<PsiClass, RefactoringUtil.IsDescendantOf> myIsDescendantOfCache = new HashMap<PsiClass,RefactoringUtil.IsDescendantOf>();
     private PackageWrapper myTargetPackage;
 
