@@ -1003,6 +1003,10 @@ public final class GridLayoutManager extends AbstractLayout {
 
   public int getCellSizePolicy(final boolean isRow, final int cellIndex) {
     DimensionInfo info = isRow ? myVerticalInfo : myHorizontalInfo;
+    if (info == null) {
+      // not laid out yet
+      return 0;
+    }
     return info.getCellSizePolicy(cellIndex);
   }
 }
