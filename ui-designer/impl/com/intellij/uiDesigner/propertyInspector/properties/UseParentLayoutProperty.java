@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class UseParentLayoutProperty extends Property<RadComponent> {
+public class UseParentLayoutProperty extends Property<RadComponent, Boolean> {
   public static UseParentLayoutProperty getInstance(Project project) {
     return project.getComponent(UseParentLayoutProperty.class);
   }
@@ -31,12 +31,12 @@ public class UseParentLayoutProperty extends Property<RadComponent> {
     super(null, "Align Grid with Parent");
   }
 
-  public Object getValue(RadComponent component) {
+  public Boolean getValue(RadComponent component) {
     return component.getConstraints().isUseParentLayout();
   }
 
-  protected void setValueImpl(RadComponent component, Object value) throws Exception {
-    final boolean useParentLayout = ((Boolean)value).booleanValue();
+  protected void setValueImpl(RadComponent component, Boolean value) throws Exception {
+    final boolean useParentLayout = value.booleanValue();
 
     final GridConstraints constraints = component.getConstraints();
     if (constraints.isUseParentLayout() != useParentLayout) {

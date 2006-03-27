@@ -23,7 +23,7 @@ public final class MaximumSizeProperty extends AbstractDimensionProperty<RadComp
     return constraints.myMaximumSize;
   }
 
-  protected void setValueImpl(final RadComponent component, final Object value) throws Exception{
-    component.getConstraints().myMaximumSize.setSize((Dimension)value);
+  protected void setValueImpl(final RadComponent component, final Dimension value) throws Exception{
+    component.getConstraints().myMaximumSize.setSize(value);
   }
 }

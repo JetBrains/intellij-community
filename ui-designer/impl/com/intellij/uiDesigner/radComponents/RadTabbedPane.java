@@ -250,7 +250,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
   }
 
-  private final class MyTitleProperty extends Property<RadComponent> {
+  private final class MyTitleProperty extends Property<RadComponent, StringDescriptor> {
     /**
      * Index of tab which title should be edited
      */
@@ -267,7 +267,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       myRenderer = new StringRenderer();
     }
 
-    public Object getValue(final RadComponent component) {
+    public StringDescriptor getValue(final RadComponent component) {
       final RadComponent tabComponent = myInPlace ? component : getRadComponent(myIndex);
       // 1. resource bundle
       final StringDescriptor descriptor = getId2Descriptor(RadTabbedPane.this).get(tabComponent.getId());
@@ -281,22 +281,21 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       return StringDescriptor.create(getTabbedPane().getTitleAt(myIndex));
     }
 
-    protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
+    protected void setValueImpl(final RadComponent component, final StringDescriptor value) throws Exception {
       final RadComponent tabComponent = myInPlace ? component : getRadComponent(myIndex);
       // 1. Put value into map
-      final StringDescriptor descriptor = (StringDescriptor)value;
-      LOG.debug("MyTitleProperty: setting value " + (descriptor == null ? "<null>" : descriptor.toString()) +
+      LOG.debug("MyTitleProperty: setting value " + (value == null ? "<null>" : value.toString()) +
                 " for component ID=" + tabComponent.getId());
       final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(RadTabbedPane.this);
-      if(descriptor == null){
+      if(value == null){
         id2Descriptor.remove(tabComponent.getId());
       }
       else{
-        id2Descriptor.put(tabComponent.getId(), descriptor);
+        id2Descriptor.put(tabComponent.getId(), value);
       }
 
       // 2. Apply real string value to JComponent peer
-      getTabbedPane().setTitleAt(myIndex, ReferenceUtil.resolve(RadTabbedPane.this, descriptor));
+      getTabbedPane().setTitleAt(myIndex, ReferenceUtil.resolve(RadTabbedPane.this, value));
     }
 
     @NotNull

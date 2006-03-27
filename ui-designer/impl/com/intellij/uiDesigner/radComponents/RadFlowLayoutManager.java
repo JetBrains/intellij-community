@@ -90,7 +90,7 @@ public class RadFlowLayoutManager extends RadLayoutManager {
     container.addComponent(component);
   }
 
-  private static class MyAlignProperty extends Property<RadContainer> {
+  private static class MyAlignProperty extends Property<RadContainer, Integer> {
     private IntEnumRenderer myRenderer;
     private IntEnumEditor myEditor;
     private IntEnumEditor.Pair[] myPairs;
@@ -106,14 +106,14 @@ public class RadFlowLayoutManager extends RadLayoutManager {
       };
     }
 
-    public Object getValue(final RadContainer component) {
+    public Integer getValue(final RadContainer component) {
       FlowLayout flowLayout = (FlowLayout) component.getLayout();
       return flowLayout.getAlignment();
     }
 
-    protected void setValueImpl(final RadContainer component, final Object value) throws Exception {
+    protected void setValueImpl(final RadContainer component, final Integer value) throws Exception {
       FlowLayout flowLayout = (FlowLayout) component.getLayout();
-      flowLayout.setAlignment(((Integer) value).intValue());
+      flowLayout.setAlignment(value.intValue());
     }
 
     @NotNull public PropertyRenderer getRenderer() {

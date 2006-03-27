@@ -22,7 +22,7 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
     super(null," Vertical Gap", -1);
   }
 
-  public Object getValue(final RadContainer component) {
+  public Integer getValue(final RadContainer component) {
     if (component.getLayout() instanceof BorderLayout) {
       BorderLayout layout = (BorderLayout) component.getLayout();
       return layout.getVgap();
@@ -39,22 +39,22 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
     return layoutManager.getVGap();
   }
 
-  protected void setValueImpl(final RadContainer component,final Object value) throws Exception {
+  protected void setValueImpl(final RadContainer component, final Integer value) throws Exception {
     if (component.getLayout() instanceof BorderLayout) {
       BorderLayout layout = (BorderLayout) component.getLayout();
-      layout.setVgap(((Integer) value).intValue());
+      layout.setVgap(value.intValue());
     }
     else if (component.getLayout() instanceof FlowLayout) {
       FlowLayout layout = (FlowLayout) component.getLayout();
-      layout.setVgap(((Integer) value).intValue());
+      layout.setVgap(value.intValue());
     }
     else if (component.getLayout() instanceof CardLayout) {
       CardLayout layout = (CardLayout) component.getLayout();
-      layout.setVgap(((Integer) value).intValue());
+      layout.setVgap(value.intValue());
     }
     else {
       final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
-      layoutManager.setVGap(((Integer)value).intValue());
+      layoutManager.setVGap(value.intValue());
     }
   }
 }

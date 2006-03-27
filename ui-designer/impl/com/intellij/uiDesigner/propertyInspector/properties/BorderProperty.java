@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class BorderProperty extends Property<RadContainer> {
+public final class BorderProperty extends Property<RadContainer, BorderType> {
   private Project myProject;
   private final Property[] myChildren;
   private final BorderTypeRenderer myRenderer;
@@ -33,11 +33,11 @@ public final class BorderProperty extends Property<RadContainer> {
     myRenderer=new BorderTypeRenderer();
   }
 
-  public Object getValue(final RadContainer component){
+  public BorderType getValue(final RadContainer component){
     return component.getBorderType();
   }
 
-  protected void setValueImpl(final RadContainer component,final Object value) throws Exception{
+  protected void setValueImpl(final RadContainer component,final BorderType value) throws Exception{
   }
 
   @NotNull
@@ -66,7 +66,7 @@ public final class BorderProperty extends Property<RadContainer> {
   /**
    * Border type subproperty
    */
-  private final class MyTypeProperty extends Property<RadContainer> {
+  private final class MyTypeProperty extends Property<RadContainer, BorderType> {
     BorderTypeRenderer myRenderer;
     BorderTypeEditor myEditor;
 
@@ -74,13 +74,12 @@ public final class BorderProperty extends Property<RadContainer> {
       super(BorderProperty.this, "type");
     }
 
-    public Object getValue(final RadContainer component){
+    public BorderType getValue(final RadContainer component){
       return component.getBorderType();
     }
 
-    protected void setValueImpl(final RadContainer component,final Object value) throws Exception{
-      final BorderType type=(BorderType)value;
-      component.setBorderType(type);
+    protected void setValueImpl(final RadContainer component,final BorderType value) throws Exception{
+      component.setBorderType(value);
     }
 
     @NotNull
@@ -110,7 +109,7 @@ public final class BorderProperty extends Property<RadContainer> {
   /**
    * Title subproperty
    */
-  private final class MyTitleProperty extends Property<RadContainer> {
+  private final class MyTitleProperty extends Property<RadContainer, StringDescriptor> {
     private StringRenderer myRenderer;
     private StringEditor myEditor;
 
@@ -118,7 +117,7 @@ public final class BorderProperty extends Property<RadContainer> {
       super(BorderProperty.this, "title");
     }
 
-    public Object getValue(final RadContainer component) {
+    public StringDescriptor getValue(final RadContainer component) {
       final StringDescriptor descriptor = component.getBorderTitle();
       final String resolvedValue = ReferenceUtil.resolve(component, descriptor);
       if (descriptor != null) {
@@ -127,7 +126,7 @@ public final class BorderProperty extends Property<RadContainer> {
       return descriptor;
     }
 
-    protected void setValueImpl(final RadContainer component,final Object value) throws Exception {
+    protected void setValueImpl(final RadContainer component,final StringDescriptor value) throws Exception {
       StringDescriptor title=(StringDescriptor)value;
       if(title != null && ReferenceUtil.resolve(component, title).length()==0){
         title=null;

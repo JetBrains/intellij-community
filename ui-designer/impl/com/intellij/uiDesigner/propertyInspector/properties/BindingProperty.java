@@ -41,7 +41,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class BindingProperty extends Property<RadComponent> {
+public final class BindingProperty extends Property<RadComponent, String> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.properties.BindingProperty");
 
   private final Project myProject;
@@ -65,14 +65,12 @@ public final class BindingProperty extends Property<RadComponent> {
     return myRenderer;
   }
 
-  public Object getValue(final RadComponent component){
+  public String getValue(final RadComponent component){
     return component.getBinding();
   }
 
-  protected void setValueImpl(final RadComponent component, final Object value) throws Exception{
-    final String newBinding = (String)value;
-
-    if (newBinding.length() == 0) {
+  protected void setValueImpl(final RadComponent component, final String value) throws Exception{
+    if (value.length() == 0) {
       checkRemoveUnusedField(component);
       component.setBinding(null);
       return;
@@ -84,7 +82,7 @@ public final class BindingProperty extends Property<RadComponent> {
 
     final RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
     if (
-      !GuiEditorUtil.isBindingUnique(component, newBinding, root)
+      !GuiEditorUtil.isBindingUnique(component, value, root)
     ) {
       //noinspection HardCodedStringLiteral
       throw new Exception("binding is not unique");
@@ -94,9 +92,9 @@ public final class BindingProperty extends Property<RadComponent> {
     // and the new one doesn't exist we need to ask user to create new field
     // or rename old one.
 
-    final String oldBinding = (String)getValue(component);
+    final String oldBinding = getValue(component);
 
-    component.setBinding(newBinding);
+    component.setBinding(value);
     component.setDefaultBinding(false);
 
     final String classToBind = root.getClassToBind();
@@ -110,8 +108,8 @@ public final class BindingProperty extends Property<RadComponent> {
     }
 
     if(oldBinding == null) {
-      if (aClass.findFieldByName(newBinding, true) == null) {
-        CreateFieldFix.runImpl(myProject, root, aClass, component.getComponentClassName(), newBinding, false);
+      if (aClass.findFieldByName(value, true) == null) {
+        CreateFieldFix.runImpl(myProject, root, aClass, component.getComponentClassName(), value, false);
       }
       return;
     }
@@ -121,7 +119,7 @@ public final class BindingProperty extends Property<RadComponent> {
       return;
     }
 
-    if(aClass.findFieldByName(newBinding, true) != null){
+    if(aClass.findFieldByName(value, true) != null){
       return;
     }
 
@@ -130,7 +128,7 @@ public final class BindingProperty extends Property<RadComponent> {
     if (!isFieldUnreferenced(oldField)) {
       final int option = Messages.showYesNoDialog(
         myProject,
-        MessageFormat.format(UIDesignerBundle.message("message.rename.field"), oldBinding, newBinding),
+        MessageFormat.format(UIDesignerBundle.message("message.rename.field"), oldBinding, value),
         UIDesignerBundle.message("title.rename"),
         Messages.getQuestionIcon()
       );
@@ -151,7 +149,7 @@ public final class BindingProperty extends Property<RadComponent> {
       return;
     }
 
-    final RenameProcessor processor = new RenameProcessor(myProject, oldField, newBinding, true, true);
+    final RenameProcessor processor = new RenameProcessor(myProject, oldField, value, true, true);
     processor.run();
   }
 

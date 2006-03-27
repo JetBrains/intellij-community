@@ -16,12 +16,12 @@ public class IndentProperty extends AbstractIntProperty<RadComponent> {
     super(null, "Indent", 0);
   }
 
-  public Object getValue(RadComponent component) {
+  public Integer getValue(RadComponent component) {
     return component.getConstraints().getIndent();
   }
 
-  protected void setValueImpl(RadComponent component, Object value) throws Exception {
-    final int indent = ((Integer)value).intValue();
+  protected void setValueImpl(RadComponent component, Integer value) throws Exception {
+    final int indent = value.intValue();
 
     final GridConstraints constraints = component.getConstraints();
     if (constraints.getIndent() != indent) {

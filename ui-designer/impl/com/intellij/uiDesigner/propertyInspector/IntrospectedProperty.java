@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class IntrospectedProperty extends Property<RadComponent> {
+public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> {
   protected final static Object[] EMPTY_OBJECT_ARRAY=new Object[]{};
 
   /**
@@ -39,9 +39,10 @@ public abstract class IntrospectedProperty extends Property<RadComponent> {
   /**
    * <b>Do not overide this method without serious reason!</b>
    */
-  public Object getValue(final RadComponent component){
+  public V getValue(final RadComponent component){
     try {
-      return myReadMethod.invoke(component.getDelegee(), EMPTY_OBJECT_ARRAY);
+      //noinspection unchecked
+      return (V) myReadMethod.invoke(component.getDelegee(), EMPTY_OBJECT_ARRAY);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -51,7 +52,7 @@ public abstract class IntrospectedProperty extends Property<RadComponent> {
   /**
    * <b>Do not overide this method without serious reason!</b>
    */
-  protected void setValueImpl(final RadComponent component,final Object value) throws Exception{
+  protected void setValueImpl(final RadComponent component,final V value) throws Exception{
     myWriteMethod.invoke(component.getDelegee(), value);
   }
 
@@ -64,29 +65,31 @@ public abstract class IntrospectedProperty extends Property<RadComponent> {
    * that corresponds to this property. You can just append some attributes
    * here or add some subtags.
    */
-  public abstract void write(@NotNull Object value, XmlWriter writer);
+  public abstract void write(@NotNull V value, XmlWriter writer);
 
   @Override public boolean isModified(final RadComponent component) {
     return component.isMarkedAsModified(this);
   }
 
   @Override public void resetValue(RadComponent component) throws Exception {
-    final Object defaultValue = getDefaultValue(component);
+    final V defaultValue = getDefaultValue(component);
     myWriteMethod.invoke(component.getDelegee(), defaultValue);
     markTopmostModified(component, false);
   }
 
-  private Object getDefaultValue(final RadComponent component) throws Exception {
+  private V getDefaultValue(final RadComponent component) throws Exception {
     final Constructor constructor = component.getComponentClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
     constructor.setAccessible(true);
     JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
-    return myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY);
+    //noinspection unchecked
+    return (V) myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY);
   }
 
   public void importSnapshotValue(final JComponent component, final RadComponent radComponent) {
     try {
-      Object value = myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
-      Object defaultValue = getDefaultValue(radComponent);
+      //noinspection unchecked
+      V value = (V) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
+      V defaultValue = getDefaultValue(radComponent);
       if (!Comparing.equal(value, defaultValue)) {
         setValue(radComponent, value);
       }

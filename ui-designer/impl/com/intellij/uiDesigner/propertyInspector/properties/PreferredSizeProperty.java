@@ -23,7 +23,7 @@ public final class PreferredSizeProperty extends AbstractDimensionProperty<RadCo
     return constraints.myPreferredSize;
   }
 
-  protected void setValueImpl(final RadComponent component, final Object value) throws Exception{
-    component.getConstraints().myPreferredSize.setSize((Dimension)value);
+  protected void setValueImpl(final RadComponent component, final Dimension value) throws Exception{
+    component.getConstraints().myPreferredSize.setSize(value);
   }
 }

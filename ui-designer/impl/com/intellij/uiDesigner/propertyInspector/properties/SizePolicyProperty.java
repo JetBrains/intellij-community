@@ -16,16 +16,16 @@ import org.jetbrains.annotations.NotNull;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class SizePolicyProperty extends Property<RadComponent> {
+public abstract class SizePolicyProperty extends Property<RadComponent, Integer> {
   private final Property[] myChildren;
   private final SizePolicyRenderer myRenderer;
 
   public SizePolicyProperty(@NonNls final String name){
     super(null, name);
     myChildren=new Property[]{
-      new MyCanShrinkProperty(),
-      new MyCanGrowProperty(),
-      new MyWantGrowProperty()
+      new MyBooleanProperty("Can Shrink", GridConstraints.SIZEPOLICY_CAN_SHRINK),
+      new MyBooleanProperty("Can Grow", GridConstraints.SIZEPOLICY_CAN_GROW),
+      new MyBooleanProperty("Want Grow", GridConstraints.SIZEPOLICY_WANT_GROW)
     };
     myRenderer=new SizePolicyRenderer();
   }
@@ -34,13 +34,12 @@ public abstract class SizePolicyProperty extends Property<RadComponent> {
 
   protected abstract void setValueImpl(GridConstraints constraints,int policy);
 
-  public final Object getValue(final RadComponent component){
+  public final Integer getValue(final RadComponent component) {
     return getValueImpl(component.getConstraints());
   }
 
-  protected final void setValueImpl(final RadComponent component,final Object value) throws Exception{
-    final int policy=((Integer)value).intValue();
-    setValueImpl(component.getConstraints(),policy);
+  protected final void setValueImpl(final RadComponent component,final Integer value) throws Exception {
+    setValueImpl(component.getConstraints(), value.intValue());
   }
 
   @NotNull public final Property[] getChildren(){
@@ -67,30 +66,30 @@ public abstract class SizePolicyProperty extends Property<RadComponent> {
   /**
    * Subproperty for "can shrink" bit
    */
-  private abstract class MyBooleanProperty extends Property{
+  private class MyBooleanProperty extends Property<RadComponent, Boolean> {
     private final BooleanRenderer myRenderer;
     private final BooleanEditor myEditor;
+    private int myPropertyMask;
 
-    public MyBooleanProperty(@NonNls final String name){
+    public MyBooleanProperty(@NonNls final String name, final int propertyMask) {
       super(SizePolicyProperty.this, name);
+      myPropertyMask = propertyMask;
       myRenderer=new BooleanRenderer();
       myEditor=new BooleanEditor();
     }
 
-    public final Object getValue(final RadComponent component){
+    public final Boolean getValue(final RadComponent component) {
       final GridConstraints constraints=component.getConstraints();
-      return Boolean.valueOf((getValueImpl(constraints)&getPropertyMask()) != 0);
+      return (getValueImpl(constraints) & myPropertyMask) != 0;
     }
 
-    protected abstract int getPropertyMask();
-
-    protected final void setValueImpl(final RadComponent component,final Object value) throws Exception{
-      final boolean canShrink=((Boolean)value).booleanValue();
+    protected final void setValueImpl(final RadComponent component, final Boolean value) throws Exception{
+      final boolean canShrink=value.booleanValue();
       int newValue=getValueImpl(component.getConstraints());
       if(canShrink){
-        newValue|=getPropertyMask();
+        newValue|=myPropertyMask;
       }else{
-        newValue&=~getPropertyMask();
+        newValue&=~myPropertyMask;
       }
       SizePolicyProperty.this.setValueImpl(component.getConstraints(),newValue);
     }
@@ -102,45 +101,6 @@ public abstract class SizePolicyProperty extends Property<RadComponent> {
 
     public final PropertyEditor getEditor(){
       return myEditor;
-    }
-  }
-
-  /**
-   * Subproperty for "can shrink" bit
-   */
-  private final class MyCanShrinkProperty extends MyBooleanProperty{
-    public MyCanShrinkProperty(){
-      super("Can Shrink");
-    }
-
-    protected int getPropertyMask(){
-      return GridConstraints.SIZEPOLICY_CAN_SHRINK;
-    }
-  }
-
-  /**
-   * Subproperty for "can grow" bit
-   */
-  private final class MyCanGrowProperty extends MyBooleanProperty{
-    public MyCanGrowProperty(){
-      super("Can Grow");
-    }
-
-    protected int getPropertyMask(){
-      return GridConstraints.SIZEPOLICY_CAN_GROW;
-    }
-  }
-
-  /**
-   * Subproperty for "want grow" bit
-   */
-  private final class MyWantGrowProperty extends MyBooleanProperty{
-    public MyWantGrowProperty(){
-      super("Want Grow");
-    }
-
-    protected int getPropertyMask(){
-      return GridConstraints.SIZEPOLICY_WANT_GROW;
     }
   }
 }

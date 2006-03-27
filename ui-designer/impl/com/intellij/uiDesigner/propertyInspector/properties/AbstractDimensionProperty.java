@@ -19,7 +19,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class AbstractDimensionProperty<T extends RadComponent> extends Property<T> {
+public abstract class AbstractDimensionProperty<T extends RadComponent> extends Property<T, Dimension> {
   private final Property[] myChildren;
   private final DimensionRenderer myRenderer;
 
@@ -49,7 +49,7 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
     return null;
   }
 
-  public Object getValue(T component) {
+  public Dimension getValue(T component) {
     return getValueImpl(component.getConstraints());
   }
 

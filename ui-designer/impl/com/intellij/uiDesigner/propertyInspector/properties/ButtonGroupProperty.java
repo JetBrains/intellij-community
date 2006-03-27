@@ -22,7 +22,7 @@ import java.awt.event.ItemEvent;
 /**
  * @author yole
  */
-public class ButtonGroupProperty extends Property<RadComponent> {
+public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> {
   private LabelPropertyRenderer myRenderer = new LabelPropertyRenderer() {
     protected void customize(Object value) {
       RadButtonGroup group = (RadButtonGroup) value;
@@ -36,7 +36,7 @@ public class ButtonGroupProperty extends Property<RadComponent> {
     super(null, "Button Group");
   }
 
-  public Object getValue(RadComponent component) {
+  public RadButtonGroup getValue(RadComponent component) {
     final RadRootContainer rootContainer = getRootContainer(component);
     return rootContainer == null ? null : rootContainer.findGroupForComponent(component);
   }
@@ -49,10 +49,10 @@ public class ButtonGroupProperty extends Property<RadComponent> {
     return (RadRootContainer) container;
   }
 
-  protected void setValueImpl(RadComponent component, Object value) throws Exception {
+  protected void setValueImpl(RadComponent component, RadButtonGroup value) throws Exception {
     final RadRootContainer radRootContainer = getRootContainer(component);
     assert radRootContainer != null;
-    radRootContainer.setGroupForComponent(component, (RadButtonGroup) value);
+    radRootContainer.setGroupForComponent(component, value);
   }
 
   @NotNull public PropertyRenderer getRenderer() {

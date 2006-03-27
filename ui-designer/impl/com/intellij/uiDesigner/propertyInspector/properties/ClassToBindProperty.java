@@ -34,7 +34,7 @@ import java.awt.event.ActionListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ClassToBindProperty extends Property<RadRootContainer> {
+public final class ClassToBindProperty extends Property<RadRootContainer, String> {
   private final ClassToBindRenderer myRenderer;
   private final MyEditor myEditor;
 
@@ -53,12 +53,12 @@ public final class ClassToBindProperty extends Property<RadRootContainer> {
     return myRenderer;
   }
 
-  public Object getValue(final RadRootContainer component){
+  public String getValue(final RadRootContainer component) {
     return component.getClassToBind();
   }
 
-  protected void setValueImpl(final RadRootContainer component, final Object value) throws Exception{
-    String className = (String)value;
+  protected void setValueImpl(final RadRootContainer component, final String value) throws Exception {
+    String className = value;
 
     if (className != null && className.length() == 0) {
       className = null;
@@ -145,7 +145,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer> {
           new TreeClassChooser.ClassFilter() { // we need show classes from the sources roots only
             public boolean isAccepted(final PsiClass aClass) {
               final VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-              return fileIndex.isInSource(vFile);
+              return vFile != null && fileIndex.isInSource(vFile);
             }
           },
           aClass

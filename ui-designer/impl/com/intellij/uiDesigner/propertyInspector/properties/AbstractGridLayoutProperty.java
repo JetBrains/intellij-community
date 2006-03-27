@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public abstract class AbstractGridLayoutProperty extends Property<RadContainer> {
+public abstract class AbstractGridLayoutProperty extends Property<RadContainer, Boolean> {
   protected final BooleanRenderer myRenderer = new BooleanRenderer();
   protected final BooleanEditor myEditor = new BooleanEditor();
 
@@ -26,7 +26,7 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer> 
     super(parent, name);
   }
 
-  public Object getValue(final RadContainer component) {
+  public Boolean getValue(final RadContainer component) {
     final AbstractLayout layoutManager=(AbstractLayout) component.getLayout();
     if (!(layoutManager instanceof GridLayoutManager)) {
       throw new IllegalArgumentException("grid layout expected: "+layoutManager);
@@ -35,14 +35,13 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer> 
     return getGridLayoutPropertyValue(gridLayoutManager);
   }
 
-  protected void setValueImpl(final RadContainer component,final Object value) throws Exception {
+  protected void setValueImpl(final RadContainer component,final Boolean value) throws Exception {
     final AbstractLayout layoutManager=(AbstractLayout) component.getLayout();
     if (!(layoutManager instanceof GridLayoutManager)) {
       throw new IllegalArgumentException("grid layout expected: "+layoutManager);
     }
     final GridLayoutManager gridLayoutManager = (GridLayoutManager)layoutManager;
-    final boolean booleanValue = ((Boolean)value).booleanValue();
-    setGridLayoutPropertyValue(gridLayoutManager, booleanValue);
+    setGridLayoutPropertyValue(gridLayoutManager, value.booleanValue());
   }
 
   protected abstract boolean getGridLayoutPropertyValue(GridLayoutManager gridLayoutManager);

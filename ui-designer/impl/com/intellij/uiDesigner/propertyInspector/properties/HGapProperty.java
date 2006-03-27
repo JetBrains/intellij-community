@@ -22,7 +22,7 @@ public final class HGapProperty extends AbstractIntProperty<RadContainer> {
     super(null, "Horizontal Gap", -1);
   }
 
-  public Object getValue(final RadContainer component){
+  public Integer getValue(final RadContainer component){
     if (component.getLayout() instanceof BorderLayout) {
       BorderLayout layout = (BorderLayout) component.getLayout();
       return layout.getHgap();
@@ -39,22 +39,22 @@ public final class HGapProperty extends AbstractIntProperty<RadContainer> {
     return layoutManager.getHGap();
   }
 
-  protected void setValueImpl(final RadContainer component,final Object value) throws Exception{
+  protected void setValueImpl(final RadContainer component,final Integer value) throws Exception{
     if (component.getLayout() instanceof BorderLayout) {
       BorderLayout layout = (BorderLayout) component.getLayout();
-      layout.setHgap(((Integer) value).intValue());
+      layout.setHgap(value.intValue());
     }
     else if (component.getLayout() instanceof FlowLayout) {
       FlowLayout layout = (FlowLayout) component.getLayout();
-      layout.setHgap(((Integer) value).intValue());
+      layout.setHgap(value.intValue());
     }
     else if (component.getLayout() instanceof CardLayout) {
       CardLayout layout = (CardLayout) component.getLayout();
-      layout.setHgap(((Integer) value).intValue());
+      layout.setHgap(value.intValue());
     }
     else {
       final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
-      layoutManager.setHGap(((Integer)value).intValue());
+      layoutManager.setHGap(value.intValue());
     }
   }
 }

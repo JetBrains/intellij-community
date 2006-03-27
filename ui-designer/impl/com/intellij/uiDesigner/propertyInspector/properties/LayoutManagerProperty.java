@@ -17,7 +17,7 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public class LayoutManagerProperty extends Property<RadContainer> {
+public class LayoutManagerProperty extends Property<RadContainer, String> {
   private PropertyRenderer myRenderer = new LabelPropertyRenderer() {
     protected void customize(Object value) {
       setText((String) value);
@@ -41,7 +41,7 @@ public class LayoutManagerProperty extends Property<RadContainer> {
     super(null, "Layout Manager");
   }
 
-  public Object getValue(RadContainer component) {
+  public String getValue(RadContainer component) {
     RadContainer container = component;
     while(container != null) {
       final RadLayoutManager layoutManager = container.getLayoutManager();
@@ -53,13 +53,13 @@ public class LayoutManagerProperty extends Property<RadContainer> {
     return UIFormXmlConstants.LAYOUT_INTELLIJ;
   }
 
-  protected void setValueImpl(RadContainer component, Object value) throws Exception {
+  protected void setValueImpl(RadContainer component, String value) throws Exception {
     final RadLayoutManager oldLayout = component.getLayoutManager();
     if (oldLayout != null && Comparing.equal(oldLayout.getName(), value)) {
       return;
     }
 
-    RadLayoutManager newLayoutManager = RadLayoutManager.createLayoutManager((String) value);
+    RadLayoutManager newLayoutManager = RadLayoutManager.createLayoutManager(value);
     newLayoutManager.changeContainerLayout(component, component.getLayout());
   }
 
