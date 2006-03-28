@@ -20,6 +20,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -120,8 +121,12 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
     catch (ProcessCanceledException e) {
       WindowManager.getInstance().getStatusBar(myProject).setInfo(IdeBundle.message("jar.build.cancelled"));
     }
-    catch (IOException e) {
-      Messages.showErrorDialog(myProject, e.toString(), IdeBundle.message("jar.build.error.title"));
+    catch (final IOException e) {
+      ApplicationManager.getApplication().invokeLater(new Runnable(){
+        public void run() {
+          Messages.showErrorDialog(myProject, e.toString(), IdeBundle.message("jar.build.error.title"));
+        }
+      });
     }
   }
 
@@ -174,9 +179,13 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
         FileUtil.rename(tempFile, jarFile);
       }
       catch (IOException e) {
-        String message = IdeBundle.message("jar.build.cannot.overwrite.error", FileUtil.toSystemDependentName(jarFile.getPath()),
-                                           FileUtil.toSystemDependentName(tempFile.getPath()));
-        Messages.showErrorDialog(module.getProject(), message, IdeBundle.message("jar.build.error.title"));
+        ApplicationManager.getApplication().invokeLater(new Runnable(){
+          public void run() {
+            String message = IdeBundle.message("jar.build.cannot.overwrite.error", FileUtil.toSystemDependentName(jarFile.getPath()),
+                                               FileUtil.toSystemDependentName(tempFile.getPath()));
+            Messages.showErrorDialog(module.getProject(), message, IdeBundle.message("jar.build.error.title"));
+          }
+        });
       }
     }
   }
