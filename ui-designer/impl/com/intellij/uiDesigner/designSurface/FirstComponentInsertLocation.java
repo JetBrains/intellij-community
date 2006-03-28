@@ -125,7 +125,7 @@ public class FirstComponentInsertLocation extends GridDropLocation {
 
   private int initialWidth(ComponentDragObject dragObject, int defaultSize) {
     Dimension initialSize = dragObject.getInitialSize(getContainer().getDelegee());
-    if (initialSize.width > 0) {
+    if (initialSize.width > 0 && initialSize.width < defaultSize) {
       return initialSize.width;
     }
     return defaultSize;
@@ -133,7 +133,7 @@ public class FirstComponentInsertLocation extends GridDropLocation {
 
   private int initialHeight(ComponentDragObject dragObject, int defaultSize) {
     Dimension initialSize = dragObject.getInitialSize(getContainer().getDelegee());
-    if (initialSize.height > 0) {
+    if (initialSize.height > 0 && initialSize.height < defaultSize) {
       return initialSize.height;
     }
     return defaultSize;
