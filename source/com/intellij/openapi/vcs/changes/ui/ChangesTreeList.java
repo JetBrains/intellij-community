@@ -51,7 +51,7 @@ public class ChangesTreeList extends JPanel {
     setLayout(myCards);
 
     final int checkboxWidth = new JCheckBox().getPreferredSize().width;
-    myTree = new Tree() {
+    myTree = new Tree(new ChangesBrowserNode("root")) {
       public Dimension getPreferredScrollableViewportSize() {
         Dimension size = super.getPreferredScrollableViewportSize();
         size = new Dimension(size.width + 10, size.height);
