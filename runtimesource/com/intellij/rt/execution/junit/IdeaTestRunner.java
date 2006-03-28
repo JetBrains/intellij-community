@@ -10,7 +10,7 @@ import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
 
 public class IdeaTestRunner extends TestRunner {
-  public boolean IS_JUNIT4 = false;
+  public JUnit4API JUNIT4_API = null;
   private TestListener myTestsListener;
   private OutputObjectRegistryImpl myRegistry;
 
@@ -50,8 +50,8 @@ public class IdeaTestRunner extends TestRunner {
 
   public void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr) {
     setPrinter(new TimeSender());
-    myRegistry = new OutputObjectRegistryImpl(segmentedOut, segmentedErr, IS_JUNIT4);
-    myTestsListener = new TestResultsSender(myRegistry, segmentedErr, IS_JUNIT4);
+    myRegistry = new OutputObjectRegistryImpl(segmentedOut, segmentedErr, JUNIT4_API);
+    myTestsListener = new TestResultsSender(myRegistry, segmentedErr, JUNIT4_API);
   }
 
   protected TestResult createTestResult() {

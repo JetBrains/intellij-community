@@ -1,8 +1,5 @@
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.junit4.JUnit4Util;
-import com.intellij.rt.junit4.Junit4ClassSuite;
-import com.intellij.rt.junit4.Junit4TestMethodAdapter;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -55,7 +52,7 @@ public class TestRunnerUtil {
           classNames[i] = (String)vector.elementAt(i);
         }
 
-        return new TestAllInPackage2(packageName, classNames, runner.IS_JUNIT4);
+        return new TestAllInPackage2(packageName, classNames, runner.JUNIT4_API);
       }
       catch (Exception e) {
         runner.runFailed(MessageFormat.format(ourBundle.getString("junit.runner.error"), new Object[] {e.toString()}));
@@ -89,14 +86,9 @@ public class TestRunnerUtil {
 
     if (methodName != null) {
       runner.clearStatus();
-      try {
-        Method method = testClass.getMethod(methodName, new Class[0]);
-        if (method != null && runner.IS_JUNIT4 && JUnit4Util.isTestMethod(method)) {
-          return new Junit4TestMethodAdapter(testClass, methodName);
-        }
-      }
-      catch (NoSuchMethodException e) {
-        // ignore
+      if (runner.JUNIT4_API != null) {
+        Test test = runner.JUNIT4_API.createTestMethodSuite(testClass, methodName);
+        if (test != null) return test;
       }
       try {
         Constructor constructor = testClass.getConstructor(new Class[]{String.class});
@@ -129,11 +121,11 @@ public class TestRunnerUtil {
       }
     }
 
-    if (runner.IS_JUNIT4) {
-      Junit4ClassSuite junit4ClassSuite = new Junit4ClassSuite(testClass);
-      if (junit4ClassSuite.testCount() != 0) {
+    if (runner.JUNIT4_API != null) {
+      Test test = runner.JUNIT4_API.createClassSuite(testClass);
+      if (test != null) {
         runner.clearStatus();
-        return junit4ClassSuite;
+        return test;
       }
     }
 
