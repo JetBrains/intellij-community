@@ -111,7 +111,9 @@ public class JUnitStarter {
       System.setOut(new PrintStream(out));
       System.setErr(new PrintStream(err));
       IdeaTestRunner testRunner = (IdeaTestRunner) getAgentClass().newInstance();
-      testRunner.IS_JUNIT4 = isJUnit4;
+      if (isJUnit4) {
+        testRunner.JUNIT4_API = (JUnit4API)Class.forName("com.intellij.rt.junit4.JUnit4Util").newInstance();
+      }
       testRunner.setStreams(out, err);
       result = IdeaTestRunner.startRunnerWithArgs(testRunner, args);
     } catch (Exception e) {

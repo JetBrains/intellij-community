@@ -4,29 +4,27 @@ import com.intellij.rt.execution.junit.segments.OutputObjectRegistryImpl;
 import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
-import com.intellij.rt.junit4.Junit4TestMethodAdapter;
-import com.intellij.rt.junit4.JUnit4Util;
 import junit.framework.*;
 
 public class TestResultsSender implements TestListener, TestSkippingListener {
   private OutputObjectRegistryImpl myRegistry;
   private PacketProcessor myErr;
-  private final boolean isJunit4;
+  private final JUnit4API JUnit4API;
   private TestMeter myCurrentTestMeter;
   private Test myCurrentTest;
 
-  public TestResultsSender(OutputObjectRegistryImpl packetFactory, PacketProcessor segmentedErr, final boolean isJunit4) {
+  public TestResultsSender(OutputObjectRegistryImpl packetFactory, PacketProcessor segmentedErr, final JUnit4API isJunit4) {
     myRegistry = packetFactory;
     myErr = segmentedErr;
-    this.isJunit4 = isJunit4;
+    this.JUnit4API = isJunit4;
   }
 
   public synchronized void addError(Test test, Throwable throwable) {
-    if (isJunit4 && JUnit4Util.isAssertion(throwable)) {
+    if (JUnit4API != null && JUnit4API.isAssertion(throwable)) {
       // junit4 makes no distinction between errors and failures
       doAddFailure(test, (Error)throwable);
     }
-    else if (throwable == Junit4TestMethodAdapter.IGNORED) {
+    else if (JUnit4API != null && JUnit4API.isTestIgnored(throwable)) {
       startTest(test);
       stopMeter(test);
       prepareIgnoredPacket(test, PoolOfTestStates.IGNORED_INDEX).send();

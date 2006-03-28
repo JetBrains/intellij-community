@@ -1,7 +1,7 @@
 package com.intellij.rt.execution.junit.segments;
 
 import com.intellij.rt.execution.junit.TestAllInPackage2;
-import com.intellij.rt.junit4.JUnit4Util;
+import com.intellij.rt.execution.junit.JUnit4API;
 import junit.extensions.TestDecorator;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -13,15 +13,15 @@ public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFac
   private Hashtable myKnownKeys = new Hashtable();
   private int myLastIndex = 0;
   private PacketProcessor myMainTransport;
-  private final boolean isJUnit4;
+  private final JUnit4API JUnit4API;
   private PacketProcessor myAuxilaryTransport;
 
-  public OutputObjectRegistryImpl(PacketProcessor transport, final boolean isJUnit4) {
+  public OutputObjectRegistryImpl(PacketProcessor transport, final JUnit4API isJUnit4) {
     myMainTransport = transport;
-    this.isJUnit4 = isJUnit4;
+    this.JUnit4API = isJUnit4;
   }
 
-  public OutputObjectRegistryImpl(PacketProcessor mainTransport, PacketProcessor auxilaryTransport, boolean isJUnit4) {
+  public OutputObjectRegistryImpl(PacketProcessor mainTransport, PacketProcessor auxilaryTransport, JUnit4API isJUnit4) {
     this(mainTransport, isJUnit4);
     myAuxilaryTransport = auxilaryTransport;
   }
@@ -56,8 +56,8 @@ public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFac
   }
 
   private void addStringRepresentation(Test test, Packet packet) {
-    if (isJUnit4 && JUnit4Util.isJUnit4TestMethodAdapter(test)) {
-      addTestMethod(packet, ((TestCase)test).getName(), JUnit4Util.getJUnit4MethodAdapterClassName(test));
+    if (JUnit4API != null && JUnit4API.isJUnit4TestMethodAdapter(test)) {
+      addTestMethod(packet, ((TestCase)test).getName(), JUnit4API.getJUnit4MethodAdapterClassName(test));
     }
     else if (test instanceof TestCase) {
       addTestMethod(packet, ((TestCase)test).getName(), test.getClass().getName());
