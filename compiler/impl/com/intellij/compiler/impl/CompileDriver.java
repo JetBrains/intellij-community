@@ -583,6 +583,9 @@ public class CompileDriver {
       catch(ProcessCanceledException e) {
         throw e;
       }
+      catch(ExitException e) {
+        throw e;
+      }
       catch (Exception e) {
         context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("compiler.error.exception", e.getMessage()), null, -1, -1);
         LOG.error(e);

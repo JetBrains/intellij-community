@@ -128,11 +128,7 @@ public abstract class AbstractWizard extends DialogWrapper {
             doOKAction();
           }
           catch (final CommitStepException exc) {
-            exc.printStackTrace();
-            Messages.showErrorDialog(
-              myContentPanel,
-              exc.getMessage()
-            );
+            Messages.showErrorDialog(myContentPanel, exc.getMessage());
           }
         }
       }
