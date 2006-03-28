@@ -19,12 +19,21 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
+
+    /** @noinspection PublicField*/
+    public boolean ignoreLocalVariables = false;
+    /** @noinspection PublicField*/
+    public boolean ignorePrivateMethodsAndFields = false;
 
     public String getID(){
         return "CollectionDeclaredAsConcreteClass";
@@ -45,18 +54,55 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
         final String interfaceName =
                 CollectionUtils.getInterfaceForClass(type);
         return InspectionGadgetsBundle.message(
-                "collection.declarated.by.class.problem.descriptor",
+                "collection.declared.by.class.problem.descriptor",
                 interfaceName);
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "collection.declared.by.class.ignore.locals.option"),
+                "ignoreLocalVariables");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "collection.declared.by.class.ignore.private.members.option"),
+                "ignorePrivateMethodsAndFields");
+        return optionsPanel;
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new DeclareCollectionAsInterfaceVisitor();
     }
 
-    private static class DeclareCollectionAsInterfaceVisitor
+    private class DeclareCollectionAsInterfaceVisitor
             extends BaseInspectionVisitor {
 
         public void visitVariable(@NotNull PsiVariable variable) {
+            if (ignoreLocalVariables && variable instanceof PsiLocalVariable) {
+                return;
+            }
+            if (ignorePrivateMethodsAndFields) {
+                if (variable instanceof PsiField) {
+                    if (variable.hasModifierProperty(PsiModifier.PRIVATE)) {
+                        return;
+                    }
+                }
+            }
+            if (variable instanceof PsiParameter) {
+                final PsiParameter parameter = (PsiParameter)variable;
+                final PsiElement scope = parameter.getDeclarationScope();
+                if (scope instanceof PsiMethod) {
+                    if (ignorePrivateMethodsAndFields) {
+                        final PsiMethod method = (PsiMethod)scope;
+                        if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                            return;
+                        }
+                    }
+                } else if (ignoreLocalVariables) {
+                    return;
+                }
+            }
             final PsiType type = variable.getType();
             if (!CollectionUtils.isCollectionClass(type)) {
                 return;
@@ -70,6 +116,10 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
 
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
+            if (ignorePrivateMethodsAndFields &&
+                    method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                return;
+            }
             final PsiType type = method.getReturnType();
             if (!CollectionUtils.isCollectionClass(type)) {
                 return;
