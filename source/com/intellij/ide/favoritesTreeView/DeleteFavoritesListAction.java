@@ -14,8 +14,7 @@ import com.intellij.ide.IdeBundle;
  */
 public class DeleteFavoritesListAction extends AnAction {
   public DeleteFavoritesListAction() {
-    super(IdeBundle.message("action.delete.favorites.list",""),
-          IdeBundle.message("action.delete.favorites.list",""), IconLoader.getIcon("/general/remove.png"));
+    super(IdeBundle.message("action.delete.favorites.list",""));
   }
 
   public void actionPerformed(AnActionEvent e) {

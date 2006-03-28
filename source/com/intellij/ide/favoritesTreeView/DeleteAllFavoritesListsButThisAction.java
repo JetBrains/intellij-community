@@ -14,8 +14,7 @@ import com.intellij.ide.IdeBundle;
  */
 public class DeleteAllFavoritesListsButThisAction extends AnAction {
   public DeleteAllFavoritesListsButThisAction() {
-    super(IdeBundle.message("action.delete.all.favorites.lists.but.this",""),
-          IdeBundle.message("action.delete.all.favorites.lists.but.this",""), IconLoader.getIcon("/general/remove.png"));
+    super(IdeBundle.message("action.delete.all.favorites.lists.but.this",""));
   }
 
   public void actionPerformed(AnActionEvent e) {

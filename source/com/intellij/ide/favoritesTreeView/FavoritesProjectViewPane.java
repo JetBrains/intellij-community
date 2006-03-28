@@ -138,10 +138,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   }
 
   public void addToolbarActions(final DefaultActionGroup group) {
-    group.add(ActionManager.getInstance().getAction(IdeActions.RENAME_FAVORITES_LIST));
-    group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_FROM_FAVORITES));
-    group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_FAVORITES_LIST));
-    group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_ALL_FAVORITES_LISTS_BUT_THIS));
+    group.add(ActionManager.getInstance().getAction(IdeActions.RENAME_FAVORITES_LIST)); 
   }
 
   //project component related
