@@ -58,7 +58,7 @@ public class EmptyStatementBodyInspection extends StatementInspection {
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
-                        "statement.with.empty.body.include.option.label"),
+                        "statement.with.empty.body.include.option"),
                 this, "m_reportEmptyBlocks");
     }
 

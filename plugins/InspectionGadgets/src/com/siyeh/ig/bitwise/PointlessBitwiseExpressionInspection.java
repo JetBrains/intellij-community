@@ -75,7 +75,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
-                        "pointless.bitwise.expression.ignore.option.label"),
+                        "pointless.bitwise.expression.ignore.option"),
                 this, "m_ignoreExpressionsContainingConstants");
     }
 

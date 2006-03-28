@@ -65,6 +65,7 @@ public class MagicNumberInspection extends ExpressionInspection {
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
+    @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "magic.number.problem.descriptor");
@@ -73,7 +74,7 @@ public class MagicNumberInspection extends ExpressionInspection {
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
-                        "magic.number.ignore.option.label"),
+                        "magic.number.ignore.option"),
                 this, "m_ignoreInHashCode");
     }
 

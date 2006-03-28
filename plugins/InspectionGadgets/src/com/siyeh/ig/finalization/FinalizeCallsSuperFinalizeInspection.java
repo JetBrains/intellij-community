@@ -56,7 +56,7 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
 
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "finalize.doesnt.call.super.ignore.option.label"),
+                "finalize.doesnt.call.super.ignore.option"),
                 this, "m_ignoreForObjectSubclasses");
     }
 
@@ -65,6 +65,7 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
     }
 
     private class NoExplicitFinalizeCallsVisitor extends BaseInspectionVisitor{
+
         public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
             final String methodName = method.getName();
