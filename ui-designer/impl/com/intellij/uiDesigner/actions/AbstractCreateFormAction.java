@@ -19,6 +19,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -54,7 +55,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase {
     }
   }
 
-  protected String createFormBody(final String fullQualifiedClassName, @NonNls final String formName) throws IncorrectOperationException {
+  protected String createFormBody(@Nullable final String fullQualifiedClassName, @NonNls final String formName) throws IncorrectOperationException {
 
     final InputStream inputStream = getClass().getResourceAsStream(formName);
 
@@ -70,7 +71,12 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase {
 
     String s = buffer.toString();
 
-    s = StringUtil.replace(s, "$CLASS$", fullQualifiedClassName);
+    if (fullQualifiedClassName != null) {
+      s = StringUtil.replace(s, "$CLASS$", fullQualifiedClassName);
+    }
+    else {
+      s = StringUtil.replace(s, "bind-to-class=\"$CLASS$\"", "");
+    }
 
     return s;
   }
