@@ -391,7 +391,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myActionGroupPanel.setLayout(new BorderLayout());
     myActionGroupPanel.add(toolbarComponent, BorderLayout.NORTH);
 
-    splitterProportions.restoreSplitterProportions(myPanel);
     myStructureViewPanel.setVisible(isShowStructure());
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -423,6 +422,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     installLabelFocusListener();
 
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
+    SwingUtilities.invokeLater(new Runnable(){
+      public void run() {
+        splitterProportions.restoreSplitterProportions(myPanel);
+      }
+    });
+
     ModuleManager.getInstance(myProject).addModuleListener(myModulesListener);
     isInitialized = true;
     doAddUninitializedPanes();
@@ -908,7 +913,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         }
         return psiElement != null && psiElement.isValid() ? psiElement : null;
       }
-      if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+      if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
         if (currentProjectViewPane == null) {
           return null;
         }
@@ -924,19 +929,19 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
         return null;
       }
-      if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+      if (DataConstants.CUT_PROVIDER.equals(dataId)) {
         return myCopyPasteDelegator.getCutProvider();
       }
-      if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+      if (DataConstants.COPY_PROVIDER.equals(dataId)) {
         return myCopyPasteDelegator.getCopyProvider();
       }
-      if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+      if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
         return myCopyPasteDelegator.getPasteProvider();
       }
       if (DataConstants.IDE_VIEW.equals(dataId)) {
         return myIdeView;
       }
-      if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+      if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
         return getSelectedNodeElement() instanceof Module ? myDeleteModuleProvider : myDeletePSIElementProvider;
       }
       if (DataConstants.HELP_ID.equals(dataId)) {

@@ -26,7 +26,7 @@ public class SplitterProportionsData implements JDOMExternalizable{
 
   private void doSaveSplitterProportions(Component root) {
     if (root instanceof Splitter) {
-      Float prop = new Float(((Splitter)root).getProportion());
+      Float prop = Float.valueOf(((Splitter)root).getProportion());
       proportions.add(prop);
     }
     if (root instanceof Container) {
