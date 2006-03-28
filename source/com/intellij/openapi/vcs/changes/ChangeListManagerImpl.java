@@ -287,6 +287,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return ok;
   }
 
+  private static class DisposedException extends RuntimeException {}
+
   private void scheduleUpdate(int millis) {
     ourUpdateAlarm.cancelAllRequests();
     ourUpdateAlarm.addRequest(new Runnable() {
@@ -335,7 +337,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                 if (changeProvider != null) {
                   changeProvider.getChanges(scope, new ChangelistBuilder() {
                     public void processChange(final Change change) {
-                      if (myDisposed) return;
+                      if (myDisposed) throw new DisposedException();
+
                       ApplicationManager.getApplication().runReadAction(new Runnable() {
                         public void run() {
                           if (isUnder(change, scope)) {
@@ -358,6 +361,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                     }
 
                     public void processUnversionedFile(VirtualFile file) {
+                      if (myDisposed) throw new DisposedException();
                       if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                         unversionedHolder.addFile(file);
                         scheduleRefresh();
@@ -365,6 +369,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                     }
 
                     public void processLocallyDeletedFile(File file) {
+                      if (myDisposed) throw new DisposedException();
                       if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                         deletedHolder.addFile(file);
                         scheduleRefresh();
@@ -373,6 +378,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
 
                     public void processModifiedWithoutEditing(VirtualFile file) {
+                      if (myDisposed) throw new DisposedException();
                       //TODO:
                     }
                   }, null); // TODO: make real indicator
@@ -380,10 +386,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               }
             }
             finally {
-              synchronized (myChangeLists) {
-                for (ChangeList list : myChangeLists) {
-                  if (list.doneProcessingChanges()) {
-                    myListeners.getMulticaster().changeListChanged(list);
+              if (myDisposed) {
+                synchronized (myChangeLists) {
+                  for (ChangeList list : myChangeLists) {
+                    if (list.doneProcessingChanges()) {
+                      myListeners.getMulticaster().changeListChanged(list);
+                    }
                   }
                 }
               }
@@ -393,6 +401,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
             myDeletedFilesHolder = deletedHolder;
             scheduleRefresh();
           }
+        }
+        catch (DisposedException e) {
+          // OK, we're finishing all the stuff now.
         }
         finally {
           updateProgressText("");
