@@ -9,8 +9,8 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class MoveSelectionToLeftAction extends AbstractMoveSelectionAction {
-  public MoveSelectionToLeftAction(final GuiEditor editor, boolean extend) {
-    super(editor, extend);
+  public MoveSelectionToLeftAction(final GuiEditor editor, boolean extend, final boolean moveToLast) {
+    super(editor, extend, moveToLast);
   }
 
   protected int calcDistance(final Point source, final Point point) {

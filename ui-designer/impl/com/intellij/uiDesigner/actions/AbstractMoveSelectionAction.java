@@ -26,10 +26,12 @@ abstract class AbstractMoveSelectionAction extends AnAction{
 
   private final GuiEditor myEditor;
   private final boolean myExtend;
+  private final boolean myMoveToLast;
 
-  public AbstractMoveSelectionAction(@NotNull final GuiEditor editor, boolean extend) {
+  public AbstractMoveSelectionAction(@NotNull final GuiEditor editor, boolean extend, final boolean moveToLast) {
     myEditor = editor;
     myExtend = extend;
+    myMoveToLast = moveToLast;
   }
 
   public final void actionPerformed(final AnActionEvent e) {
@@ -41,7 +43,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
     }
     final RadComponent selectedComponent = selectedComponents.get(0);
 
-    if (moveSelectionByGrid(selectedComponent)) {
+    if (moveSelectionByGrid(selectedComponent) || myMoveToLast) {
       return;
     }
 
@@ -160,19 +162,37 @@ abstract class AbstractMoveSelectionAction extends AnAction{
     int row = selectedComponent.getConstraints().getRow();
     int column = selectedComponent.getConstraints().getColumn();
 
+    RadComponent lastComponent = null;
     do {
       row += getRowMoveDelta();
       column += getColumnMoveDelta();
       if (row < 0 || row >= grid.getRowCount() || column < 0 || column >= grid.getColumnCount()) {
+        if (myMoveToLast) {
+          break;
+        }
         return false;
       }
 
       final RadComponent component = parent.getComponentAtGrid(row, column);
       if (component != null && component != selectedComponent) {
-        selectOrExtend(component);
-        return true;
+        if (myMoveToLast) {
+          if (myExtend) {
+            GuiEditorUtil.selectComponent(component);
+          }
+          lastComponent = component;
+        }
+        else {
+          selectOrExtend(component);
+          return true;
+        }
       }
     } while(true);
+
+    if (lastComponent != null) {
+      selectOrExtend(lastComponent);
+      return true;
+    }
+    return false;
   }
 
   protected abstract int calcDistance(Point source, Point point);

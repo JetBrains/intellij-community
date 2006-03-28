@@ -21,15 +21,25 @@ final class GlassLayer extends JComponent implements DataProvider{
     myEditor = editor;
     enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
-    registerKeyboardAction(new MoveSelectionToRightAction(myEditor, false), IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
-    registerKeyboardAction(new MoveSelectionToLeftAction(myEditor, false), IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT);
-    registerKeyboardAction(new MoveSelectionToUpAction(myEditor, false), IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
-    registerKeyboardAction(new MoveSelectionToDownAction(myEditor, false), IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+    registerKeyboardAction(new MoveSelectionToRightAction(myEditor, false, false), IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    registerKeyboardAction(new MoveSelectionToLeftAction(myEditor, false, false), IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT);
+    registerKeyboardAction(new MoveSelectionToUpAction(myEditor, false, false), IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+    registerKeyboardAction(new MoveSelectionToDownAction(myEditor, false, false), IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
 
-    registerKeyboardAction(new MoveSelectionToRightAction(myEditor, true), "EditorRightWithSelection");
-    registerKeyboardAction(new MoveSelectionToLeftAction(myEditor, true), "EditorLeftWithSelection");
-    registerKeyboardAction(new MoveSelectionToUpAction(myEditor, true), "EditorUpWithSelection");
-    registerKeyboardAction(new MoveSelectionToDownAction(myEditor, true), "EditorDownWithSelection");
+    registerKeyboardAction(new MoveSelectionToRightAction(myEditor, true, false), "EditorRightWithSelection");
+    registerKeyboardAction(new MoveSelectionToLeftAction(myEditor, true, false), "EditorLeftWithSelection");
+    registerKeyboardAction(new MoveSelectionToUpAction(myEditor, true, false), "EditorUpWithSelection");
+    registerKeyboardAction(new MoveSelectionToDownAction(myEditor, true, false), "EditorDownWithSelection");
+
+    registerKeyboardAction(new MoveSelectionToRightAction(myEditor, false, true), "EditorLineEnd");
+    registerKeyboardAction(new MoveSelectionToLeftAction(myEditor, false, true), "EditorLineStart");
+    registerKeyboardAction(new MoveSelectionToUpAction(myEditor, false, true), "EditorPageUp");
+    registerKeyboardAction(new MoveSelectionToDownAction(myEditor, false, true), "EditorPageDown");
+
+    registerKeyboardAction(new MoveSelectionToRightAction(myEditor, true, true), "EditorLineEndWithSelection");
+    registerKeyboardAction(new MoveSelectionToLeftAction(myEditor, true, true), "EditorLineStartWithSelection");
+    registerKeyboardAction(new MoveSelectionToUpAction(myEditor, true, true), "EditorPageUpWithSelection");
+    registerKeyboardAction(new MoveSelectionToDownAction(myEditor, true, true), "EditorPageDownWithSelection");
 
     // F2 should start inplace editing
     final StartInplaceEditingAction startInplaceEditingAction = new StartInplaceEditingAction(editor);
