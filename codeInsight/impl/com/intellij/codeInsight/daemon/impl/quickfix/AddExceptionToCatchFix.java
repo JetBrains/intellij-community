@@ -42,19 +42,10 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
 
     try {
       if (tryStatement.getFinallyBlock() == null && tryStatement.getCatchBlocks().length == 0) {
-        PsiCodeBlock tryBlock = (PsiCodeBlock) tryStatement.getTryBlock().copy();
-
-        PsiElementFactory factory = tryBlock.getManager().getElementFactory();
-        PsiTryStatement newTryStatement = (PsiTryStatement) factory.createStatementFromText("try {} catch (Exception e){}", null);
-        newTryStatement.getTryBlock().replace(tryBlock);
         for (PsiClassType unhandledException : unhandledExceptions) {
-          addCatchStatement(newTryStatement, unhandledException, file);
+          addCatchStatement(tryStatement, unhandledException, file);
         }
-        newTryStatement.getCatchSections()[0].delete();
-        CodeStyleManager codeStyleManager = tryStatement.getManager().getCodeStyleManager();
-
-        newTryStatement = (PsiTryStatement) tryStatement.replace(codeStyleManager.reformat(newTryStatement));
-        catchBlockToSelect = newTryStatement.getCatchBlocks()[0];
+        catchBlockToSelect = tryStatement.getCatchBlocks()[0];
       }
       else {
         for (int i = 0; i < unhandledExceptions.length; i++) {
