@@ -121,7 +121,7 @@
 
     <group id="JavaeeMigrationGroup">
       <action id="ApplyJavaeeStyle" class="com.intellij.javaee.module.view.ApplyJavaeeStyleAction"/>
-      <action id="GeneratePersistenceUnit" class="com.intellij.javaee.persistence.view.GeneratePersistenceUnitAction"/>
+      <group id="GeneratePersistenceMapping" class="com.intellij.javaee.persistence.view.GeneratePersistenceMappingActionGroup" popup="true"/>
     </group>
 
     <group id="J2EEGenerateGroup">

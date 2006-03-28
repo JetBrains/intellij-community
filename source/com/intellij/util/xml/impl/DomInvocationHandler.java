@@ -532,8 +532,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
         for (DomInvocationHandler handler : fixedChildren) {
           handler.detach(invalidate);
         }
-        for (CollectionElementInvocationHandler handler : getCollectionChildren()) {
-          handler.detach(true);
+        if (myXmlTag != null && myXmlTag.isValid()) {
+          for (CollectionElementInvocationHandler handler : getCollectionChildren()) {
+            handler.detach(true);
+          }
         }
       }
 
