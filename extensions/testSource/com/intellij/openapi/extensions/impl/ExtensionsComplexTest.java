@@ -9,9 +9,9 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import junit.framework.TestCase;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
-import java.util.Iterator;
 
 /**
  * @author Alexander Kireyev
@@ -58,12 +58,6 @@ public class ExtensionsComplexTest extends TestCase {
     "    <extension point=\"the.test.plugin.extensionPoint\" implementation=\"com.intellij.openapi.extensions.impl.NonCreatableClass\" />\n" +
     "  </extensions>";
 
-  private static final String EXTENSIONS_4_AREA =
-    "  <extensions xmlns=\"the.test.plugin\">\n" +
-    "    <extensionPoint4area area=\"area\"/>\n" +
-    "    <dependentTwo area=\"area\"/>\n" +
-    "  </extensions>";
-
   private static final String EXTENSIONS_4_CHILD_AREA =
     "  <extensions xmlns=\"the.test.plugin\">\n" +
     "    <dependentChildThree area=\"child_area\"/>\n" +
@@ -99,9 +93,7 @@ public class ExtensionsComplexTest extends TestCase {
   protected void tearDown() throws Exception {
     disposeAreas("child_area");
     disposeAreas("area");
-    final ExtensionPoint[] extensionPoints = Extensions.getRootArea().getExtensionPoints();
-    for (int i = 0; i < extensionPoints.length; i++) {
-      ExtensionPoint extensionPoint = extensionPoints[i];
+    for (ExtensionPoint extensionPoint : Extensions.getRootArea().getExtensionPoints()) {
       if (extensionPoint.getName().startsWith(PLUGIN_NAME) || extensionPoint.getName().startsWith(PLUGIN_NAME_2)) {
         Extensions.getRootArea().unregisterExtensionPoint(extensionPoint.getName());
       }
@@ -109,37 +101,55 @@ public class ExtensionsComplexTest extends TestCase {
     super.tearDown();
   }
 
-  private void disposeAreas(final String areaClass) {
-    final AreaInstance[] allAreas = Extensions.getAllAreas(areaClass);
-    for (int i = 0; i < allAreas.length; i++) {
-      AreaInstance areaInstance = allAreas[i];
+  private static void disposeAreas(final @NonNls String areaClass) {
+    for (AreaInstance areaInstance : Extensions.getAllAreas(areaClass)) {
       Extensions.disposeArea(areaInstance);
     }
   }
 
   public void testPluginInit() throws Exception {
-    initExtensionPoints(PLUGIN_NAME, EXTENSION_POINTS_ROOT, null);
-    initExtensions(EXTENSIONS_ROOT, null);
+    initExtensionPoints(
+      PLUGIN_NAME, "<extensionPoints>\n" +
+                   "  <extensionPoint name=\"extensionPoint\" beanClass=\"com.intellij.openapi.extensions.impl.XMLTestBean\" />\n" +
+                   "  <extensionPoint name=\"dependentOne\" beanClass=\"com.intellij.openapi.extensions.impl.DependentObjectOne\" />\n" +
+                   "</extensionPoints>", null);
+    initExtensions(
+      "  <extensions xmlns=\"the.test.plugin\">\n" +
+      "    <extensionPoint>\n" +
+      "      <prop1>321</prop1>\n" +
+      "    </extensionPoint>\n" +
+      "    <dependentOne/>\n" +
+      "  </extensions>", null);
 
-    assertTrue(Extensions.getRootArea().hasExtensionPoint(TEST_EP_NAME));
-    assertEquals(1, Extensions.getExtensions(TEST_EP_NAME).length);
-    assertEquals(321, ((XMLTestBean)Extensions.getRootArea().getExtensionPoint(TEST_EP_NAME).getExtension()).getProp1());
-    assertEquals("the.test.plugin", ((XMLTestBean)Extensions.getRootArea().getExtensionPoint(TEST_EP_NAME).getExtension()).getPluginId().getIdString());
+    assertTrue(Extensions.getRootArea().hasExtensionPoint("the.test.plugin.extensionPoint"));
+    assertEquals(1, Extensions.getExtensions("the.test.plugin.extensionPoint").length);
+    assertEquals(321, ((XMLTestBean)Extensions.getRootArea().getExtensionPoint("the.test.plugin.extensionPoint").getExtension()).getProp1());
+    assertEquals("the.test.plugin", ((XMLTestBean)Extensions.getRootArea().getExtensionPoint("the.test.plugin.extensionPoint").getExtension()).getPluginId().getIdString());
 
-    DependentObjectOne dependentObjectOne = (DependentObjectOne)Extensions.getRootArea().getExtensionPoint(TEST_DEPENDENT1_NAME).getExtension();
+    DependentObjectOne dependentObjectOne = (DependentObjectOne)Extensions.getRootArea().getExtensionPoint("the.test.plugin.dependentOne").getExtension();
     assertEquals(1, dependentObjectOne.getTestBeans().length);
 
     AreaInstance areaInstance = new MyAreaInstance();
     Extensions.instantiateArea("area", areaInstance, null);
-    initExtensionPoints(PLUGIN_NAME, EXTENSION_POINTS_4_AREA, areaInstance);
-    initExtensions(EXTENSIONS_4_AREA, areaInstance);
+    initExtensionPoints(
+      PLUGIN_NAME,
+      "<extensionPoints>\n" +
+      "  <extensionPoint name=\"dependentTwo\" beanClass=\"com.intellij.openapi.extensions.impl.DependentObjectTwo\" area=\"area\"/>\n" +
+      "  <extensionPoint name=\"extensionPoint4area\" beanClass=\"com.intellij.openapi.extensions.impl.XMLTestBean\" area=\"area\" />\n" +
+      "</extensionPoints>", areaInstance);
+
+    initExtensions(
+      "  <extensions xmlns=\"the.test.plugin\">\n" +
+      "    <extensionPoint4area area=\"area\"/>\n" +
+      "    <dependentTwo area=\"area\"/>\n" +
+      "  </extensions>", areaInstance);
 
     ExtensionPoint extensionPoint = Extensions.getArea(areaInstance).getExtensionPoint("the.test.plugin.extensionPoint4area");
     assertNotNull(extensionPoint);
     assertSame(areaInstance, extensionPoint.getArea());
     assertNotNull(extensionPoint.getExtension());
 
-    DependentObjectTwo dependentObjectTwo = (DependentObjectTwo)Extensions.getArea(areaInstance).getExtensionPoint(TEST_DEPENDENT2_NAME).getExtension();
+    DependentObjectTwo dependentObjectTwo = (DependentObjectTwo)Extensions.getArea(areaInstance).getExtensionPoint("the.test.plugin.dependentTwo").getExtension();
     assertSame(dependentObjectOne, dependentObjectTwo.getOne());
   }
 
@@ -171,9 +181,16 @@ public class ExtensionsComplexTest extends TestCase {
     assertSame(Extensions.getRootArea().getExtensionPoint(TEST_EP_NAME).getExtension(), dependentObjectOne.getTestBeans()[0]);
   }
 
-  public void testPluginInitInAreas() throws Exception {
-    initExtensionPoints(PLUGIN_NAME, EXTENSION_POINTS_ROOT, null);
-    initExtensionPoints(PLUGIN_NAME_2, EXTENSION_POINTS_ROOT_2, null);
+  public void _testPluginInitInAreas() throws Exception {
+    initExtensionPoints(PLUGIN_NAME,
+                        "<extensionPoints>\n" +
+                        "  <extensionPoint name=\"extensionPoint\" beanClass=\"com.intellij.openapi.extensions.impl.XMLTestBean\" />\n" +
+                        "  <extensionPoint name=\"dependentOne\" beanClass=\"com.intellij.openapi.extensions.impl.DependentObjectOne\" />\n" +
+                        "</extensionPoints>", null);
+    initExtensionPoints(PLUGIN_NAME_2,
+                        "  <extensionPoints>\n" +
+                        "    <extensionPoint name=\"anotherTestEP\" beanClass=\"com.intellij.openapi.extensions.impl.XMLTestBean\" />\n" +
+                        "  </extensionPoints>", null);
     initExtensions(EXTENSIONS_ROOT, null);
 
     AreaInstance areaInstance1 = new MyAreaInstance();
@@ -232,7 +249,7 @@ public class ExtensionsComplexTest extends TestCase {
 
     // Check extensions
     assertNotSame(Extensions.getArea(areaInstance1).getExtensionPoint("the.test.plugin.extensionPoint4area").getExtensions()[0],
-        Extensions.getArea(areaInstance2).getExtensionPoint("the.test.plugin.extensionPoint4area").getExtensions()[0]);
+                  Extensions.getArea(areaInstance2).getExtensionPoint("the.test.plugin.extensionPoint4area").getExtensions()[0]);
 
     XMLTestBean ownExtension = new XMLTestBean();
     ownExtension.setProp1(54321);
@@ -254,29 +271,32 @@ public class ExtensionsComplexTest extends TestCase {
   private void initExtensionsInAREA(final AreaInstance areaInstance1) {
     initExtensionPoints(PLUGIN_NAME, EXTENSION_POINTS_4_AREA, areaInstance1);
     initExtensionPoints(PLUGIN_NAME_2, EXTENSION_POINTS_4_AREA_2, areaInstance1);
-    initExtensions(EXTENSIONS_4_AREA, areaInstance1);
+    initExtensions("  <extensions xmlns=\"the.test.plugin\">\n" +
+                   "    <extensionPoint4area area=\"area\"/>\n" +
+                   "    <dependentTwo area=\"area\"/>\n" +
+                   "  </extensions>", areaInstance1);
     initExtensions(EXTENSIONS_4_AREA_2, areaInstance1);
     initExtensions(EXTENSIONS_4_AREA_2_PLUS, areaInstance1);
   }
 
-  private void checkAreaInitialized(AreaInstance areaInstance) {
+  private static void checkAreaInitialized(AreaInstance areaInstance) {
     assertNotNull(Extensions.getArea(areaInstance).getExtensionPoint("the.test.plugin.extensionPoint4area").getExtension());
     assertEquals(2, Extensions.getArea(areaInstance).getExtensionPoint("the.test.plugin.extensionPoint4area").getExtensions().length);
     assertTrue(Extensions.getArea(areaInstance).hasExtensionPoint("another.test.plugin.anotherTestEP4area"));
   }
 
-  private void initExtensionPoints(String pluginName, String data, AreaInstance instance) {
+  private static void initExtensionPoints(@NonNls String pluginName, @NonNls String data, AreaInstance instance) {
     final Element element = ExtensionComponentAdapterTest.readElement(data);
-    for (Iterator iterator = element.getChildren().iterator(); iterator.hasNext();) {
-      Element child = (Element)iterator.next();
+    for (final Object o : element.getChildren()) {
+      Element child = (Element)o;
       Extensions.getArea(instance).registerExtensionPoint(pluginName, child);
     }
   }
 
-  private void initExtensions(String data, AreaInstance instance) {
+  private static void initExtensions(@NonNls String data, AreaInstance instance) {
     final Element element = ExtensionComponentAdapterTest.readElement(data);
-    for (Iterator iterator = element.getChildren().iterator(); iterator.hasNext();) {
-      Element child = (Element)iterator.next();
+    for (final Object o : element.getChildren()) {
+      Element child = (Element)o;
       Extensions.getArea(instance).registerExtension(element.getNamespaceURI(), child);
     }
   }

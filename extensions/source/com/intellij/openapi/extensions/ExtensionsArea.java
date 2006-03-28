@@ -16,6 +16,7 @@
 package com.intellij.openapi.extensions;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.picocontainer.PicoContainer;
 
 import java.util.List;
@@ -25,11 +26,11 @@ import java.util.List;
  */
 public interface ExtensionsArea  {
 
-  void registerExtensionPoint(String extensionPointName, String extensionPointBeanClass);
-  void unregisterExtensionPoint(String extensionPointName);
+  void registerExtensionPoint(@NonNls String extensionPointName, String extensionPointBeanClass);
+  void unregisterExtensionPoint(@NonNls String extensionPointName);
 
-  boolean hasExtensionPoint(String extensionPointName);
-  ExtensionPoint getExtensionPoint(String extensionPointName);
+  boolean hasExtensionPoint(@NonNls String extensionPointName);
+  ExtensionPoint getExtensionPoint(@NonNls String extensionPointName);
 
   ExtensionPoint[] getExtensionPoints();
 

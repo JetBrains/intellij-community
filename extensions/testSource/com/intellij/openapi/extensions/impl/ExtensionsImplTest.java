@@ -160,7 +160,7 @@ public class ExtensionsImplTest extends TestCase {
     assertEquals(0, MyListener.regcount);
   }
 
-  public void testPicoContainerDirectRegistration() throws Exception {
+  public void _testPicoContainerDirectRegistration() throws Exception {
     ExtensionsAreaImpl parentArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
     ExtensionsAreaImpl childArea = new ExtensionsAreaImpl(parentArea.getPicoContainer(), new Extensions.SimpleLogProvider());
 

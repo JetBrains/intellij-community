@@ -17,6 +17,7 @@ package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import org.apache.commons.collections.MultiHashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,10 +30,10 @@ public abstract class Extensions {
   public static final String AREA_LISTENER_EXTENSION_POINT = "jetbrains.fabrique.platform.areaListeners";
 
   private static Map ourAreaClass2prototypeArea;
-  private static Map ourAreaInstance2area;
+  private static Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area;
   private static MultiHashMap ourAreaClass2instances;
-  private static Map ourAreaInstance2class;
-  private static Map ourAreaClass2Configuration;
+  private static Map<AreaInstance,String> ourAreaInstance2class;
+  private static Map<String,AreaClassConfiguration> ourAreaClass2Configuration;
 
   public static ExtensionsArea getRootArea() {
     return getArea(null);
@@ -43,10 +44,10 @@ public abstract class Extensions {
     if (!ourAreaInstance2area.containsKey(areaInstance)) {
       throw new IllegalArgumentException("No area instantiated for: " + areaInstance);
     }
-    return (ExtensionsArea) ourAreaInstance2area.get(areaInstance);
+    return ourAreaInstance2area.get(areaInstance);
   }
 
-  public static Object[] getExtensions(String extensionPointName) {
+  public static Object[] getExtensions(@NonNls String extensionPointName) {
     return getExtensions(extensionPointName, null);
   }
 
@@ -60,11 +61,11 @@ public abstract class Extensions {
 
   private static void init() {
     if (ourAreaInstance2area == null) {
-      ourAreaInstance2area = new HashMap();
+      ourAreaInstance2area = new HashMap<AreaInstance, ExtensionsAreaImpl>();
       ourAreaClass2prototypeArea = new HashMap();
       ourAreaClass2instances = new MultiHashMap();
-      ourAreaInstance2class = new HashMap();
-      ourAreaClass2Configuration = new HashMap();
+      ourAreaInstance2class = new HashMap<AreaInstance, String>();
+      ourAreaClass2Configuration = new HashMap<String, AreaClassConfiguration>();
       ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);
       ourAreaInstance2area.put(null, rootArea);
       ourAreaClass2prototypeArea.put(null, rootArea);
@@ -79,7 +80,7 @@ public abstract class Extensions {
     ourAreaInstance2class = null;
   }
 
-  public static void instantiateArea(String areaClass, AreaInstance areaInstance, AreaInstance parentAreaInstance) {
+  public static void instantiateArea(@NonNls String areaClass, AreaInstance areaInstance, AreaInstance parentAreaInstance) {
     if (areaClass == null) {
       throw new IllegalArgumentException("Should not try to instantiate the root area");
     }
@@ -91,7 +92,7 @@ public abstract class Extensions {
       throw new IllegalArgumentException("Area already instantiated for: " + areaInstance);
     }
     ExtensionsArea parentArea = getArea(parentAreaInstance);
-    AreaClassConfiguration configuration = (AreaClassConfiguration)ourAreaClass2Configuration.get(areaClass);
+    AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);
     if (!equals(parentArea.getAreaClass(), configuration.getParentClassName())) {
       throw new IllegalArgumentException("Wrong parent area. Expected class: " + configuration.getParentClassName() + " actual class: " + parentArea.getAreaClass());
     }
@@ -111,13 +112,13 @@ public abstract class Extensions {
     return listeners;
   }
 
-  public static void registerAreaClass(String areaClass, String parentAreaClass) {
+  public static void registerAreaClass(@NonNls String areaClass, @NonNls String parentAreaClass) {
     init();
     if (ourAreaClass2Configuration.containsKey(areaClass)) {
       // allow duplicate area class registrations if they are the same - fixing duplicate registration in tests is much more trouble
-      AreaClassConfiguration configuration = (AreaClassConfiguration)ourAreaClass2Configuration.get(areaClass);
+      AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);
       if (!equals(configuration.getParentClassName(), parentAreaClass)) {
-        throw new RuntimeException("Area class already registered: " + areaClass, ((AreaClassConfiguration)ourAreaClass2Configuration.get(areaClass)).getCreationPoint());
+        throw new RuntimeException("Area class already registered: " + areaClass, (ourAreaClass2Configuration.get(areaClass)).getCreationPoint());
       }
       else {
         return;
@@ -134,13 +135,13 @@ public abstract class Extensions {
     }
 
     AreaListener[] listeners = getAreaListeners();
-    String areaClass = (String) ourAreaInstance2class.get(areaInstance);
+    String areaClass = ourAreaInstance2class.get(areaInstance);
     if (areaClass == null) {
       throw new IllegalArgumentException("Area class is null (area never instantiated?). Instance: " + areaInstance);
     }
     try {
-      for (int i = 0; i < listeners.length; i++) {
-        listeners[i].areaDisposing(areaClass, areaInstance);
+      for (AreaListener listener : listeners) {
+        listener.areaDisposing(areaClass, areaInstance);
       }
     } finally {
       ourAreaInstance2area.remove(areaInstance);
@@ -151,7 +152,7 @@ public abstract class Extensions {
 
   public static AreaInstance[] getAllAreas() {
     init();
-    final Set keys = ourAreaInstance2area.keySet();
+    final Set<AreaInstance> keys = ourAreaInstance2area.keySet();
     return (AreaInstance[]) keys.toArray(new AreaInstance[keys.size()]);
   }
 

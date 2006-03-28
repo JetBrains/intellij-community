@@ -45,7 +45,7 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
   }
 
   public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
-    assert myContainer == container;
+    //assert myContainer == container : "Different containers: " + myContainer + " - " + container;
 
     if (myComponentInstance == null) {
       if (!Element.class.equals(getComponentImplementation())) {

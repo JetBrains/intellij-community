@@ -63,7 +63,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
     myAreaClass = areaClass;
     myAreaInstance = areaInstance;
-    myPicoContainer = new AreaPicoContainerImpl(parentPicoContainer, this);
+    myPicoContainer = new AreaPicoContainerImpl(parentPicoContainer, areaInstance);
     //if (areaInstance != null) {
     //  myPicoContainer.registerComponentInstance(areaInstance);
     //}
@@ -161,6 +161,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   private MutablePicoContainer internalGetPluginContainer(String pluginName) {
+    return myPicoContainer;
+    /*
     DefaultPicoContainer pluginContainer = myPluginName2picoContainer.get(pluginName);
     if (pluginContainer == null) {
       pluginContainer = new DefaultPicoContainer(myPicoContainer);
@@ -168,6 +170,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       myPluginName2picoContainer.put(pluginName, pluginContainer);
     }
     return pluginContainer;
+    */
   }
 
   private void disposePluginContainer(String pluginName) {

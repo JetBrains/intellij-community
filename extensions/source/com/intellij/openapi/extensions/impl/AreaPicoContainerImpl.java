@@ -15,176 +15,31 @@
  */
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.AreaPicoContainer;
+import org.jetbrains.annotations.NonNls;
 import org.picocontainer.*;
 import org.picocontainer.alternatives.AbstractDelegatingMutablePicoContainer;
-import org.picocontainer.defaults.*;
-
-import java.util.*;
+import org.picocontainer.defaults.ComponentAdapterFactory;
+import org.picocontainer.defaults.DefaultComponentAdapterFactory;
+import org.picocontainer.defaults.DefaultPicoContainer;
 
 /**
  * @author Alexander Kireyev
  */
+@SuppressWarnings({"unchecked"})
 public class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContainer implements AreaPicoContainer {
-  private ExtensionsAreaImpl myArea;
   private ComponentAdapterFactory myComponentAdapterFactory;
+  private final AreaInstance myAreaInstance;
 
-  public AreaPicoContainerImpl(PicoContainer parentPicoContainer, ExtensionsAreaImpl area) {
-    this(new MyPicoContainer(parentPicoContainer), area);
+  public AreaPicoContainerImpl(PicoContainer parentPicoContainer, AreaInstance areaInstance) {
+    this(new MyPicoContainer(parentPicoContainer), areaInstance);
   }
 
-  private AreaPicoContainerImpl(MyPicoContainer picoContainer, ExtensionsAreaImpl area) {
+  private AreaPicoContainerImpl(MyPicoContainer picoContainer, AreaInstance areaInstance) {
     super(picoContainer);
+    myAreaInstance = areaInstance;
     picoContainer.setWrapperContainer(this);
-    myArea = area;
-  }
-
-  public ComponentAdapter getComponentAdapter(final Object componentKey) {
-    final ComponentAdapter[] result = new ComponentAdapter[] { null };
-    accept(new EmptyPicoVisitor() {
-      public void visitComponentAdapter(ComponentAdapter componentAdapter) {
-        if (componentKey.equals(componentAdapter.getComponentKey())) {
-          result[0] = componentAdapter;
-        }
-      }
-    });
-    if (result[0] != null) {
-      return result[0];
-    }
-    else {
-      if (getParent() != null) {
-        return getParent().getComponentAdapter(componentKey);
-      }
-      else {
-        return null;
-      }
-    }
-  }
-
-  public List getComponentInstances() {
-    final List result = new ArrayList();
-    if (getParent() != null) {
-      List parentInstances = getParent().getComponentInstances();
-      result.addAll(parentInstances);
-    }
-    accept(new EmptyPicoVisitor() {
-      public void visitContainer(PicoContainer pico) {
-        result.addAll(pico.getComponentInstances());
-      }
-    });
-    return result;
-  }
-
-  public List getComponentInstancesOfType(final Class type) {
-    final List result = new ArrayList();
-    if (getParent() != null) {
-      List parentInstances = getParent().getComponentInstancesOfType(type);
-      result.addAll(parentInstances);
-    }
-    accept(new EmptyPicoVisitor() {
-      public void visitContainer(PicoContainer pico) {
-        result.addAll(pico.getComponentInstancesOfType(type));
-      }
-    });
-    return result;
-  }
-
-  public Object getComponentInstanceOfType(Class componentType) {
-    List instances = getComponentInstancesOfType(componentType);
-    if (instances.size() == 0) {
-      return null;
-    }
-    else if (instances.size() == 1) {
-      return instances.get(0);
-    }
-    else {
-      throw new AmbiguousComponentResolutionException(componentType, instances.toArray(new Object[instances.size()]));
-    }
-  }
-
-  public Object getComponentInstance(final Object componentKey) {
-    final Object[] result = new Object[] { null };
-    accept(new EmptyPicoVisitor() {
-      public void visitContainer(PicoContainer pico) {
-        final boolean[] found = new boolean[] { false };
-        pico.accept(new EmptyPicoVisitor() {
-          public void visitComponentAdapter(ComponentAdapter componentAdapter) {
-            if (componentKey.equals(componentAdapter.getComponentKey())) {
-              found[0] = true;
-            }
-          }
-        });
-        if (!found[0]) {
-          return;
-        }
-        Object componentInstance = pico.getComponentInstance(componentKey);
-        if (componentInstance != null) {
-          result[0] = componentInstance;
-        }
-      }
-    });
-    if (result[0] != null) {
-      return result[0];
-    }
-    if (getParent() != null) {
-      Object parentInstance = getParent().getComponentInstance(componentKey);
-      if (parentInstance != null) {
-        return parentInstance;
-      }
-    }
-    return null;
-  }
-
-  public ComponentAdapter getComponentAdapterOfType(Class componentType) {
-    List adapters = getComponentAdaptersOfType(componentType);
-    if (adapters.size() == 0) {
-      return null;
-    }
-    else if (adapters.size() == 1) {
-      return (ComponentAdapter) adapters.get(0);
-    }
-    else {
-      Class[] foundClasses = new Class[adapters.size()];
-      for (int i = 0; i < foundClasses.length; i++) {
-          ComponentAdapter componentAdapter = (ComponentAdapter) adapters.get(i);
-          foundClasses[i] = componentAdapter.getComponentImplementation();
-      }
-      throw new AmbiguousComponentResolutionException(componentType, foundClasses);
-    }
-  }
-
-  public Collection getComponentAdapters() {
-    final Set result = new HashSet();
-    if (getParent() != null) {
-      result.addAll(getParent().getComponentAdapters());
-    }
-
-    result.addAll(super.getComponentAdapters());
-
-    accept(new EmptyPicoVisitor() {
-      public void visitContainer(PicoContainer pico) {
-        if (pico != getDelegate()) result.addAll(pico.getComponentAdapters());
-      }
-    });
-
-    return result;
-  }
-
-  public List getComponentAdaptersOfType(final Class componentType) {
-    final Set result = new HashSet();
-    if (getParent() != null) {
-      result.addAll(getParent().getComponentAdaptersOfType(componentType));
-    }
-
-    final List componentAdapters = new ArrayList(getComponentAdapters());
-    for (Iterator iterator = componentAdapters.iterator(); iterator.hasNext();) {
-      ComponentAdapter componentAdapter = (ComponentAdapter) iterator.next();
-      if (componentType.isAssignableFrom(componentAdapter.getComponentImplementation())) {
-        result.add(componentAdapter);
-      }
-    }
-
-    return new ArrayList(result);
   }
 
   public MutablePicoContainer makeChildContainer() {
@@ -199,15 +54,10 @@ public class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContaine
     return myComponentAdapterFactory;
   }
 
-  private abstract class EmptyPicoVisitor extends AbstractPicoVisitor {
-    public void visitContainer(PicoContainer pico) {
-    }
 
-    public void visitComponentAdapter(ComponentAdapter componentAdapter) {
-    }
-
-    public void visitParameter(Parameter parameter) {
-    }
+  @NonNls
+  public String toString() {
+    return "AreaPicoContainer[" + myAreaInstance + "]";
   }
 
   private static class MyPicoContainer extends DefaultPicoContainer {
