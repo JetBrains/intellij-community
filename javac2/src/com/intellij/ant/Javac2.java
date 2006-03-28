@@ -44,6 +44,7 @@ public final class Javac2 extends Javac{
   protected void compile(){
     // compile java
     super.compile();
+    log("javac2, using compiler: " + getCompiler());
 
     // we instrument every file, because we cannot find which files should not be instrumented without dependency storage
     final ArrayList formsToInstrument = myFormFiles;
