@@ -7,6 +7,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.JavaMethodSignature;
+import com.intellij.util.xml.StableElement;
 import com.intellij.pom.Navigatable;
 
 import java.lang.reflect.Method;
@@ -26,11 +27,11 @@ public class InvocationCache {
     addCoreInvocations(Object.class);
     try {
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttribute")), new Invocation() {
-          public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-            final XmlTag tag = handler.getXmlTag();
-            return tag != null ? tag.getAttribute(handler.getXmlElementName(), null) : null;
-          }
-        });
+        public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+          final XmlTag tag = handler.getXmlTag();
+          return tag != null ? tag.getAttribute(handler.getXmlElementName(), null) : null;
+        }
+      });
     }
     catch (NoSuchMethodException e) {
       throw new AssertionError();
@@ -44,12 +45,7 @@ public class InvocationCache {
           public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
             final Object o = args[0];
             final DomElement proxy = handler.getProxy();
-            if (proxy == o) return true;
-            if (!(o instanceof DomElement)) return false;
-            if (!(AdvancedProxy.getInvocationHandler(proxy) instanceof DomInvocationHandler)) {
-              return o.equals(proxy);
-            }
-            return false;
+            return proxy == o || o instanceof StableElement && o.equals(((StableElement)o).getWrappedElement());
           }
         });
       }
