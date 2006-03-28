@@ -88,7 +88,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return myDataConstantToRuleMap.get(dataId);
   }
 
-  private Object validated(Object data, String dataId, Object dataSource) {
+  private static Object validated(Object data, String dataId, Object dataSource) {
     Object invalidData = DataValidator.findInvalidData(dataId, data);
     if (invalidData != null) {
       LOG.assertTrue(false, "Data isn't valid. " + dataId + "=" + invalidData + " Provided by: " + dataSource.getClass().getName() + " (" + dataSource.toString()+")");
@@ -168,9 +168,9 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   private void registerRules() {
     myDataConstantToRuleMap.put(DataConstants.PSI_FILE, new PsiFileRule());
     myDataConstantToRuleMap.put(DataConstantsEx.PASTE_TARGET_PSI_ELEMENT, new PasteTargetRule());
-    myDataConstantToRuleMap.put(DataConstantsEx.COPY_PROVIDER, new CopyProviderRule());
-    myDataConstantToRuleMap.put(DataConstantsEx.CUT_PROVIDER, new CutProviderRule());
-    myDataConstantToRuleMap.put(DataConstantsEx.PASTE_PROVIDER, new PasteProviderRule());
+    myDataConstantToRuleMap.put(DataConstants.COPY_PROVIDER, new CopyProviderRule());
+    myDataConstantToRuleMap.put(DataConstants.CUT_PROVIDER, new CutProviderRule());
+    myDataConstantToRuleMap.put(DataConstants.PASTE_PROVIDER, new PasteProviderRule());
     myDataConstantToRuleMap.put(DataConstantsEx.PROJECT_FILE_DIRECTORY, new ProjectFileDirectoryRule());
     myDataConstantToRuleMap.put(DataConstants.NAVIGATABLE, new NavigatableRule());
     myDataConstantToRuleMap.put(DataConstants.VIRTUAL_FILE_ARRAY, new VirtualFileArrayRule());
@@ -226,7 +226,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
           return null;
         }
       }
-      else if (DataConstantsEx.CONTEXT_COMPONENT.equals(dataId)) {
+      else if (DataConstants.CONTEXT_COMPONENT.equals(dataId)) {
         return _component;
       }
       else if (DataConstantsEx.MODALITY_STATE.equals(dataId)) {

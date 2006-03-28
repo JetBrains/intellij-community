@@ -1,11 +1,12 @@
 package com.intellij.ide.impl;
 
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
+
+import java.lang.reflect.Array;
 
 public abstract class DataValidator <T> {
 
@@ -25,13 +26,13 @@ public abstract class DataValidator <T> {
 
   public abstract T findInvalid(T data);
 
-  public static DataValidator getValidator(String dataId) {
+  private static <T> DataValidator<T> getValidator(String dataId) {
     return ourValidators.get(dataId);
   }
 
-  public static Object findInvalidData(String dataId, Object data) {
+  public static <T> T findInvalidData(String dataId, T data) {
     if (data == null) return null;
-    DataValidator validator = getValidator(dataId);
+    DataValidator<T> validator = getValidator(dataId);
     if (validator != null) return validator.findInvalid(data);
     return null;
   }
@@ -40,24 +41,26 @@ public abstract class DataValidator <T> {
     ourValidators.put(DataConstants.VIRTUAL_FILE, VIRTUAL_FILE_VALIDATOR);
     ourValidators.put(DataConstants.VIRTUAL_FILE_ARRAY, new ArrayValidator<VirtualFile>(VIRTUAL_FILE_VALIDATOR));
     ourValidators.put(DataConstants.PSI_ELEMENT, PSI_ELEMENT_VALIDATOR);
-    ourValidators.put(DataConstantsEx.PSI_ELEMENT_ARRAY, new ArrayValidator<PsiElement>(PSI_ELEMENT_VALIDATOR));
+    ourValidators.put(DataConstants.PSI_ELEMENT_ARRAY, new ArrayValidator<PsiElement>(PSI_ELEMENT_VALIDATOR));
     ourValidators.put(DataConstants.PSI_FILE, PSI_ELEMENT_VALIDATOR);
   }
 
-  private static class ArrayValidator <T> extends DataValidator {
+  private static class ArrayValidator<T> extends DataValidator<T[]> {
     private final DataValidator<T> myElementValidator;
 
     public ArrayValidator(DataValidator<T> elementValidator) {
       myElementValidator = elementValidator;
     }
 
-    public T findInvalid(Object object) {
-      Object[] array = (Object[])object;
-      for (int i = 0; i < array.length; i++) {
-        T element = (T)array[i];
+    public T[] findInvalid(T[] array) {
+      for (T element : array) {
         LOG.assertTrue(element != null);
         T invalid = myElementValidator.findInvalid(element);
-        if (invalid != null) return invalid;
+        if (invalid != null) {
+          T[] result = (T[])Array.newInstance(array[0].getClass(), 1);
+          result[0] = invalid;
+          return result;
+        }
       }
       return null;
     }
