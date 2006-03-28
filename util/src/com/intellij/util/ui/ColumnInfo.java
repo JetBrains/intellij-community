@@ -76,7 +76,11 @@ public abstract class ColumnInfo <Item, Aspect> {
     return null;
   }
 
-  public TableCellEditor getEditor(Item item) {
+  public TableCellRenderer getCustomizedRenderer(final Item o, TableCellRenderer renderer) {
+    return renderer;
+  }
+
+  public TableCellEditor getEditor(Item o) {
     return null;
   }
 

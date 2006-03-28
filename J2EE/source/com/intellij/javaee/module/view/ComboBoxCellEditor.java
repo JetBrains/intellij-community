@@ -20,9 +20,14 @@ public abstract class ComboBoxCellEditor extends DefaultCellEditor {
 
   protected abstract List<String> getComboBoxItems();
 
+  protected boolean isComboboxEditable() {
+    return false;
+  }
+
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     String servletName = (String)value;
     final JComboBox component = (JComboBox)super.getTableCellEditorComponent(table, value, isSelected, row, column);
+    component.setBorder(null);
     component.removeAllItems();
     final List<String> items = getComboBoxItems();
     int selected = -1;
@@ -40,6 +45,7 @@ public abstract class ComboBoxCellEditor extends DefaultCellEditor {
     } else {
       component.setSelectedItem(selected);
     }
+    component.setEditable(isComboboxEditable());
     return component;
   }
 }
