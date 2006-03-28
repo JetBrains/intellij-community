@@ -328,6 +328,9 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
     public void dragDropEnd() {
     }
+
+    public void dropActionChanged(final int gestureModifiers) {
+    }
   }
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})

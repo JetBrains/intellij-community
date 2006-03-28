@@ -363,5 +363,9 @@ public class PaletteComponentList extends JList {
 
     public void dragDropEnd() {
     }
+
+    public void dropActionChanged(final int gestureModifiers) {
+      PaletteManager.getInstance(myProject).notifyDropActionChanged(gestureModifiers);
+    }
   }
 }

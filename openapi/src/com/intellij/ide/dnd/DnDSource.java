@@ -38,4 +38,6 @@ public interface DnDSource {
   Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin);
 
   void dragDropEnd();
+
+  void dropActionChanged(final int gestureModifiers);
 }

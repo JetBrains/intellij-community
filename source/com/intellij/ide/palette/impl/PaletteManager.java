@@ -5,6 +5,7 @@
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.palette.PaletteItem;
+import com.intellij.ide.palette.PaletteDragEventListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -33,6 +34,7 @@ public class PaletteManager implements ProjectComponent {
   private ToolWindow myPaletteToolWindow;
   private PaletteManager.MyFileEditorManagerListener myListener;
   private List<KeyListener> myKeyListeners = new ArrayList<KeyListener>();
+  private List<PaletteDragEventListener> myDragEventListeners = new ArrayList<PaletteDragEventListener>();
 
   public PaletteManager(Project project, FileEditorManager fileEditorManager) {
     myProject = project;
@@ -106,6 +108,14 @@ public class PaletteManager implements ProjectComponent {
     myKeyListeners.remove(l);
   }
 
+  public void addDragEventListener(PaletteDragEventListener l) {
+    myDragEventListeners.add(l);
+  }
+
+  public void removeDragEventListener(PaletteDragEventListener l) {
+    myDragEventListeners.remove(l);
+  }
+
   private void processFileEditorChange() {
     myPaletteWindow.refreshPaletteIfChanged();
     if (myPaletteWindow.getActiveGroupCount() == 0) {
@@ -117,7 +127,7 @@ public class PaletteManager implements ProjectComponent {
     }
   }
 
-  public void notifyKeyEvent(final KeyEvent e) {
+  void notifyKeyEvent(final KeyEvent e) {
     for(KeyListener l: myKeyListeners) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
         l.keyPressed(e);
@@ -128,6 +138,12 @@ public class PaletteManager implements ProjectComponent {
       else if (e.getID() == KeyEvent.KEY_TYPED) {
         l.keyTyped(e);
       }
+    }
+  }
+
+  void notifyDropActionChanged(int gestureModifiers) {
+    for(PaletteDragEventListener l: myDragEventListeners) {
+      l.dropActionChanged(gestureModifiers);
     }
   }
 

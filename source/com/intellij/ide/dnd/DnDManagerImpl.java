@@ -498,6 +498,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
     }
 
     public void dropActionChanged(DragSourceDragEvent dsde) {
+      mySource.dropActionChanged(dsde.getGestureModifiers());
     }
 
     public void dragDropEnd(DragSourceDropEvent dsde) {

@@ -4,12 +4,14 @@
  */
 package com.intellij.ide.dnd;
 
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-
-import com.intellij.openapi.util.Pair;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.Image;
+import java.awt.Point;
 
 public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
   public static void main(String[] args) {
@@ -37,6 +39,9 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       }
 
       public void dragDropEnd() {
+      }
+
+      public void dropActionChanged(final int gestureModifiers) {
       }
     }, source);
 

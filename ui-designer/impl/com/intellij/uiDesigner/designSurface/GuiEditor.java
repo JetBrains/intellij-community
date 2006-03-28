@@ -2,7 +2,9 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.palette.PaletteDragEventListener;
 import com.intellij.ide.palette.impl.PaletteManager;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,7 +22,6 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
@@ -30,6 +31,7 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -37,7 +39,6 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.util.Alarm;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,13 +47,10 @@ import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * <code>GuiEditor</code> is a panel with border layout. It has palette at the north,
@@ -170,6 +168,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private GridCaptionPanel myHorzCaptionPanel;
   private GridCaptionPanel myVertCaptionPanel;
   private MyPaletteKeyListener myPaletteKeyListener;
+  private MyPaletteDragListener myPaletteDragListener;
 
   /**
    * @param file file to be edited
@@ -293,6 +292,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     myPaletteKeyListener = new MyPaletteKeyListener();
     PaletteManager.getInstance(getProject()).addKeyListener(myPaletteKeyListener);
+    myPaletteDragListener = new MyPaletteDragListener();
+    PaletteManager.getInstance(getProject()).addDragEventListener(myPaletteDragListener);
   }
 
   @NotNull
@@ -312,6 +313,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
 
     PaletteManager.getInstance(getProject()).removeKeyListener(myPaletteKeyListener);
+    PaletteManager.getInstance(getProject()).removeDragEventListener(myPaletteDragListener);
     myDocument.removeDocumentListener(myDocumentListener);
     PsiManager.getInstance(myModule.getProject()).removePsiTreeChangeListener(myPsiTreeChangeListener);
     myPsiTreeChangeListener.dispose();
@@ -954,6 +956,17 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     @Override public void keyReleased(KeyEvent e) {
       if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
+        setDesignTimeInsets(2);
+      }
+    }
+  }
+
+  private class MyPaletteDragListener implements PaletteDragEventListener {
+    public void dropActionChanged(int gestureModifiers) {
+      if ((gestureModifiers & InputEvent.SHIFT_MASK) != 0) {
+        setDesignTimeInsets(12);
+      }
+      else {
         setDesignTimeInsets(2);
       }
     }
