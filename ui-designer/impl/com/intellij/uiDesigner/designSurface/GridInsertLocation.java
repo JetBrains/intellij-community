@@ -256,15 +256,21 @@ public class GridInsertLocation extends GridDropLocation {
   public DropLocation getAdjacentLocation(Direction direction) {
     GridLayoutManager grid = (GridLayoutManager) myContainer.getLayout();
     if (isRowInsert()) {
-      if (direction == Direction.RIGHT && getColumn() < grid.getColumnCount()-1) {
-        return new GridInsertLocation(myContainer, getRow(), getColumn()+1, getMode());
+      if (direction == Direction.RIGHT) {
+        if (getColumn() < grid.getColumnCount()-1) {
+          return new GridInsertLocation(myContainer, getRow(), getColumn()+1, getMode());
+        }
+        return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.ColumnAfter);
       }
-      if (direction == Direction.LEFT && getColumn() > 0) {
-        return new GridInsertLocation(myContainer, getRow(), getColumn()-1, getMode());
+      if (direction == Direction.LEFT) {
+        if (getColumn() > 0) {
+          return new GridInsertLocation(myContainer, getRow(), getColumn()-1, getMode());
+        }
+        return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.ColumnBefore);
       }
       if (direction == Direction.DOWN || direction == Direction.UP) {
         int adjRow = (myMode == GridInsertMode.RowAfter) ? getRow() : getRow()-1;
-        if (direction == Direction.DOWN && adjRow+1 < grid.getRowCount()-1) {
+        if (direction == Direction.DOWN && adjRow+1 < grid.getRowCount()) {
           return new GridDropLocation(myContainer, adjRow+1, getColumn());
         }
         if (direction == Direction.UP && adjRow >= 0) {
@@ -273,15 +279,21 @@ public class GridInsertLocation extends GridDropLocation {
       }
     }
     else {
-      if (direction == Direction.DOWN && getRow() < grid.getRowCount()-1) {
-        return new GridInsertLocation(myContainer, getRow()+1, getColumn(), getMode());
+      if (direction == Direction.DOWN) {
+        if (getRow() < grid.getRowCount()-1) {
+          return new GridInsertLocation(myContainer, getRow()+1, getColumn(), getMode());
+        }
+        return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.RowAfter);
       }
-      if (direction == Direction.UP && getRow() > 0) {
-        return new GridInsertLocation(myContainer, getRow()-1, getColumn(), getMode());
+      if (direction == Direction.UP) {
+        if (getRow() > 0) {
+          return new GridInsertLocation(myContainer, getRow()-1, getColumn(), getMode());
+        }
+        return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.RowBefore);
       }
       if (direction == Direction.LEFT || direction == Direction.RIGHT) {
         int adjCol = (myMode == GridInsertMode.ColumnAfter) ? getColumn() : getColumn()-1;
-        if (direction == Direction.RIGHT && adjCol+1 < grid.getColumnCount()-1) {
+        if (direction == Direction.RIGHT && adjCol+1 < grid.getColumnCount()) {
           return new GridDropLocation(myContainer, getRow(), adjCol+1);
         }
         if (direction == Direction.LEFT && adjCol >= 0) {

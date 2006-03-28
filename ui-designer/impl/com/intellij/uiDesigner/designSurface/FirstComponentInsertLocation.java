@@ -22,8 +22,9 @@ import java.awt.Dimension;
  * @author yole
  */
 public class FirstComponentInsertLocation extends GridDropLocation {
-  private Point myTargetPoint;
-  private Rectangle myCellRect;
+  private final Rectangle myCellRect;
+  private final int myXPart;
+  private final int myYPart;
 
   public FirstComponentInsertLocation(final RadContainer container,
                                       final int row,
@@ -31,8 +32,42 @@ public class FirstComponentInsertLocation extends GridDropLocation {
                                       final Point targetPoint,
                                       @NotNull final Rectangle cellRect) {
     super(container, row, column);
-    myTargetPoint = targetPoint;
     myCellRect = cellRect;
+    int midX1 = myCellRect.x + myCellRect.width / 3;
+    int midX2 = myCellRect.x + (myCellRect.width*2) / 3;
+    int midY1 = myCellRect.y + myCellRect.height / 3;
+    int midY2 = myCellRect.y + (myCellRect.height*2) / 3;
+    if (targetPoint.x < midX1) {
+      myXPart = 0;
+    }
+    else if (targetPoint.x < midX2) {
+      myXPart = 1;
+    }
+    else {
+      myXPart = 2;
+    }
+    if (targetPoint.y < midY1) {
+      myYPart = 0;
+    }
+    else if (targetPoint.y < midY2) {
+      myYPart = 1;
+    }
+    else {
+      myYPart = 2;
+    }
+  }
+
+
+  public FirstComponentInsertLocation(final RadContainer container,
+                                      final int row,
+                                      final int column,
+                                      final Rectangle cellRect,
+                                      final int xPart,
+                                      final int yPart) {
+    super(container, row, column);
+    myCellRect = cellRect;
+    myXPart = xPart;
+    myYPart = yPart;
   }
 
   @Override public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
@@ -42,11 +77,11 @@ public class FirstComponentInsertLocation extends GridDropLocation {
     int midY2 = myCellRect.y + (myCellRect.height*2) / 3;
 
     Rectangle rc = new Rectangle();
-    if (myTargetPoint.x < midX1) {
+    if (myXPart == 0) {
       rc.x = myCellRect.x;
       rc.width = initialWidth(dragObject, midX1 - myCellRect.x);
     }
-    else if (myTargetPoint.x < midX2) {
+    else if (myXPart == 1) {
       if (!isInsertTwoSpacers(dragObject.getHSizePolicy())) {
         rc.x = myCellRect.x;
         rc.width = myCellRect.width;
@@ -61,11 +96,11 @@ public class FirstComponentInsertLocation extends GridDropLocation {
       rc.x = myCellRect.width - rc.width;
     }
 
-    if (myTargetPoint.y < midY1) {
+    if (myYPart == 0) {
       rc.y = myCellRect.y;
       rc.height = initialHeight(dragObject, midY1 - myCellRect.y);
     }
-    else if (myTargetPoint.y < midY2) {
+    else if (myYPart == 1) {
       if (!isInsertTwoSpacers(dragObject.getVSizePolicy())) {
         rc.y = myCellRect.y;
         rc.height = myCellRect.height;
@@ -117,34 +152,41 @@ public class FirstComponentInsertLocation extends GridDropLocation {
     int hSizePolicy = getSizePolicy(components, true);
     int vSizePolicy = getSizePolicy(components, false);
 
-    int midX1 = myCellRect.x + myCellRect.width / 3;
-    int midX2 = myCellRect.x + (myCellRect.width*2) / 3;
-    int midY1 = myCellRect.y + myCellRect.height / 3;
-    int midY2 = myCellRect.y + (myCellRect.height*2) / 3;
-
     InsertComponentProcessor icp = new InsertComponentProcessor(editor);
 
-    if (myTargetPoint.x < midX1 ||
-        (myTargetPoint.x < midX2 && isInsertTwoSpacers(hSizePolicy))) {
+    if (myXPart == 0 ||
+        (myXPart == 1 && isInsertTwoSpacers(hSizePolicy))) {
       insertSpacer(icp, hSpacerItem, GridInsertMode.ColumnAfter);
     }
-    if (myTargetPoint.x > midX2 ||
-        (myTargetPoint.x > midX1 && isInsertTwoSpacers(hSizePolicy))) {
+    if (myXPart == 2 ||
+        (myXPart == 1 && isInsertTwoSpacers(hSizePolicy))) {
       insertSpacer(icp, hSpacerItem, GridInsertMode.ColumnBefore);
     }
 
-    if (myTargetPoint.y < midY1 ||
-        (myTargetPoint.y < midY2 && isInsertTwoSpacers(vSizePolicy))) {
+    if (myYPart == 0 ||
+        (myYPart == 1 && isInsertTwoSpacers(vSizePolicy))) {
       insertSpacer(icp, vSpacerItem, GridInsertMode.RowAfter);
     }
-    if (myTargetPoint.y > midY2 ||
-        (myTargetPoint.y > midY1 && isInsertTwoSpacers(vSizePolicy))) {
+    if (myYPart == 2 ||
+        (myYPart == 1 && isInsertTwoSpacers(vSizePolicy))) {
       insertSpacer(icp, vSpacerItem, GridInsertMode.RowBefore);
     }
   }
 
   @Nullable
   public DropLocation getAdjacentLocation(Direction direction) {
+    if (direction == Direction.DOWN && myYPart < 2) {
+      return new FirstComponentInsertLocation(myContainer, myRow, myColumn, myCellRect, myXPart, myYPart+1);
+    }
+    if (direction == Direction.UP && myYPart > 0) {
+      return new FirstComponentInsertLocation(myContainer, myRow, myColumn, myCellRect, myXPart, myYPart-1);
+    }
+    if (direction == Direction.RIGHT && myXPart < 2) {
+      return new FirstComponentInsertLocation(myContainer, myRow, myColumn, myCellRect, myXPart+1, myYPart);
+    }
+    if (direction == Direction.LEFT && myXPart > 0) {
+      return new FirstComponentInsertLocation(myContainer, myRow, myColumn, myCellRect, myXPart-1, myYPart);
+    }
     return null;
   }
 

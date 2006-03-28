@@ -18,16 +18,14 @@ public class GridDropLocation implements DropLocation {
 
   protected RadContainer myContainer;
   protected int myRow;
-  private int myColumn;
+  protected int myColumn;
   private boolean myDropAllowed;
 
   public GridDropLocation(final boolean dropAllowed) {
     myDropAllowed = dropAllowed;
   }
 
-  public GridDropLocation(final RadContainer container,
-                          final int row,
-                          final int column) {
+  public GridDropLocation(final RadContainer container, final int row, final int column) {
     myContainer = container;
     myRow = row;
     myColumn = column;

@@ -29,6 +29,17 @@ public class GridInsertProcessor {
   }
 
   @NotNull public static DropLocation getDropLocation(RadRootContainer rootContainer, Point aPoint) {
+    RadContainer container = getDropTargetContainer(rootContainer, aPoint);
+
+    if (container == null) {
+      return new GridDropLocation(false);
+    }
+
+    final Point targetPoint = SwingUtilities.convertPoint(rootContainer.getDelegee(), aPoint, container.getDelegee());
+    return container.getDropLocation(targetPoint);
+  }
+
+  public static RadContainer getDropTargetContainer(final RadRootContainer rootContainer, final Point aPoint) {
     int EPSILON = 4;
     RadContainer container = FormEditingUtil.getRadContainerAt(rootContainer, aPoint.x, aPoint.y, EPSILON);
     // to facilitate initial component adding, increase stickiness if there is one container at top level
@@ -43,13 +54,7 @@ public class GridInsertProcessor {
         }
       }
     }
-
-    if (container == null) {
-      return new GridDropLocation(false);
-    }
-
-    final Point targetPoint = SwingUtilities.convertPoint(rootContainer.getDelegee(), aPoint, container.getDelegee());
-    return container.getDropLocation(targetPoint);
+    return container;
   }
 
   public DropLocation processDragEvent(Point pnt, ComponentDragObject dragObject) {

@@ -15,12 +15,14 @@ import com.intellij.uiDesigner.palette.GroupItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.awt.Point;
 
 /**
  * @author yole
@@ -51,11 +53,11 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
         // try to insert in empty cell to the right or below the component; if not found -
         // insert row below selected component
         if (c.getColumn() + c.getColSpan() < grid.getColumnCount() &&
-          container.getComponentAtGrid(c.getRow(), c.getColumn() + c.getColSpan()) == null) {
+            container.getComponentAtGrid(c.getRow(), c.getColumn() + c.getColSpan()) == null) {
           dropLocation = new GridDropLocation(container, c.getRow(), c.getColumn() + c.getColSpan());
         }
         else if (c.getRow() + c.getRowSpan() < grid.getRowCount() &&
-          container.getComponentAtGrid(c.getRow() + c.getRowSpan(), c.getColumn()) == null) {
+                 container.getComponentAtGrid(c.getRow() + c.getRowSpan(), c.getColumn()) == null) {
           dropLocation = new GridDropLocation(container, c.getRow() + c.getRowSpan(), c.getColumn());
         }
         else {
@@ -65,8 +67,21 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
       }
     }
     if (dropLocation == null) {
-      dropLocation = GridInsertProcessor.getDropLocation(editor.getRootContainer(),
-                                                         editor.getMainProcessor().getLastMousePosition());
+      final Point mousePosition = editor.getMainProcessor().getLastMousePosition();
+      if (mousePosition != null) {
+        RadContainer container = GridInsertProcessor.getDropTargetContainer(editor.getRootContainer(), mousePosition);
+        if (container instanceof RadRootContainer && container.getComponentCount() == 1 &&
+          container.getComponent(0) instanceof RadContainer) {
+          RadContainer childContainer = (RadContainer)container.getComponent(0);
+          dropLocation = childContainer.getDropLocation(null);
+        }
+        else {
+          dropLocation = GridInsertProcessor.getDropLocation(editor.getRootContainer(), mousePosition);
+        }
+      }
+      else {
+        dropLocation = editor.getRootContainer().getDropLocation(null);
+      }
     }
     return dropLocation;
   }

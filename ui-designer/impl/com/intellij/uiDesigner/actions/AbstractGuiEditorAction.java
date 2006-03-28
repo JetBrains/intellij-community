@@ -52,6 +52,8 @@ public abstract class AbstractGuiEditorAction extends AnAction {
       e.getPresentation().setEnabled(false);
     }
     else {
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(true);
       final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
       update(editor, selection, e);
     }

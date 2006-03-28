@@ -115,14 +115,20 @@ public class RadGridLayoutManager extends RadLayoutManager {
   public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
     final GridLayoutManager grid = (GridLayoutManager) container.getLayout();
 
-    if (location == null) {
-      return new GridDropLocation(container, 0, 0);
-    }
-
     if (grid.getRowCount() == 1 && grid.getColumnCount() == 1 &&
         container.getComponentAtGrid(0, 0) == null) {
       final Rectangle rc = grid.getCellRangeRect(0, 0, 0, 0);
+      if (location == null) {
+        return new FirstComponentInsertLocation(container, 0, 0, rc, 0, 0);
+      }
       return new FirstComponentInsertLocation(container, 0, 0, location, rc);
+    }
+
+    if (location == null) {
+      if (container.getComponentAtGrid(0, 0) == null) {
+        return new GridDropLocation(container, 0, 0);
+      }
+      return new GridInsertLocation(container, getLastNonSpacerRow(container), 0, GridInsertMode.RowAfter);
     }
 
     int[] xs = grid.getXs();
@@ -198,5 +204,17 @@ public class RadGridLayoutManager extends RadLayoutManager {
       return new GridInsertLocation(container, row, col, mode);
     }
     return new GridDropLocation(container, row, col);
+  }
+
+  private static int getLastNonSpacerRow(final RadContainer container) {
+    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+    int lastRow = grid.getRowCount()-1;
+    for(int col=0; col<grid.getColumnCount(); col++) {
+      RadComponent c = container.getComponentAtGrid(lastRow, col);
+      if (c != null && !(c instanceof RadHSpacer) && !(c instanceof RadVSpacer)) {
+        return lastRow;
+      }
+    }
+    return lastRow-1;
   }
 }

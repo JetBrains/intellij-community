@@ -66,9 +66,26 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   public void setLastLocation(final DropLocation location) {
-    myLastLocation = location;
     if (location.canDrop(getComponentToInsert())) {
-      location.placeFeedback(myEditor.getActiveDecorationLayer(), getComponentToInsert());
+      myLastLocation = location;
+    }
+    else {
+      DropLocation locationToRight = location.getAdjacentLocation(DropLocation.Direction.RIGHT);
+      DropLocation locationToBottom = location.getAdjacentLocation(DropLocation.Direction.DOWN);
+      if (locationToRight != null && locationToRight.canDrop(getComponentToInsert())) {
+        myLastLocation = locationToRight;
+      }
+      else if (locationToBottom != null && locationToBottom.canDrop(getComponentToInsert())) {
+        myLastLocation = locationToBottom;
+      }
+      else {
+        myLastLocation = location;
+      }
+    }
+
+    if (myLastLocation.canDrop(getComponentToInsert())) {
+      
+      myLastLocation.placeFeedback(myEditor.getActiveDecorationLayer(), getComponentToInsert());
     }
   }
 
@@ -79,10 +96,6 @@ public final class InsertComponentProcessor extends EventProcessor {
           myEditor.getMainProcessor().stopCurrentProcessor();
           processComponentInsert(getComponentToInsert(), myLastLocation);
         }
-      }
-      else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-        myEditor.getMainProcessor().stopCurrentProcessor();
-        myEditor.getActiveDecorationLayer().removeFeedback();
       }
       else {
         myLastLocation = moveDropLocation(myEditor, myLastLocation, getComponentToInsert(), e);
@@ -174,7 +187,10 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   protected void processMouseEvent(final MouseEvent e){
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-      processComponentInsert(e.getPoint(), null, getComponentToInsert());
+      final ComponentItem componentItem = getComponentToInsert();
+      if (componentItem != null) {
+        processComponentInsert(e.getPoint(), null, componentItem);
+      }
     }
     else if (e.getID() == MouseEvent.MOUSE_MOVED) {
       myLastLocation = myGridInsertProcessor.processDragEvent(e.getPoint(), getComponentToInsert());
@@ -377,7 +393,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   protected boolean cancelOperation() {
     myEditor.setDesignTimeInsets(2);
     myEditor.getActiveDecorationLayer().removeFeedback();
-    return false;
+    return true;
   }
 
   public Cursor processMouseMoveEvent(final MouseEvent e) {
