@@ -276,6 +276,7 @@ public class GridInsertLocation extends GridDropLocation {
         if (direction == Direction.UP && adjRow >= 0) {
           return new GridDropLocation(myContainer, adjRow, getColumn());
         }
+        return getLocationAtParent(direction);
       }
     }
     else {
@@ -299,6 +300,21 @@ public class GridInsertLocation extends GridDropLocation {
         if (direction == Direction.LEFT && adjCol >= 0) {
           return new GridDropLocation(myContainer, getRow(), adjCol);
         }
+        return getLocationAtParent(direction);
+      }
+    }
+    return null;
+  }
+
+  private DropLocation getLocationAtParent(final Direction direction) {
+    final RadContainer parent = myContainer.getParent();
+    if (parent.isGrid()) {
+      final GridConstraints c = myContainer.getConstraints();
+      switch(direction) {
+        case LEFT: return new GridInsertLocation(parent, c.getRow(), c.getColumn(), GridInsertMode.ColumnBefore);
+        case RIGHT: return new GridInsertLocation(parent, c.getRow(), c.getColumn()+c.getColSpan()-1, GridInsertMode.ColumnAfter);
+        case UP: return new GridInsertLocation(parent, c.getRow(), c.getColumn(), GridInsertMode.RowBefore);
+        case DOWN: return new GridInsertLocation(parent, c.getRow()+c.getRowSpan()-1, c.getColumn(), GridInsertMode.RowAfter);
       }
     }
     return null;
