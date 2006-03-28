@@ -130,13 +130,13 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
   }
 
   public boolean isValid() {
-    final PsiFile containingFile = getContainingFile();
-    return (containingFile != null) && containingFile.isValid();
+    final PsiElement parent = getParent();
+    return parent != null && parent.isValid();
   }
 
   public boolean isWritable() {
-    final PsiFile psiFile = getContainingFile();
-    return (psiFile != null && psiFile.isWritable());
+    final PsiElement parent = getParent();
+    return parent != null && parent.isWritable();
   }
 
   @NotNull
@@ -149,8 +149,8 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
   }
 
   public boolean isPhysical() {
-    final PsiFile psiFile = getContainingFile();
-    return (psiFile != null && psiFile.isPhysical());
+    final PsiElement parent = getParent();
+    return parent != null && parent.isPhysical();
   }
 
   public GlobalSearchScope getResolveScope() {
