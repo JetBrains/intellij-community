@@ -248,7 +248,7 @@ public class XmlUtil {
 
   public static boolean processXmlElements(XmlElement element, PsiElementProcessor processor, boolean deepFlag, boolean wideFlag) {
     if (element == null) return true;
-    PsiFile baseFile = element.getContainingFile();
+    PsiFile baseFile = element.isValid() ? element.getContainingFile() : null;
     return new XmlElementProcessor(processor, baseFile).processXmlElements(
       element,
       deepFlag,
