@@ -42,18 +42,43 @@ public abstract class EventProcessor {
       case KeyEvent.VK_LEFT: return DropLocation.Direction.LEFT;
       case KeyEvent.VK_UP: return DropLocation.Direction.UP;
       case KeyEvent.VK_DOWN: return DropLocation.Direction.DOWN;
+      case KeyEvent.VK_END: return DropLocation.Direction.RIGHT;
+      case KeyEvent.VK_HOME: return DropLocation.Direction.LEFT;
+      case KeyEvent.VK_PAGE_UP: return DropLocation.Direction.UP;
+      case KeyEvent.VK_PAGE_DOWN: return DropLocation.Direction.DOWN;
       default: return null;
     }
+  }
+
+  private static boolean isMoveToLast(final int keyCode) {
+    return keyCode == KeyEvent.VK_HOME || keyCode == KeyEvent.VK_END ||
+           keyCode == KeyEvent.VK_PAGE_UP || keyCode == KeyEvent.VK_PAGE_DOWN;
   }
 
   protected static DropLocation moveDropLocation(final GuiEditor editor, final DropLocation location,
                                                  final ComponentDragObject dragObject, final KeyEvent e) {
     DropLocation.Direction dir = directionFromKey(e.getKeyCode());
+    boolean moveToLast = isMoveToLast(e.getKeyCode());
     if (dir != null && location != null) {
-      DropLocation adjacentLocation = location.getAdjacentLocation(dir);
-      while(adjacentLocation != null && !adjacentLocation.canDrop(dragObject)) {
-        adjacentLocation = adjacentLocation.getAdjacentLocation(dir);
+      DropLocation adjacentLocation;
+      if (moveToLast) {
+        adjacentLocation = location.getAdjacentLocation(dir);
+        DropLocation lastLocation = location;
+        while(adjacentLocation != null) {
+          if (adjacentLocation.canDrop(dragObject)) {
+            lastLocation = adjacentLocation;
+          }
+          adjacentLocation = adjacentLocation.getAdjacentLocation(dir);
+        }
+        adjacentLocation = lastLocation;
       }
+      else {
+        adjacentLocation = location.getAdjacentLocation(dir);
+        while(adjacentLocation != null && !adjacentLocation.canDrop(dragObject)) {
+          adjacentLocation = adjacentLocation.getAdjacentLocation(dir);
+        }
+      }
+
       if (adjacentLocation != null && adjacentLocation.canDrop(dragObject)) {
         adjacentLocation.placeFeedback(editor.getActiveDecorationLayer(), dragObject);
         return adjacentLocation;
@@ -61,4 +86,5 @@ public abstract class EventProcessor {
     }
     return location;
   }
+
 }
