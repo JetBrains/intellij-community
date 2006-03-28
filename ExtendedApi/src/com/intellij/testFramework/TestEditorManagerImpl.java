@@ -94,6 +94,14 @@ import java.util.Map;
   }
 
   public void closeAllFiles() {
+    final EditorFactory editorFactory = EditorFactory.getInstance();
+    for (VirtualFile file : myVirtualFile2Editor.keySet()) {
+      Editor editor = myVirtualFile2Editor.get(file);
+      if (editor != null){
+        editorFactory.releaseEditor(editor);
+      }
+    }
+    myVirtualFile2Editor.clear();
   }
 
   public Editor openTextEditorEnsureNoFocus(OpenFileDescriptor descriptor) {
@@ -207,6 +215,7 @@ import java.util.Map;
   }
 
   public void disposeComponent() {
+    closeAllFiles();
   }
 
   public void initComponent() { }
