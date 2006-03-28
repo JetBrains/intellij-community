@@ -16,13 +16,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.event.*;
 
 /**
  * @author yole
@@ -103,6 +99,20 @@ public class PaletteComponentList extends JList {
       }
     });
 
+    addKeyListener(new KeyListener() {
+      public void keyPressed(KeyEvent e) {
+        PaletteManager.getInstance(myProject).notifyKeyEvent(e);
+      }
+
+      public void keyReleased(KeyEvent e) {
+        PaletteManager.getInstance(myProject).notifyKeyEvent(e);
+      }
+
+      public void keyTyped(KeyEvent e) {
+        PaletteManager.getInstance(myProject).notifyKeyEvent(e);
+      }
+    });
+
     setCellRenderer(new ComponentCellRenderer());
 
     setVisibleRowCount(0);
@@ -151,7 +161,7 @@ public class PaletteComponentList extends JList {
   }
 
   public int getPreferredHeight(final int width) {
-    myTempWidth = new Integer(width);
+    myTempWidth = width;
     try {
       return getUI().getPreferredSize(this).height;
     }
@@ -221,13 +231,10 @@ public class PaletteComponentList extends JList {
     }
   }
 
-  private class ComponentCellRenderer extends ColoredListCellRenderer {
-    private Border myHoverBorder = BorderFactory.createLineBorder(Color.BLUE);
-
+  private static class ComponentCellRenderer extends ColoredListCellRenderer {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       PaletteItem paletteItem = (PaletteItem) value;
       clear();
-      //setBorder(index == myHoverIndex ? myHoverBorder : null);
       paletteItem.customizeCellRenderer(this, selected, hasFocus);
     }
   }

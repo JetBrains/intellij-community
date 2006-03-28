@@ -18,6 +18,11 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * @author yole
  */
@@ -27,6 +32,7 @@ public class PaletteManager implements ProjectComponent {
   private PaletteWindow myPaletteWindow;
   private ToolWindow myPaletteToolWindow;
   private PaletteManager.MyFileEditorManagerListener myListener;
+  private List<KeyListener> myKeyListeners = new ArrayList<KeyListener>();
 
   public PaletteManager(Project project, FileEditorManager fileEditorManager) {
     myProject = project;
@@ -92,6 +98,14 @@ public class PaletteManager implements ProjectComponent {
     return null;
   }
 
+  public void addKeyListener(KeyListener l) {
+    myKeyListeners.add(l);
+  }
+
+  public void removeKeyListener(KeyListener l) {
+    myKeyListeners.remove(l);
+  }
+
   private void processFileEditorChange() {
     myPaletteWindow.refreshPaletteIfChanged();
     if (myPaletteWindow.getActiveGroupCount() == 0) {
@@ -100,6 +114,20 @@ public class PaletteManager implements ProjectComponent {
     else {
       myPaletteToolWindow.setAvailable(true, null);
       myPaletteToolWindow.show(null);
+    }
+  }
+
+  public void notifyKeyEvent(final KeyEvent e) {
+    for(KeyListener l: myKeyListeners) {
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
+        l.keyPressed(e);
+      }
+      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+        l.keyReleased(e);
+      }
+      else if (e.getID() == KeyEvent.KEY_TYPED) {
+        l.keyTyped(e);
+      }
     }
   }
 
