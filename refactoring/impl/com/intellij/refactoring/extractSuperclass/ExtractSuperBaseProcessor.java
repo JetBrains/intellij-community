@@ -109,8 +109,8 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
       PsiClass superClass = extractSuper(superClassName);
       for (final UsageInfo usage : usages) {
         if (usage instanceof BindToOldUsageInfo) {
-          final PsiReference reference = ((BindToOldUsageInfo)usage).reference;
-          if (reference.getElement().isValid()) {
+          final PsiReference reference = ((BindToOldUsageInfo)usage).getReference();
+          if (reference != null && reference.getElement().isValid()) {
             reference.bindToElement(myClass);
           }
         }

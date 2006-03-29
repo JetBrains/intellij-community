@@ -184,7 +184,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       if (usage instanceof MoveRenameUsageInfo) {
         MoveRenameUsageInfo usageInfo = (MoveRenameUsageInfo)usage;
-        if (element.equals(usageInfo.referencedElement)) {
+        if (element.equals(usageInfo.getReferencedElement())) {
           extractedUsages.add(usageInfo);
         }
       }

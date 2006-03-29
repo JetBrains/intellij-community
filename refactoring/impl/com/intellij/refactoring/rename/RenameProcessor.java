@@ -48,7 +48,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private String myNewName = null;
 
   boolean mySearchInComments;
-  private boolean mySearchTextOccurences;
+  private boolean mySearchTextOccurrences;
   private String myCommandName;
   private boolean myShouldRenameVariables;
   private boolean myShouldRenameInheritors;
@@ -61,12 +61,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
                          PsiElement element,
                          String newName,
                          boolean isSearchInComments,
-                         boolean toSearchInNonJavaFiles) {
+                         boolean isSearchTextOccurrences) {
     super(project);
     myPrimaryElement = element;
 
     mySearchInComments = isSearchInComments;
-    mySearchTextOccurences = toSearchInNonJavaFiles;
+    mySearchTextOccurrences = isSearchTextOccurrences;
 
     setNewName(newName);
   }
@@ -272,7 +272,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     Runnable runnable = new Runnable() {
       public void run() {
         for (final AutomaticRenamer renamer : myRenamers) {
-          renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurences);
+          renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences);
         }
       }
     };
@@ -399,7 +399,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {
       PsiElement element = entry.getKey();
       final String newName = entry.getValue();
-      final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchTextOccurences, myAllRenames);
+      final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchTextOccurrences, myAllRenames);
       result.addAll(Arrays.asList(usages));
       if (element instanceof PsiClass && myShouldRenameVariables) {
         myRenamers.add(new AutomaticVariableRenamer((PsiClass)element, newName, Arrays.asList(usages)));
@@ -488,7 +488,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       LOG.assertTrue(usage instanceof MoveRenameUsageInfo);
 
       MoveRenameUsageInfo usageInfo = (MoveRenameUsageInfo)usage;
-      if (element.equals(usageInfo.referencedElement)) {
+      if (element.equals(usageInfo.getReferencedElement())) {
         extractedUsages.add(usageInfo);
       }
     }
@@ -522,16 +522,16 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     mySearchInComments = value;
   }
 
-  public void setSearchTextOccurences(boolean searchTextOccurences) {
-    mySearchTextOccurences = searchTextOccurences;
+  public void setSearchTextOccurrences(boolean searchTextOccurrences) {
+    mySearchTextOccurrences = searchTextOccurrences;
   }
 
   public boolean isSearchInComments() {
     return mySearchInComments;
   }
 
-  public boolean isSearchTextOccurences() {
-    return mySearchTextOccurences;
+  public boolean isSearchTextOccurrences() {
+    return mySearchTextOccurrences;
   }
 
 

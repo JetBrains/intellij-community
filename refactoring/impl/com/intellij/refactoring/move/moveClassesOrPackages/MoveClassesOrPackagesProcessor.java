@@ -226,8 +226,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       PsiElement element = usage.getElement();
       if (element == null) continue;
       if (usage instanceof MoveRenameUsageInfo && !(usage instanceof NonCodeUsageInfo) &&
-          ((MoveRenameUsageInfo)usage).referencedElement instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)((MoveRenameUsageInfo)usage).referencedElement;
+          ((MoveRenameUsageInfo)usage).getReferencedElement() instanceof PsiClass) {
+        PsiClass aClass = (PsiClass)((MoveRenameUsageInfo)usage).getReferencedElement();
         if (!movedClasses.contains(aClass)) {
           movedClasses.add(aClass);
         }
@@ -357,8 +357,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       public PsiReference[] findReferences() {
         ArrayList<PsiReference> result = new ArrayList<PsiReference>();
         for (UsageInfo usage : usages) {
-          if (usage instanceof MoveRenameUsageInfo && ((MoveRenameUsageInfo)usage).referencedElement == aClass) {
-            final PsiReference reference = ((MoveRenameUsageInfo)usage).reference;
+          if (usage instanceof MoveRenameUsageInfo && ((MoveRenameUsageInfo)usage).getReferencedElement() == aClass) {
+            final PsiReference reference = ((MoveRenameUsageInfo)usage).getReference();
             if (reference != null) {
               result.add(reference);
             }
@@ -453,7 +453,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private static MoveRenameUsageInfo[] extractElementUsages(PsiElement element, UsageInfo[] allUsages) {
     ArrayList<MoveRenameUsageInfo> usages = new ArrayList<MoveRenameUsageInfo>();
     for (UsageInfo usage : allUsages) {
-      if (usage instanceof MoveRenameUsageInfo && element.equals(((MoveRenameUsageInfo)usage).referencedElement)) {
+      if (usage instanceof MoveRenameUsageInfo && element.equals(((MoveRenameUsageInfo)usage).getReferencedElement())) {
         usages.add((MoveRenameUsageInfo)usage);
       }
     }

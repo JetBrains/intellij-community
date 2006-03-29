@@ -1489,7 +1489,7 @@ public class RefactoringUtil {
 
             final String message =
               RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2", ConflictsUtil.capitalize(
-                CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(moveRenameUsageInfo.referencedElement, true))),
+                CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true))),
                                    scopeDescription,
                                    CommonRefactoringUtil.htmlEmphasize(module.getName()));
             conflicts.add(message);

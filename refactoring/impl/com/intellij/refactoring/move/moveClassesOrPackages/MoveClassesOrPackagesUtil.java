@@ -141,8 +141,8 @@ public class MoveClassesOrPackagesUtil {
 
     for (UsageInfo usage1 : usages) {
       MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usage1;
-      LOG.assertTrue(usage.referencedElement instanceof PsiPackage);
-      final PsiPackage oldPackage = (PsiPackage)usage.referencedElement;
+      LOG.assertTrue(usage.getReferencedElement() instanceof PsiPackage);
+      final PsiPackage oldPackage = (PsiPackage)usage.getReferencedElement();
       LOG.assertTrue(!"".equals(oldPackage.getName()));
       targetPackages.put(usage, newPrefix + oldPackage.getName());
     }
@@ -161,7 +161,7 @@ public class MoveClassesOrPackagesUtil {
     for (UsageInfo usage2 : usages) {
       MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usage2;
       if (usage.getElement() == null) continue;
-      PsiReference reference = usage.reference;
+      PsiReference reference = usage.getReference();
       if (reference != null) {
         final String newQName = targetPackages.get(usage);
         final PsiPackage newPackage = manager.findPackage(newQName);
@@ -267,7 +267,7 @@ public class MoveClassesOrPackagesUtil {
     for (UsageInfo usage1 : usages) {
       MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usage1;
       if (usage.getElement() == null) continue;
-      PsiReference reference = usage.reference;
+      PsiReference reference = usage.getReference();
       if (reference != null) {
         PsiElement parent = reference.getElement().getParent();
         if (parent instanceof PsiImportStatement) {

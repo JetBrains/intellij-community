@@ -94,8 +94,11 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       for (UsageInfo usage : myVariablesUsages) {
         if (usage instanceof MoveRenameUsageInfo) {
           final MoveRenameUsageInfo renameUsageInfo = ((MoveRenameUsageInfo)usage);
-          final String newName = myVariablesRenames.get(renameUsageInfo.referencedElement);
-          renameUsageInfo.reference.handleElementRename(newName);
+          final String newName = myVariablesRenames.get(renameUsageInfo.getReferencedElement());
+          final PsiReference reference = renameUsageInfo.getReference();
+          if (reference != null) {
+            reference.handleElementRename(newName);
+          }
         }
       }
 

@@ -24,26 +24,26 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
 
   @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition){
-    final Set<String> knownTopLevelPackages = new HashSet<String>();
+    /*final Set<String> knownTopLevelPackages = new HashSet<String>();
     final List<PsiElement> defaultPackages = getDefaultPackages(position);
     for (final PsiElement pack : defaultPackages) {
       if (pack instanceof PsiPackage) {
         knownTopLevelPackages.add(((PsiPackage)pack).getName());
       }
-    }
+    }*/
     final List<ReferenceSet.JavaReference> results = new ArrayList<ReferenceSet.JavaReference>();
 
     final Matcher matcher = PATTERN.matcher(str);
 
     while(matcher.find()){
       final String identifier = matcher.group().trim();
-      if(knownTopLevelPackages.contains(identifier.substring(0, identifier.indexOf('.')))){
+      //if(knownTopLevelPackages.contains(identifier.substring(0, identifier.indexOf('.')))){
         results.addAll(Arrays.asList(new ReferenceSet(identifier, position, offsetInPosition + matcher.start(), type, false){
           protected boolean isSoft(){
             return true;
           }
         }.getAllReferences()));
-      }
+      //}
     }
     return results.toArray(new GenericReference[results.size()]);
   }

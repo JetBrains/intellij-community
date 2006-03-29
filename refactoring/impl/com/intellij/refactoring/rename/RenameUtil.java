@@ -577,7 +577,7 @@ public class RenameUtil {
     }
     for (UsageInfo info : infos) {
       if (info.getElement() == null) continue;
-      PsiReference ref = ((MoveRenameUsageInfo)info).reference;
+      PsiReference ref = ((MoveRenameUsageInfo)info).getReference();
       if (ref == null) continue;
       queue.addLast(ref);
     }
@@ -621,7 +621,7 @@ public class RenameUtil {
 
   private static void rename(UsageInfo info, String newName) throws IncorrectOperationException {
     if (info.getElement() == null) return;
-    PsiReference ref = ((MoveRenameUsageInfo)info).reference;
+    PsiReference ref = ((MoveRenameUsageInfo)info).getReference();
     if (ref == null) return;
     ref.handleElementRename(newName);
   }
@@ -669,7 +669,7 @@ public class RenameUtil {
       if (!(element instanceof PsiMethod)) {
         final PsiReference ref;
         if (usage instanceof MoveRenameUsageInfo) {
-          ref = ((MoveRenameUsageInfo) usage).reference;
+          ref = ((MoveRenameUsageInfo) usage).getReference();
         } else {
           ref = element.getReference();
         }
@@ -705,7 +705,7 @@ public class RenameUtil {
           ref = element.getReference();
         }
         else {
-          ref = ((MoveRenameUsageInfo)usage).reference;
+          ref = ((MoveRenameUsageInfo)usage).getReference();
         }
         if (ref != null) {
           PsiElement newElem = ref.handleElementRename(newName);

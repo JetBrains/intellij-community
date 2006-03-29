@@ -15,33 +15,65 @@
  */
 package com.intellij.refactoring.util;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nullable;
 
 public class MoveRenameUsageInfo extends UsageInfo{
-  public final PsiElement referencedElement;
-  public final PsiReference reference;
+  private final PsiElement myReferencedElement;
+
+  private RangeMarker myReferenceRangeMarker = null;
+  private PsiReference myReference;
 
   public MoveRenameUsageInfo(PsiElement element, PsiReference reference, PsiElement referencedElement){
     super(element);
-    this.referencedElement = referencedElement;
-    if (reference == null) {
-      this.reference = element.getReference();
+    final Project project = element.getProject();
+    myReferencedElement = referencedElement;
+    myReference = reference;
+    if (reference == null) reference = element.getReference();
+    if (reference != null) {
+      Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
+      int elementStart = element.getTextRange().getStartOffset();
+      myReferenceRangeMarker = document.createRangeMarker(elementStart + reference.getRangeInElement().getStartOffset(),
+                                                          elementStart + reference.getRangeInElement().getEndOffset());
     }
-    else {
-      this.reference = reference;
-    }
+
   }
 
   public MoveRenameUsageInfo(PsiElement element, PsiReference reference, int startOffset, int endOffset, PsiElement referencedElement, boolean nonCodeUsage){
     super(element, startOffset, endOffset, nonCodeUsage);
-    this.referencedElement = referencedElement;
-    if (reference == null) {
-      this.reference = element.getReference();
+    final Project project = element.getProject();
+    myReferencedElement = referencedElement;
+    myReference = reference;
+    if (reference == null) reference = element.getReference();
+    if (reference != null) {
+      Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
+      int elementStart = element.getTextRange().getStartOffset();
+      myReferenceRangeMarker = document.createRangeMarker(elementStart + reference.getRangeInElement().getStartOffset(),
+                                                          elementStart + reference.getRangeInElement().getEndOffset());
     }
-    else {
-      this.reference = reference;
-    }
+  }
+
+  @Nullable
+  public PsiElement getReferencedElement() {
+    return myReferencedElement;
+  }
+
+  @Nullable
+  public PsiReference getReference() {
+    if (myReferenceRangeMarker == null) return null;
+    final PsiElement element = getElement();
+    if (element == null) return null;
+    final int start = myReferenceRangeMarker.getStartOffset() - element.getTextRange().getStartOffset();
+    final int end = myReferenceRangeMarker.getEndOffset() - element.getTextRange().getStartOffset();
+    final PsiReference reference = element.findReferenceAt(start);
+    if (reference == null) return null;
+    final TextRange rangeInElement = reference.getRangeInElement();
+    if (rangeInElement.getStartOffset() != start || rangeInElement.getEndOffset() != end) return null;
+    return reference;
   }
 }
