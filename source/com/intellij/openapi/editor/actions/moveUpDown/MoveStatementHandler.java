@@ -40,7 +40,8 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final Project project = editor.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
-    PsiFile file = getRoot(documentManager.getPsiFile(document), editor);
+    PsiFile psiFile = documentManager.getPsiFile(document);
+    PsiFile file = getRoot(psiFile, editor);
     if (file == null) return false;
     final Mover mover = getSuitableMover(editor, file);
     if (mover == null || mover.insertOffset == -1) return false;
@@ -51,6 +52,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
   }
 
   private static PsiFile getRoot(final PsiFile file, final Editor editor) {
+    if (file == null || editor == null) return null;
     PsiElement leafElement = file.findElementAt(editor.getCaretModel().getOffset());
     if (leafElement == null) return null;
     return (PsiFile)PsiUtil.getRoot(leafElement.getNode()).getPsi();
