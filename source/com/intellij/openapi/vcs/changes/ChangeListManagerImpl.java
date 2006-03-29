@@ -386,7 +386,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               }
             }
             finally {
-              if (myDisposed) {
+              if (!myDisposed) {
                 synchronized (myChangeLists) {
                   for (ChangeList list : myChangeLists) {
                     if (list.doneProcessingChanges()) {
