@@ -1,16 +1,13 @@
 package com.intellij.debugger.actions;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.ui.HotSwapUI;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.ui.HotSwapUI;
-import com.intellij.debugger.impl.DebuggerSession;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,7 +29,7 @@ public class HotSwapAction extends AnAction{
     DebuggerSession session = debuggerManager.getContext().getDebuggerSession();
 
     if(session != null && session.isAttached()) {
-      HotSwapUI.getInstance(project).reloadChangedClasses(session, RunManagerEx.getInstanceEx(project).getConfig().isCompileBeforeRunning());
+      HotSwapUI.getInstance(project).reloadChangedClasses(session, session.isCompileBeforeRunning());
     }
   }
 

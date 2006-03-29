@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Manages {@link RunConfiguration}s.
@@ -21,9 +22,8 @@ public abstract class RunManagerEx extends RunManager {
     return (RunManagerEx)project.getComponent(RunManager.class);
   }
 
-  public abstract RunnerAndConfigurationSettingsImpl getSelectedConfiguration(ConfigurationType type);
-
-
+  @Nullable
+  public abstract RunnerAndConfigurationSettingsImpl getSelectedConfiguration();
 
   public abstract boolean isTemporary(RunnerAndConfigurationSettingsImpl configuration);
 

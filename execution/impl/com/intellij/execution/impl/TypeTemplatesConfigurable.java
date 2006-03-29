@@ -4,10 +4,10 @@
  */
 package com.intellij.execution.impl;
 
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
@@ -62,23 +62,20 @@ class TypeTemplatesConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    for (int i = 0; i < myConfigurables.length; i++) {
-      final Configurable configurable = myConfigurables[i];
+    for (final Configurable configurable : myConfigurables) {
       if (configurable.isModified()) return true;
     }
     return false;
   }
 
   public void apply() throws ConfigurationException {
-    for (int i = 0; i < myConfigurables.length; i++) {
-      final Configurable configurable = myConfigurables[i];
+    for (final Configurable configurable : myConfigurables) {
       configurable.apply();
     }
   }
 
   public void reset() {
-    for (int i = 0; i < myConfigurables.length; i++) {
-      final Configurable configurable = myConfigurables[i];
+    for (final Configurable configurable : myConfigurables) {
       configurable.reset();
     }
   }
@@ -96,15 +93,15 @@ class TypeTemplatesConfigurable implements Configurable {
     final ConfigurationFactory[] factories = type.getConfigurationFactories();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     return factories.length == 1
-           ? (Configurable)new TemplateConfigurable(runManager.getConfigurationTemplate(factories[0]))
+           ? new TemplateConfigurable(runManager.getConfigurationTemplate(factories[0]))
            : new TypeTemplatesConfigurable(type, runManager);
   }
 
-  private static class TemplateConfigurable extends SettingsEditorConfigurable {
+  private static class TemplateConfigurable extends SettingsEditorConfigurable<RunnerAndConfigurationSettingsImpl> {
     private final RunnerAndConfigurationSettings myTemplate;
 
     public TemplateConfigurable(RunnerAndConfigurationSettingsImpl template) {
-      super(new ConfigurationSettingsEditor(template), template);
+      super(new ConfigurationSettingsEditorWrapper(template), template);
       myTemplate = template;
     }
 

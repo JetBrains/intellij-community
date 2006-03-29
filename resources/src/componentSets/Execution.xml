@@ -32,6 +32,10 @@
       <skipForDummyProject/>
     </component>
     <component>
+      <implementation-class>com.intellij.execution.impl.ProjectRunConfigurationManager</implementation-class>
+      <skipForDummyProject/>
+    </component>
+    <component>
       <interface-class>com.intellij.execution.ExecutionManager</interface-class>
       <implementation-class>com.intellij.execution.impl.ExecutionManagerImpl</implementation-class>
       <skipForDummyProject/>

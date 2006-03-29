@@ -2,10 +2,12 @@ package com.intellij.execution.impl;
 
 import com.intellij.ant.AntConfiguration;
 import com.intellij.ant.impl.MapDataContext;
+import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.compiler.impl.ProjectCompileScope;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
@@ -17,21 +19,18 @@ import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.compiler.impl.ProjectCompileScope;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dyoma
@@ -112,7 +111,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     };
     Module[] modulesToCompile = state.getModulesToCompile();
     if (modulesToCompile == null) modulesToCompile = Module.EMPTY_ARRAY;
-    if (getConfig().isCompileBeforeRunning() && modulesToCompile.length > 0) {
+    if (getConfig().isCompileBeforeRunning(configuration) && modulesToCompile.length > 0) {
       final CompileStatusNotification callback = new CompileStatusNotification() {
         public void finished(final boolean aborted, final int errors, final int warnings, CompileContext compileContext) {
           if (errors == 0 && !aborted) {
@@ -121,7 +120,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         }
       };
       CompileScope scope;
-      if (Boolean.valueOf(System.getProperty(MAKE_PROJECT_ON_RUN_KEY, Boolean.FALSE.toString()))) {
+      if (Boolean.valueOf(System.getProperty(MAKE_PROJECT_ON_RUN_KEY, Boolean.FALSE.toString())).booleanValue()) {
         // user explicitly requested whole-project make
         scope = new ProjectCompileScope(myProject);
       }
@@ -169,8 +168,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       };
       final TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(myProject);
       if (myFilters != null) {
-        for (int i = 0; i < myFilters.length; i++) {
-          builder.addFilter(myFilters[i]);
+        for (Filter myFilter : myFilters) {
+          builder.addFilter(myFilter);
         }
       }
       state.setConsoleBuilder(builder);

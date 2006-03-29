@@ -51,10 +51,10 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     final JTableHeader tableHeader = myFilesTable.getTableHeader();
     final FontMetrics fontMetrics = tableHeader.getFontMetrics(tableHeader.getFont());
 
-    int preferredWidth = fontMetrics.stringWidth(" " + IS_SHOW.getName() + " ") + 4;
+    int preferredWidth = fontMetrics.stringWidth(IS_SHOW.getName()) + 20;
     setUpColumnWidth(tableHeader, preferredWidth, 0);
 
-    preferredWidth = fontMetrics.stringWidth(" " + IS_SKIP_CONTENT.getName() + " ") + 4;
+    preferredWidth = fontMetrics.stringWidth(IS_SKIP_CONTENT.getName()) + 20;
     setUpColumnWidth(tableHeader, preferredWidth, 2);
 
     myFilesTable.setColumnSelectionAllowed(false);

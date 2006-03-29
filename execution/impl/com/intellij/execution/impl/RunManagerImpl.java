@@ -1,12 +1,13 @@
 package com.intellij.execution.impl;
 
+import com.intellij.execution.RunManagerConfig;
 import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.*;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.RuntimeConfiguration;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.ModuleBasedConfiguration;
 import com.intellij.execution.util.RefactoringElementListenerComposite;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Application;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,10 +18,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
-import com.intellij.util.containers.InternalIterator;
-import com.intellij.util.containers.CollectUtil;
-import com.intellij.util.containers.Convertor;
-import com.intellij.ide.util.PropertiesComponent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -34,16 +31,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   private Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<String, ConfigurationType>();
 
-  private List<RunnerAndConfigurationSettingsImpl> myConfigurations = new ArrayList<RunnerAndConfigurationSettingsImpl>(); // template configurations are not included here
+  private Map<String, RunnerAndConfigurationSettingsImpl> myConfigurations = new HashMap<String, RunnerAndConfigurationSettingsImpl>(); // template configurations are not included here
   private Map<ConfigurationFactory, RunnerAndConfigurationSettingsImpl> myTemplateConfigurationsMap = new HashMap<ConfigurationFactory, RunnerAndConfigurationSettingsImpl>();
-  private ConfigurationType myActiveConfigurationType;
-  private Map<ConfigurationType, RunnerAndConfigurationSettingsImpl> mySelectedConfigurations = new HashMap<ConfigurationType, RunnerAndConfigurationSettingsImpl>();
-
+  private RunnerAndConfigurationSettingsImpl mySelectedConfiguration = null;
+  private String mySelectedConfig = null;
   protected MyRefactoringElementListenerProvider myRefactoringElementListenerProvider;
   private RunnerAndConfigurationSettingsImpl myTempConfiguration;
 
-  @NonNls
-  private static final String ACTIVE_TYPE = "activeType";
   @NonNls
   private static final String TEMP_CONFIGURATION = "tempConfiguration";
   @NonNls
@@ -63,8 +57,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     myRefactoringElementListenerProvider = new MyRefactoringElementListenerProvider();
     initializeConfigurationTypes(configurationTypes);
 
-    for (Iterator<RunnerAndConfigurationSettingsImpl> iterator = myConfigurations.iterator(); iterator.hasNext();) {
-      final RunnerAndConfigurationSettings settings = iterator.next();
+    for (final RunnerAndConfigurationSettingsImpl settings : myConfigurations.values()) {
       RunConfiguration configuration = settings.getConfiguration();
       if (configuration instanceof ModuleBasedConfiguration) {
         ((ModuleBasedConfiguration)configuration).init();
@@ -77,8 +70,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     LOG.assertTrue(factories != null);
 
     myTypes = factories;
-    for (int i = 0; i < factories.length; i++) {
-      final ConfigurationType type = factories[i];
+    for (final ConfigurationType type : factories) {
       myTypesByName.put(type.getComponentName(), type);
     }
   }
@@ -107,6 +99,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     LOG.assertTrue(factory != null);
     RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(factory);
     RunConfiguration configuration = factory.createConfiguration(name, template.getConfiguration());
+    getConfig().setCompileMethodBeforeRunning(configuration,
+                                              getConfig().getCompileMethodBeforeRunning(template.getConfiguration()));
+    getConfig().setStoreProjectConfiguration(configuration,
+                                             getConfig().isStoreProjectConfiguration(template.getConfiguration()));
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this, configuration, false);
     settings.importRunnerAndConfigurationSettings(template);
     return settings;
@@ -122,7 +118,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public ConfigurationType[] getConfigurationFactories() {
-    return (ConfigurationType[])myTypes.clone();
+    return myTypes.clone();
   }
 
   /**
@@ -132,8 +128,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     LOG.assertTrue(type != null);
 
     final List<RunConfiguration> array = new ArrayList<RunConfiguration>();
-    for (int i = 0; i < myConfigurations.size(); i++) {
-      final RunConfiguration configuration = myConfigurations.get(i).getConfiguration();
+    for (RunnerAndConfigurationSettingsImpl myConfiguration : myConfigurations.values()) {
+      final RunConfiguration configuration = myConfiguration.getConfiguration();
       if (type.equals(configuration.getType())) {
         array.add(configuration);
       }
@@ -144,7 +140,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public RunConfiguration[] getAllConfigurations() {
     RunConfiguration [] result = new RunConfiguration[myConfigurations.size()];
     int i = 0;
-    for (Iterator<RunnerAndConfigurationSettingsImpl> iterator = myConfigurations.iterator(); iterator.hasNext();i++) {
+    for (Iterator<RunnerAndConfigurationSettingsImpl> iterator = myConfigurations.values().iterator(); iterator.hasNext();i++) {
       RunnerAndConfigurationSettings settings = iterator.next();
       result[i] = settings.getConfiguration();
     }
@@ -153,9 +149,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public RunnerAndConfigurationSettings getSettings(RunConfiguration configuration){
-    for (Iterator<RunnerAndConfigurationSettingsImpl> iterator = myConfigurations.iterator(); iterator.hasNext();) {
-      RunnerAndConfigurationSettings settings = iterator.next();
-      if(settings.getConfiguration() == configuration) return settings;
+    for (RunnerAndConfigurationSettingsImpl settings : myConfigurations.values()) {
+      if (settings.getConfiguration() == configuration) return settings;
     }
     return null;
   }
@@ -167,8 +162,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     LOG.assertTrue(type != null);
 
     final List<RunnerAndConfigurationSettings> array = new ArrayList<RunnerAndConfigurationSettings>();
-    for (int i = 0; i < myConfigurations.size(); i++) {
-      final RunnerAndConfigurationSettingsImpl configuration = myConfigurations.get(i);
+    for (RunnerAndConfigurationSettingsImpl configuration : myConfigurations.values()) {
       if (type.equals(configuration.getType())) {
         array.add(configuration);
       }
@@ -186,7 +180,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void addConfiguration(RunnerAndConfigurationSettingsImpl settings) {
-    myConfigurations.add(settings);
+    myConfigurations.put(getUniqueName(settings), settings);
+  }
+
+  private static String getUniqueName(final RunnerAndConfigurationSettingsImpl settings) {
+    return settings.getType().getDisplayName() + "." + settings.getName();
   }
 
   public void removeConfigurations(final ConfigurationType type) {
@@ -198,7 +196,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     //    it.remove();
     //  }
     //}
-    for (Iterator<RunnerAndConfigurationSettingsImpl> it = myConfigurations.iterator(); it.hasNext();) {
+    for (Iterator<RunnerAndConfigurationSettingsImpl> it = myConfigurations.values().iterator(); it.hasNext();) {
       final RunnerAndConfigurationSettings configuration = it.next();
       if (type.equals(configuration.getType())) {
         it.remove();
@@ -210,28 +208,16 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
   }
 
-  public ConfigurationType getActiveConfigurationFactory() {
-    return myActiveConfigurationType;
-  }
 
-  public void setActiveConfigurationFactory(final ConfigurationType activeConfigurationType) {
-    LOG.assertTrue(activeConfigurationType != null);
-    myActiveConfigurationType = activeConfigurationType;
-  }
-
-  public RunnerAndConfigurationSettingsImpl getSelectedConfiguration(final ConfigurationType type) {
-    LOG.assertTrue(type != null);
-    return mySelectedConfigurations.get(type);
+  public RunnerAndConfigurationSettingsImpl getSelectedConfiguration() {
+    if (mySelectedConfiguration == null){
+      mySelectedConfiguration = myConfigurations.get(mySelectedConfig);
+    }
+    return mySelectedConfiguration;
   }
 
   public void setSelectedConfiguration(final RunnerAndConfigurationSettingsImpl configuration) {
-    LOG.assertTrue(configuration != null);
-    mySelectedConfigurations.put(configuration.getType(), configuration);
-  }
-
-  public void clearConfigurationSelection(final ConfigurationType configurationType) {
-    LOG.assertTrue(configurationType != null);
-    mySelectedConfigurations.remove(configurationType);
+    mySelectedConfiguration = configuration;
   }
 
   public static boolean canRunConfiguration(final RunConfiguration configuration) {
@@ -250,58 +236,51 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   public void writeExternal(final Element parentNode) throws WriteExternalException {
     LOG.assertTrue(parentNode != null);
-    if (myActiveConfigurationType != null) {
-      final Element element = new Element(ACTIVE_TYPE);
-      parentNode.addContent(element);
-      element.setAttribute(NAME_ATTR, myActiveConfigurationType.getComponentName());
-    }
 
     if (myTempConfiguration != null) {
       addConfigurationElement(parentNode, myTempConfiguration, TEMP_CONFIGURATION);
     }
 
-    for (Iterator<RunnerAndConfigurationSettingsImpl> iterator = myTemplateConfigurationsMap.values().iterator(); iterator.hasNext();) {
-      addConfigurationElement(parentNode, iterator.next(), CONFIGURATION);
+    for (final RunnerAndConfigurationSettingsImpl runnerAndConfigurationSettings : myTemplateConfigurationsMap.values()) {
+      addConfigurationElement(parentNode, runnerAndConfigurationSettings);
     }
 
-    final List<RunnerAndConfigurationSettingsImpl> stableConfigurations = getStableConfigurations();
-    for (int i = 0; i < stableConfigurations.size(); i++) {
-      addConfigurationElement(parentNode, stableConfigurations.get(i), CONFIGURATION);
+    final Collection<RunnerAndConfigurationSettingsImpl> configurations = getStableConfigurations().values();
+    final RunManagerConfig managerConfig = getConfig();
+    for (RunnerAndConfigurationSettingsImpl configuration : configurations) {
+      if (!managerConfig.isStoreProjectConfiguration(configuration.getConfiguration())){
+        addConfigurationElement(parentNode, configuration);
+      }
+    }
+    if (mySelectedConfiguration != null){
+      parentNode.setAttribute(SELECTED_ATTR, getUniqueName(mySelectedConfiguration));
     }
   }
 
-  private void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettingsImpl template, String elementType) throws WriteExternalException {
+  public static void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettingsImpl template) throws WriteExternalException {
+    final Element configurationElement = new Element(CONFIGURATION);
+    parentNode.addContent(configurationElement);
+    template.writeExternal(configurationElement);
+  }
+
+  private static void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettingsImpl template, String elementType) throws WriteExternalException {
     final Element configurationElement = new Element(elementType);
     parentNode.addContent(configurationElement);
-    storeConfiguration(configurationElement, template);
-  }
-
-  private void storeConfiguration(final Element element, final RunnerAndConfigurationSettingsImpl configuration)
-    throws WriteExternalException {
-    final ConfigurationType type = configuration.getType();
-    final boolean isSelected = mySelectedConfigurations.get(type) == configuration;
-    element.setAttribute(SELECTED_ATTR, Boolean.valueOf(isSelected).toString());
-    configuration.writeExternal(element);
+    template.writeExternal(configurationElement);
   }
 
   public void readExternal(final Element parentNode) throws InvalidDataException {
     myConfigurations.clear();
 
     final List children = parentNode.getChildren();
-    for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-      final Element element = (Element)iterator.next();
-      final String elementName = element.getName();
-      if (ACTIVE_TYPE.equals(elementName)) {
-        final String typeName = element.getAttributeValue(NAME_ATTR);
-        if (typeName != null) myActiveConfigurationType = myTypesByName.get(typeName);
-      }
-      else {
-        loadConfiguration(element);
-      }
+    for (final Object aChildren : children) {
+      final Element element = (Element)aChildren;
+      loadConfiguration(element);
     }
+    mySelectedConfig = parentNode.getAttributeValue(SELECTED_ATTR);
   }
 
-  private void loadConfiguration(final Element element) throws InvalidDataException {
+  public void loadConfiguration(final Element element) throws InvalidDataException {
     RunnerAndConfigurationSettingsImpl configuration = new RunnerAndConfigurationSettingsImpl(this);
     configuration.readExternal(element);
     ConfigurationFactory factory = configuration.getFactory();
@@ -311,8 +290,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       myTemplateConfigurationsMap.put(factory, configuration);
     }
     else {
-      if (Boolean.valueOf(element.getAttributeValue(SELECTED_ATTR))) {
-        mySelectedConfigurations.put(factory.getType(), configuration);
+      if (Boolean.valueOf(element.getAttributeValue(SELECTED_ATTR)).booleanValue()) { //to support old style
+        mySelectedConfiguration = configuration;
       }
       if (TEMP_CONFIGURATION.equals(element.getName())) {
         myTempConfiguration = configuration;
@@ -336,11 +315,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return findFactoryOfTypeByName(myTypesByName.get(typeName), factoryName);
   }
 
-  private ConfigurationFactory findFactoryOfTypeByName(final ConfigurationType type, final String factoryName) {
+  private static ConfigurationFactory findFactoryOfTypeByName(final ConfigurationType type, final String factoryName) {
     if (type == null || factoryName == null) return null;
     final ConfigurationFactory[] factories = type.getConfigurationFactories();
-    for (int i = 0; i < factories.length; i++) {
-      final ConfigurationFactory factory = factories[i];
+    for (final ConfigurationFactory factory : factories) {
       if (factoryName.equals(factory.getName())) return factory;
     }
     return null;
@@ -359,20 +337,19 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void setActiveConfiguration(final RunnerAndConfigurationSettingsImpl configuration) {
-    final ConfigurationType type = configuration.getType();
-    setActiveConfigurationFactory(type);
     setSelectedConfiguration(configuration);
   }
 
-  private List<RunnerAndConfigurationSettingsImpl> getStableConfigurations() {
-    final List<RunnerAndConfigurationSettingsImpl> result = new ArrayList<RunnerAndConfigurationSettingsImpl>(myConfigurations);
-    result.remove(myTempConfiguration);
+  public Map<String, RunnerAndConfigurationSettingsImpl> getStableConfigurations() {
+    final HashMap<String,RunnerAndConfigurationSettingsImpl> result = new HashMap<String, RunnerAndConfigurationSettingsImpl>(myConfigurations);
+    if (myTempConfiguration != null) {
+      result.remove(myTempConfiguration.getName());
+    }
     return result;
   }
 
   public boolean isTemporary(final RunConfiguration configuration) {
-    if (myTempConfiguration == null) return false;
-    return myTempConfiguration.getConfiguration() == configuration;
+    return myTempConfiguration != null && myTempConfiguration.getConfiguration() == configuration;
   }
 
   public boolean isTemporary(RunnerAndConfigurationSettingsImpl settings) {
@@ -389,11 +366,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
   }
 
-  public RunnerAndConfigurationSettings getSelectedConfiguration() {
-    ConfigurationType activeFactory = getActiveConfigurationFactory();
-    return activeFactory != null ? getSelectedConfiguration(activeFactory) : null;
-  }
-
   public RunnerAndConfigurationSettings createRunConfiguration(String name, ConfigurationFactory type) {
     return createConfiguration(name, type);
   }
@@ -402,8 +374,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   private class MyRefactoringElementListenerProvider implements RefactoringElementListenerProvider {
     public RefactoringElementListener getListener(final PsiElement element) {
       RefactoringElementListenerComposite composite = null;
-      for (int i = 0; i < myConfigurations.size(); i++) {
-        final RunConfiguration configuration = myConfigurations.get(i).getConfiguration();
+      for (RunnerAndConfigurationSettingsImpl settings : myConfigurations.values()) {
+        final RunConfiguration configuration = settings.getConfiguration();
         if (configuration instanceof RuntimeConfiguration) { // todo: perhaps better way to handle listeners?
           final RefactoringElementListener listener = ((RuntimeConfiguration)configuration).getRefactoringElementListener(element);
           if (listener != null) {

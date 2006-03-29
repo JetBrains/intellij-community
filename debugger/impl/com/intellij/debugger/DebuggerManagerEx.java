@@ -1,7 +1,6 @@
 package com.intellij.debugger;
 
 import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerManagerListener;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -34,8 +33,10 @@ public abstract class DebuggerManagerEx extends DebuggerManager {
   public abstract void addDebuggerManagerListener(DebuggerManagerListener debuggerManagerListener);
   public abstract void removeDebuggerManagerListener(DebuggerManagerListener debuggerManagerListener);
 
-  public abstract DebuggerSession attachVirtualMachine(String sessionName, RunProfileState state,
+  public abstract DebuggerSession attachVirtualMachine(String sessionName,
+                                                       RunProfileState state,
                                                        RemoteConnection connection,
-                                                       boolean pollConnection) throws ExecutionException;
+                                                       boolean pollConnection,
+                                                       boolean compileBeforeRunning) throws ExecutionException;
 
 }

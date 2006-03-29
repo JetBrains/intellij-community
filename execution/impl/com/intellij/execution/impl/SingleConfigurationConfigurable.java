@@ -1,7 +1,7 @@
 package com.intellij.execution.impl;
 
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +11,7 @@ import com.intellij.openapi.options.SettingsEditorConfigurable;
 import com.intellij.openapi.options.SettingsEditorListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -20,8 +21,6 @@ import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -40,7 +39,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final Icon myIcon;
 
   private SingleConfigurationConfigurable(RunnerAndConfigurationSettingsImpl settings) {
-    super(new ConfigurationSettingsEditor(settings), settings);
+    super(new ConfigurationSettingsEditorWrapper(settings), settings);
 
     final Config configuration = (Config)getSettings().getConfiguration();
     myDisplayName = getSettings().getName();
@@ -67,13 +66,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return configurable;
   }
 
-  public final void applyTo(final RunnerAndConfigurationSettingsImpl configuration) throws ConfigurationException {
-    LOG.assertTrue(configuration != null);
-
-    getEditor().applyTo(configuration);
-    configuration.setName(getNameText());
-  }
-
   public void apply() throws ConfigurationException {
     getSettings().setName(getNameText());
     super.apply();
@@ -85,13 +77,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       setNameText(configuration.getName());
     }
     super.reset();
-  }
-
-  public final void loadFrom(final RunnerAndConfigurationSettingsImpl configuration) {
-    LOG.assertTrue(configuration != null);
-
-    getEditor().resetFrom(configuration);
-    setNameText(configuration.getName());
   }
 
   public final JComponent createComponent() {
@@ -215,7 +200,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           updateWarning();
         }
       });
-
     }
 
     public final JComponent getWholePanel() {

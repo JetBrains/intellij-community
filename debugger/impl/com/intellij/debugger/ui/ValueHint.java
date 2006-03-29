@@ -176,7 +176,7 @@ public class ValueHint {
                     if( myType != MOUSE_OVER_HINT || descriptor.isValueValid()) {
                       final SimpleColoredText simpleColoredText = DebuggerTreeRenderer.getDescriptorText(descriptor, true);
                       if (!(value instanceof PrimitiveValue)){
-                        simpleColoredText.append("(" + DebuggerBundle.message("active.tooltip.suggestion") + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+                        simpleColoredText.append(" (" + DebuggerBundle.message("active.tooltip.suggestion") + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
                       }
                       showHint(simpleColoredText);
                     }

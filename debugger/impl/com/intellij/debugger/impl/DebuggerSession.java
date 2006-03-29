@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -28,17 +29,15 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.idea.ActionsBundle;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.EventRequest;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
-import org.jetbrains.annotations.Nullable;
 
 public class DebuggerSession {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerSession");
@@ -72,6 +71,7 @@ public class DebuggerSession {
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
   private Set<ThreadReferenceProxyImpl> mySteppingThroughThreads = new HashSet<ThreadReferenceProxyImpl>();
+  private boolean myCompileBeforeRunning;
 
   public boolean isSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
     return mySteppingThroughThreads.contains(threadProxy);
@@ -129,9 +129,14 @@ public class DebuggerSession {
     }
   }
 
-  protected DebuggerSession(String sessionName, final DebugProcessImpl debugProcess) {
+  public boolean isCompileBeforeRunning() {
+    return myCompileBeforeRunning;
+  }
+
+  protected DebuggerSession(String sessionName, final DebugProcessImpl debugProcess, boolean compileBeforeRunning) {
     mySessionName  = sessionName;
     myDebugProcess = debugProcess;
+    myCompileBeforeRunning = compileBeforeRunning;
     SESSION_EMPTY_CONTEXT = DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, null, null, null);
     myContextManager = new MyDebuggerStateManager();
     myState = new DebuggerSessionState(STATE_STOPPED, null);

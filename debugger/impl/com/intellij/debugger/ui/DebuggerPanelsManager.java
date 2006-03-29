@@ -8,6 +8,7 @@ import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunProfile;
@@ -100,7 +101,9 @@ public class DebuggerPanelsManager implements ProjectComponent{
                                                    RemoteConnection remoteConnection,
                                                    boolean pollConnection) throws ExecutionException {
 
-    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(runProfile.getName(), state, remoteConnection, pollConnection);
+    final RunManagerEx runManagerEx = RunManagerEx.getInstanceEx(myProject);
+    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject)
+      .attachVirtualMachine(runProfile.getName(), state, remoteConnection, pollConnection, runManagerEx.getConfig().isCompileBeforeRunning(runProfile));
     if (debuggerSession == null) {
       return null;
     }

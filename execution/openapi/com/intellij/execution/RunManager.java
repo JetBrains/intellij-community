@@ -28,7 +28,6 @@ public abstract class RunManager {
   public static RunManager getInstance(final Project project) {
     return project.getComponent(RunManager.class);
   }
-  public abstract ConfigurationType getActiveConfigurationFactory();
 
   public abstract ConfigurationType[] getConfigurationFactories();
 
@@ -41,8 +40,6 @@ public abstract class RunManager {
   public abstract boolean isTemporary(RunConfiguration configuration);
 
   public abstract void makeStable(RunConfiguration configuration);
-
-  public abstract void setActiveConfigurationFactory(ConfigurationType activeConfigurationType);
 
   public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
 
