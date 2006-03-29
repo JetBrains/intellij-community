@@ -20,8 +20,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.util.Query;
+import com.intellij.util.Processor;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
@@ -60,7 +63,6 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
                     "method.only.used.from.inner.class.problem.descriptor.anonymous.implementing",
                     name);
         }
-
         return InspectionGadgetsBundle.message(
                 "method.only.used.from.inner.class.problem.descriptor", name);
     }
@@ -84,6 +86,9 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
             super.visitMethod(method);
             if (!method.hasModifierProperty(PsiModifier.PRIVATE) ||
                 method.isConstructor()) {
+                return;
+            }
+            if (method.getNameIdentifier() == null) {
                 return;
             }
             final MethodReferenceFinder processor =
@@ -114,7 +119,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
         }
     }
 
-    private class MethodReferenceFinder implements PsiReferenceProcessor {
+    private class MethodReferenceFinder implements Processor<PsiReference> {
 
         private final PsiClass methodClass;
         private final PsiMethod method;
@@ -127,7 +132,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
             methodClass = method.getContainingClass();
         }
 
-        public boolean execute(PsiReference reference) {
+        public boolean process(PsiReference reference) {
             final PsiElement element = reference.getElement();
             final PsiMethod containingMethod =
                     PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -161,18 +166,12 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
         }
 
         public boolean isOnlyAccessedFromInnerClass() {
-            final PsiClass methodClass = method.getContainingClass();
-            final LocalSearchScope scope =
-                    new LocalSearchScope(methodClass);
-
-            final PsiManager manager = method.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
+            final Query<PsiReference> query = ReferencesSearch.search(method);
             final ProgressManager progressManager =
                     ProgressManager.getInstance();
             progressManager.runProcess(new Runnable() {
                 public void run() {
-                    searchHelper.processReferences(
-                            MethodReferenceFinder.this, method, scope, false);
+                    query.forEach(MethodReferenceFinder.this);
                 }
             }, null);
             return onlyAccessedFromInnerClass;
