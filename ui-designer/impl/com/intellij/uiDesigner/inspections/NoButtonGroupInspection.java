@@ -54,6 +54,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
                                      return new MyQuickFix(editor, component, c1.getColumn() == c2.getColumn());
                                    }
                                  });
+              break;
             }
           }
         }
