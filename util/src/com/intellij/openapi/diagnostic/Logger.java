@@ -83,11 +83,10 @@ public abstract class Logger {
 
   public boolean assertTrue(boolean value, @NonNls String message) {
     if (!value) {
-      //noinspection HardCodedStringLiteral
-      String resultMessage = "Assertion failed";
-      if (!message.equals("")) resultMessage += ": " + message;
+      @NonNls StringBuffer resultMessage = new StringBuffer("Assertion failed");
+      if (message.length() > 0) resultMessage.append(": ").append(message);
 
-      error(resultMessage, new Throwable());
+      error(resultMessage.toString(), new Throwable());
     }
 
     return value;
