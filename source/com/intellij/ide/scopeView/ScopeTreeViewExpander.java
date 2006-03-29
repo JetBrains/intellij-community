@@ -49,7 +49,8 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
           final PsiElement file = fileNode.getPsiElement();
           if (file instanceof PsiJavaFile) {
             final VirtualFile virtualFile = ((PsiJavaFile)file).getVirtualFile();
-            if (virtualFile == null || virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.CLASS) return;
+            if (virtualFile == null ||
+                (virtualFile.getFileType() != StdFileTypes.JAVA && virtualFile.getFileType() != StdFileTypes.CLASS)) return;
             final PsiClass[] psiClasses = ((PsiJavaFile)file).getClasses();
             if (classNodes == null) {
               classNodes = new HashSet<ClassNode>();
