@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public abstract class UserFileType <T extends UserFileType> implements FileType, Cloneable {
-  private String myName;
+  @NotNull private String myName;
   private String myDescription;
   private Icon myIcon = Icons.CUSTOM_FILE_ICON;
 
@@ -51,7 +51,7 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
     return myDescription;
   }
 
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     myName = name;
   }
 
