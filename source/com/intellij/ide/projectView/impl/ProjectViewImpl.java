@@ -50,9 +50,9 @@ import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Icons;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -1331,9 +1331,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           selectedElements = new ArrayList<Object>();
           for (TreePath path : selectionPaths) {
             final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-            final NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
-            if (descriptor != null) {
-              selectedElements.add(descriptor.getElement());
+            final Object userObject = node.getUserObject();
+            if (userObject instanceof NodeDescriptor) {
+              selectedElements.add(((NodeDescriptor)userObject).getElement());
             }
           }
         }
