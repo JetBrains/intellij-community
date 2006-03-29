@@ -177,7 +177,6 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
                     }
                     final PsiPrimitiveType primitiveType =
                             (PsiPrimitiveType)type;
-                    final Project project = unboxingExpression.getProject();
                     types[i] = primitiveType.getBoxedType(unboxingExpression);
                 } else {
                     types[i] = type;
