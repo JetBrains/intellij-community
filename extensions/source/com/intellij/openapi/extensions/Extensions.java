@@ -51,6 +51,11 @@ public abstract class Extensions {
     return getExtensions(extensionPointName, null);
   }
 
+  @SuppressWarnings({"unchecked"})
+  public static <T> T[] getExtensions(ExtensionPointName<T> extensionPointName) {
+    return (T[])getExtensions(extensionPointName.getName(), null);
+  }
+
   public static Object[] getExtensions(String extensionPointName, AreaInstance areaInstance) {
     ExtensionsArea area = getArea(areaInstance);
     assert area != null: "Unable to get area for " + areaInstance;

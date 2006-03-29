@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2006 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intellij.openapi.extensions;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
- * @author AKireyev
+ * @author mike
  */
-public interface ExtensionPoint<T> {
-  String getName();
-  AreaInstance getArea();
+public class ExtensionPointName<T> {
+  private final String myName;
 
-  String getBeanClassName();
+  public ExtensionPointName(@NonNls final String name) {
+    myName = name;
+  }
 
-  void registerExtension(Object extension);
-  void registerExtension(Object extension, LoadingOrder order);
 
-  T[] getExtensions();
-  T getExtension();
-  boolean hasExtension(Object extension);
+  public String getName() {
+    return myName;
+  }
 
-  void unregisterExtension(Object extension);
 
-  void addExtensionPointListener(ExtensionPointListener listener);
-  void removeExtensionPointListener(ExtensionPointListener extensionPointListener);
-
-  void reset();
-
-  Class getExtensionClass();
+  public String toString() {
+    return myName;
+  }
 }

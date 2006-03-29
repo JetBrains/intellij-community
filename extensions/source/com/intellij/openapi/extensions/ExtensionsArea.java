@@ -25,12 +25,12 @@ import java.util.List;
  * @author AKireyev
  */
 public interface ExtensionsArea  {
-
   void registerExtensionPoint(@NonNls String extensionPointName, String extensionPointBeanClass);
   void unregisterExtensionPoint(@NonNls String extensionPointName);
 
   boolean hasExtensionPoint(@NonNls String extensionPointName);
   ExtensionPoint getExtensionPoint(@NonNls String extensionPointName);
+  <T> ExtensionPoint<T> getExtensionPoint(ExtensionPointName<T> extensionPointName);
 
   ExtensionPoint[] getExtensionPoints();
 
@@ -60,5 +60,4 @@ public interface ExtensionsArea  {
   void registerAreaExtensionsAndPoints(final PluginDescriptor pluginDescriptor,
                                        final List<Element> extensionsPoints,
                                        final List<Element> extensions);
-
 }
