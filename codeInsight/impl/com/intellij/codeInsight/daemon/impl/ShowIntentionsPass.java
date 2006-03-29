@@ -25,6 +25,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -49,10 +50,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/**
- * @fabrique
- */
 public class ShowIntentionsPass extends TextEditorHighlightingPass {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.ShowIntentionsPass");
   private final Project myProject;
   private final Editor myEditor;
   private final IntentionAction[] myIntentionActions;
@@ -83,6 +82,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     myEndOffset = myEditor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
 
     myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    LOG.assertTrue(myFile != null);
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
@@ -325,7 +325,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (classes.length == 1
         && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
         && !isCaretNearRef(editor,ref)
-        && !(PsiUtil.isInJspFile(ref.getContainingFile()))) {
+        && !PsiUtil.isInJspFile(ref.getContainingFile())) {
       action.execute();
       return false;
     }
