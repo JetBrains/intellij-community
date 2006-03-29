@@ -315,7 +315,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myInsideSynch = true;
     try {
       final RadComponent newSelectedComponent = myComponentTree.getSelectedComponent();
-      LOG.assertTrue(newSelectedComponent != null);
+      if (newSelectedComponent == null) {  // possible when switching away from form editor (IDEADEV-5222)
+        return;
+      }
 
       if(!forceSynch && newSelectedComponent.equals(myComponent)){
         // Nothing changed
