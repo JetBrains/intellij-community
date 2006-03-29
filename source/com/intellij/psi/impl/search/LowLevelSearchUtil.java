@@ -95,69 +95,6 @@ public class LowLevelSearchUtil {
     }
     while (startOffset < endOffset);
 
-    /*scope.findLeafElementAt()
-    final PsiElement scopePsi = SourceTreeToPsiMap.treeElementToPsi(scope);
-    if (scopePsi instanceof PsiWhiteSpace) {
-      // Optimization. Taking language from whitespace may expand a chameleon next to this whitespace
-      // As we know for sure whitespaces may not have words in them this optimization is safe.
-      return true;
-    }
-
-    final Language lang = scopePsi.getLanguage();
-    if (lang.getFindUsagesProvider().mayHaveReferences(scope.getElementType(), searchContext)) {
-      if (scope instanceof LeafElement) {
-        LeafElement leaf = (LeafElement)scope;
-        int startOffset = 0;
-        int endOffset = leaf.getTextLength();
-        do {
-          int i = leaf.searchWord(startOffset, searcher);
-          if (i >= 0) {
-            if (!processor.execute(scopePsi, i)) return false;
-            startOffset = i + 1;
-          }
-          else {
-            return true;
-          }
-        }
-        while (startOffset < endOffset);
-      }
-      else {
-        char[] buffer = ((CompositeElement)scope).textToCharArray();
-
-        // This is hack. Need to be fixed and optimized. current code's extremely slow
-        // LeafElement leaf = SourceUtil.findLeafToFetchCharArrayRange(scope);
-        //if (leaf != null) {
-        //  buffer = leaf.buffer;
-        //  startOffset = leaf.offset;
-        //  endOffset = leaf.offset + scope.getTextLength();
-        //}
-        //else {
-        //  buffer = scope.textToCharArray();
-        //  startOffset = 0;
-        //  endOffset = buffer.length;
-        //}
-        int startOffset = 0;
-        int endOffset = buffer.length;
-
-        final int originalStartOffset = startOffset;
-        do {
-          int i = searchWord(buffer, startOffset, endOffset, searcher);
-          if (i >= 0) {
-            if (!processor.execute(scopePsi, i - originalStartOffset)) return false;
-            startOffset = i + 1;
-          }
-          else {
-            return true;
-          }
-        }
-        while (startOffset < endOffset);
-      }
-    }
-
-    if (scope instanceof CompositeElement) {
-      return processChildren(scope, searcher, processor, progress, searchContext);
-    }*/
-
     return true;
   }
 
