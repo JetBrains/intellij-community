@@ -81,5 +81,12 @@ public class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContaine
     private ComponentAdapterFactory getAdapterFactory() {
       return myWrapperContainer.getComponentAdapterFactory() != null ? myWrapperContainer.getComponentAdapterFactory() : myDefault;
     }
+
+
+    @NonNls
+    @Override
+    public String toString() {
+      return "AreaPicoContainer.MyPicoContainer[" + myWrapperContainer.myAreaInstance + "]";
+    }
   }
 }
