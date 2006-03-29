@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.cvsstatuses;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.AddFileOrDirectoryAction;
 import com.intellij.cvsSupport2.actions.RemoveLocallyFileOrDirectoryAction;
@@ -7,8 +8,10 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.checkinProject.CvsRollbacker;
 import com.intellij.cvsSupport2.checkinProject.DirectoryContent;
 import com.intellij.cvsSupport2.checkinProject.VirtualFileEntry;
+import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
+import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -52,6 +55,29 @@ public class CvsChangeProvider implements ChangeProvider {
         processFile(path, builder);
       }
     }
+  }
+
+  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    final List<FilePath> filesList = ChangesUtil.getPaths(changes);
+    FilePath[] files = filesList.toArray(new FilePath[filesList.size()]);
+    Project project = myVcs.getProject();
+    final CvsOperationExecutor executor = new CvsOperationExecutor(project);
+    executor.setShowErrors(false);
+
+    final CvsConfiguration cvsConfiguration = CvsConfiguration.getInstance(project);
+
+    CvsHandler handler = CommandCvsHandler.createCommitHandler(
+          files,
+          new File[]{},
+          preparedComment,
+          CvsBundle.message("operation.name.commit.file", files.length),
+          CvsConfiguration.getInstance(project).MAKE_NEW_FILES_READONLY,
+          project,
+          cvsConfiguration.TAG_AFTER_PROJECT_COMMIT,
+          cvsConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME);
+
+    executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
+    return executor.getResult().getErrorsAndWarnings();
   }
 
   public List<VcsException> rollbackChanges(List<Change> changes) {

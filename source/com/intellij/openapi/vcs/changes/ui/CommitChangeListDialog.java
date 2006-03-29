@@ -309,17 +309,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
           ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.PerVcsProcessor<Change>() {
             public void process(AbstractVcs vcs, List<Change> changes) {
-              final CheckinEnvironment environment = vcs.getCheckinEnvironment();
-              if (environment != null) {
-                List<FilePath> paths = new ArrayList<FilePath>();
-                for (Change change : changes) {
-                  paths.add(ChangesUtil.getFilePath(change));
-                }
-
+              final ChangeProvider provider = vcs.getChangeProvider();
+              if (provider != null) {
+                List<FilePath> paths = ChangesUtil.getPaths(changes);
                 pathsToRefresh.addAll(paths);
-
-                final List<VcsException> exceptions =
-                  environment.commit(paths.toArray(new FilePath[paths.size()]), myProject, getCommitMessage());
+                final List<VcsException> exceptions = provider.commit(changes, getCommitMessage());
                 if (exceptions.size() > 0) {
                   vcsExceptions.addAll(exceptions);
                   changesFailedToCommit.addAll(changes);
@@ -488,10 +482,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private FilePath[] getPaths() {
-    List<FilePath> result = new ArrayList<FilePath>();
-    for (Change change : myBrowser.getCurrentIncludedChanges()) {
-      result.add(ChangesUtil.getFilePath(change));
-    }
+    List<FilePath> result = ChangesUtil.getPaths(myBrowser.getCurrentIncludedChanges());
     return result.toArray(new FilePath[result.size()]);
   }
 

@@ -48,6 +48,14 @@ public class ChangesUtil {
     return null;
   }
 
+  public static List<FilePath> getPaths(final List<Change> changes) {
+    List<FilePath> paths = new ArrayList<FilePath>();
+    for (Change change : changes) {
+      paths.add(getFilePath(change));
+    }
+    return paths;
+  }
+
   public interface PerVcsProcessor<T> {
     void process(AbstractVcs vcs, List<T> items);
   }

@@ -324,6 +324,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     return myFileViewEnvironment;
   }
 
+  @NotNull
   public CheckinEnvironment getCheckinEnvironment() {
     return myCvsCheckinEnvironment;
   }

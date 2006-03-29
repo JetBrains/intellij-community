@@ -157,10 +157,6 @@ public abstract class AbstractVcs {
   public void shutdown() throws VcsException {
     LOG.assertTrue(myIsStarted);
     myIsStarted = false;
-    final FileStatusProvider fileStatusProvider = getFileStatusProvider();
-    if (fileStatusProvider instanceof DelayedFileStatusProvider) {
-      ((DelayedFileStatusProvider)fileStatusProvider).dispose();
-    }
   }
 
   public FileViewEnvironment getFileViewEnvironment() {

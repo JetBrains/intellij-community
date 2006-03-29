@@ -13,6 +13,7 @@ import java.util.List;
 public interface ChangeProvider {
   void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress);
 
+  List<VcsException> commit(List<Change> changes, String preparedComment);
   List<VcsException> rollbackChanges(List<Change> changes);
   List<VcsException> scheduleMissingFileForDeletion(List<File> files);
   List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files);
