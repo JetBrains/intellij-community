@@ -33,21 +33,22 @@ public class PathManager {
   @NonNls private static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   @NonNls private static final String PROPERTY_HOME_PATH = "idea.home.path";
 
-  private static String ourHomePath;
-  private static String ourSystemPath;
-  private static String ourConfigPath;
-  private static String ourPluginsPath;
-  private static String ourPreinstalledPluginsPath;
+  @NonNls private static String ourHomePath;
+  @NonNls private static String ourSystemPath;
+  @NonNls private static String ourConfigPath;
+  @NonNls private static String ourPluginsPath;
+  @NonNls private static String ourPreinstalledPluginsPath;
 
   @NonNls private static final String FILE = "file";
   @NonNls private static final String JAR = "jar";
-  private static final String JAR_DELIMITER = "!";
-  private static final String PROTOCOL_DELIMITER = ":";
+  @NonNls private static final String JAR_DELIMITER = "!";
+  @NonNls private static final String PROTOCOL_DELIMITER = ":";
   @NonNls public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
   @NonNls private static final String LIB_FOLDER = "lib";
   @NonNls public static final String PLUGINS_DIRECTORY = "plugins";
   @NonNls private static final String BIN_FOLDER = "bin";
   @NonNls private static final String OPTIONS_FOLDER = "options";
+
   private static final FileFilter BIN_FOLDER_FILE_FILTER = new FileFilter() {
     public boolean accept(File pathname) {
       return pathname.isDirectory() && BIN_FOLDER.equalsIgnoreCase(pathname.getName());
@@ -69,7 +70,6 @@ public class PathManager {
 
     final Class aClass = PathManager.class;
 
-    //noinspection HardCodedStringLiteral
     String rootPath = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     if (rootPath != null) {
       File root = new File(rootPath).getAbsoluteFile();
@@ -119,7 +119,6 @@ public class PathManager {
       ourSystemPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_SYSTEM_PATH)));
     }
     else {
-      //noinspection HardCodedStringLiteral
       ourSystemPath = getHomePath() + File.separator + "system";
     }
 
@@ -134,7 +133,6 @@ public class PathManager {
     return ourSystemPath;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void ensureConfigFolderExists(boolean userInteractionAllowed, final boolean createIfNotExists) {
     getConfigPathWithoutDialog();
 
@@ -143,7 +141,7 @@ public class PathManager {
       file.mkdirs();
       if (userInteractionAllowed) {
         try {
-          final Class<?> helper = Class.forName("com.intellij.openapi.application.ConfigImportHelper");
+          @NonNls final Class<?> helper = Class.forName("com.intellij.openapi.application.ConfigImportHelper");
           final Method helperMethod = helper.getMethod("importConfigsTo", String.class);
           helperMethod.invoke(null, ourConfigPath);
         }
@@ -163,7 +161,6 @@ public class PathManager {
     return getConfigPath(true);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String  getConfigPathWithoutDialog() {
     if (ourConfigPath != null) return ourConfigPath;
 
@@ -176,13 +173,13 @@ public class PathManager {
     return ourConfigPath;
   }
 
+  @NonNls
   public static String getHelpURL() {
-    //noinspection HardCodedStringLiteral
     return "jar:file:///" + getHelpJarPath() + "!/idea";
   }
 
+  @NonNls
   private static String getHelpJarPath() {
-    //noinspection HardCodedStringLiteral
     return getHomePath() + File.separator + "help" + File.separator + "ideahelp.jar";
   }
 
@@ -233,15 +230,15 @@ public class PathManager {
     return file.getAbsolutePath();
   }
 
+  @NonNls
   public static File getOptionsFile(NamedJDOMExternalizable externalizable) {
-    //noinspection HardCodedStringLiteral
     return new File(getOptionsPath()+File.separatorChar+externalizable.getExternalFileName()+".xml");
   }
 
   /**
    * Attempts to detect classpath entry which contains given resource
    */
-  public static String getResourceRoot(Class context, String path) {
+  public static String getResourceRoot(Class context, @NonNls String path) {
     URL url = context.getResource(path);
     if (url == null) {
       url = ClassLoader.getSystemResource(path.substring(1));
@@ -255,10 +252,11 @@ public class PathManager {
   /**
    * Attempts to extract classpath entry part from passed URL.
    */
+  @NonNls
   private static String extractRoot(URL resourceURL, String resourcePath) {
     if (!(StringUtil.startsWithChar(resourcePath, '/') || StringUtil.startsWithChar(resourcePath, '\\'))) {
       //noinspection HardCodedStringLiteral
-      System.err.println("precondition failed");
+      System.err.println("precondition failed: "+resourcePath);
       return null;
     }
     String protocol = resourceURL.getProtocol();
@@ -282,19 +280,21 @@ public class PathManager {
         }
       }
     }
-
-    if (resultPath != null && resultPath.endsWith(File.separator)) {
-      resultPath = resultPath.substring(0, resultPath.length() - 1);
+    if (resultPath == null) {
+      //noinspection HardCodedStringLiteral
+      System.err.println("cannot extract: "+resultPath + " from "+resourceURL);
+      return null;
     }
 
+    resultPath = StringUtil.trimEnd(resultPath, File.separator);
     resultPath = StringUtil.replace(resultPath, "%20", " ");
     resultPath = StringUtil.replace(resultPath, "%23", "#");
 
     return resultPath;
   }
 
+  @NonNls
   public static File getDefaultOptionsFile() {
-    //noinspection HardCodedStringLiteral
     return new File(getOptionsPath(),DEFAULT_OPTIONS_FILE_NAME+".xml");
   }
 
