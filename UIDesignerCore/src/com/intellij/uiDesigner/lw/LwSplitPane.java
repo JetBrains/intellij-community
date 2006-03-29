@@ -15,10 +15,11 @@
  */
 package com.intellij.uiDesigner.lw;
 
+import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import org.jdom.Element;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.LayoutManager;
 
 /**
  * @author Anton Katilin
@@ -51,7 +52,7 @@ public final class LwSplitPane extends LwContainer{
       component.setCustomLayoutConstraints(POSITION_RIGHT);
     }
     else {
-      throw new IllegalArgumentException("unexpected position: " + position);
+      throw new UnexpectedFormElementException("unexpected position: " + position);
     }
   }
 }

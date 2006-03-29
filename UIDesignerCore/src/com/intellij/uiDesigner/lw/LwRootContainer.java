@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
@@ -57,7 +58,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
       throw new IllegalArgumentException("element cannot be null");
     }
     if(!"form".equals(element.getName())){
-      throw new IllegalArgumentException("unexpected element: "+element);
+      throw new UnexpectedFormElementException("unexpected element: "+element);
     }
 
     if (!Utils.FORM_NAMESPACE.equals(element.getNamespace().getURI())) {

@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
@@ -243,7 +244,7 @@ public class LwContainer extends LwComponent implements IContainer{
       component = new LwToolBar();
     }
     else{
-      throw new IllegalArgumentException("unexpected element: "+child);
+      throw new UnexpectedFormElementException("unexpected element: "+child);
     }
     return component;
   }
@@ -260,7 +261,7 @@ public class LwContainer extends LwComponent implements IContainer{
       createLayoutSerializer();
     }
     else{
-      throw new IllegalArgumentException("unexpected element: "+element);
+      throw new UnexpectedFormElementException("unexpected element: "+element);
     }
     myLayoutSerializer.readLayout(element, this);
   }

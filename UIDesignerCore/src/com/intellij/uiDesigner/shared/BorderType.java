@@ -15,6 +15,8 @@
  */
 package com.intellij.uiDesigner.shared;
 
+import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.Color;
@@ -90,7 +92,7 @@ public final class BorderType {
       return LINE;
     }
     else{
-      throw new IllegalArgumentException("unknown type: "+name);
+      throw new UnexpectedFormElementException("unknown type: "+name);
     }
   }
 }

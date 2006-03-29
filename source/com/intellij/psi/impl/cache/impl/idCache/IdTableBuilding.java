@@ -32,6 +32,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
+import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -239,6 +240,9 @@ public class IdTableBuilding {
                                 });
       }
       catch(AlienFormFileException ex) {
+        // ignore
+      }
+      catch(UnexpectedFormElementException ex) {
         // ignore
       }
       catch (Exception e) {
