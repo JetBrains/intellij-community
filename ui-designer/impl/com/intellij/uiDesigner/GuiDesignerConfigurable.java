@@ -66,9 +66,9 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
   }
 
   public JComponent createComponent() {
-    LOG.assertTrue(myGeneralUI == null);
-
-    myGeneralUI = new MyGeneralUI();
+    if (myGeneralUI == null) {
+      myGeneralUI = new MyGeneralUI();
+    }
 
     return myGeneralUI.myPanel;
   }
