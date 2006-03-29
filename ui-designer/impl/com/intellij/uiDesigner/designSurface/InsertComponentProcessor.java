@@ -193,12 +193,15 @@ public final class InsertComponentProcessor extends EventProcessor {
       }
     }
     else if (e.getID() == MouseEvent.MOUSE_MOVED) {
-      myLastLocation = myGridInsertProcessor.processDragEvent(e.getPoint(), getComponentToInsert());
-      if (myLastLocation.canDrop(getComponentToInsert())) {
-        setCursor(FormEditingUtil.getCopyDropCursor());
-      }
-      else {
-        setCursor(FormEditingUtil.getMoveNoDropCursor());
+      final ComponentItem componentToInsert = getComponentToInsert();
+      if (componentToInsert != null) {
+        myLastLocation = myGridInsertProcessor.processDragEvent(e.getPoint(), componentToInsert);
+        if (myLastLocation.canDrop(getComponentToInsert())) {
+          setCursor(FormEditingUtil.getCopyDropCursor());
+        }
+        else {
+          setCursor(FormEditingUtil.getMoveNoDropCursor());
+        }
       }
     }
   }
