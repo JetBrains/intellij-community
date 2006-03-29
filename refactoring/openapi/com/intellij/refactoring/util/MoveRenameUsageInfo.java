@@ -27,13 +27,11 @@ public class MoveRenameUsageInfo extends UsageInfo{
   private final PsiElement myReferencedElement;
 
   private RangeMarker myReferenceRangeMarker = null;
-  private PsiReference myReference;
 
   public MoveRenameUsageInfo(PsiElement element, PsiReference reference, PsiElement referencedElement){
     super(element);
     final Project project = element.getProject();
     myReferencedElement = referencedElement;
-    myReference = reference;
     if (reference == null) reference = element.getReference();
     if (reference != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
@@ -48,7 +46,6 @@ public class MoveRenameUsageInfo extends UsageInfo{
     super(element, startOffset, endOffset, nonCodeUsage);
     final Project project = element.getProject();
     myReferencedElement = referencedElement;
-    myReference = reference;
     if (reference == null) reference = element.getReference();
     if (reference != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
