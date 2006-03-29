@@ -1400,7 +1400,9 @@ public class HighlightUtil {
           if (referencedClass == null) return null;
           if (qualifier == null) {
             PsiClass superClass = referencedClass.getSuperClass();
-            if (PsiUtil.isInnerClass(superClass) && InheritanceUtil.isInheritorOrSelf(referencedClass, superClass.getContainingClass(), true)) {
+            if (superClass != null
+                && PsiUtil.isInnerClass(superClass)
+                && InheritanceUtil.isInheritorOrSelf(referencedClass, superClass.getContainingClass(), true)) {
               // by default super() is considered this. - qualified
               resolvedName = PsiKeyword.THIS;
             }
