@@ -52,6 +52,9 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     });
   }
 
+  public void setCompileMethodState(boolean state){
+    myCompileMethod.setEnabled(state);
+  }
 
   @NotNull
   protected JComponent createEditor() {

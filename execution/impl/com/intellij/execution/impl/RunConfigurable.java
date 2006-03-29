@@ -32,9 +32,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -132,8 +130,9 @@ class RunConfigurable extends BaseConfigurable {
           final Object userObject = node.getUserObject();
           if (userObject instanceof SingleConfigurationConfigurable){
             myRightPanel.removeAll();
-            final SingleConfigurationConfigurable configurationConfigurable = ((SingleConfigurationConfigurable)userObject);
+            final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable = (SingleConfigurationConfigurable<RunConfiguration>)userObject;
             myRightPanel.add(configurationConfigurable.createComponent(), BorderLayout.CENTER);
+            updateCompileMethodComboStatus(configurationConfigurable);
             setupDialogBounds();
           } else if (userObject instanceof ConfigurationType){
             drawPressAddButtonMessage(((ConfigurationType)userObject));
@@ -166,6 +165,11 @@ class RunConfigurable extends BaseConfigurable {
     });
     sortTree();
     ((DefaultTreeModel)myTree.getModel()).reload();
+  }
+
+  private void updateCompileMethodComboStatus(final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable) {
+    final ConfigurationSettingsEditorWrapper editor = (ConfigurationSettingsEditorWrapper)configurationConfigurable.getEditor();
+    editor.setCompileMethodState(myCbCompileBeforeRunning.isSelected());
   }
 
   private void sortTree() {
@@ -288,6 +292,14 @@ class RunConfigurable extends BaseConfigurable {
     bottomPanel.add(myCbShowSettingsBeforeRunning);
 
     myCbCompileBeforeRunning = new JCheckBox(ExecutionBundle.message("run.configuration.make.module.before.running.checkbox"));
+    myCbCompileBeforeRunning.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable = getSelectedConfiguration();
+        if (configurationConfigurable != null){
+          updateCompileMethodComboStatus(configurationConfigurable);
+        }
+      }
+    });
     bottomPanel.add(myCbCompileBeforeRunning);
 
     myWholePanel.add(bottomPanel, BorderLayout.SOUTH);
