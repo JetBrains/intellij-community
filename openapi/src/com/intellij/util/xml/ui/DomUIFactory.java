@@ -47,8 +47,12 @@ public abstract class DomUIFactory implements ApplicationComponent {
     return createGenericValueControl(DomUtil.getGenericValueType(element.getDomElementType()), element, commitOnEveryChange);
   }
 
-  public static DomUIControl createDescriptionControl(DomElement parent, final boolean commitOnEveryChange) {
+  public static DomUIControl createSmallDescriptionControl(DomElement parent, final boolean commitOnEveryChange) {
     return new BigStringControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
+  }
+
+  public static DomUIControl createLargeDescriptionControl(DomElement parent, final boolean commitOnEveryChange) {
+    return new StringControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
   }
 
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element, boolean commitOnEveryChange) {
