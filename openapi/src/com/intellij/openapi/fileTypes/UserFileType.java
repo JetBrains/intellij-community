@@ -88,8 +88,4 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
   public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
     return null;
   }
-
-  public Language getLanguage() {
-    return null;
-  }
 }
