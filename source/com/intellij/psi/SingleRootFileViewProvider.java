@@ -365,7 +365,9 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     }
 
     public long getModificationStamp() {
-      return getDocument().getModificationStamp();
+      Document document = myDocument != null ? myDocument.get() : null;
+      if (document != null) return document.getModificationStamp();
+      return myFile.getModificationStamp();
     }
   }
 
