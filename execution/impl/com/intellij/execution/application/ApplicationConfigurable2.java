@@ -5,16 +5,18 @@ import com.intellij.execution.junit2.configuration.ClassBrowser;
 import com.intellij.execution.junit2.configuration.CommonJavaParameters;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
 import com.intellij.execution.ui.AlternativeJREPanel;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.BorderLayout;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfiguration>{
   private CommonJavaParameters myCommonJavaParameters;
@@ -30,6 +32,11 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
 
   public ApplicationConfigurable2(final Project project) {
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
+    myModule.getComponent().addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
+      }
+    });
     myLogConfigurations = new LogConfigurationPanel();
     myLogsPanel.setLayout(new BorderLayout());
     myLogsPanel.add(myLogConfigurations.getLoggerComponent(), BorderLayout.CENTER);
@@ -72,9 +79,5 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
   }
 
   public void disposeEditor() {
-  }
-
-  public String getHelpTopic() {
-    return null;
   }
 }

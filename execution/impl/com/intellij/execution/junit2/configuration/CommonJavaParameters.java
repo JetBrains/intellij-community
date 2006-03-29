@@ -1,15 +1,21 @@
 package com.intellij.execution.junit2.configuration;
 
-import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class CommonJavaParameters extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.configuration.CommonJavaParameters");
@@ -25,22 +31,31 @@ public class CommonJavaParameters extends JPanel {
   private LabeledComponent<RawCommandLineEditor> myVMParameters;
 
   private LabeledComponent[] myFields = new LabeledComponent[3];
+  private Module myModule = null;
 
   public CommonJavaParameters() {
     super(new BorderLayout());
     add(myWholePanel, BorderLayout.CENTER);
     copyDialogCaption(myProgramParameters);
     copyDialogCaption(myVMParameters);
-    myWorkingDirectory.getComponent().
-      addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null, null,
-                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
-
+    myWorkingDirectory.getComponent()
+      .addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+        fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
+        fileChooserDescriptor.setContextModule(myModule);
+        VirtualFile[] files = FileChooser.chooseFiles(myWorkingDirectory, fileChooserDescriptor);
+        if (files != null && files.length != 0) {
+          setText(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY, files[0].getPresentableUrl());
+        }
+      }
+    });
     myFields[RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY] = myProgramParameters;
     myFields[RunJavaConfiguration.VM_PARAMETERS_PROPERTY] = myVMParameters;
     myFields[RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY] = myWorkingDirectory;
   }
 
-  private void copyDialogCaption(final LabeledComponent<RawCommandLineEditor> component) {
+  private static void copyDialogCaption(final LabeledComponent<RawCommandLineEditor> component) {
     final RawCommandLineEditor rawCommandLineEditor = component.getComponent();
     rawCommandLineEditor.setDialodCaption(component.getRawText());
     component.getLabel().setLabelFor(rawCommandLineEditor.getTextField());
@@ -56,15 +71,13 @@ public class CommonJavaParameters extends JPanel {
   }
 
   public void applyTo(final RunJavaConfiguration configuration) {
-    for (int i = 0; i < ourProperties.length; i++) {
-      final int property = ourProperties[i];
+    for (final int property : ourProperties) {
       configuration.setProperty(property, getText(property));
     }
   }
 
   public void reset(final RunJavaConfiguration configuration) {
-    for (int i = 0; i < ourProperties.length; i++) {
-      final int property = ourProperties[i];
+    for (final int property : ourProperties) {
       setText(property, configuration.getProperty(property));
     }
   }
@@ -90,5 +103,9 @@ public class CommonJavaParameters extends JPanel {
 
   private LabeledComponent getLabeledComponent(final int index) {
     return myFields[index];
+  }
+
+  public void setModuleContext(final Module module) {
+    myModule = module;
   }
 }
