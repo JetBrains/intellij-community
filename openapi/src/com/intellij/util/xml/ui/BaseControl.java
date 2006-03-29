@@ -8,6 +8,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,6 +29,9 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
   private Bound myBoundComponent;
   private com.intellij.util.xml.ui.DomWrapper<T> myDomWrapper;
   private boolean myCommitting;
+
+  protected Color myDefaultForegraund = Color.BLACK;
+  protected Color myErrorForeground = Color.RED;
 
   protected BaseControl(final com.intellij.util.xml.ui.DomWrapper<T> domWrapper) {
     myDomWrapper = domWrapper;
@@ -101,6 +106,7 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
     final T valueInControl = getValue(getBoundComponent());
     if (!valuesAreEqual(getValueFromXml(), valueInControl)) {
       setValueToXml(valueInControl);
+      updateComponent();
     }
   }
 
@@ -111,7 +117,11 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
   public final void reset() {
     if (!myCommitting) {
       doReset();
+      updateComponent();
     }
+  }
+
+  protected void updateComponent() {
   }
 
   protected void doReset() {

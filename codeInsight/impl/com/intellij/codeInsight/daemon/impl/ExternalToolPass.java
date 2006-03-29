@@ -59,7 +59,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     if (myAnnotationHolder.hasAnnotations()) {
       List<HighlightInfo> infos = getHighlights();
 
-      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(),
+      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset,
                                                      infos, UpdateHighlightersUtil.EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP);
     }
   }

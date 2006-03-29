@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.PsiFile;
@@ -270,6 +271,10 @@ public class DomUtil {
       LOG.error(e);
     }
     catch (InvocationTargetException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)cause;
+      }
       LOG.error(e);
     }
   }

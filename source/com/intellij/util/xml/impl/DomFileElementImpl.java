@@ -14,6 +14,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.javaee.model.ElementPresentation;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

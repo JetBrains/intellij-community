@@ -43,7 +43,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private XmlFile myFile;
   private DomElement myProxy;
   private final Set<String> myInitializedChildren = new com.intellij.util.containers.HashSet<String>();
-  private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren = new HashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
+  private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren =
+    new HashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
   private final Map<String, AttributeChildInvocationHandler> myAttributeChildren = new HashMap<String, AttributeChildInvocationHandler>();
   private GenericInfoImpl myGenericInfoImpl;
   private final Map<String, Class> myFixedChildrenClasses = new HashMap<String, Class>();
@@ -220,7 +221,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
-    } finally {
+    }
+    finally {
       myManager.setChanging(changing);
     }
     setXmlTagToNull();
@@ -430,7 +432,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
           for (int i = 0; i < count; i++) {
             getOrCreateIndexedChild(findSubTag(tag, qname, i), new Pair<String, Integer>(qname, i));
           }
-        } else if (tag != null && myGenericInfoImpl.isCollectionChild(qname)) {
+        }
+        else if (tag != null && myGenericInfoImpl.isCollectionChild(qname)) {
           for (XmlTag subTag : tag.findSubTags(qname)) {
             createCollectionElement(myGenericInfoImpl.getCollectionChildrenType(qname), subTag);
           }
@@ -444,11 +447,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   private void getOrCreateAttributeChild(final Method method, final String attributeName) {
-    final AttributeChildInvocationHandler handler = new AttributeChildInvocationHandler(method.getGenericReturnType(),
-                                                                                        getXmlTag(),
-                                                                                        this,
-                                                                                        attributeName,
-                                                                                        myManager,
+    final AttributeChildInvocationHandler handler = new AttributeChildInvocationHandler(method.getGenericReturnType(), getXmlTag(), this,
+                                                                                        attributeName, myManager,
                                                                                         getConverterForChild(method));
     myManager.createDomElement(handler);
     myAttributeChildren.put(handler.getXmlElementName(), handler);
@@ -460,14 +460,14 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       handler = createIndexedChild(subTag, pair);
       myFixedChildren.put(pair, handler);
       myManager.createDomElement(handler);
-    } else {
+    }
+    else {
       handler.attach(subTag);
     }
     return handler;
   }
 
-  private IndexedElementInvocationHandler createIndexedChild(final XmlTag subTag,
-                                                             final Pair<String, Integer> pair) {
+  private IndexedElementInvocationHandler createIndexedChild(final XmlTag subTag, final Pair<String, Integer> pair) {
     final JavaMethodSignature signature = myGenericInfoImpl.getFixedChildGetter(pair);
     final String qname = pair.getFirst();
     final Class<?> rawType = DomUtil.getRawType(myType);
