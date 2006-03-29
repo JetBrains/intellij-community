@@ -157,13 +157,13 @@ public class CvsChangeProvider implements ChangeProvider {
   private void processStatus(final FilePath filePath, final FileStatus status, final ChangelistBuilder builder) {
     if (status == FileStatus.NOT_CHANGED) return;
     if (status == FileStatus.MODIFIED || status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS) {
-      builder.processChange(new Change(new CvsUpToDateRevision(filePath), new CurrentContentRevision(filePath)));
+      builder.processChange(new Change(new CvsUpToDateRevision(filePath), new CurrentContentRevision(filePath), status));
     }
     else if (status == FileStatus.ADDED) {
-      builder.processChange(new Change(null, new CurrentContentRevision(filePath)));
+      builder.processChange(new Change(null, new CurrentContentRevision(filePath), status));
     }
     else if (status == FileStatus.DELETED) {
-      builder.processChange(new Change(new CvsUpToDateRevision(filePath), null));
+      builder.processChange(new Change(new CvsUpToDateRevision(filePath), null, status));
     }
     else if (status == FileStatus.DELETED_FROM_FS) {
       builder.processLocallyDeletedFile(filePath.getIOFile());

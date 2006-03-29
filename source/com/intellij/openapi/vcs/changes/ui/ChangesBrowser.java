@@ -5,8 +5,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +29,6 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private ChangesTreeList myViewer;
   private ChangeList mySelectedChangeList;
   private Collection<Change> myAllChanges;
-  private FileStatusListener myFileStatusListener;
   private final Map<Change, ChangeList> myChangeListsMap = new HashMap<Change, ChangeList>();
   private Project myProject;
 
@@ -64,18 +61,6 @@ public class ChangesBrowser extends JPanel implements DataProvider {
 
     setSelectedList(initalListSelection);
 
-    myFileStatusListener = new FileStatusListener() {
-      public void fileStatusesChanged() {
-        repaintData();
-      }
-
-      public void fileStatusChanged(VirtualFile virtualFile) {
-        repaintData();
-      }
-    };
-
-    FileStatusManager.getInstance(project).addFileStatusListener(myFileStatusListener);
-
     JPanel listPanel = new JPanel(new BorderLayout());
     listPanel.add(myViewer);
     listPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("commit.dialog.changed.files.label")));
@@ -91,10 +76,6 @@ public class ChangesBrowser extends JPanel implements DataProvider {
 
   public JComponent getContentComponent() {
     return this;
-  }
-
-  public void dispose() {
-    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
   }
 
   public Collection<Change> getAllChanges() {

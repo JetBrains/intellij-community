@@ -1,6 +1,8 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 
@@ -13,18 +15,27 @@ import java.util.List;
  */
 public class UnversionedFilesHolder {
   private List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+  private Project myProject;
+
+  public UnversionedFilesHolder(Project project) {
+    myProject = project;
+  }
 
   public synchronized void cleanScope(final VcsDirtyScope scope) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final List<VirtualFile> currentFiles = new ArrayList<VirtualFile>(myFiles);
         for (VirtualFile file : currentFiles) {
-          if (!file.isValid() || scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+          if (fileDropped(file) || scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
             myFiles.remove(file);
           }
         }
       }
     });
+  }
+
+  private boolean fileDropped(final VirtualFile file) {
+    return !file.isValid() || !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
   }
 
   public synchronized void addFile(VirtualFile file) {
@@ -36,7 +47,7 @@ public class UnversionedFilesHolder {
   }
 
   public synchronized UnversionedFilesHolder copy() {
-    final UnversionedFilesHolder copyHolder = new UnversionedFilesHolder();
+    final UnversionedFilesHolder copyHolder = new UnversionedFilesHolder(myProject);
     copyHolder.myFiles.addAll(myFiles);
     return copyHolder;
   }

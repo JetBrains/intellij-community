@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -62,7 +63,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private boolean SHOW_FLATTEN_MODE = true;
 
-  private UnversionedFilesHolder myUnversionedFilesHolder = new UnversionedFilesHolder();
+  private UnversionedFilesHolder myUnversionedFilesHolder;
   private DeletedFilesHolder myDeletedFilesHolder = new DeletedFilesHolder();
   private final List<ChangeList> myChangeLists = new ArrayList<ChangeList>();
 
@@ -93,6 +94,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myProject = project;
     myVcsManager = vcsManager;
     myView = new ChangesListView(project);
+    myUnversionedFilesHolder = new UnversionedFilesHolder(project);
   }
 
   public void projectOpened() {
@@ -595,6 +597,21 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
       return null;
     }
+  }
+
+  private boolean fileIsInContent(VirtualFile file) {
+    return ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
+  }
+
+  @NotNull
+  public FileStatus getStatus(VirtualFile file) {
+    if (!fileIsInContent(file)) return FileStatus.NOT_CHANGED;
+
+    if (myUnversionedFilesHolder.containsFile(file)) return FileStatus.UNKNOWN;
+    final AbstractVcs vcs = myVcsManager.getVcsFor(file);
+    if (vcs == null) return FileStatus.NOT_CHANGED;
+    final Change change = getChange(file);
+    return change == null ? FileStatus.NOT_CHANGED : change.getFileStatus();
   }
 
   @NotNull

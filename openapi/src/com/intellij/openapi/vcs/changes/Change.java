@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 
 /**
  * @author max
@@ -16,10 +17,23 @@ public class Change {
 
   private final ContentRevision myBeforeRevision;
   private final ContentRevision myAfterRevision;
+  private final FileStatus myFileStatus;
+
 
   public Change(final ContentRevision beforeRevision, final ContentRevision afterRevision) {
+    this(beforeRevision, afterRevision, convertStatus(beforeRevision, afterRevision));
+  }
+
+  public Change(final ContentRevision beforeRevision, final ContentRevision afterRevision, FileStatus fileStatus) {
     myBeforeRevision = beforeRevision;
     myAfterRevision = afterRevision;
+    myFileStatus = fileStatus;
+  }
+
+  private static FileStatus convertStatus(ContentRevision beforeRevision, ContentRevision afterRevision) {
+    if (beforeRevision == null) return FileStatus.ADDED;
+    if (afterRevision == null) return FileStatus.DELETED;
+    return FileStatus.MODIFIED;
   }
 
   public Type getType() {
@@ -38,7 +52,6 @@ public class Change {
     return Type.MODIFICATION;
   }
 
-
   public ContentRevision getBeforeRevision() {
     return myBeforeRevision;
   }
@@ -47,6 +60,9 @@ public class Change {
     return myAfterRevision;
   }
 
+  public FileStatus getFileStatus() {
+    return myFileStatus;
+  }
 
   public boolean equals(final Object o) {
     if (this == o) return true;

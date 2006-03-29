@@ -4,9 +4,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.*;
@@ -27,12 +25,15 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final Map<VirtualFile, VcsDirtyScope> myScopes = new HashMap<VirtualFile, VcsDirtyScope>();
   private final VcsDirtyScopeManagerImpl.MyVfsListener myVfsListener;
   private final Project myProject;
+  private final ProjectRootManager myRootManager;
   private final ChangeListManager myChangeListManager;
   private boolean myIsDisposed = false;
   private boolean myIsInitialized = false;
+  private ModuleRootListener myRootModelListener;
 
   public VcsDirtyScopeManagerImpl(Project project, ProjectRootManager rootManager, ChangeListManager changeListManager) {
     myProject = project;
+    myRootManager = rootManager;
     myChangeListManager = changeListManager;
     myIndex = rootManager.getFileIndex();
     myVfsListener = new MyVfsListener();
@@ -47,6 +48,17 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
         markEverythingDirty();
       }
     });
+
+    myRootModelListener = new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {
+      }
+
+      public void rootsChanged(ModuleRootEvent event) {
+        markEverythingDirty();
+      }
+    };
+
+    myRootManager.addModuleRootListener(myRootModelListener);
   }
 
   public void markEverythingDirty() {
@@ -63,6 +75,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   public void projectClosed() {
     myIsDisposed = true;
+    myRootManager.removeModuleRootListener(myRootModelListener);
     VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
   }
 
@@ -72,6 +85,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void initComponent() {}
+
   public void disposeComponent() {
     myIsDisposed = true;
   }

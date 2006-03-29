@@ -11,8 +11,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -54,7 +52,6 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   private DnDManager myDndManager;
   private ChangeListOwner myDragOwner;
   private final Project myProject;
-  private FileStatusListener myFileStatusManager;
   private TreeState myTreeState;
   private boolean myShowFlatten = false;
 
@@ -71,18 +68,6 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
     new TreeSpeedSearch(this, new NodeToTextConvertor());
     SmartExpander.installOn(this);
-
-    myFileStatusManager = new FileStatusListener() {
-      public void fileStatusesChanged() {
-        reload();
-      }
-
-      public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-        reload();
-      }
-    };
-
-    FileStatusManager.getInstance(project).addFileStatusListener(myFileStatusManager);
   }
 
   public DefaultTreeModel getModel() {
@@ -110,7 +95,6 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   }
 
   public void dispose() {
-    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusManager);
     if (myDragSource != null) {
       myDndManager.unregisterSource(myDragSource, this);
       myDndManager.unregisterTarget(myDropTarget, this);

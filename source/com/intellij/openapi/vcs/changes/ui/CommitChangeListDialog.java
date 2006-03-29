@@ -204,7 +204,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   protected void dispose() {
     super.dispose();
     myOKButtonUpdateAlarm.cancelAllRequests();
-    myBrowser.dispose();
   }
 
   private String getCommitActionName() {

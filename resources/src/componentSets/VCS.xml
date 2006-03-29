@@ -8,6 +8,7 @@
     <component>
       <interface-class>com.intellij.openapi.vcs.FileStatusManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.FileStatusManagerImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
 
     <component>
