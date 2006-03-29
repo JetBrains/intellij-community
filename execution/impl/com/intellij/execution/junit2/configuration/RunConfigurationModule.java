@@ -23,6 +23,7 @@ import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -88,7 +89,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
     return JUnitUtil.findPsiClass(qualifiedName.replace('$', '.'), getModule(), myProject, myClassesInLibraries);
   }
 
-  public static Collection<Module> getModulesForClass(final Project project, final String className) {
+  public static Collection<Module> getModulesForClass(@NotNull final Project project, final String className) {
     if (project.isDefault()) return Arrays.asList(ModuleManager.getInstance(project).getModules());
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final PsiClass[] possibleClasses = PsiManager.getInstance(project).findClasses(className,
@@ -110,16 +111,14 @@ public class RunConfigurationModule implements JDOMExternalizable {
       if (ModuleRootManager.getInstance(module).getJdk() == null) {
         throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.jdk.specified.for.module.warning.text", module.getName()));
       }
-      else {
-        return;
-      }
-    }else {
-    if (myModuleName == null || myModuleName.trim().length() == 0) {
-      throw new RuntimeConfigurationError(ExecutionBundle.message("module.not.specified.error.text"));
     }
     else {
-      throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", myModuleName));
-    }
+      if (myModuleName == null || myModuleName.trim().length() == 0) {
+        throw new RuntimeConfigurationError(ExecutionBundle.message("module.not.specified.error.text"));
+      }
+      else {
+        throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", myModuleName));
+      }
     }
   }
 

@@ -20,12 +20,12 @@ import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 
 public class ExecutionUtil {
@@ -66,7 +66,7 @@ public class ExecutionUtil {
     return convertor.convert(psiClass);
   }
 
-  public static Convertor<VirtualFile, Module> fileToModule(final Project project) {
+  public static Convertor<VirtualFile, Module> fileToModule(@NotNull final Project project) {
     return new Convertor<VirtualFile, Module>() {
       public Module convert(final VirtualFile file) {
         return VfsUtil.getModuleForFile(project, file);
@@ -74,13 +74,12 @@ public class ExecutionUtil {
     };
   }
 
-  public static Collection<Module> collectModulesDependsOn(final Collection<Module> modules) {
+  public static Collection<Module> collectModulesDependsOn(@NotNull final Collection<Module> modules) {
     if (modules.size() == 0) return new ArrayList<Module>(0);
     final HashSet<Module> result = new HashSet<Module>();
     final Project project = modules.iterator().next().getProject();
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
-    for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
-      final Module module = iterator.next();
+    for (final Module module : modules) {
       result.add(module);
       result.addAll(moduleManager.getModuleDependentModules(module));
     }
@@ -106,7 +105,7 @@ public class ExecutionUtil {
       element = PsiTreeUtil.getParentOfType(element, PsiJavaFile.class);
       if (element == null) return location;
     }
-    final PsiJavaFile psiFile = ((PsiJavaFile)element);
+    final PsiJavaFile psiFile = (PsiJavaFile)element;
     final PsiClass[] classes = psiFile.getClasses();
     if (classes.length != 1) return location;
     return PsiLocation.fromPsiElement(classes[0]);
@@ -147,7 +146,7 @@ public class ExecutionUtil {
     textArea.setWrapStyleWord(false);
     textArea.setLineWrap(true);
     final JScrollPane scrollPane = new JScrollPane(textArea);
-    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     final JPanel panel = new JPanel(new BorderLayout(10, 0));
     panel.setPreferredSize(new Dimension(500, 200));
     panel.add(scrollPane, BorderLayout.CENTER);
