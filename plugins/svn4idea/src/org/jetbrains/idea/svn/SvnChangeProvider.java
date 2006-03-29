@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -138,6 +139,8 @@ public class SvnChangeProvider implements ChangeProvider {
 
   private void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder) {
     if (status != null) {
+      FileStatus fStatus = SvnFileStatusProvider.convertStatus(status, filePath.getIOFile());
+
       final SVNStatusType statusType = status.getContentsStatus();
       if (statusType == SVNStatusType.STATUS_UNVERSIONED) {
         builder.processUnversionedFile(filePath.getVirtualFile());
@@ -145,13 +148,13 @@ public class SvnChangeProvider implements ChangeProvider {
       else if (statusType == SVNStatusType.STATUS_CONFLICTED ||
                statusType == SVNStatusType.STATUS_MERGED ||
                statusType == SVNStatusType.STATUS_MODIFIED) {
-        builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs), new CurrentContentRevision(filePath)));
+        builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs), new CurrentContentRevision(filePath), fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_ADDED) {
-        builder.processChange(new Change(null, new CurrentContentRevision(filePath)));
+        builder.processChange(new Change(null, new CurrentContentRevision(filePath), fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_DELETED) {
-        builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs), null));
+        builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs), null, fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_MISSING) {
         builder.processLocallyDeletedFile(filePath.getIOFile());
