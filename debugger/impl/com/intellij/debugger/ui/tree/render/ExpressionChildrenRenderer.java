@@ -78,7 +78,7 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
   }
 
   private Value evaluateChildren(EvaluationContext context, NodeDescriptor descriptor) throws EvaluateException {
-    final ExpressionEvaluator evaluator = myChildrenExpression.getEvaluator(context.getDebugProcess().getProject());
+    final ExpressionEvaluator evaluator = myChildrenExpression.getEvaluator(context.getProject());
 
     Value value = evaluator.evaluate(context);
     descriptor.putUserData(EXPRESSION_VALUE, value);
