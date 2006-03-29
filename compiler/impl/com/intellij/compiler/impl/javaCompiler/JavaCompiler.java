@@ -47,9 +47,7 @@ public class JavaCompiler implements TranslatingCompiler {
       context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
     }
     catch (CacheCorruptedException e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
+      LOG.info(e);
       context.requestRebuildNextTime(e.getMessage());
       outputItems = TranslatingCompiler.EMPTY_OUTPUT_ITEM_ARRAY;
     }
