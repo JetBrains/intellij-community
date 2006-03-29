@@ -49,6 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
@@ -268,6 +269,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     return myFileStatusProvider;
   }
 
+  @NotNull
   public CheckinEnvironment getCheckinEnvironment() {
     return myCheckinEnvironment;
   }

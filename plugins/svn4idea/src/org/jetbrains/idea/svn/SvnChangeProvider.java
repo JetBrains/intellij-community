@@ -44,6 +44,13 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
+  // TODO: Get rid of CheckitEnvironment and move real commit code here.
+  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    final List<FilePath> paths = ChangesUtil.getPaths(changes);
+    FilePath[] arrayed = paths.toArray(new FilePath[paths.size()]);
+    return myVcs.getCheckinEnvironment().commit(arrayed, myVcs.getProject(), preparedComment);
+  }
+
   public List<VcsException> rollbackChanges(List<Change> changes) {
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     for (Change change : changes) {
