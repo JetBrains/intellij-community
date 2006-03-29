@@ -125,11 +125,14 @@ public class PendingEventDispatcher <T extends EventListener> {
         */
       }
     }
+
+    /* Seems like this assertion is incorrect and there's nothing wrong with just skipping in this situation.
     else {
       if (myDispatchingListeners.size() > 0 && listener != myDispatchingListeners.peek() && myDispatchingListeners.contains(listener)){
         LOG.error("Cyclic dispatching is prohibited");
       }
     }
+    */
   }
 
   private void assertDispatchThread() {
