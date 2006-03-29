@@ -31,6 +31,10 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
       bindProperties(getDomElement());
   }
 
+  protected boolean commitOnEveryChange(GenericDomValue element) {
+    return false;
+  }
+
   protected void bindProperties(final DomElement domElement) {
     if (domElement == null) return;
 
@@ -40,18 +44,18 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
       if (boundComponent != null) {
         if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {
           if ((description.getValues(domElement)).size() == 1) {
-            DomUIControl control;
             final GenericDomValue element = domElement.getManager().createStableValue(new Factory<GenericDomValue>() {
               public GenericDomValue create() {
                 return (GenericDomValue)description.getValues(domElement).get(0);
               }
             });
+            boolean commitOnEveryChange = commitOnEveryChange(element);
+            DomUIControl control;
             if (boundComponent instanceof BigStringComponent) {
-              control = new BigStringControl(new DomFixedWrapper(element));
+              control = new BigStringControl(new DomFixedWrapper(element), commitOnEveryChange);
             } else {
-              control = DomUIFactory.createControl(element);
+              control = DomUIFactory.createControl(element, commitOnEveryChange);
             }
-
             doBind(control, boundComponent);
           }
           else {
