@@ -57,28 +57,22 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type){
+  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     String text = element.getText();
 
     if (element instanceof XmlAttributeValue) {
-        final String valueString = ((XmlAttributeValue) element).getValue();
-        int startOffset = StringUtil.startsWithChar(text, '"') ||
-                          StringUtil.startsWithChar(text, '\'') ? 1 : 0;
-        return getReferencesByString(valueString, element, type, startOffset);
-    } else if (element instanceof XmlTag) {
+      final String valueString = ((XmlAttributeValue)element).getValue();
+      int startOffset = StringUtil.startsWithChar(text, '"') || StringUtil.startsWithChar(text, '\'') ? 1 : 0;
+      return getReferencesByString(valueString, element, type, startOffset);
+    }
+    else if (element instanceof XmlTag) {
       final XmlTagValue value = ((XmlTag)element).getValue();
 
-      if (value != null) {
-        text = value.getText();
-        final String trimmedText = text.trim();
+      text = value.getText();
+      final String trimmedText = text.trim();
 
-        return getReferencesByString(
-          trimmedText,
-          element,
-          type,
-          value.getTextRange().getStartOffset() + text.indexOf(trimmedText) - element.getTextOffset()
-        );
-      }
+      return getReferencesByString(trimmedText, element, type,
+                                   value.getTextRange().getStartOffset() + text.indexOf(trimmedText) - element.getTextOffset());
     }
 
     return getReferencesByString(text, element, type, 0);
@@ -179,17 +173,19 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       myReferences = referencesList.toArray(new JavaReference[referencesList.size()]);
     }
 
-    private void reparse(PsiElement element){
-      final String text;
+    private void reparse(PsiElement element, final TextRange range) {
+      final String text = element.getText().substring(range.getStartOffset(), range.getEndOffset());
 
-      if (element instanceof XmlAttributeValue) {
-        text = StringUtil.stripQuotesAroundValue( element.getText() );
-      } else if (element instanceof XmlTag) {
-        text = ((XmlTag)element).getValue().getTrimmedText();
-      } else {
-        text = element.getText();
-      }
-      reparse(text,element, false);
+      //if (element instanceof XmlAttributeValue) {
+      //  text = StringUtil.stripQuotesAroundValue(element.getText().substring(range.getStartOffset(), range.getEndOffset()));
+      //}
+      //else if (element instanceof XmlTag) {
+      //  text = ((XmlTag)element).getValue().getTrimmedText();
+      //}
+      //else {
+      //  text = element.getText();
+      //}
+      reparse(text, element, false);
     }
 
     private JavaReference getReference(int index){
@@ -283,10 +279,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       }
 
       public boolean isReferenceTo(PsiElement element) {
-        if (element instanceof PsiClass || element instanceof PsiPackage) {
-          return super.isReferenceTo(element);
-        }
-        return false;
+        return (element instanceof PsiClass || element instanceof PsiPackage) && super.isReferenceTo(element);
       }
 
       public TextRange getRangeInElement(){
@@ -330,7 +323,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         final String newName = qualifiedName;
         final TextRange range = new TextRange(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
         final PsiElement finalElement = getManipulator(getElement()).handleContentChange(getElement(), range, newName);
-        reparse(finalElement);
+        reparse(finalElement,range);
         return finalElement;
       }
 

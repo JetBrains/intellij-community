@@ -1,12 +1,14 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.ide.util.DirectoryChooser;
+import com.intellij.ide.util.DirectoryChooserModuleTreeView;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -20,13 +22,10 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.ide.util.DirectoryChooser;
-import com.intellij.ide.util.DirectoryChooserModuleTreeView;
-
-import java.util.*;
-import java.io.File;
-
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.util.*;
 
 public class MoveClassesOrPackagesUtil {
   private static final Logger LOG = Logger.getInstance(

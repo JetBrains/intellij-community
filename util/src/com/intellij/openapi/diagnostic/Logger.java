@@ -94,12 +94,7 @@ public abstract class Logger {
   }
 
   public boolean assertTrue(boolean value) {
-    if (!value) {
-      return assertTrue(value, "");
-    }
-    else {
-      return true;
-    }
+    return value || assertTrue(value, "");
   }
 
   public abstract void setLevel(Level level);

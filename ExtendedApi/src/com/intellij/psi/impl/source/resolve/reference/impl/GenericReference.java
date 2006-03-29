@@ -51,7 +51,7 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
     final List resultSet = new ArrayList();
     final ConflictFilterProcessor processor;
     try{
-      processor = ProcessorRegistry.getInstance().getProcessorByType(getType(), resultSet, needToCheckAccessibility() ? getElement() : null);
+      processor = ProcessorRegistry.getProcessorByType(getType(), resultSet, needToCheckAccessibility() ? getElement() : null);
       processor.setName(getCanonicalText());
     }
     catch(ProcessorRegistry.IncompatibleReferenceTypeException e){
@@ -73,7 +73,7 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
     final List ret = new ArrayList();
     final FilterScopeProcessor proc;
     try{
-      proc = ProcessorRegistry.getInstance().getProcessorByType(getSoftenType(), ret, needToCheckAccessibility() ? getElement() : null);
+      proc = ProcessorRegistry.getProcessorByType(getSoftenType(), ret, needToCheckAccessibility() ? getElement() : null);
     }
     catch(ProcessorRegistry.IncompatibleReferenceTypeException e){
       LOG.error(e);
@@ -94,7 +94,7 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
     }
   }
 
-  protected ElementManipulator<PsiElement> getManipulator(PsiElement currentElement){
+  protected static ElementManipulator<PsiElement> getManipulator(PsiElement currentElement){
     return ReferenceProvidersRegistry.getInstance(currentElement.getProject()).getManipulator(currentElement);
   }
 

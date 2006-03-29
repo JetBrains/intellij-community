@@ -35,7 +35,7 @@ public class ControlFlow {
 
   public Instruction[] getInstructions(){
     addInstruction(new ReturnInstruction());
-    return (Instruction[])myInstructions.toArray(new Instruction[myInstructions.size()]);
+    return myInstructions.toArray(new Instruction[myInstructions.size()]);
   }
 
   public int getInstructionCount() {
@@ -82,11 +82,19 @@ public class ControlFlow {
   }
 
   public void dump(PrintStream p) {
+    p.println(toString());
+  }
+
+
+  public String toString() {
+    StringBuilder result = new StringBuilder();
     final Instruction[] instructions = getInstructions();
 
     for (int i = 0; i < instructions.length; i++) {
       Instruction instruction = instructions[i];
-      p.println(Integer.toString(i) + ": " + instruction.toString());
+      result.append(Integer.toString(i) + ": " + instruction.toString());
+      result.append("\n");
     }
+    return result.toString();
   }
 }
