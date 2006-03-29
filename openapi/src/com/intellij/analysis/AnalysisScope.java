@@ -394,8 +394,7 @@ public class AnalysisScope {
       }
       return true;
     }
-    if (myType == VIRTUAL_FILES || myType == CUSTOM) return true;
-    return myElement != null && myElement.isValid();
+    return myType == VIRTUAL_FILES || myType == CUSTOM || (myElement != null && myElement.isValid());
   }
 
   public int getScopeType() {
@@ -522,6 +521,16 @@ public class AnalysisScope {
       LOG.assertTrue(profileManager != null);
       final PsiDirectory[] psiDirectories = ((PsiPackage)myElement).getDirectories();
       processDirectories(psiDirectories, result, profileManager);
+    } else if (myType == VIRTUAL_FILES){
+      final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myProject, Profile.INSPECTION);
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
+      LOG.assertTrue(profileManager != null);
+      for (VirtualFile file : myFilesSet) {
+        final PsiFile psiFile = psiManager.findFile(file);
+        if (psiFile != null && psiFile.isValid()) {
+          result.add(profileManager.getProfileName(psiFile));
+        }
+      }
     }
     return result;
   }
@@ -538,7 +547,7 @@ public class AnalysisScope {
     }
   }
 
-  private void processModule(final Set<String> result, final Module module) {
+  private static void processModule(final Set<String> result, final Module module) {
     final Project project = module.getProject();
     final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(project, Profile.INSPECTION);
     LOG.assertTrue(profileManager != null);
