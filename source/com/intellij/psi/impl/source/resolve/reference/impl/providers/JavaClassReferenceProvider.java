@@ -237,7 +237,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
               return true;
             }
 
-            public <T> T getHint(Class<T> hintClass) {
+            public <V> V getHint(Class<V> hintClass) {
               return processor.getHint(hintClass);
             }
 
@@ -321,8 +321,9 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         }
 
         final String newName = qualifiedName;
-        final TextRange range = new TextRange(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+        TextRange range = new TextRange(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
         final PsiElement finalElement = getManipulator(getElement()).handleContentChange(getElement(), range, newName);
+        range = new TextRange(range.getStartOffset(), range.getStartOffset()+newName.length());
         reparse(finalElement,range);
         return finalElement;
       }

@@ -26,7 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 
 public interface PsiScopeProcessor {
-  public static final class Event{
+  final class Event{
     public static final Event START_STATIC = new Event();
     public static final Event BEGIN_GROUP = new Event();
     public static final Event END_GROUP = new Event();
