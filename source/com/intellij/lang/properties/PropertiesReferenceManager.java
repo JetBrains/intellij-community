@@ -140,6 +140,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
         if (myChangedFiles.isEmpty()) break;
         virtualFile = myChangedFiles.remove(myChangedFiles.size() - 1);
       }
+      if (!virtualFile.isValid()) continue;
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
       if (!(psiFile instanceof PropertiesFile)) continue;
       Set<String> keys = ((PropertiesFile)psiFile).getNamesMap().keySet();
