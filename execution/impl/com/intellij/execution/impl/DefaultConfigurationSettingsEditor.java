@@ -41,6 +41,7 @@ public class DefaultConfigurationSettingsEditor implements Configurable {
     final JPanel wholePanel = new JPanel(new BorderLayout());
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
     wholePanel.add(pane, BorderLayout.WEST);
     final JPanel rightPanel = new JPanel(new BorderLayout());
     wholePanel.add(rightPanel, BorderLayout.CENTER);
@@ -82,8 +83,11 @@ public class DefaultConfigurationSettingsEditor implements Configurable {
           if (configurable == null){
             configurable = TypeTemplatesConfigurable.createConfigurable(type, myProject);
             myStoredComponents.put(type, configurable);
+            rightPanel.add(configurable.createComponent());
+            configurable.reset();
+          } else {
+            rightPanel.add(configurable.createComponent());
           }
-          rightPanel.add(configurable.createComponent());
           rightPanel.revalidate();
           rightPanel.repaint();
           final Window window = SwingUtilities.windowForComponent(wholePanel);
