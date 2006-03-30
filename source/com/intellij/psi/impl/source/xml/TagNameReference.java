@@ -1,9 +1,5 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
-import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.TextRange;
@@ -11,12 +7,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlChildRole;
@@ -24,10 +20,15 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.jsp.impl.TldDescriptor;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -81,13 +82,13 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
       final String namespacePrefix = element.getNamespacePrefix();
       newElementName = newElementName.substring(0,newElementName.lastIndexOf('.'));
 
-      if (namespacePrefix.length() > 0) {
+      if (namespacePrefix != null && namespacePrefix.length() > 0) {
         newElementName = namespacePrefix + ":" + newElementName;
       }
     } else if (newElementName.indexOf(':') == -1) {
       final String namespacePrefix = element.getNamespacePrefix();
 
-      if (namespacePrefix.length() > 0) {
+      if (namespacePrefix != null && namespacePrefix.length() > 0) {
         if (PsiUtil.isInJspFile(element.getContainingFile())) {
           final XmlNSDescriptor nsDescriptor = element.getNSDescriptor(element.getNamespace(), true);
 
@@ -117,7 +118,7 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
       // implicit reference to tag file
       return getElement();
     }
-    
+
     throw new IncorrectOperationException("Cant bind to not a xml element definition!"+element+","+metaData);
   }
 
@@ -129,7 +130,7 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
     final List<XmlElementDescriptor> variants = new ArrayList<XmlElementDescriptor>();
     final XmlTag element = getElement();
     if (element instanceof JspDirective) return EMPTY_ARRAY;
-    
+
     if(!myStartTagFlag){
       XmlTag fromJspTree = null;
       final PsiFile containingFile = element.getContainingFile();
@@ -157,8 +158,9 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
         }
       }
       final String name = element.getName();
-      if(fromJspTree == null) return new Object[]{name};
-      return new Object[]{name, fromJspTree.getName()};
+      if(name == null && (fromJspTree == null || fromJspTree.getName() == null)) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      if(fromJspTree == null || fromJspTree.getName() == null) return new Object[]{name};
+      if(name != null) return new Object[]{name, fromJspTree.getName()};
     }
     final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<String, XmlElementDescriptor>();
 
