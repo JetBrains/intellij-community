@@ -1,7 +1,7 @@
 package com.intellij.execution.junit2.configuration;
 
-import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
@@ -9,6 +9,7 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
@@ -18,9 +19,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.CollectUtil;
-import com.intellij.util.containers.ConvertingIterator;
-import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class RunConfigurationModule implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.configuration.RunConfigurationModule");
@@ -92,11 +92,15 @@ public class RunConfigurationModule implements JDOMExternalizable {
   public static Collection<Module> getModulesForClass(@NotNull final Project project, final String className) {
     if (project.isDefault()) return Arrays.asList(ModuleManager.getInstance(project).getModules());
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final PsiClass[] possibleClasses = PsiManager.getInstance(project).findClasses(className,
-                                                                             GlobalSearchScope.projectScope(project));
-    final HashSet<Module> modules = CollectUtil.SKIP_NULLS.toSet(possibleClasses,
-                                                           ConvertingIterator.composition(ExecutionUtil.FILE_OF_CLASS,
-                                                                                          ExecutionUtil.fileToModule(project)));
+    final PsiClass[] possibleClasses = PsiManager.getInstance(project).findClasses(className, GlobalSearchScope.projectScope(project));
+
+    final Set<Module> modules = new THashSet<Module>();
+    for (PsiClass aClass : possibleClasses) {
+      Module module = ModuleUtil.findModuleForPsiElement(aClass);
+      if (module != null) {
+        modules.add(module);
+      }
+    }
     if (modules.isEmpty()) {
       return Arrays.asList(ModuleManager.getInstance(project).getModules());
     }
