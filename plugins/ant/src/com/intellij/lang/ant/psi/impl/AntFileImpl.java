@@ -5,10 +5,12 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +57,16 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
     return myProject = new AntProjectImpl(this, tag);
   }
 
+  @NotNull
+  public AntProperty[] getProperties() {
+    return AntProperty.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public AntProperty getProperty(final String name) {
+    return null;
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "AntFile:" + getName();
@@ -72,6 +84,11 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
 
   public AntElement getAntParent() {
     return null;
+  }
+
+  @NotNull
+  public XmlAttribute[] getAttributes() {
+    return AntElementImpl.EMPTY_ATTRIBUTES;
   }
 
   public void subtreeChanged() {

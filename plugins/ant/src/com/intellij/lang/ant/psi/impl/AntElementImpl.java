@@ -6,13 +6,16 @@ import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,9 +25,12 @@ import java.util.List;
 
 public abstract class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
+  static final XmlAttribute[] EMPTY_ATTRIBUTES = new XmlAttribute[0];
+
   private final AntElement myParent;
   private AntElement[] myChildren = null;
   private PsiReference[] myReferences = null;
+  private XmlAttribute[] myAttributes = null;
 
   public AntElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(sourceElement);
@@ -50,13 +56,23 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
     return (AntProject)((this instanceof AntProject) ? this : PsiTreeUtil.getParentOfType(this, AntProject.class));
   }
 
-  public PsiElement getParent(){
+  @NotNull
+  public AntProperty[] getProperties() {
+    return AntProperty.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public AntProperty getProperty(final String name) {
+    return null;
+  }
+
+  public PsiElement getParent() {
     return myParent;
   }
 
   @NotNull
-  public AntElement[] getChildren(){
-    if(myChildren != null) return myChildren;
+  public AntElement[] getChildren() {
+    if (myChildren != null) return myChildren;
     return myChildren = getChildrenInner();
   }
 
@@ -111,18 +127,31 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
     myChildren = null;
   }
 
+  @NotNull
+  public XmlAttribute[] getAttributes() {
+    if (myAttributes == null) {
+      final XmlElement element = getSourceElement();
+      if (element instanceof XmlTag) {
+        myAttributes = ((XmlTag)element).getAttributes();
+      }
+      else {
+        myAttributes = EMPTY_ATTRIBUTES;
+      }
+    }
+    return myAttributes;
+  }
+
   public void subtreeChanged() {
     final AntElement parent = getAntParent();
     clearCaches();
-    if(parent != null) parent.subtreeChanged();
+    if (parent != null) parent.subtreeChanged();
   }
 
   public PsiElement findElementAt(int offset) {
     final int offsetInFile = offset + getTextRange().getStartOffset();
     for (final AntElement element : getChildren()) {
       final TextRange textRange = element.getTextRange();
-      if(textRange.contains(offsetInFile))
-        return element.findElementAt(offsetInFile - textRange.getStartOffset());
+      if (textRange.contains(offsetInFile)) return element.findElementAt(offsetInFile - textRange.getStartOffset());
     }
     return getTextRange().contains(offsetInFile) ? this : null;
   }
@@ -133,7 +162,7 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
 
   @NotNull
   public PsiReference[] getReferences() {
-    if(myReferences != null) {
+    if (myReferences != null) {
       return myReferences;
     }
     final GenericReferenceProvider[] providers = AntReferenceProvidersRegistry.getProvidersByElement(this);

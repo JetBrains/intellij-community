@@ -11,4 +11,7 @@ public interface AntCall extends AntElement {
   AntTarget getTarget();
 
   void setTarget(AntTarget target) throws IncorrectOperationException;
+
+  @NotNull
+  AntProperty[] getParams();
 }

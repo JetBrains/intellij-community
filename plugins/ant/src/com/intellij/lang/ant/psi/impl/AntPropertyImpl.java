@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -18,7 +19,7 @@ import java.io.File;
 
 public class AntPropertyImpl extends AntElementImpl implements AntProperty {
 
-  public AntPropertyImpl(AntProject parent, final XmlTag tag) {
+  public AntPropertyImpl(AntElement parent, final XmlTag tag) {
     super(parent, tag);
   }
 
@@ -101,14 +102,15 @@ public class AntPropertyImpl extends AntElementImpl implements AntProperty {
     return getSourceElement().getAttributeValue("file");
   }
 
-
   @Nullable
   public PropertiesFile getPropertiesFile() {
     final String filename = getFileName();
     if (filename == null) return null;
     AntFileImpl antFile = PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
     if (antFile == null) return null;
-    VirtualFile vFile = antFile.getSourceElement().getViewProvider().getVirtualFile().getParent();
+    VirtualFile vFile = antFile.getVirtualFile();
+    if (vFile == null) return null;
+    vFile = vFile.getParent();
     if (vFile == null) return null;
     final File file = new File(vFile.getPath(), filename);
     vFile = LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));

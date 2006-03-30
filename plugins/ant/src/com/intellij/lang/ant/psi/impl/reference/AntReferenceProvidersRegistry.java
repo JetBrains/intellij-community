@@ -6,6 +6,7 @@ import com.intellij.lang.ant.psi.impl.AntProjectImpl;
 import com.intellij.lang.ant.psi.impl.AntPropertyImpl;
 import com.intellij.lang.ant.psi.impl.AntTargetImpl;
 import com.intellij.lang.ant.psi.impl.reference.providers.AntPropertyFileReferenceProvider;
+import com.intellij.lang.ant.psi.impl.reference.providers.AntPropertyValueReferenceProvider;
 import com.intellij.lang.ant.psi.impl.reference.providers.AntSingleTargetReferenceProvider;
 import com.intellij.lang.ant.psi.impl.reference.providers.AntTargetListReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
@@ -20,10 +21,11 @@ public class AntReferenceProvidersRegistry {
 
   static {
     ourProviders = new HashMap<Class, GenericReferenceProvider[]>();
+    final AntPropertyValueReferenceProvider propValueProvider = new AntPropertyValueReferenceProvider();
     ourProviders.put(AntProjectImpl.class, new GenericReferenceProvider[]{new AntSingleTargetReferenceProvider()});
-    ourProviders.put(AntTargetImpl.class, new GenericReferenceProvider[]{new AntTargetListReferenceProvider()});
-    ourProviders.put(AntCallImpl.class, new GenericReferenceProvider[]{new AntSingleTargetReferenceProvider()});
-    ourProviders.put(AntPropertyImpl.class, new GenericReferenceProvider[]{new AntPropertyFileReferenceProvider()});
+    ourProviders.put(AntTargetImpl.class, new GenericReferenceProvider[]{new AntTargetListReferenceProvider(), propValueProvider});
+    ourProviders.put(AntCallImpl.class, new GenericReferenceProvider[]{new AntSingleTargetReferenceProvider(), propValueProvider});
+    ourProviders.put(AntPropertyImpl.class, new GenericReferenceProvider[]{new AntPropertyFileReferenceProvider(), propValueProvider});
   }
 
   private AntReferenceProvidersRegistry() {

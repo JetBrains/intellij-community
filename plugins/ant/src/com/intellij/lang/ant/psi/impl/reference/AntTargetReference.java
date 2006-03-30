@@ -9,64 +9,42 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 
-public class AntTargetReference extends GenericReference {
+public class AntTargetReference extends AntGenericReference {
 
   private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.ANT_TARGET);
-
-  private final AntElement myAntElement;
-  private final String myText;
-  private final TextRange myTextRange;
-  private final XmlAttribute myAttribute;
 
   public AntTargetReference(final GenericReferenceProvider provider,
                             final AntElement antElement,
                             final String str,
                             final TextRange textRange,
                             final XmlAttribute attribute) {
-    super(provider);
-    myAntElement = antElement;
-    myText = str;
-    myTextRange = textRange;
-    myAttribute = attribute;
-  }
-
-  public AntElement getElement() {
-    return myAntElement;
-  }
-
-  public TextRange getRangeInElement() {
-    return myTextRange;
-  }
-
-  public String getCanonicalText() {
-    return myText;
+    super(provider, antElement, str, textRange, attribute);
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final AntElement element = getElement();
     if (element instanceof AntProject || element instanceof AntCall) {
-      myAttribute.setValue(newElementName);
+      getAttribute().setValue(newElementName);
       element.subtreeChanged();
     }
     else if (element instanceof AntTarget) {
       int start = getElementStartOffset() + getReferenceStartOffset() - getAttributeValueStartOffset();
-      final String value = myAttribute.getValue();
+      final String value = getAttribute().getValue();
       final StringBuilder builder = StringBuilderSpinAllocator.alloc();
       try {
         if (start > 0) {
           builder.append(value.substring(0, start));
         }
         builder.append(newElementName);
-        if (value.length() > start + myTextRange.getLength()) {
-          builder.append(value.substring(start + myTextRange.getLength()));
+        if (value.length() > start + getRangeInElement().getLength()) {
+          builder.append(value.substring(start + getRangeInElement().getLength()));
         }
-        myAttribute.setValue(builder.toString());
+        getAttribute().setValue(builder.toString());
       }
       finally {
         StringBuilderSpinAllocator.dispose(builder);
@@ -117,6 +95,6 @@ public class AntTargetReference extends GenericReference {
   }
 
   private int getAttributeValueStartOffset() {
-    return myAttribute.getValueElement().getTextRange().getStartOffset() + 1;
+    return getAttribute().getValueElement().getTextRange().getStartOffset() + 1;
   }
 }

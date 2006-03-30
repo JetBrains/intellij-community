@@ -1,9 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
-import com.intellij.lang.ant.psi.AntCall;
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -17,6 +14,7 @@ import java.util.List;
 public class AntCallImpl extends AntElementImpl implements AntCall {
 
   private AntTarget[] myDependsTargets = null;
+  private AntProperty[] myParams = null;
 
   public AntCallImpl(final AntElement parent, final XmlElement sourceElement) {
     super(parent, sourceElement);
@@ -58,7 +56,25 @@ public class AntCallImpl extends AntElementImpl implements AntCall {
   }
 
   @NotNull
-  public AntTarget[] getDependsTargets() {
+  public AntProperty[] getParams() {
+    if(myParams == null) {
+      List<AntProperty> properties = new ArrayList<AntProperty>();
+      for (AntElement element : getChildren()) {
+        if (element instanceof AntProperty) {
+          properties.add((AntProperty)element);
+        }
+      }
+      myParams = properties.toArray(new AntProperty[properties.size()]);
+    }
+    return myParams;
+  }
+
+  public void clearCaches() {
+    myDependsTargets = null;
+  }
+
+  @NotNull
+  private AntTarget[] getDependsTargets() {
     if (myDependsTargets == null) {
       List<AntTarget> targets = new ArrayList<AntTarget>();
       for (AntElement element : getChildren()) {
@@ -71,10 +87,6 @@ public class AntCallImpl extends AntElementImpl implements AntCall {
     return myDependsTargets;
   }
 
-  public void clearCaches() {
-    myDependsTargets = null;
-  }
-
   protected AntElement[] getChildrenInner() {
     final XmlTag[] tags = getSourceElement().getSubTags();
     final List<AntElement> children = new ArrayList<AntElement>();
@@ -82,6 +94,9 @@ public class AntCallImpl extends AntElementImpl implements AntCall {
       @NonNls final String tagName = tag.getName();
       if ("target".equals(tagName)) {
         children.add(new AntTargetImpl(this, tag));
+      }
+      else if("param".equals(tagName)) {
+        children.add(new AntPropertyImpl(this, tag));
       }
     }
     return children.toArray(new AntElement[children.size()]);

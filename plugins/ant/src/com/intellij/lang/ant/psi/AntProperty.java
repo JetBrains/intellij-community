@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 public interface AntProperty extends AntElement, PsiNamedElement {
 
+  public static AntProperty[] EMPTY_ARRAY = new AntProperty[0];
+
   @NotNull
   XmlTag getSourceElement();
 

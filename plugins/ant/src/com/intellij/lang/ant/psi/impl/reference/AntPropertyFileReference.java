@@ -8,38 +8,22 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.util.IncorrectOperationException;
 
-public class AntPropertyFileReference extends GenericReference {
+public class AntPropertyFileReference extends AntGenericReference {
 
   private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.FILE);
-
-  private final AntElement myAntElement;
-  private final String myText;
-  private final TextRange myTextRange;
 
   public AntPropertyFileReference(final GenericReferenceProvider provider,
                                   final AntElement antElement,
                                   final String str,
                                   final TextRange textRange) {
-    super(provider);
-    myAntElement = antElement;
-    myText = str;
-    myTextRange = textRange;
+    super(provider,antElement, str, textRange, null);
   }
 
   public AntProperty getElement() {
-    return (AntProperty)myAntElement;
-  }
-
-  public TextRange getRangeInElement() {
-    return myTextRange;
-  }
-
-  public String getCanonicalText() {
-    return myText;
+    return (AntProperty)super.getElement();
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
