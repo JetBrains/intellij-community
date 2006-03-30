@@ -26,7 +26,7 @@
         </constraints>
         <properties>
           <labelFor value=""/>
-          <text value=" "/>
+          <text value=""/>
         </properties>
       </component>
       <component id="71451" class="javax.swing.JLabel" binding="myIconLabel">

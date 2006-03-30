@@ -5,6 +5,9 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.ui.TooltipUtils;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.util.xml.highlighting.DomElementProblemDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
@@ -86,10 +89,13 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     setUniformIcon(getNodeIcon());
     clearColoredText();
-    if (myDomElement.getXmlTag() != null) {
+
+    final List<DomElementProblemDescription> problems = DomElementAnnotationsManager.getInstance().getProblems(myDomElement);
+    if (problems.size() > 0) {
+      addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems), SimpleTextAttributes.ERROR_ATTRIBUTES);
+    } else  if (myDomElement.getXmlTag() != null) {
       addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    }
-    else {
+    } else {
       addColoredFragment(getNodeName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
 

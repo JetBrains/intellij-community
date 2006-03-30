@@ -43,10 +43,12 @@ public class InvocationCache {
       if ("equals".equals(method.getName())) {
         ourCoreInvocations.put(JavaMethodSignature.getSignature(method), new Invocation() {
           public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
-            final Object o = args[0];
-            final DomElement proxy = handler.getProxy();
-            return proxy == o || o instanceof StableElement && o.equals(((StableElement)o).getWrappedElement());
+            return _equals(handler.getProxy(), args[0]);
           }
+          private boolean _equals(final DomElement proxy, final Object o) {
+            return proxy == o || o instanceof StableElement && _equals(proxy, ((StableElement)o).getWrappedElement());
+          }
+
         });
       }
       else {
@@ -58,6 +60,7 @@ public class InvocationCache {
       }
     }
   }
+
 
   public Invocation getInvocation(JavaMethodSignature method) {
     Invocation invocation = ourCoreInvocations.get(method);

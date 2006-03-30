@@ -24,7 +24,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   private Map<DomFileElement, CachedValue<DomElementsProblemsHolder>> myCache = new HashMap<DomFileElement, CachedValue<DomElementsProblemsHolder>>();
 
   public List<DomElementProblemDescription> getProblems(final DomElement domElement) {
-    if(myCache.get(domElement.getRoot()) == null) {
+ if(myCache.get(domElement.getRoot()) == null) {
        myCache.put(domElement.getRoot(), getCachedValue(domElement));
     }
 

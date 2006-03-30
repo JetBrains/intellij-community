@@ -23,10 +23,8 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
   public List<DomElementProblemDescription> getProblems(DomElement domElement) {
     List<DomElementProblemDescription> problems = new ArrayList<DomElementProblemDescription>();
     for (DomElementProblemDescription problemDescription : this) {
-
-      //TODO !!!!  getXmlTag() - isn't proper way
       final DomElement domElement1 = problemDescription.getDomElement();
-      if(domElement1.getXmlTag().equals(domElement.getXmlTag())) {
+      if(domElement1.equals(domElement)) {
         problems.add(problemDescription);
       }
     }

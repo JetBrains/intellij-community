@@ -59,7 +59,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
 
     myDomEventListener = new DomEventListener() {
       public void eventOccured(DomEvent event) {
-        myBuilder.updateFromRoot(true);
+        myBuilder.updateFromRoot(false);
       }
     };
     myDomManager = rootElement.getManager();
