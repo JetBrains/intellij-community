@@ -25,7 +25,8 @@ public class BooleanEnumControl extends BaseControl<JCheckBox, String> {
   }
 
   public BooleanEnumControl(final DomWrapper<String> domWrapper, Class<? extends Enum> enumClass, boolean invertedOrder) {
-    this(domWrapper, NamedEnumUtil.getEnumValueByElement(enumClass.getEnumConstants()[invertedOrder ? 1 : 0]), NamedEnumUtil.getEnumValueByElement(enumClass.getEnumConstants()[invertedOrder ? 0 : 1]));
+    this(domWrapper, NamedEnumUtil.getEnumValueByElement(enumClass.getEnumConstants()[invertedOrder ? 0 : 1]), NamedEnumUtil.getEnumValueByElement(enumClass.getEnumConstants()[invertedOrder ? 1 : 0]));
+    assert enumClass.getEnumConstants().length == 2 : enumClass;
   }
 
   protected JCheckBox createMainComponent(JCheckBox boundComponent) {
