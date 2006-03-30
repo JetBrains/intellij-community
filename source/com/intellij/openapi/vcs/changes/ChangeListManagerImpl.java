@@ -98,11 +98,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void projectOpened() {
-    if (myChangeLists.isEmpty()) {
-      final ChangeList list = ChangeList.createEmptyChangeList(VcsBundle.message("changes.default.changlist.name"));
-      myChangeLists.add(list);
-      setDefaultChangeList(list);
-    }
+    createDefaultChangelistIfNecessary();
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
@@ -110,6 +106,14 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         myInitilized = true;
       }
     });
+  }
+
+  private void createDefaultChangelistIfNecessary() {
+    if (myChangeLists.isEmpty()) {
+      final ChangeList list = ChangeList.createEmptyChangeList(VcsBundle.message("changes.default.changlist.name"));
+      myChangeLists.add(list);
+      setDefaultChangeList(list);
+    }
   }
 
   public void projectClosed() {
@@ -127,6 +131,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void initComponent() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      createDefaultChangelistIfNecessary();
+      myInitilized = true;
+    }
   }
 
   public void disposeComponent() {
@@ -251,11 +259,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   private void updateProgressText(final String text) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myProgressLabel.setText(text);
-      }
-    });
+    if (myProgressLabel != null) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myProgressLabel.setText(text);
+        }
+      });
+    }
   }
 
   public boolean ensureUpToDate(boolean canBeCanceled) {
