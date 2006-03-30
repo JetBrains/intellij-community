@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -28,16 +29,16 @@ public class SharedPsiElementImplUtil {
     offset = thisElement.getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
 
     List<PsiReference> referencesList = new ArrayList<PsiReference>();
+    PsiElement elementForMultiRef = TreeUtil.getFileElement((TreeElement)element.getNode()).getPsi();
     while(element != null) {
       addReferences(offset, element, referencesList);
       offset = element.getStartOffsetInParent() + offset;
-      if (element == thisElement) break;
       element = element.getParent();
     }
 
     if (referencesList.isEmpty()) return null;
     if (referencesList.size() == 1) return referencesList.get(0);
-    return new PsiMultiReference(referencesList.toArray(new PsiReference[referencesList.size()]), thisElement);
+    return new PsiMultiReference(referencesList.toArray(new PsiReference[referencesList.size()]), elementForMultiRef);
   }
 
   private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences) {
