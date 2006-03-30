@@ -210,8 +210,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
 
   public RunnerAndConfigurationSettingsImpl getSelectedConfiguration() {
-    if (mySelectedConfiguration == null){
+    if (mySelectedConfiguration == null && mySelectedConfig != null){
       mySelectedConfiguration = myConfigurations.get(mySelectedConfig);
+      mySelectedConfig = null;
     }
     return mySelectedConfiguration;
   }

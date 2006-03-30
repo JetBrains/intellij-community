@@ -20,16 +20,22 @@ import javax.swing.*;
  * @author dyoma
  */
 class TypeTemplatesConfigurable implements Configurable {
-  private final RunManagerImpl myRunManager;
   private final ConfigurationType myType;
   private final Configurable[] myConfigurables;
   private TabbedPaneWrapper myTabbedPane;
 
   public TypeTemplatesConfigurable(final ConfigurationType type, final RunManagerImpl runManager) {
-    myRunManager = runManager;
     myType = type;
     myConfigurables = new Configurable[getFactories().length];
     myTabbedPane = new TabbedPaneWrapper();
+    final ConfigurationFactory[] factories = getFactories();
+    for (int i = 0; i < factories.length; i++) {
+      final ConfigurationFactory factory = factories[i];
+      final RunnerAndConfigurationSettingsImpl template = runManager.getConfigurationTemplate(factory);
+      final Configurable configurable = new TemplateConfigurable(template);
+      myConfigurables[i] = configurable;
+      myTabbedPane.addTab(factory.getName(), configurable.getIcon(), configurable.createComponent(), null);
+    }
   }
 
   private ConfigurationFactory[] getFactories() {
@@ -50,14 +56,6 @@ class TypeTemplatesConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
-    final ConfigurationFactory[] factories = getFactories();
-    for (int i = 0; i < factories.length; i++) {
-      final ConfigurationFactory factory = factories[i];
-      final RunnerAndConfigurationSettingsImpl template = myRunManager.getConfigurationTemplate(factory);
-      final Configurable configurable = new TemplateConfigurable(template);
-      myConfigurables[i] = configurable;
-      myTabbedPane.addTab(factory.getName(), configurable.getIcon(), configurable.createComponent(), null);
-    }
     return myTabbedPane.getComponent();
   }
 
