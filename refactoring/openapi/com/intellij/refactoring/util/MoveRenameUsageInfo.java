@@ -66,7 +66,10 @@ public class MoveRenameUsageInfo extends UsageInfo{
   @Nullable
   public PsiReference getReference() {
     if (myReferenceRangeMarker == null) return null;
-    if (myReference != null && myReference.getElement().isValid()) return myReference;
+    if (myReference != null) {
+      final PsiElement element = myReference.getElement();
+      if (element != null && element.isValid()) return myReference;
+    }
     final PsiElement element = getElement();
     if (element == null) return null;
     final int start = myReferenceRangeMarker.getStartOffset() - element.getTextRange().getStartOffset();
