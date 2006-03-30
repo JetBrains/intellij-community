@@ -344,7 +344,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public Map<String, RunnerAndConfigurationSettingsImpl> getStableConfigurations() {
     final HashMap<String,RunnerAndConfigurationSettingsImpl> result = new HashMap<String, RunnerAndConfigurationSettingsImpl>(myConfigurations);
     if (myTempConfiguration != null) {
-      result.remove(myTempConfiguration.getName());
+      result.remove(getUniqueName(myTempConfiguration));
     }
     return result;
   }
