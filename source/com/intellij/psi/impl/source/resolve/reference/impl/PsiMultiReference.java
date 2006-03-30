@@ -85,7 +85,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     while(element != myElement) {
       rangeInElement = rangeInElement.shiftRight(element.getStartOffsetInParent());
       element = element.getParent();
-      LOG.assertTrue(element != null);
+      if (element instanceof PsiFile) break;
     }
     return rangeInElement;
   }
