@@ -21,19 +21,24 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ConstantExpressionPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiExpression)){
             return false;
         }
-        if(ErrorUtil.containsError(element)){
-            return false;
-        }
-        final PsiExpression expression = (PsiExpression) element;
-
+	    // should be unneeded, disabled for performance
+        //if(ErrorUtil.containsError(element)){
+        //    return false;
+        //}
         if(element instanceof PsiLiteralExpression ||
                 element instanceof PsiClassObjectAccessExpression){
-            return false;
+	        return false;
         }
+	    final PsiExpression expression = (PsiExpression) element;
+	    final PsiType type = expression.getType();
+	    if (type == null || type.equalsToText("java.lang.String")){
+		    return false;
+	    }
         if(!PsiUtil.isConstantExpression(expression)){
             return false;
         }
@@ -41,14 +46,11 @@ class ConstantExpressionPredicate implements PsiElementPredicate{
         final PsiConstantEvaluationHelper helper =
                 manager.getConstantEvaluationHelper();
         final Object value = helper.computeConstantExpression(expression);
-        if(value == null)
-        {
-            return false;
+        if(value == null){
+	        return false;
         }
         final PsiElement parent = element.getParent();
-        if(!(parent instanceof PsiExpression)){
-            return true;
-        }
-        return !PsiUtil.isConstantExpression((PsiExpression) parent);
+	    return !(parent instanceof PsiExpression &&
+			    PsiUtil.isConstantExpression((PsiExpression)parent));
     }
 }
