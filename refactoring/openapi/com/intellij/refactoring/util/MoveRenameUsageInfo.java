@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class MoveRenameUsageInfo extends UsageInfo{
   private final PsiElement myReferencedElement;
 
+  private final PsiReference myReference;
   private RangeMarker myReferenceRangeMarker = null;
 
   public MoveRenameUsageInfo(PsiElement element, PsiReference reference, PsiElement referencedElement){
@@ -33,6 +34,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
     final Project project = element.getProject();
     myReferencedElement = referencedElement;
     if (reference == null) reference = element.getReference();
+    myReference = reference;
     if (reference != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
       int elementStart = element.getTextRange().getStartOffset();
@@ -47,6 +49,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
     final Project project = element.getProject();
     myReferencedElement = referencedElement;
     if (reference == null) reference = element.getReference();
+    myReference = reference;
     if (reference != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
       int elementStart = element.getTextRange().getStartOffset();
@@ -63,6 +66,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
   @Nullable
   public PsiReference getReference() {
     if (myReferenceRangeMarker == null) return null;
+    if (myReference != null && myReference.getElement().isValid()) return myReference;
     final PsiElement element = getElement();
     if (element == null) return null;
     final int start = myReferenceRangeMarker.getStartOffset() - element.getTextRange().getStartOffset();
