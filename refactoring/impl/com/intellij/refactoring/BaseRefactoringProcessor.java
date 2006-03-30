@@ -218,7 +218,7 @@ public abstract class BaseRefactoringProcessor {
 
     for (Usage usage : usages) {
       if (usage instanceof PsiElementUsage) {
-        final PsiElementUsage elementUsage = ((PsiElementUsage)usage);
+        final PsiElementUsage elementUsage = (PsiElementUsage)usage;
         if (elementUsage.isNonCodeUsage()) {
           nonCodeUsageCount++;
           nonCodeFiles.add(elementUsage.getElement().getContainingFile());
@@ -340,7 +340,7 @@ public abstract class BaseRefactoringProcessor {
     }
   }
 
-  private Set<PsiJavaFile> getTouchedJavaFiles(final UsageInfo[] usages) {
+  private static Set<PsiJavaFile> getTouchedJavaFiles(final UsageInfo[] usages) {
     Set<PsiJavaFile> javaFiles = new HashSet<PsiJavaFile>();
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();

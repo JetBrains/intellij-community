@@ -14,9 +14,10 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -31,7 +32,8 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.pom.java.LanguageLevel;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -283,40 +285,43 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException {
-    if (PsiUtil.isInJspFile(file)) return;
     final PsiImportList importList = file.getImportList();
-    if (importList == null) {
-      return;
-    }
+    if (importList == null) return;
     final PsiImportStatementBase[] imports = importList.getAllImportStatements();
-    if( imports.length == 0 )
-    {
-      return;
-    }
+    if( imports.length == 0 ) return;
 
-    final Set<PsiImportStatementBase> redundants = new HashSet<PsiImportStatementBase>(Arrays.asList(imports));
-    final PsiElement[] roots = file.getPsiRoots();
-    for (PsiElement root : roots) {
-      root.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-          if (!reference.isQualified()) {
-            final JavaResolveResult resolveResult = reference.advancedResolve(false);
-            final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
-            if (resolveScope instanceof PsiImportStatementBase) {
-              //noinspection SuspiciousMethodCalls
-              redundants.remove(resolveScope);
+    Set<PsiImportStatementBase> allImports = new THashSet<PsiImportStatementBase>(Arrays.asList(imports));
+    final Collection<PsiImportStatementBase> redundants;
+    if (PsiUtil.isInJspFile(file)) {
+      // remove only duplicate imports
+      redundants = new THashSet<PsiImportStatementBase>(TObjectHashingStrategy.IDENTITY);
+      redundants.addAll(Arrays.asList(imports));
+      redundants.removeAll(allImports);
+    }
+    else {
+      redundants = allImports;
+      final PsiElement[] roots = file.getPsiRoots();
+      for (PsiElement root : roots) {
+        root.accept(new PsiRecursiveElementVisitor() {
+          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+            if (!reference.isQualified()) {
+              final JavaResolveResult resolveResult = reference.advancedResolve(false);
+              final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
+              if (resolveScope instanceof PsiImportStatementBase) {
+                final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)resolveScope;
+                redundants.remove(importStatementBase);
+              }
             }
+            super.visitReferenceElement(reference);
           }
-          super.visitReferenceElement(reference);
-        }
-      });
+        });
+      }
     }
 
     for (final PsiImportStatementBase importStatement : redundants) {
       final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
       //Do not remove non-resolving refs
-      if( ref == null || ref.resolve() == null )
-      {
+      if (ref == null || ref.resolve() == null) {
         continue;
       }
 
@@ -374,8 +379,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       final TextRange significantRange = getSignificantRange(file, offset);
       final FormattingModel model = builder.createModel(file, settings);
 
-      int result = FormatterEx.getInstanceEx().adjustLineIndent(model, settings, indentOptions, offset, significantRange);
-      return result;
+      return FormatterEx.getInstanceEx().adjustLineIndent(model, settings, indentOptions, offset, significantRange);
     }
     else {
       return offset;
@@ -506,19 +510,22 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       ASTNode current = elementAtOffset;
       current = findNearestExpressionParent(current);
       if (current == null) {
-        if (elementAtOffset.getElementType() == ElementType.WHITE_SPACE) {
+        if (elementAtOffset.getElementType() == TokenType.WHITE_SPACE) {
           ASTNode prevElement = elementAtOffset.getTreePrev();
           if (prevElement == null) {
             return elementAtOffset.getTextRange();
-          } else {
+          }
+          else {
             ASTNode prevExpressionParent = findNearestExpressionParent(prevElement);
             if (prevExpressionParent == null) {
               return elementAtOffset.getTextRange();
-            } else {
+            }
+            else {
               return new TextRange(prevExpressionParent.getTextRange().getStartOffset(), elementAtOffset.getTextRange().getEndOffset());
             }
           }
-        } else {
+        }
+        else {
           return elementAtOffset.getTextRange();
         }
 
@@ -526,7 +533,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       else {
         return current.getTextRange();
       }
-    } else {
+    }
+    else {
       return elementAtOffset.getTextRange();
     }
   }
@@ -544,33 +552,27 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public boolean isLineToBeIndented(PsiFile file, int offset) {
-    if( !SourceTreeToPsiMap.hasTreeElement( file ) )
-    {
+    if (!SourceTreeToPsiMap.hasTreeElement(file)) {
       return false;
     }
     Helper helper = new Helper(file.getFileType(), myProject);
     char[] chars = file.textToCharArray();
     int start = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
-    if( start > 0 && chars[start] != '\n' && chars[start] != '\r' )
-    {
+    if (start > 0 && chars[start] != '\n' && chars[start] != '\r') {
       return false;
     }
     int end = CharArrayUtil.shiftForward(chars, offset, " \t");
-    if( end >= chars.length )
-    {
+    if (end >= chars.length) {
       return false;
     }
     ASTNode element = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(end));
-    if( element == null )
-    {
+    if (element == null) {
       return false;
     }
-    if( element.getElementType() == ElementType.WHITE_SPACE )
-    {
+    if (element.getElementType() == TokenType.WHITE_SPACE) {
       return false;
     }
-    if( element.getElementType() == ElementType.PLAIN_TEXT )
-    {
+    if (element.getElementType() == ElementType.PLAIN_TEXT) {
       return false;
     }
     /*
@@ -579,11 +581,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       return false;
     }
     */
-    if (getSettings().KEEP_FIRST_COLUMN_COMMENT
-        && (element.getElementType() == ElementType.END_OF_LINE_COMMENT || element.getElementType() == ElementType.C_STYLE_COMMENT)
-    ) {
-      if( helper.getIndent( element, true ) == 0 )
-      {
+    if (getSettings().KEEP_FIRST_COLUMN_COMMENT &&
+        (element.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || element.getElementType() == JavaTokenType.C_STYLE_COMMENT)) {
+      if (helper.getIndent(element, true) == 0) {
         return false;
       }
     }
@@ -602,7 +602,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     ASTNode element = SourceTreeToPsiMap.psiElementToTree(elementAt);
     ASTNode parent = element.getTreeParent();
     int elementStart = element.getTextRange().getStartOffset();
-    if (element.getElementType() != ElementType.WHITE_SPACE) {
+    if (element.getElementType() != TokenType.WHITE_SPACE) {
       /*
       if (elementStart < offset) return null;
       Element marker = Factory.createLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length());
@@ -613,7 +613,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
 
     ASTNode space1 = Helper.splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
-    ASTNode marker = Factory.createSingleLeafElement(TokenTypeEx.NEW_LINE_INDENT, DUMMY_IDENTIFIER.toCharArray(), 0,
+    ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER.toCharArray(), 0,
                                                      DUMMY_IDENTIFIER.length(), charTable, file.getManager());
     parent.addChild(marker, space1.getTreeNext());
     return SourceTreeToPsiMap.treeElementToPsi(marker);
