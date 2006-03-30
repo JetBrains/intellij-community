@@ -16,18 +16,17 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameParameterFix;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
@@ -37,7 +36,10 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
     /**
      * @noinspection PublicField
      */
-    public boolean m_ignoreSingleCharacterNames = true;
+    public boolean m_ignoreSingleCharacterNames = false;
+
+    /** @noinspection PublicField*/
+    public boolean m_ignoreOverridesOfLibraryMethods = false;
 
     public String getGroupDisplayName() {
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
@@ -51,13 +53,18 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "parameter.name.differs.from.overridden.parameter.ignore.option"),
-                this,
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "parameter.name.differs.from.overridden.parameter.ignore.character.option"),
                 "m_ignoreSingleCharacterNames");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "parameter.name.differs.from.overridden.parameter.ignore.library.option"),
+                "m_ignoreOverridesOfLibraryMethods");
+        return optionsPanel;
     }
 
+    @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         final PsiParameter parameter = (PsiParameter)location.getParent();
         if (parameter == null) {
@@ -112,6 +119,14 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
 
         private void checkParameters(PsiMethod superMethod,
                                      PsiParameter[] parameters) {
+            if (m_ignoreOverridesOfLibraryMethods) {
+                final PsiClass containingClass =
+                        superMethod.getContainingClass();
+                if (containingClass != null &&
+                        LibraryUtil.classIsInLibrary(containingClass)) {
+                    return;
+                }
+            }
             final PsiParameterList superParameterList =
                     superMethod.getParameterList();
             final PsiParameter[] superParameters =
