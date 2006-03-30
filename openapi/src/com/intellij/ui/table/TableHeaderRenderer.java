@@ -33,7 +33,7 @@ public class TableHeaderRenderer extends JPanel implements TableCellRenderer{
   private final SortableColumnModel myModel;
   private final JLabel myLabel = new JLabel("", JLabel.CENTER);
   private final JPanel myIconPanel = new JPanel(new BorderLayout());
-  private final JPanel mySpace = new JPanel();
+  private final JPanel mySpace = new JPanel(new BorderLayout());
   private final JLabel myIconLabel = new JLabel();
   private final Border myBorder;
 
