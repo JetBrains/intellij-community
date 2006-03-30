@@ -19,15 +19,16 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstantInitializer;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import com.siyeh.ig.performance.InnerClassReferenceVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
+public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -57,6 +58,9 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
 
         public void visitClass(@NotNull PsiClass aClass){
             if (!(aClass instanceof PsiAnonymousClass)) {
+                return;
+            }
+            if (aClass instanceof PsiEnumConstantInitializer) {
                 return;
             }
             final PsiAnonymousClass anAnonymousClass =
