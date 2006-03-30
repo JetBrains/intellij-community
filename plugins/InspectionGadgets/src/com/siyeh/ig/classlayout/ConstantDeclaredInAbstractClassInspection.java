@@ -55,7 +55,8 @@ public class ConstantDeclaredInAbstractClassInspection extends FieldInspection {
                 return;
             }
             if (containingClass.isInterface() ||
-                    containingClass.isAnnotationType()) {
+                    containingClass.isAnnotationType() ||
+                    containingClass.isEnum()) {
                 return;
             }
             if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
