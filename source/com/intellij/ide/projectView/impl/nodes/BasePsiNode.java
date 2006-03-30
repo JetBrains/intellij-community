@@ -1,12 +1,12 @@
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -100,13 +100,11 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
     updateImpl(data);
   }
 
-  @SuppressWarnings({"InstanceofIncompatibleInterface", "CastToIncompatibleInterface"})
   private boolean isDeprecated() {
     final T element = getValue();
-    if (element == null || !element.isValid()) return false;
-    if (!(element instanceof PsiDocCommentOwner)) return false;
-    return ((PsiDocCommentOwner)element).isDeprecated();
-
+    return element != null && element.isValid() &&
+           element instanceof PsiDocCommentOwner &&
+           ((PsiDocCommentOwner)element).isDeprecated();
   }
 
   public boolean contains(VirtualFile file) {
@@ -116,11 +114,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
       return false;
     }
     final VirtualFile valueFile = containingFile.getVirtualFile();
-    if (valueFile != null) {
-      return file.equals(valueFile);
-    } else {
-      return false;
-    }
+    return valueFile != null && file.equals(valueFile);
   }
 
   public void navigate(boolean requestFocus) {

@@ -23,9 +23,9 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -104,8 +104,7 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
   }
 
   public final boolean equals(Object object) {
-    if (!(object instanceof AbstractTreeNode)) return false;
-    return Comparing.equal(getValue(), ((AbstractTreeNode)object).getValue());
+    return object instanceof AbstractTreeNode && Comparing.equal(getValue(), ((AbstractTreeNode)object).getValue());
   }
 
   public final int hashCode() {
