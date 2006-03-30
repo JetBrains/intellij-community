@@ -171,4 +171,27 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
       }
     }
   }
+
+  public final void requestFocus() {
+    myComponent.requestFocus();
+  }
+
+  public final void setNextFocusableComponent(Component aComponent) {
+    myComponent.setNextFocusableComponent(aComponent);
+  }
+
+  private KeyEvent myCurrentEvent = null;
+  protected final boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
+    if (condition == WHEN_FOCUSED && myCurrentEvent != e)
+      try {
+        myCurrentEvent = e;
+        myComponent.dispatchEvent(e);
+      }
+      finally {
+        myCurrentEvent = null;
+      }
+    if (e.isConsumed()) return true;
+    return super.processKeyBinding(ks, e, condition, pressed);
+  }
+
 }

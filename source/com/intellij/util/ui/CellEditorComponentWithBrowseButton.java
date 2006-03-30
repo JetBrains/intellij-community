@@ -58,11 +58,11 @@ public class CellEditorComponentWithBrowseButton<Comp extends JComponent> extend
   }
 
   public void requestFocus() {
-    myComponent.getChildComponent().requestFocus();
+    myComponent.requestFocus();
   }
 
   public void setNextFocusableComponent(Component aComponent) {
-    myComponent.getChildComponent().setNextFocusableComponent(aComponent);
+    myComponent.setNextFocusableComponent(aComponent);
   }
 
   public void addNotify() {
