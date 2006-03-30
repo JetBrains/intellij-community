@@ -7,17 +7,14 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ConvertingIterator;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +27,6 @@ import java.util.Collection;
 
 public class ExecutionUtil {
   private static final Icon INVALID_CONFIGURATOIN = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png");
-
-  public static final Convertor<PsiClass, VirtualFile> FILE_OF_CLASS =
-    new Convertor<PsiClass, VirtualFile>() {
-      public VirtualFile convert(final PsiClass psiClass) {
-        return psiClass.getContainingFile().getVirtualFile();
-      }
-    };
 
   public static String getRuntimeQualifiedName(final PsiClass aClass) {
     final PsiClass containingClass = aClass.getContainingClass();
@@ -61,17 +51,8 @@ public class ExecutionUtil {
     return rtClassName.substring(lastDot + 1, rtClassName.length());
   }
 
-  public static Module findModule(final PsiClass psiClass) {
-    final Convertor<PsiClass,Module> convertor = ConvertingIterator.composition(FILE_OF_CLASS, fileToModule(psiClass.getProject()));
-    return convertor.convert(psiClass);
-  }
-
-  public static Convertor<VirtualFile, Module> fileToModule(@NotNull final Project project) {
-    return new Convertor<VirtualFile, Module>() {
-      public Module convert(final VirtualFile file) {
-        return VfsUtil.getModuleForFile(project, file);
-      }
-    };
+  public static Module findModule(@NotNull final PsiClass psiClass) {
+    return ModuleUtil.findModuleForPsiElement(psiClass);
   }
 
   public static Collection<Module> collectModulesDependsOn(@NotNull final Collection<Module> modules) {
