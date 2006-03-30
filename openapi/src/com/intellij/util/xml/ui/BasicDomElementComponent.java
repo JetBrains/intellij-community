@@ -1,10 +1,10 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
@@ -15,6 +15,8 @@ import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * User: Sergey.Vasiliev
@@ -22,20 +24,21 @@ import java.lang.reflect.Field;
  */
 public abstract class BasicDomElementComponent<T extends DomElement> extends AbstractDomElementComponent<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ui.editors.BasicDomElementComponent");
+  private final Map<JComponent, DomUIControl> myBoundComponents = new HashMap<JComponent, DomUIControl>();
 
   public BasicDomElementComponent(T domElement) {
     super(domElement);
   }
 
-  protected void bindProperties() {
-      bindProperties(getDomElement());
+  protected final void bindProperties() {
+    bindProperties(getDomElement());
   }
 
   protected boolean commitOnEveryChange(GenericDomValue element) {
     return false;
   }
 
-  protected void bindProperties(final DomElement domElement) {
+  protected final void bindProperties(final DomElement domElement) {
     if (domElement == null) return;
 
     final java.util.List<DomChildrenDescription> childrenDescriptions = domElement.getGenericInfo().getChildrenDescriptions();
@@ -72,12 +75,13 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
   }
 
   protected void doBind(final DomUIControl control, final JComponent boundComponent) {
+    myBoundComponents.put(boundComponent, control);
     control.bind(boundComponent);
     addComponent(control);
   }
 
   private JComponent getBoundComponent(final DomChildrenDescription description) {
-    final Field[] fields = this.getClass().getDeclaredFields();
+    final Field[] fields = getClass().getDeclaredFields();
     for (Field field : fields) {
       try {
         field.setAccessible(true);
@@ -116,7 +120,11 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     return getDomElement().getModule();
   }
 
-  protected void setEnabled(Component component, boolean enabled) {
+  protected final DomUIControl getDomControl(JComponent component) {
+    return myBoundComponents.get(component);
+  }
+
+  protected static void setEnabled(Component component, boolean enabled) {
     component.setEnabled(enabled);
     if (component instanceof Container) {
       for (Component child : ((Container)component).getComponents()) {
