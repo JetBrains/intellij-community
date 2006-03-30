@@ -55,6 +55,9 @@ public class PublicMethodNotExposedInInterfaceInspection
             if (method.isConstructor()) {
                 return;
             }
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;
             }

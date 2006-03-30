@@ -66,6 +66,9 @@ public class RefusedBequestInspection extends MethodInspection{
             if(body == null){
                 return;
             }
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final PsiMethod leastConcreteSuperMethod =
                     getLeastConcreteSuperMethod(method);
             if(leastConcreteSuperMethod == null){
@@ -87,7 +90,6 @@ public class RefusedBequestInspection extends MethodInspection{
             if(containsSuperCall(body, leastConcreteSuperMethod)){
                 return;
             }
-
             registerMethodError(method);
         }
 

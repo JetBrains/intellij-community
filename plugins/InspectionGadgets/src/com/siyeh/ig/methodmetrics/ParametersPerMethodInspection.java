@@ -62,6 +62,9 @@ public class ParametersPerMethodInspection extends MethodMetricInspection {
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
             if (parameters == null) {

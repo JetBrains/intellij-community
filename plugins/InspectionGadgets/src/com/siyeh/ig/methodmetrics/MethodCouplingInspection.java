@@ -153,6 +153,9 @@ public class MethodCouplingInspection extends MethodMetricInspection {
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final CouplingVisitor visitor = new CouplingVisitor(
                     method, m_includeJavaClasses, m_includeLibraryClasses);
             method.accept(visitor);

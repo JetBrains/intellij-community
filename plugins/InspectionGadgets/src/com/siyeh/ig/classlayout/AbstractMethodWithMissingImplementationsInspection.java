@@ -59,6 +59,9 @@ public class AbstractMethodWithMissingImplementationsInspection
 
         public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final PsiClass containingClass = method.getContainingClass();
             if (containingClass == null) {
                 return;

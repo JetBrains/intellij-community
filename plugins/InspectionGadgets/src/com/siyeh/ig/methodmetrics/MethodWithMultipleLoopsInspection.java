@@ -44,6 +44,9 @@ public class MethodWithMultipleLoopsInspection extends MethodInspection {
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final LoopCountVisitor visitor = new LoopCountVisitor();
             method.accept(visitor);
             final int negationCount = visitor.getCount();

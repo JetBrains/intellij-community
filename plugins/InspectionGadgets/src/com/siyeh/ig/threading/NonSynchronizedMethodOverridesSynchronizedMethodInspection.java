@@ -51,6 +51,9 @@ public class NonSynchronizedMethodOverridesSynchronizedMethodInspection
             if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
                 return;
             }
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final PsiMethod[] superMethods = method.findSuperMethods();
             for (final PsiMethod superMethod : superMethods) {
                 if (superMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {

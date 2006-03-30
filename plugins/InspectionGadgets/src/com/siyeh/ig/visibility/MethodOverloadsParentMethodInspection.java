@@ -70,8 +70,10 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
                     || method.hasModifierProperty(PsiModifier.STATIC)){
                 return;
             }
-
-          final PsiMethod[] superMethods = method.findSuperMethods();
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
+            final PsiMethod[] superMethods = method.findSuperMethods();
             if(superMethods.length != 0){
                 return;
             }

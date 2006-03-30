@@ -82,6 +82,9 @@ public class RedundantMethodOverrideInspection extends MethodInspection {
             if (body == null) {
                 return;
             }
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final PsiMethod[] superMethods = method.findSuperMethods(false);
             if (superMethods.length == 0) {
                 return;

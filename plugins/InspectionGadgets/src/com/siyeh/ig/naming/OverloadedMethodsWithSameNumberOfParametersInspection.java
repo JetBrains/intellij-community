@@ -51,7 +51,9 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
             if (method.isConstructor()) {
                 return;
             }
-            final int parameterCount = calculateParamCount(method);
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final PsiClass aClass = method.getContainingClass();
             if (aClass == null) {
                 return;
@@ -59,6 +61,7 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
             final String methodName = method.getName();
             final PsiMethod[] sameNameMethods =
                     aClass.findMethodsByName(methodName, false);
+            final int parameterCount = calculateParamCount(method);
             for (PsiMethod sameNameMethod : sameNameMethods) {
                 if(!sameNameMethod.equals(method)) {
                     final int testParameterCount = 

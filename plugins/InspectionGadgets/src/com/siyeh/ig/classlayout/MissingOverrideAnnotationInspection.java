@@ -88,6 +88,9 @@ public class MissingOverrideAnnotationInspection extends MethodInspection {
             extends BaseInspectionVisitor{
 
         public void visitMethod(@NotNull PsiMethod method){
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             if(method.isConstructor()){
                 return;
             }
@@ -95,7 +98,8 @@ public class MissingOverrideAnnotationInspection extends MethodInspection {
                method.hasModifierProperty(PsiModifier.STATIC)){
                 return;
             }
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
+            final LanguageLevel languageLevel =
+                    PsiUtil.getLanguageLevel(method);
             if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
                 return;
             }

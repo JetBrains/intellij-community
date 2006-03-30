@@ -58,8 +58,9 @@ public class MethodNameSameAsParentNameInspection extends MethodInspection {
             if (method.isConstructor()) {
                 return;
             }
-            final String methodName = method.getName();
-
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final PsiClass containingClass = method.getContainingClass();
             if (containingClass == null) {
                 return;
@@ -72,6 +73,7 @@ public class MethodNameSameAsParentNameInspection extends MethodInspection {
             if (parentName == null) {
                 return;
             }
+            final String methodName = method.getName();
             if (!methodName.equals(parentName)) {
                 return;
             }

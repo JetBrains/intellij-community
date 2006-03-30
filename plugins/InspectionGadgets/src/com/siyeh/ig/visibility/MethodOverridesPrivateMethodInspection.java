@@ -68,6 +68,9 @@ public class MethodOverridesPrivateMethodInspection extends MethodInspection{
             if(aClass == null){
                 return;
             }
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
             if(parameters == null){

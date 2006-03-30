@@ -60,6 +60,9 @@ public class NonCommentSourceStatementsInspection
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final NCSSVisitor visitor = new NCSSVisitor();
             method.accept(visitor);
             final int count = visitor.getStatementCount();

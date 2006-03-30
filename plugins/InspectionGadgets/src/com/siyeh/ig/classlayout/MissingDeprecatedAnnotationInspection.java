@@ -99,6 +99,9 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection {
         }
 
         public void visitMethod(@NotNull PsiMethod method) {
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;

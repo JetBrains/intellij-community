@@ -57,6 +57,9 @@ public class MultipleReturnPointsPerMethodInspection
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final int returnPointCount = calculateReturnPointCount(method);
             if (returnPointCount <= getLimit()) {
                 return;

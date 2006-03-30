@@ -65,6 +65,9 @@ public class ThrownExceptionsPerMethodInspection
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
             final PsiReferenceList throwList = method.getThrowsList();
             final PsiJavaCodeReferenceElement[] thrownExceptions =
                     throwList.getReferenceElements();

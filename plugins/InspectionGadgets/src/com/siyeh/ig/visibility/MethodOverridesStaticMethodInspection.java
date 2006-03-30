@@ -62,12 +62,16 @@ public class MethodOverridesStaticMethodInspection extends MethodInspection{
 
     private static class MethodOverridesStaticMethodVisitor
             extends BaseInspectionVisitor{
+
         public void visitMethod(@NotNull PsiMethod method){
             final PsiClass aClass = method.getContainingClass();
             if(aClass == null){
                 return;
             }
-            final String methName = method.getName();
+            if (method.getNameIdentifier() == null) {
+                return;
+            }
+            final String methodName = method.getName();
             final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
             if(parameters == null){
@@ -81,7 +85,7 @@ public class MethodOverridesStaticMethodInspection extends MethodInspection{
                     return;
                 }
                 final PsiMethod[] methods =
-                        ancestorClass.findMethodsByName(methName, false);
+                        ancestorClass.findMethodsByName(methodName, false);
                 for(final PsiMethod testMethod : methods){
                     final PsiParameterList testParametersList =
                             testMethod.getParameterList();
