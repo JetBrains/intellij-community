@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatusProvider;
 import com.intellij.openapi.vcs.UpToDateRevisionProvider;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 
 public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
@@ -51,6 +52,10 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
 
   public FileStatusProvider getFileStatusProvider() {
     return LocalVcsServices.getInstance(myProject).getFileStatusProvider();
+  }
+
+  public ChangeProvider getChangeProvider() {
+    return LocalVcsServices.getInstance(myProject).createChangeProvider(this);
   }
 
   public boolean markExternalChangesAsUpToDate() {
