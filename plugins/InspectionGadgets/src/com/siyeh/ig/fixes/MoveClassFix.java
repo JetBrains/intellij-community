@@ -34,7 +34,7 @@ public class MoveClassFix extends InspectionGadgetsFix {
         final PsiClass aClass = (PsiClass) nameElement.getParent();
         final RefactoringActionHandlerFactory factory =
                 RefactoringActionHandlerFactory.getInstance();
-        final RefactoringActionHandler renameHandler = factory.createMoveHandler();
-        renameHandler.invoke(project, new PsiElement[]{aClass}, null);
+        final RefactoringActionHandler moveHandler = factory.createMoveHandler();
+        moveHandler.invoke(project, new PsiElement[]{aClass}, null);
     }
 }
