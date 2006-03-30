@@ -24,17 +24,18 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ConjunctionPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiBinaryExpression)){
-            return false;
-        }
-        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiBinaryExpression expression = (PsiBinaryExpression) element;
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
-        return tokenType.equals(JavaTokenType.ANDAND) ||
-                tokenType.equals(JavaTokenType.OROR);
+	    if (!tokenType.equals(JavaTokenType.ANDAND) &&
+			    !tokenType.equals(JavaTokenType.OROR)) {
+		    return false;
+	    }
+	    return !ErrorUtil.containsError(element);
     }
 }

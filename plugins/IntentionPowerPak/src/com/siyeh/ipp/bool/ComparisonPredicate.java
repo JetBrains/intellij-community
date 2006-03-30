@@ -23,20 +23,19 @@ import com.siyeh.ipp.psiutils.ComparisonUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ComparisonPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiBinaryExpression)){
             return false;
         }
-        if(ErrorUtil.containsError(element)){
-            return false;
-        }
         final PsiBinaryExpression expression = (PsiBinaryExpression) element;
-
-        final PsiExpression lhs = expression.getLOperand();
         final PsiExpression rhs = expression.getROperand();
         if(rhs == null){
             return false;
         }
-        return ComparisonUtils.isComparison((PsiExpression) element);
+	    if (!ComparisonUtils.isComparison((PsiExpression)element)) {
+		    return false;
+	    }
+	    return !ErrorUtil.containsError(element);
     }
 }

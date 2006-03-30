@@ -27,9 +27,6 @@ class ObjectEqualityPredicate implements PsiElementPredicate{
         if(!(element instanceof PsiBinaryExpression)){
             return false;
         }
-        if(ErrorUtil.containsError(element)){
-            return false;
-        }
         final PsiBinaryExpression expression = (PsiBinaryExpression) element;
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
@@ -58,7 +55,10 @@ class ObjectEqualityPredicate implements PsiElementPredicate{
         if(rhsType == null){
             return false;
         }
-        return !TypeConversionUtil.isPrimitiveAndNotNull(lhsType) &&
-                !TypeConversionUtil.isPrimitiveAndNotNull(rhsType);
+	    if (TypeConversionUtil.isPrimitiveAndNotNull(lhsType) ||
+			    TypeConversionUtil.isPrimitiveAndNotNull(rhsType)) {
+		    return false;
+	    }
+	    return !ErrorUtil.containsError(element);
     }
 }
