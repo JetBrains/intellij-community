@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -10,11 +11,9 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,8 +65,10 @@ public class XmlEncodingReferenceProvider implements PsiReferenceProvider {
       catch (Exception e) {
         return null;
       }
-      String fqn = charset.getClass().getName();
-      return myValue.getManager().findClass(fqn, GlobalSearchScope.allScope(myValue.getProject()));
+      return myValue;
+      //if (ApplicationManager.getApplication().isUnitTestMode()) return myValue; // tests do not have full JDK
+      //String fqn = charset.getClass().getName();
+      //return myValue.getManager().findClass(fqn, GlobalSearchScope.allScope(myValue.getProject()));
     }
 
     public String getUnresolvedMessagePattern() {
