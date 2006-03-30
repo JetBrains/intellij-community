@@ -62,22 +62,23 @@ public class LiteralAsArgToStringEqualsInspection
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
+            final PsiExpression argument =
+                    (PsiExpression)descriptor.getPsiElement();
+            final PsiElement argumentList = argument.getParent();
             final PsiMethodCallExpression expression =
-                    (PsiMethodCallExpression)descriptor.getPsiElement();
+                    (PsiMethodCallExpression)argumentList.getParent();
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final PsiExpression target =
                     methodExpression.getQualifierExpression();
             final String methodName = methodExpression.getReferenceName();
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression arg = argumentList.getExpressions()[0];
             final PsiExpression strippedTarget =
                     ParenthesesUtils.stripParentheses(target);
             if (strippedTarget == null) {
                 return;
             }
             final PsiExpression strippedArg =
-                    ParenthesesUtils.stripParentheses(arg);
+                    ParenthesesUtils.stripParentheses(argument);
             if (strippedArg == null) {
                 return;
             }
@@ -86,8 +87,7 @@ public class LiteralAsArgToStringEqualsInspection
                     ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
                 callString = '(' + strippedArg.getText() + ")." + methodName +
                         '(' + strippedTarget.getText() + ')';
-            }
-            else {
+            } else {
                 callString = strippedArg.getText() + '.' + methodName + '(' +
                         strippedTarget.getText() + ')';
             }
