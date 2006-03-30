@@ -5,7 +5,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collection;
 
 public class SharedPsiElementImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.SharedPsiElementImplUtil");
@@ -28,20 +26,20 @@ public class SharedPsiElementImplUtil {
     if (element == null) return null;
     offset = thisElement.getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
 
-    List<PsiReference> referencesList = new ArrayList<PsiReference>();
-    PsiElement elementForMultiRef = TreeUtil.getFileElement((TreeElement)element.getNode()).getPsi();
     while(element != null) {
-      addReferences(offset, element, referencesList);
+      final PsiReference[] ref = extractReference(offset, element);
+      if (ref.length == 1) return ref[0];
+      else if(ref.length > 1) return new PsiMultiReference(ref, element);
+
       offset = element.getStartOffsetInParent() + offset;
       element = element.getParent();
     }
 
-    if (referencesList.isEmpty()) return null;
-    if (referencesList.size() == 1) return referencesList.get(0);
-    return new PsiMultiReference(referencesList.toArray(new PsiReference[referencesList.size()]), elementForMultiRef);
+    return null;
   }
 
-  private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences) {
+  private static PsiReference[] extractReference(int offset, PsiElement element) {
+    final List<PsiReference> referencesList = new ArrayList<PsiReference>();
     for (final PsiReference reference : element.getReferences()) {
       if (reference == null) {
         LOG.error(element.toString());
@@ -49,9 +47,11 @@ public class SharedPsiElementImplUtil {
       final TextRange range = reference.getRangeInElement();
       if (range.getStartOffset() <= offset &&
           (offset < range.getEndOffset() || (offset == range.getEndOffset() && range.getLength() == 0))) {
-        outReferences.add(reference);
+        referencesList.add(reference);
       }
     }
+
+    return referencesList.toArray(new PsiReference[referencesList.size()]);
   }
 
   @NotNull public static PsiReference[] getReferences(PsiElement thisElement) {

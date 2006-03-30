@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
@@ -21,7 +20,6 @@ import java.util.Set;
  */
 
 public class PsiMultiReference implements PsiPolyVariantReference {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference");
   private final PsiReference[] myReferences;
   private final PsiElement myElement;
 
@@ -79,15 +77,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   public TextRange getRangeInElement(){
-    final PsiReference chosenRef = chooseReference();
-    TextRange rangeInElement = chosenRef.getRangeInElement();
-    PsiElement element = chosenRef.getElement();
-    while(element != myElement) {
-      rangeInElement = rangeInElement.shiftRight(element.getStartOffsetInParent());
-      element = element.getParent();
-      if (element instanceof PsiFile) break;
-    }
-    return rangeInElement;
+    return chooseReference().getRangeInElement();
   }
 
   public PsiElement resolve(){
@@ -107,14 +97,11 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   public boolean isReferenceTo(PsiElement element){
-    for (PsiReference reference : myReferences) {
-      if (reference.isReferenceTo(element)) return true;
-    }
-    return false;
+    return chooseReference().isReferenceTo(element);
   }
 
   public Object[] getVariants() {
-    Set<Object> variants = new HashSet<Object>();
+    Set variants = new HashSet();
     for(PsiReference ref: myReferences) {
       Object[] refVariants = ref.getVariants();
       for(Object refVariant : refVariants) {
