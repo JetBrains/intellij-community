@@ -19,12 +19,14 @@ import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.ide.util.FQNameCellRenderer;
+import com.intellij.idea.LoggerFactory;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,7 +37,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -59,7 +60,6 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.idea.LoggerFactory;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -140,10 +140,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   private void checkTag(XmlTag tag) {
     if (ourDoJaxpTesting) return;
 
-    if (tag.getName() == null) {
-      return;
-    }
-
     if (!checkTagIsClosed(tag)) return;
 
     if (!(tag.getParent() instanceof XmlTag)) {
@@ -203,7 +199,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               if (namespacePrefix.equals(t.getAttributeValue("prefix"))) return;
             }
           } else {
-            String nsDeclarationAttrName = null;
+            @NonNls String nsDeclarationAttrName = null;
             for(XmlTag t = tag; t != null; t = t.getParentTag()) {
               if (t.hasNamespaceDeclarations()) {
                 if (nsDeclarationAttrName == null) nsDeclarationAttrName = "xmlns:"+namespacePrefix;
@@ -376,11 +372,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               final ASTNode startOfTagStart = XmlChildRole.START_TAG_START_FINDER.findChild(tag.getNode());
               TextRange rangeForActionInStartTagName;
               if (endOfTagStart != null && startOfTagStart != null) {
-                rangeForActionInStartTagName = new TextRange(
-                  startOfTagStart.getStartOffset() + startOfTagStart.getTextLength(),
-                  endOfTagStart.getStartOffset()
-                );
-              } else {
+                rangeForActionInStartTagName =
+                  new TextRange(startOfTagStart.getStartOffset() + startOfTagStart.getTextLength(), endOfTagStart.getStartOffset());
+              }
+              else {
                 rangeForActionInStartTagName = startTagNameToken.getTextRange();
               }
 
@@ -651,9 +646,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private HighlightInfo reportAttributeProblem(final XmlTag tag,
-                                      final String localName,
-                                      final XmlAttribute attribute,
-                                      final String localizedMessage) {
+                                               final String localName,
+                                               final XmlAttribute attribute,
+                                               final String localizedMessage) {
     final HighlightInfoType tagProblemInfoType;
     IntentionAction[] quickFixes;
 
@@ -661,21 +656,21 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (tag instanceof HtmlTag) {
       final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
-      LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME);
+      LocalInspectionToolWrapper toolWrapper =
+        (LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME);
       HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)toolWrapper.getTool();
-      if(isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),localName)) return null;
+      if (isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_ATTRIBUTE), localName)) return null;
       final HighlightDisplayKey key = HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME);
       if (!inspectionProfile.isToolEnabled(key)) return null;
 
-      quickFixes = new IntentionAction[] {
-        inspection.getIntentionAction(tag, localName, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
-        removeAttributeIntention,
-        new EditInspectionToolsSettingsAction(key)
-      };
+      quickFixes = new IntentionAction[]{inspection.getIntentionAction(tag, localName, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
+        removeAttributeIntention, new EditInspectionToolsSettingsAction(key)};
 
       tagProblemInfoType = SeverityRegistrar.getHighlightInfoTypeBySeverity(inspectionProfile.getErrorLevel(key).getSeverity());
-    } else {
-      tagProblemInfoType = HighlightInfoType.WRONG_REF; quickFixes = new IntentionAction[] { removeAttributeIntention };
+    }
+    else {
+      tagProblemInfoType = HighlightInfoType.WRONG_REF;
+      quickFixes = new IntentionAction[]{removeAttributeIntention};
     }
 
     final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
@@ -685,10 +680,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     );
     addToResults(highlightInfo);
 
-    if (quickFixes != null) {
-      for (IntentionAction quickFix : quickFixes) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, quickFix);
-      }
+    for (IntentionAction quickFix : quickFixes) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, quickFix);
     }
 
     return highlightInfo;
@@ -726,12 +719,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   public void visitXmlAttributeValue(XmlAttributeValue value) {
-    if (!(value.getParent() instanceof XmlAttribute)) {
+    final PsiElement parent = value.getParent();
+    if (!(parent instanceof XmlAttribute)) {
       checkReferences(value, QuickFixProvider.NULL);
       return;
     }
 
-    XmlAttribute attribute = (XmlAttribute)value.getParent();
+    XmlAttribute attribute = (XmlAttribute)parent;
     if (value.getUserData(DO_NOT_VALIDATE_KEY) != null) {
       return;
     }
@@ -789,11 +783,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       }
     }
 
-    QuickFixProvider quickFixProvider = QuickFixProvider.NULL;
-    if (attributeDescriptor instanceof QuickFixProvider) quickFixProvider = (QuickFixProvider)attributeDescriptor;
+    QuickFixProvider quickFixProvider = attributeDescriptor instanceof QuickFixProvider ?
+                                        (QuickFixProvider)attributeDescriptor : QuickFixProvider.NULL;
 
     checkReferences(value, quickFixProvider);
-
   }
 
   public static HighlightInfo checkIdRefAttrValue(XmlAttributeValue value, RefCountHolder holder) {
@@ -996,7 +989,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  public void visitJspElement(OuterLanguageElement text) {
+  public static void visitJspElement(OuterLanguageElement text) {
     PsiElement parent = text.getParent();
 
     if (parent instanceof XmlText) {
@@ -1093,8 +1086,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     boolean myTaglibDeclaration;
     private final XmlTag myTag;
     private final String myNamespacePrefix;
-    private static final String MY_DEFAULT_XML_NS = "someuri";
-    private static final String URI_ATTR_NAME = "uri";
+    @NonNls private static final String MY_DEFAULT_XML_NS = "someuri";
+    @NonNls private static final String URI_ATTR_NAME = "uri";
 
     public CreateNSDeclarationIntentionAction(final XmlTag tag, final String namespacePrefix, boolean taglibDeclaration) {
       myTag = tag;
@@ -1180,7 +1173,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
         final String[] availableUrls = instanceEx.getResourceUrls(null,true);
         int i = 0;
-        
+
         for(String url:availableUrls) {
           if (pi != null) {
             pi.setFraction(((double)i)/availableUrls.length);
@@ -1287,7 +1280,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         return ((XmlTag)element).getAttribute(URI_ATTR_NAME,null);
       }
       else {
-        final String name = "xmlns:" + myNamespacePrefix;
+        @NonNls final String name = "xmlns:" + myNamespacePrefix;
         rootTag.add(
           elementFactory.createXmlAttribute(name,namespace)
         );

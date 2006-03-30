@@ -249,7 +249,7 @@ public class CompletionData {
     // TODO: need to add more separators here. Such as #, $ etc... Think on centralizing their location.
     final String text = insertedElement.getText();
     if(ref == null && (StringUtil.endsWithChar(text, '#') ||
-                       (StringUtil.endsWithChar(text, '.') && !(insertedElement instanceof Property)))){
+                       StringUtil.endsWithChar(text, '.') && !(insertedElement instanceof Property))){
       return "";
     }
 
@@ -269,7 +269,7 @@ public class CompletionData {
         result = result.substring(0, result.indexOf('('));
       }
       
-      if (ref.getElement() instanceof PsiNameValuePair && result.startsWith("{")) {
+      if (ref.getElement() instanceof PsiNameValuePair && StringUtil.startsWithChar(result,'{')) {
         result = ""; // PsiNameValuePair refarence without name span all content of the element
       }
       return result;

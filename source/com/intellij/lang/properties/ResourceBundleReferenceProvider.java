@@ -22,7 +22,7 @@ public class ResourceBundleReferenceProvider implements PsiReferenceProvider {
         return new PsiReference[] { reference };
       }
     }
-    return null;
+    return PsiReference.EMPTY_ARRAY;
   }
 
   @NotNull

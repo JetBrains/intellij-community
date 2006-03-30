@@ -1,17 +1,14 @@
 package com.intellij.psi.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.DefaultRoleFinder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.RoleFinder;
-import com.intellij.psi.jsp.JspTokenType;
 
-public class XmlChildRole {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.xml.XmlChildRole");
-
-  public static final RoleFinder START_TAG_NAME_FINDER = new RoleFinder() {
+public interface XmlChildRole {
+  RoleFinder START_TAG_NAME_FINDER = new RoleFinder() {
     public ASTNode findChild(ASTNode parent) {
       //LOG.assertTrue(parent.getElementType() == XmlElementType.XML_TAG);
       ASTNode current = parent.getFirstChildNode();
@@ -25,7 +22,7 @@ public class XmlChildRole {
     }
   };
 
-  public static final RoleFinder CLOSING_TAG_NAME_FINDER = new RoleFinder() {
+  RoleFinder CLOSING_TAG_NAME_FINDER = new RoleFinder() {
     public ASTNode findChild(ASTNode parent) {
       //LOG.assertTrue(parent.getElementType() == XmlElementType.XML_TAG);
       ASTNode current = parent.getFirstChildNode();
@@ -46,7 +43,7 @@ public class XmlChildRole {
     }
   };
 
-  public static final RoleFinder DOCUMENT_FINDER = new RoleFinder() {
+  RoleFinder DOCUMENT_FINDER = new RoleFinder() {
     public ASTNode findChild(ASTNode parent) {
       ASTNode oldDocument = TreeUtil.findChild(parent, XmlElementType.XML_DOCUMENT);
       if(oldDocument == null) oldDocument = TreeUtil.findChild(parent, XmlElementType.HTML_DOCUMENT);
@@ -54,14 +51,13 @@ public class XmlChildRole {
     }
   };
 
-  public static final RoleFinder ATTRIBUTE_VALUE_FINDER = new DefaultRoleFinder(XmlElementType.XML_ATTRIBUTE_VALUE);
-  public static final RoleFinder CLOSING_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_END_TAG_START);
-  public static final RoleFinder EMPTY_TAG_END_FINDER = new DefaultRoleFinder(XmlTokenType.XML_EMPTY_ELEMENT_END);
-  public static final RoleFinder ATTRIBUTE_NAME_FINDER = new DefaultRoleFinder(XmlTokenType.XML_NAME);
-  public static final RoleFinder ATTRIBUTE_VALUE_VALUE_FINDER = new DefaultRoleFinder(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN);
-  public static final RoleFinder START_TAG_END_FINDER = new DefaultRoleFinder(XmlTokenType.XML_TAG_END, JspTokenType.JSP_SCRIPTLET_START,
+  RoleFinder ATTRIBUTE_VALUE_FINDER = new DefaultRoleFinder(XmlElementType.XML_ATTRIBUTE_VALUE);
+  RoleFinder CLOSING_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_END_TAG_START);
+  RoleFinder EMPTY_TAG_END_FINDER = new DefaultRoleFinder(XmlTokenType.XML_EMPTY_ELEMENT_END);
+  RoleFinder ATTRIBUTE_NAME_FINDER = new DefaultRoleFinder(XmlTokenType.XML_NAME);
+  RoleFinder ATTRIBUTE_VALUE_VALUE_FINDER = new DefaultRoleFinder(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN);
+  RoleFinder START_TAG_END_FINDER = new DefaultRoleFinder(XmlTokenType.XML_TAG_END, JspTokenType.JSP_SCRIPTLET_START,
                                                                               JspTokenType.JSP_EXPRESSION_START, JspTokenType.JSP_DECLARATION_START);
-  public static final RoleFinder START_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_START_TAG_START);
-  public static final RoleFinder PROLOG_FINDER = new DefaultRoleFinder(XmlElementType.XML_PROLOG);
-
+  RoleFinder START_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_START_TAG_START);
+  RoleFinder PROLOG_FINDER = new DefaultRoleFinder(XmlElementType.XML_PROLOG);
 }

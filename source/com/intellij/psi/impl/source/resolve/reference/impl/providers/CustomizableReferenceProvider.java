@@ -1,21 +1,16 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Nov 9, 2005
- * Time: 7:25:54 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public interface CustomizableReferenceProvider extends PsiReferenceProvider {
-  final class CustomizationKey<Option> {
+  final class CustomizationKey<T> {
     private String myOptionDescription;
 
     CustomizationKey(String optionDescription) {
@@ -24,11 +19,11 @@ public interface CustomizableReferenceProvider extends PsiReferenceProvider {
 
     public String toString() { return myOptionDescription; }
 
-    public Option getValue(Map<CustomizationKey,Object> options) {
-      return (Option)options.get(this);
+    public T getValue(Map<CustomizationKey,Object> options) {
+      return (T)options.get(this);
     }
 
-    public void putValue(Map<CustomizationKey,Object> options, Option value) {
+    public void putValue(Map<CustomizationKey,Object> options, T value) {
       options.put(this, value);
     }
   }

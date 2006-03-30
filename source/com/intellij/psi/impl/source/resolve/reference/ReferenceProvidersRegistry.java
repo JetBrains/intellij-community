@@ -20,6 +20,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.xml.util.HtmlReferenceProvider;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlEncodingReferenceProvider;
 import com.intellij.codeInsight.i18n.I18nUtil;
 import com.intellij.util.Function;
 import com.intellij.javaee.web.WebUtil;
@@ -622,6 +623,12 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         )
       ),
       new HibernateReferencesProvider()
+    );
+
+    registerXmlAttributeValueReferenceProvider(
+      new String[] {"encoding"},
+      new ScopeFilter(new ParentElementFilter(new ClassFilter(XmlProcessingInstruction.class))),
+      new XmlEncodingReferenceProvider()
     );
   }
 

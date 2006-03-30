@@ -164,6 +164,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the element text.
    */
+  @NonNls
   String getText();
 
   /**

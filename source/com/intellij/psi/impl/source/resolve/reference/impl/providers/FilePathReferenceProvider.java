@@ -35,10 +35,8 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
           final PsiScopeProcessor baseProcessor = super.createProcessor(result, type);
           return new PsiScopeProcessor() {
             public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-              if (element instanceof PsiJavaFile && element instanceof PsiCompiledElement) {
-                return true;
-              }
-              return baseProcessor.execute(element, substitutor);
+              return element instanceof PsiJavaFile && element instanceof PsiCompiledElement
+                     || baseProcessor.execute(element, substitutor);
             }
 
             public <T> T getHint(Class<T> hintClass) {
