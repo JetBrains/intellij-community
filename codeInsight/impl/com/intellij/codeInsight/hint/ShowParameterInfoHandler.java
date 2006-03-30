@@ -53,6 +53,9 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final int offset = editor.getCaretModel().getOffset();
+    final PsiElement psiElement = file.findElementAt(offset);
+    if (psiElement == null) return;
+
     final MyShowParameterInfoContext context = new MyShowParameterInfoContext(
       editor,
       project,
@@ -63,7 +66,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
     context.setHighlightedElement(highlightedElement);
 
-    final Language language = file.findElementAt(offset).getLanguage();
+    final Language language = psiElement.getLanguage();
     final ParameterInfoProvider parameterInfoProvider = ourHandlers.get(language);
     final ParameterInfoHandler[] handlers = parameterInfoProvider != null ? parameterInfoProvider.getHandlers():new ParameterInfoHandler[0];
 
