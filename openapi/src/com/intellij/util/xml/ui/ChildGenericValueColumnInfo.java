@@ -47,6 +47,7 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
   }
 
   public final String valueOf(T object) {
+    if (!object.isValid()) return null;
     final String stringValue = getGenericValue(object).getStringValue();
     return StringUtil.isEmpty(stringValue) ? getEmptyValuePresentation(object): stringValue;
   }
