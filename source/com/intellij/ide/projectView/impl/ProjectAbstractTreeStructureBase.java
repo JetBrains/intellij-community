@@ -21,7 +21,7 @@ public abstract class ProjectAbstractTreeStructureBase extends AbstractTreeStruc
     return myProviders;
   }
 
-  public void setProviders(TreeStructureProvider[] treeStructureProviders) {
+  public void setProviders(TreeStructureProvider... treeStructureProviders) {
     myProviders = treeStructureProviders == null ? null : Arrays.asList(treeStructureProviders);
   }
 }

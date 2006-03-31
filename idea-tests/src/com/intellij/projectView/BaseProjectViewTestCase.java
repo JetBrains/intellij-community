@@ -3,7 +3,6 @@ package com.intellij.projectView;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
@@ -156,7 +155,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   protected void useStandardProviders() {
-    getProjectTreeStructure().setProviders(new TreeStructureProvider[]{new ClassesTreeStructureProvider(myProject)});
+    getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject));
   }
 
   protected AbstractProjectTreeStructure getProjectTreeStructure() {

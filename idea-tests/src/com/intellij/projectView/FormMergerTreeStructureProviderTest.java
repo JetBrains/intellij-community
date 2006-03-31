@@ -14,10 +14,8 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
 
   public void testStandardProviders() {
     final AbstractProjectViewPSIPane pane = createPane();
-    getProjectTreeStructure().setProviders(new TreeStructureProvider[]{
-      new ClassesTreeStructureProvider(myProject),
-      new FormMergerTreeStructureProvider(myProject)
-    });
+    getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject),
+                                           new FormMergerTreeStructureProvider(myProject));
 
     assertStructureEqual(getPackageDirectory(), "PsiDirectory: package1\n" +
                                                 " Form:Form1\n" +
