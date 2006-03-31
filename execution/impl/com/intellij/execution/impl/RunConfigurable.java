@@ -150,6 +150,11 @@ class RunConfigurable extends BaseConfigurable {
         updateDialog();
       }
     });
+    myTree.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        clickDefaultButton();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         myTree.requestFocusInWindow();
