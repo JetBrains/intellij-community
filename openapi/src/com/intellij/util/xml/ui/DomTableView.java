@@ -228,7 +228,7 @@ public abstract class DomTableView extends JPanel {
       if (!Comparing.equal(oldValue, aValue)) {
         new WriteCommandAction(getProject()) {
           protected void run(final Result result) throws Throwable {
-            MyListTableModel.super.setValueAt(aValue, rowIndex, columnIndex);
+            MyListTableModel.super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex);
           }
         }.execute();
       }

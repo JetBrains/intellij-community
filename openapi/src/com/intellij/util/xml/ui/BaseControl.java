@@ -142,7 +142,7 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
         protected void run(Result result) throws Throwable {
           final CommitListener multicaster = myDispatcher.getMulticaster();
           multicaster.beforeCommit(BaseControl.this);
-          myDomWrapper.setValue(value);
+          myDomWrapper.setValue("".equals(value) ? null : value);
           multicaster.afterCommit(BaseControl.this);
         }
       }.execute();
