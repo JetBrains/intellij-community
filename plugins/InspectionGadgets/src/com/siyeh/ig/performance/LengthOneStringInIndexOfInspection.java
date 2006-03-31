@@ -24,6 +24,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -47,9 +48,11 @@ public class LengthOneStringInIndexOfInspection
 
     @NotNull
     public String buildErrorString(Object... infos) {
+        final String string = (String)infos[0];
+        final String escapedString = StringUtil.escapeStringCharacters(string);
         return InspectionGadgetsBundle.message(
                 "length.one.strings.in.concatenation.problem.descriptor",
-                infos[0]);
+                escapedString);
     }
 
     public BaseInspectionVisitor buildVisitor() {

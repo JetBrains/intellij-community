@@ -49,10 +49,9 @@ public class LengthOneStringsInConcatenationInspection
     public String buildErrorString(Object... infos) {
         final String string = (String)infos[0];
         final String escapedString = StringUtil.escapeStringCharacters(string);
-        final String transformedText = '\'' + escapedString + '\'';
         return InspectionGadgetsBundle.message(
                 "length.one.strings.in.concatenation.problem.descriptor",
-                transformedText);
+                escapedString);
     }
 
     public BaseInspectionVisitor buildVisitor() {
