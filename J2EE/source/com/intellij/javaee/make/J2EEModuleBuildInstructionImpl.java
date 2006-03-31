@@ -115,7 +115,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
           File file = instruction.getFile();
           String dependencyRelativePath = PathUtil.getCanonicalPath(MakeUtil.appendToPath(getOutputRelativePath(), instruction.getOutputRelativePath()));
 
-          ZipUtil.addFileToZip(outputStream, file, dependencyRelativePath, writtenRelativePaths, fileFilter);
+          ZipUtil.addFileOrDirRecursively(outputStream, jarFile, file, dependencyRelativePath, fileFilter, writtenRelativePaths);
           return true;
         }
 
