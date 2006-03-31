@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.text.AttributeSet;
@@ -27,8 +28,6 @@ import java.beans.PropertyChangeSupport;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class SpeedSearchBase<Comp extends JComponent> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SpeedSearchBase");
@@ -234,6 +233,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       mySearchPopup.processKeyEvent(e);
       return;
     }
+    if (!isSpeedSearchEnabled()) return;
     if (e.getID() == KeyEvent.KEY_TYPED) {
       if (!UIUtil.isReallyTypedEvent(e)) return;
 
@@ -243,6 +243,15 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
         e.consume();
       }
     }
+  }
+
+
+  public Comp getComponent() {
+    return myComponent;
+  }
+
+  protected boolean isSpeedSearchEnabled() {
+    return true;
   }
 
   public String getEnteredPrefix() {

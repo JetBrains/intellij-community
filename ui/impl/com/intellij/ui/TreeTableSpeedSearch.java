@@ -28,6 +28,11 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
     this(tree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING);
   }
 
+
+  protected boolean isSpeedSearchEnabled() {
+    return !getComponent().isEditing() && super.isSpeedSearchEnabled();
+  }
+
   protected void selectElement(Object element, String selectedText) {
     final TreePath treePath = (TreePath)element;
     TableUtil.selectRows(myComponent, new int[] {myComponent.getTree().getRowForPath(treePath)});
