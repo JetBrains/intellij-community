@@ -260,13 +260,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     updateCaretCursor();
 
     // This hacks context layout problem where editor appears scrolled to the right just after it is created.
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myScrollingModel.disableAnimation();
-        myScrollingModel.scrollHorizontally(0);
-        myScrollingModel.enableAnimation();
-      }
-    });
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myScrollingModel.disableAnimation();
+          myScrollingModel.scrollHorizontally(0);
+          myScrollingModel.enableAnimation();
+        }
+      });
+    }
   }
 
   public boolean isViewer() {
