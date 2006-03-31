@@ -8,9 +8,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -33,9 +31,10 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
     PsiExpression expression = PsiTreeUtil.getParentOfType(element, PsiExpression.class);
-    if (expression == null) return null;
-    while (expression.getParent() instanceof PsiExpression) {
-      expression = (PsiExpression)expression.getParent();
+    PsiElement parent = expression;
+    while (parent instanceof PsiExpression && (((PsiExpression)parent).getType() == PsiType.BOOLEAN || parent instanceof PsiConditionalExpression)) {
+      expression = (PsiExpression)parent;
+      parent = parent.getParent();
     }
     return expression;
   }
