@@ -21,24 +21,31 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class ReplaceAssignmentWithOperatorAssignmentInspection
         extends ExpressionInspection{
+
+    /** @noinspection PublicField*/
+    public boolean ignoreLazyOperators = true;
 
     public String getID(){
         return "AssignmentReplaceableWithOperatorAssignment";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("assignment.replaceable.with.operator.assignment.display.name");
+        return InspectionGadgetsBundle.message(
+                "assignment.replaceable.with.operator.assignment.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -52,6 +59,13 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         return InspectionGadgetsBundle.message(
                 "assignment.replaceable.with.operator.assignment.problem.descriptor",
                 calculateReplacementExpression(assignmentExpression));
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "assignment.replaceable.with.operator.assignment.ignore.conditional.operators.option"),
+                this, "ignoreLazyOperators");
     }
 
     static String calculateReplacementExpression(
@@ -123,15 +137,12 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
 
     }
 
-    private static class ReplaceAssignmentWithOperatorAssignmentVisitor
+    private class ReplaceAssignmentWithOperatorAssignmentVisitor
             extends BaseInspectionVisitor{
 
         public void visitAssignmentExpression(@NotNull
                 PsiAssignmentExpression assignment){
             super.visitAssignmentExpression(assignment);
-            if(!WellFormednessUtils.isWellFormed(assignment)){
-                return;
-            }
             final PsiJavaToken sign = assignment.getOperationSign();
             final IElementType assignmentTokenType = sign.getTokenType();
             if(!assignmentTokenType.equals(JavaTokenType.EQ)){
@@ -139,13 +150,23 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
             }
             final PsiExpression lhs = assignment.getLExpression();
             final PsiExpression rhs = assignment.getRExpression();
-
             if(!(rhs instanceof PsiBinaryExpression)){
                 return;
             }
             final PsiBinaryExpression binaryRhs = (PsiBinaryExpression) rhs;
             if(!(binaryRhs.getROperand() != null)){
                 return;
+            }
+            final PsiJavaToken operator = binaryRhs.getOperationSign();
+            final IElementType expressionTokenType = operator.getTokenType();
+            if (expressionTokenType.equals(JavaTokenType.EQEQ)) {
+                return;
+            }
+            if (ignoreLazyOperators) {
+                if (expressionTokenType.equals(JavaTokenType.ANDAND) ||
+                        expressionTokenType.equals(JavaTokenType.OROR)) {
+                    return;
+                }
             }
             final PsiExpression lOperand = binaryRhs.getLOperand();
             if(SideEffectChecker.mayHaveSideEffects(lhs)){
