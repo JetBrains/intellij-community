@@ -61,10 +61,9 @@ public class RollbackChangesDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    doRollback();
     super.doOKAction();
+    doRollback();
   }
-
 
   @Nullable
   protected JComponent createCenterPanel() {

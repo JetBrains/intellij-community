@@ -270,9 +270,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         return;
       }
 
-      doCommit();
-
       super.doOKAction();
+      doCommit();
     }
     catch (InputException ex) {
       ex.show();
