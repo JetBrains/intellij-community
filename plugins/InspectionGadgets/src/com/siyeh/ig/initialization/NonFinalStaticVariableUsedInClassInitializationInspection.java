@@ -19,13 +19,13 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class NonFinalStaticVariableUsedInClassInitializationInspection
-        extends ExpressionInspection{
+        extends BaseInspection {
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
@@ -70,19 +70,25 @@ public class NonFinalStaticVariableUsedInClassInitializationInspection
 
         private static boolean isInClassInitialization(
                 PsiExpression expression){
-            final PsiClassInitializer initializer =
+            final PsiClass expressionClass =
+                    PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+            final PsiMember member =
                     PsiTreeUtil.getParentOfType(expression,
-                                                PsiClassInitializer.class);
-            if(initializer != null &&
-               initializer.hasModifierProperty(PsiModifier.STATIC)){
-                if(!PsiUtil.isOnAssignmentLeftHand(expression)){
-                    return true;
-                }
+                            PsiClassInitializer.class, PsiField.class);
+            if (member == null) {
+                return false;
             }
-            final PsiField field =
-                    PsiTreeUtil.getParentOfType(expression, PsiField.class);
-            return field != null &&
-                   field.hasModifierProperty(PsiModifier.STATIC);
+            final PsiClass memberClass = member.getContainingClass();
+            if (!memberClass.equals(expressionClass)) {
+                return false;
+            }
+            if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+                return false;
+            }
+            if (member instanceof PsiClassInitializer) {
+                return !PsiUtil.isOnAssignmentLeftHand(expression);
+            }
+            return true;
         }
     }
 }
