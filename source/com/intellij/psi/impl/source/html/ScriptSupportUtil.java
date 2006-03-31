@@ -78,7 +78,7 @@ public class ScriptSupportUtil {
               if (references.length > 0) {
                 final PsiElement psiElement = references[references.length - 1].resolve();
 
-                if (psiElement instanceof PsiFile) {
+                if (psiElement instanceof PsiFile && psiElement.isValid()) {
                   if(!psiElement.processDeclarations(processor, substitutor, null, place))
                     return false;
                 }
