@@ -3,12 +3,12 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.javaee.ReadOnlyDeploymentDescriptorModificationException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Function;
+import com.intellij.util.xml.ClassChooserManager;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.ClassChooserManager;
 
 import java.lang.reflect.Type;
 
@@ -34,7 +34,7 @@ public class AddChildInvocation implements Invocation{
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     final VirtualFile virtualFile = handler.getFile().getVirtualFile();
     if (virtualFile != null && !virtualFile.isWritable()) {
-      throw new ReadOnlyDeploymentDescriptorModificationException(virtualFile);
+      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(virtualFile);
     }
     final Type type = myClassGetter.fun(args);
     final DomElement domElement = handler.addChild(myTagName, type, myIndexGetter.fun(args));
