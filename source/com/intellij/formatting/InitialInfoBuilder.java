@@ -2,6 +2,7 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.impl.DebugUtil;
@@ -58,10 +59,21 @@ class InitialInfoBuilder {
 
     if (parent != null) {
       if (textRange.getStartOffset() < parent.getTextRange().getStartOffset()) {
-        assertInvalidRanges(textRange.getStartOffset(), parent.getTextRange().getStartOffset(), myModel);
+        assertInvalidRanges(
+          textRange.getStartOffset(),
+          parent.getTextRange().getStartOffset(),
+          myModel,
+          "child block start is less than parent block start"
+        );
       }
+
       if (textRange.getEndOffset() > parent.getTextRange().getEndOffset()) {
-        assertInvalidRanges(textRange.getEndOffset(), parent.getTextRange().getEndOffset(), myModel);
+        assertInvalidRanges(
+          textRange.getEndOffset(),
+          parent.getTextRange().getEndOffset(),
+          myModel,
+          "child block end is after parent block end"
+        );
       }
     }
 
@@ -134,7 +146,12 @@ class InitialInfoBuilder {
     myResult.put(rootBlock, info);
 
     if (textRange.getLength() == 0) {
-      assertInvalidRanges(textRange.getStartOffset(), textRange.getEndOffset(), myModel);
+      assertInvalidRanges(
+        textRange.getStartOffset(),
+        textRange.getEndOffset(),
+        myModel,
+        "empty block"
+      );
     }
     if (myPreviousBlock != null) {
       myPreviousBlock.setNextBlock(info);
@@ -194,27 +211,32 @@ class InitialInfoBuilder {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void assertInvalidRanges(final int startOffset, final int newEndOffset, FormattingDocumentModel model) {
-    final StringBuffer message = new StringBuffer();
-    message.append("Invalid formatting blocks");
-    message.append('\n');
+  public static void assertInvalidRanges(final int startOffset, final int newEndOffset, FormattingDocumentModel model, String message) {
+    final StringBuffer buffer = new StringBuffer();
+    buffer.append("Invalid formatting blocks:").append(message).append("\n");
+    buffer.append("Start offset:").append(startOffset).append(" end offset:").append(newEndOffset).append("\n");
+
+    int minOffset = Math.max( Math.min(startOffset,newEndOffset) - 20, 0);
+    int maxOffset = Math.min( Math.max(startOffset, newEndOffset) + 20, model.getTextLength());
+
+    buffer.append("Affected text fragment:[").append(minOffset).append (",").append(maxOffset).append("] - '")
+      .append(model.getText(new TextRange(minOffset, maxOffset))).append("'\n");
+
+    if (model instanceof FormattingDocumentModelImpl) {
+      buffer.append("in ").append(((FormattingDocumentModelImpl)model).getFile().getLanguage()).append("\n");
+    }
+
+    buffer.append("File text:\n");
+    buffer.append(model.getText(new TextRange(0, model.getTextLength())).toString());
+
     if (model instanceof FormattingDocumentModelImpl) {
       final FormattingDocumentModelImpl modelImpl = ((FormattingDocumentModelImpl)model);
-      message.append("Psi Tree:");
-      message.append('\n');
-      DebugUtil.treeToBuffer(message, modelImpl.getFile().getNode(), 0, false, true, true);
-      message.append('\n');
+      buffer.append("Psi Tree:");
+      buffer.append('\n');
+      DebugUtil.treeToBuffer(buffer, modelImpl.getFile().getNode(), 0, false, true, true);
+      buffer.append('\n');
     }
-    message.append("Start Offset:");
-    message.append(startOffset);
-    message.append(" ");
-    message.append(newEndOffset);
-    message.append(" ");
-    message.append(newEndOffset);
-    message.append("\n");
-    message.append("File text:");
-    message.append('\n');
-    message.append(model.getText(new TextRange(0, model.getTextLength())).toString());
-    LOG.assertTrue(false, message.toString());
+
+    LOG.assertTrue(false, buffer.toString());
   }
 }

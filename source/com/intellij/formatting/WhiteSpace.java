@@ -40,13 +40,23 @@ class WhiteSpace {
     final int oldEndOffset = myTextRange.getEndOffset();
     if (newEndOffset == oldEndOffset) return;
     if (myTextRange.getStartOffset() >= newEndOffset) {
-      InitialInfoBuilder.assertInvalidRanges(myTextRange.getStartOffset(), newEndOffset, model);
+      InitialInfoBuilder.assertInvalidRanges(
+        myTextRange.getStartOffset(),
+        newEndOffset,
+        model,
+        "some block intersects with whitespace"
+      );
     }
     myTextRange = new TextRange(myTextRange.getStartOffset(), newEndOffset);
     myInitial = model.getText(myTextRange);
     
     if (myInitial != null && myInitial.toString().trim().length() > 0) {
-      InitialInfoBuilder.assertInvalidRanges(myTextRange.getStartOffset(), myTextRange.getEndOffset(), model);
+      InitialInfoBuilder.assertInvalidRanges(
+        myTextRange.getStartOffset(),
+        myTextRange.getEndOffset(),
+        model,
+        "nonempty text is not covered by block"
+      );
     }
 
     final int tabsize = options.TAB_SIZE;
