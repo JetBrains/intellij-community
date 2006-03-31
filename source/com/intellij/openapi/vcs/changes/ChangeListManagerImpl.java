@@ -56,7 +56,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private Alarm myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private boolean myInitilized = false;
+  private boolean myInitialized = false;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private boolean myDisposed = false;
@@ -102,8 +102,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        ToolWindowManager.getInstance(myProject).registerToolWindow(TOOLWINDOW_ID, createChangeViewComponent(), ToolWindowAnchor.BOTTOM);
-        myInitilized = true;
+        final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+        if (toolWindowManager != null) {
+          toolWindowManager.registerToolWindow(TOOLWINDOW_ID, createChangeViewComponent(), ToolWindowAnchor.BOTTOM);
+        }
+        myInitialized = true;
       }
     });
   }
@@ -131,10 +134,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      createDefaultChangelistIfNecessary();
-      myInitilized = true;
-    }
   }
 
   public void disposeComponent() {
@@ -269,6 +268,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public boolean ensureUpToDate(boolean canBeCanceled) {
+    if (!myInitialized) return true;
+
     final boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -306,7 +307,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     ourUpdateAlarm.addRequest(new Runnable() {
       public void run() {
         if (myDisposed) return;
-        if (!myInitilized) {
+        if (!myInitialized) {
           scheduleUpdate();
           return;
         }
@@ -448,7 +449,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   private void refreshView() {
-    if (myDisposed) return;
+    if (myDisposed || ApplicationManager.getApplication().isUnitTestMode()) return;
     myView.updateModel(getChangeListsCopy(),
                        new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()),
                        new ArrayList<File>(myDeletedFilesHolder.getFiles()));
