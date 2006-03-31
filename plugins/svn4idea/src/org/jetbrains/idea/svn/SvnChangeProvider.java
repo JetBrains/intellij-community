@@ -128,7 +128,8 @@ public class SvnChangeProvider implements ChangeProvider {
     if (path.isDirectory()) {
       stClient.doStatus(path.getIOFile(), recursively, false, false, false, new ISVNStatusHandler() {
         public void handleStatus(SVNStatus status) throws SVNException {
-          if (status.getKind() == SVNNodeKind.FILE) {
+          final SVNNodeKind kind = status.getKind();
+          if (kind == SVNNodeKind.FILE || kind == SVNNodeKind.NONE) {
             processStatus(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(status.getFile()), status, builder);
           }
         }
@@ -149,7 +150,7 @@ public class SvnChangeProvider implements ChangeProvider {
       FileStatus fStatus = SvnFileStatusProvider.convertStatus(status, filePath.getIOFile());
 
       final SVNStatusType statusType = status.getContentsStatus();
-      if (statusType == SVNStatusType.STATUS_UNVERSIONED) {
+      if (statusType == SVNStatusType.STATUS_UNVERSIONED || statusType == SVNStatusType.UNKNOWN) {
         builder.processUnversionedFile(filePath.getVirtualFile());
       }
       else if (statusType == SVNStatusType.STATUS_CONFLICTED ||
