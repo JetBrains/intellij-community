@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
@@ -153,16 +154,22 @@ public class LookupImpl extends LightweightHint implements Lookup {
     );
     selectMostPreferableItem();
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run(){
-          if (myIndex >= 0 && myIndex < myList.getModel().getSize()){
-            ListScrollingUtil.selectItem(myList, myIndex);
-          }
-          else if(myItems.length > 0){
-            ListScrollingUtil.selectItem(myList, 0);
+    final Application application = ApplicationManager.getApplication();
+
+    if (!application.isUnitTestMode()) {
+      application.invokeLater(
+        new Runnable() {
+          public void run(){
+            if (myIndex >= 0 && myIndex < myList.getModel().getSize()){
+              ListScrollingUtil.selectItem(myList, myIndex);
+            }
+            else if(myItems.length > 0){
+              ListScrollingUtil.selectItem(myList, 0);
+            }
           }
         }
-      });
+      );
+    }
   }
 
 
