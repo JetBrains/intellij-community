@@ -56,7 +56,12 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
     }
     operand.accept(this);
     if (!myIsConstant) return;
-    PsiType type = expression.getCastType().getType();
+    PsiTypeElement element = expression.getCastType();
+    if (element == null){
+      myIsConstant = false;
+      return;
+    }
+    PsiType type = element.getType();
     if (type instanceof PsiPrimitiveType) return;
     if (type.equalsToText("java.lang.String")) return;
     myIsConstant = false;
@@ -78,11 +83,12 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
   }
 
   public void visitBinaryExpression(PsiBinaryExpression expression) {
-    expression.getLOperand().accept(this);
-    if (!myIsConstant) return;
+    // check right operand first since it tends to be shorter
     PsiExpression rOperand = expression.getROperand();
     if (rOperand != null){
       rOperand.accept(this);
+      if (!myIsConstant) return;
+      expression.getLOperand().accept(this);
     }
   }
 
@@ -123,11 +129,11 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
       myIsConstant = false;
       return;
     }
-    if (!variable.hasInitializer()){
+    PsiExpression initializer = variable.getInitializer();
+    if (initializer == null){
       myIsConstant = false;
       return;
     }
-    PsiExpression initializer = variable.getInitializer();
     initializer.accept(this);
     varIsConst.put(variable, Boolean.valueOf(myIsConstant));
   }

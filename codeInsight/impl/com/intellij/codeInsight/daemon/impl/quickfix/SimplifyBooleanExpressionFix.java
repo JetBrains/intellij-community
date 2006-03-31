@@ -146,6 +146,8 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     simplifyIfStatement(newExpression);
   }
   public static boolean canBeSimplified(@NotNull PsiExpression expression) {
+    PsiType type = expression.getType();
+    if (type != PsiType.BOOLEAN) return false;
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), false);
     final Ref<Boolean> canBeSimplified = new Ref<Boolean>(Boolean.FALSE);
     expression.accept(new PsiRecursiveElementVisitor() {
