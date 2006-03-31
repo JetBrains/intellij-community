@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -99,7 +100,9 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
   }
 
   public String getUnresolvedMessagePattern(){
-    return getType().getUnresolvedMessage();
+    final ReferenceType type = getType();
+    if (type != null) return type.getUnresolvedMessage();
+    return JavaErrorMessages.message("error.cannot.resolve.default.message");
   }
 
   public abstract PsiElement getContext();
