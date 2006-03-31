@@ -22,12 +22,15 @@ public class FormalArgTypePredicate extends ExprTypePredicate {
     if (expr == null) return null;
 
     // find our parent in parameters of the method
-    final PsiParameter[] methodParameters = expr.resolveMethod().getParameterList().getParameters();
+    final PsiMethod psiMethod = expr.resolveMethod();
+    if (psiMethod == null) return null;
+    final PsiParameter[] methodParameters = psiMethod.getParameterList().getParameters();
     final PsiExpression[] expressions = expr.getArgumentList().getExpressions();
 
-    for(int i=0;i<methodParameters.length;++i) {
-      if (expressions[i]==match) {
-        return methodParameters[i].getType();
+    for(int i = 0;i < methodParameters.length; ++i) {
+      if (expressions[i] == match) {
+        if (i < methodParameters.length) return methodParameters[i].getType();
+        break;
       }
     }
     return null;
