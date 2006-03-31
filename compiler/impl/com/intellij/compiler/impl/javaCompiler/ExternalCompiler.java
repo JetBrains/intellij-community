@@ -1,12 +1,15 @@
 package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 
 public abstract class ExternalCompiler implements BackendCompiler {
+  private static final Logger LOG = Logger.getInstance("com.intellij.compiler.impl.javaCompiler.ExternalCompiler");
+
   @NotNull
   public abstract String[] createStartupCommand(ModuleChunk chunk, CompileContext context, String outputPath)
     throws IOException, IllegalArgumentException;
@@ -21,7 +24,8 @@ public abstract class ExternalCompiler implements BackendCompiler {
       buf.append(" ").append(command);
     }
 
-    final Process process = Runtime.getRuntime().exec(commands);
-    return process;
+    LOG.info(buf.toString());
+
+    return Runtime.getRuntime().exec(commands);
   }
 }
