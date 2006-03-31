@@ -94,7 +94,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   private boolean canWrapTagEnd(final XmlTag tag) {
     final String name = tag.getName();
-    return tag.getSubTags().length > 0 || (name != null && name.toLowerCase().startsWith(JSP_TAG_PREFIX));
+    return tag.getSubTags().length > 0 || (name.toLowerCase().startsWith(JSP_TAG_PREFIX));
   }
 
   protected XmlTag getTag() {

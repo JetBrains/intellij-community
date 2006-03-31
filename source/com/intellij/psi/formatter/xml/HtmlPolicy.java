@@ -116,10 +116,9 @@ public class HtmlPolicy extends XmlFormattingPolicy{
 
   private boolean shouldBeWrapped(final XmlTag tag) {
     final String name = tag.getName();
-    if (name == null) return false;
+    if (name.length() == 0) return false;
 
-    if (isScriptletObject(tag)) return true;
-    return JspUtil.getDirectiveKindByTag(tag) != null;
+    return isScriptletObject(tag) || JspUtil.getDirectiveKindByTag(tag) != null;
   }
 
   private boolean isScriptletObject(final XmlTag tag) {
