@@ -13,13 +13,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.*;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -38,7 +37,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private final PsiManagerImpl myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
-  private static final IndexPatternOccurrence[] EMPTY_OCCURRENCES = new IndexPatternOccurrence[0];
 
   static {
     ReferencesSearch.INSTANCE.registerExecutor(new CachesBasedRefSearcher());
@@ -48,6 +46,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     DirectClassInheritorsSearch.INSTANCE.registerExecutor(new JavaDirectInheritorsSearcher());
 
     OverridingMethodsSearch.INSTANCE.registerExecutor(new JavaOverridingMethodsSearcher());
+
+    AllOverridingMethodsSearch.INSTANCE.registerExecutor(new JavaAllOverridingMethodsSearcher());
 
     MethodReferencesSearch.INSTANCE.registerExecutor(new MethodUsagesSearcher());
 

@@ -29,13 +29,12 @@ public class SafeDeleteFix implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    PsiElement element = myElement.getContainingFile();
-    return myElement != null && myElement.isValid() && element.getManager().isInProject(element);
+    return myElement.isValid() && myElement.getManager().isInProject(myElement);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(myElement.getContainingFile())) return;
-    new SafeDeleteHandler().invoke(project, new PsiElement[]{myElement}, false);
+    SafeDeleteHandler.invoke(project, new PsiElement[]{myElement}, false);
   }
 
   public boolean startInWriteAction() {

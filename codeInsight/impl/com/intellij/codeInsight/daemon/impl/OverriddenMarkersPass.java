@@ -11,11 +11,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
@@ -114,32 +115,25 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static void collectOverridingMethods(Set<PsiMethod> methods, List<LineMarkerInfo> result) {
+  private static void collectOverridingMethods(final Set<PsiMethod> methods, List<LineMarkerInfo> result) {
     final Set<PsiMethod> overridden = new HashSet<PsiMethod>();
-    Map<PsiClass, List<PsiMethod>> classesToMethods = new HashMap<PsiClass, List<PsiMethod>>();
+    Set<PsiClass> classes = new HashSet<PsiClass>();
     for (PsiMethod method : methods) {
       final PsiClass parentClass = method.getContainingClass();
       if (!"java.lang.Object".equals(parentClass.getQualifiedName())) {
-        List<PsiMethod> hisMethods = classesToMethods.get(parentClass);
-        if (hisMethods == null) {
-          hisMethods = new ArrayList<PsiMethod>();
-          classesToMethods.put(parentClass, hisMethods);
-        }
-        hisMethods.add(method);
+        classes.add(parentClass);
       }
     }
 
-    for (final PsiClass aClass : classesToMethods.keySet()) {
-      final List<PsiMethod> hisMethods = classesToMethods.get(aClass);
-      for (Iterator iterator = hisMethods.iterator(); iterator.hasNext();) {
-        PsiMethod hisMethod = (PsiMethod)iterator.next();
-        final PsiElementProcessor.FindElement<PsiMethod> processor = new PsiElementProcessor.FindElement<PsiMethod>();
-        aClass.getManager().getSearchHelper().processOverridingMethods(processor, hisMethod, aClass.getUseScope(), true);
-        if (processor.isFound()) {
-          iterator.remove();
-          overridden.add(hisMethod);
+    for (final PsiClass aClass : classes) {
+      AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
+        public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
+          final PsiMethod superMethod = pair.getFirst();
+          overridden.add(superMethod);
+          methods.remove(superMethod);
+          return !methods.isEmpty();
         }
-      }
+      });
     }
 
     for (PsiMethod method : overridden) {
