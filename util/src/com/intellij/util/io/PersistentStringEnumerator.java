@@ -238,8 +238,10 @@ public class PersistentStringEnumerator {
   }
 
   public void flush() throws IOException {
-    markDirty(false);
-    myStorage.flush();
+    if (myStorage.isMapped()) {
+      markDirty(false);
+      myStorage.flush();
+    }
   }
 
   private void markDirty(boolean dirty) throws IOException {

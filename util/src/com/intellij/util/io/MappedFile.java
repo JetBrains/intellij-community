@@ -271,4 +271,8 @@ public class MappedFile {
       ByteBufferUtil.unmapMappedByteBuffer(myHolder);
     }
   }
+
+  public boolean isMapped() {
+    return myHolder.getBuffer() != null;
+  }
 }
