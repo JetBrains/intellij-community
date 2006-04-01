@@ -187,7 +187,7 @@ public class ChangesTreeList extends JPanel {
     }
   }
 
-  public void setChangesToDisplay(List<Change> changes) {
+  public void setChangesToDisplay(final List<Change> changes) {
     final DefaultListModel listModel = (DefaultListModel)myList.getModel();
     listModel.removeAllElements();
     for (Change change : changes) {
@@ -196,14 +196,13 @@ public class ChangesTreeList extends JPanel {
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, false);
     myTree.setModel(builder.buildModel(changes));
+
     TreeUtil.expandAll(myTree);
 
     if (changes.size() > 0) {
       myList.setSelectedIndex(0);
       myTree.setSelectionRow(0);
     }
-
-    repaint();
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
@@ -337,6 +336,7 @@ public class ChangesTreeList extends JPanel {
 
       myCheckBox.setSelected(hasIncluded);
       myCheckBox.setEnabled(!(hasIncluded && hasExcluded));
+      revalidate();
 
       return this;
     }
