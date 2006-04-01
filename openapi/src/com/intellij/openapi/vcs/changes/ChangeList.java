@@ -48,7 +48,7 @@ public class ChangeList implements Cloneable {
     return myIsDefault;
   }
 
-  public boolean isInUpdate() {
+  public synchronized boolean isInUpdate() {
     return myIsInUpdate;
   }
 
@@ -83,7 +83,7 @@ public class ChangeList implements Cloneable {
     }
   }
 
-  boolean processChange(Change change) {
+  synchronized boolean processChange(Change change) {
     if (myIsDefault) {
       addChange(change);
       return true;
@@ -106,7 +106,7 @@ public class ChangeList implements Cloneable {
     return changesDetected;
   }
 
-  public boolean equals(final Object o) {
+  public synchronized boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
