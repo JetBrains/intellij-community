@@ -11,11 +11,9 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.FileStatusProvider;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -37,13 +35,18 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private final HashMap<VirtualFile, FileStatus> myCachedStatuses = new HashMap<VirtualFile, FileStatus>();
 
   private Project myProject;
+  private final ProjectLevelVcsManager myVcsManager;
   private List<FileStatusListener> myListeners = new ArrayList<FileStatusListener>();
   private MyDocumentAdapter myDocumentListener;
 
   private final Map<VirtualFileSystem, FileStatusProvider> myVFSToProviderMap = new HashMap<VirtualFileSystem, FileStatusProvider>();
 
-  public FileStatusManagerImpl(Project project, StartupManager startupManager, ChangeListManager changeListManager) {
+  public FileStatusManagerImpl(Project project,
+                               StartupManager startupManager,
+                               ChangeListManager changeListManager,
+                               ProjectLevelVcsManager vcsManager) {
     myProject = project;
+    myVcsManager = vcsManager;
 
     startupManager.registerPostStartupActivity(new Runnable() {
       public void run() {
@@ -86,7 +89,15 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
   }
 
+  private boolean fileIsInContent(VirtualFile file) {
+    return ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
+  }
+
   private FileStatus calcLocalFileStatus(final VirtualFile virtualFile) {
+    if (!fileIsInContent(virtualFile)) return FileStatus.NOT_CHANGED;
+    final AbstractVcs vcs = myVcsManager.getVcsFor(virtualFile);
+    if (vcs == null) return FileStatus.NOT_CHANGED;
+
     final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(virtualFile);
     if (status == FileStatus.NOT_CHANGED && isDocumentModified(virtualFile)) return FileStatus.MODIFIED;
     return status;
