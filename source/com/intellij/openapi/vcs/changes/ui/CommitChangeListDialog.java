@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -52,6 +53,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private Project myProject;
   private final CommitSession mySession;
   private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private ChangeList myLastSelectedList = null;
+  private String myLastKnownComment = "";
 
   private static void commit(Project project, List<ChangeList> list, final List<Change> changes, final CommitExecutor executor) {
     new CommitChangeListDialog(project, list, changes, executor).show();
@@ -97,14 +100,21 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     mySession = executor != null ? executor.createCommitSession() : null;
 
     myBrowser = new ChangesBrowser(project, changeLists, changes);
+    myBrowser.addSelectedListChangeListener(new ChangesBrowser.SelectedListChangeListener() {
+      public void selectedListChanged() {
+        updateComment();
+      }
+    });
+
+    myCommitMessageArea = new CommitMessage();
+    setCommitMessage(CheckinDialog.getInitialMessage(getPaths(), project));
+    myCommitMessageArea.init();
+
+    updateComment();
 
     myActionName = executor != null ? executor.getActionDescription() : VcsBundle.message("commit.dialog.title");
 
     myAdditionalOptionsPanel = new JPanel();
-    myCommitMessageArea = new CommitMessage();
-
-    setCommitMessage(CheckinDialog.getInitialMessage(getPaths(), project));
-    myCommitMessageArea.init();
 
     myAdditionalOptionsPanel.setLayout(new BorderLayout());
     Box optionsBox = Box.createVerticalBox();
@@ -199,6 +209,24 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     init();
   }
 
+  private void updateComment() {
+    final String currentComment = myCommitMessageArea.getComment();
+    if (myLastSelectedList != null) {
+      myLastSelectedList.setComment(currentComment);
+    }
+
+    final ChangeList list = myBrowser.getSelectedChangeList();
+    final String listComment = list.getComment();
+    if (!StringUtil.isEmptyOrSpaces(listComment)) {
+      myCommitMessageArea.setText(listComment);
+    }
+    else {
+      myCommitMessageArea.setText(myLastKnownComment);
+    }
+
+    myLastSelectedList = list;
+  }
+
 
   @Override
   protected void dispose() {
@@ -285,7 +313,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         final List<Change> changesFailedToCommit = new ArrayList<Change>();
 
         ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(checkinAction(vcsExceptions, changesFailedToCommit), myActionName, true, myProject);
+          .runProcessWithProgressSynchronously(checkinAction(vcsExceptions, changesFailedToCommit, myBrowser.getSelectedChangeList()), myActionName, true, myProject);
       }
     };
 
@@ -293,7 +321,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                                             VcsConfiguration.getInstance(myProject), checkinAction, true);
   }
 
-  private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit) {
+  private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit, final ChangeList changeList) {
     if (mySession != null) {
       return new Runnable() {
         public void run() {
@@ -334,13 +362,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, myActionName);
         }
         finally {
-          commitCompleted(vcsExceptions, changesFailedToCommit, VcsConfiguration.getInstance(myProject), myHandlers, getCommitMessage());
+          commitCompleted(vcsExceptions, changeList, changesFailedToCommit, VcsConfiguration.getInstance(myProject), myHandlers, getCommitMessage());
         }
       }
     };
   }
 
   private void commitCompleted(final List<VcsException> allExceptions,
+                               final ChangeList changeList,
                                final List<Change> failedChanges,
                                VcsConfiguration config,
                                final List<CheckinHandler> checkinHandlers,
@@ -361,8 +390,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
       final ChangeList failedList =
-        changeListManager.addChangeList(VcsBundle.message("commit.dialog.failed.commit.template", commitMessage));
+        changeListManager.addChangeList(VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()));
 
+      failedList.setComment(commitMessage);
       changeListManager.moveChangesTo(failedList, failedChanges.toArray(new Change[failedChanges.size()]));
     }
 
@@ -494,6 +524,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public void setCommitMessage(final String currentDescription) {
+    myLastKnownComment = currentDescription;
     myCommitMessageArea.setText(currentDescription);
     myCommitMessageArea.requestFocusInMessage();
   }

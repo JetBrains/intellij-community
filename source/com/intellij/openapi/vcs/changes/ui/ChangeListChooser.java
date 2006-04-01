@@ -24,7 +24,7 @@ public class ChangeListChooser extends DialogWrapper {
   private JRadioButton myRbExisting;
   private JRadioButton myRbNew;
   private JComboBox myExisitingsCombo;
-  private JTextField myNewListNameField;
+  private EditChangelistPanel myNewListPanel;
   private final Collection<ChangeList> myExistingLists;
   private Project myProject;
   private ChangeList mySelectedList;
@@ -52,7 +52,7 @@ public class ChangeListChooser extends DialogWrapper {
 
     myExisitingsCombo.setRenderer(new ColoredListCellRenderer() {
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        append(((ChangeList)value).getDescription(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append(((ChangeList)value).getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     });
 
@@ -79,25 +79,29 @@ public class ChangeListChooser extends DialogWrapper {
   private void updateEnabledItems() {
     if (myRbExisting.isSelected()) {
       myExisitingsCombo.setEnabled(true);
-      myNewListNameField.setEnabled(false);
+      myNewListPanel.setEnabled(false);
       myExisitingsCombo.requestFocus();
     }
     else {
       myExisitingsCombo.setEnabled(false);
-      myNewListNameField.setEnabled(true);
-      myNewListNameField.requestFocus();
+      myNewListPanel.setEnabled(true);
+      myNewListPanel.requestFocus();
     }
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myRbExisting.isSelected() ? myExisitingsCombo : myNewListNameField;
+    return myRbExisting.isSelected() ? myExisitingsCombo : myNewListPanel.getPrefferedFocusedComponent();
+  }
+
+  protected String getDimensionServiceKey() {
+    return "VCS.ChangelistChooser";
   }
 
   protected void doOKAction() {
     if (myRbNew.isSelected()) {
-      String newText = myNewListNameField.getText();
+      String newText = myNewListPanel.getName();
       for (ChangeList list : myExistingLists) {
-        if (newText.equals(list.getDescription())) {
+        if (newText.equals(list.getName())) {
           Messages.showErrorDialog(myProject,
                                    VcsBundle.message("changes.newchangelist.warning.already.exists.text", newText),
                                    VcsBundle.message("changes.newchangelist.warning.already.exists.title"));
@@ -110,7 +114,8 @@ public class ChangeListChooser extends DialogWrapper {
       mySelectedList = (ChangeList)myExisitingsCombo.getSelectedItem();
     }
     else {
-      mySelectedList = ChangeListManager.getInstance(myProject).addChangeList(myNewListNameField.getText());
+      mySelectedList = ChangeListManager.getInstance(myProject).addChangeList(myNewListPanel.getName());
+      mySelectedList.setComment(myNewListPanel.getDescription());
     }
 
     super.doOKAction();

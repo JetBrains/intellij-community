@@ -16,7 +16,9 @@ public class ChangeList implements Cloneable {
 
   private Collection<Change> myChanges = new HashSet<Change>();
   private Collection<Change> myReadChangesCache = null;
-  private String myDescription;
+  private String myName;
+  private String myComment = "";
+
   private boolean myIsDefault = false;
   private Collection<Change> myOutdatedChanges;
   private boolean myIsInUpdate = false;
@@ -27,7 +29,7 @@ public class ChangeList implements Cloneable {
   }
 
   private ChangeList(final String description) {
-    myDescription = description;
+    myName = description;
   }
 
   public synchronized Collection<Change> getChanges() {
@@ -40,8 +42,17 @@ public class ChangeList implements Cloneable {
     return myReadChangesCache;
   }
 
-  public String getDescription() {
-    return myDescription;
+  public String getName() {
+    return myName;
+  }
+
+
+  public String getComment() {
+    return myComment;
+  }
+
+  public void setComment(final String comment) {
+    myComment = comment != null ? comment : "";
   }
 
   public boolean isDefault() {
@@ -114,13 +125,13 @@ public class ChangeList implements Cloneable {
 
     if (myIsDefault != list.myIsDefault) return false;
     if (!myChanges.equals(list.myChanges)) return false;
-    if (!myDescription.equals(list.myDescription)) return false;
+    if (!myName.equals(list.myName)) return false;
 
     return true;
   }
 
   public int hashCode() {
-    return myDescription.hashCode();
+    return myName.hashCode();
   }
 
   public ChangeList clone() {

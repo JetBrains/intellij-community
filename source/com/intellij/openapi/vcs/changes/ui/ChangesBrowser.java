@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
 
@@ -31,6 +32,19 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private Collection<Change> myAllChanges;
   private final Map<Change, ChangeList> myChangeListsMap = new HashMap<Change, ChangeList>();
   private Project myProject;
+  private EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
+
+  public interface SelectedListChangeListener extends EventListener{
+    void selectedListChanged();
+  }
+
+  public void addSelectedListChangeListener(SelectedListChangeListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
+  public void removeSelectedListChangeListener(SelectedListChangeListener listener) {
+    myDispatcher.removeListener(listener);
+  }
 
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
@@ -165,10 +179,6 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     myViewer.setChangesToDisplay(getCurrentDisplayedChanges());
   }
 
-  private void repaintData() {
-    myViewer.repaint();
-  }
-
   private class ChangeListChooser extends JPanel {
     public ChangeListChooser(List<ChangeList> lists) {
       super(new BorderLayout());
@@ -176,7 +186,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       chooser.setRenderer(new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final ChangeList l = ((ChangeList)value);
-          append(l.getDescription(),
+          append(l.getName(),
                  l.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       });
@@ -204,6 +214,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private void setSelectedList(final ChangeList list) {
     mySelectedChangeList = list;
     rebuildList();
+    myDispatcher.getMulticaster().selectedListChanged();
   }
 
   private JComponent createToolbar() {
@@ -245,6 +256,10 @@ public class ChangesBrowser extends JPanel implements DataProvider {
 
   public List<Change> getCurrentIncludedChanges() {
     return filterBySelectedChangeList(myViewer.getIncludedChanges());
+  }
+
+  public ChangeList getSelectedChangeList() {
+    return mySelectedChangeList;
   }
 
   private List<Change> filterBySelectedChangeList(final Collection<Change> changes) {

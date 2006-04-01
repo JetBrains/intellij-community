@@ -41,7 +41,7 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
     Object object = node.getUserObject();
     if (object instanceof ChangeList) {
       final ChangeList list = ((ChangeList)object);
-      append(list.getDescription(),
+      append(list.getName(),
              list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
       appendCount(node);
       if (list.isInUpdate()) {

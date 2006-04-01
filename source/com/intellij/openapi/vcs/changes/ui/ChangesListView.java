@@ -499,7 +499,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       final Object object = node.getUserObject();
       if (object instanceof ChangeList) {
         final ChangeList list = ((ChangeList)object);
-        return list.getDescription();
+        return list.getName();
       }
       else if (object instanceof Change) {
         final Change change = (Change)object;

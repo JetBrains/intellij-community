@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
+import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -81,6 +82,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   @NonNls private static final String NODE_LIST = "list";
   @NonNls private static final String ATT_NAME = "name";
+  @NonNls private static final String ATT_COMMENT = "comment";
   @NonNls private static final String NODE_CHANGE = "change";
   @NonNls private static final String ATT_DEFAULT = "default";
   @NonNls private static final String ATT_VALUE_TRUE = "true";
@@ -682,14 +684,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
 
     public void actionPerformed(AnActionEvent e) {
-      String rc = Messages.showInputDialog(myProject, VcsBundle.message("changes.dialog.newchangelist.text"),
-                                           VcsBundle.message("changes.dialog.newchangelist.title"), Messages.getQuestionIcon());
-      if (rc != null) {
-        if (rc.length() == 0) {
-          rc = getUniqueName();
+      NewChangelistDialog dlg = new NewChangelistDialog(myProject);
+      dlg.show();
+      if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+        String name = dlg.getName();
+        if (name.length() == 0) {
+          name = getUniqueName();
         }
 
-        addChangeList(rc);
+        final ChangeList list = addChangeList(name);
+        list.setComment(dlg.getDescirption());
       }
     }
 
@@ -698,7 +702,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       synchronized (myChangeLists) {
         int unnamedcount = 0;
         for (ChangeList list : getChangeLists()) {
-          if (list.getDescription().startsWith("Unnamed")) {
+          if (list.getName().startsWith("Unnamed")) {
             unnamedcount++;
           }
         }
@@ -895,7 +899,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final ChangeList list = lists[0];
       int rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
                Messages.showYesNoDialog(project,
-                                        VcsBundle.message("changes.removechangelist.warning.text", list.getDescription()),
+                                        VcsBundle.message("changes.removechangelist.warning.text", list.getName()),
                                         VcsBundle.message("changes.removechangelist.warning.title"),
                                         Messages.getQuestionIcon());
 
@@ -941,6 +945,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     final List<Element> listNodes = (List<Element>)element.getChildren(NODE_LIST);
     for (Element listNode : listNodes) {
       ChangeList list = addChangeList(listNode.getAttributeValue(ATT_NAME));
+      list.setComment(listNode.getAttributeValue(ATT_COMMENT));
       final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
       for (Element changeNode : changeNodes) {
         try {
@@ -972,7 +977,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           listNode.setAttribute(ATT_DEFAULT, ATT_VALUE_TRUE);
         }
 
-        listNode.setAttribute(ATT_NAME, list.getDescription());
+        listNode.setAttribute(ATT_NAME, list.getName());
+        listNode.setAttribute(ATT_COMMENT, list.getComment());
         for (Change change : list.getChanges()) {
           writeChange(listNode, change);
         }

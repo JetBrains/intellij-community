@@ -113,7 +113,7 @@ public class TreeModelBuilder {
         }
 
         if (o1 instanceof ChangeList && o2 instanceof ChangeList) {
-          return ((ChangeList)o1).getDescription().compareToIgnoreCase(((ChangeList)o2).getDescription());
+          return ((ChangeList)o1).getName().compareToIgnoreCase(((ChangeList)o2).getName());
         }
 
         if (o1 instanceof VirtualFile && o2 instanceof VirtualFile) {

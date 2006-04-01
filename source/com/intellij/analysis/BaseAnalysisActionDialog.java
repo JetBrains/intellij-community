@@ -97,7 +97,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     model.addElement(ALL);
     final List<ChangeList> changeLists = changeListManager.getChangeLists();
     for (ChangeList changeList : changeLists) {
-      model.addElement(changeList.getDescription());
+      model.addElement(changeList.getName());
     }
     myChangeLists.setModel(model);
     myChangeLists.setEnabled(myUncommitedFilesButton.isSelected());
@@ -203,7 +203,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
           files = changeListManager.getAffectedFiles();
         } else {
           for (ChangeList list : changeListManager.getChangeLists()) {
-            if (!Comparing.strEqual(list.getDescription(), (String)myChangeLists.getSelectedItem())) continue;
+            if (!Comparing.strEqual(list.getName(), (String)myChangeLists.getSelectedItem())) continue;
             final Collection<Change> changes = list.getChanges();
             for (Change change : changes) {
               final ContentRevision afterRevision = change.getAfterRevision();
