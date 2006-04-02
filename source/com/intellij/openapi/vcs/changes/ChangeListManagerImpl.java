@@ -16,10 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
-import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog;
-import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -164,6 +161,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     toAnotherListAction.registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
 
     final SetDefaultChangeListAction setDefaultChangeListAction = new SetDefaultChangeListAction();
+    final RenameChangeListAction renameAction = new RenameChangeListAction();
+    renameAction.registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
+
     final CommitAction commitAction = new CommitAction();
     final RollbackAction rollbackAction = new RollbackAction();
 
@@ -211,6 +211,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     menuGroup.add(newChangeListAction);
     menuGroup.add(removeChangeListAction);
     menuGroup.add(setDefaultChangeListAction);
+    menuGroup.add(renameAction);
     menuGroup.add(toAnotherListAction);
     menuGroup.add(diffAction);
     menuGroup.addSeparator();
@@ -709,6 +710,25 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
         return unnamedcount == 0 ? "Unnamed" : "Unnamed (" + unnamedcount + ")";
       }
+    }
+  }
+
+  public class RenameChangeListAction extends AnAction {
+
+    public RenameChangeListAction() {
+      super(VcsBundle.message("changes.action.rename.text"),
+            VcsBundle.message("changes.action.rename.description"), null);
+    }
+
+    public void update(AnActionEvent e) {
+      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      e.getPresentation().setEnabled(lists != null && lists.length == 1);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      assert lists != null;
+      new EditChangelistDialog(myProject, lists[0]).show();
     }
   }
 

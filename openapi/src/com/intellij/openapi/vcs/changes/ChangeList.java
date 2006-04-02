@@ -46,6 +46,9 @@ public class ChangeList implements Cloneable {
     return myName;
   }
 
+  public void setName(final String name) {
+    myName = name;
+  }
 
   public String getComment() {
     return myComment;

@@ -55,4 +55,7 @@ public class CommonShortcuts {
   }
 
 
+  public static ShortcutSet getRename() {
+    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_RENAME));
+  }
 }
