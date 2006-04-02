@@ -173,10 +173,12 @@ outer:
     return applicableFound;
   }
 
-  private int getCheckLevel(MethodCandidateInfo method){
+  private static int getCheckLevel(MethodCandidateInfo method){
     boolean visible = method.isAccessible();// && !method.myStaticProblem;
     boolean available = method.isStaticsScopeCorrect();
-    return (visible ? 1 : 0) << 1 | (available ? 1 : 0);
+    return (visible ? 1 : 0) << 2 |
+           (available ? 1 : 0) << 1 |
+           (!(method.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) ? 1 : 0);
   }
 
   private enum Specifics {
