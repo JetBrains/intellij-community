@@ -269,7 +269,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
   @NotNull
   private ChangeList[] getSelectedChangeLists() {
-    Set<LocalChangeList> lists = new HashSet<LocalChangeList>();
+    Set<ChangeList> lists = new HashSet<ChangeList>();
 
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return new ChangeList[0];
@@ -278,11 +278,11 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
       final Object userObject = node.getUserObject();
       if (userObject instanceof ChangeList) {
-        lists.add((LocalChangeList)userObject);
+        lists.add((ChangeList)userObject);
       }
     }
 
-    return lists.toArray(new LocalChangeList[lists.size()]);
+    return lists.toArray(new ChangeList[lists.size()]);
   }
 
   public void setMenuActions(final ActionGroup menuGroup) {

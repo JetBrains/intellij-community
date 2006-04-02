@@ -722,13 +722,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     public void update(AnActionEvent e) {
       ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(lists != null && lists.length == 1);
+      e.getPresentation().setEnabled(lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList);
     }
 
     public void actionPerformed(AnActionEvent e) {
-      LocalChangeList[] lists = (LocalChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
       assert lists != null;
-      new EditChangelistDialog(myProject, findRealByCopy(lists[0])).show();
+      new EditChangelistDialog(myProject, findRealByCopy((LocalChangeList)lists[0])).show();
     }
   }
 
@@ -740,14 +740,15 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
 
     public void update(AnActionEvent e) {
-      LocalChangeList[] lists = (LocalChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(lists != null && lists.length == 1 && !lists[0].isDefault());
+      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      e.getPresentation().setEnabled(lists != null && lists.length == 1 &&
+                                     lists[0] instanceof LocalChangeList && !((LocalChangeList)lists[0]).isDefault());
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final LocalChangeList[] lists = ((LocalChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
+      final ChangeList[] lists = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
       assert lists != null;
-      setDefaultChangeList(lists[0]);
+      setDefaultChangeList((LocalChangeList)lists[0]);
     }
   }
 
@@ -908,15 +909,17 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     public void update(AnActionEvent e) {
       Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-      LocalChangeList[] lists = (LocalChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(project != null && lists != null && lists.length == 1 && !lists[0].isDefault());
+      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      e.getPresentation().setEnabled(project != null && lists != null && lists.length == 1 &&
+                                     lists[0] instanceof LocalChangeList &&
+                                     !((LocalChangeList)lists[0]).isDefault());
     }
 
     public void actionPerformed(AnActionEvent e) {
       Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-      final LocalChangeList[] lists = ((LocalChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
+      final ChangeList[] lists = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
       assert lists != null;
-      final LocalChangeList list = lists[0];
+      final LocalChangeList list = (LocalChangeList)lists[0];
       int rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
                Messages.showYesNoDialog(project,
                                         VcsBundle.message("changes.removechangelist.warning.text", list.getName()),

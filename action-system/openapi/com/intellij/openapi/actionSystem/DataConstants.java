@@ -134,7 +134,7 @@ public interface DataConstants {
   @NonNls String IDE_VIEW = "IDEView";
 
   /**
-   * Returns array of selected {@link com.intellij.openapi.vcs.changes.LocalChangeList}s.
+   * Returns array of selected {@link com.intellij.openapi.vcs.changes.ChangeList}s.
    * @since 6.0
    */
   @NonNls String CHANGE_LISTS = "vcs.ChangeList";
