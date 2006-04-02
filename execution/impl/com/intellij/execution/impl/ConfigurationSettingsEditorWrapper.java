@@ -34,7 +34,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     }
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    myCompileBeforeRunning = runManager.getConfig().getCompileMethodBeforeRunning(runConfiguration);
+    myCompileBeforeRunning = runManager.getCompileMethodBeforeRun(runConfiguration);
     myCompileMethod.setSelectedItem(myCompileBeforeRunning);
 
     myCompileMethod.addActionListener(new ActionListener() {
@@ -43,7 +43,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
       }
     });
 
-    myStoreProjectConfiguration = runManager.getConfig().isStoreProjectConfiguration(runConfiguration);
+    myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
     myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
     myCbStoreProjectConfiguration.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -80,14 +80,12 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private void additionalApply(final RunnerAndConfigurationSettingsImpl settings) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    runManager.getConfig().setCompileMethodBeforeRunning(runConfiguration, myCompileBeforeRunning);
-    runManager.getConfig().setStoreProjectConfiguration(runConfiguration, myStoreProjectConfiguration);
+    runManager.setCompileMethodBeforeRun(runConfiguration, myCompileBeforeRunning);
+    runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
   }
-
 
   public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettingsImpl settings = myEditor.getSnapshot();
-    additionalApply(settings);
     return settings;
   }
 

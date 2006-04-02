@@ -394,8 +394,11 @@ class RunConfigurable extends BaseConfigurable {
 
     // if apply succeeded, update the list of configurations in RunManager
     manager.removeConfigurations(type);
-    for (final SingleConfigurationConfigurable stableConfiguration : stableConfigurations) {
-      manager.addConfiguration((RunnerAndConfigurationSettingsImpl)stableConfiguration.getSettings());
+    for (final SingleConfigurationConfigurable<RunConfiguration> stableConfiguration : stableConfigurations) {
+      final ConfigurationSettingsEditorWrapper settingsEditorWrapper = ((ConfigurationSettingsEditorWrapper)stableConfiguration.getEditor());
+      manager.addConfiguration(stableConfiguration.getSettings(),
+                               settingsEditorWrapper.isStoreProjectConfiguration(),
+                               settingsEditorWrapper.getCompileMethodBeforeRunning());
     }
     if (tempConfiguration != null) {
       manager.setTemporaryConfiguration((RunnerAndConfigurationSettingsImpl)tempConfiguration.getSettings());
@@ -715,10 +718,6 @@ class RunConfigurable extends BaseConfigurable {
         final DefaultMutableTreeNode typeNode = getSelectedConfigurationTypeNode();
         final RunnerAndConfigurationSettingsImpl settings = configuration.getSnapshot();
         settings.setName(createUniqueName(typeNode));
-        final RunManagerConfig managerConfig = getRunManager().getConfig();
-        final ConfigurationSettingsEditorWrapper settingsEditorWrapper = (ConfigurationSettingsEditorWrapper)configuration.getEditor();
-        managerConfig.setCompileMethodBeforeRunning(settings.getConfiguration(), settingsEditorWrapper.getCompileMethodBeforeRunning());
-        managerConfig.setStoreProjectConfiguration(settings.getConfiguration(), settingsEditorWrapper.isStoreProjectConfiguration());
         createNewConfiguration(settings, typeNode);
       }
       catch (ConfigurationException e1) {

@@ -1,9 +1,10 @@
 package com.intellij.execution.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.RunDialog;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.Presentation;
 
@@ -20,7 +21,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     choosePolicy(context).update(presentation, context, actionText);
   }
 
-  private BaseCreatePolicy choosePolicy(final ConfigurationContext context) {
+  private static BaseCreatePolicy choosePolicy(final ConfigurationContext context) {
     final RunnerAndConfigurationSettings configuration = context.findExisting();
     if (configuration == null) return CREATE_AND_EDIT;
     final RunManagerEx runManager = context.getRunManager();
@@ -83,7 +84,8 @@ public class CreateAction extends BaseRunConfigurationAction {
     public void perform(final ConfigurationContext context) {
       final RunManagerEx runManager = context.getRunManager();
       final RunnerAndConfigurationSettingsImpl configuration = context.getConfiguration();
-      runManager.addConfiguration(configuration);
+      final RunnerAndConfigurationSettingsImpl template = ((RunManagerImpl)runManager).getConfigurationTemplate(configuration.getFactory());
+      runManager.addConfiguration(configuration, runManager.isConfigurationShared(template), runManager.getCompileMethodBeforeRun(template.getConfiguration()));
       runManager.setActiveConfiguration(configuration);
     }
   }

@@ -1,6 +1,5 @@
 package com.intellij.execution.impl;
 
-import com.intellij.execution.RunManagerConfig;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -44,16 +43,15 @@ public class ProjectRunConfigurationManager implements ProjectComponent, JDOMExt
   public void readExternal(Element element) throws InvalidDataException {
     final List children = element.getChildren();
     for (final Object child : children) {
-      myManager.loadConfiguration((Element)child);
+      myManager.loadConfiguration((Element)child, true);
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     final Collection<RunnerAndConfigurationSettingsImpl> configurations = myManager.getStableConfigurations().values();
-    final RunManagerConfig managerConfig = myManager.getConfig();
     for (RunnerAndConfigurationSettingsImpl configuration : configurations) {
-      if (managerConfig.isStoreProjectConfiguration(configuration.getConfiguration())){
-        RunManagerImpl.addConfigurationElement(element, configuration);
+      if (myManager.isConfigurationShared(configuration)){
+        myManager.addConfigurationElement(element, configuration);
       }
     }
   }

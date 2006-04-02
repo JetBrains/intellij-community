@@ -39,5 +39,9 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract RunnerAndConfigurationSettingsImpl[] getConfigurationSettings(ConfigurationType type);
 
-  public abstract void addConfiguration(RunnerAndConfigurationSettingsImpl settings);
+  public abstract void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean isShared, String method);
+
+  public abstract boolean isConfigurationShared(RunnerAndConfigurationSettingsImpl settings);
+
+  public abstract String getCompileMethodBeforeRun(RunConfiguration settings);
 }

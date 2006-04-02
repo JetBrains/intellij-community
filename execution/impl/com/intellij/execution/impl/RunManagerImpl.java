@@ -32,6 +32,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   private Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<String, ConfigurationType>();
 
   private Map<String, RunnerAndConfigurationSettingsImpl> myConfigurations = new TreeMap<String, RunnerAndConfigurationSettingsImpl>(); // template configurations are not included here
+  private Map<String, Boolean> mySharedConfigurations = new TreeMap<String, Boolean>();
+  private Map<String, String> myMethod2CompileBeforeRun = new TreeMap<String, String>();
+
   private Map<ConfigurationFactory, RunnerAndConfigurationSettingsImpl> myTemplateConfigurationsMap = new HashMap<ConfigurationFactory, RunnerAndConfigurationSettingsImpl>();
   private RunnerAndConfigurationSettingsImpl mySelectedConfiguration = null;
   private String mySelectedConfig = null;
@@ -48,11 +51,12 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   protected static final String NAME_ATTR = "name";
   @NonNls
   protected static final String SELECTED_ATTR = "selected";
+  @NonNls private static final String METHOD = "method";
 
   public RunManagerImpl(final Project project,
                         PropertiesComponent propertiesComponent,
                         ConfigurationType[] configurationTypes) {
-    myConfig = new RunManagerConfig(propertiesComponent);
+    myConfig = new RunManagerConfig(propertiesComponent, this);
     myProject = project;
     myRefactoringElementListenerProvider = new MyRefactoringElementListenerProvider();
     initializeConfigurationTypes(configurationTypes);
@@ -99,10 +103,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     LOG.assertTrue(factory != null);
     RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(factory);
     RunConfiguration configuration = factory.createConfiguration(name, template.getConfiguration());
-    getConfig().setCompileMethodBeforeRunning(configuration,
-                                              getConfig().getCompileMethodBeforeRunning(template.getConfiguration()));
-    getConfig().setStoreProjectConfiguration(configuration,
-                                             getConfig().isStoreProjectConfiguration(template.getConfiguration()));
+    setCompileMethodBeforeRun(configuration, getCompileMethodBeforeRun(template.getConfiguration()));
+    shareConfiguration(configuration, isConfigurationShared(template));
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this, configuration, false);
     settings.importRunnerAndConfigurationSettings(template);
     return settings;
@@ -179,11 +181,14 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return template;
   }
 
-  public void addConfiguration(RunnerAndConfigurationSettingsImpl settings) {
-    myConfigurations.put(getUniqueName(settings), settings);
+  public void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean shared, String method) {
+    final String configName = getUniqueName(settings.getConfiguration());
+    myConfigurations.put(configName, settings);
+    mySharedConfigurations.put(configName, shared);
+    myMethod2CompileBeforeRun.put(configName, method);
   }
 
-  private static String getUniqueName(final RunnerAndConfigurationSettingsImpl settings) {
+  private static String getUniqueName(final RunConfiguration settings) {
     return settings.getType().getDisplayName() + "." + settings.getName();
   }
 
@@ -247,27 +252,28 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
 
     final Collection<RunnerAndConfigurationSettingsImpl> configurations = getStableConfigurations().values();
-    final RunManagerConfig managerConfig = getConfig();
     for (RunnerAndConfigurationSettingsImpl configuration : configurations) {
-      if (!managerConfig.isStoreProjectConfiguration(configuration.getConfiguration())){
+      if (!isConfigurationShared(configuration)){
         addConfigurationElement(parentNode, configuration);
       }
     }
     if (mySelectedConfiguration != null){
-      parentNode.setAttribute(SELECTED_ATTR, getUniqueName(mySelectedConfiguration));
+      parentNode.setAttribute(SELECTED_ATTR, getUniqueName(mySelectedConfiguration.getConfiguration()));
     }
   }
 
-  public static void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettingsImpl template) throws WriteExternalException {
-    final Element configurationElement = new Element(CONFIGURATION);
-    parentNode.addContent(configurationElement);
-    template.writeExternal(configurationElement);
+  public void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettingsImpl template) throws WriteExternalException {
+    addConfigurationElement(parentNode, template, CONFIGURATION);
   }
 
-  private static void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettingsImpl template, String elementType) throws WriteExternalException {
+  private void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettingsImpl template, String elementType) throws WriteExternalException {
     final Element configurationElement = new Element(elementType);
     parentNode.addContent(configurationElement);
     template.writeExternal(configurationElement);
+    final String method = myMethod2CompileBeforeRun.get(getUniqueName(template.getConfiguration()));
+    if (method != null) {
+      configurationElement.setAttribute(METHOD, method);
+    }
   }
 
   public void readExternal(final Element parentNode) throws InvalidDataException {
@@ -276,12 +282,12 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     final List children = parentNode.getChildren();
     for (final Object aChildren : children) {
       final Element element = (Element)aChildren;
-      loadConfiguration(element);
+      loadConfiguration(element, false);
     }
     mySelectedConfig = parentNode.getAttributeValue(SELECTED_ATTR);
   }
 
-  public void loadConfiguration(final Element element) throws InvalidDataException {
+  public void loadConfiguration(final Element element, boolean isShared) throws InvalidDataException {
     RunnerAndConfigurationSettingsImpl configuration = new RunnerAndConfigurationSettingsImpl(this);
     configuration.readExternal(element);
     ConfigurationFactory factory = configuration.getFactory();
@@ -297,7 +303,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       if (TEMP_CONFIGURATION.equals(element.getName())) {
         myTempConfiguration = configuration;
       }
-      addConfiguration(configuration);
+      addConfiguration(configuration, isShared, element.getAttributeValue(METHOD));
     }
   }
 
@@ -333,7 +339,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     LOG.assertTrue(tempConfiguration != null);
     myConfigurations = getStableConfigurations();
     myTempConfiguration = tempConfiguration;
-    addConfiguration(myTempConfiguration);
+    final RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(tempConfiguration.getFactory());
+    addConfiguration(myTempConfiguration, isConfigurationShared(template), getCompileMethodBeforeRun(template.getConfiguration()));
     setActiveConfiguration(myTempConfiguration);
   }
 
@@ -344,7 +351,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public Map<String, RunnerAndConfigurationSettingsImpl> getStableConfigurations() {
     final HashMap<String,RunnerAndConfigurationSettingsImpl> result = new HashMap<String, RunnerAndConfigurationSettingsImpl>(myConfigurations);
     if (myTempConfiguration != null) {
-      result.remove(getUniqueName(myTempConfiguration));
+      result.remove(getUniqueName(myTempConfiguration.getConfiguration()));
     }
     return result;
   }
@@ -371,6 +378,24 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return createConfiguration(name, type);
   }
 
+
+  public boolean isConfigurationShared(final RunnerAndConfigurationSettingsImpl settings){
+    final Boolean shared = mySharedConfigurations.get(getUniqueName(settings.getConfiguration()));
+    return shared != null && shared.booleanValue();
+  }
+
+  public String getCompileMethodBeforeRun(final RunConfiguration settings){
+    final String method = myMethod2CompileBeforeRun.get(getUniqueName(settings));
+    return method != null ? method : RunManagerConfig.MAKE;
+  }
+
+  public void shareConfiguration(final RunConfiguration runConfiguration, final boolean shareConfiguration) {
+    mySharedConfigurations.put(getUniqueName(runConfiguration), shareConfiguration);
+  }
+
+  public void setCompileMethodBeforeRun(final RunConfiguration runConfiguration, final String method) {
+    myMethod2CompileBeforeRun.put(getUniqueName(runConfiguration), method);
+  }
 
   private class MyRefactoringElementListenerProvider implements RefactoringElementListenerProvider {
     public RefactoringElementListener getListener(final PsiElement element) {
