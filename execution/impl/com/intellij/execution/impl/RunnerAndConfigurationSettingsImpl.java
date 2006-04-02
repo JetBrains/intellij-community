@@ -1,8 +1,8 @@
 package com.intellij.execution.impl;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,10 +13,10 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author dyoma
@@ -35,8 +35,17 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private RunConfiguration myConfiguration;
   private boolean myIsTemplate;
 
-  private Map<JavaProgramRunner, RunnerSettings> myRunnerSettings = new HashMap<JavaProgramRunner, RunnerSettings>();
-  private Map<JavaProgramRunner, ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new HashMap<JavaProgramRunner, ConfigurationPerRunnerSettings>();
+  private Map<JavaProgramRunner, RunnerSettings> myRunnerSettings = new TreeMap<JavaProgramRunner, RunnerSettings>(createComparator());
+  private Map<JavaProgramRunner, ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new TreeMap<JavaProgramRunner, ConfigurationPerRunnerSettings>(createComparator());
+
+  private static Comparator<? super JavaProgramRunner> createComparator() {
+    return new Comparator<JavaProgramRunner>() {
+      public int compare(final JavaProgramRunner runner1, final JavaProgramRunner runner2) {
+        return runner1.getInfo().getId().compareTo(runner2.getInfo().getId());
+      }
+    };
+  }
+
   @NonNls
   protected static final String NAME_ATTR = "name";
   @NonNls
@@ -89,7 +98,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    myIsTemplate = Boolean.valueOf(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE));
+    myIsTemplate = Boolean.valueOf(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE)).booleanValue();
     final ConfigurationFactory factory = getFactory(element);
     if (factory == null) return;
 
@@ -103,24 +112,25 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
     myConfiguration.readExternal(element);
     List runners = element.getChildren(RUNNER_ELEMENT);
-    for (Iterator iterator = runners.iterator(); iterator.hasNext();) {
-      Element runnerElement = (Element)iterator.next();
+    for (final Object runner1 : runners) {
+      Element runnerElement = (Element)runner1;
       String id = runnerElement.getAttributeValue(RUNNER_ID);
       JavaProgramRunner runner = ExecutionRegistry.getInstance().findRunnerById(id);
       if (runner != null) {
-        RunnerSettings settings = new RunnerSettings(runner.createConfigurationData(new InfoProvider(runner)), myConfiguration);
+        RunnerSettings settings = createRunnerSettings(runner);
         settings.readExternal(runnerElement);
         myRunnerSettings.put(runner, settings);
       }
     }
 
     List configurations = element.getChildren(CONFIGURATION_ELEMENT);
-    for (Iterator iterator = configurations.iterator(); iterator.hasNext();) {
-      Element configurationElement = (Element)iterator.next();
+    for (final Object configuration : configurations) {
+      Element configurationElement = (Element)configuration;
       String id = configurationElement.getAttributeValue(RUNNER_ID);
       JavaProgramRunner runner = ExecutionRegistry.getInstance().findRunnerById(id);
       if (runner != null) {
-        ConfigurationPerRunnerSettings settings = new ConfigurationPerRunnerSettings(runner.getInfo(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
+        ConfigurationPerRunnerSettings settings =
+          new ConfigurationPerRunnerSettings(runner.getInfo(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
         settings.readExternal(configurationElement);
         myConfigurationPerRunnerSettings.put(runner, settings);
       }
@@ -138,8 +148,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
     myConfiguration.writeExternal(element);
 
-    for (Iterator<JavaProgramRunner> iterator = myRunnerSettings.keySet().iterator(); iterator.hasNext();) {
-      JavaProgramRunner runner = iterator.next();
+    for (JavaProgramRunner runner : myRunnerSettings.keySet()) {
       RunnerSettings settings = myRunnerSettings.get(runner);
       Element runnerElement = new Element(RUNNER_ELEMENT);
       settings.writeExternal(runnerElement);
@@ -147,8 +156,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       runnerElement.setAttribute(RUNNER_ID, runner.getInfo().getId());
     }
 
-    for (Iterator<JavaProgramRunner> iterator = myConfigurationPerRunnerSettings.keySet().iterator(); iterator.hasNext();) {
-      JavaProgramRunner runner = iterator.next();
+    for (JavaProgramRunner runner : myConfigurationPerRunnerSettings.keySet()) {
       ConfigurationPerRunnerSettings settings = myConfigurationPerRunnerSettings.get(runner);
       Element runnerElement = new Element(CONFIGURATION_ELEMENT);
       settings.writeExternal(runnerElement);
@@ -160,7 +168,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   public RunnerSettings getRunnerSettings(JavaProgramRunner runner) {
     RunnerSettings settings = myRunnerSettings.get(runner);
     if (settings == null) {
-      settings = new RunnerSettings(runner.createConfigurationData(new InfoProvider(runner)), myConfiguration);
+      settings = createRunnerSettings(runner);
       myRunnerSettings.put(runner, settings);
     }
     return settings;
@@ -190,18 +198,17 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
   public void importRunnerAndConfigurationSettings(RunnerAndConfigurationSettingsImpl template) {
     try {
-      for (Iterator<JavaProgramRunner> iterator = template.myRunnerSettings.keySet().iterator(); iterator.hasNext();) {
-        JavaProgramRunner runner = iterator.next();
-        RunnerSettings data = new RunnerSettings(runner.createConfigurationData(new InfoProvider(runner)), myConfiguration);
+      for (JavaProgramRunner runner : template.myRunnerSettings.keySet()) {
+        RunnerSettings data = createRunnerSettings(runner);
         myRunnerSettings.put(runner, data);
         Element temp = new Element(DUMMY_ELEMENT_NANE);
         template.myRunnerSettings.get(runner).writeExternal(temp);
         data.readExternal(temp);
       }
 
-      for (Iterator<JavaProgramRunner> iterator = template.myConfigurationPerRunnerSettings.keySet().iterator(); iterator.hasNext();) {
-        JavaProgramRunner runner = iterator.next();
-        ConfigurationPerRunnerSettings data = new ConfigurationPerRunnerSettings(runner.getInfo(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
+      for (JavaProgramRunner runner : template.myConfigurationPerRunnerSettings.keySet()) {
+        ConfigurationPerRunnerSettings data =
+          new ConfigurationPerRunnerSettings(runner.getInfo(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
         myConfigurationPerRunnerSettings.put(runner, data);
         Element temp = new Element(DUMMY_ELEMENT_NANE);
         template.myConfigurationPerRunnerSettings.get(runner).writeExternal(temp);
@@ -214,6 +221,10 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     catch (InvalidDataException e) {
       LOG.error(e);
     }
+  }
+
+  private RunnerSettings createRunnerSettings(final JavaProgramRunner runner) {
+    return new RunnerSettings<JDOMExternalizable>(runner.createConfigurationData(new InfoProvider(runner)), myConfiguration);
   }
 
   private class InfoProvider implements ConfigurationInfoProvider {
