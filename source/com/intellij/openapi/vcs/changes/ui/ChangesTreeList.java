@@ -40,6 +40,7 @@ public class ChangesTreeList extends JPanel {
 
   @NonNls private static final String TREE_CARD = "Tree";
   @NonNls private static final String LIST_CARD = "List";
+  @NonNls private static final String ROOT = "root";
   private CardLayout myCards;
 
   public ChangesTreeList(final Project project, Collection<Change> initiallyIncluded) {
@@ -51,7 +52,7 @@ public class ChangesTreeList extends JPanel {
     setLayout(myCards);
 
     final int checkboxWidth = new JCheckBox().getPreferredSize().width;
-    myTree = new Tree(new ChangesBrowserNode("root")) {
+    myTree = new Tree(new ChangesBrowserNode(ROOT)) {
       public Dimension getPreferredScrollableViewportSize() {
         Dimension size = super.getPreferredScrollableViewportSize();
         size = new Dimension(size.width + 10, size.height);
