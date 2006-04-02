@@ -728,7 +728,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     public void actionPerformed(AnActionEvent e) {
       ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
       assert lists != null;
-      new EditChangelistDialog(myProject, lists[0]).show();
+      new EditChangelistDialog(myProject, findRealByCopy(lists[0])).show();
     }
   }
 
