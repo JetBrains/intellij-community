@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -81,13 +82,16 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
-    PsiSearchHelper helper = myManager.getSearchHelper();
-    PsiReference[] refs = helper.findReferences(myMethod, GlobalSearchScope.projectScope(myProject), true);
-    UsageInfo[] infos = new UsageInfo[refs.length];
-    for (int i = 0; i < refs.length; i++) {
-      infos[i] = new UsageInfo(refs[i].getElement());
+    final Collection<PsiReference> refCollection = ReferencesSearch.search(myMethod).findAll();
+    Set<UsageInfo> usages = new HashSet<UsageInfo>();
+    if (myReference != null) {
+      usages.add(new UsageInfo(myReference));
     }
-    return infos;
+    for (PsiReference reference : refCollection) {
+      usages.add(new UsageInfo(reference.getElement()));
+    }
+
+    return usages.toArray(new UsageInfo[usages.size()]);
   }
 
   protected void refreshElements(PsiElement[] elements) {
