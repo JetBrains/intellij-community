@@ -39,17 +39,17 @@ public class MoveChangesToAnotherListAction extends AnAction {
 
   public static void askAndMove(final Project project, final Change[] changes) {
     final ChangeListManager listManager = ChangeListManager.getInstance(project);
-    final List<ChangeList> lists = listManager.getChangeLists();
+    final List<LocalChangeList> lists = listManager.getChangeLists();
     ChangeListChooser chooser = new ChangeListChooser(project, getPreferredLists(lists, changes, true), guessPreferredList(lists, changes));
     chooser.show();
-    ChangeList resultList = chooser.getSelectedList();
+    LocalChangeList resultList = chooser.getSelectedList();
     if (resultList != null) {
       listManager.moveChangesTo(resultList, changes);
     }
   }
 
-  private static ChangeList guessPreferredList(final List<ChangeList> lists, final Change[] changes) {
-    List<ChangeList> preferredLists = getPreferredLists(lists, changes, false);
+  private static ChangeList guessPreferredList(final List<LocalChangeList> lists, final Change[] changes) {
+    List<LocalChangeList> preferredLists = getPreferredLists(lists, changes, false);
 
     for (ChangeList preferredList : preferredLists) {
       if (preferredList.getChanges().isEmpty()) {
@@ -64,10 +64,10 @@ public class MoveChangesToAnotherListAction extends AnAction {
     return null;
   }
 
-  private static List<ChangeList> getPreferredLists(final List<ChangeList> lists,
+  private static List<LocalChangeList> getPreferredLists(final List<LocalChangeList> lists,
                                                     final Change[] changes,
                                                     final boolean includeDefaultIfEmpty) {
-    List<ChangeList> preferredLists = new ArrayList<ChangeList>(lists);
+    List<LocalChangeList> preferredLists = new ArrayList<LocalChangeList>(lists);
     Set<Change> changesAsSet = new THashSet<Change>(Arrays.asList(changes));
     for (ChangeList list : lists) {
       for (Change change : list.getChanges()) {
@@ -79,7 +79,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
     }
 
     if (preferredLists.isEmpty() && includeDefaultIfEmpty) {
-      for (ChangeList list : lists) {
+      for (LocalChangeList list : lists) {
         if (list.isDefault()) {
           preferredLists.add(list);
         }

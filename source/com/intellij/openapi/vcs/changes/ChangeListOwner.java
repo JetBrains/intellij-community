@@ -4,5 +4,5 @@ package com.intellij.openapi.vcs.changes;
  * @author max
  */
 public interface ChangeListOwner {
-  void moveChangesTo(ChangeList list, Change[] changes);
+  void moveChangesTo(LocalChangeList list, Change[] changes);
 }

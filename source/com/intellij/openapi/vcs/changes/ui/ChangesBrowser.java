@@ -30,7 +30,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private ChangesTreeList myViewer;
   private ChangeList mySelectedChangeList;
   private Collection<Change> myAllChanges;
-  private final Map<Change, ChangeList> myChangeListsMap = new HashMap<Change, ChangeList>();
+  private final Map<Change, LocalChangeList> myChangeListsMap = new HashMap<Change, LocalChangeList>();
   private Project myProject;
   private EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
 
@@ -48,7 +48,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
 
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
-  public ChangesBrowser(final Project project, List<ChangeList> changeLists, final List<Change> changes) {
+  public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes) {
     super(new BorderLayout());
 
     myProject = project;
@@ -57,7 +57,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     ChangeList initalListSelection = null;
     for (ChangeList list : changeLists) {
       myAllChanges.addAll(list.getChanges());
-      if (list.isDefault()) {
+      if (list instanceof LocalChangeList && ((LocalChangeList)list).isDefault()) {
         initalListSelection = list;
       }
     }
@@ -180,12 +180,12 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   }
 
   private class ChangeListChooser extends JPanel {
-    public ChangeListChooser(List<ChangeList> lists) {
+    public ChangeListChooser(List<? extends ChangeList> lists) {
       super(new BorderLayout());
       final JComboBox chooser = new JComboBox(lists.toArray());
       chooser.setRenderer(new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          final ChangeList l = ((ChangeList)value);
+          final LocalChangeList l = ((LocalChangeList)value);
           append(l.getName(),
                  l.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
@@ -194,7 +194,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       chooser.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
           if (e.getStateChange() == ItemEvent.SELECTED) {
-            setSelectedList((ChangeList)chooser.getSelectedItem());
+            setSelectedList((LocalChangeList)chooser.getSelectedItem());
           }
         }
       });

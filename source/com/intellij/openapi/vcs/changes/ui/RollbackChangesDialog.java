@@ -34,19 +34,19 @@ public class RollbackChangesDialog extends DialogWrapper {
       return;
     }
 
-    Set<ChangeList> lists = new THashSet<ChangeList>();
+    Set<LocalChangeList> lists = new THashSet<LocalChangeList>();
     for (Change change : changes) {
       lists.add(manager.getChangeList(change));
     }
 
-    rollback(project, new ArrayList<ChangeList>(lists), new ArrayList<Change>(changes));
+    rollback(project, new ArrayList<LocalChangeList>(lists), new ArrayList<Change>(changes));
   }
 
-  public static void rollback(final Project project, final List<ChangeList> changeLists, final List<Change> changes) {
+  public static void rollback(final Project project, final List<LocalChangeList> changeLists, final List<Change> changes) {
     new RollbackChangesDialog(project, changeLists, changes).show();
   }
 
-  public RollbackChangesDialog(final Project project, List<ChangeList> changeLists, final List<Change> changes) {
+  public RollbackChangesDialog(final Project project, List<LocalChangeList> changeLists, final List<Change> changes) {
     super(project, true);
 
     myProject = project;

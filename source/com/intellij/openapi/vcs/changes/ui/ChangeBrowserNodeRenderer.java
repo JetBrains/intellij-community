@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -40,12 +41,19 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
     ChangesBrowserNode node = (ChangesBrowserNode)value;
     Object object = node.getUserObject();
     if (object instanceof ChangeList) {
-      final ChangeList list = ((ChangeList)object);
-      append(list.getName(),
-             list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-      appendCount(node);
-      if (list.isInUpdate()) {
-        append(" " + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      if (object instanceof LocalChangeList) {
+        final LocalChangeList list = ((LocalChangeList)object);
+        append(list.getName(),
+               list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        appendCount(node);
+        if (list.isInUpdate()) {
+          append(" " + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+      }
+      else {
+        final ChangeList list = ((ChangeList)object);
+        append(list.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        appendCount(node);
       }
     }
     else if (object instanceof Change) {

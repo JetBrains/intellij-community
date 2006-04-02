@@ -95,7 +95,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     DefaultComboBoxModel model = new DefaultComboBoxModel();
     model.addElement(ALL);
-    final List<ChangeList> changeLists = changeListManager.getChangeLists();
+    final List<? extends ChangeList> changeLists = changeListManager.getChangeLists();
     for (ChangeList changeList : changeLists) {
       model.addElement(changeList.getName());
     }

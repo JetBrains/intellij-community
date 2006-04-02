@@ -53,10 +53,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private Project myProject;
   private final CommitSession mySession;
   private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private ChangeList myLastSelectedList = null;
+  private LocalChangeList myLastSelectedList = null;
   private String myLastKnownComment = "";
 
-  private static void commit(Project project, List<ChangeList> list, final List<Change> changes, final CommitExecutor executor) {
+  private static void commit(Project project, List<LocalChangeList> list, final List<Change> changes, final CommitExecutor executor) {
     new CommitChangeListDialog(project, list, changes, executor).show();
   }
 
@@ -79,12 +79,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       return;
     }
 
-    Set<ChangeList> lists = new THashSet<ChangeList>();
+    Set<LocalChangeList> lists = new THashSet<LocalChangeList>();
     for (Change change : changes) {
       lists.add(manager.getChangeList(change));
     }
 
-    commit(project, new ArrayList<ChangeList>(lists), new ArrayList<Change>(changes), executor);
+    commit(project, new ArrayList<LocalChangeList>(lists), new ArrayList<Change>(changes), executor);
   }
 
   public static void commitChanges(final Project project, final Collection<Change> changes) {
@@ -92,7 +92,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private CommitChangeListDialog(final Project project,
-                                 List<ChangeList> changeLists,
+                                 List<LocalChangeList> changeLists,
                                  final List<Change> changes,
                                  final CommitExecutor executor) {
     super(project, true);
@@ -215,7 +215,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myLastSelectedList.setComment(currentComment);
     }
 
-    final ChangeList list = myBrowser.getSelectedChangeList();
+    final LocalChangeList list = (LocalChangeList)myBrowser.getSelectedChangeList();
     final String listComment = list.getComment();
     if (!StringUtil.isEmptyOrSpaces(listComment)) {
       myCommitMessageArea.setText(listComment);
@@ -389,7 +389,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
 
       final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-      final ChangeList failedList =
+      final LocalChangeList failedList =
         changeListManager.addChangeList(VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()));
 
       failedList.setComment(commitMessage);

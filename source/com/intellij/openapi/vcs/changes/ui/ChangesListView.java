@@ -106,12 +106,6 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     }
   }
 
-  private void reload() {
-    storeState();
-    getModel().reload();
-    restoreState();
-  }
-
   private void storeState() {
     myTreeState = TreeState.createOn(this, (ChangesBrowserNode)getModel().getRoot());
   }
@@ -128,7 +122,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     myShowFlatten = showFlatten;
   }
 
-  public void updateModel(List<ChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<File> locallyDeletedFiles) {
+  public void updateModel(List<LocalChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<File> locallyDeletedFiles) {
     storeState();
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
@@ -275,7 +269,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
   @NotNull
   private ChangeList[] getSelectedChangeLists() {
-    Set<ChangeList> lists = new HashSet<ChangeList>();
+    Set<LocalChangeList> lists = new HashSet<LocalChangeList>();
 
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return new ChangeList[0];
@@ -284,11 +278,11 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
       final Object userObject = node.getUserObject();
       if (userObject instanceof ChangeList) {
-        lists.add((ChangeList)userObject);
+        lists.add((LocalChangeList)userObject);
       }
     }
 
-    return lists.toArray(new ChangeList[lists.size()]);
+    return lists.toArray(new LocalChangeList[lists.size()]);
   }
 
   public void setMenuActions(final ActionGroup menuGroup) {
@@ -404,7 +398,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   private static class ChangeListDragBean {
     private ChangesListView myView;
     private Change[] myChanges;
-    private ChangeList myDropList = null;
+    private LocalChangeList myDropList = null;
 
 
     public ChangeListDragBean(final ChangesListView view, final Change[] changes) {
@@ -420,12 +414,12 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       return myChanges;
     }
 
-    public void setTargetList(final ChangeList dropList) {
+    public void setTargetList(final LocalChangeList dropList) {
       myDropList = dropList;
     }
 
 
-    public ChangeList getDropList() {
+    public LocalChangeList getDropList() {
       return myDropList;
     }
   }
@@ -457,7 +451,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       }
       while (true);
 
-      ChangeList dropList = (ChangeList)object;
+      LocalChangeList dropList = (LocalChangeList)object;
       final Change[] changes = dragBean.getChanges();
       for (Change change : dropList.getChanges()) {
         for (Change incomingChange : changes) {
@@ -480,7 +474,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       if (!(attached instanceof ChangeListDragBean)) return;
 
       final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-      final ChangeList dropList = dragBean.getDropList();
+      final LocalChangeList dropList = dragBean.getDropList();
       if (dropList != null) {
         myDragOwner.moveChangesTo(dropList, dragBean.getChanges());
       }

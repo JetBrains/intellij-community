@@ -23,17 +23,17 @@ public abstract class ChangeListManager {
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
 
   @NotNull
-  public abstract List<ChangeList> getChangeLists();
+  public abstract List<LocalChangeList> getChangeLists();
 
   public abstract List<File> getAffectedPaths();
   @NotNull
   public abstract List<VirtualFile> getAffectedFiles();
   public abstract boolean isFileAffected(final VirtualFile file);
 
-  public abstract ChangeList addChangeList(@NotNull String name);
-  public abstract void setDefaultChangeList(@NotNull ChangeList list);
+  public abstract LocalChangeList addChangeList(@NotNull String name);
+  public abstract void setDefaultChangeList(@NotNull LocalChangeList list);
 
-  public abstract ChangeList getChangeList(Change change);
+  public abstract LocalChangeList getChangeList(Change change);
 
   @Nullable
   public abstract Change getChange(VirtualFile file);
@@ -47,9 +47,9 @@ public abstract class ChangeListManager {
   @NotNull
   public abstract Collection<Change> getChangesIn(FilePath path);
 
-  public abstract void removeChangeList(final ChangeList list);
+  public abstract void removeChangeList(final LocalChangeList list);
 
-  public abstract void moveChangesTo(final ChangeList list, final Change[] changes);
+  public abstract void moveChangesTo(final LocalChangeList list, final Change[] changes);
 
   public abstract void addChangeListListner(ChangeListListener listener);
   public abstract void removeChangeListListner(ChangeListListener listener);

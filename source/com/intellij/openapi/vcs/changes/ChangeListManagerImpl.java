@@ -62,10 +62,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private UnversionedFilesHolder myUnversionedFilesHolder;
   private DeletedFilesHolder myDeletedFilesHolder = new DeletedFilesHolder();
-  private final List<ChangeList> myChangeLists = new ArrayList<ChangeList>();
+  private final List<LocalChangeList> myChangeLists = new ArrayList<LocalChangeList>();
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private ChangeList myDefaultChangelist;
+  private LocalChangeList myDefaultChangelist;
 
   private ChangesListView myView;
   private JLabel myProgressLabel;
@@ -111,7 +111,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private void createDefaultChangelistIfNecessary() {
     if (myChangeLists.isEmpty()) {
-      final ChangeList list = ChangeList.createEmptyChangeList(VcsBundle.message("changes.default.changlist.name"));
+      final LocalChangeList list = LocalChangeList.createEmptyChangeList(VcsBundle.message("changes.default.changlist.name"));
       myChangeLists.add(list);
       setDefaultChangeList(list);
     }
@@ -331,7 +331,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 synchronized (myChangeLists) {
-                  for (ChangeList list : getChangeLists()) {
+                  for (LocalChangeList list : getChangeLists()) {
                     if (myDisposed) return;
                     list.startProcessingChanges(scope);
                   }
@@ -359,7 +359,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                           if (isUnder(change, scope)) {
                             try {
                               synchronized (myChangeLists) {
-                                for (ChangeList list : myChangeLists) {
+                                for (LocalChangeList list : myChangeLists) {
                                   if (list == myDefaultChangelist) continue;
                                   if (list.processChange(change)) return;
                                 }
@@ -403,7 +403,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
             finally {
               if (!myDisposed) {
                 synchronized (myChangeLists) {
-                  for (ChangeList list : myChangeLists) {
+                  for (LocalChangeList list : myChangeLists) {
                     if (list.doneProcessingChanges()) {
                       myListeners.getMulticaster().changeListChanged(list);
                     }
@@ -457,10 +457,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                        new ArrayList<File>(myDeletedFilesHolder.getFiles()));
   }
 
-  private List<ChangeList> getChangeListsCopy() {
+  private List<LocalChangeList> getChangeListsCopy() {
     synchronized (myChangeLists) {
-      List<ChangeList> copy = new ArrayList<ChangeList>(myChangeLists.size());
-      for (ChangeList list : myChangeLists) {
+      List<LocalChangeList> copy = new ArrayList<LocalChangeList>(myChangeLists.size());
+      for (LocalChangeList list : myChangeLists) {
         copy.add(list.clone());
       }
       return copy;
@@ -468,7 +468,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   @NotNull
-  public List<ChangeList> getChangeLists() {
+  public List<LocalChangeList> getChangeLists() {
     synchronized (myChangeLists) {
       return myChangeLists;
     }
@@ -534,9 +534,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return myUnversionedFilesHolder.containsFile(file);
   }
 
-  public ChangeList addChangeList(String name) {
+  public LocalChangeList addChangeList(String name) {
     synchronized (myChangeLists) {
-      final ChangeList list = ChangeList.createEmptyChangeList(name);
+      final LocalChangeList list = LocalChangeList.createEmptyChangeList(name);
       myChangeLists.add(list);
       myListeners.getMulticaster().changeListAdded(list);
       scheduleRefresh();
@@ -544,7 +544,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  public void removeChangeList(ChangeList list) {
+  public void removeChangeList(LocalChangeList list) {
     synchronized (myChangeLists) {
       if (list.isDefault()) throw new RuntimeException(new IncorrectOperationException("Cannot remove default changelist"));
 
@@ -559,17 +559,17 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  private void addChangeToList(final Change change, final ChangeList list) {
+  private void addChangeToList(final Change change, final LocalChangeList list) {
     list.addChange(change);
     myListeners.getMulticaster().changeListChanged(list);
   }
 
-  private void removeChangeFromList(final Change change, final ChangeList list) {
+  private void removeChangeFromList(final Change change, final LocalChangeList list) {
     list.removeChange(change);
     myListeners.getMulticaster().changeListChanged(list);
   }
 
-  public void setDefaultChangeList(ChangeList list) {
+  public void setDefaultChangeList(LocalChangeList list) {
     synchronized (myChangeLists) {
       if (myDefaultChangelist != null) myDefaultChangelist.setDefault(false);
       list = findRealByCopy(list);
@@ -580,8 +580,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  private ChangeList findRealByCopy(ChangeList list) {
-    for (ChangeList changeList : myChangeLists) {
+  private LocalChangeList findRealByCopy(LocalChangeList list) {
+    for (LocalChangeList changeList : myChangeLists) {
       if (changeList.equals(list)) {
         return changeList;
       }
@@ -589,9 +589,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return list;
   }
 
-  public ChangeList getChangeList(Change change) {
+  public LocalChangeList getChangeList(Change change) {
     synchronized (myChangeLists) {
-      for (ChangeList list : myChangeLists) {
+      for (LocalChangeList list : myChangeLists) {
         if (list.getChanges().contains(change)) return list;
       }
       return null;
@@ -693,7 +693,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           name = getUniqueName();
         }
 
-        final ChangeList list = addChangeList(name);
+        final LocalChangeList list = addChangeList(name);
         list.setComment(dlg.getDescirption());
       }
     }
@@ -726,7 +726,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
 
     public void actionPerformed(AnActionEvent e) {
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      LocalChangeList[] lists = (LocalChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
       assert lists != null;
       new EditChangelistDialog(myProject, findRealByCopy(lists[0])).show();
     }
@@ -740,12 +740,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
 
     public void update(AnActionEvent e) {
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      LocalChangeList[] lists = (LocalChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
       e.getPresentation().setEnabled(lists != null && lists.length == 1 && !lists[0].isDefault());
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final ChangeList[] lists = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
+      final LocalChangeList[] lists = ((LocalChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
       assert lists != null;
       setDefaultChangeList(lists[0]);
     }
@@ -908,15 +908,15 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     public void update(AnActionEvent e) {
       Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      LocalChangeList[] lists = (LocalChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
       e.getPresentation().setEnabled(project != null && lists != null && lists.length == 1 && !lists[0].isDefault());
     }
 
     public void actionPerformed(AnActionEvent e) {
       Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-      final ChangeList[] lists = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
+      final LocalChangeList[] lists = ((LocalChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
       assert lists != null;
-      final ChangeList list = lists[0];
+      final LocalChangeList list = lists[0];
       int rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
                Messages.showYesNoDialog(project,
                                         VcsBundle.message("changes.removechangelist.warning.text", list.getName()),
@@ -929,9 +929,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  public void moveChangesTo(final ChangeList list, final Change[] changes) {
+  public void moveChangesTo(final LocalChangeList list, final Change[] changes) {
     synchronized (myChangeLists) {
-      for (ChangeList existingList : getChangeLists()) {
+      for (LocalChangeList existingList : getChangeLists()) {
         for (Change change : changes) {
           removeChangeFromList(change, existingList);
         }
@@ -964,7 +964,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     final List<Element> listNodes = (List<Element>)element.getChildren(NODE_LIST);
     for (Element listNode : listNodes) {
-      ChangeList list = addChangeList(listNode.getAttributeValue(ATT_NAME));
+      LocalChangeList list = addChangeList(listNode.getAttributeValue(ATT_NAME));
       list.setComment(listNode.getAttributeValue(ATT_COMMENT));
       final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
       for (Element changeNode : changeNodes) {
@@ -990,7 +990,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     element.setAttribute(ATT_FLATTENED_VIEW, String.valueOf(SHOW_FLATTEN_MODE));
 
     synchronized (myChangeLists) {
-      for (ChangeList list : myChangeLists) {
+      for (LocalChangeList list : myChangeLists) {
         Element listNode = new Element(NODE_LIST);
         element.addContent(listNode);
         if (list.isDefault()) {

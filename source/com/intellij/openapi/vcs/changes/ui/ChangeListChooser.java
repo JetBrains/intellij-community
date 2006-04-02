@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -25,13 +26,13 @@ public class ChangeListChooser extends DialogWrapper {
   private JRadioButton myRbNew;
   private JComboBox myExisitingsCombo;
   private EditChangelistPanel myNewListPanel;
-  private final Collection<ChangeList> myExistingLists;
+  private final Collection<? extends ChangeList> myExistingLists;
   private Project myProject;
-  private ChangeList mySelectedList;
+  private LocalChangeList mySelectedList;
 
 
   public ChangeListChooser(@NotNull Project project,
-                           @NotNull Collection<ChangeList> changelists,
+                           @NotNull Collection<? extends ChangeList> changelists,
                            @Nullable ChangeList defaultSelection) {
     super(project, false);
     myExistingLists = changelists;
@@ -111,7 +112,7 @@ public class ChangeListChooser extends DialogWrapper {
     }
 
     if (myRbExisting.isSelected()) {
-      mySelectedList = (ChangeList)myExisitingsCombo.getSelectedItem();
+      mySelectedList = (LocalChangeList)myExisitingsCombo.getSelectedItem();
     }
     else {
       mySelectedList = ChangeListManager.getInstance(myProject).addChangeList(myNewListPanel.getName());
@@ -121,7 +122,7 @@ public class ChangeListChooser extends DialogWrapper {
     super.doOKAction();
   }
 
-  public ChangeList getSelectedList() {
+  public LocalChangeList getSelectedList() {
     return mySelectedList;
   }
 

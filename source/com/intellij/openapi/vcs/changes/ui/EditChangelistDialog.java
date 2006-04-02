@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 
 import javax.swing.*;
 
@@ -12,9 +12,9 @@ import javax.swing.*;
  */
 public class EditChangelistDialog extends DialogWrapper {
   private EditChangelistPanel myPanel;
-  private final ChangeList myList;
+  private final LocalChangeList myList;
 
-  public EditChangelistDialog(Project project, ChangeList list) {
+  public EditChangelistDialog(Project project, LocalChangeList list) {
     super(project, true);
     myList = list;
     myPanel = new EditChangelistPanel();
