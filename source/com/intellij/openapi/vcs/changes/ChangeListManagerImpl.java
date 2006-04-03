@@ -327,7 +327,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
           final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
           for (final VcsDirtyScope scope : scopes) {
-            updateProgressText(VcsBundle.message("changes.update.progress.message", scope.getScopeRoot().getPresentableUrl()));
+            final AbstractVcs vcs = scope.getVcs();
+            if (vcs == null) continue;
+            
+            updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()));
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 synchronized (myChangeLists) {
@@ -346,58 +349,55 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
             deletedHolder.cleanScope(scope);
 
             try {
-              final AbstractVcs vcs = myVcsManager.getVcsFor(scope.getScopeRoot());
-              if (vcs != null) {
-                final ChangeProvider changeProvider = vcs.getChangeProvider();
-                if (changeProvider != null) {
-                  changeProvider.getChanges(scope, new ChangelistBuilder() {
-                    public void processChange(final Change change) {
-                      if (myDisposed) throw new DisposedException();
+              final ChangeProvider changeProvider = vcs.getChangeProvider();
+              if (changeProvider != null) {
+                changeProvider.getChanges(scope, new ChangelistBuilder() {
+                  public void processChange(final Change change) {
+                    if (myDisposed) throw new DisposedException();
 
-                      ApplicationManager.getApplication().runReadAction(new Runnable() {
-                        public void run() {
-                          if (isUnder(change, scope)) {
-                            try {
-                              synchronized (myChangeLists) {
-                                for (LocalChangeList list : myChangeLists) {
-                                  if (list == myDefaultChangelist) continue;
-                                  if (list.processChange(change)) return;
-                                }
-
-                                myDefaultChangelist.processChange(change);
+                    ApplicationManager.getApplication().runReadAction(new Runnable() {
+                      public void run() {
+                        if (isUnder(change, scope)) {
+                          try {
+                            synchronized (myChangeLists) {
+                              for (LocalChangeList list : myChangeLists) {
+                                if (list == myDefaultChangelist) continue;
+                                if (list.processChange(change)) return;
                               }
-                            }
-                            finally {
-                              scheduleRefresh();
+
+                              myDefaultChangelist.processChange(change);
                             }
                           }
+                          finally {
+                            scheduleRefresh();
+                          }
                         }
-                      });
-                    }
-
-                    public void processUnversionedFile(VirtualFile file) {
-                      if (myDisposed) throw new DisposedException();
-                      if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-                        unversionedHolder.addFile(file);
-                        scheduleRefresh();
                       }
-                    }
+                    });
+                  }
 
-                    public void processLocallyDeletedFile(File file) {
-                      if (myDisposed) throw new DisposedException();
-                      if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-                        deletedHolder.addFile(file);
-                        scheduleRefresh();
-                      }
+                  public void processUnversionedFile(VirtualFile file) {
+                    if (myDisposed) throw new DisposedException();
+                    if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                      unversionedHolder.addFile(file);
+                      scheduleRefresh();
                     }
+                  }
+
+                  public void processLocallyDeletedFile(File file) {
+                    if (myDisposed) throw new DisposedException();
+                    if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                      deletedHolder.addFile(file);
+                      scheduleRefresh();
+                    }
+                  }
 
 
-                    public void processModifiedWithoutEditing(VirtualFile file) {
-                      if (myDisposed) throw new DisposedException();
-                      //TODO:
-                    }
-                  }, null); // TODO: make real indicator
-                }
+                  public void processModifiedWithoutEditing(VirtualFile file) {
+                    if (myDisposed) throw new DisposedException();
+                    //TODO:
+                  }
+                }, null); // TODO: make real indicator
               }
             }
             finally {

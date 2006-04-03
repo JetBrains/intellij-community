@@ -10,15 +10,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
 
 /**
  * author: lesya
@@ -27,6 +28,8 @@ public class CvsStatusProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider");
 
   private static long TIME_STAMP_EPSILON = 3000;
+
+  private CvsStatusProvider() {}
 
   public static void changeTimeStampEpsilonTo(long epsilon) {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
@@ -119,13 +122,12 @@ public class CvsStatusProvider {
   }
 
   private static boolean isInContent(VirtualFile file, Module module) {
-    if (file == null) return true;
-    if (FileTypeManager.getInstance().isFileIgnored(file.getName())) {
-      return false;
-    }
-    else {
-      return ModuleRootManager.getInstance(module).getFileIndex().isInContent(file);
-    }
+    return file == null || !FileTypeManager.getInstance().isFileIgnored(file.getName()) &&
+                           ModuleRootManager.getInstance(module).getFileIndex().isInContent(file);
+  }
+
+  public static DirectoryContent getDirectoryContent(VirtualFile directory, Project project) {
+    return getDirectoryContent(directory, VfsUtil.getModuleForFile(project, directory));
   }
 
   public static DirectoryContent getDirectoryContent(VirtualFile directory, Module module) {
@@ -135,16 +137,14 @@ public class CvsStatusProvider {
     VirtualFile[] children = CvsVfsUtil.getChildrenOf(directory);
     if (children == null) children = VirtualFile.EMPTY_ARRAY;
 
-    Collection entries = cvsInfo.getEntries();
+    Collection<Entry> entries = cvsInfo.getEntries();
 
     HashMap<String, VirtualFile> nameToFileMap = new HashMap<String, VirtualFile>();
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
+    for (VirtualFile child : children) {
       nameToFileMap.put(child.getName(), child);
     }
 
-    for (Iterator each = entries.iterator(); each.hasNext();) {
-      Entry entry = (Entry)each.next();
+    for (final Entry entry : entries) {
       String fileName = entry.getFileName();
       if (entry.isDirectory()) {
         if (nameToFileMap.containsKey(fileName)) {
@@ -168,8 +168,7 @@ public class CvsStatusProvider {
       nameToFileMap.remove(fileName);
     }
 
-    for (Iterator iterator = nameToFileMap.keySet().iterator(); iterator.hasNext();) {
-      String name = (String)iterator.next();
+    for (final String name : nameToFileMap.keySet()) {
       VirtualFile unknown = nameToFileMap.get(name);
       if (unknown.isDirectory()) {
         if (isInContent(unknown, module)) {

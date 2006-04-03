@@ -6,7 +6,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NonNls;
@@ -22,19 +24,24 @@ import java.util.Map;
  */
 public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements ProjectComponent {
   private final ProjectFileIndex myIndex;
-  private final Map<VirtualFile, VcsDirtyScope> myScopes = new HashMap<VirtualFile, VcsDirtyScope>();
+  private final Map<AbstractVcs, VcsDirtyScope> myScopes = new HashMap<AbstractVcs, VcsDirtyScope>();
   private final VcsDirtyScopeManagerImpl.MyVfsListener myVfsListener;
   private final Project myProject;
   private final ProjectRootManager myRootManager;
   private final ChangeListManager myChangeListManager;
+  private final ProjectLevelVcsManager myVcsManager;
   private boolean myIsDisposed = false;
   private boolean myIsInitialized = false;
   private ModuleRootListener myRootModelListener;
 
-  public VcsDirtyScopeManagerImpl(Project project, ProjectRootManager rootManager, ChangeListManager changeListManager) {
+  public VcsDirtyScopeManagerImpl(Project project,
+                                  ProjectRootManager rootManager,
+                                  ChangeListManager changeListManager,
+                                  ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myRootManager = rootManager;
     myChangeListManager = changeListManager;
+    myVcsManager = vcsManager;
     myIndex = rootManager.getFileIndex();
     myVfsListener = new MyVfsListener();
   }
@@ -118,10 +125,11 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   @NotNull
   private VcsDirtyScope getScope(final VirtualFile root) {
     synchronized (myScopes) {
-      VcsDirtyScope scope = myScopes.get(root);
+      final AbstractVcs vcs = myVcsManager.getVcsFor(root);
+      VcsDirtyScope scope = myScopes.get(vcs);
       if (scope == null) {
-        scope = new VcsDirtyScope(root, myProject);
-        myScopes.put(root, scope);
+        scope = new VcsDirtyScope(vcs, myProject);
+        myScopes.put(vcs, scope);
       }
       return scope;
     }

@@ -20,6 +20,9 @@ public class FilePathHashingStrategy implements TObjectHashingStrategy<String> {
   }
 
   private static char normalizeChar(final char cc) {
+    if (cc >= 'a' && cc <= 'z' || cc == '.' || cc == '/') return cc; // optimization
+    if (cc >= 'A' && cc <= 'Z') return (char)(cc - 'A' + 'a');
+
     char c = SystemInfo.isFileSystemCaseSensitive ? cc : Character.toLowerCase(cc);
     return c == File.separatorChar ? '/' : c;
   }

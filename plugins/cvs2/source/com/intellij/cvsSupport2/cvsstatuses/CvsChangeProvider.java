@@ -135,7 +135,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private void processEntriesIn(VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively) {
     if (!scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir))) return;
-    final DirectoryContent dirContent = CvsStatusProvider.getDirectoryContent(dir, scope.getScopeModule());
+    final DirectoryContent dirContent = CvsStatusProvider.getDirectoryContent(dir, myVcs.getProject());
 
     for (VirtualFile file : dirContent.getUnknownFiles()) {
       builder.processUnversionedFile(file);

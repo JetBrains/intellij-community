@@ -3,14 +3,17 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import gnu.trove.THashSet;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -18,19 +21,22 @@ import java.util.Set;
  * @author max
  */
 public class VcsDirtyScope {
-  private final VirtualFile myScopeRoot;
   private final Set<FilePath> myDirtyFiles = new THashSet<FilePath>();
   private final Set<FilePath> myDirtyDirectoriesRecursively = new THashSet<FilePath>();
+  private final Set<VirtualFile> myAffectedContentRoots = new THashSet<VirtualFile>();
   private final ProjectFileIndex myIndex;
   private Project myProject;
+  private AbstractVcs myVcs;
 
-  public VcsDirtyScope(final VirtualFile root, final Project project) {
+  public VcsDirtyScope(final AbstractVcs vcs, final Project project) {
     myProject = project;
-    myScopeRoot = root;
+    myVcs = vcs;
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
   public void addDirtyDirRecursively(FilePath newcomer) {
+    myAffectedContentRoots.add(getRootFor(myIndex, newcomer));
+
     for (FilePath oldBoy : myDirtyDirectoriesRecursively) {
       if (newcomer.isUnder(oldBoy, false)) {
         return;
@@ -46,6 +52,8 @@ public class VcsDirtyScope {
   }
 
   public void addDirtyFile(FilePath newcomer) {
+    myAffectedContentRoots.add(getRootFor(myIndex, newcomer));
+
     for (FilePath oldBoy : myDirtyDirectoriesRecursively) {
       if (newcomer.isUnder(oldBoy, false)) {
         return;
@@ -71,13 +79,12 @@ public class VcsDirtyScope {
     myDirtyFiles.add(newcomer);
   }
 
-  public VirtualFile getScopeRoot() {
-    return myScopeRoot;
+  public Collection<VirtualFile> getAffectedContentRoots() {
+    return myAffectedContentRoots;
   }
 
-  public Module getScopeModule() {
-    if (myProject.isDisposed()) return null;
-    return myIndex.getModuleForFile(myScopeRoot);
+  public AbstractVcs getVcs() {
+    return myVcs;
   }
 
   public Set<FilePath> getDirtyFiles() {
@@ -90,13 +97,21 @@ public class VcsDirtyScope {
 
   public void iterate(ContentIterator iterator) {
     if (myProject.isDisposed()) return;
-    final Module module = myIndex.getModuleForFile(myScopeRoot);
-    final ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
 
-    for (FilePath dir : myDirtyDirectoriesRecursively) {
-      final VirtualFile vFile = dir.getVirtualFile();
-      if (vFile != null && vFile.isValid()) {
-        index.iterateContentUnderDirectory(vFile, iterator);
+    for (VirtualFile root : myAffectedContentRoots) {
+      final Module module = VfsUtil.getModuleForFile(myProject, root);
+      final ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
+
+      for (FilePath dir : myDirtyDirectoriesRecursively) {
+        final VirtualFile vFile = dir.getVirtualFile();
+        if (vFile != null && vFile.isValid()) {
+          if (VfsUtil.isAncestor(root, vFile, false)) {
+            index.iterateContentUnderDirectory(vFile, iterator);
+          }
+          else if (VfsUtil.isAncestor(vFile, root, false)) {
+            index.iterateContentUnderDirectory(root, iterator);
+          }
+        }
       }
     }
 
@@ -115,7 +130,7 @@ public class VcsDirtyScope {
 
   public boolean belongsTo(FilePath path) {
     if (myProject.isDisposed()) return false;
-    if (getRootFor(myIndex, path) != myScopeRoot) return false;
+    if (!myAffectedContentRoots.contains(getRootFor(myIndex, path))) return false;
 
     for (FilePath filePath : myDirtyDirectoriesRecursively) {
       if (path.isUnder(filePath, false)) return true;
