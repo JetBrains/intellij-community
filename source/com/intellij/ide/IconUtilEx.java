@@ -14,9 +14,9 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
-import com.intellij.javaee.model.common.EnterpriseBean;
-import com.intellij.javaee.model.common.CmpField;
-import com.intellij.javaee.model.common.CmrField;
+import com.intellij.javaee.model.common.ejb.EnterpriseBean;
+import com.intellij.javaee.model.common.ejb.CmpField;
+import com.intellij.javaee.model.common.ejb.CmrField;
 
 import javax.swing.*;
 

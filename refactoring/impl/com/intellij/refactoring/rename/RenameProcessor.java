@@ -2,7 +2,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.javaee.ejb.role.EjbDeclMethodRole;
 import com.intellij.javaee.ejb.role.EjbMethodRole;
-import com.intellij.javaee.model.common.EjbPsiMethodUtil;
+import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;

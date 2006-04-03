@@ -25,9 +25,9 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.javaee.model.common.CmpField;
-import com.intellij.javaee.model.common.CmrField;
-import com.intellij.javaee.model.common.EntityBean;
+import com.intellij.javaee.model.common.ejb.EntityBean;
+import com.intellij.javaee.model.common.ejb.CmpField;
+import com.intellij.javaee.model.common.ejb.CmrField;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;

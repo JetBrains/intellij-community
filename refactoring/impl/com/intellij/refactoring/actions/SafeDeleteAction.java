@@ -7,8 +7,8 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.lang.Language;
-import com.intellij.javaee.model.common.CmrField;
-import com.intellij.javaee.model.common.CmpField;
+import com.intellij.javaee.model.common.ejb.CmrField;
+import com.intellij.javaee.model.common.ejb.CmpField;
 import com.intellij.javaee.model.common.JavaeeCommonConstants;
 
 public class SafeDeleteAction extends BaseRefactoringAction {

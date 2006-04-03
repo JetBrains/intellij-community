@@ -36,7 +36,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.javaee.ejb.role.*;
-import com.intellij.javaee.model.common.EjbPsiMethodUtil;
+import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

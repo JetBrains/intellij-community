@@ -8,7 +8,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.javaee.model.common.CmpField;
+import com.intellij.javaee.model.common.ejb.CmpField;
 
 public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
