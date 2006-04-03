@@ -93,6 +93,8 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
           fullElementsSet.add(element);
         }
       }
+    } else {
+      fullElementsSet.addAll(Arrays.asList(temptoDelete));
     }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet)) return;
