@@ -16,7 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -87,7 +86,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
 
     final RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
     if (
-      !GuiEditorUtil.isBindingUnique(component, value, root)
+      !FormEditingUtil.isBindingUnique(component, value, root)
     ) {
       //noinspection HardCodedStringLiteral
       throw new Exception("binding is not unique");

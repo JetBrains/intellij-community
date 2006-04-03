@@ -248,7 +248,7 @@ public final class InsertComponentProcessor extends EventProcessor {
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
             location.processDrop(myEditor, components, null, item);
 
-            GuiEditorUtil.selectSingleComponent(myInsertedComponent);
+            FormEditingUtil.selectSingleComponent(myInsertedComponent);
 
             if (location.getContainer() != null && location.getContainer().isXY()) {
               Dimension newSize = myInsertedComponent.getPreferredSize();
@@ -260,7 +260,7 @@ public final class InsertComponentProcessor extends EventProcessor {
                 myInsertedComponent.getParent() instanceof RadRootContainer &&
                 myInsertedComponent instanceof RadAtomicComponent) {
               GridBuildUtil.convertToGrid(myEditor);
-              GuiEditorUtil.selectSingleComponent(myInsertedComponent);
+              FormEditingUtil.selectSingleComponent(myInsertedComponent);
             }
 
             checkBindTopLevelPanel();
@@ -284,7 +284,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     PsiFile boundForm = item.getBoundForm();
     if (boundForm != null) {
       try {
-        Utils.validateNestedFormLoop(GuiEditorUtil.buildResourceName(boundForm), new PsiNestedFormLoader(myEditor.getModule()));
+        Utils.validateNestedFormLoop(FormEditingUtil.buildResourceName(boundForm), new PsiNestedFormLoader(myEditor.getModule()));
       }
       catch(CodeGenerationException ex) {
         Messages.showErrorDialog(myEditor, ex.getMessage(), CommonBundle.getErrorTitle());
@@ -337,7 +337,7 @@ public final class InsertComponentProcessor extends EventProcessor {
         PsiFile boundForm = item.getBoundForm();
         if (boundForm != null) {
           try {
-            result = new RadNestedForm(editor.getModule(), GuiEditorUtil.buildResourceName(boundForm), id);
+            result = new RadNestedForm(editor.getModule(), FormEditingUtil.buildResourceName(boundForm), id);
           }
           catch(Exception ex) {
             result = RadErrorComponent.create(

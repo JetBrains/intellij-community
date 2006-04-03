@@ -7,8 +7,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -19,9 +21,12 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.editor.UIFormEditor;
+import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -505,6 +510,136 @@ public final class FormEditingUtil {
       final String id = Integer.toString((int)(Math.random() * 1024 * 1024), 16);
       if (!idAlreadyExist(id, rootContainer)) {
         return id;
+      }
+    }
+  }
+
+  /**
+   * @return {@link com.intellij.uiDesigner.designSurface.GuiEditor} from the context. Can be <code>null</code>.
+   */
+  @Nullable
+  public static GuiEditor getEditorFromContext(@NotNull final DataContext context){
+    final FileEditor editor = (FileEditor)context.getData(DataConstants.FILE_EDITOR);
+    if(editor instanceof UIFormEditor){
+      return ((UIFormEditor)editor).getEditor();
+    }
+    else {
+      return (GuiEditor) context.getData(GuiEditor.class.getName());
+    }
+  }
+
+  /**
+   *
+   * @param componentToAssignBinding
+   * @param binding
+   * @param component topmost container where to find duplicate binding. In most cases
+   * it should be {@link com.intellij.uiDesigner.designSurface.GuiEditor#getRootContainer()}
+   */
+  public static boolean isBindingUnique(
+    final IComponent componentToAssignBinding,
+    final String binding,
+    final IComponent component
+  ) {
+    if (componentToAssignBinding != component && binding.equals(component.getBinding())) {
+      return false;
+    }
+
+    if (component instanceof IContainer) {
+      final IContainer container = (IContainer)component;
+      for (int i=0; i < container.getComponentCount(); i++) {
+        if (!isBindingUnique(componentToAssignBinding, binding, container.getComponent(i))) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  @Nullable
+  public static String buildResourceName(final PsiFile file) {
+    PsiDirectory directory = file.getContainingDirectory();
+    if (directory != null) {
+      PsiPackage pkg = directory.getPackage();
+      String packageName = pkg != null ? pkg.getQualifiedName() : "";
+      return packageName.replace('.', '/') + '/' + file.getName();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static RadContainer getSelectionParent(final List<RadComponent> selection) {
+    RadContainer parent = null;
+    for(RadComponent c: selection) {
+      if (parent == null) {
+        parent = c.getParent();
+      }
+      else if (parent != c.getParent()) {
+        parent = null;
+        break;
+      }
+    }
+    return parent;
+  }
+
+  public static boolean isComponentSwitchedInView(@NotNull RadComponent component) {
+    while(component.getParent() != null) {
+      if (!component.getParent().getLayoutManager().isSwitchedToChild(component.getParent(), component)) {
+        return false;
+      }
+      component = component.getParent();
+    }
+    return true;
+  }
+
+  /**
+   * Selects the component and ensures that the tabbed panes containing the component are
+   * switched to the correct tab.
+   *
+   * @param component the component to select.
+   * @return true if the component is enclosed in at least one tabbed pane, false otherwise.
+   */
+  public static boolean selectComponent(@NotNull final RadComponent component) {
+    boolean hasTab = false;
+    RadComponent parent = component;
+    while(parent.getParent() != null) {
+      if (parent.getParent().getLayoutManager().switchContainerToChild(parent.getParent(), parent)) {
+        hasTab = true;
+      }
+      parent = parent.getParent();
+    }
+    component.setSelected(true);
+    return hasTab;
+  }
+
+  public static void selectSingleComponent(final RadComponent component) {
+    final RadContainer root = (RadContainer)getRoot(component);
+    if (root == null) return;
+
+    ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(component.getProject()).getComponentTreeBuilder();
+    builder.beginUpdateSelection();
+    try {
+      clearSelection(root);
+      selectComponent(component);
+    }
+    finally {
+      builder.endUpdateSelection();
+    }
+  }
+
+  public static void selectComponents(List<RadComponent> components) {
+    if (components.size() > 0) {
+      RadComponent component = components.get(0);
+      ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(component.getProject()).getComponentTreeBuilder();
+      builder.beginUpdateSelection();
+      try {
+        clearSelection((RadContainer) getRoot(component));
+        for(RadComponent aComponent: components) {
+          selectComponent(aComponent);
+        }
+      }
+      finally {
+        builder.endUpdateSelection();
       }
     }
   }

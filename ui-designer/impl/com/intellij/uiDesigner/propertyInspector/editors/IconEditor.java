@@ -8,10 +8,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.ImageFileFilter;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.lw.IconDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroIconProperty;
@@ -45,7 +45,7 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
         fileChooser.showDialog();
         PsiFile file = fileChooser.getSelectedFile();
         if (file != null) {
-          String resourceName = GuiEditorUtil.buildResourceName(file);
+          String resourceName = FormEditingUtil.buildResourceName(file);
           if (resourceName != null) {
             IconDescriptor descriptor = new IconDescriptor(resourceName);
             IntroIconProperty.loadIconFromFile(file.getVirtualFile(), descriptor);

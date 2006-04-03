@@ -17,9 +17,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.ImageFileFilter;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -80,7 +80,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     PsiFile boundForm = itemToBeEdited.getBoundForm();
     if (boundForm != null) {
       myNestedFormRadioButton.setSelected(true);
-      myTfNestedForm.setText(GuiEditorUtil.buildResourceName(boundForm));
+      myTfNestedForm.setText(FormEditingUtil.buildResourceName(boundForm));
     }
     else {
       myClassRadioButton.setSelected(true);
@@ -327,7 +327,7 @@ public final class ComponentItemDialog extends DialogWrapper {
       fileChooser.showDialog();
       PsiFile file = fileChooser.getSelectedFile();
       if (file != null) {
-        myTextField.setText(GuiEditorUtil.buildResourceName(file));
+        myTextField.setText(FormEditingUtil.buildResourceName(file));
       }
     }
   }

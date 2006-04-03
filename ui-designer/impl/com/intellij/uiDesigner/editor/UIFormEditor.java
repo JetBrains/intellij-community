@@ -16,7 +16,6 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormHighlightingPass;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -125,14 +124,14 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   public void selectComponent(@NotNull final String binding) {
     final RadComponent component = (RadComponent) FormEditingUtil.findComponentWithBinding(myEditor.getRootContainer(), binding);
     if (component != null) {
-      GuiEditorUtil.selectSingleComponent(component);
+      FormEditingUtil.selectSingleComponent(component);
     }
   }
 
   public void selectComponentById(@NotNull final String id) {
     final RadComponent component = FormEditingUtil.findComponent(myEditor.getRootContainer(), id);
     if (component != null) {
-      GuiEditorUtil.selectSingleComponent(component);
+      FormEditingUtil.selectSingleComponent(component);
     }
   }
 

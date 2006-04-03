@@ -7,7 +7,6 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ public abstract class AbstractGuiEditorAction extends AnAction {
   }
 
   public final void actionPerformed(AnActionEvent e) {
-    GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
+    GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     if (editor != null) {
       final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
       if (myModifying) {
@@ -46,7 +45,7 @@ public abstract class AbstractGuiEditorAction extends AnAction {
   protected abstract void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e);
 
   public final void update(AnActionEvent e) {
-    GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
+    GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     if (editor == null) {
       e.getPresentation().setVisible(false);
       e.getPresentation().setEnabled(false);

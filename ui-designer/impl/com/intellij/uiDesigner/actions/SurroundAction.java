@@ -37,7 +37,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
     if (!editor.ensureEditable()) {
       return;
     }
-    final RadContainer selectionParent = GuiEditorUtil.getSelectionParent(selection);
+    final RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
     assert selectionParent != null;
 
     final Palette palette = Palette.getInstance(editor.getProject());
@@ -113,7 +113,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
   }
 
   protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    RadContainer selectionParent = GuiEditorUtil.getSelectionParent(selection);
+    RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(selectionParent != null &&
                                    (selectionParent instanceof RadRootContainer || selectionParent.isGrid()) &&
                                    isSelectionContiguous(selectionParent, selection) &&

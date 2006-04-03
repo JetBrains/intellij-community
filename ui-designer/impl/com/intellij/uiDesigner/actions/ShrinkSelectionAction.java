@@ -3,8 +3,8 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.SelectionState;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 
@@ -16,7 +16,7 @@ import java.util.Stack;
  */
 public final class ShrinkSelectionAction extends AnAction{
   public void actionPerformed(final AnActionEvent e) {
-    final GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
+    final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     assert editor != null;
     final SelectionState selectionState = editor.getSelectionState();
     selectionState.setInsideChange(true);
@@ -33,7 +33,7 @@ public final class ShrinkSelectionAction extends AnAction{
 
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    final GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
+    final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     if(editor == null){
       presentation.setEnabled(false);
       return;

@@ -89,7 +89,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
         continue;
       }
 
-      if (!GuiEditorUtil.isBindingUnique(component, fieldName, root)) {
+      if (!FormEditingUtil.isBindingUnique(component, fieldName, root)) {
         continue;
       }
 

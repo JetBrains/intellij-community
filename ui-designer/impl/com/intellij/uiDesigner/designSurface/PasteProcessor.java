@@ -7,7 +7,6 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import gnu.trove.TIntArrayList;
@@ -111,7 +110,7 @@ public class PasteProcessor extends EventProcessor {
     if (location.canDrop(myPastedComponentList)) {
       RadComponent[] componentsToPaste = myComponentsToPaste.toArray(new RadComponent[myComponentsToPaste.size()]);
       location.processDrop(myEditor, componentsToPaste, null, myPastedComponentList);
-      GuiEditorUtil.selectComponents(myComponentsToPaste);
+      FormEditingUtil.selectComponents(myComponentsToPaste);
       endPaste();
     }
   }

@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
@@ -60,7 +59,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
             if(selectedComponent.equals(component)){
               return true;
             }
-            if (!GuiEditorUtil.isComponentSwitchedInView(component)) {
+            if (!FormEditingUtil.isComponentSwitchedInView(component)) {
               return true;
             }
             components.add(component);
@@ -110,10 +109,10 @@ abstract class AbstractMoveSelectionAction extends AnAction{
 
   private void selectOrExtend(final RadComponent component) {
     if (myExtend) {
-      GuiEditorUtil.selectComponent(component);
+      FormEditingUtil.selectComponent(component);
     }
     else {
-      GuiEditorUtil.selectSingleComponent(component);
+      FormEditingUtil.selectSingleComponent(component);
     }
   }
 
@@ -143,7 +142,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
       }
     );
     if(!componentToBeSelected.isNull()){
-      GuiEditorUtil.selectComponent(componentToBeSelected.get());
+      FormEditingUtil.selectComponent(componentToBeSelected.get());
     }
   }
 
@@ -177,7 +176,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
       if (component != null && component != selectedComponent) {
         if (myMoveToLast) {
           if (myExtend) {
-            GuiEditorUtil.selectComponent(component);
+            FormEditingUtil.selectComponent(component);
           }
           lastComponent = component;
         }

@@ -33,7 +33,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
   }
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
-    RadContainer parent = GuiEditorUtil.getSelectionParent(selection);
+    RadContainer parent = FormEditingUtil.getSelectionParent(selection);
     assert parent != null;
     List<RadComponent> duplicates = new ArrayList<RadComponent>();
     TIntHashSet insertedRows = new TIntHashSet();
@@ -57,7 +57,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
         duplicates.add(copy);
       }
     }
-    GuiEditorUtil.selectComponents(duplicates);
+    FormEditingUtil.selectComponents(duplicates);
   }
 
   private static void copyBinding(final GuiEditor editor, final RadComponent c, final RadComponent copy) {
@@ -99,7 +99,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
   }
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    final RadContainer parent = GuiEditorUtil.getSelectionParent(selection);
+    final RadContainer parent = FormEditingUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(parent != null && parent.isGrid());
     // The action is enabled in any of the following cases:
     // 1) a single component is selected;

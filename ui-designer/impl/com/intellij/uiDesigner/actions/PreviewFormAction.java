@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -75,7 +74,7 @@ public final class PreviewFormAction extends AnAction{
   }
 
   @Nullable private GuiEditor getEditor(final DataContext context){
-    return myEditor != null ? myEditor : GuiEditorUtil.getEditorFromContext(context);
+    return myEditor != null ? myEditor : FormEditingUtil.getEditorFromContext(context);
   }
 
   public void actionPerformed(final AnActionEvent e) {

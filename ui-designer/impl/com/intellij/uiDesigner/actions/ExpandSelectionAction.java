@@ -25,7 +25,7 @@ public final class ExpandSelectionAction extends AnAction{
   public ExpandSelectionAction() {}
 
   public void actionPerformed(final AnActionEvent e) {
-    final GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
+    final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     assert editor != null;
     final SelectionState selectionState = editor.getSelectionState();
     selectionState.setInsideChange(true);
@@ -70,7 +70,7 @@ public final class ExpandSelectionAction extends AnAction{
 
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    final GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
+    final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
 
     if(editor == null){
       presentation.setEnabled(false);

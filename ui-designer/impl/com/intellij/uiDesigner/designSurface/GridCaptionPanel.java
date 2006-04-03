@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
 import com.intellij.uiDesigner.actions.GridChangeActionGroup;
@@ -135,7 +134,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         return container;
       }
     }
-    RadContainer container = GuiEditorUtil.getSelectionParent(selection);
+    RadContainer container = FormEditingUtil.getSelectionParent(selection);
     if (container == null && myEditor.getRootContainer().getComponentCount() > 0) {
       container = (RadContainer)myEditor.getRootContainer().getComponent(0);
     }

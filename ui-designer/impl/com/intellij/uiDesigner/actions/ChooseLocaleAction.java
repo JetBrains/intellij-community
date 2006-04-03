@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +57,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
   }
 
   @Nullable private GuiEditor getEditor(final AnActionEvent e) {
-    myLastEditor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
+    myLastEditor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     return myLastEditor;
   }
 

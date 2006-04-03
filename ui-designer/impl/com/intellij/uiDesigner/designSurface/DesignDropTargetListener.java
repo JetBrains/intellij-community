@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.CutCopyPasteSupport;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SimpleTransferable;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -293,7 +292,7 @@ class DesignDropTargetListener implements DropTargetListener {
       for (RadComponent component : droppedComponents) {
         InsertComponentProcessor.createBindingWhenDrop(myEditor, component);
       }
-      GuiEditorUtil.selectComponents(droppedComponents);
+      FormEditingUtil.selectComponents(droppedComponents);
     }
     else {
       setDraggingState(dcl, false);

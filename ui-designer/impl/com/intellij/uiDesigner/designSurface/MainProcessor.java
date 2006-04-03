@@ -4,7 +4,6 @@ import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -276,7 +275,7 @@ public final class MainProcessor extends EventProcessor{
     }
 
     if (!UIUtil.isControlKeyDown(e) && !e.isShiftDown() && !component.isSelected()) {
-      GuiEditorUtil.selectSingleComponent(component);
+      FormEditingUtil.selectSingleComponent(component);
     }
 
     final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), component.getDelegee());

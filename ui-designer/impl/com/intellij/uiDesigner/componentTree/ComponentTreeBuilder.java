@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.HierarchyChangeListener;
 import com.intellij.uiDesigner.SelectionWatcher;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -261,7 +260,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
             final RadComponent component=ptr.getComponent();
             LOG.assertTrue(component!=null);
             if (!hasComponentInTab) {
-              hasComponentInTab = GuiEditorUtil.selectComponent(component);
+              hasComponentInTab = FormEditingUtil.selectComponent(component);
             }
             else {
               component.setSelected(true);
