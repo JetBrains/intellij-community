@@ -107,7 +107,11 @@ public class ExecutionUtil {
     return fqName.substring(dotIndex + 1, fqName.length());
   }
 
-  public static void showExecutionErrorMessage(final Throwable e, final String title, final Project project) {
+  public static void showExecutionErrorMessage(final ExecutionException e, final String title, final Project project) {
+    if (e instanceof RunCanceledByUserException) {
+      return;
+    }
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(e.getLocalizedMessage());
     }

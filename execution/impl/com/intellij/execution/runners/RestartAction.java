@@ -6,6 +6,7 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -57,6 +58,8 @@ public class RestartAction extends AnAction {
           return dataContext.getData(dataId);
         }
       }, myRunner, myRunnerSettings, myConfigurationSettings);
+    }
+    catch(RunCanceledByUserException e1) {
     }
     catch (ExecutionException e1) {
       Messages.showErrorDialog(project, e1.getMessage(), ExecutionBundle.message("restart.error.message.title"));
