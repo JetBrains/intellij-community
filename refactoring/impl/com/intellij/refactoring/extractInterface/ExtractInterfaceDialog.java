@@ -164,11 +164,13 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
 
   @Override
   protected void updateDialogForExtractSubclass() {
+    super.updateDialogForExtractSubclass();
     myInterfaceNameLabel.setText(RefactoringBundle.message("rename.implementation.class.to"));
   }
 
   @Override
   protected void updateDialogForExtractSuperclass() {
+    super.updateDialogForExtractSuperclass();
     myInterfaceNameLabel.setText(RefactoringBundle.message("interface.name.prompt"));
   }
 
@@ -264,11 +266,10 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     }
 
     if (!isExtractSuperclass()) {
-      final ExtractInterfaceProcessor processor = new ExtractInterfaceProcessor(myProject, false, getTargetDirectory(), interfaceName,
-                                                                                myClass,
-                                                                                getSelectedMembers(),
-                                                                                new JavaDocPolicy(getJavaDocPolicy()));
-      invokeRefactoring(processor);
+      invokeRefactoring(new ExtractInterfaceProcessor(myProject, false, getTargetDirectory(), interfaceName,
+                                                      myClass,
+                                                      getSelectedMembers(),
+                                                      new JavaDocPolicy(getJavaDocPolicy())));
     }
 
     RefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC = getJavaDocPolicy();

@@ -29,7 +29,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
   private final InterfaceContainmentVerifier myContainmentVerifier = new InterfaceContainmentVerifier() {
     public boolean checkedInterfacesContain(PsiMethod psiMethod) {
       return PullUpHelper.checkedInterfacesContain(myMemberInfos, psiMethod);
-    };
+    }
   };
   private JLabel myClassNameLabel;
   private JLabel myPackageLabel;
