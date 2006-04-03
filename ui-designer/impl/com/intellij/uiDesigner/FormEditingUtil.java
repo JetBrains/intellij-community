@@ -16,6 +16,8 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.Painter;
+import com.intellij.uiDesigner.designSurface.DraggedComponentList;
+import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
@@ -642,6 +644,30 @@ public final class FormEditingUtil {
         builder.endUpdateSelection();
       }
     }
+  }
+
+  public static boolean isDropOnChild(final DraggedComponentList draggedComponentList,
+                                       final DropLocation location) {
+    if (location.getContainer() == null) {
+      return false;
+    }
+
+    for(RadComponent component: draggedComponentList.getComponents()) {
+      if (isChild(location.getContainer(), component)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isChild(RadContainer maybeChild, RadComponent maybeParent) {
+    while(maybeChild != null) {
+      if (maybeParent == maybeChild) {
+        return true;
+      }
+      maybeChild = maybeChild.getParent();
+    }
+    return false;
   }
 
   public static interface StringDescriptorVisitor<T extends IComponent> {

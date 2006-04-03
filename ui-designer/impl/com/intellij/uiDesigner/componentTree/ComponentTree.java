@@ -478,6 +478,9 @@ public final class ComponentTree extends Tree implements DataProvider {
         if (path != null && targetComponent instanceof RadContainer) {
           DropLocation dropLocation = ((RadContainer) targetComponent).getDropLocation(null);
           canDrop = dropLocation.canDrop(dragObject);
+          if (dcl != null && FormEditingUtil.isDropOnChild(dcl, dropLocation)) {
+            canDrop = false;
+          }
           if (canDrop) {
             dropTargetComponent = targetComponent;
             dtde.acceptDrag(dtde.getDropAction());
@@ -504,8 +507,10 @@ public final class ComponentTree extends Tree implements DataProvider {
         if (targetComponent instanceof RadContainer) {
           DropLocation dropLocation = ((RadContainer) targetComponent).getDropLocation(null);
           if (dcl != null) {
-            RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
-            dropLocation.processDrop(myEditor, components, null, dcl);
+            if (!FormEditingUtil.isDropOnChild(dcl, dropLocation)) {
+              RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
+              dropLocation.processDrop(myEditor, components, null, dcl);
+            }
           }
           else {
             new InsertComponentProcessor(myEditor).processComponentInsert(componentItem, dropLocation);

@@ -134,7 +134,7 @@ class DesignDropTargetListener implements DropTargetListener {
 
       DropLocation location = myGridInsertProcessor.processDragEvent(dtde.getLocation(), myComponentDragObject);
       if (!location.canDrop(myComponentDragObject) ||
-          (myDraggedComponentList != null && isDropOnChild(myDraggedComponentList, location))) {
+          (myDraggedComponentList != null && FormEditingUtil.isDropOnChild(myDraggedComponentList, location))) {
         myComponentTree.setDropTargetComponent(null);
         dtde.rejectDrag();
       }
@@ -146,30 +146,6 @@ class DesignDropTargetListener implements DropTargetListener {
     catch (Exception e) {
       LOG.error(e);
     }
-  }
-
-  private static boolean isDropOnChild(final DraggedComponentList draggedComponentList,
-                                       final DropLocation location) {
-    if (location.getContainer() == null) {
-      return false;
-    }
-
-    for(RadComponent component: draggedComponentList.getComponents()) {
-      if (isChild(location.getContainer(), component)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean isChild(RadContainer maybeChild, RadComponent maybeParent) {
-    while(maybeChild != null) {
-      if (maybeParent == maybeChild) {
-        return true;
-      }
-      maybeChild = maybeChild.getParent();
-    }
-    return false;
   }
 
   public void dropActionChanged(DropTargetDragEvent dtde) {
@@ -239,7 +215,7 @@ class DesignDropTargetListener implements DropTargetListener {
     final ArrayList<RadComponent> dclComponents = dcl.getComponents();
     final int componentCount = dclComponents.size();
     DropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), dropPoint);
-    if (isDropOnChild(dcl, location)) {
+    if (FormEditingUtil.isDropOnChild(dcl, location)) {
       setDraggingState(dcl, false);
       return false;
     }
