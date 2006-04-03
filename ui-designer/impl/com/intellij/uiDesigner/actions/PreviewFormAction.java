@@ -62,7 +62,7 @@ public final class PreviewFormAction extends AnAction{
    * import this class to refer
    */
   private static final String CLASS_TO_BIND_NAME = "FormPreviewFrame";
-  @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "RuntimeBundle_";
+  @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "RuntimeBundle";
   @NonNls private static final String RUNTIME_BUNDLE_EXTENSION = ".properties";
 
   public PreviewFormAction() {
@@ -175,13 +175,14 @@ public final class PreviewFormAction extends AnAction{
 
       Locale locale = Locale.getDefault();
       if (locale.getCountry().length() > 0 && locale.getLanguage().length() > 0) {
-        CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + locale.getLanguage() +
+        CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() +
                                                    "_" + locale.getCountry() + RUNTIME_BUNDLE_EXTENSION);
       }
       if (locale.getLanguage().length() > 0) {
-        CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
+        CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
       }
-      CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
+      CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
+      CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + RUNTIME_BUNDLE_EXTENSION);
 
       final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, null);
       codeGenerator.patchFile(tempFile);
