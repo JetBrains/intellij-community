@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.uiDesigner.ReferenceUtil;
@@ -150,6 +151,7 @@ public final class StringEditorDialog extends DialogWrapper{
             public void run() {
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
+                  PsiDocumentManager.getInstance(module.getProject()).commitAllDocuments();
                   try {
                     propertyByKey.setValue(editedValue);
                   }
