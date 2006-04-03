@@ -138,6 +138,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     prepareSuccessful();
+    RefactoringUtil.sortDepthFirstRightLeftOrder(usagesIn);
     return true;
   }
 
@@ -218,20 +219,15 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           }
           if (myMethod.isWritable()) myMethod.delete();
         } else {
-          Set<PsiReferenceExpression> tempRefs = new TreeSet<PsiReferenceExpression>(new Comparator<PsiReferenceExpression>() {
-            //Enforce partial order: descendants in the tree are processed before the ancestors
-            public int compare(final PsiReferenceExpression e1, final PsiReferenceExpression e2) {
-              if (PsiTreeUtil.isAncestor(e2, e1, false)) return 1;
-              return -1;
-            }
-          });
+          List<PsiReferenceExpression> refExprList = new ArrayList<PsiReferenceExpression>();
           for (final UsageInfo usage : usages) {
-            if (usage.getElement() instanceof PsiReferenceExpression) {
-              tempRefs.add((PsiReferenceExpression)usage.getElement());
+            final PsiElement element = usage.getElement();
+            if (element instanceof PsiReferenceExpression) {
+              refExprList.add((PsiReferenceExpression)element);
             }
           }
-          PsiReferenceExpression[] refs = tempRefs.toArray(
-            new PsiReferenceExpression[tempRefs.size()]);
+          PsiReferenceExpression[] refs = refExprList.toArray(
+            new PsiReferenceExpression[refExprList.size()]);
           refs = addBracesWhenNeeded(refs);
           for (PsiReferenceExpression ref : refs) {
             inlineMethodCall(ref);

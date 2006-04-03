@@ -5,6 +5,8 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.MockInlineMethodOptions;
 
 public class InlineMethodTest extends CodeInsightTestCase {
@@ -84,12 +86,14 @@ public class InlineMethodTest extends CodeInsightTestCase {
   private void performAction() throws Exception{
     PsiElement element = TargetElementUtil.findTargetElement(myEditor,
             TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
+    PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? ((PsiReferenceExpression)ref) : null;
     assertTrue(element instanceof PsiMethod);
     final boolean condition = InlineMethodProcessor.checkBadReturns((PsiMethod) element);
     assertFalse("Bad returns found", condition);
     PsiMethod method = (PsiMethod)element;
     InlineOptions options = new MockInlineMethodOptions();
-    final InlineMethodProcessor processor = new InlineMethodProcessor(myProject, method, null, myEditor, options.isInlineThisOnly());
+    final InlineMethodProcessor processor = new InlineMethodProcessor(myProject, method, refExpr, myEditor, options.isInlineThisOnly());
     processor.run();
   }
 }
