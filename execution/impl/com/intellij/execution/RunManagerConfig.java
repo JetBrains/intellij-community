@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.util.StoringPropertyContainer;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.config.BooleanProperty;
 
 public class RunManagerConfig {
@@ -44,8 +45,8 @@ public class RunManagerConfig {
   public boolean isCompileBeforeRunning(RunProfile runProfile){
     return isCompileBeforeRunning() &&
            (!(runProfile instanceof RunConfiguration) ||
-            myManager.getCompileMethodBeforeRun((RunConfiguration)runProfile) == MAKE ||
-            myManager.getCompileMethodBeforeRun((RunConfiguration)runProfile) == MAKE_ANT);
+            Comparing.strEqual(myManager.getCompileMethodBeforeRun((RunConfiguration)runProfile), MAKE) ||
+            Comparing.strEqual(myManager.getCompileMethodBeforeRun((RunConfiguration)runProfile), MAKE_ANT));
   }
 
 }
