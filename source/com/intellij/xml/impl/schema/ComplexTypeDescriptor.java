@@ -1,15 +1,15 @@
 package com.intellij.xml.impl.schema;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.impl.XmlLangAttributeDescriptor;
-
-import java.util.*;
-
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.*;
 
 /**
  * @author Mike
@@ -323,11 +323,33 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           if (complexTypeDescriptor.canContainTag(localName, namespace)) return true;
         }
       }
+    } else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "element")) {
+      final String ref = tag.getAttributeValue("ref");
+      XmlTag descriptorTag = tag;
+
+      if (ref != null) {
+        final PsiElement psiElement = tag.getAttribute("ref", null).getValueElement().getReferences()[0].resolve();
+        if (psiElement instanceof XmlTag) descriptorTag = (XmlTag)psiElement;
+      }
+
+      if ("true".equals(descriptorTag.getAttributeValue("abstract"))) {
+
+        final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)tag.getNSDescriptor(namespace, true);
+        final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(localName, namespace):null;
+        final String name = descriptorTag.getAttributeValue("name");
+
+        if (descriptor != null &&
+            name != null) {
+          final String substitutionValue = ((XmlTag)descriptor.getDeclaration()).getAttributeValue("substitutionGroup");
+
+          if (substitutionValue != null && name.equals(XmlUtil.findLocalNameByQualifiedName(substitutionValue))) {
+            return true; // could be more parent-child relation complex!!!
+          }
+        }
+    }
     }
 
-    XmlTag[] subTags = tag.getSubTags();
-    for (int i = 0; i < subTags.length; i++) {
-      XmlTag subTag = subTags[i];
+    for (XmlTag subTag : tag.getSubTags()) {
       if (_canContainTag(localName, namespace, subTag, visited)) return true;
     }
 
