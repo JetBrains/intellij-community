@@ -954,9 +954,9 @@ public class GenericsHighlightUtil {
     final MethodSignature signature = overrider.getSignature(PsiSubstitutor.EMPTY);
     for (MethodSignatureBackedByPsiMethod superSignature : superMethodSignatures) {
       PsiMethod baseMethod = superSignature.getMethod();
-      final PsiSubstitutor substitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(signature, superSignature);
-      LOG.assertTrue(substitutor != null);
-      if (PsiUtil.isRawSubstitutor(baseMethod, substitutor)) continue;
+      PsiSubstitutor substitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(signature, superSignature);
+      if (substitutor == null) substitutor = superSignature.getSubstitutor();
+      if (PsiUtil.isRawSubstitutor(baseMethod, superSignature.getSubstitutor())) continue;
       final PsiType baseReturnType = substitutor.substitute(baseMethod.getReturnType());
       final PsiType overriderReturnType = overrider.getReturnType();
       if (baseReturnType == null || overriderReturnType == null) return null;
