@@ -183,11 +183,11 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       return modifierList.findAnnotation(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
     }
 
-    PsiElement container = place;
-    do {
+    PsiElement container = PsiTreeUtil.getNonStrictParentOfType(place, PsiDocCommentOwner.class);
+    while(true) {
+      if (!(container instanceof PsiTypeParameter)) break;
       container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
     }
-    while (container instanceof PsiTypeParameter);
 
     if (container != null) {
       PsiElement element = GlobalInspectionContextImpl.getElementMemberSuppressedIn((PsiDocCommentOwner)container, toolId);

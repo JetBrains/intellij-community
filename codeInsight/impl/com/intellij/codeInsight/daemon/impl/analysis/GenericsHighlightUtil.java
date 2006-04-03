@@ -950,9 +950,12 @@ public class GenericsHighlightUtil {
     if (PsiUtil.getLanguageLevel(overrider).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     if (!InspectionProjectProfileManager.getInstance(overrider.getProject()).getInspectionProfile(overrider).isToolEnabled(key)) return null;
-    for (MethodSignatureBackedByPsiMethod signature : superMethodSignatures) {
-      PsiMethod baseMethod = signature.getMethod();
-      PsiSubstitutor substitutor = signature.getSubstitutor();
+    if (InspectionManagerEx.inspectionResultSuppressed(overrider, UncheckedWarningLocalInspection.ID)) return null;
+    final MethodSignature signature = overrider.getSignature(PsiSubstitutor.EMPTY);
+    for (MethodSignatureBackedByPsiMethod superSignature : superMethodSignatures) {
+      PsiMethod baseMethod = superSignature.getMethod();
+      final PsiSubstitutor substitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(signature, superSignature);
+      LOG.assertTrue(substitutor != null);
       if (PsiUtil.isRawSubstitutor(baseMethod, substitutor)) continue;
       final PsiType baseReturnType = substitutor.substitute(baseMethod.getReturnType());
       final PsiType overriderReturnType = overrider.getReturnType();
