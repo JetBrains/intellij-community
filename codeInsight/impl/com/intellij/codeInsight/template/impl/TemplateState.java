@@ -45,7 +45,6 @@ public class TemplateState implements Disposable {
 
   private TemplateImpl myTemplate;
   private TemplateSegments mySegments = null;
-  private Hashtable myVariables = new Hashtable();
 
   private boolean toProcessChangedUpdate = true;
   private RangeMarker myTemplateRange = null;
@@ -188,7 +187,6 @@ public class TemplateState implements Disposable {
     }
     myTemplateRange = null;
     myTemplate = null;
-    myVariables.clear();
     releaseEditor();
     myTabStopHighlighters.clear();
   }
