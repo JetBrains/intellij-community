@@ -11,5 +11,5 @@ import java.lang.annotation.ElementType;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface NameStrategy {
-  Class value();
+  Class<? extends DomNameStrategy> value();
 }
