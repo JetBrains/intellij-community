@@ -230,7 +230,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public void accept(final DomElementVisitor visitor) {
-    DomUtil.tryAccept(visitor, DomFileElement.class, this);
+    DomImplUtil.tryAccept(visitor, DomFileElement.class, this);
   }
 
   public void acceptChildren(DomElementVisitor visitor) {

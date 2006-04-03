@@ -119,7 +119,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   @NotNull
   private DomNameStrategy getNameStrategy() {
-    final DomNameStrategy strategy = DomUtil.getDomNameStrategy(DomUtil.getRawType(myClass));
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomUtil.getRawType(myClass));
     return strategy == null ? DomNameStrategy.HYPHEN_STRATEGY : strategy;
   }
 
@@ -152,7 +152,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       final Method method = iterator.next();
-      if (isCoreMethod(method) || DomUtil.isTagValueSetter(method) ||
+      if (isCoreMethod(method) || DomImplUtil.isTagValueSetter(method) ||
           isCustomMethod(JavaMethodSignature.getSignature(method))) {
         removedSignatures.add(JavaMethodSignature.getSignature(method));
         iterator.remove();
@@ -161,7 +161,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       Method method = iterator.next();
-      if (DomUtil.isGetter(method) && processGetterMethod(method)) {
+      if (DomImplUtil.isGetter(method) && processGetterMethod(method)) {
         removedSignatures.add(JavaMethodSignature.getSignature(method));
         iterator.remove();
       }
@@ -229,7 +229,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   private boolean processGetterMethod(final Method method) {
-    if (DomUtil.isTagValueGetter(method)) {
+    if (DomImplUtil.isTagValueGetter(method)) {
       myValueElement = true;
       return true;
     }
@@ -248,7 +248,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       return true;
     }
 
-    if (DomUtil.isDomElement(method.getReturnType())) {
+    if (isDomElement(method.getReturnType())) {
       final String qname = getSubTagName(signature);
       if (qname != null) {
         assert !isCollectionChild(qname) : "Collection and fixed children cannot intersect: " + qname;
@@ -266,8 +266,8 @@ public class GenericInfoImpl implements DomGenericInfo {
       }
     }
 
-    final Type type = DomUtil.extractCollectionElementType(method.getGenericReturnType());
-    if (DomUtil.isDomElement(type)) {
+    final Type type = DomImplUtil.extractCollectionElementType(method.getGenericReturnType());
+    if (isDomElement(type)) {
       final SubTagsList subTagsList = method.getAnnotation(SubTagsList.class);
       if (subTagsList != null) {
         myCompositeChildrenMethods.put(signature, new HashSet<String>(Arrays.asList(subTagsList.value())));
@@ -412,7 +412,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       methods[i] = getter;
       aClass = getter.getReturnType();
       if (List.class.isAssignableFrom(aClass)) {
-        aClass = DomUtil.getRawType(DomUtil.extractCollectionElementType(getter.getGenericReturnType()));
+        aClass = DomUtil.getRawType(DomImplUtil.extractCollectionElementType(getter.getGenericReturnType()));
       }
     }
     final int lastElement = methods.length - 1;
@@ -447,7 +447,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       final Method method;
       try {
         method = aClass.getMethod("is" + capitalized);
-        return DomUtil.canHaveIsPropertyGetterPrefix(method.getGenericReturnType()) ? method : null;
+        return DomImplUtil.canHaveIsPropertyGetterPrefix(method.getGenericReturnType()) ? method : null;
       }
       catch (NoSuchMethodException e1) {
         return null;
@@ -631,5 +631,9 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   final boolean isCollectionChild(final String qname) {
     return myCollectionChildrenClasses.containsKey(qname);
+  }
+
+  public static boolean isDomElement(final Type type) {
+    return type != null && DomElement.class.isAssignableFrom(DomUtil.getRawType(type));
   }
 }

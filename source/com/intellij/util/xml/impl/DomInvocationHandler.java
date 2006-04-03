@@ -253,7 +253,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public void accept(final DomElementVisitor visitor) {
-    DomUtil.tryAccept(visitor, DomUtil.getRawType(myType), getProxy());
+    DomImplUtil.tryAccept(visitor, DomUtil.getRawType(myType), getProxy());
   }
 
   public final void acceptChildren(DomElementVisitor visitor) {
@@ -320,7 +320,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public final DomNameStrategy getNameStrategy() {
     final Class<?> rawType = DomUtil.getRawType(myType);
-    final DomNameStrategy strategy = DomUtil.getDomNameStrategy(rawType);
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(rawType);
     if (strategy != null) {
       return strategy;
     }
@@ -353,11 +353,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   protected final Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
-    if (DomUtil.isTagValueGetter(method)) {
+    if (DomImplUtil.isTagValueGetter(method)) {
       return createGetValueInvocation(getConverter(method, true));
     }
 
-    if (DomUtil.isTagValueSetter(method)) {
+    if (DomImplUtil.isTagValueSetter(method)) {
       return createSetValueInvocation(getConverter(method, false));
     }
 

@@ -5,6 +5,7 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xml.impl.AdvancedProxy;
+import com.intellij.util.xml.impl.DomImplUtil;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -185,7 +186,7 @@ public class ModelMerger {
         }
         if (Collection.class.isAssignableFrom(returnType)) {
           return getMergedImplementations(method, args,
-                                          DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())));
+                                          DomUtil.getRawType(DomImplUtil.extractCollectionElementType(method.getGenericReturnType())));
         }
 
         if (GenericValue.class.isAssignableFrom(returnType)) {

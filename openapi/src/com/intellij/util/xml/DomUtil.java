@@ -4,23 +4,14 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author peter
@@ -132,42 +123,6 @@ public class DomUtil {
     return null;
   }
 
-  @Nullable
-  public static Type extractCollectionElementType(Type returnType) {
-    if (returnType instanceof ParameterizedType) {
-      ParameterizedType parameterizedType = (ParameterizedType)returnType;
-      final Type rawType = parameterizedType.getRawType();
-      if (rawType instanceof Class) {
-        final Class<?> rawClass = (Class<?>)rawType;
-        if (List.class.equals(rawClass) || Collection.class.equals(rawClass)) {
-          final Type[] arguments = parameterizedType.getActualTypeArguments();
-          if (arguments.length == 1) {
-            final Type argument = arguments[0];
-            if (argument instanceof WildcardType) {
-              final Type[] upperBounds = ((WildcardType)argument).getUpperBounds();
-              if (upperBounds.length == 1) {
-                return upperBounds[0];
-              }
-            }
-            else if (argument instanceof ParameterizedType) {
-              if (getGenericValueType(argument) != null) {
-                return argument;
-              }
-            }
-            else if (argument instanceof Class) {
-              return argument;
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  public static boolean isDomElement(final Type type) {
-    return type != null && DomElement.class.isAssignableFrom(getRawType(type));
-  }
-
   public static <T extends Annotation> T findAnnotationDFS(final Class<?> rawType, final Class<T> annotationType) {
     T annotation = rawType.getAnnotation(annotationType);
     if (annotation != null) return annotation;
@@ -181,106 +136,8 @@ public class DomUtil {
     return null;
   }
 
-  public static DomNameStrategy getDomNameStrategy(final Class<?> rawType) {
-    final NameStrategy annotation = findAnnotationDFS(rawType, NameStrategy.class);
-    if (annotation != null) {
-      final Class aClass = annotation.value();
-      if (HyphenNameStrategy.class.equals(aClass)) return DomNameStrategy.HYPHEN_STRATEGY;
-      if (JavaNameStrategy.class.equals(aClass)) return DomNameStrategy.JAVA_STRATEGY;
-      try {
-        return (DomNameStrategy)aClass.newInstance();
-      }
-      catch (InstantiationException e) {
-        LOG.error(e);
-      }
-      catch (IllegalAccessException e) {
-        LOG.error(e);
-      }
-    }
-    return null;
-  }
-
-  public static boolean isTagValueGetter(final Method method) {
-    if (!isGetter(method)) {
-      return false;
-    }
-    if (hasTagValueAnnotation(method)) {
-      return true;
-    }
-    if ("getValue".equals(method.getName())) {
-      final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
-      final Class<?> declaringClass = method.getDeclaringClass();
-      if (signature.findAnnotation(SubTag.class, declaringClass) != null) return false;
-      if (signature.findAnnotation(SubTagList.class, declaringClass) != null) return false;
-      return true;
-    }
-    return false;
-  }
-
-  private static boolean hasTagValueAnnotation(final Method method) {
-    return findAnnotationDFS(method, TagValue.class) != null;
-  }
-
   public static <T extends Annotation> T findAnnotationDFS(final Method method, final Class<T> annotationClass) {
     return JavaMethodSignature.getSignature(method).findAnnotation(annotationClass, method.getDeclaringClass());
   }
 
-  public static boolean isGetter(final Method method) {
-    final String name = method.getName();
-    if (method.getParameterTypes().length != 0) {
-      return false;
-    }
-    final Class<?> returnType = method.getReturnType();
-    if (name.startsWith("get")) {
-      return returnType != void.class;
-    }
-    if (name.startsWith("is")) {
-      return canHaveIsPropertyGetterPrefix(method.getGenericReturnType());
-    }
-    return false;
-  }
-
-  public static boolean canHaveIsPropertyGetterPrefix(final Type type) {
-    return boolean.class.equals(type) || Boolean.class.equals(type)
-           || Boolean.class.equals(getGenericValueType(type));
-  }
-
-  public final static void tryAccept(final DomElementVisitor visitor, final Class aClass, DomElement proxy) {
-    try {
-      tryInvoke(visitor, "visit" + aClass.getSimpleName(), aClass, proxy);
-    }
-    catch (NoSuchMethodException e) {
-      try {
-        tryInvoke(visitor, "visit", aClass, proxy);
-      }
-      catch (NoSuchMethodException e1) {
-        for (Class aClass1 : aClass.getInterfaces()) {
-          tryAccept(visitor, aClass1, proxy);
-        }
-      }
-    }
-  }
-
-  private static void tryInvoke(final DomElementVisitor visitor, final String name, final Class aClass, DomElement proxy) throws NoSuchMethodException {
-    try {
-      final Method method = visitor.getClass().getMethod(name, aClass);
-      method.setAccessible(true);
-      method.invoke(visitor, proxy);
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)cause;
-      }
-      LOG.error(e);
-    }
-  }
-
-  public static boolean isTagValueSetter(final Method method) {
-    boolean setter = method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
-    return setter && (hasTagValueAnnotation(method) || "setValue".equals(method.getName()));
-  }
 }
