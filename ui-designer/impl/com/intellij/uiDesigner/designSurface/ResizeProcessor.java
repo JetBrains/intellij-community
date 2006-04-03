@@ -14,7 +14,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -41,17 +42,19 @@ public final class ResizeProcessor extends EventProcessor {
     }
 
     myComponent = component;
-    myComponent.setResizing(true);
     myOriginalParent = component.getParent();
     myOriginalConstraints = component.getConstraints();
-    if (component.getParent().isGrid()) {
+
+    final List<RadComponent> copyList = CutCopyPasteSupport.copyComponents(editor, Collections.singletonList(component));
+    if (component.getParent().isGrid() && copyList != null) {
+      myComponent.setResizing(true);
       Rectangle rc = SwingUtilities.convertRectangle(component.getParent().getDelegee(),
                                                      component.getBounds(),
                                                      myEditor.getDragLayer());
       component.setDragging(true);
       component.setSelected(false);
 
-      myResizedCopy = CutCopyPasteSupport.copyComponents(editor, Collections.singletonList(component)).get(0);
+      myResizedCopy = copyList.get(0);
       myResizedCopy.setBounds(rc);
       myResizedCopy.setSelected(true);
       editor.getDragLayer().add(myResizedCopy.getDelegee());
