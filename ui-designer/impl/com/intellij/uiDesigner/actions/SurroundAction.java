@@ -72,13 +72,15 @@ public class SurroundAction extends AbstractGuiEditorAction {
           }
           selectionParent.addComponent(newContainer);
 
-          if (newContainer instanceof RadTabbedPane ||
-              newContainer instanceof RadSplitPane) {
+          if (newContainer instanceof RadTabbedPane) {
+            // the first tab is created by RadTabbedPane itself
+            assert newContainer.getComponentCount() == 1;
+            newContainer = (RadContainer) newContainer.getComponent(0);
+          }
+          else if (newContainer instanceof RadSplitPane) {
             RadContainer panel = (RadContainer) InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
             assert panel != null;
-            if (newContainer instanceof RadSplitPane) {
-              panel.setCustomLayoutConstraints(LwSplitPane.POSITION_LEFT);
-            }
+            panel.setCustomLayoutConstraints(LwSplitPane.POSITION_LEFT);
             newContainer.addComponent(panel);
             newContainer = panel;
           }
