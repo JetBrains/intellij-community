@@ -961,7 +961,7 @@ public class GenericsHighlightUtil {
       final PsiType overriderReturnType = overrider.getReturnType();
       if (baseReturnType == null || overriderReturnType == null) return null;
       if (isRawToGeneric(baseReturnType, overriderReturnType)) {
-        final String message = JavaErrorMessages.message("unchecked.overriding.incompatibe.return.type",
+        final String message = JavaErrorMessages.message("unchecked.overriding.incompatible.return.type",
                                                          HighlightUtil.formatType(overriderReturnType),
                                                          HighlightUtil.formatType(baseReturnType));
 
