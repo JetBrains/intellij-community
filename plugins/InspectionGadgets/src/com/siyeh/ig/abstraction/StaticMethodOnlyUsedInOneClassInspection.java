@@ -8,26 +8,23 @@ package com.siyeh.ig.abstraction;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.search.PsiReferenceProcessor;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.util.Query;
 import com.intellij.util.Processor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.refactoring.RefactoringFactory;
+import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 public class StaticMethodOnlyUsedInOneClassInspection
         extends MethodInspection {
@@ -57,6 +54,33 @@ public class StaticMethodOnlyUsedInOneClassInspection
         }
         return InspectionGadgetsBundle.message(
                 "static.method.only.used.in.one.class.problem.descriptor", name);
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new StaticMethodOnlyUsedInOneClassFix();
+    }
+
+    private static class StaticMethodOnlyUsedInOneClassFix
+            extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "static.method.only.used.in.one.class.quickfix");
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement location = descriptor.getPsiElement();
+            final PsiMethod method = (PsiMethod)location.getParent();
+            final RefactoringActionHandlerFactory factory =
+                    RefactoringActionHandlerFactory.getInstance();
+            final RefactoringActionHandler moveHandler =
+                    factory.createMoveHandler();
+            final DataManager dataManager = DataManager.getInstance();
+            final DataContext dataContext = dataManager.getDataContext();
+            moveHandler.invoke(project, new PsiElement[]{method}, dataContext);
+        }
     }
 
     public BaseInspectionVisitor buildVisitor() {

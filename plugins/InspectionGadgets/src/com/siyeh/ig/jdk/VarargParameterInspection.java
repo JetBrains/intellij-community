@@ -63,7 +63,7 @@ public class VarargParameterInspection extends MethodInspection {
 
         public String getName() {
             return InspectionGadgetsBundle.message(
-                    "variable.argument.method.quick.fix");
+                    "variable.argument.method.quickfix");
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
