@@ -328,6 +328,7 @@ public class TemplateState implements Disposable {
 
     if (myChangesFlag) {
       setCurrentVariableNumber(-1);
+      fireTemplateCancelled();
     }
     else {
       if (!mySegments.isInvalid()) {
