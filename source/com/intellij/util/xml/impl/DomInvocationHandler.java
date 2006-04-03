@@ -33,6 +33,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   private static final String ATTRIBUTES = "@";
 
+  private final Type myAbstractType;
   private Type myType;
   private final DomInvocationHandler myParent;
   private final DomManagerImpl myManager;
@@ -62,6 +63,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myTagName = tagName;
     myManager = manager;
     myGenericConverter = genericConverter;
+    myAbstractType = type;
     setType(type);
   }
 
@@ -85,6 +87,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public final Type getDomElementType() {
     return myType;
+  }
+
+  final Type getAbstractType() {
+    return myAbstractType;
   }
 
   public final void copyFrom(DomElement other) {
@@ -276,7 +282,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
-  private List<CollectionElementInvocationHandler> getCollectionChildren() {
+  final List<CollectionElementInvocationHandler> getCollectionChildren() {
     final List<CollectionElementInvocationHandler> collectionChildren = new ArrayList<CollectionElementInvocationHandler>();
     final XmlTag tag = getXmlTag();
     if (tag != null) {
@@ -369,6 +375,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   @NotNull
   final IndexedElementInvocationHandler getFixedChild(final Pair<String, Integer> info) {
     return myFixedChildren.get(info);
+  }
+
+  final Collection<IndexedElementInvocationHandler> getFixedChildren() {
+    return myFixedChildren.values();
   }
 
   @NotNull

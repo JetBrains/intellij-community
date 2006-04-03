@@ -54,7 +54,7 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
     }
   }
 
-  private final TagChangeSet getChangeSet(XmlTag tag) {
+  private TagChangeSet getChangeSet(XmlTag tag) {
     assert !myDocumentChanged;
     assert tag != null;
     TagChangeSet changeSet = myChangeSets.get(tag);

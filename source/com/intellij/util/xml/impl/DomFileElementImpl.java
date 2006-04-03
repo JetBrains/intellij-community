@@ -3,6 +3,10 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.javaee.model.ElementPresentation;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlDocument;
@@ -10,18 +14,12 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
-import com.intellij.javaee.model.ElementPresentation;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.reflect.Type;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -185,6 +183,13 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
         myManager.createDomElement(myRootHandler);
       }
       return myRootHandler;
+    }
+  }
+
+  protected final void resetRoot() {
+    if (myRootHandler != null) {
+      myRootHandler.detach(true);
+      myRootHandler = null;
     }
   }
 
