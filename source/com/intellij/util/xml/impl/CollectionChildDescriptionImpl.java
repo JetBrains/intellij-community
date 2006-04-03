@@ -12,6 +12,7 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
@@ -93,6 +94,13 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   public List<? extends DomElement> getValues(final DomElement element) {
     try {
       return (List<DomElement>)myGetterMethod.invoke(element);
+    }
+    catch (InvocationTargetException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)cause;
+      }
+      throw new RuntimeException(cause);
     }
     catch (ProcessCanceledException e) {
       throw e;
