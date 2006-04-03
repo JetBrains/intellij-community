@@ -37,7 +37,7 @@ import java.awt.event.KeyEvent;
  * @author Vladimir Kondratyev
  */
 public class ComboBox extends JComboBox {
-  private final int myMinimumAndPreferredWidth;
+  private int myMinimumAndPreferredWidth;
 
   public ComboBox() {
     this(-1);
@@ -62,7 +62,11 @@ public class ComboBox extends JComboBox {
     registerCancelOnEscape();
   }
 
-  private DialogWrapperDialog getParentDialog(Component c) {
+  public void setMinimumAndPreferredWidth(final int minimumAndPreferredWidth) {
+    myMinimumAndPreferredWidth = minimumAndPreferredWidth;
+  }
+
+  private static DialogWrapperDialog getParentDialog(Component c) {
     do {
       if (c == null || c instanceof DialogWrapperDialog) return (DialogWrapperDialog)c;
       c = c.getParent();

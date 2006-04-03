@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -141,7 +142,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   @NonNls private static final String ELEMENT_AUTOSCROLL_TO_SOURCE = "autoscrollToSource";
   @NonNls private static final String ELEMENT_AUTOSCROLL_FROM_SOURCE = "autoscrollFromSource";
   @NonNls private static final String ELEMENT_SORT_BY_TYPE = "sortByType";
-  private JComboBox myCombo;
+  private ComboBox myCombo;
   private JPanel myViewContentPanel;
   private JPanel myActionGroupPanel;
   private JLabel myLabel;
@@ -367,6 +368,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         return this;
       }
     });
+    myCombo.setMinimumAndPreferredWidth(10);
 
     myStructureViewWrapper = new MyStructureViewWrapperImpl();
     myStructureViewWrapper.setFileEditor(null);
