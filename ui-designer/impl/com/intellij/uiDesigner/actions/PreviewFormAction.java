@@ -167,7 +167,7 @@ public final class PreviewFormAction extends AnAction{
     // 2. Copy previewer class and all its superclasses into TEMP directory and instrument it.
     try {
       final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME, true);
-      CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$1", true);
+      //CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$1", true);
       CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyWindowListener", true);
       CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyExitAction", true);
       CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyPackAction", true);
@@ -199,7 +199,7 @@ public final class PreviewFormAction extends AnAction{
       Messages.showErrorDialog(
         module.getProject(),
         UIDesignerBundle.message("error.cannot.preview.form", formFile.getPath().replace('/', File.separatorChar),
-                             (e.getMessage() != null ? e.getMessage() : e.toString())),
+                                 e.getMessage() != null ? e.getMessage() : e.toString()),
         CommonBundle.getErrorTitle()
       );
       return;

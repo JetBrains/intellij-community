@@ -70,7 +70,7 @@ public final class CopyResourcesUtil {
     copyClass(targetDir, "com/intellij/uiDesigner/core/HorizontalInfo", deleteOnExit);
     copyClass(targetDir, "com/intellij/uiDesigner/core/LayoutState", deleteOnExit);
     copyClass(targetDir, "com/intellij/uiDesigner/core/Spacer", deleteOnExit);
-    copyClass(targetDir, "com/intellij/uiDesigner/core/SupportCode$1", deleteOnExit);
+    //copyClass(targetDir, "com/intellij/uiDesigner/core/SupportCode$1", deleteOnExit);
     copyClass(targetDir, "com/intellij/uiDesigner/core/SupportCode$TextWithMnemonic", deleteOnExit);
     copyClass(targetDir, "com/intellij/uiDesigner/core/SupportCode", deleteOnExit);
     copyClass(targetDir, "com/intellij/uiDesigner/core/Util", deleteOnExit);
