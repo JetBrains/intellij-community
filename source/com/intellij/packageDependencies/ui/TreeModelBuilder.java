@@ -437,8 +437,14 @@ public class TreeModelBuilder {
 
   private PsiPackage getFilePackage(PsiJavaFile file) {
     VirtualFile vFile = file.getVirtualFile();
-    if (myFileIndex.isInLibrarySource(vFile)) {
-      return myPsiManager.findPackage(myFileIndex.getPackageNameByDirectory(vFile.getParent()));
+    if (vFile != null && myFileIndex.isInLibrarySource(vFile)) {
+      final VirtualFile directory = vFile.getParent();
+      if (directory != null) {
+        final String packageName = myFileIndex.getPackageNameByDirectory(directory);
+        if (packageName != null) {
+          return myPsiManager.findPackage(packageName);
+        }
+      }
     }
     return myPsiManager.findPackage(file.getPackageName());
   }
@@ -450,7 +456,9 @@ public class TreeModelBuilder {
   }
 
   private OrderEntry getLibraryForFile(PsiFile file) {
-    List<OrderEntry> orders = myFileIndex.getOrderEntriesForFile(file.getVirtualFile());
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return null;
+    List<OrderEntry> orders = myFileIndex.getOrderEntriesForFile(virtualFile);
     for (OrderEntry order : orders) {
       if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) return order;
     }
@@ -551,9 +559,8 @@ public class TreeModelBuilder {
     ((DirectoryNode)directoryNode).setCompactedDirNode(childNode); //compact
     getMap(myModuleDirNodes, scopeType).put(psiDirectory, (DirectoryNode)directoryNode);
 
-    if (!myFlattenPackages) {
-      final PsiDirectory directory = psiDirectory.getParentDirectory();
-      LOG.assertTrue(directory != null);
+    final PsiDirectory directory = psiDirectory.getParentDirectory();
+    if (!myFlattenPackages && directory != null) {
       final PsiDirectory parentDirectory = directory.getParentDirectory();
       if (parentDirectory != null && ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(parentDirectory.getVirtualFile()) == module) {
         DirectoryNode parentDirectoryNode = getMap(myModuleDirNodes, scopeType).get(directory);
