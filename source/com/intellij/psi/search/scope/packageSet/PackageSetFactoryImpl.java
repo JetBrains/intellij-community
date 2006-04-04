@@ -3,6 +3,7 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopesLexer;
 import org.jetbrains.annotations.Nullable;
@@ -194,11 +195,14 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
             myLexer.getTokenType() == null) {
           myLexer.advance();
           break;
-        }
-        if (myLexer.getTokenType() == TokenTypeEx.ASTERISK){
+        } else if (myLexer.getTokenType() == TokenTypeEx.ASTERISK){
           pattern.append("*");
-        } else {
+        } else if (myLexer.getTokenType() == JavaTokenType.IDENTIFIER ||
+                   myLexer.getTokenType() == JavaTokenType.WHITE_SPACE){
           pattern.append(getTokenText());
+        } else {
+          error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
+          break;
         }
         myLexer.advance();
       }

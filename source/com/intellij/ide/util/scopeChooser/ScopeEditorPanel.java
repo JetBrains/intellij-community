@@ -136,7 +136,7 @@ public class ScopeEditorPanel {
         myErrorMessage = null;
         rebuild(false);
       }
-      catch (ParsingException e) {
+      catch (Exception e) {
         myErrorMessage = e.getMessage();
         showErrorMessage();
       }
@@ -224,7 +224,7 @@ public class ScopeEditorPanel {
       final String modulePattern = node.toString();
       return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*") : new PatternPackageSet("*..*", scope, modulePattern, null);
     } else if (node instanceof ModuleNode) {
-      if (!recursively) return null;                            
+      if (!recursively) return null;
       final String scope = getSelectedScopeType(node);
       final String modulePattern = ((ModuleNode)node).getModuleName();
       return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*") : new PatternPackageSet("*..*", scope, modulePattern, null);
@@ -260,14 +260,14 @@ public class ScopeEditorPanel {
     return null;
   }
 
-  private PackageSet getPatternSet(PackageDependenciesNode node, String pattern) {
+  private static PackageSet getPatternSet(PackageDependenciesNode node, String pattern) {
     String scope = getSelectedScopeType(node);
     String modulePattern = getSelectedModulePattern(node);
 
     return new PatternPackageSet(scope != PatternPackageSet.SCOPE_FILE ? pattern : null, scope, modulePattern, scope == PatternPackageSet.SCOPE_FILE ? pattern : null);
   }
 
-  private String getSelectedModulePattern(PackageDependenciesNode node) {
+  private static String getSelectedModulePattern(PackageDependenciesNode node) {
     ModuleNode moduleParent = getModuleParent(node);
     String modulePattern = null;
     if (moduleParent != null) {
@@ -276,7 +276,7 @@ public class ScopeEditorPanel {
     return modulePattern;
   }
 
-  private String getSelectedScopeType(PackageDependenciesNode node) {
+  private static String getSelectedScopeType(PackageDependenciesNode node) {
     if (DependencyUISettings.getInstance().UI_GROUP_BY_FILES) return PatternPackageSet.SCOPE_FILE;
     GeneralGroupNode groupParent = getGroupParent(node);
     String scope = PatternPackageSet.SCOPE_ANY;
@@ -295,13 +295,13 @@ public class ScopeEditorPanel {
     return scope;
   }
 
-  private GeneralGroupNode getGroupParent(PackageDependenciesNode node) {
+  private static GeneralGroupNode getGroupParent(PackageDependenciesNode node) {
     if (node instanceof GeneralGroupNode) return (GeneralGroupNode)node;
     if (node == null || node instanceof RootNode) return null;
     return getGroupParent((PackageDependenciesNode)node.getParent());
   }
 
-  private ModuleNode getModuleParent(PackageDependenciesNode node) {
+  private static ModuleNode getModuleParent(PackageDependenciesNode node) {
     if (node instanceof ModuleNode) return (ModuleNode)node;
     if (node == null || node instanceof RootNode) return null;
     return getModuleParent((PackageDependenciesNode)node.getParent());
@@ -346,7 +346,7 @@ public class ScopeEditorPanel {
     rebuild(updateText, null);
   }
 
-  private void initTree(Tree tree) {
+  private static void initTree(Tree tree) {
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
