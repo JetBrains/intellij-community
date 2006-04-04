@@ -9,6 +9,7 @@ import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -93,7 +94,7 @@ public final class RegExpPredicate extends Handler {
 
     text = getMeaningfulText(matchedNode);
 
-    boolean result = doMatch(text, start, end, context);
+    boolean result = doMatch(text, start, end, context, matchedNode);
 
     if (!result) {
       // Short class name is matched with fully qualified name
@@ -106,11 +107,11 @@ public final class RegExpPredicate extends Handler {
           text = ((PsiClass)element).getQualifiedName();
 
           if (text!=null) {
-            result = doMatch(text, start, end, context);
+            result = doMatch(text, start, end, context, matchedNode);
           }
         }
       } else if (matchedNode instanceof PsiLiteralExpression) {
-        result = doMatch(matchedNode.getText(), start, end, context);
+        result = doMatch(matchedNode.getText(), start, end, context, matchedNode);
       }
     }
 
@@ -122,7 +123,8 @@ public final class RegExpPredicate extends Handler {
     if (matchedNode instanceof PsiReferenceExpression &&
         ((PsiReferenceExpression)matchedNode).getQualifierExpression()!=null
        ) {
-      text = ((PsiReferenceExpression)matchedNode).getReferenceNameElement().getText();
+      final PsiElement referencedElement = ((PsiReferenceExpression)matchedNode).getReferenceNameElement();
+      text = referencedElement != null ? referencedElement.getText():"";
     } else if (matchedNode instanceof PsiLiteralExpression) {
       text = matchedNode.getText();
       //if (text.length()>2 && text.charAt(0)=='"' && text.charAt(text.length()-1)=='"') {
@@ -146,11 +148,11 @@ public final class RegExpPredicate extends Handler {
     return match(patternNode,matchedNode,0,-1,context);
   }
 
-  boolean doMatch(String text, MatchContext context) {
-    return doMatch(text,0,-1,context);
+  boolean doMatch(String text, MatchContext context, PsiElement matchedElement) {
+    return doMatch(text,0,-1,context, matchedElement);
   }
 
-  boolean doMatch(String text, int from, int end, MatchContext context) {
+  boolean doMatch(String text, int from, int end, MatchContext context,PsiElement matchedElement) {
     if (from!=0 || end!=-1) {
       text = text.substring(from,end == -1 ? text.length():end);
     }
@@ -167,7 +169,9 @@ public final class RegExpPredicate extends Handler {
           new MatchResultImpl(
             baseHandlerName + "_" + i,
             matcher.group(i),
-            null,
+            new SmartPsiPointer(matchedElement),
+            matcher.start(i),
+            matcher.end(i),
             target
           )
         );

@@ -1,11 +1,10 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
-import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
-import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.MatchUtils;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.HierarchyNodeIterator;
 import com.intellij.psi.*;
+import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
+import com.intellij.structuralsearch.impl.matcher.iterators.HierarchyNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -37,7 +36,7 @@ public class ExprTypePredicate extends Handler {
       final PsiType type = evalType((PsiExpression)match,context);
       if (type==null) return false;
 
-      return doMatchWithTheType(type, context);
+      return doMatchWithTheType(type, context, match);
     } else {
       return false;
     }
@@ -56,7 +55,7 @@ public class ExprTypePredicate extends Handler {
     return type;
   }
 
-  private boolean doMatchWithTheType(final PsiType type, MatchContext context) {
+  private boolean doMatchWithTheType(final PsiType type, MatchContext context, PsiElement matchedNode) {
     if (type instanceof PsiClassType) {
       PsiClass clazz = ((PsiClassType)type).resolve();
 
@@ -65,13 +64,13 @@ public class ExprTypePredicate extends Handler {
 
     if (type!=null) {
       final String presentableText = type.getPresentableText();
-      boolean result = delegate.doMatch(presentableText,context);
+      boolean result = delegate.doMatch(presentableText,context, matchedNode);
 
       if (!result && type instanceof PsiArrayType && ((PsiArrayType)type).getComponentType() instanceof PsiClassType) {
         PsiClass clazz = ((PsiClassType)((PsiArrayType)type).getComponentType()).resolve();
 
         if (clazz!=null) { // presentable text for array is not qualified!
-          result = delegate.doMatch(clazz.getQualifiedName()+"[]",context);
+          result = delegate.doMatch(clazz.getQualifiedName()+"[]",context, matchedNode);
         }
       }
       return result;

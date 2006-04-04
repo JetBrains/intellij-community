@@ -1068,7 +1068,7 @@ public class MatchingVisitor extends PsiElementVisitor {
 
     List<PsiElement> matchedNodes = null;
     PsiElement patternElement;
-    MatchResultImpl saveResult = matchContext.getResult();
+    final MatchResultImpl saveResult = matchContext.hasResult() ? matchContext.getResult():null;
     matchContext.setResult(null);
 
     Loop:

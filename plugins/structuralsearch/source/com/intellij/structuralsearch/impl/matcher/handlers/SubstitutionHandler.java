@@ -180,7 +180,7 @@ public class SubstitutionHandler extends Handler {
       myNestedResult = null;
       
       if (maxOccurs==1 && minOccurs==1) {
-        context.getResult().removeSon(name);
+        if (context.hasResult()) context.getResult().removeSon(name);
       }
       // @todo we may fail fast the match by throwing an exception
 
