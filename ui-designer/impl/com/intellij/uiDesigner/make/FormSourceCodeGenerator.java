@@ -242,6 +242,11 @@ public final class FormSourceCodeGenerator {
 
       method.delete();
     }
+
+    final PsiMethod[] grcMethods = aClass.findMethodsByName(AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME, false);
+    for(final PsiMethod grcMethod: grcMethods) {
+      grcMethod.delete();
+    }
   }
 
   private static boolean containsMethodIdentifier(final PsiElement element, final PsiMethod setupMethod) {
