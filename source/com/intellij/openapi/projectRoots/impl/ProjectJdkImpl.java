@@ -25,6 +25,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
   private final ProjectRootContainerImpl myRootContainer;
   private String myName;
   private String myVersionString;
+  private boolean myVersionDefined = false;
   private String myHomePath = "";
   private final MyRootProvider myRootProvider = new MyRootProvider();
   private ProjectJdkImpl myOrigin = null;
@@ -64,13 +65,14 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
 
   public final void setVersionString(String versionString) {
     myVersionString = (versionString == null || "".equals(versionString)) ? null : versionString;
+    myVersionDefined = true;
   }
 
   public String getVersionString() {
-    if (myVersionString == null) {
+    if (myVersionString == null && !myVersionDefined) {
       String homePath = getHomePath();
       if (homePath != null && homePath.length() > 0) {
-        this.setVersionString(mySdkType.getVersionString(homePath));
+        setVersionString(mySdkType.getVersionString(homePath));
       }
     }
     return myVersionString;
@@ -99,16 +101,16 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
       mySdkType = JavaSdk.getInstance();
     }
     final Element version = element.getChild(ELEMENT_VERSION);
-    this.setVersionString((version != null) ? version.getAttributeValue(ATTRIBUTE_VALUE) : null);
+    setVersionString((version != null) ? version.getAttributeValue(ATTRIBUTE_VALUE) : null);
 
     if (element.getAttribute(ELEMENT_VERSION) == null || !"2".equals(element.getAttributeValue(ELEMENT_VERSION))) {
       myRootContainer.startChange();
       myRootContainer.readOldVersion(element.getChild(ELEMENT_ROOTS));
       final List children = element.getChild(ELEMENT_ROOTS).getChildren(ELEMENT_ROOT);
-      for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-        Element root = (Element)iterator.next();
-        for (Iterator j = root.getChildren(ELEMENT_PROPERTY).iterator(); j.hasNext();) {
-          Element prop = (Element)j.next();
+      for (final Object aChildren : children) {
+        Element root = (Element)aChildren;
+        for (final Object o : root.getChildren(ELEMENT_PROPERTY)) {
+          Element prop = (Element)o;
           if (ELEMENT_TYPE.equals(prop.getAttributeValue(ELEMENT_NAME)) && VALUE_JDKHOME.equals(prop.getAttributeValue(ATTRIBUTE_VALUE))) {
             myHomePath = VirtualFileManager.extractPath(root.getAttributeValue(ATTRIBUTE_FILE));
           }
@@ -127,8 +129,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
 
   private static SdkType getSdkTypeByName(String sdkTypeName) {
     final SdkType[] allSdkTypes = ApplicationManager.getApplication().getComponents(SdkType.class);
-    for (int idx = 0; idx < allSdkTypes.length; idx++) {
-      final SdkType type = allSdkTypes[idx];
+    for (final SdkType type : allSdkTypes) {
       if (type.getName().equals(sdkTypeName)) {
         return type;
       }
@@ -175,6 +176,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
     myHomePath = path;
     if (changes) {
       myVersionString = null; // clear cached value if home path changed
+      myVersionDefined = false;
     }
   }
 
@@ -221,17 +223,17 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
 
   private static void copyRoots(ProjectRootContainer srcContainer, ProjectRootContainer destContainer, ProjectRootType type){
     final ProjectRoot[] newRoots = srcContainer.getRoots(type);
-    for (int i = 0; i < newRoots.length; i++){
-      destContainer.addRoot(newRoots[i], type);
+    for (ProjectRoot newRoot : newRoots) {
+      destContainer.addRoot(newRoot, type);
     }
   }
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
     public String[] getUrls(OrderRootType rootType) {
-      final VirtualFile[] rootFiles = myRootContainer.getRootFiles((ProjectRootType)ourOrderRootsToProjectRoots.get(rootType));
+      final VirtualFile[] rootFiles = myRootContainer.getRootFiles(ourOrderRootsToProjectRoots.get(rootType));
       final ArrayList<String> result = new ArrayList<String>();
-      for (int i = 0; i < rootFiles.length; i++) {
-        result.add(rootFiles[i].getUrl());
+      for (VirtualFile rootFile : rootFiles) {
+        result.add(rootFile.getUrl());
       }
       return result.toArray(new String[result.size()]);
     }
@@ -266,7 +268,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
     }
   }
 
-  private final static HashMap ourOrderRootsToProjectRoots = new HashMap();
+  private final static HashMap<OrderRootType,ProjectRootType> ourOrderRootsToProjectRoots = new HashMap<OrderRootType, ProjectRootType>();
 
   static {
     ourOrderRootsToProjectRoots.put(OrderRootType.CLASSES, ProjectRootType.CLASS);
@@ -310,8 +312,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
   public VirtualFile[] getRoots(ProjectRootType rootType) {
     final ProjectRoot[] roots = myRootContainer.getRoots(rootType); // use getRoots() cause the data is most up-to-date there
     final List<VirtualFile> files = new ArrayList<VirtualFile>(roots.length);
-    for (int idx = 0; idx < roots.length; idx++) {
-      ProjectRoot root = roots[idx];
+    for (ProjectRoot root : roots) {
       files.addAll(Arrays.asList(root.getVirtualFiles()));
     }
     return files.toArray(new VirtualFile[files.size()]);
