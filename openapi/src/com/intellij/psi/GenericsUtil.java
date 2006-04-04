@@ -34,6 +34,8 @@ import java.util.Set;
 public class GenericsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.GenericsUtil");
 
+  private GenericsUtil() {}
+
   public static PsiType getGreatestLowerBound(PsiType type1, PsiType type2) {
     return PsiIntersectionType.createIntersection(type1, type2);
   }
