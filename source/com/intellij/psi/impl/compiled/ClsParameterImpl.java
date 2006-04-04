@@ -56,6 +56,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
     return this;
   }
 
+  @NotNull
   public PsiTypeElement getTypeElement() {
     return myType;
   }
