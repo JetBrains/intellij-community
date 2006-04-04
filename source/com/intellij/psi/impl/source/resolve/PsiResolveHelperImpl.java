@@ -164,8 +164,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
 
     if (wildcardToCapture != null) {
       if (lowerBound != PsiType.NULL) {
+        if (!wildcardToCapture.isAssignableFrom(lowerBound)) return PsiType.NULL;
         lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, wildcardToCapture, typeParameter.getManager());
       } else {
+        if (upperBound != PsiType.NULL && !upperBound.isAssignableFrom(wildcardToCapture)) return PsiType.NULL;
         return wildcardToCapture;
       }
     }
