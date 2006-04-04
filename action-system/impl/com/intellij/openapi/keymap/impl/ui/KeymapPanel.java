@@ -910,8 +910,8 @@ public class KeymapPanel extends JPanel {
       }
 
       Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
-      for(int i = 0; i < shortcuts.length; i++){
-        shortcutsModel.addElement(shortcuts[i]);
+      for (Shortcut shortcut : shortcuts) {
+        shortcutsModel.addElement(shortcut);
       }
       if(shortcutsModel.size() > 0) {
         myShortcutsList.setSelectedIndex(0);
@@ -930,6 +930,12 @@ public class KeymapPanel extends JPanel {
 
   private @NonNls String prepareDescription(final String description) {
     return myFilterComponent != null ? "<html><body>" + SearchUtil.markup(description, myFilterComponent.getFilter()) + "</body></html>" : description;
+  }
+
+  public void disposeUI() {
+    if (myFilterComponent != null){
+      myFilterComponent.dispose();
+    }
   }
 
   private final class MyKeymapRenderer extends DefaultListCellRenderer {
@@ -982,13 +988,13 @@ public class KeymapPanel extends JPanel {
     myKeymapListModel.removeAllElements();
     KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     Keymap[] keymaps = keymapManager.getAllKeymaps();
-    for(int i = 0; i < keymaps.length; i++){
-      KeymapImpl keymap = (KeymapImpl)keymaps[i];
-      if(keymap.canModify()) {
+    for (Keymap keymap1 : keymaps) {
+      KeymapImpl keymap = (KeymapImpl)keymap1;
+      if (keymap.canModify()) {
         keymap = keymap.copy();
       }
       myKeymapListModel.addElement(keymap);
-      if(keymapManager.getActiveKeymap() == keymaps[i]) {
+      if (keymapManager.getActiveKeymap() == keymap1) {
         myActiveKeymap = keymap;
       }
     }
@@ -1002,8 +1008,7 @@ public class KeymapPanel extends JPanel {
 
     myQuickListsModel.removeAllElements();
     QuickList[] allQuickLists = QuickListsManager.getInstance().getAllQuickLists();
-    for (int i = 0; i < allQuickLists.length; i++) {
-      QuickList list = allQuickLists[i];
+    for (QuickList list : allQuickLists) {
       myQuickListsModel.addElement(list);
     }
 
@@ -1107,7 +1112,7 @@ public class KeymapPanel extends JPanel {
     }
   }
 
-  public class ShortcutTextField extends JTextField {
+  public static class ShortcutTextField extends JTextField {
     private KeyStroke myKeyStroke;
 
     public ShortcutTextField() {

@@ -273,6 +273,7 @@ public abstract class IntentionSettingsTree {
   }
 
   public void dispose() {
+    myFilter.dispose();
   }
 
   public void setFilter(String filter){

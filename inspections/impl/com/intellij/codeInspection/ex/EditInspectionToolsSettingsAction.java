@@ -157,7 +157,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
 
     public void disposeUIResources() {
       if (myPanel != null) {
-        myPanel.saveVisibleState();
+        myPanel.disposeUI();
         myPanel = null;
       }
     }

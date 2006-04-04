@@ -109,4 +109,7 @@ public abstract class FilterComponent extends JPanel {
     filter();
   }
 
+  public void dispose() {
+    myUpdateAlarm.cancelAllRequests();
+  }
 }

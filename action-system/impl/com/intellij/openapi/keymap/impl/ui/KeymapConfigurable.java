@@ -54,7 +54,10 @@ public class KeymapConfigurable extends BaseConfigurable implements SearchableCo
   }
 
   public void disposeUIResources() {
-    myPanel = null;
+    if (myPanel != null) {
+      myPanel.disposeUI();
+      myPanel = null;
+    }
   }
 
   public String getHelpTopic() {
