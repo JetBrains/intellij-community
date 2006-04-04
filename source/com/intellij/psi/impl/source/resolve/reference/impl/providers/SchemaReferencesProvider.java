@@ -3,12 +3,16 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -138,14 +142,31 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
     @Nullable
     public PsiElement resolve() {
+      final PsiManager manager = getElement().getManager();
+      final PsiElement psiElement;
+
+      if(manager instanceof PsiManagerImpl){
+        psiElement = ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, new ResolveCache.Resolver() {
+          public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
+            return resolveInner();
+          }
+        }, false, false);
+      } else {
+        psiElement = resolveInner();
+      }
+
+      return psiElement != PsiUtil.NULL_PSI_ELEMENT ? psiElement:null;
+    }
+
+    private PsiElement resolveInner() {
       final XmlTag tag = PsiTreeUtil.getParentOfType(myElement, XmlTag.class);
-      if (tag == null) return null;
-      
+      if (tag == null) return PsiUtil.NULL_PSI_ELEMENT;
+
       String canonicalText = getCanonicalText();
       XmlNSDescriptorImpl nsDescriptor = getDescriptor(tag,canonicalText);
 
       if (myType != null && nsDescriptor != null) {
-        
+
         switch(myType) {
           case GroupReference: return nsDescriptor.findGroup(canonicalText);
           case AttributeGroupReference: return nsDescriptor.findAttributeGroup(canonicalText);
@@ -157,7 +178,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
               true
             );
 
-            return descriptor != null ? descriptor.getDeclaration(): null;
+            return descriptor != null ? descriptor.getDeclaration(): PsiUtil.NULL_PSI_ELEMENT;
           }
           case AttributeReference: {
             final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(canonicalText);
@@ -168,17 +189,17 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
             );
 
             if (descriptor != null) return descriptor.getDeclaration();
-            
+
             if ("xml".equals(prefixByQualifiedName) &&
                 ( "lang".equals(localNameByQualifiedName) ||
                   "base".equals(localNameByQualifiedName) ||
-                  "space".equals(localNameByQualifiedName) 
+                  "space".equals(localNameByQualifiedName)
                 )
                ) {
               return myElement; // for compatibility
             }
-            
-            return null;
+
+            return PsiUtil.NULL_PSI_ELEMENT;
           }
           case TypeReference: {
             TypeDescriptor typeDescriptor = nsDescriptor.getTypeDescriptor(canonicalText,tag);
@@ -191,7 +212,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
         }
       }
 
-      return null;
+      return PsiUtil.NULL_PSI_ELEMENT;
     }
 
     private XmlNSDescriptorImpl getDescriptor(final XmlTag tag, String text) {
@@ -203,7 +224,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       if (nsDescriptor == null) { // import
         nsDescriptor = (XmlNSDescriptor)((XmlFile)tag.getContainingFile()).getDocument().getMetaData();
       }
-      
+
       return nsDescriptor instanceof XmlNSDescriptorImpl ? (XmlNSDescriptorImpl)nsDescriptor:null;
     }
 
