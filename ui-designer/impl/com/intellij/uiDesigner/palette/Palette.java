@@ -539,8 +539,12 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       readMethod,
       writeMethod,
       new IntEnumRenderer(pairs),
-      new IntEnumEditor(pairs)
-    );
+      new IntEnumEditor(pairs), false);
+  }
+
+  @NotNull
+  public IntrospectedProperty[] getIntrospectedProperties(@NotNull final RadComponent component) {
+    return getIntrospectedProperties(component.getComponentClass(), component.getDelegee().getClass());
   }
 
   /**
@@ -549,7 +553,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    * returned.
    */
   @NotNull
-  public IntrospectedProperty[] getIntrospectedProperties(@NotNull final Class aClass){
+  public IntrospectedProperty[] getIntrospectedProperties(@NotNull final Class aClass, @NotNull final Class delegeeClass) {
     // Try the cache first
     // TODO[vova, anton] update cache after class reloading (its properties caould be hanged).
     if (myClass2Properties.containsKey(aClass)) {
@@ -560,22 +564,25 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     try {
       final BeanInfo beanInfo = Introspector.getBeanInfo(aClass);
       final PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
-      for (int i = 0; i < descriptors.length; i++) {
-        final PropertyDescriptor descriptor = descriptors[i];
-
-        final Method readMethod = descriptor.getReadMethod();
-        final Method writeMethod = descriptor.getWriteMethod();
+      for (final PropertyDescriptor descriptor : descriptors) {
+        Method readMethod = descriptor.getReadMethod();
+        Method writeMethod = descriptor.getWriteMethod();
         if (writeMethod == null || readMethod == null) {
           continue;
         }
 
+        boolean storeAsClient = false;
+        try {
+          delegeeClass.getMethod(readMethod.getName(), readMethod.getParameterTypes());
+          delegeeClass.getMethod(writeMethod.getName(), writeMethod.getParameterTypes());
+        }
+        catch (NoSuchMethodException e) {
+          storeAsClient = true;
+        }
+
         @NonNls final String name = descriptor.getName();
 
-        if (
-          name.equals("preferredSize") ||
-          name.equals("minimumSize") ||
-          name.equals("maximumSize")
-        ){
+        if (name.equals("preferredSize") || name.equals("minimumSize") || name.equals("maximumSize")) {
           // our own properties must be used instead
           continue;
         }
@@ -595,7 +602,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
               continue;
             }
             else {
-              property = new IntroIntProperty(name, readMethod, writeMethod);
+              property = new IntroIntProperty(name, readMethod, writeMethod, storeAsClient);
             }
           }
           else if (AbstractButton.class.isAssignableFrom(aClass)) {  // special handling AbstractButton subclasses
@@ -603,35 +610,34 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
               continue;
             }
             else {
-              property = new IntroIntProperty(name, readMethod, writeMethod);
+              property = new IntroIntProperty(name, readMethod, writeMethod, storeAsClient);
             }
           }
           else {
-            property = new IntroIntProperty(name, readMethod, writeMethod);
+            property = new IntroIntProperty(name, readMethod, writeMethod, storeAsClient);
           }
         }
         else if (boolean.class.equals(propertyType)) { // boolean
-          property = new IntroBooleanProperty(name, readMethod, writeMethod);
+          property = new IntroBooleanProperty(name, readMethod, writeMethod, storeAsClient);
         }
-        else if(double.class.equals(propertyType)){ // double
-          property = new IntroDoubleProperty(name, readMethod, writeMethod);
+        else if (double.class.equals(propertyType)) { // double
+          property = new IntroDoubleProperty(name, readMethod, writeMethod, storeAsClient);
         }
-        else if (String.class.equals(propertyType)){ // java.lang.String
-          property = new IntroStringProperty(name, readMethod, writeMethod, myProject);
+        else if (String.class.equals(propertyType)) { // java.lang.String
+          property = new IntroStringProperty(name, readMethod, writeMethod, myProject, storeAsClient);
         }
         else if (Insets.class.equals(propertyType)) { // java.awt.Insets
-          property = new IntroInsetsProperty(name, readMethod, writeMethod);
+          property = new IntroInsetsProperty(name, readMethod, writeMethod, storeAsClient);
         }
         else if (Dimension.class.equals(propertyType)) { // java.awt.Dimension
-          property = new IntroDimensionProperty(name, readMethod, writeMethod);
+          property = new IntroDimensionProperty(name, readMethod, writeMethod, storeAsClient);
         }
-        else if(Rectangle.class.equals(propertyType)){ // java.awt.Rectangle
-          property = new IntroRectangleProperty(name, readMethod, writeMethod);
+        else if (Rectangle.class.equals(propertyType)) { // java.awt.Rectangle
+          property = new IntroRectangleProperty(name, readMethod, writeMethod, storeAsClient);
         }
         else if (Component.class.isAssignableFrom(propertyType)) {
-          if (JSplitPane.class.isAssignableFrom(aClass) &&
-            (name.equals("leftComponent") || name.equals("rightComponent") ||
-             name.equals("topComponent") || name.equals("bottomComponent"))) {
+          if (JSplitPane.class.isAssignableFrom(aClass) && (name.equals("leftComponent") || name.equals("rightComponent") ||
+                                                            name.equals("topComponent") || name.equals("bottomComponent"))) {
             // these properties are set through layout
             continue;
           }
@@ -644,16 +650,16 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
               }
             };
           }
-          property = new IntroComponentProperty(name, readMethod, writeMethod, propertyType, filter);
+          property = new IntroComponentProperty(name, readMethod, writeMethod, propertyType, filter, storeAsClient);
         }
         else if (Color.class.equals(propertyType)) {
-          property = new IntroColorProperty(name, readMethod, writeMethod);
+          property = new IntroColorProperty(name, readMethod, writeMethod, storeAsClient);
         }
         else if (Font.class.equals(propertyType)) {
-          property = new IntroFontProperty(name, readMethod, writeMethod);
+          property = new IntroFontProperty(name, readMethod, writeMethod, storeAsClient);
         }
         else if (Icon.class.equals(propertyType)) {
-          property = new IntroIconProperty(name, readMethod, writeMethod);
+          property = new IntroIconProperty(name, readMethod, writeMethod, storeAsClient);
         }
         else {
           // other types are not supported (yet?)
@@ -678,8 +684,8 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    * property with the such name.
    */
   @Nullable
-  public IntrospectedProperty getIntrospectedProperty(@NotNull final Class aClass, @NotNull final String name){
-    final IntrospectedProperty[] properties = getIntrospectedProperties(aClass);
+  public IntrospectedProperty getIntrospectedProperty(@NotNull final RadComponent component, @NotNull final String name){
+    final IntrospectedProperty[] properties = getIntrospectedProperties(component);
     for (final IntrospectedProperty property: properties) {
       if (name.equals(property.getName())) {
         return property;
@@ -694,9 +700,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    * instead.
    */
   @Nullable
-  public IntrospectedProperty getInplaceProperty(@NotNull final Class aClass){
-    final String inplaceProperty = Properties.getInstance().getInplaceProperty(aClass);
-    final IntrospectedProperty[] properties = getIntrospectedProperties(aClass);
+  public IntrospectedProperty getInplaceProperty(@NotNull final RadComponent component) {
+    final String inplaceProperty = Properties.getInstance().getInplaceProperty(component.getClass());
+    final IntrospectedProperty[] properties = getIntrospectedProperties(component);
     for (int i = properties.length - 1; i >= 0; i--) {
       final IntrospectedProperty property = properties[i];
       if(property.getName().equals(inplaceProperty)){

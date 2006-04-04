@@ -46,7 +46,7 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
       return (HashMap)myCache.get(className);
     }
 
-    if (Utils.validateJComponentClass(myLoader, className) != null) {
+    if (Utils.validateJComponentClass(myLoader, className, false) != null) {
       return null;
     }
 

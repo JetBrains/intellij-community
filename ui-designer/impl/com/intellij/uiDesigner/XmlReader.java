@@ -159,7 +159,7 @@ public final class XmlReader {
     if (componentClass != null) {
       final Palette palette = Palette.getInstance(module.getProject());
       for (final LwIntrospectedProperty lwProperty : properties) {
-        final IntrospectedProperty property = palette.getIntrospectedProperty(componentClass, lwProperty.getName());
+        final IntrospectedProperty property = palette.getIntrospectedProperty(component, lwProperty.getName());
         if (property == null) {
           continue;
         }
@@ -203,7 +203,7 @@ public final class XmlReader {
 
   private static RadErrorComponent createErrorComponent(final Module module, final String id, final LwComponent lwComponent, final ClassLoader loader) {
     final String componentClassName = lwComponent.getComponentClassName();
-    final String errorDescription = Utils.validateJComponentClass(loader, componentClassName);
+    final String errorDescription = Utils.validateJComponentClass(loader, componentClassName, true);
     return RadErrorComponent.create(
       module,
       id,

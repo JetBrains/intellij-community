@@ -295,7 +295,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   @Nullable
   public static String getComponentTitle(final RadComponent component) {
     Palette palette = Palette.getInstance(component.getModule().getProject());
-    IntrospectedProperty[] props = palette.getIntrospectedProperties(component.getComponentClass());
+    IntrospectedProperty[] props = palette.getIntrospectedProperties(component);
     for(IntrospectedProperty prop: props) {
       if (prop.getName().equals(SwingProperties.TEXT) && prop instanceof IntroStringProperty) {
         StringDescriptor value = (StringDescriptor) prop.getValue(component);

@@ -35,8 +35,8 @@ public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
 
   private IconEditor myEditor;
 
-  public IntroIconProperty(final String name, final Method readMethod, final Method writeMethod) {
-    super(name, readMethod, writeMethod);
+  public IntroIconProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
+    super(name, readMethod, writeMethod, storeAsClient);
     myEditor = new IconEditor();
   }
 

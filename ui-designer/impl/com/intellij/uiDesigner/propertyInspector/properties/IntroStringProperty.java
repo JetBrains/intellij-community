@@ -37,8 +37,12 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
   private final StringRenderer myRenderer;
   private final StringEditor myEditor;
 
-  public IntroStringProperty(final String name, final Method readMethod, final Method writeMethod, final Project project) {
-    super(name, readMethod, writeMethod);
+  public IntroStringProperty(final String name,
+                             final Method readMethod,
+                             final Method writeMethod,
+                             final Project project,
+                             final boolean storeAsClient) {
+    super(name, readMethod, writeMethod, storeAsClient);
     myRenderer = new StringRenderer();
     myEditor = new StringEditor(project);
   }
@@ -115,10 +119,10 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
 
     // 2. plain value
     final JComponent delegee = component.getDelegee();
-    return stringDescriptorFromValue(delegee);
+    return stringDescriptorFromValue(component, delegee);
   }
 
-  private StringDescriptor stringDescriptorFromValue(final JComponent delegee) {
+  private StringDescriptor stringDescriptorFromValue(final RadComponent component, final JComponent delegee) {
     final StringDescriptor result;
     if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof JLabel)){
       final JLabel label = (JLabel)delegee;
@@ -133,12 +137,17 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
         mergeTextAndMnemonic(button.getText(), button.getMnemonic(), button.getDisplayedMnemonicIndex())
       );
     }
-    else{
-      try {
-        result = StringDescriptor.create((String) myReadMethod.invoke(delegee, EMPTY_OBJECT_ARRAY));
+    else {
+      if (component != null) {
+        result = StringDescriptor.create((String) invokeGetter(component));
       }
-      catch (Exception e) {
-        throw new RuntimeException(e);
+      else {
+        try {
+          result = StringDescriptor.create((String) myReadMethod.invoke(delegee, EMPTY_OBJECT_ARRAY));
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
     }
 
@@ -224,7 +233,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     try {
       Object value = myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
       if (value != null) {
-        setValue(radComponent, stringDescriptorFromValue(component));
+        setValue(radComponent, stringDescriptorFromValue(null, component));
       }
     }
     catch (Exception e) {

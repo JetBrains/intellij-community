@@ -12,13 +12,11 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.CommonBundle;
-import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import java.util.*;
 import java.awt.Component;
 import java.awt.Container;
-import java.lang.reflect.Modifier;
 
 /**
  * @author yole
@@ -82,7 +80,7 @@ public class SnapshotContext {
       return myClassesToReplace.get(componentClass);
     }
 
-    Class replacementClass = suggestReplacementClass(componentClass);
+    Class replacementClass = FormEditingUtil.suggestReplacementClass(componentClass);
 
     // can't use Messages because Application does not exist
     int choice = JOptionPane.showOptionDialog(
@@ -109,25 +107,6 @@ public class SnapshotContext {
       return replacementClass;
     }
     throw new CancelSnapshotException();
-  }
-
-  private static Class suggestReplacementClass(Class componentClass) {
-    while(true) {
-      componentClass = componentClass.getSuperclass();
-      if (componentClass.equals(JComponent.class)) {
-        return JPanel.class;
-      }
-      if ((componentClass.getModifiers() & Modifier.ABSTRACT) != 0) {
-        continue;
-      }
-      try {
-        componentClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
-      }
-      catch(NoSuchMethodException ex) {
-        continue;
-      }
-      return componentClass;
-    }
   }
 
   public void notifyUnknownLayoutManager(Container container) {

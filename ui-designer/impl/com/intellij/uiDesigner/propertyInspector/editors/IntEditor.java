@@ -7,7 +7,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IntEditor extends AbstractTextFieldEditor {
+public final class IntEditor extends AbstractTextFieldEditor<Integer> {
   private final int myLowBoundary;
 
   /**
@@ -17,12 +17,11 @@ public final class IntEditor extends AbstractTextFieldEditor {
     myLowBoundary = lowBoundary;
   }
 
-  protected void setValueFromComponent(final RadComponent component, final Object value) {
-    final Integer integer = (Integer)value;
-    myTf.setText(integer.toString());
+  protected void setValueFromComponent(final RadComponent component, final Integer value) {
+    myTf.setText(value.toString());
   }
 
-  public Object getValue() throws Exception{
+  public Integer getValue() throws Exception{
     try {
       final Integer value = Integer.valueOf(myTf.getText());
       if(value.intValue() < myLowBoundary){

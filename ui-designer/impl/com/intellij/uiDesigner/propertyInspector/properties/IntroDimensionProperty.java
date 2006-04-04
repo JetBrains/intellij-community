@@ -19,8 +19,8 @@ public final class IntroDimensionProperty extends IntrospectedProperty<Dimension
   private final Property[] myChildren;
   private final DimensionRenderer myRenderer;
 
-  public IntroDimensionProperty(final String name, final Method readMethod, final Method writeMethod){
-    super(name, readMethod, writeMethod);
+  public IntroDimensionProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient){
+    super(name, readMethod, writeMethod, storeAsClient);
     myChildren = new Property[]{
       new AbstractDimensionProperty.MyWidthProperty(this),
       new AbstractDimensionProperty.MyHeightProperty(this)

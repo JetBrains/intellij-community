@@ -73,8 +73,11 @@ public final class BindingProperty extends Property<RadComponent, String> {
     return component.getBinding();
   }
 
-  protected void setValueImpl(final RadComponent component, final String value) throws Exception{
+  protected void setValueImpl(final RadComponent component, final String value) throws Exception {
     if (value.length() == 0) {
+      if (component.isCustomCreateRequired()) {
+        throw new Exception(UIDesignerBundle.message("error.custom.create.binding.required"));
+      }
       checkRemoveUnusedField(component);
       component.setBinding(null);
       component.setCustomCreate(false);

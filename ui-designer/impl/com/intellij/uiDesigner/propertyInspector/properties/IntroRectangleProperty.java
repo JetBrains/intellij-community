@@ -22,8 +22,8 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
   private final RectangleRenderer myRenderer;
   private final Property[] myChildren;
 
-  public IntroRectangleProperty(final String name, final Method readMethod, final Method writeMethod){
-    super(name, readMethod, writeMethod);
+  public IntroRectangleProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient){
+    super(name, readMethod, writeMethod, storeAsClient);
     myRenderer=new RectangleRenderer();
     myChildren=new Property[]{
       new MyXProperty(),

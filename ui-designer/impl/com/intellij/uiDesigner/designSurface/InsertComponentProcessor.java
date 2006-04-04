@@ -152,7 +152,7 @@ public final class InsertComponentProcessor extends EventProcessor {
    */
   public static void createBindingWhenDrop(final GuiEditor editor, final RadComponent insertedComponent) {
     final ComponentItem item = Palette.getInstance(editor.getProject()).getItem(insertedComponent.getComponentClassName());
-    if (item != null && item.isAutoCreateBinding()) {
+    if ((item != null && item.isAutoCreateBinding()) || insertedComponent.isCustomCreateRequired()) {
       doCreateBindingWhenDrop(editor, insertedComponent);
     }
   }
@@ -357,7 +357,7 @@ public final class InsertComponentProcessor extends EventProcessor {
           }
           catch (final Exception exc) {
             //noinspection NonConstantStringShouldBeStringBuffer
-            String errorDescription = Utils.validateJComponentClass(loader, item.getClassName());
+            String errorDescription = Utils.validateJComponentClass(loader, item.getClassName(), true);
             if (errorDescription == null) {
               errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", item.getClassName());
               final String message = FormEditingUtil.getExceptionMessage(exc);

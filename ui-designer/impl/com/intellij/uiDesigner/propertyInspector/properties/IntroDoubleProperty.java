@@ -18,8 +18,8 @@ public final class IntroDoubleProperty extends IntrospectedProperty<Double> {
   private final DoubleRenderer myRenderer;
   private final DoubleEditor myEditor;
 
-  public IntroDoubleProperty(final String name, final Method readMethod, final Method writeMethod){
-    super(name, readMethod, writeMethod);
+  public IntroDoubleProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient){
+    super(name, readMethod, writeMethod, storeAsClient);
     myRenderer = new DoubleRenderer();
     myEditor = new DoubleEditor();
   }

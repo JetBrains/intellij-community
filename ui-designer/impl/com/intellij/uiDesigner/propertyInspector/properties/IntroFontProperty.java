@@ -27,8 +27,8 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   private FontEditor myFontEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroFontProperty_";
 
-  public IntroFontProperty(final String name, final Method readMethod, final Method writeMethod) {
-    super(name, readMethod, writeMethod);
+  public IntroFontProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
+    super(name, readMethod, writeMethod, storeAsClient);
     myFontEditor = new FontEditor(name);
   }
 

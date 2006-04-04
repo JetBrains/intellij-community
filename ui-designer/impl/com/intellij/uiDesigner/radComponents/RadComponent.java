@@ -3,10 +3,10 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RevalidateInfo;
-import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.EventProcessor;
@@ -16,13 +16,16 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -115,13 +118,26 @@ public abstract class RadComponent implements IComponent {
     myClass = aClass;
     myId = id;
 
-    myChangeSupport=new PropertyChangeSupport(this);
+    myChangeSupport = new PropertyChangeSupport(this);
     myConstraints = new GridConstraints();
     myModifiedPropertyNames = new HashSet<String>();
 
+    Constructor constructor;
     try {
-      final Constructor constructor = myClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
-      constructor.setAccessible(true);
+      constructor = myClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
+    }
+    catch (NoSuchMethodException e) {
+      try {
+        constructor = FormEditingUtil.suggestReplacementClass(myClass).getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
+      }
+      catch (NoSuchMethodException e1) {
+        throw new RuntimeException(e1);
+      }
+      setCustomCreate(true);
+    }
+
+    constructor.setAccessible(true);
+    try {
       myDelegee = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
     catch (Exception e) {
@@ -167,7 +183,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   public void initDefaultProperties(@NotNull final ComponentItem item) {
-    final IntrospectedProperty[] properties = getPalette().getIntrospectedProperties(myClass);
+    final IntrospectedProperty[] properties = getPalette().getIntrospectedProperties(this);
     for (final IntrospectedProperty property : properties) {
       final Object initialValue = item.getInitialValue(property);
       if (initialValue != null) {
@@ -209,6 +225,10 @@ public abstract class RadComponent implements IComponent {
     myCustomCreate = customCreate;
   }
 
+  public boolean isCustomCreateRequired() {
+    return !getDelegee().getClass().equals(getComponentClass());
+  }
+
   /**
    * @return Swing delegee component. The <code>RadComponent</code> has the same
    * delegee during all its life.
@@ -237,7 +257,7 @@ public abstract class RadComponent implements IComponent {
 
   @Nullable
   public Property getDefaultInplaceProperty() {
-    return getPalette().getInplaceProperty(getComponentClass());
+    return getPalette().getInplaceProperty(this);
   }
 
   @Nullable
@@ -532,7 +552,7 @@ public abstract class RadComponent implements IComponent {
     writer.startElement("properties");
     try{
       final IntrospectedProperty[] introspectedProperties =
-        getPalette().getIntrospectedProperties(getComponentClass());
+        getPalette().getIntrospectedProperties(this);
       for(final IntrospectedProperty property : introspectedProperties) {
         if (isMarkedAsModified(property)) {
           final Object value = property.getValue(this);
@@ -558,7 +578,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   public IProperty[] getModifiedProperties() {
-    IntrospectedProperty[] props = getPalette().getIntrospectedProperties(getComponentClass());
+    IntrospectedProperty[] props = getPalette().getIntrospectedProperties(this);
     ArrayList<IProperty> result = new ArrayList<IProperty>();
     for(IntrospectedProperty prop: props) {
       if (isMarkedAsModified(prop)) {
@@ -618,9 +638,9 @@ public abstract class RadComponent implements IComponent {
       }
       catch (NoSuchMethodException e) {
         componentClass = context.getReplacementClass(componentClass);
-        if (componentClass == null) {
-          return null;
-        }
+      }
+      if (componentClass == null) {
+        return null;
       }
 
       if (component instanceof JPanel) {
@@ -640,7 +660,7 @@ public abstract class RadComponent implements IComponent {
     context.registerComponent(component, result);
     result.importSnapshotComponent(context, component);
 
-    final IntrospectedProperty[] properties = context.getPalette().getIntrospectedProperties(component.getClass());
+    final IntrospectedProperty[] properties = context.getPalette().getIntrospectedProperties(component.getClass(), result.getClass());
     for(IntrospectedProperty prop: properties) {
       prop.importSnapshotValue(component, result);
     }

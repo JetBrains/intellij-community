@@ -96,7 +96,7 @@ public class NoLabelForInspection extends BaseFormInspection {
         return;
       }
       final Palette palette = Palette.getInstance(myEditor.getProject());
-      IntrospectedProperty[] props = palette.getIntrospectedProperties(myLabel.getComponentClass());
+      IntrospectedProperty[] props = palette.getIntrospectedProperties(myLabel);
       for(IntrospectedProperty prop: props) {
         if (prop.getName().equals(SwingProperties.LABEL_FOR)) {
           try {

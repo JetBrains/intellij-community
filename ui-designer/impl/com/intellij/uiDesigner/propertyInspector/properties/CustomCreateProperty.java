@@ -44,7 +44,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     @Override
     public JComponent getComponent(final RadComponent component, final Boolean value, final boolean inplace) {
       JComponent result = super.getComponent(component, value, inplace);
-      result.setEnabled(component.getBinding() != null);
+      result.setEnabled(component.getBinding() != null && !component.isCustomCreateRequired());
       return result;
     }
   };

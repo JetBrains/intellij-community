@@ -118,7 +118,7 @@ public final class Utils {
    * @return descriptive human readable error message or <code>null</code> if
    * no errors were detected.
    */
-  public static String validateJComponentClass(final ClassLoader loader, final String className){
+  public static String validateJComponentClass(final ClassLoader loader, final String className, final boolean validateConstructor){
     if(loader == null){
       throw new IllegalArgumentException("loader cannot be null");
     }
@@ -145,14 +145,16 @@ public final class Utils {
       return "Cannot load class " + className + ": " + exc.getMessage();
     }
 
-    try {
-      final Constructor constructor = aClass.getConstructor(new Class[0]);
-      if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
-        return "Class \"" + className + "\" does not have default public constructor";
+    if (validateConstructor) {
+      try {
+        final Constructor constructor = aClass.getConstructor(new Class[0]);
+        if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
+          return "Class \"" + className + "\" does not have default public constructor";
+        }
       }
-    }
-    catch (final Exception exc) {
-      return "Class \"" + className + "\" does not have default constructor";
+      catch (final Exception exc) {
+        return "Class \"" + className + "\" does not have default constructor";
+      }
     }
 
     // Check that JComponent is accessible via the loader

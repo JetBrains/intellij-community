@@ -18,8 +18,8 @@ public final class IntroBooleanProperty extends IntrospectedProperty<Boolean> {
   private final BooleanRenderer myRenderer;
   private final BooleanEditor myEditor;
 
-  public IntroBooleanProperty(final String name, final Method readMethod, final Method writeMethod){
-    super(name, readMethod, writeMethod);
+  public IntroBooleanProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient){
+    super(name, readMethod, writeMethod, storeAsClient);
     myRenderer = new BooleanRenderer();
     myEditor = new BooleanEditor();
   }

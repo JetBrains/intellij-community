@@ -19,8 +19,8 @@ public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
   private final Property[] myChildren;
   private final InsetsPropertyRenderer myRenderer;
 
-  public IntroInsetsProperty(final String name,final Method readMethod,final Method writeMethod){
-    super(name, readMethod, writeMethod);
+  public IntroInsetsProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient){
+    super(name, readMethod, writeMethod, storeAsClient);
     myChildren=new Property[]{
       new AbstractInsetsProperty.MyTopProperty(this),
       new AbstractInsetsProperty.MyLeftProperty(this),

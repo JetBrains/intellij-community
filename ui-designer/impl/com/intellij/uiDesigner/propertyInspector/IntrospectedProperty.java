@@ -1,15 +1,16 @@
 package com.intellij.uiDesigner.propertyInspector;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ArrayUtil;
-import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * @author Anton Katilin
@@ -21,20 +22,24 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
   /**
    * This method is used to set property value to "delegee" JComponent
    */
-  protected final Method myReadMethod;
+  @NotNull protected final Method myReadMethod;
   /**
    * This method is used to get property value from "delegee" JComponent
    */
-  private final Method myWriteMethod;
+  @NotNull private final Method myWriteMethod;
 
-  public IntrospectedProperty(
-    final String name,
-    final Method readMethod,
-    final Method writeMethod
-  ){
+  private final boolean myStoreAsClient;
+
+  @NonNls private static final String INTRO_PREFIX = "Intro:";
+
+  public IntrospectedProperty(final String name,
+                              @NotNull final Method readMethod,
+                              @NotNull final Method writeMethod,
+                              final boolean storeAsClient) {
     super(null, name);
     myReadMethod = readMethod;
     myWriteMethod = writeMethod;
+    myStoreAsClient = storeAsClient;
   }
 
   /**
@@ -46,6 +51,9 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
   }
 
   protected Object invokeGetter(final RadComponent component) {
+    if (myStoreAsClient) {
+      return component.getClientProperty(INTRO_PREFIX + getName());
+    }
     try {
       return myReadMethod.invoke(component.getDelegee(), EMPTY_OBJECT_ARRAY);
     }
@@ -62,7 +70,12 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
   }
 
   protected void invokeSetter(final RadComponent component, final Object value) throws IllegalAccessException, InvocationTargetException {
-    myWriteMethod.invoke(component.getDelegee(), value);
+    if (myStoreAsClient) {
+      component.putClientProperty(INTRO_PREFIX + getName(), value);
+    }
+    else {
+      myWriteMethod.invoke(component.getDelegee(), value);
+    }
   }
 
   /**
@@ -87,6 +100,9 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
   }
 
   private V getDefaultValue(final RadComponent component) throws Exception {
+    if (myStoreAsClient) {
+      return null;
+    }
     final Constructor constructor = component.getComponentClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
     constructor.setAccessible(true);
     JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);

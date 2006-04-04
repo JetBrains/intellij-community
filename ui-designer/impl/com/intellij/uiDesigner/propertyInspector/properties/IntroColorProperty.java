@@ -26,8 +26,8 @@ public class IntroColorProperty extends IntrospectedProperty<ColorDescriptor> {
   private ColorEditor myColorEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroColorProperty_";
 
-  public IntroColorProperty(final String name, final Method readMethod, final Method writeMethod) {
-    super(name, readMethod, writeMethod);
+  public IntroColorProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
+    super(name, readMethod, writeMethod, storeAsClient);
     myColorEditor = new ColorEditor(name);
   }
 

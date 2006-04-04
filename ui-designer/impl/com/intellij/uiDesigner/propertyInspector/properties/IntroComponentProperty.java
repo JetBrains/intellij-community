@@ -27,8 +27,13 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
   private ComponentEditor myEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroComponentProperty_";
 
-  public IntroComponentProperty(String name, Method readMethod, Method writeMethod, Class propertyType, Filter<RadComponent> filter) {
-    super(name, readMethod, writeMethod);
+  public IntroComponentProperty(String name,
+                                Method readMethod,
+                                Method writeMethod,
+                                Class propertyType,
+                                Filter<RadComponent> filter,
+                                final boolean storeAsClient) {
+    super(name, readMethod, writeMethod, storeAsClient);
     myEditor = new ComponentEditor(propertyType, filter);
   }
 

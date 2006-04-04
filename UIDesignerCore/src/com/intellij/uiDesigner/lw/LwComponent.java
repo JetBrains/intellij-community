@@ -167,7 +167,7 @@ public abstract class LwComponent implements IComponent{
 
   /**
    * @return <code>null</code> only if component class is not valid.
-   * Class validation is performed with {@link com.intellij.uiDesigner.compiler.Utils#validateJComponentClass(java.lang.ClassLoader, java.lang.String)}
+   * Class validation is performed with {@link com.intellij.uiDesigner.compiler.Utils#validateJComponentClass(ClassLoader,String,boolean)}
    */
   public final Element getErrorComponentProperties(){
     return myErrorComponentProperties;

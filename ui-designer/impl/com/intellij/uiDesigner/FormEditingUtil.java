@@ -32,12 +32,14 @@ import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -683,6 +685,25 @@ public final class FormEditingUtil {
       throw new RuntimeException(e);
     }
     return aClass.findMethodBySignature(method, true);
+  }
+
+  public static Class suggestReplacementClass(Class componentClass) {
+    while(true) {
+      componentClass = componentClass.getSuperclass();
+      if (componentClass.equals(JComponent.class)) {
+        return JPanel.class;
+      }
+      if ((componentClass.getModifiers() & Modifier.ABSTRACT) != 0) {
+        continue;
+      }
+      try {
+        componentClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
+      }
+      catch(NoSuchMethodException ex) {
+        continue;
+      }
+      return componentClass;
+    }
   }
 
   public static interface StringDescriptorVisitor<T extends IComponent> {
