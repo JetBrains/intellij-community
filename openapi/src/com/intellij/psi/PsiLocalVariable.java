@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a Java local variable.
@@ -31,4 +32,10 @@ public interface PsiLocalVariable extends PsiVariable {
    * @since 5.0.2
    */
   void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException;
+
+  /**
+   * @inheritDoc
+   */
+  @NotNull
+  PsiTypeElement getTypeElement();
 }

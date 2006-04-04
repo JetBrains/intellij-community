@@ -66,6 +66,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return SharedImplUtil.getType(this);
   }
 
+  @NotNull
   public PsiTypeElement getTypeElement() {
     ASTNode first = TreeUtil.findChild(getTreeParent(), LOCAL_VARIABLE);
     return (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(TreeUtil.findChild(first, TYPE));
@@ -229,10 +230,8 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     if (lastParent.getParent() != this) return true;
     final ASTNode lastParentTree = SourceTreeToPsiMap.psiElementToTree(lastParent);
 
-    if (getChildRole(lastParentTree) == ChildRole.INITIALIZER) {
-      return processor.execute(this, substitutor);
-    }
-    return true;
+    return getChildRole(lastParentTree) != ChildRole.INITIALIZER ||
+           processor.execute(this, substitutor);
   }
 
   public ItemPresentation getPresentation() {

@@ -36,6 +36,7 @@ public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNamedE
    *
    * @return the type element for the variable type.
    */
+  @Nullable
   PsiTypeElement getTypeElement();
 
   /**

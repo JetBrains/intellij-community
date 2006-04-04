@@ -63,6 +63,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
     return this;
   }
 
+  @NotNull
   public final PsiIdentifier getNameIdentifier() {
     return (PsiIdentifier)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
@@ -93,6 +94,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
     }
   }
 
+  @NotNull
   public PsiTypeElement getTypeElement() {
     return (PsiTypeElement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
@@ -165,7 +167,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
     }
     else {
       if (myCachedIsVarArgs == null) {
-        myCachedIsVarArgs = Boolean.valueOf(getRepositoryManager().getMethodView().isParameterTypeEllipsis(getRepositoryId(), getIndex()));
+        myCachedIsVarArgs = getRepositoryManager().getMethodView().isParameterTypeEllipsis(getRepositoryId(), getIndex());
       }
       return myCachedIsVarArgs.booleanValue();
     }

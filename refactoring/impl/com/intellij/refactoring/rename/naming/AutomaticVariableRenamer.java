@@ -22,7 +22,9 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
       if (!(element instanceof PsiJavaCodeReferenceElement)) continue;
       final PsiVariable variable = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
       if (variable == null) continue;
-      final PsiJavaCodeReferenceElement ref = variable.getTypeElement().getInnermostComponentReferenceElement();
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement == null) continue;
+      final PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
       if (ref == null) continue;
       if (ref.equals(element)) {
         myElements.add((variable));
