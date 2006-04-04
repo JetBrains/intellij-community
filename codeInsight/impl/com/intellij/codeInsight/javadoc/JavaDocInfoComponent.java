@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -14,7 +15,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
 import com.intellij.ui.EdgeBorder;
-import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 
@@ -63,7 +63,7 @@ public class JavaDocInfoComponent extends JPanel {
     private boolean myControlPanelVisible;
     private ExternalDocAction myExternalDocAction;
 
-    private LightweightHint myHint;
+    private JBPopup myHint;
 
     private HashMap<KeyStroke,ActionListener> myKeyboardActions = new HashMap<KeyStroke, ActionListener>(); // KeyStroke --> ActionListener
 
@@ -71,105 +71,110 @@ public class JavaDocInfoComponent extends JPanel {
         return myScrollPane.requestFocusInWindow();
     }
 
-    public JavaDocInfoComponent(final JavaDocManager manager) {
-        myManager = manager;
-        myIsEmpty = true;
-        myIsShown = false;
 
-        myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
-            public Dimension getPreferredScrollableViewportSize() {
-                if (getWidth() == 0 || getHeight() == 0) {
-                    setSize(MAX_WIDTH, MAX_HEIGHT);
-                }
-                Insets ins = myEditorPane.getInsets();
-                View rootView = myEditorPane.getUI().getRootView(myEditorPane);
-                rootView.setSize(MAX_WIDTH, MAX_HEIGHT);  // Necessary! Without this line, size will not increase then you go from small page to bigger one
-                int prefHeight = (int) rootView.getPreferredSpan(View.Y_AXIS);
-                prefHeight += ins.bottom + ins.top + myScrollPane.getHorizontalScrollBar().getMaximumSize().height;
-                return new Dimension(MAX_WIDTH, Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, prefHeight)));
-            }
+  public void requestFocus() {
+    myScrollPane.requestFocus();
+  }
 
-            {
-                enableEvents(KeyEvent.KEY_EVENT_MASK);
-            }
+  public JavaDocInfoComponent(final JavaDocManager manager) {
+      myManager = manager;
+      myIsEmpty = true;
+      myIsShown = false;
 
-            protected void processKeyEvent(KeyEvent e) {
-                KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
-                ActionListener listener = myKeyboardActions.get(keyStroke);
-                if (listener != null) {
-                    listener.actionPerformed(new ActionEvent(JavaDocInfoComponent.this, 0, ""));
-                    e.consume();
-                    return;
-                }
-                super.processKeyEvent(e);
-            }
-        };
-        myText = "";
-        myEditorPane.setEditable(false);
-        myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
+      myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
+          public Dimension getPreferredScrollableViewportSize() {
+              if (getWidth() == 0 || getHeight() == 0) {
+                  setSize(MAX_WIDTH, MAX_HEIGHT);
+              }
+              Insets ins = myEditorPane.getInsets();
+              View rootView = myEditorPane.getUI().getRootView(myEditorPane);
+              rootView.setSize(MAX_WIDTH, MAX_HEIGHT);  // Necessary! Without this line, size will not increase then you go from small page to bigger one
+              int prefHeight = (int) rootView.getPreferredSpan(View.Y_AXIS);
+              prefHeight += ins.bottom + ins.top + myScrollPane.getHorizontalScrollBar().getMaximumSize().height;
+              return new Dimension(MAX_WIDTH, Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, prefHeight)));
+          }
 
-        myScrollPane = new JScrollPane(myEditorPane);
-        myScrollPane.setBorder(null);
+          {
+              enableEvents(KeyEvent.KEY_EVENT_MASK);
+          }
 
-        myEditorPane.addMouseListener(new MouseAdapter() {
-            public void mousePressed(MouseEvent e) {
-                myManager.requestFocus();
-            }
-        });
+          protected void processKeyEvent(KeyEvent e) {
+              KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
+              ActionListener listener = myKeyboardActions.get(keyStroke);
+              if (listener != null) {
+                  listener.actionPerformed(new ActionEvent(JavaDocInfoComponent.this, 0, ""));
+                  e.consume();
+                  return;
+              }
+              super.processKeyEvent(e);
+          }
+      };
+      myText = "";
+      myEditorPane.setEditable(false);
+      myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
 
-        myEditorPane.addFocusListener(new FocusAdapter() {
-            public void focusLost(FocusEvent e) {
-                Component previouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(manager.getProject());
+      myScrollPane = new JScrollPane(myEditorPane);
+      myScrollPane.setBorder(null);
 
-                if (!(previouslyFocused == myEditorPane)) {
-                    myHint.hide();
-                }
-            }
-        });
+      myEditorPane.addMouseListener(new MouseAdapter() {
+          public void mousePressed(MouseEvent e) {
+              myManager.requestFocus();
+          }
+      });
 
-        setLayout(new BorderLayout());
-        add(myScrollPane, BorderLayout.CENTER);
-        myScrollPane.setBorder(BorderFactory.createEmptyBorder(0, 2, 2, 2));
+      myEditorPane.addFocusListener(new FocusAdapter() {
+          public void focusLost(FocusEvent e) {
+              Component previouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(manager.getProject());
 
-        DefaultActionGroup group = new DefaultActionGroup();
-        group.add(new BackAction());
-        group.add(new ForwardAction());
-        group.add(myExternalDocAction = new ExternalDocAction());
-        myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, group, true);
+              if (!(previouslyFocused == myEditorPane)) {
+                  myHint.cancel();
+              }
+          }
+      });
 
-        myControlPanel = new JPanel();
-        myControlPanel.setLayout(new BorderLayout());
-        myControlPanel.setBorder(new EdgeBorder(EdgeBorder.EDGE_BOTTOM));
-        JPanel dummyPanel = new JPanel();
+      setLayout(new BorderLayout());
+      add(myScrollPane, BorderLayout.CENTER);
+      myScrollPane.setBorder(BorderFactory.createEmptyBorder(0, 2, 2, 2));
 
-        myElementLabel = new JLabel();
+      DefaultActionGroup group = new DefaultActionGroup();
+      group.add(new BackAction());
+      group.add(new ForwardAction());
+      group.add(myExternalDocAction = new ExternalDocAction());
+      myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, group, true);
 
-        dummyPanel.setLayout(new BorderLayout());
-        dummyPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+      myControlPanel = new JPanel();
+      myControlPanel.setLayout(new BorderLayout());
+      myControlPanel.setBorder(new EdgeBorder(EdgeBorder.EDGE_BOTTOM));
+      JPanel dummyPanel = new JPanel();
 
-        dummyPanel.add(myElementLabel, BorderLayout.EAST);
+      myElementLabel = new JLabel();
 
-        myControlPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
-        myControlPanel.add(dummyPanel, BorderLayout.CENTER);
-        myControlPanelVisible = false;
+      dummyPanel.setLayout(new BorderLayout());
+      dummyPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
 
-        myEditorPane.addHyperlinkListener(new HyperlinkListener() {
-            public void hyperlinkUpdate(HyperlinkEvent e) {
-                HyperlinkEvent.EventType type = e.getEventType();
-                if (type == HyperlinkEvent.EventType.ACTIVATED) {
-                    manager.navigateByLink(JavaDocInfoComponent.this, e.getDescription());
-                } else if (type == HyperlinkEvent.EventType.ENTERED) {
-                    myEditorPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                } else if (type == HyperlinkEvent.EventType.EXITED) {
-                    myEditorPane.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                }
-            }
-        });
+      dummyPanel.add(myElementLabel, BorderLayout.EAST);
 
-        registerActions();
+      myControlPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
+      myControlPanel.add(dummyPanel, BorderLayout.CENTER);
+      myControlPanelVisible = false;
 
-        updateControlState();
-    }
+      myEditorPane.addHyperlinkListener(new HyperlinkListener() {
+          public void hyperlinkUpdate(HyperlinkEvent e) {
+              HyperlinkEvent.EventType type = e.getEventType();
+              if (type == HyperlinkEvent.EventType.ACTIVATED) {
+                  manager.navigateByLink(JavaDocInfoComponent.this, e.getDescription());
+              } else if (type == HyperlinkEvent.EventType.ENTERED) {
+                  myEditorPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+              } else if (type == HyperlinkEvent.EventType.EXITED) {
+                  myEditorPane.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+              }
+          }
+      });
+
+      registerActions();
+
+      updateControlState();
+  }
 
     public synchronized boolean isEmpty() {
         return myIsEmpty;
@@ -189,7 +194,7 @@ public class JavaDocInfoComponent extends JPanel {
         myControlPanelVisible = visible;
     }
 
-    public void setHint(LightweightHint hint) {
+    public void setHint(JBPopup hint) {
         myHint = hint;
     }
 
@@ -241,11 +246,6 @@ public class JavaDocInfoComponent extends JPanel {
             myEditorPane.setText(text);
             myManager.showHint(myHint);
             myIsShown = justShown = true;
-            myManager.takeFocus(myHint);
-        }
-
-        if (myHint.getComponent().getRootPane() == null) {
-            return;
         }
 
         if (!justShown) {
@@ -254,27 +254,6 @@ public class JavaDocInfoComponent extends JPanel {
 
         if (!skip) {
             myText = text;
-        }
-
-        if (myHint != null) {
-            Rectangle bounds = myHint.getBounds();
-            Dimension preferredSize = myHint.getComponent().getPreferredSize();
-            int height = preferredSize.height;
-            JLayeredPane layeredPane = myHint.getComponent().getRootPane().getLayeredPane();
-
-            if (bounds.y + height >= layeredPane.getHeight()) {
-                height = layeredPane.getHeight() - bounds.y - 1;
-            }
-
-            if (true){//myIsShown && !justShown) {
-                Point p = myManager.chooseBestHintPosition(myHint);
-
-                if (p != null) {
-                    myHint.setBounds(p.x, p.y, preferredSize.width, height);
-                } else {
-                    myHint.setBounds(bounds.x, bounds.y, preferredSize.width, height);
-                }
-            }
         }
 
         SwingUtilities.invokeLater(new Runnable() {

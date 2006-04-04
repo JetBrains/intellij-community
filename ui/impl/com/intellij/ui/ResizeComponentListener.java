@@ -4,13 +4,17 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.JBPopupImpl;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
 
 /**
  * User: anna
@@ -18,11 +22,11 @@ import java.awt.event.MouseMotionListener;
  */
 public class ResizeComponentListener extends MouseAdapter implements MouseMotionListener {
   private static final int SENSITIVITY = 4;
-  private final JComponent myComponent;
+  private final JBPopupImpl.MyContentPanel myComponent;
   private Point myStartPoint = null;
   private int myDirection = -1;
 
-  public ResizeComponentListener(final JComponent component) {
+  public ResizeComponentListener(final JBPopupImpl.MyContentPanel component) {
     myComponent = component;
   }
 
@@ -31,8 +35,21 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     if (popupWindow != null) {
       myStartPoint = new RelativePoint(e).getScreenPoint();
       myDirection = getDirection(myStartPoint, popupWindow.getBounds());
+      if (SystemInfo.isMac && myDirection != Cursor.SE_RESIZE_CURSOR){ //resize only by right-bottom corner
+        myDirection = Cursor.DEFAULT_CURSOR;
+      }
       if (myDirection == Cursor.DEFAULT_CURSOR){
         myStartPoint = null;
+      } else {
+        final BufferedImage image = new BufferedImage(myComponent.getWidth(), myComponent.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = (Graphics2D)image.getGraphics();
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_IN, 1));
+        myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
+        UIUtil.setEnabled(myComponent, false, true);
+        myComponent.setResizable(false); //do not paint icon in the corner
+        myComponent.paint(g2);
+        myComponent.setResizable(true);
+        myComponent.setImage2Paint(image);
       }
     }
   }
@@ -48,6 +65,13 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   private void endOperation() {
     final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
     if (popupWindow != null) {
+      myComponent.setImage2Paint(null);
+      if (!SystemInfo.isMac) {
+        myComponent.setBorder(BorderFactory.createEmptyBorder(2,2,2,2));
+      }
+      UIUtil.setEnabled(myComponent, true, true);
+      popupWindow.validate();
+      popupWindow.repaint();
       popupWindow.setCursor(Cursor.getDefaultCursor());
     }
     myStartPoint = null;
@@ -108,8 +132,6 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
                               bounds.height);
         break;
     }
-    popupWindow.validate();
-    popupWindow.repaint();
   }
 
   public void mouseMoved(MouseEvent e) {
@@ -117,9 +139,19 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
     if (popupWindow == null) return;
     final int cursor = getDirection(point, popupWindow.getBounds());
-    popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
     if (cursor != Cursor.DEFAULT_CURSOR){
+      if (!SystemInfo.isMac) {
+        if (myStartPoint == null) {
+          myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
+        }
+        popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
+      }
       e.consume();
+    } else {
+      if (!SystemInfo.isMac){
+        myComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
+      }
     }
   }
 
@@ -129,20 +161,27 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
     if (popupWindow == null) return;
     if (myStartPoint != null) {
-      popupWindow.setCursor(Cursor.getPredefinedCursor(myDirection));
+      if (!SystemInfo.isMac) {
+        popupWindow.setCursor(Cursor.getPredefinedCursor(myDirection));
+      }
       doResize(point);
       myStartPoint = point;
       e.consume();
     } else {
-       final int cursor = getDirection(point, popupWindow.getBounds());
-       popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
+      if (!SystemInfo.isMac) {
+        final int cursor = getDirection(point, popupWindow.getBounds());
+        popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
+      }
     }
   }
 
   private static int getDirection(Point startPoint, Rectangle bounds){
-    bounds = new Rectangle(bounds.x + 2, bounds.y + 2, bounds.width - 6, bounds.height - 6);
-    if (!bounds.contains(startPoint)){
-      return Cursor.DEFAULT_CURSOR;
+    if (SystemInfo.isMac){
+      if (bounds.x + bounds.width - startPoint.x < 16 && //inside icon
+          startPoint.y - bounds.y - bounds.height < 16 && 
+          startPoint.x > startPoint.y){
+        return Cursor.SE_RESIZE_CURSOR;
+      }
     }
     if (Math.abs(startPoint.x - bounds.x ) < SENSITIVITY){ //left bound
       if (Math.abs(startPoint.y - bounds.y) < SENSITIVITY){ //top

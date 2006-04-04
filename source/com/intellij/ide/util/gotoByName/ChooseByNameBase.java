@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
@@ -20,7 +21,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.diff.Diff;
@@ -110,7 +110,7 @@ public abstract class ChooseByNameBase{
   }
 
   public class JPanelProvider extends JPanel implements DataProvider {
-    LightweightHint myHint = null;
+    JBPopup myHint = null;
     boolean myFocusRequested = false;
 
     JPanelProvider(LayoutManager mgr) {
@@ -143,7 +143,7 @@ public abstract class ChooseByNameBase{
       return null;
     }
 
-    public void registerHint(LightweightHint h) {
+    public void registerHint(JBPopup h) {
       myHint = h;
     }
 
@@ -165,11 +165,11 @@ public abstract class ChooseByNameBase{
 
     public void hideHint() {
       if (myHint != null) {
-        myHint.hide();
+        myHint.cancel();
       }
     }
 
-    public LightweightHint getHint() {
+    public JBPopup getHint() {
       return myHint;
     }
   }
@@ -387,7 +387,7 @@ public abstract class ChooseByNameBase{
   }
 
   private void updateDocumentation() {
-    final LightweightHint hint = myTextFieldPanel.getHint();
+    final JBPopup hint = myTextFieldPanel.getHint();
     final Object element = getChosenElement();
     if (hint != null && element instanceof PsiElement){
       myTextFieldPanel.unregisterHint();
@@ -751,7 +751,7 @@ public abstract class ChooseByNameBase{
         final String pattern = myTextField.getText();
         final String oldText = myTextField.getText();
         final int oldPos = myList.getSelectedIndex();
-        myHistory.add(Pair.create(oldText, new Integer(oldPos)));
+        myHistory.add(Pair.create(oldText, oldPos));
         final Runnable postRunnable = new Runnable() {
           public void run() {
             fillInCommonPrefix(pattern);
@@ -767,7 +767,7 @@ public abstract class ChooseByNameBase{
           final int oldPos = myList.getSelectedIndex();
           final Pair<String, Integer> last = myHistory.remove(myHistory.size() - 1);
           myTextField.setText(last.first);
-          myFuture.add(Pair.create(oldText, new Integer(oldPos)));
+          myFuture.add(Pair.create(oldText, oldPos));
           rebuildList(0, 0, null, ModalityState.current());
         }
         return;
@@ -779,7 +779,7 @@ public abstract class ChooseByNameBase{
           final int oldPos = myList.getSelectedIndex();
           final Pair<String, Integer> next = myFuture.remove(myFuture.size() - 1);
           myTextField.setText(next.first);
-          myHistory.add(Pair.create(oldText, new Integer(oldPos)));
+          myHistory.add(Pair.create(oldText, oldPos));
           rebuildList(0, 0, null, ModalityState.current());
         }
         return;
@@ -824,7 +824,7 @@ public abstract class ChooseByNameBase{
       if (commonPrefix == null) commonPrefix = "";
       final String newPattern = commonPrefix;
 
-      myHistory.add(Pair.create(oldText, new Integer(oldPos)));
+      myHistory.add(Pair.create(oldText, oldPos));
       myTextField.setText(newPattern);
       myTextField.setCaretPosition(newPattern.length());
 

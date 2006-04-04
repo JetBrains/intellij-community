@@ -17,10 +17,10 @@ import java.awt.event.MouseMotionListener;
  * Date: 13-Mar-2006
  */
 public class MoveComponentListener extends MouseAdapter implements MouseMotionListener {
-  private final JComponent myComponent;
+  private final CaptionPanel myComponent;
   private Point myStartPoint = null;
 
-  public MoveComponentListener(final JComponent component) {
+  public MoveComponentListener(final CaptionPanel component) {
     myComponent = component;
   }
 
@@ -68,5 +68,13 @@ public class MoveComponentListener extends MouseAdapter implements MouseMotionLi
       wnd.setLocation(draggedTo);
       e.consume();
     }
+  }
+
+  public void mouseEntered(MouseEvent e) {
+    myComponent.setActive(true);
+  }
+
+  public void mouseExited(MouseEvent e) {
+    myComponent.setActive(false);
   }
 }

@@ -22,6 +22,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private JComponent myPrefferedFocusedComponent;
   private boolean myRequestFocus;
   private boolean myForceHeavyweight;
+  private String myDimensionServiceKey = null;
 
 
   public ComponentPopupBuilderImpl(final JComponent component,
@@ -61,8 +62,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     return this;
   }
 
+  public ComponentPopupBuilder setDimensionServiceKey(final String dimensionServiceKey) {
+    myDimensionServiceKey = dimensionServiceKey;
+    return this;
+  }
+
   @NotNull
   public JBPopup createPopup() {
-    return new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null);
+    return new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight, myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null);
   }
 }

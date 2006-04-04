@@ -5,17 +5,20 @@ import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.ui.LightweightHint;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
-import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.FocusEvent;
 
 /**
@@ -46,13 +49,11 @@ public final class ShowJavadocAction extends AnAction {
     tabbedPane.addTab(UIDesignerBundle.message("tab.getter"), component1);
     tabbedPane.addTab(UIDesignerBundle.message("tab.setter"), component2);
 
-    final LightweightHint hint = new LightweightHint(tabbedPane.getComponent()) {
-      public void hide() {
-        super.hide();
-        inspector.requestFocusInWindow();
-      }
-    };
-
+    final JBPopup hint =
+      JBPopupFactory.getInstance().createComponentPopupBuilder(tabbedPane.getComponent(), inspector)
+        .setResizable(true)
+        .setRequestFocus(true)
+        .createPopup();
     component1.setHint(hint);
     component2.setHint(hint);
 
@@ -61,12 +62,12 @@ public final class ShowJavadocAction extends AnAction {
 
     final FocusWatcher focusWatcher = new FocusWatcher() {
       protected void focusLostImpl(final FocusEvent e) {
-        hint.hide();
+        hint.cancel();
       }
     };
 
-    focusWatcher.install(hint.getComponent());
-    hint.show(inspector, 0, 0, inspector);
+    focusWatcher.install(hint.getContent());
+    hint.show(new RelativePoint(inspector, new Point(0,0)));
     SwingUtilities.invokeLater(
       new Runnable() {
         public void run() {

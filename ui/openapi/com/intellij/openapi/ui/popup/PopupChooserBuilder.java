@@ -42,6 +42,7 @@ public class PopupChooserBuilder {
   private boolean myRequestFocus = true;
   private boolean myForceResizable = false;
   private boolean myForceMovable = false;
+  private String myDimensionServiceKey = null;
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = list;
@@ -98,6 +99,11 @@ public class PopupChooserBuilder {
     return this;
   }
 
+  public PopupChooserBuilder setDimensionServiceKey(String key){
+    myDimensionServiceKey = key;
+    return this;
+  }
+
   @NotNull
   public JBPopup createPopup() {
     JPanel contentPane = new JPanel(new BorderLayout());
@@ -148,6 +154,7 @@ public class PopupChooserBuilder {
 
     myPopup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(contentPane, myChooserComponent)
+      .setDimensionServiceKey(myDimensionServiceKey)
       .setRequestFocus(myRequestFocus)
       .setResizable(myForceResizable)
       .setMovable(myForceMovable)

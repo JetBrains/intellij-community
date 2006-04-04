@@ -38,6 +38,8 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setForceHeavyweight(boolean forceHeavyweight);
 
+  ComponentPopupBuilder setDimensionServiceKey(final String dimensionServiceKey);
+
   @NotNull
   JBPopup createPopup();
 
