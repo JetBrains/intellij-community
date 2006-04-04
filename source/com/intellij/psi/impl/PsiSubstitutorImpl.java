@@ -296,10 +296,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
       buffer.append(typeParameter.getName());
       final PsiElement owner = typeParameter.getOwner();
       if (owner instanceof PsiClass) {
-        buffer.append(" of " + ((PsiClass)owner).getQualifiedName());
+        buffer.append(" of ");
+        buffer.append(((PsiClass)owner).getQualifiedName());
       }
       else if (owner instanceof PsiMethod) {
-        buffer.append(" of " + ((PsiMethod)owner).getName() + " in " + ((PsiMethod)owner).getContainingClass().getQualifiedName());
+        buffer.append(" of ");
+        buffer.append(((PsiMethod)owner).getName());
+        buffer.append(" in ");
+        buffer.append(((PsiMethod)owner).getContainingClass().getQualifiedName());
       }
       buffer.append(" -> ");
       if (entry.getValue() != null) {
