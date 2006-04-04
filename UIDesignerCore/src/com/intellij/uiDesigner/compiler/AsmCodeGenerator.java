@@ -34,7 +34,6 @@ import java.awt.Color;
 
 /**
  * @author yole
- * @noinspection unchecked
  */
 public class AsmCodeGenerator {
   private LwRootContainer myRootContainer;

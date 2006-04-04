@@ -41,7 +41,6 @@ import java.awt.CardLayout;
  * @author Vladimir Kondratyev
  *
  * NOTE: the class must be compilable with JDK 1.3, so any methods and filds introduced in 1.4 or later must not be used
- * @noinspection unchecked
  */
 public final class Utils {
   public static final String FORM_NAMESPACE = "http://www.intellij.com/uidesigner/form/";

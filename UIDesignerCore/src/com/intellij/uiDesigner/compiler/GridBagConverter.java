@@ -32,7 +32,6 @@ import java.util.Map;
 
 /**
  * @author yole
- * @noinspection ForLoopReplaceableByForEach,unchecked
  */
 public class GridBagConverter {
   private Insets myInsets;
