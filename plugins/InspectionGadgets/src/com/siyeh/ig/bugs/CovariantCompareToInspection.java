@@ -17,6 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -62,8 +63,8 @@ public class CovariantCompareToInspection extends MethodInspection {
             if (parameters.length != 1) {
                 return;
             }
-            final PsiType argType = parameters[0].getType();
-            if (TypeUtils.isJavaLangObject(argType)) {
+            final PsiType paramType = parameters[0].getType();
+            if (TypeUtils.isJavaLangObject(paramType)) {
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
@@ -76,17 +77,18 @@ public class CovariantCompareToInspection extends MethodInspection {
                     return;
                 }
             }
-            final PsiClassType[] implementsListTypes =
-                    aClass.getImplementsListTypes();
-            for(final PsiClassType implementedType : implementsListTypes){
-                if(implementedType.hasParameters()) {
-                    final PsiClass resolved = implementedType.resolve();
-                    if (resolved != null && "java.lang.Comparable".equals(
-                                    resolved.getQualifiedName())) {
+
+            final PsiClass comparableClass = method.getManager().findClass("java.lang.Comparable", method.getResolveScope());
+            if (comparableClass != null && comparableClass.getTypeParameters().length == 1) {
+                final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(comparableClass, aClass, PsiSubstitutor.EMPTY);
+                if (superSubstitutor != null) {  //null iff aClass is not inheritor of comparableClass
+                    final PsiType substituted = superSubstitutor.substitute(comparableClass.getTypeParameters()[0]);
+                    if (paramType.equals(substituted)) {
                         return;
                     }
                 }
             }
+
             registerMethodError(method);
         }
 
