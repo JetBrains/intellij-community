@@ -457,8 +457,13 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     PsiElementFactory factory = targetMethod.getManager().getElementFactory();
     final PsiElement resolved = methodCall.getMethodExpression().resolve();
     if (resolved != targetMethod) {
-      LOG.assertTrue(resolved instanceof PsiMethod);
-      final PsiClass containingClass = ((PsiMethod) resolved).getContainingClass();
+      PsiClass containingClass;
+      if (resolved instanceof PsiMethod) {
+        containingClass = ((PsiMethod) resolved).getContainingClass();
+      } else {
+        LOG.assertTrue(resolved instanceof PsiClass);
+        containingClass = (PsiClass)resolved;
+      }
       if(containingClass.isInheritor(myClass, false)) {
         final PsiExpression newMethodExpression =
                 factory.createExpressionFromText("super." + targetMethod.getName(), context);
