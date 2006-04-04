@@ -106,9 +106,7 @@ public class GenericsHighlightUtil {
       }
       else {
         description = JavaErrorMessages.message(
-          "generics.wrong.number.of.type.arguments",
-          new Integer(refParametersNum),
-          new Integer(targetParametersNum)
+          "generics.wrong.number.of.type.arguments", refParametersNum, targetParametersNum
         );
       }
 
@@ -197,6 +195,7 @@ public class GenericsHighlightUtil {
     final PsiJavaCodeReferenceElement[] referenceElements = referenceList.getReferenceElements();
     HighlightInfo errorResult = null;
     PsiClass extendFrom = (PsiClass)resolveResult.getElement();
+    if (extendFrom == null) return null;
     if (!extendFrom.isInterface() && referenceElements.length != 0 && context != referenceElements[0]) {
       final String description = HighlightClassUtil.INTERFACE_EXPECTED;
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
@@ -547,6 +546,7 @@ public class GenericsHighlightUtil {
     if (!InspectionProjectProfileManager.getInstance(call.getProject()).getInspectionProfile(call).isToolEnabled(key)) return null;
 
     final PsiMethod method = (PsiMethod)resolveResult.getElement();
+    if (method == null) return null;
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (final PsiParameter parameter : parameters) {
@@ -894,8 +894,11 @@ public class GenericsHighlightUtil {
 
   public static HighlightInfo checkGenericCallWithRawArguments(JavaResolveResult resolveResult, PsiCallExpression callExpression) {
     final PsiMethod method = (PsiMethod)resolveResult.getElement();
+    if (method == null) return null;
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    final PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
+    final PsiExpressionList argumentList = callExpression.getArgumentList();
+    if (argumentList == null) return null;
+    final PsiExpression[] expressions = argumentList.getExpressions();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < expressions.length; i++) {
       PsiParameter parameter = parameters[Math.min(i, parameters.length - 1)];
@@ -965,9 +968,10 @@ public class GenericsHighlightUtil {
                                                          HighlightUtil.formatType(overriderReturnType),
                                                          HighlightUtil.formatType(baseReturnType));
 
-        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
-                                                                              overrider.getReturnTypeElement(), message);
-        List<IntentionAction> options = IntentionManager.getInstance(overrider.getProject()).getStandardIntentionOptions(key,overrider.getReturnTypeElement());
+        final PsiTypeElement returnTypeElement = overrider.getReturnTypeElement();
+        LOG.assertTrue(returnTypeElement != null);
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, returnTypeElement, message);
+        List<IntentionAction> options = IntentionManager.getInstance(overrider.getProject()).getStandardIntentionOptions(key,returnTypeElement);
         String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
         QuickFixAction.registerQuickFixAction(highlightInfo,
                                               new EmptyIntentionAction(JavaErrorMessages.message("unchecked.overriding"), options),
