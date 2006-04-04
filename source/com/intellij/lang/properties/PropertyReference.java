@@ -90,14 +90,12 @@ public class PropertyReference implements PsiPolyVariantReference, EmptyResolveM
     if (myElement instanceof PsiLiteralExpression) {
       PsiExpression newExpression = factory.createExpressionFromText("\"" + newElementName + "\"", myElement);
       return myElement.replace(newExpression);
-    } else if (myElement instanceof XmlAttributeValue) {
+    } else {
       return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement).handleContentChange(
         myElement,
         getRangeInElement(),
         newElementName
       );
-    } else {
-      return null;
     }
   }
 

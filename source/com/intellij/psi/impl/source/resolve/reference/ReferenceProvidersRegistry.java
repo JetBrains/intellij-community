@@ -7,12 +7,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.el.ELLiteralExpression;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
+import com.intellij.psi.impl.source.jsp.el.impl.ELLiteralManipulator;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
@@ -81,6 +83,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerManipulator(XmlToken.class, new XmlTokenManipulator());
     registerManipulator(PsiLiteralExpression.class, new StringLiteralManipulator());
     registerManipulator(XmlTag.class, new XmlTagValueManipulator());
+    registerManipulator(ELLiteralExpression.class, new ELLiteralManipulator());
     // Binding declarations
 
     myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
