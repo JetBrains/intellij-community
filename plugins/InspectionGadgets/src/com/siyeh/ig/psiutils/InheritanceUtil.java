@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -31,6 +32,16 @@ public class InheritanceUtil{
 
     public static boolean existsMutualSubclass(PsiClass class1,
                                                PsiClass class2){
+        if (class1 instanceof PsiTypeParameter) {
+            final PsiClass[] superClasses = class1.getSupers();
+            for (PsiClass superClass : superClasses) {
+                if (!existsMutualSubclass(superClass, class2)) return false;
+            }
+            return true;
+        } else if (class2 instanceof PsiTypeParameter) {
+            return existsMutualSubclass(class2, class1);
+        }
+
         final String className = class1.getQualifiedName();
         if("java.lang.Object".equals(className)){
             return true;
