@@ -20,6 +20,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
+import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -32,11 +33,12 @@ import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Anton Katilin
@@ -53,6 +55,8 @@ public final class BindingProperty extends Property<RadComponent, String> {
     }
   };
   private final BindingEditor myEditor;
+  @NonNls private static final String PREFIX_HTML = "html";
+  @NonNls private static final String PREFIX_BODY = "body";
 
   public BindingProperty(final Project project){
     super(null, "binding");
@@ -250,10 +254,19 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   public static String suggestBindingFromText(final RadComponent component, final String text) {
-    List<String> words = StringUtil.getWordsIn(text);
+    ArrayList<String> words = new ArrayList<String>(StringUtil.getWordsIn(text));
     if (words.size() > 0) {
+      if (words.get(0).equalsIgnoreCase(PREFIX_HTML) && words.get(words.size()-1).equalsIgnoreCase(PREFIX_HTML)) {
+        words.remove(0);
+        words.remove(words.size()-1);
+      }
+      if (words.get(0).equalsIgnoreCase(PREFIX_BODY) && words.get(words.size()-1).equalsIgnoreCase(PREFIX_BODY)) {
+        words.remove(0);
+        words.remove(words.size()-1);
+      }
+
       StringBuilder nameBuilder = new StringBuilder(StringUtil.decapitalize(words.get(0)));
-      for(int i=1; i<words.size(); i++) {
+      for(int i=1; i<words.size() && i < 4; i++) {
         nameBuilder.append(StringUtil.capitalize(words.get(i)));
       }
       nameBuilder.append(StringUtil.capitalize(InsertComponentProcessor.getShortClassName(component.getComponentClassName())));
@@ -267,5 +280,18 @@ public final class BindingProperty extends Property<RadComponent, String> {
       return binding;
     }
     return null;
+  }
+
+  public static String getDefaultBinding(final RadComponent c) {
+    RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(c);
+    String binding = null;
+    String text = FormInspectionUtil.getText(c.getModule(), c);
+    if (text != null) {
+      binding = suggestBindingFromText(c, text);
+    }
+    if (binding == null) {
+      binding = InsertComponentProcessor.suggestBinding(root, c.getComponentClassName());
+    }
+    return binding;
   }
 }

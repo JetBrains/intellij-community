@@ -104,12 +104,12 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   @NotNull
-  public static String suggestBinding(final GuiEditor editor, @NotNull final String componentClassName){
+  public static String suggestBinding(final RadRootContainer rootContainer, @NotNull final String componentClassName) {
     String shortClassName = getShortClassName(componentClassName);
 
     LOG.assertTrue(shortClassName.length() > 0);
 
-    return getUniqueBinding(editor.getRootContainer(), shortClassName);
+    return getUniqueBinding(rootContainer, shortClassName);
   }
 
   public static String getShortClassName(@NonNls final String componentClassName) {
@@ -159,7 +159,7 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   private static void doCreateBindingWhenDrop(final GuiEditor editor, final RadComponent insertedComponent) {
     // Now if the inserted component is a input control, we need to automatically create binding
-    final String binding = suggestBinding(editor, insertedComponent.getComponentClassName());
+    final String binding = suggestBinding(editor.getRootContainer(), insertedComponent.getComponentClassName());
     insertedComponent.setBinding(binding);
     insertedComponent.setDefaultBinding(true);
 

@@ -10,10 +10,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.InputValidator;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.IRootContainer;
@@ -44,7 +47,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     @Override
     public JComponent getComponent(final RadComponent component, final Boolean value, final boolean inplace) {
       JComponent result = super.getComponent(component, value, inplace);
-      result.setEnabled(component.getBinding() != null && !component.isCustomCreateRequired());
+      result.setEnabled(!component.isCustomCreateRequired());
       return result;
     }
   };
@@ -67,6 +70,33 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
   }
 
   protected void setValueImpl(final RadComponent component, final Boolean value) throws Exception {
+    if (value.booleanValue() && component.getBinding() == null) {
+      String initialBinding = BindingProperty.getDefaultBinding(component);
+      final PsiNameHelper nameHelper = PsiManager.getInstance(component.getProject()).getNameHelper();
+      String binding = Messages.showInputDialog(
+        component.getProject(),
+        UIDesignerBundle.message("custom.create.field.name.prompt"), 
+        UIDesignerBundle.message("custom.create.title"), Messages.getQuestionIcon(),
+        initialBinding,
+        new InputValidator() {
+           public boolean checkInput(String inputString) {
+             return nameHelper.isIdentifier(inputString);
+           }
+
+           public boolean canClose(String inputString) {
+             return nameHelper.isIdentifier(inputString);
+           }
+         });
+      if (binding == null) {
+        return;
+      }
+      try {
+        new BindingProperty(component.getProject()).setValue(component, binding);
+      }
+      catch (Exception e1) {
+        LOG.error(e1);
+      }
+    }
     component.setCustomCreate(value.booleanValue());
     if (value.booleanValue()) {
       final IRootContainer root = FormEditingUtil.getRoot(component);

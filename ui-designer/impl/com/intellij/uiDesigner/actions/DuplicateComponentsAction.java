@@ -7,14 +7,12 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,25 +51,18 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
         copy.getConstraints().setRow(row+rowSpan);
         copy.getConstraints().setRowSpan(rowSpan);
         parent.addComponent(copy);
-        copyBinding(editor, c, copy);
+        copyBinding(c, copy);
         duplicates.add(copy);
       }
     }
     FormEditingUtil.selectComponents(duplicates);
   }
 
-  private static void copyBinding(final GuiEditor editor, final RadComponent c, final RadComponent copy) {
+  private static void copyBinding(final RadComponent c, final RadComponent copy) {
     if (c.getBinding() != null) {
-      String binding = null;
-      String text = FormInspectionUtil.getText(c.getModule(), copy);
-      if (text != null) {
-        binding = BindingProperty.suggestBindingFromText(copy, text);
-      }
-      if (binding == null) {
-        binding = InsertComponentProcessor.suggestBinding(editor, c.getComponentClassName());
-      }
+      String binding = BindingProperty.getDefaultBinding(copy);
       try {
-        new BindingProperty(editor.getProject()).setValue(copy, binding);
+        new BindingProperty(c.getProject()).setValue(copy, binding);
       }
       catch (Exception e1) {
         LOG.error(e1);
