@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TableToolTipHandler extends AbstractToolTipHandler<TableCellKey, JTable> {
-  public TableToolTipHandler(JTable table) {
+  protected TableToolTipHandler(JTable table) {
     super(table);
   }
 

@@ -185,7 +185,7 @@ public class CommanderPanel extends JPanel {
       }
     );
 
-    new ListToolTipHandler(myList);
+    ListToolTipHandler.install(myList);
   }
 
   private void updateHistory(boolean elementExpanded) {

@@ -14,6 +14,8 @@ import jetbrains.fabrique.ui.treeStructure.actions.CollapseAllAction;
 import jetbrains.fabrique.ui.treeStructure.actions.ExpandAllAction;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeExpansionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
@@ -56,6 +58,25 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     myBuilder.initRoot();
 
     add(myTree, BorderLayout.CENTER);
+
+    myTree.addTreeExpansionListener(new TreeExpansionListener() {
+      public void treeExpanded(TreeExpansionEvent event) {
+        final SimpleNode simpleNode = myTree.getNodeFor(event.getPath());
+
+        if(simpleNode instanceof AbstractDomElementNode) {
+          ((AbstractDomElementNode)simpleNode).setExpanded(true);
+        }
+      }
+
+      public void treeCollapsed(TreeExpansionEvent event) {
+         final SimpleNode simpleNode = myTree.getNodeFor(event.getPath());
+
+        if(simpleNode instanceof AbstractDomElementNode) {
+          ((AbstractDomElementNode)simpleNode).setExpanded(false);
+          simpleNode.update();
+        }
+      }
+    });
 
     myDomEventListener = new DomEventListener() {
       public void eventOccured(DomEvent event) {

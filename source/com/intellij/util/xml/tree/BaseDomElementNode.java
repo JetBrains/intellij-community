@@ -23,6 +23,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   private final DomElement myDomElement;
   private final String myTagName;
 
+
   public BaseDomElementNode(final DomElement modelElement) {
     this(modelElement, null);
   }
@@ -89,16 +90,21 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     setUniformIcon(getNodeIcon());
     clearColoredText();
+    boolean isExpanded = isExpanded();
 
-    final List<DomElementProblemDescription> problems = DomElementAnnotationsManager.getInstance().getProblems(myDomElement);
+    final List<DomElementProblemDescription> problems = DomElementAnnotationsManager.getInstance().getProblems(myDomElement, true, highlightIfChildrenHasProblems());
     if (problems.size() > 0) {
-      addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems), SimpleTextAttributes.ERROR_ATTRIBUTES);
+      addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems), SimpleTextAttributes.ERROR_ATTRIBUTES); //new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.BLACK, Color.RED)
     } else  if (myDomElement.getXmlTag() != null) {
       addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     } else {
       addColoredFragment(getNodeName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
 
+    return true;
+  }
+
+  protected boolean highlightIfChildrenHasProblems() {
     return true;
   }
 

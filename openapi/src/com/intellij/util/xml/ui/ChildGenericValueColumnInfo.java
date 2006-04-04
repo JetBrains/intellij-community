@@ -16,11 +16,14 @@ import javax.swing.table.TableCellRenderer;
 /**
  * @author peter
  */
-public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumnInfo<T,String> {
+public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumnInfo<T, String> {
   private final TableCellEditor myEditor;
   private final DomFixedChildDescription myChildDescription;
 
-  public ChildGenericValueColumnInfo(final String name, final DomFixedChildDescription description, final TableCellRenderer renderer, final TableCellEditor editor) {
+  public ChildGenericValueColumnInfo(final String name,
+                                     final DomFixedChildDescription description,
+                                     final TableCellRenderer renderer,
+                                     final TableCellEditor editor) {
     super(name, renderer);
     myEditor = editor;
     myChildDescription = description;
@@ -38,6 +41,15 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
     return (Class<T>)DomUtil.getRawType(myChildDescription.getType());
   }
 
+  public TableCellRenderer getCustomizedRenderer(final T domElement, final TableCellRenderer renderer) {
+    return getErroableCellRenderer(renderer, domElement);
+
+  }
+
+  public DefaultTableCellRenderer getErroableCellRenderer(final TableCellRenderer renderer, final T domElement) {
+    return new ErrorableTableCellRenderer(getGenericValue(domElement), renderer, domElement);
+  }
+
   public void setValue(final T o, final String aValue) {
     getGenericValue(o).setStringValue(aValue);
   }
@@ -49,7 +61,7 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
   public final String valueOf(T object) {
     if (!object.isValid()) return null;
     final String stringValue = getGenericValue(object).getStringValue();
-    return StringUtil.isEmpty(stringValue) ? getEmptyValuePresentation(object): stringValue;
+    return StringUtil.isEmpty(stringValue) ? getEmptyValuePresentation(object) : stringValue;
   }
 
   protected final DomFixedChildDescription getChildDescription() {
@@ -59,4 +71,5 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
   protected String getEmptyValuePresentation(T object) {
     return "";
   }
+
 }

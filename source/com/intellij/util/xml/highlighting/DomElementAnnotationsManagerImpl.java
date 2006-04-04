@@ -11,42 +11,53 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
+import java.util.*;
 
 public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager implements ApplicationComponent {
   private Map<Class, List<DomElementsAnnotator>> myClass2Annotator = new HashMap<Class, List<DomElementsAnnotator>>();
 
-  private Map<DomFileElement, CachedValue<DomElementsProblemsHolder>> myCache = new HashMap<DomFileElement, CachedValue<DomElementsProblemsHolder>>();
+  private Map<DomFileElement, CachedValue<DomElementsProblemsHolder>> myCache =
+    new HashMap<DomFileElement, CachedValue<DomElementsProblemsHolder>>();
 
   public List<DomElementProblemDescription> getProblems(final DomElement domElement) {
- if(myCache.get(domElement.getRoot()) == null) {
-       myCache.put(domElement.getRoot(), getCachedValue(domElement));
+     return getProblems(domElement, false);
+  }
+
+  public List<DomElementProblemDescription> getProblems(DomElement domElement, boolean includeXmlProblems) {
+    return getProblems(domElement, includeXmlProblems, true);
+  }
+
+  public List<DomElementProblemDescription> getProblems(DomElement domElement,  boolean includeXmlProblems, boolean withChildren) {
+    if(domElement == null) return Collections.emptyList();
+    
+    if (myCache.get(domElement.getRoot()) == null) {
+      myCache.put(domElement.getRoot(), getCachedValue(domElement));
     }
 
-    return myCache.get(domElement.getRoot()).getValue().getProblems(domElement);
+    return  myCache.get(domElement.getRoot()).getValue().getProblems(domElement, includeXmlProblems, withChildren);
   }
 
   private CachedValue<DomElementsProblemsHolder> getCachedValue(final DomElement domElement) {
     final CachedValuesManager cachedValuesManager = PsiManager.getInstance(domElement.getManager().getProject()).getCachedValuesManager();
 
     return cachedValuesManager.createCachedValue(new CachedValueProvider<DomElementsProblemsHolder>() {
-       public Result<DomElementsProblemsHolder> compute() {
-         final DomElementsProblemsHolder holder = new DomElementsProblemsHolderImpl();
+      public Result<DomElementsProblemsHolder> compute() {
+        final DomElementsProblemsHolder holder = new DomElementsProblemsHolderImpl();
 
-         final List<DomElementsAnnotator> annotators = getDomElementsAnnotators(domElement);
+        final List<DomElementsAnnotator> annotators = getDomElementsAnnotators(domElement);
 
-         for (DomElementsAnnotator annotator : annotators) {
-           annotator.annotate((DomElement)domElement.getRoot().getRootElement(), holder);
-         }
+        for (DomElementsAnnotator annotator : annotators) {
+          annotator.annotate((DomElement)domElement.getRoot().getRootElement(), holder);
+        }
 
-         return new Result<DomElementsProblemsHolder>(holder, domElement.getRoot().getFile());
-       }
-     }, false);
+        return new Result<DomElementsProblemsHolder>(holder, domElement.getRoot().getFile());
+      }
+    }, false);
   }
 
   public List<DomElementsAnnotator> getDomElementsAnnotators(DomElement domElement) {

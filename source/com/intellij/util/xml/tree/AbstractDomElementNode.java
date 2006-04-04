@@ -11,6 +11,7 @@ import java.util.*;
 
 abstract public class AbstractDomElementNode extends SimpleNode {
   public static final Key<Map<Class, Boolean>> TREE_NODES_HIDERS_KEY = Key.create("TREE_NODES_HIDERS_KEY");
+  private boolean isExpanded;
 
   protected AbstractDomElementNode() {
     super();
@@ -57,5 +58,13 @@ abstract public class AbstractDomElementNode extends SimpleNode {
     });
 
     return hiders.get(classes[0]).booleanValue();
+  }
+
+  public boolean isExpanded() {
+    return isExpanded;
+  }
+
+  public void setExpanded(final boolean expanded) {
+    isExpanded = expanded;
   }
 }

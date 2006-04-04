@@ -4,10 +4,9 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.util.xml.DomElement;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
 public class DomElementProblemDescriptorImpl implements DomElementProblemDescription {
@@ -38,10 +37,27 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
 
   @NotNull
   public String getDescriptionTemplate() {
-    return myMessage;
+    return myMessage == null? "": myMessage;
   }
 
   public LocalQuickFix[] getFixes() {
     return myFixes;
+  }
+
+
+  public int hashCode() {
+    if(myDomElement == null) return super.hashCode();
+
+    return 241*getDomElement().hashCode() + 29*getDescriptionTemplate().hashCode() + getHighlightType().hashCode();
+  }
+
+  public boolean equals(Object obj) {
+    if ((obj instanceof DomElementProblemDescription)) return super.equals(obj);
+    if (getDomElement() == null) return super.equals(obj);
+
+    DomElementProblemDescription other = (DomElementProblemDescription)obj;
+    return getDomElement().equals(other.getDomElement())
+           && getDescriptionTemplate().equals(other.getDescriptionTemplate())
+           && getHighlightType().equals(other.getHighlightType());
   }
 }

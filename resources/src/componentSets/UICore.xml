@@ -63,6 +63,10 @@
       <interface-class>com.intellij.openapi.ui.popup.JBPopupFactory</interface-class>
       <implementation-class>com.intellij.ui.popup.PopupFactoryImpl</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.ui.ToolTipHandlerProvider</interface-class>
+      <implementation-class>com.intellij.ui.ToolTipHandlerProviderImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

@@ -67,7 +67,7 @@ import java.text.MessageFormat;
 import java.util.*;
 
 /**
- * @author Mike
+ * @author Mike                                  
  */
 public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.ValidationHost {
   private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance(
@@ -836,31 +836,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     for (final PsiReference reference : references) {
       if (reference != null) {
         if (!reference.isSoft()) {
-          boolean hasBadResolve;
-
-          if (reference instanceof PsiPolyVariantReference) {
-            hasBadResolve = ((PsiPolyVariantReference)reference).multiResolve(false).length == 0;
-          } else {
-            hasBadResolve = reference.resolve() == null;
-          }
-
-          if(hasBadResolve) {
-            String message;
-            if (reference instanceof EmptyResolveMessageProvider) {
-              message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
-            }
-            else {
-              message = XmlErrorMessages.message("cannot.resolve.symbol");
-            }
-
-            String description;
-            try {
-              description = MessageFormat.format(message, reference.getCanonicalText());
-            } catch(IllegalArgumentException ex) {
-              // unresolvedMessage provided by third-party reference contains wrong format string (e.g. {}), tolerate it
-              description = message;
-              LOG.warn(XmlErrorMessages.message("plugin.reference.message.problem",reference.getClass().getName(),message));
-            }
+          if(hasBadResolve(reference)) {
+            String description = getErrorDescription(reference);
 
             HighlightInfo info = HighlightInfo.createHighlightInfo(
               getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class)),
@@ -879,6 +856,37 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         }
       }
     }
+  }
+
+  public static String getErrorDescription(final PsiReference reference) {
+    String message;
+    if (reference instanceof EmptyResolveMessageProvider) {
+      message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
+    }
+    else {
+      message = XmlErrorMessages.message("cannot.resolve.symbol");
+    }
+
+    String description;
+    try {
+      description = MessageFormat.format(message, reference.getCanonicalText());
+    } catch(IllegalArgumentException ex) {
+      // unresolvedMessage provided by third-party reference contains wrong format string (e.g. {}), tolerate it
+      description = message;
+      LOG.warn(XmlErrorMessages.message("plugin.reference.message.problem",reference.getClass().getName(),message));
+    }
+    return description;
+  }
+
+  public static boolean hasBadResolve(final PsiReference reference) {
+    boolean hasBadResolve;
+
+    if (reference instanceof PsiPolyVariantReference) {
+      hasBadResolve = ((PsiPolyVariantReference)reference).multiResolve(false).length == 0;
+    } else {
+      hasBadResolve = reference.resolve() == null;
+    }
+    return hasBadResolve;
   }
 
   public void visitXmlDoctype(XmlDoctype xmlDoctype) {

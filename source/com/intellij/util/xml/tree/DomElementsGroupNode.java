@@ -2,9 +2,11 @@ package com.intellij.util.xml.tree;
 
 import com.intellij.javaee.model.ElementPresentation;
 import com.intellij.javaee.model.ElementPresentationManager;
+import com.intellij.javaee.J2EEBundle;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
@@ -45,11 +47,24 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     setUniformIcon(getNodeIcon());
 
     clearColoredText();
-    addColoredFragment(getNodeName(), new SimpleTextAttributes(Font.BOLD, Color.black));
+
+    final boolean showErrors = !isExpanded() && hasErrors();
+
+    addColoredFragment(getNodeName(),
+                       new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, showErrors? SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor() : SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor()));
+
     final int childrenCount = getChildren().length;
-    addColoredFragment(" (" + childrenCount + ')', new SimpleTextAttributes(Font.ITALIC, Color.gray));
+    addColoredFragment(" (" + childrenCount + ')', showErrors ? J2EEBundle.message("dom.elements.tree.childs.contain.errors") : null, new SimpleTextAttributes(Font.ITALIC, Color.gray));
 
     return true;
+  }
+
+  private boolean hasErrors() {
+    for (DomElement domElement : myChildDescription.getValues(myParentElement)) {
+        if (DomElementAnnotationsManager.getInstance().getProblems(domElement, true).size() > 0) return true;
+    }
+
+    return false;
   }
 
   public String getNodeName() {

@@ -29,5 +29,9 @@ public interface DomElementsProblemsHolder {
 
   List<DomElementProblemDescription> getProblems(DomElement domElement);
 
+  List<DomElementProblemDescription> getProblems(DomElement domElement, boolean includeXmlProblems);
+
+  List<DomElementProblemDescription> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren);
+
   List<DomElementProblemDescription> getProblems(DomElement domElement, ProblemHighlightType severity);
 }

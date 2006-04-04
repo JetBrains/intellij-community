@@ -8,7 +8,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
 public final class ListToolTipHandler extends AbstractToolTipHandler<Integer, JList>{
-  public ListToolTipHandler(JList list) {
+
+  protected ListToolTipHandler(JList list) {
     super(list);
 
     list.getSelectionModel().addListSelectionListener(
@@ -34,6 +35,10 @@ public final class ListToolTipHandler extends AbstractToolTipHandler<Integer, JL
         }
       }
     );
+  }
+
+  public static void install(JList list) {
+    new ListToolTipHandler(list);
   }
 
   /**

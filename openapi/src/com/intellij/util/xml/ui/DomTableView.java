@@ -14,9 +14,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ToolTipHandlerProvider;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +73,9 @@ public abstract class DomTableView extends JPanel {
   private final JPanel myInnerPanel;
 
   protected TableCellRenderer getTableCellRenderer(final int row, final int column, final TableCellRenderer superRenderer, final Object value) {
-    return new StripeTableCellRenderer(superRenderer);
+    final ColumnInfo columnInfo = (getTableModel()).getColumnInfos()[column];
+
+    return columnInfo.getCustomizedRenderer(value, new StripeTableCellRenderer(superRenderer));
   }
 
   protected DomTableView() {
@@ -85,6 +89,7 @@ public abstract class DomTableView extends JPanel {
     myEmptyPaneText = emptyPaneText;
     myHelpID = helpID;
 
+    ToolTipHandlerProvider.getToolTipHandlerProvider().install(myTable);
 
     final JTableHeader header = myTable.getTableHeader();
     header.addMouseMotionListener(new MouseMotionAdapter() {
