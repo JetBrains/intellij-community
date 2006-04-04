@@ -24,7 +24,7 @@ public class DuplicatesFinder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.DuplicatesFinder");
   private static final Key<PsiVariable> PARAMETER = Key.create("PARAMETER");
   private final PsiElement[] myPattern;
-  private final List<? extends PsiVariable> myParameters;
+  private List<? extends PsiVariable> myParameters;
   private final List<? extends PsiVariable> myOutputParameters;
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints = false;
@@ -65,6 +65,7 @@ public class DuplicatesFinder {
       myMultipleExitPoints = exitPoints.size() > 1;
 
       if (myMultipleExitPoints) {
+        myParameters = new ArrayList<PsiVariable>(myParameters); //to allow removal of items from the otherwise readonly list
         removeParametersUsedInExitsOnly(codeFragment, exitStatements, controlFlow, startOffset, endOffset);
       }
     }
