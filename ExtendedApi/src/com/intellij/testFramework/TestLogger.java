@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NonNls;
 
 public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
-  private org.apache.log4j.Logger myLogger;
+  private Logger myLogger;
 
   public TestLogger(Logger logger) {
     myLogger = logger;
