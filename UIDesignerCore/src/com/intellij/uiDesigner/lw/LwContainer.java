@@ -30,7 +30,6 @@ import java.util.Iterator;
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
- * @noinspection unchecked
  */
 public class LwContainer extends LwComponent implements IContainer{
   // PLEASE DO NOT USE GENERICS IN THIS FILE AS IT IS USED IN JAVAC2 ANT TASK THAT SHOULD BE RUNNABLE WITH JDK 1.3
