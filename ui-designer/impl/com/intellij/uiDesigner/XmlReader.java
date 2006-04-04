@@ -149,6 +149,7 @@ public final class XmlReader {
 
     // binding
     component.setBinding(lwComponent.getBinding());
+    component.setCustomCreate(lwComponent.isCustomCreate());
 
     // bounds
     component.setBounds(lwComponent.getBounds());
@@ -173,6 +174,7 @@ public final class XmlReader {
 
     if (component instanceof RadContainer) {
       final RadContainer container = (RadContainer)component;
+      //noinspection ConstantConditions
       final LwContainer lwContainer = (LwContainer)lwComponent;
 
       // border
@@ -187,6 +189,7 @@ public final class XmlReader {
 
     if (component instanceof RadRootContainer) {
       final RadRootContainer radRootContainer = (RadRootContainer)component;
+      //noinspection ConstantConditions
       final LwRootContainer lwRootContainer = (LwRootContainer)lwComponent;
       radRootContainer.setClassToBind(lwRootContainer.getClassToBind());
       radRootContainer.setMainComponentBinding(lwRootContainer.getMainComponentBinding());

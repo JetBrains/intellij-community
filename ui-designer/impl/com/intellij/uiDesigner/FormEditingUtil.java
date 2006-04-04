@@ -29,7 +29,9 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -668,6 +670,19 @@ public final class FormEditingUtil {
       maybeChild = maybeChild.getParent();
     }
     return false;
+  }
+
+  public static PsiMethod findCreateComponentsMethod(final PsiClass aClass) {
+    PsiElementFactory factory = aClass.getManager().getElementFactory();
+    PsiMethod method;
+    try {
+      method = factory.createMethodFromText("void " + AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME + "() {}",
+                                            aClass);
+    }
+    catch (IncorrectOperationException e) {
+      throw new RuntimeException(e);
+    }
+    return aClass.findMethodBySignature(method, true);
   }
 
   public static interface StringDescriptorVisitor<T extends IComponent> {

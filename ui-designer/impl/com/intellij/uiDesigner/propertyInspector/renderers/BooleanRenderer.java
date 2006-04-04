@@ -10,7 +10,7 @@ import javax.swing.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class BooleanRenderer extends JCheckBox implements PropertyRenderer<Boolean> {
+public class BooleanRenderer extends JCheckBox implements PropertyRenderer<Boolean> {
   public JComponent getComponent(final RadComponent component, final Boolean value, final boolean selected, final boolean hasFocus){
     // Background and foreground
     if(selected){

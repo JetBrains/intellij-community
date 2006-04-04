@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.RevalidateInfo;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
@@ -65,6 +66,7 @@ public abstract class RadComponent implements IComponent {
    * @see #getBinding()
    */
   private String myBinding;
+  private boolean myCustomCreate = false;
 
   @NotNull private final Module myModule;
   @NotNull private final Class myClass;
@@ -170,6 +172,7 @@ public abstract class RadComponent implements IComponent {
       final Object initialValue = item.getInitialValue(property);
       if (initialValue != null) {
         try {
+          //noinspection unchecked
           property.setValue(this, initialValue);
         }
         catch (Exception e) {
@@ -196,6 +199,14 @@ public abstract class RadComponent implements IComponent {
   public final void setBinding(final String binding){
     //TODO[anton,vova]: check that binding is a valid java identifier!!!
     myBinding = binding;
+  }
+
+  public boolean isCustomCreate() {
+    return myCustomCreate;
+  }
+
+  public void setCustomCreate(final boolean customCreate) {
+    myCustomCreate = customCreate;
   }
 
   /**
@@ -499,7 +510,10 @@ public abstract class RadComponent implements IComponent {
   protected final void writeBinding(final XmlWriter writer){
     // Binding
     if (getBinding() != null){
-      writer.addAttribute("binding", getBinding());
+      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_BINDING, getBinding());
+    }
+    if (isCustomCreate()) {
+      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_CUSTOM_CREATE, Boolean.TRUE.toString());
     }
   }
 
@@ -525,6 +539,7 @@ public abstract class RadComponent implements IComponent {
           if (value != null) {
             writer.startElement(property.getName());
             try {
+              //noinspection unchecked
               property.write(value, writer);
             }
             finally {
@@ -570,6 +585,7 @@ public abstract class RadComponent implements IComponent {
                              final IntrospectedProperty property) {
     try {
       final Object value = lwComponent.getPropertyValue(lwProperty);
+      //noinspection unchecked
       property.setValue(this, value);
     }
     catch (Exception e) {

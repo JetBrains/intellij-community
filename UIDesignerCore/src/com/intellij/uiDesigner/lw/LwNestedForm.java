@@ -31,8 +31,7 @@ public class LwNestedForm extends LwComponent {
 
   public void read(Element element, PropertiesProvider provider) throws Exception {
     myFormFileName = LwXmlReader.getRequiredString(element, UIFormXmlConstants.ATTRIBUTE_FORM_FILE);
-    readId(element);
-    readBinding(element);
+    readBase(element);
     readConstraints(element);
   }
 

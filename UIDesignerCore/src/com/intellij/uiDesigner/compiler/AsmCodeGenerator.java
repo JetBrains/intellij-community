@@ -53,6 +53,7 @@ public class AsmCodeGenerator {
   private static Map myPropertyCodeGenerators = new HashMap();
   public static final String SETUP_METHOD_NAME = "$$$setupUI$$$";
   public static final String GET_ROOT_COMPONENT_METHOD_NAME = "$$$getRootComponent$$$";
+  public static final String CREATE_COMPONENTS_METHOD_NAME = "createUIComponents";
   private static final Type ourButtonGroupType = Type.getType(ButtonGroup.class);
   private NestedFormLoader myFormLoader;
 
@@ -192,6 +193,7 @@ public class AsmCodeGenerator {
     private String mySuperName;
     private Map myFieldDescMap = new HashMap();
     private Map myFieldAccessMap = new HashMap();
+    private boolean myHaveCreateComponentsMethod = false;
 
     public FormClassVisitor(final ClassVisitor cv) {
       super(cv);
@@ -217,6 +219,10 @@ public class AsmCodeGenerator {
       if (name.equals(SETUP_METHOD_NAME) || name.equals(GET_ROOT_COMPONENT_METHOD_NAME)) {
         return null;
       }
+      if (name.equals(CREATE_COMPONENTS_METHOD_NAME) && desc.equals("()V")) {
+        myHaveCreateComponentsMethod = true;
+      }
+
       final MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
       if (name.equals(CONSTRUCTOR_NAME)) {
         return new FormConstructorVisitor(methodVisitor, myClassName, mySuperName);
@@ -231,8 +237,17 @@ public class AsmCodeGenerator {
     }
 
     public void visitEnd() {
+      final boolean haveCustomCreateComponents = Utils.getCustomCreateComponentCount(myRootContainer) > 0;
+      if (haveCustomCreateComponents && !myHaveCreateComponentsMethod) {
+        myErrors.add(new FormErrorInfo(null, "Form contains components with Custom Create option but no createUIComponents() method"));
+      }
+
       Method method = Method.getMethod("void " + SETUP_METHOD_NAME + " ()");
       GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PRIVATE, method, null, null, cv);
+      if (haveCustomCreateComponents && myHaveCreateComponentsMethod) {
+        generator.visitVarInsn(Opcodes.ALOAD, 0);
+        generator.visitMethodInsn(Opcodes.INVOKESPECIAL, myClassName, CREATE_COMPONENTS_METHOD_NAME, "()V");
+      }
       buildSetupMethod(generator);
 
       final String rootBinding = myRootContainer.getComponent(0).getBinding();
@@ -307,19 +322,32 @@ public class AsmCodeGenerator {
 
       myIdToLocalMap.put(lwComponent.getId(), new Integer(componentLocal));
 
-      generator.newInstance(componentType);
-      generator.dup();
-      generator.invokeConstructor(componentType, Method.getMethod("void <init>()"));
-      generator.storeLocal(componentLocal);
-
       Class componentClass = getComponentClass(className, myLoader);
       validateFieldBinding(lwComponent, componentClass);
-      generateFieldBinding(lwComponent, generator, componentLocal);
+
+      if (!lwComponent.isCustomCreate()) {
+        generator.newInstance(componentType);
+        generator.dup();
+        generator.invokeConstructor(componentType, Method.getMethod("void <init>()"));
+        generator.storeLocal(componentLocal);
+
+        generateFieldBinding(lwComponent, generator, componentLocal);
+      }
+      else {
+        final String binding = lwComponent.getBinding();
+        if (binding == null) {
+          throw new CodeGenerationException(lwComponent.getId(),
+                                            "Only components bound to fields can have custom creation code");
+        }
+        generator.loadThis();
+        generator.getField(Type.getType("L" + myClassName + ";"), binding,
+                           Type.getType((String)myFieldDescMap.get(binding)));
+        generator.storeLocal(componentLocal);
+      }
 
       if (lwComponent instanceof LwContainer) {
         getComponentCodeGenerator((LwContainer) lwComponent).generateContainerLayout(lwComponent, generator, componentLocal);
       }
-
 
       generateComponentProperties(lwComponent, componentClass, generator, componentLocal);
 

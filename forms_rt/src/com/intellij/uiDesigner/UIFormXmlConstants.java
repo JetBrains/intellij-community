@@ -38,6 +38,8 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_SWING_FONT = "swing-font";
   public static final String ATTRIBUTE_INDENT = "indent";
   public static final String ATTRIBUTE_ID = "id";
+  public static final String ATTRIBUTE_BINDING = "binding";
+  public static final String ATTRIBUTE_CUSTOM_CREATE = "custom-create";
   public static final String ATTRIBUTE_FORM_FILE = "form-file";
   public static final String ATTRIBUTE_SAME_SIZE_HORIZONTALLY = "same-size-horizontally";
   public static final String ATTRIBUTE_SAME_SIZE_VERTICALLY = "same-size-vertically";

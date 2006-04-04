@@ -28,7 +28,7 @@ public final class LwVSpacer extends LwAtomicComponent {
   }
   
   public void read(final Element element, final PropertiesProvider provider) throws Exception{
-    readId(element);
+    readBase(element);
     readConstraints(element);
   }
 }

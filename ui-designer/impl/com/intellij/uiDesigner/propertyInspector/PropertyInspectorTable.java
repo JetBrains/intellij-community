@@ -401,6 +401,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     else {
       if (!(component instanceof RadVSpacer || component instanceof RadHSpacer)){
         addProperty(result, myBindingProperty);
+        addProperty(result, CustomCreateProperty.getInstance(myProject));
       }
 
       if(component instanceof RadContainer){
@@ -1084,6 +1085,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       updateUI(myButtonGroupProperty);
       updateUI(SameSizeHorizontallyProperty.getInstance(myProject));
       updateUI(SameSizeVerticallyProperty.getInstance(myProject));
+      updateUI(CustomCreateProperty.getInstance(myProject));
     }
   }
 

@@ -12,7 +12,7 @@ import java.awt.event.ActionListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class BooleanEditor extends PropertyEditor<Boolean> {
+public class BooleanEditor extends PropertyEditor<Boolean> {
   private final JCheckBox myCheckBox;
   private boolean myInsideChange;
 

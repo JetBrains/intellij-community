@@ -27,8 +27,7 @@ public class LwAtomicComponent extends LwComponent {
   }
 
   public void read(final Element element, final PropertiesProvider provider) throws Exception{
-    readId(element);
-    readBinding(element);
+    readBase(element);
     readConstraints(element);
     readProperties(element, provider);
   }

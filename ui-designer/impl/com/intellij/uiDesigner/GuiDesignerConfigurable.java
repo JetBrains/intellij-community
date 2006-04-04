@@ -16,6 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
 import com.intellij.uiDesigner.radComponents.RadLayoutManager;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,7 +156,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
      */
     private void vanishGeneratedSources() {
       final PsiShortNamesCache cache = PsiManager.getInstance(myProject).getShortNamesCache();
-      final PsiMethod[] methods = cache.getMethodsByName(FormSourceCodeGenerator.METHOD_NAME, GlobalSearchScope.projectScope(myProject));
+      final PsiMethod[] methods = cache.getMethodsByName(AsmCodeGenerator.SETUP_METHOD_NAME, GlobalSearchScope.projectScope(myProject));
 
       for (int i = 0; i < methods.length; i++) {
         final PsiMethod method = methods[i];

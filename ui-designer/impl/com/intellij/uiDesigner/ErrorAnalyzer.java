@@ -147,7 +147,7 @@ public final class ErrorAnalyzer {
                 );
               }
               final PsiType fieldType = field.getType();
-              if(fieldType != null && componentType != null && !fieldType.isAssignableFrom(componentType)){
+              if(componentType != null && !fieldType.isAssignableFrom(componentType)){
                 final QuickFix[] fixes = editor != null ? new QuickFix[]{
                   new ChangeFieldTypeFix(editor, field, componentType)
                 } : QuickFix.EMPTY_ARRAY;
@@ -159,9 +159,23 @@ public final class ErrorAnalyzer {
                     fixes
                   )
                 );
+                return true;
               }
             }
             catch (IncorrectOperationException e) {
+            }
+
+            if (component.isCustomCreate() && FormEditingUtil.findCreateComponentsMethod(psiClass) == null) {
+              final QuickFix[] fixes = editor != null ? new QuickFix[]{
+                new GenerateCreateComponentsFix(editor, psiClass)
+              } : QuickFix.EMPTY_ARRAY;
+              component.putClientProperty(
+                CLIENT_PROP_BINDING_ERROR,
+                new ErrorInfo(
+                  "Custom Create",
+                  UIDesignerBundle.message("error.no.custom.create.method"), HighlightDisplayLevel.ERROR,
+                  fixes));
+              return true;
             }
           }
 

@@ -36,6 +36,8 @@ public interface IComponent {
 
   String getId();
 
+  boolean isCustomCreate();
+
   IProperty[] getModifiedProperties();
 
   IContainer getParentContainer();

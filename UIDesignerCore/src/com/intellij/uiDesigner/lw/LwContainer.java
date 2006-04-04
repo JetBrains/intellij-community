@@ -290,8 +290,7 @@ public class LwContainer extends LwComponent implements IContainer{
   }
 
   public void read(final Element element, final PropertiesProvider provider) throws Exception {
-    readId(element);
-    readBinding(element);
+    readBase(element);
 
     // Layout
     readLayout(element);
@@ -307,8 +306,7 @@ public class LwContainer extends LwComponent implements IContainer{
   }
 
   protected void readNoLayout(final Element element, final PropertiesProvider provider) throws Exception {
-    readId(element);
-    readBinding(element);
+    readBase(element);
 
     // Constraints and properties
     readConstraints(element);

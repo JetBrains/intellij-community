@@ -247,4 +247,18 @@ public final class Utils {
     }
     return 0;
   }
+
+  public static int getCustomCreateComponentCount(final IContainer container) {
+    final int[] result = new int[1];
+    result [0] = 0;
+    container.accept(new ComponentVisitor() {
+      public boolean visit(IComponent c) {
+        if (c.isCustomCreate()) {
+          result [0]++;
+        }
+        return true;
+      }
+    });
+    return result [0];
+  }
 }

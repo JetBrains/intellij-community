@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
 import java.awt.*;
@@ -61,6 +62,7 @@ public abstract class LwComponent implements IComponent{
    */
   private Element myErrorComponentProperties;
   protected final HashMap myClientProperties;
+  private boolean myCustomCreate = false;
 
   public LwComponent(final String className){
     if (className == null){
@@ -127,6 +129,14 @@ public abstract class LwComponent implements IComponent{
     return myConstraints;
   }
 
+  public boolean isCustomCreate() {
+    return myCustomCreate;
+  }
+
+  public void setCustomCreate(final boolean customCreate) {
+    myCustomCreate = customCreate;
+  }
+
   public boolean accept(ComponentVisitor visitor) {
     return visitor.visit(this);
   }
@@ -166,6 +176,7 @@ public abstract class LwComponent implements IComponent{
   public final LwIntrospectedProperty[] getAssignedIntrospectedProperties() {
     final LwIntrospectedProperty[] properties = new LwIntrospectedProperty[myIntrospectedProperty2Value.size()];
     final Iterator iterator = myIntrospectedProperty2Value.keySet().iterator();
+    //noinspection ForLoopThatDoesntUseLoopVariable
     for (int i=0; iterator.hasNext(); i++) {
       properties[i] = (LwIntrospectedProperty)iterator.next();
     }
@@ -174,18 +185,12 @@ public abstract class LwComponent implements IComponent{
 
   /**
    * 'id' is required attribute
-   */
-  protected final void readId(final Element element){
-    final String id = LwXmlReader.getRequiredString(element, "id");
-    setId(id);
-  }
-
-  /**
    * 'binding' is optional attribute
    */
-  protected final void readBinding(final Element element){
-    final String binding = element.getAttributeValue("binding");
-    setBinding(binding);
+  protected final void readBase(final Element element) {
+    setId(LwXmlReader.getRequiredString(element, UIFormXmlConstants.ATTRIBUTE_ID));
+    setBinding(element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_BINDING));
+    setCustomCreate(LwXmlReader.getOptionalBoolean(element, UIFormXmlConstants.ATTRIBUTE_CUSTOM_CREATE, false));
   }
 
   /**

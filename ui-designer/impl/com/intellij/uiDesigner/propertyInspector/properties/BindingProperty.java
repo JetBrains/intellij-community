@@ -77,6 +77,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     if (value.length() == 0) {
       checkRemoveUnusedField(component);
       component.setBinding(null);
+      component.setCustomCreate(false);
       return;
     }
 
