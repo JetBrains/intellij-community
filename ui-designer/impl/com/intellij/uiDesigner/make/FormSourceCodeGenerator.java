@@ -196,8 +196,21 @@ public final class FormSourceCodeGenerator {
       null
     );
 
-    final PsiElement method = aClass.add(fakeClass.getMethods()[0]);
-    final PsiElement initializer = aClass.addBefore(fakeClass.getInitializers()[0], method);
+    final PsiMethod method = (PsiMethod) aClass.add(fakeClass.getMethods()[0]);
+    PsiElement initializer = null;
+
+    // don't generate initializer block if $$$setupUI$$$() is called explicitly from one of the constructors
+    boolean needInitializer = true;
+    for(PsiMethod constructor: aClass.getConstructors()) {
+      if (containsMethodIdentifier(constructor, method)) {
+        needInitializer = false;
+        break;
+      }
+    }
+
+    if (needInitializer) {
+      initializer = aClass.addBefore(fakeClass.getInitializers()[0], method);
+    }
 
     PsiMethod grcMethod = null;
     PsiMethod[] grcMethods = aClass.findMethodsByName(AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME, false);
@@ -222,8 +235,10 @@ public final class FormSourceCodeGenerator {
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(module.getProject());
     codeStyleManager.shortenClassReferences(method);
     codeStyleManager.reformat(method);
-    codeStyleManager.shortenClassReferences(initializer);
-    codeStyleManager.reformat(initializer);
+    if (initializer != null) {
+      codeStyleManager.shortenClassReferences(initializer);
+      codeStyleManager.reformat(initializer);
+    }
     if (grcMethod != null) {
       codeStyleManager.shortenClassReferences(grcMethod);
       codeStyleManager.reformat(grcMethod);
