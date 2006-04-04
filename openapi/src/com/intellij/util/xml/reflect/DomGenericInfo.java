@@ -38,6 +38,9 @@ public interface DomGenericInfo {
   @Nullable
   DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName);
 
+  /**
+   * @return true, if there's no children in the element, only tag value accessors
+   */
   boolean isTagValueElement();
 
 
