@@ -3,8 +3,6 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.javaee.ReadOnlyDeploymentDescriptorModificationException;
-import com.intellij.javaee.ui.Warning;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -179,7 +177,7 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     writeCommandAction.execute();
   }
 
-  public void commit() throws ReadOnlyDeploymentDescriptorModificationException {
+  public void commit() {
     final CommitListener listener = myDispatcher.getMulticaster();
     listener.beforeCommit(this);
     listener.afterCommit(this);

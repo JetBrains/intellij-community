@@ -13,21 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.javaee.ui;
+package com.intellij.util.xml.ui;
 
-import com.intellij.javaee.ReadOnlyDeploymentDescriptorModificationException;
+import javax.swing.*;
 
-import java.util.List;
+public class Warning {
+  private final String myWarning;
+  private final JComponent myComponent;
 
-/**
- * author: lesya
- */
-public interface Committable {
-  void commit() throws ReadOnlyDeploymentDescriptorModificationException;
+  public Warning(String warning, JComponent component) {
+    myWarning = warning;
+    myComponent = component;
+  }
 
-  void reset();
 
-  void dispose();
+  public String toString() {
+    return getWarning();
+  }
 
-  List<Warning> getWarnings();
+  public String getWarning() {
+    return myWarning;
+  }
+
+  public JComponent getComponent() {
+    return myComponent;
+  }
+
 }

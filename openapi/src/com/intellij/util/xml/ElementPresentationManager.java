@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.javaee.model;
+package com.intellij.util.xml;
 
 import org.jetbrains.annotations.Nullable;
 

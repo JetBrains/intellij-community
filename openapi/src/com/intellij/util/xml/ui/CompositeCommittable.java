@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.javaee.ui;
-
-import com.intellij.javaee.ReadOnlyDeploymentDescriptorModificationException;
+package com.intellij.util.xml.ui;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +29,7 @@ public class CompositeCommittable implements Committable {
     return panel;
   }
 
-  public void commit() throws ReadOnlyDeploymentDescriptorModificationException {
+  public void commit() {
     for (final Committable committable : myComponents) {
       committable.commit();
     }

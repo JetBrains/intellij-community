@@ -3,8 +3,8 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.javaee.model.ElementPresentation;
-import com.intellij.javaee.model.ElementPresentationManager;
+import com.intellij.util.xml.ElementPresentation;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;

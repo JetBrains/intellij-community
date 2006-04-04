@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.javaee.ui;
+package com.intellij.util.xml;
 
 import javax.swing.*;
 
 /**
- * author: lesya
+ * @author peter
  */
-public interface CommittablePanel extends Committable {
-  JComponent getComponent();
+public interface ElementPresentation {
+  String getElementName();
+
+  String getTypeName();
+
+  Icon getIcon();
 }

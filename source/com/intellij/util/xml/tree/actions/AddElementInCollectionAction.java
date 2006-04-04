@@ -4,7 +4,7 @@
 
 package com.intellij.util.xml.tree.actions;
 
-import com.intellij.javaee.model.ElementPresentationManager;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.util.xml.DomUtil;

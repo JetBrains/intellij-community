@@ -19,8 +19,6 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElementNavigateProvider;
 import com.intellij.util.xml.DomElement;
-import com.intellij.javaee.ui.Committable;
-import com.intellij.javaee.ui.CompositeCommittable;
 
 import java.util.List;
 

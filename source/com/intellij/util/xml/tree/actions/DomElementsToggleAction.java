@@ -4,8 +4,8 @@
 
 package com.intellij.util.xml.tree.actions;
 
-import com.intellij.javaee.model.ElementPresentationManager;
-import com.intellij.javaee.model.ElementPresentation;
+import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.ElementPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.util.IconLoader;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 JetBrains s.r.o.
+ * Copyright 2000-2005 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.javaee.model;
+package com.intellij.util.xml.ui;
 
-import javax.swing.*;
+import java.util.List;
 
 /**
- * @author peter
+ * author: lesya
  */
-public interface ElementPresentation {
-  String getElementName();
+public interface Committable {
+  void commit();
 
-  String getTypeName();
+  void reset();
 
-  Icon getIcon();
+  void dispose();
+
+  List<Warning> getWarnings();
 }

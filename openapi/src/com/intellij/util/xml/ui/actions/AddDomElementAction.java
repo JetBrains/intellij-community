@@ -4,8 +4,8 @@
 
 package com.intellij.util.xml.ui.actions;
 
-import com.intellij.javaee.model.ElementPresentation;
-import com.intellij.javaee.model.ElementPresentationManager;
+import com.intellij.util.xml.ElementPresentation;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -15,10 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.ClassChooser;
-import com.intellij.util.xml.ClassChooserManager;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.ui.DomCollectionPanel;
 

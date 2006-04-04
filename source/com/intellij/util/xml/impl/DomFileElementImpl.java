@@ -3,7 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.javaee.model.ElementPresentation;
+import com.intellij.util.xml.ElementPresentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.util.Key;

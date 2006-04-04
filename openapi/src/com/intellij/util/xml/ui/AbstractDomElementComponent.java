@@ -1,7 +1,5 @@
 package com.intellij.util.xml.ui;
 
-import com.intellij.javaee.ui.CompositeCommittable;
-import com.intellij.javaee.ui.CommittablePanel;
 import com.intellij.util.xml.DomElement;
 
 /**
