@@ -6,6 +6,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ModalityStateEx extends ModalityState {
   private static final WeakReference[] EMPTY_REFS_ARRAY = new WeakReference[0];
 
@@ -57,10 +59,10 @@ public class ModalityStateEx extends ModalityState {
     return false;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   public String toString() {
     if (myModalEntities.length == 0) return "ModalityState.NON_MODAL";
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append("ModalityState:");
     for (int i = 0; i < myModalEntities.length; i++) {
       Object entity = myModalEntities[i].get();
