@@ -162,7 +162,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       }
     }
 
-    if (lowerBound == PsiType.NULL) lowerBound = upperBound;
     if (wildcardToCapture != null) {
       if (lowerBound != PsiType.NULL) {
         lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, wildcardToCapture, typeParameter.getManager());
@@ -170,6 +169,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         return wildcardToCapture;
       }
     }
+
+    if (lowerBound == PsiType.NULL) lowerBound = upperBound;
 
     if (lowerBound == PsiType.NULL) {
       lowerBound = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, forCompletion);
