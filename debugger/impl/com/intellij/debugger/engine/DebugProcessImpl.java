@@ -947,7 +947,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
               result[0] = invokeMethod(invokePolicy, myArgs);
             }
             finally {
-              LOG.assertTrue(thread.isSuspended(), thread.toString());
+              if (!thread.isSuspended()) {
+                LOG.assertTrue(false, thread.toString());
+              }
               LOG.assertTrue(context.isEvaluating());
             }
           }

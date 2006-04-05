@@ -119,7 +119,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     if (myFrameCount == -1) {
       try {
         final ThreadReference threadReference = getThreadReference();
-        myFrameCount = threadReference.frameCount();
+        myFrameCount = threadReference != null? threadReference.frameCount() : 0;
       }
       catch (IncompatibleThreadStateException e) {
         if (!isSuspended()) {

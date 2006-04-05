@@ -200,13 +200,16 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   private void runAction(final EvaluationContextImpl context, LocatableEvent event) {
     if (LOG_ENABLED || LOG_EXPRESSION_ENABLED) {
-      final StringBuffer buf = new StringBuffer(128);
+      final StringBuilder buf = new StringBuilder(128);
       if (LOG_ENABLED) {
         buf.append(getEventMessage(event));
         buf.append("\n");
       }
+      final DebugProcessImpl debugProcess = context.getDebugProcess();
       if (LOG_EXPRESSION_ENABLED && getLogMessage() != null && !"".equals(getLogMessage())) {
-        if(!context.getDebugProcess().isAttached()) return;
+        if(!debugProcess.isAttached()) {
+          return;
+        }
 
         String result;
         try {
@@ -231,7 +234,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
         buf.append("\n");
       }
       if (buf.length() > 0) {
-        context.getDebugProcess().printToConsole(buf.toString());
+        debugProcess.printToConsole(buf.toString());
       }
     }
   }
