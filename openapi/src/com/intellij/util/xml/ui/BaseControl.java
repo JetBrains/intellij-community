@@ -77,16 +77,6 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
     myDispatcher.removeListener(listener);
   }
 
-  public JComponent getFocusedComponent() {
-    checkInitialized();
-    return myBoundComponent;
-  }
-
-  public final Bound getBoundComponent() {
-    checkInitialized();
-    return myBoundComponent;
-  }
-
   public final DomElement getDomElement() {
     return myDomWrapper.getDomElement();
   }
@@ -101,7 +91,7 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
 
   public final void commit() {
     assert getDomElement().isValid();
-    final T valueInControl = getValue(getBoundComponent());
+    final T valueInControl = getValue(getComponent());
     if (!valuesAreEqual(getValueFromXml(), valueInControl)) {
       setValueToXml(valueInControl);
       updateComponent();
@@ -124,8 +114,8 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
 
   protected void doReset() {
     final T t = getValueFromXml();
-    if (!valuesAreEqual(t, getValue(getBoundComponent()))) {
-      setValue(getBoundComponent(), t);
+    if (!valuesAreEqual(t, getValue(getComponent()))) {
+      setValue(getComponent(), t);
     }
   }
 

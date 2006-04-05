@@ -193,14 +193,6 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     return myParentDomElement.getManager().getProject();
   }
 
-  public JComponent getFocusedComponent() {
-    return getBoundComponent();
-  }
-
-  public JComponent getBoundComponent() {
-    return getComponent();
-  }
-
   public JComponent getComponent() {
     if (myCollectionPanel == null) initialize(null);
 

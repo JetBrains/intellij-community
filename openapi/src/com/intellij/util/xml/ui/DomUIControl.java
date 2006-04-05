@@ -14,10 +14,6 @@ public interface DomUIControl extends CommittablePanel {
 
   DomElement getDomElement();
 
-  JComponent getBoundComponent();
-
-  JComponent getFocusedComponent();
-
   void bind(JComponent component);
 
   void addCommitListener(CommitListener listener);
