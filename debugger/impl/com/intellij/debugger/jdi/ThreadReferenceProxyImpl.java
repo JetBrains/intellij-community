@@ -70,7 +70,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   public void suspend() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    getThreadReference().suspend();
+    final ThreadReference threadReference = getThreadReference();
+    if (threadReference != null) {
+      threadReference.suspend();
+    }
     clearCaches();
   }
 
