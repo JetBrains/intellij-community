@@ -5,6 +5,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -27,14 +28,19 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   public DirectoryNode(PsiDirectory aDirectory, boolean compactPackages, boolean showFQName) {
     myDirectory = aDirectory;
-    myDirName = aDirectory.getName();
+    final boolean showModules = DependencyUISettings.getInstance().UI_SHOW_MODULES;
+    myDirName = showModules ? aDirectory.getName() : myDirectory.getVirtualFile().getPresentableUrl();
     myCompactPackages = compactPackages;
     if (showFQName) {
-      final ProjectFileIndex index = ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex();
-      final VirtualFile directory = myDirectory.getVirtualFile();
-      final VirtualFile contentRoot = index.getContentRootForFile(directory);
-      if (contentRoot != null) {
-        myFQName = VfsUtil.getRelativePath(directory, contentRoot.getParent(), File.separatorChar);
+      if (!showModules) {
+        myFQName = myDirName;
+      } else {
+        final ProjectFileIndex index = ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex();
+        final VirtualFile directory = myDirectory.getVirtualFile();
+        final VirtualFile contentRoot = index.getContentRootForFile(directory);
+        if (contentRoot != null) {
+          myFQName = VfsUtil.getRelativePath(directory, contentRoot.getParent(), File.separatorChar);
+        }
       }
     }
     setUserObject(toString());
@@ -54,20 +60,17 @@ public class DirectoryNode extends PackageDependenciesNode {
   public String toString() {
     if (myFQName != null) return myFQName;
     if (myCompactPackages && myCompactedDirNode != null){
-      return myDirName + "/" + myCompactedDirNode.toString();
+      return myDirName + File.separator + myCompactedDirNode.getDirName();
     }
     return myDirName;
   }
 
   public String getDirName(){
-    if (myDirectory == null || !myDirectory.isValid()) return null;
-    final VirtualFile contentRoot =
-      ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex().getContentRootForFile(myDirectory.getVirtualFile());
-    final String dirName = VfsUtil.getRelativePath(myDirectory.getVirtualFile(), contentRoot, '/');
+    if (myDirectory == null || !myDirectory.isValid()) return "";
     if (myCompactPackages && myCompactedDirNode != null){
-      return dirName + "/" + myCompactedDirNode.toString();
+      return myDirectory.getName() + File.separator + myCompactedDirNode.getDirName();
     }
-    return dirName;
+    return myDirectory.getName();
   }
 
   public PsiElement getPsiElement() {

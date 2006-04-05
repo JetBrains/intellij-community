@@ -241,7 +241,7 @@ public class ScopeEditorPanel {
       return getPatternSet(node, pattern);
     }
     else if (node instanceof DirectoryNode){
-      String pattern = ((DirectoryNode)node).getDirName();
+      String pattern = node.toString();
       if (pattern != null) {
         pattern += recursively ? "/*" : "/**";
       }
