@@ -44,9 +44,8 @@ import java.util.Map;
  */
 public class ReferenceProvidersRegistry implements ProjectComponent {
   private final List<Class> myTempScopes = new ArrayList<Class>();
-  private final List<ProviderBinding> myBindingsWithoutClass = new ArrayList<ProviderBinding>();
   private final Map<Class,ProviderBinding> myBindingsMap = new HashMap<Class,ProviderBinding>();
-  private final List<Pair<Class, ElementManipulator>> myManipulators = new ArrayList<Pair<Class, ElementManipulator>>();
+  private final List<Pair<Class<?>, ElementManipulator<?>>> myManipulators = new ArrayList<Pair<Class<?>, ElementManipulator<?>>>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new HashMap<ReferenceProviderType, PsiReferenceProvider>(5);
 
   private static final Logger LOG = Logger.getInstance("ReferenceProvidersRegistry");
@@ -280,6 +279,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ), dynamicPathReferenceProviderNoEmptyFileReferencesAtEnd
     );
 
+    PsiReferenceProvider propertiesReferenceProvider = getProviderByType(PROPERTIES_FILE_KEY_PROVIDER);
     registerXmlAttributeValueReferenceProvider(
       new String[]{"key"},
       new ScopeFilter(
@@ -295,7 +295,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             )
           ), 2
         )
-      ), getProviderByType(PROPERTIES_FILE_KEY_PROVIDER)
+      ), propertiesReferenceProvider
     );
 
     registerXmlAttributeValueReferenceProvider(
@@ -307,7 +307,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             new ClassFilter(XmlTag.class)
           ), 2
         )
-      ), getProviderByType(PROPERTIES_FILE_KEY_PROVIDER)
+      ), propertiesReferenceProvider
     );
 
     registerXmlAttributeValueReferenceProvider(
@@ -322,7 +322,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             )
           ), 2
         )
-      ), getProviderByType(PROPERTIES_FILE_KEY_PROVIDER)
+      ), propertiesReferenceProvider
     );
 
     registerXmlAttributeValueReferenceProvider(
@@ -709,7 +709,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerXmlAttributeValueReferenceProvider(attributeNames, elementFilter, true, provider);
   }
 
-  public @Nullable PsiReferenceProvider getProviderByType(@NotNull ReferenceProviderType type) {
+  public @NotNull PsiReferenceProvider getProviderByType(@NotNull ReferenceProviderType type) {
     return myReferenceTypeToProviderMap.get(type);
   }
 
@@ -734,11 +734,6 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         }
       }
 
-      if (myBindingsWithoutClass.size() > 0) {
-        for (final ProviderBinding binding : myBindingsWithoutClass) {
-          binding.addAcceptableReferenceProviders(current, ret);
-        }
-      }
       element = ResolveUtil.getContext(element);
     }
     while (!isScopeFinal(current.getClass()));
@@ -751,7 +746,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   }
 
   public @Nullable <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
-    for (final Pair<Class, ElementManipulator> pair : myManipulators) {
+    for (final Pair<Class<?>,ElementManipulator<?>> pair : myManipulators) {
       if (pair.getFirst().isAssignableFrom(element.getClass())) {
         return (ElementManipulator<T>)pair.getSecond();
       }
@@ -761,7 +756,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   }
 
   public <T extends PsiElement> void registerManipulator(@NotNull Class<T> elementClass, @NotNull ElementManipulator<T> manipulator) {
-    myManipulators.add(new Pair<Class, ElementManipulator>(elementClass, manipulator));
+    myManipulators.add(new Pair<Class<?>, ElementManipulator<?>>(elementClass, manipulator));
   }
 
   private boolean isScopeFinal(Class scopeClass) {

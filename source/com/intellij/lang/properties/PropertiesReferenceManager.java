@@ -36,6 +36,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   private final Map<String, Collection<VirtualFile>> myPropertiesMap = new THashMap<String, Collection<VirtualFile>>();
   private final List<VirtualFile> myChangedFiles = new ArrayList<VirtualFile>();
   private final FileTypeListener myFileTypeChangedListener;
+  private final Object LOCK = new Object();
 
   public static PropertiesReferenceManager getInstance(Project project) {
     return project.getComponent(PropertiesReferenceManager.class);
@@ -96,7 +97,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
       public boolean processFile(VirtualFile fileOrDir) {
         boolean isPropertiesFile = myPropertiesFilesManager.addNewFile(fileOrDir);
         if (isPropertiesFile) {
-          synchronized (myChangedFiles) {
+          synchronized (LOCK) {
             myChangedFiles.add(fileOrDir);
           }
         }
@@ -119,7 +120,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
     return "Properties support manager";
   }
   public void beforePropertiesFileChange(final PropertiesFile propertiesFile, final Collection<String> propertiesBefore) {
-    synchronized (myChangedFiles) {
+    synchronized (LOCK) {
       VirtualFile virtualFile = propertiesFile.getVirtualFile();
       if (propertiesBefore != null) {
         for (String key : propertiesBefore) {
@@ -136,7 +137,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   private void updateChangedFiles() {
     while (true) {
       VirtualFile virtualFile;
-      synchronized (myChangedFiles) {
+      synchronized (LOCK) {
         if (myChangedFiles.isEmpty()) break;
         virtualFile = myChangedFiles.remove(myChangedFiles.size() - 1);
       }
@@ -144,7 +145,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
       if (!(psiFile instanceof PropertiesFile)) continue;
       Set<String> keys = ((PropertiesFile)psiFile).getNamesMap().keySet();
-      synchronized (myPropertiesMap) {
+      synchronized (LOCK) {
         for (String key : keys) {
           Collection<VirtualFile> containingFiles = myPropertiesMap.get(key);
           if (containingFiles == null) {
@@ -160,7 +161,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   public Collection<Property> findPropertiesByKey(final String key) {
     updateChangedFiles();
     Collection<Property> result;
-    synchronized (myPropertiesMap) {
+    synchronized (LOCK) {
       Collection<VirtualFile> virtualFiles = myPropertiesMap.get(key);
       if (virtualFiles == null || virtualFiles.size() == 0) return Collections.emptyList();
       result = new ArrayList<Property>(virtualFiles.size());

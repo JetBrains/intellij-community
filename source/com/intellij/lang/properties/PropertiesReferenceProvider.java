@@ -16,12 +16,11 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class PropertiesReferenceProvider implements PsiReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
-    final Object value;
+    Object value = null;
     String bundleName = null;
     boolean propertyRefWithPrefix = false;
 
@@ -42,28 +41,21 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
       if (I18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
         final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
         if (resourceBundleName instanceof PsiExpression) {
-          PsiExpression expr = (PsiExpression) resourceBundleName;
+          PsiExpression expr = (PsiExpression)resourceBundleName;
           final Object bundleValue = expr.getManager().getConstantEvaluationHelper().computeConstantExpression(expr);
           bundleName = bundleValue == null ? null : bundleValue.toString();
         }
       }
-
-    } else if (element instanceof XmlAttributeValue) {
-      if(isNonDynamicAttribute(element)) {
-        value = ((XmlAttributeValue)element).getValue();
-        final XmlAttribute attribute = (XmlAttribute)element.getParent();
-        if ("key".equals(attribute.getName())) {
-          final XmlTag parent = attribute.getParent();
-          if ("message".equals(parent.getLocalName()) &&
-              Arrays.binarySearch(XmlUtil.JSTL_FORMAT_URIS,parent.getNamespace()) >= 0) {
-            propertyRefWithPrefix = true;
-          }
+    }
+    else if (element instanceof XmlAttributeValue && isNonDynamicAttribute(element)) {
+      value = ((XmlAttributeValue)element).getValue();
+      final XmlAttribute attribute = (XmlAttribute)element.getParent();
+      if ("key".equals(attribute.getName())) {
+        final XmlTag parent = attribute.getParent();
+        if ("message".equals(parent.getLocalName()) && Arrays.binarySearch(XmlUtil.JSTL_FORMAT_URIS, parent.getNamespace()) >= 0) {
+          propertyRefWithPrefix = true;
         }
-      } else {
-        value = null;
       }
-    } else {
-      value = null;
     }
 
     if (value instanceof String) {
