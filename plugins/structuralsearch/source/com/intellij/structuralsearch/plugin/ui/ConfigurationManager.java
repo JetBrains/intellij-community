@@ -1,9 +1,14 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -125,7 +130,49 @@ public class ConfigurationManager {
     return configurations;
   }
 
+  public static Configuration findConfigurationByName(final Collection<Configuration> configurations, final String name) {
+    for(Configuration config:configurations) {
+      if (config.getName().equals(name)) return config;
+    }
+
+    return null;
+  }
+
   public Collection<Configuration> getHistoryConfigurations() {
     return historyConfigurations;
+  }
+
+  public static @Nullable String findAppropriateName(@NotNull final Collection<Configuration> configurations, @NotNull String _name,
+                                                     @NotNull final Project project) {
+    Configuration config;
+    String name = _name;
+
+    while ((config = findConfigurationByName(configurations, name)) != null) {
+      int i = Messages.showYesNoDialog(
+        project,
+        SSRBundle.message("overwrite.message"),
+        SSRBundle.message("overwrite.title"),
+        IconLoader.getIcon("/general/questionDialog.png")
+      );
+
+      if (i == 0) {
+        configurations.remove(config);
+        break;
+      }
+      name = showSaveTemplateAsDialog(name, project);
+      if (name == null) break;
+    }
+    return name;
+  }
+
+  public static @Nullable String showSaveTemplateAsDialog(@NotNull String initial, @NotNull Project project) {
+    return Messages.showInputDialog(
+      project,
+      SSRBundle.message("template.name.button"),
+      SSRBundle.message("save.template.description.button"),
+      IconLoader.getIcon("/general/questionDialog.png"),
+      initial,
+      null
+    );
   }
 }

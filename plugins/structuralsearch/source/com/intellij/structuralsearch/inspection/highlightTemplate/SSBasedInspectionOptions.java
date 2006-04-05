@@ -19,12 +19,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
-import com.intellij.structuralsearch.plugin.ui.SearchContext;
-import com.intellij.structuralsearch.plugin.ui.SearchDialog;
+import com.intellij.structuralsearch.plugin.ui.*;
+import com.intellij.structuralsearch.SSRBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -179,6 +179,10 @@ public class SSBasedInspectionOptions {
 
     if (configuration.getName() == null || configuration.getName().equals(SearchDialog.USER_DEFINED)) {
       String name = dialog.showSaveTemplateAsDialog();
+
+      if (name != null) {
+        name = ConfigurationManager.findAppropriateName(myConfigurations, name, dialog.getProject());
+      }
       if (name == null) return;
       configuration.setName(name);
     }

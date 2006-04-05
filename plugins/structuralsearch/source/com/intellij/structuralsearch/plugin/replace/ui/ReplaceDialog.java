@@ -336,11 +336,10 @@ public class ReplaceDialog extends SearchDialog {
       );
     }
     catch (UnsupportedPatternException ex) {
-      showError("unsupported.replacement.pattern.message");
+      reportMessage("unsupported.replacement.pattern.message",replaceCriteriaEdit, ex.getMessage());
       result = false;
     }
 
-    getOKAction().setEnabled(result);
     return result;
   }
 

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -16,18 +17,19 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDialog;
 import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
+import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
@@ -41,6 +43,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Collection;
 
 // Class to show the user the request for search
 
@@ -62,6 +65,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   private JCheckBox maxMatchesSwitch;
   private JTextField maxMatches;
   private JComboBox fileTypes;
+  private JLabel status;
+  private JLabel statusText;
 
   protected SearchModel model;
   private JCheckBox openInNewTab;
@@ -89,6 +94,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     myRunFindActionOnClose = runFindActionOnClose;
     this.searchContext = (SearchContext)searchContext.clone();
     setTitle(getDefaultTitle());
+
     if (runFindActionOnClose) {
       setOKButtonText(SSRBundle.message("ssdialog.find.botton"));
       setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
@@ -97,7 +103,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     existingTemplatesComponent = ExistingTemplatesComponent.getInstance(this.searchContext.getProject());
     model = new SearchModel(createConfiguration());
-    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     init();
   }
@@ -115,10 +121,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return !searchCriteriaEdit.getDocument().getText().equals(configuration.getMatchOptions().getSearchPattern());
   }
 
-
   public void setSearchPattern(final Configuration config) {
     model.setShadowConfig(config);
     setValuesFromConfig(config);
+    initiateValidation();
   }
 
   protected Editor createEditor(final SearchContext searchContext) {
@@ -152,18 +158,44 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     editor.getContentComponent().addKeyListener(
       new KeyAdapter() {
-        public void keyPressed(KeyEvent e) {
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-
-            public void run() {
-              if (false) doValidate();
-            }
-          }, 500);
+        public void keyTyped(KeyEvent e) {
+          initiateValidation();
         }
       }
     );
     return editor;
+  }
+
+  private void initiateValidation() {
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(new Runnable() {
+
+      public void run() {
+        try {
+          SwingUtilities.invokeAndWait(
+            new Runnable() {
+              public void run() {
+                ApplicationManager.getApplication().runWriteAction(
+                  new Runnable() {
+                    public void run() {
+                      if (!doValidate()) {
+                        getOKAction().setEnabled(false);
+                      } else {
+                        getOKAction().setEnabled(true);
+                        reportMessage(null,null);
+                      }
+                    }
+                  }
+                );
+              }
+            }
+          );
+        }
+        catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }, 500);
   }
 
   protected void buildOptions(JPanel searchOptions) {
@@ -215,15 +247,18 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     //noinspection HardCodedStringLiteral
     fileTypes = new JComboBox(new String[]{"java", "xml", "html"});
     if (ourSupportDifferentFileTypes) {
+      final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
       searchOptions.add(
         UIUtil.createOptionLine(
           new JComponent[]{
-            new JLabel(SSRBundle.message("search.dialog.file.type.label")),
+            jLabel,
             fileTypes,
             (JComponent)Box.createHorizontalGlue()
           }
         )
       );
+
+      jLabel.setLabelFor(fileTypes);
     }
 
     final PsiFile file = searchContext.getFile();
@@ -489,6 +524,18 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return centerPanel;
   }
 
+
+  protected JComponent createSouthPanel() {
+    final JPanel statusPanel = new JPanel(new BorderLayout());
+    statusPanel.add(super.createSouthPanel(), BorderLayout.NORTH);
+    statusPanel.add(statusText = new JLabel(SSRBundle.message("status.message")), BorderLayout.WEST);
+    final String s = SSRBundle.message("status.mnemonic");
+    if (s.length() > 0) statusText.setDisplayedMnemonic( s.charAt(0) );
+    statusPanel.add(status = new JLabel(),BorderLayout.CENTER);
+
+    return statusPanel;
+  }
+
   private JPanel createTemplateManagementButtons() {
     JPanel panel = new JPanel(null);
     panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
@@ -502,10 +549,21 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
         public void actionPerformed(ActionEvent e) {
           String name = showSaveTemplateAsDialog();
+
           if (name != null) {
+            final Project project = searchContext.getProject();
+            final ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(project).getConfigurationManager();
+            final Collection<Configuration> configurations = configurationManager.getConfigurations();
+
+            if (configurations != null) {
+              name = ConfigurationManager.findAppropriateName(configurations, name, project);
+              if (name == null) return;
+            }
+
             model.getConfig().setName(name);
             setValuesToConfig(model.getConfig());
             setDialogTitle(model.getConfig());
+
             if (model.getShadowConfig() == null ||
                 model.getShadowConfig() instanceof PredefinedConfiguration) {
               existingTemplatesComponent.addConfigurationToUserTemplates(model.getConfig());
@@ -568,9 +626,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             }
             Configuration[] configurations = dialog.getSelectedConfigurations();
             if (configurations.length == 1) {
-              Configuration configuration = configurations[0];
-              setValuesFromConfig(configuration);
-              model.setShadowConfig(null);
+              setSearchPattern(configurations[0]);
             }
           }
         }
@@ -597,8 +653,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             }
             Configuration[] configurations = dialog.getSelectedConfigurations();
             if (configurations.length == 1) {
-              Configuration configuration = configurations[0];
-              setSearchPattern(configuration);
+              setSearchPattern(configurations[0]);
             }
           }
         }
@@ -608,16 +663,15 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return panel;
   }
 
+  public final Project getProject() {
+    return searchContext.getProject();
+  }
+
   public String showSaveTemplateAsDialog() {
-    String name = Messages.showInputDialog(
-      searchContext.getProject(),
-      SSRBundle.message("template.name.button"),
-      SSRBundle.message("save.template.description.button"),
-      IconLoader.getIcon("/general/questionDialog.png"),
+    return ConfigurationManager.showSaveTemplateAsDialog(
       model.getShadowConfig() != null ? model.getShadowConfig().getName() : "",
-      null
+      searchContext.getProject()
     );
-    return name;
   }
 
   protected boolean isReplaceDialog() {
@@ -658,6 +712,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       }
     }
 
+    initiateValidation();
+
     super.show();
   }
 
@@ -697,7 +753,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       runAction(model.getConfig(), searchContext);
     }
     catch (MalformedPatternException ex) {
-      showError("this.pattern.is.malformed.message", ex.getMessage());
+      reportMessage("this.pattern.is.malformed.message", searchCriteriaEdit, ex.getMessage());
     }
   }
 
@@ -718,11 +774,11 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       Matcher.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
     }
     catch (MalformedPatternException ex) {
-      showError("this.pattern.is.malformed.message", ex.getMessage());
+      reportMessage("this.pattern.is.malformed.message", searchCriteriaEdit, ex.getMessage());
       result = false;
     }
     catch (UnsupportedPatternException ex) {
-      showError("this.pattern.is.unsupported.message");
+      reportMessage("this.pattern.is.unsupported.message", searchCriteriaEdit);
       result = false;
     }
 
@@ -730,21 +786,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return result;
   }
 
-  protected void showError(@NonNls String messageId, Object... params) {
-    //final int offset = searchCriteriaEdit.getCaretModel().getOffset();
-    //UIUtil.showTooltip(
-    //  searchCriteriaEdit,
-    //  offset,
-    //  offset + 1,
-    //  SSRBundle.message(messageId),
-    //  OUR_TOOLTIP_GROUP
-    //);
-
-    Messages.showErrorDialog(
-      searchContext.getProject(),
-      SSRBundle.message(messageId, params),
-      SSRBundle.message("information.message.title")
-    );
+  protected void reportMessage(@NonNls String messageId, Editor editor, Object... params) {
+    status.setText(messageId != null ? SSRBundle.message(messageId, params):"");
+    status.revalidate();
+    statusText.setLabelFor(editor != null ? editor.getContentComponent() : null);
   }
 
   protected void setValuesToConfig(Configuration config) {
