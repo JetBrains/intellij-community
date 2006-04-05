@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,7 +47,9 @@ public class JarCompiler implements PackagingCompiler {
         public void run() {
           MyValState valState = (MyValState)state;
           String jarPath = valState.getOutputJarUrl();
-          FileUtil.delete(new File(VfsUtil.urlToPath(jarPath)));
+          if (jarPath != null) {
+            FileUtil.delete(new File(VfsUtil.urlToPath(jarPath)));
+          }
         }
       });
     }
@@ -154,7 +157,7 @@ public class JarCompiler implements PackagingCompiler {
         long timestamp = timestamps[i];
         if (!url.equals(other.sourceUrls[i]) || timestamp != other.timestamps[i]) return false;
       }
-      if (!outputJarUrl.equals(other.outputJarUrl)) return false;
+      if (!Comparing.strEqual(outputJarUrl,other.outputJarUrl)) return false;
       if (outputJarTimestamp != other.outputJarTimestamp) return false;
       return true;
     }
