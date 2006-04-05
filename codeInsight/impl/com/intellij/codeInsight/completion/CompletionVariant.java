@@ -11,7 +11,6 @@ import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
@@ -305,11 +304,10 @@ public class CompletionVariant {
         ((PsiJavaReference)reference).processVariants(processor);
       }
       else{
-        Set<Object> variants = new THashSet<Object>();
-        filterVariants(reference, prefix, position, variants);
+        final Object[] completions = reference.getVariants();
+        if(completions == null) return;
 
-        if(variants.isEmpty()) return;
-        for (Object completion : variants) {
+        for (Object completion : completions) {
           if (completion instanceof PsiElement) {
             processor.execute((PsiElement)completion, PsiSubstitutor.EMPTY);
           }
@@ -338,33 +336,6 @@ public class CompletionVariant {
     }
   }
 
-  private static void filterVariants(final PsiReference reference,
-                                     final String prefix,
-                                     final PsiElement position,
-                                     Collection<Object> variants) {
-    //if (reference instanceof PsiMultiReference) {
-    //  for (PsiReference ref : ((PsiMultiReference)reference).getReferences()) {
-    //    filterVariants(ref, prefix, position, variants);
-    //  }
-    //  return;
-    //}
-    //if (reference instanceof GenericReference) {
-    //  GenericReference genericReference = (GenericReference)reference;
-    //  if (prefix.length() == 0
-    //      && genericReference.getContextReference() == null
-    //      && position.getParent() instanceof PsiLiteralExpression
-    //      && ((String)((PsiLiteralExpression)position.getParent()).getValue()).indexOf(CompletionUtil.DUMMY_IDENTIFIER) != 0
-    //      && ((String)((PsiLiteralExpression)position.getParent()).getValue()).indexOf(CompletionUtil.DUMMY_IDENTIFIER) != 1
-    //    ) {
-    //    return;
-    //  }
-    //}
-
-    final Object[] completions = reference.getVariants();
-    if (completions != null) {
-      variants.addAll(Arrays.asList(completions));
-    }
-  }
 
   private static class Scope{
     Class myClass;
