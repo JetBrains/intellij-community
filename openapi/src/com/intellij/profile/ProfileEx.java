@@ -101,4 +101,11 @@ public class ProfileEx implements Profile {
   public int hashCode() {
     return myName.hashCode();
   }
+
+  public int compareTo(final Object o) {
+    if (o instanceof Profile){
+      return getName().toLowerCase().compareTo(((Profile)o).getName().toLowerCase());
+    }
+    return 0;
+  }
 }

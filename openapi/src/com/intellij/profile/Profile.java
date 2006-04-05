@@ -26,7 +26,7 @@ import java.io.File;
  * User: anna
  * Date: 20-Nov-2005
  */
-public interface Profile extends JDOMExternalizable {
+public interface Profile extends JDOMExternalizable, Comparable {
   Icon LOCAL_PROFILE = IconLoader.getIcon("/general/applicationSettings.png");
   Icon PROJECT_PROFILE = IconLoader.getIcon("/general/projectSettings.png");
   @NonNls String INSPECTION = "INSPECTION";
