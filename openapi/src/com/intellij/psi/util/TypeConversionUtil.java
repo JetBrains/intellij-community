@@ -71,19 +71,18 @@ public class TypeConversionUtil {
    * @return true iff fromType can be casted to toType
    */
   public static boolean areTypesConvertible(PsiType fromType, PsiType toType) {
-    // type can be casted via
-    // widening primitive or reference conversion
-    // This case also includes boxing/unboxing conversions
-    if (toType.isAssignableFrom(fromType)) return true;
-
-    // or narrowing primitive conversion
     if (isPrimitiveAndNotNull(fromType) && isPrimitiveAndNotNull(toType)) {
       final int fromTypeRank = getTypeRank(fromType);
       final int toTypeRank = getTypeRank(toType);
       return fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK;
     }
     if (isPrimitiveAndNotNull(fromType) || isPrimitiveAndNotNull(toType)) return false;
+
+    //type can be cast via widening reference conversion
+    if (toType.isAssignableFrom(fromType)) return true;
+
     if (isNullType(fromType) || isNullType(toType)) return true;
+
     // or narrowing reference conversion
     return isNarrowingReferenceConversionAllowed(fromType, toType);
   }
