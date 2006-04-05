@@ -34,7 +34,7 @@ public interface PsiLocalVariable extends PsiVariable {
   void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException;
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   @NotNull
   PsiTypeElement getTypeElement();
