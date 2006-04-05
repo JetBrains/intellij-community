@@ -19,8 +19,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -47,7 +47,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
         return true;
     }
 
-    @Nullable
+    @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "manual.array.copy.problem.descriptor");
@@ -82,7 +82,8 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
 
         @Nullable
         private static String getSystemArrayCopyText(
-                PsiForStatement forStatement) {
+                PsiForStatement forStatement)
+                throws IncorrectOperationException {
             final PsiBinaryExpression condition =
                     (PsiBinaryExpression)forStatement.getCondition();
             if (condition == null) {
@@ -93,7 +94,6 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 return null;
             }
             final String lengthText = limit.getText();
-
             final PsiStatement initialization =
                     forStatement.getInitialization();
             if (initialization == null) {
@@ -107,9 +107,8 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             if (declaration.getDeclaredElements().length != 1) {
                 return null;
             }
-            final PsiLocalVariable var = (PsiLocalVariable)
+            final PsiLocalVariable variable = (PsiLocalVariable)
                     declaration.getDeclaredElements()[0];
-            final PsiExpression initialValue = var.getInitializer();
             final PsiExpressionStatement body = getBody(forStatement);
             if (body == null) {
                 return null;
@@ -132,16 +131,13 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             }
             final PsiExpression rArray = rhs.getArrayExpression();
             final String fromArrayText = rArray.getText();
-            final PsiExpression rhsIndex = rhs.getIndexExpression();
-            final int offset = getOffset(initialValue);
+            final PsiExpression rhsIndexExpression = rhs.getIndexExpression();
             final String fromOffsetText =
-                    Integer.toString(offset + getOffset(rhsIndex));
-            final PsiExpression lhsIndex = lhs.getIndexExpression();
+                    getOffsetText(rhsIndexExpression, variable);
+            final PsiExpression lhsIndexExpression = lhs.getIndexExpression();
             final String toOffsetText =
-                    Integer.toString(offset + getOffset(lhsIndex));
-            @NonNls final StringBuffer buffer =
-                    new StringBuffer(25 + fromArrayText.length() +
-                            toArrayText.length() + lengthText.length());
+                    getOffsetText(lhsIndexExpression, variable);
+            @NonNls final StringBuffer buffer = new StringBuffer(60);
             buffer.append("System.arraycopy(");
             buffer.append(fromArrayText);
             buffer.append(", ");
@@ -156,45 +152,64 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             return buffer.toString();
         }
 
-        private static int getOffset(PsiExpression expression) {
-            if (PsiUtil.isConstantExpression(expression)) {
-                final PsiManager manager = expression.getManager();
-                final PsiConstantEvaluationHelper constantEvaluationHelper =
-                        manager.getConstantEvaluationHelper();
-                final Object result =
-                        constantEvaluationHelper.computeConstantExpression(
-                                expression);
-                if (result instanceof Integer) {
-                    final Integer integer = (Integer)result;
-                    return integer.intValue();
-                } else {
-                    return 0;
+        @Nullable
+        private static String getOffsetText(PsiExpression expression,
+                                            PsiLocalVariable variable)
+                throws IncorrectOperationException {
+            final PsiExpression strippedExpression =
+                    ParenthesesUtils.stripParentheses(expression);
+            if (strippedExpression == null) {
+                return null;
+            }
+            final String expressionText = strippedExpression.getText();
+            final String variableName = variable.getName();
+            if (expressionText.equals(variableName)) {
+                final PsiExpression initialValue = variable.getInitializer();
+                if (initialValue == null) {
+                    return null;
                 }
-            } else if (expression instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression binaryExp =
-                        (PsiBinaryExpression)expression;
-                final PsiExpression rhs = binaryExp.getROperand();
-                if (rhs == null) {
-                    return 0;
-                }
-                final PsiManager manager = rhs.getManager();
-                final PsiConstantEvaluationHelper constantEvaluationHelper =
-                        manager.getConstantEvaluationHelper();
-                final Object result =
-                        constantEvaluationHelper.computeConstantExpression(rhs);
-                if (!(result instanceof Integer)) {
-                    return 0;
-                }
-                final Integer integer = (Integer)result;
-                final PsiJavaToken sign = binaryExp.getOperationSign();
+                return initialValue.getText();
+            }
+            if (strippedExpression instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression)strippedExpression;
+                final PsiExpression lhs = binaryExpression.getLOperand();
+                final String lhsText = getOffsetText(lhs, variable);
+                final PsiExpression rhs = binaryExpression.getROperand();
+                final String rhsText = getOffsetText(rhs, variable);
+                final PsiJavaToken sign = binaryExpression.getOperationSign();
                 final IElementType tokenType = sign.getTokenType();
-                if (JavaTokenType.MINUS.equals(tokenType)) {
-                    return -integer.intValue();
-                } else {
-                    return integer.intValue();
+                if (lhsText == null || lhsText.equals("0")) {
+                    if (tokenType.equals(JavaTokenType.MINUS)) {
+                        return '-' + rhsText;
+                    }
+                    return rhsText;
+                } else if (rhsText== null || rhsText.equals("0")) {
+                    return lhsText;
                 }
+                return collapseConstant(lhsText + sign.getText() + rhsText,
+                        variable);
+            }
+            return collapseConstant(expression.getText(), variable);
+        }
+
+        private static String collapseConstant(String expressionText,
+                                               PsiElement context)
+                throws IncorrectOperationException {
+            final PsiManager manager = context.getManager();
+            final PsiElementFactory factory = manager.getElementFactory();
+            final PsiConstantEvaluationHelper evaluationHelper =
+                    manager.getConstantEvaluationHelper();
+            final PsiExpression fromOffsetExpression =
+                    factory.createExpressionFromText(expressionText,
+                            context);
+            final Object fromOffsetConstant =
+                    evaluationHelper.computeConstantExpression(
+                            fromOffsetExpression);
+            if (fromOffsetConstant != null) {
+                return fromOffsetConstant.toString();
             } else {
-                return 0;
+                return expressionText;
             }
         }
 
@@ -215,10 +230,10 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
 
     private static class ManualArrayCopyVisitor extends BaseInspectionVisitor {
 
-        public void visitForStatement(@NotNull PsiForStatement forStatement) {
-            super.visitForStatement(forStatement);
+        public void visitForStatement(@NotNull PsiForStatement statement) {
+            super.visitForStatement(statement);
             final PsiStatement initialization =
-                    forStatement.getInitialization();
+                    statement.getInitialization();
             if (!(initialization instanceof PsiDeclarationStatement)) {
                 return;
             }
@@ -227,48 +242,35 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             if (declaration.getDeclaredElements().length != 1) {
                 return;
             }
-            final PsiLocalVariable var = (PsiLocalVariable)
+            final PsiLocalVariable variable = (PsiLocalVariable)
                     declaration.getDeclaredElements()[0];
-            final PsiExpression initialValue = var.getInitializer();
-            if (initialValue != null) {
-                final PsiManager manager = initialValue.getManager();
-                final PsiConstantEvaluationHelper constantEvaluationHelper =
-                        manager.getConstantEvaluationHelper();
-                final Object value =
-                        constantEvaluationHelper.computeConstantExpression(
-                                initialValue);
-                if (!(value instanceof Integer)) {
-                    return;
-                }
-                final Integer integer = (Integer)value;
-                if (integer.intValue() != 0) {
-                    return;
-                }
-            }
-            final PsiExpression condition = forStatement.getCondition();
-            if (!isComparison(condition, var)) {
+            final PsiExpression initialValue = variable.getInitializer();
+            if (initialValue == null) {
                 return;
             }
-            final PsiStatement update = forStatement.getUpdate();
-            if (!isIncrement(update, var)) {
+            final PsiExpression condition = statement.getCondition();
+            if (!isComparison(condition, variable)) {
                 return;
             }
-            final PsiStatement body = forStatement.getBody();
-            if (!bodyIsArrayMove(body, var)) {
+            final PsiStatement update = statement.getUpdate();
+            if (!isIncrement(update, variable)) {
                 return;
             }
-            registerStatementError(forStatement);
+            final PsiStatement body = statement.getBody();
+            if (!bodyIsArrayMove(body, variable)) {
+                return;
+            }
+            registerStatementError(statement);
         }
 
         private static boolean bodyIsArrayMove(PsiStatement body,
-                                               PsiLocalVariable var) {
+                                               PsiLocalVariable variable) {
             if (body instanceof PsiExpressionStatement) {
                 final PsiExpressionStatement exp =
                         (PsiExpressionStatement)body;
                 final PsiExpression expression = exp.getExpression();
-                return expressionIsArrayMove(expression, var);
-            }
-            else if (body instanceof PsiBlockStatement) {
+                return expressionIsArrayMove(expression, variable);
+            } else if (body instanceof PsiBlockStatement) {
                 final PsiBlockStatement blockStatement =
                         (PsiBlockStatement)body;
                 final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
@@ -276,13 +278,13 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 if (statements.length != 1) {
                     return false;
                 }
-                return bodyIsArrayMove(statements[0], var);
+                return bodyIsArrayMove(statements[0], variable);
             }
             return false;
         }
 
-        private static boolean expressionIsArrayMove(PsiExpression expression,
-                                                     PsiLocalVariable var) {
+        private static boolean expressionIsArrayMove(
+                PsiExpression expression, PsiLocalVariable variable) {
             final PsiExpression strippedExpression =
                     ParenthesesUtils.stripParentheses(expression);
             if (strippedExpression == null) {
@@ -302,7 +304,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             if (SideEffectChecker.mayHaveSideEffects(lhs)) {
                 return false;
             }
-            if (!isOffsetArrayAccess(lhs, var)) {
+            if (!isOffsetArrayAccess(lhs, variable)) {
                 return false;
             }
             final PsiExpression rhs = assignment.getRExpression();
@@ -317,35 +319,30 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 return false;
             }
             final PsiType rhsType = rhs.getType();
-            if (rhsType == null) {
-                // fix for NullPointerException in PsiArrayType.equals()
-                // when the parameter is null in #4055
-                return false;
-            }
             if (!lhsType.equals(rhsType)) {
                 return false;
             }
-            return isOffsetArrayAccess(rhs, var);
+            return isOffsetArrayAccess(rhs, variable);
         }
 
         private static boolean isOffsetArrayAccess(PsiExpression expression,
-                                                   PsiLocalVariable var) {
+                                                   PsiLocalVariable variable) {
             final PsiExpression strippedExpression =
                     ParenthesesUtils.stripParentheses(expression);
             if (!(strippedExpression instanceof PsiArrayAccessExpression)) {
                 return false;
             }
-            final PsiArrayAccessExpression arrayExp =
+            final PsiArrayAccessExpression arrayExpression =
                     (PsiArrayAccessExpression)strippedExpression;
-            final PsiExpression index = arrayExp.getIndexExpression();
+            final PsiExpression index = arrayExpression.getIndexExpression();
             if (index == null) {
                 return false;
             }
-            return expressionIsOffsetVariableLookup(index, var);
+            return expressionIsOffsetVariableLookup(index, variable);
         }
 
         private static boolean isIncrement(PsiStatement statement,
-                                           PsiLocalVariable var) {
+                                           PsiLocalVariable variable) {
             if (!(statement instanceof PsiExpressionStatement)) {
                 return false;
             }
@@ -362,9 +359,8 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                     return false;
                 }
                 final PsiExpression operand = prefixExp.getOperand();
-                return expressionIsVariableLookup(operand, var);
-            }
-            else if (expression instanceof PsiPostfixExpression) {
+                return expressionIsVariableLookup(operand, variable);
+            } else if (expression instanceof PsiPostfixExpression) {
                 final PsiPostfixExpression postfixExp =
                         (PsiPostfixExpression)expression;
                 final PsiJavaToken sign = postfixExp.getOperationSign();
@@ -373,13 +369,13 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                     return false;
                 }
                 final PsiExpression operand = postfixExp.getOperand();
-                return expressionIsVariableLookup(operand, var);
+                return expressionIsVariableLookup(operand, variable);
             }
             return true;
         }
 
         private static boolean isComparison(PsiExpression condition,
-                                            PsiLocalVariable var) {
+                                            PsiLocalVariable variable) {
             final PsiExpression strippedCondition =
                     ParenthesesUtils.stripParentheses(condition);
             if (!(strippedCondition instanceof PsiBinaryExpression)) {
@@ -393,41 +389,46 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 return false;
             }
             final PsiExpression lhs = binaryExp.getLOperand();
-            return expressionIsVariableLookup(lhs, var);
+            return expressionIsVariableLookup(lhs, variable);
         }
 
         private static boolean expressionIsVariableLookup(
-                PsiExpression expression, PsiLocalVariable var) {
+                PsiExpression expression, PsiLocalVariable variable) {
             final PsiExpression strippedExpression =
                     ParenthesesUtils.stripParentheses(expression);
             if (strippedExpression == null) {
                 return false;
             }
             final String expressionText = strippedExpression.getText();
-            final String varText = var.getName();
+            final String varText = variable.getName();
             return expressionText.equals(varText);
         }
 
         private static boolean expressionIsOffsetVariableLookup(
-                PsiExpression expression, PsiLocalVariable var) {
+                PsiExpression expression, PsiLocalVariable variable) {
             final PsiExpression strippedExpression =
                     ParenthesesUtils.stripParentheses(expression);
-            if (expressionIsVariableLookup(strippedExpression, var)) {
+            if (expressionIsVariableLookup(strippedExpression, variable)) {
                 return true;
             }
             if (!(strippedExpression instanceof PsiBinaryExpression)) {
                 return false;
             }
-            final PsiBinaryExpression binaryExp =
+            final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)strippedExpression;
-            final PsiExpression lhs = binaryExp.getLOperand();
-            if (!expressionIsVariableLookup(lhs, var)) {
+            final PsiJavaToken sign = binaryExpression.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
+            if (!JavaTokenType.PLUS.equals(tokenType) &&
+                    !JavaTokenType.MINUS.equals(tokenType)) {
                 return false;
             }
-            final PsiJavaToken sign = binaryExp.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
-            return !(!tokenType.equals(JavaTokenType.PLUS) &&
-                    !tokenType.equals(JavaTokenType.MINUS));
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            if (expressionIsOffsetVariableLookup(lhs, variable)) {
+                return true;
+            }
+            final PsiExpression rhs = binaryExpression.getROperand();
+            return expressionIsOffsetVariableLookup(rhs, variable) &&
+                    !JavaTokenType.MINUS.equals(tokenType);
         }
     }
 }
