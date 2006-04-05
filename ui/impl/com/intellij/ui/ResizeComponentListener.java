@@ -35,9 +35,6 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     if (popupWindow != null) {
       myStartPoint = new RelativePoint(e).getScreenPoint();
       myDirection = getDirection(myStartPoint, popupWindow.getBounds());
-      if (SystemInfo.isMac && myDirection != Cursor.SE_RESIZE_CURSOR){ //resize only by right-bottom corner
-        myDirection = Cursor.DEFAULT_CURSOR;
-      }
       if (myDirection == Cursor.DEFAULT_CURSOR){
         myStartPoint = null;
       } else {
@@ -60,6 +57,15 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
 
   public void mouseReleased(MouseEvent e) {
     endOperation();
+  }
+
+
+  public void mouseExited(MouseEvent e) {
+    if (!myComponent.isDraggedState()){
+      final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
+      if (popupWindow == null) return;
+      clearBorder(popupWindow);
+    }
   }
 
   private void endOperation() {
@@ -150,12 +156,16 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
       }
       e.consume();
     } else {
-      if (!SystemInfo.isMac){
-        myComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-        popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
-      } else {
-        myComponent.focusBorder(false);
-      }
+      clearBorder(popupWindow);
+    }
+  }
+
+  private void clearBorder(final Window popupWindow) {
+    if (!SystemInfo.isMac){
+      myComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+      popupWindow.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+    } else {
+      myComponent.focusBorder(false);
     }
   }
 
