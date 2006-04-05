@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
@@ -122,7 +121,7 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     myCollectionPanel.setColumnInfos(createColumnInfos(myParentDomElement));
   }
 
-  protected void doEdit() {
+  protected final void doEdit() {
     doEdit(myData.get(myCollectionPanel.getTable().getSelectedRow()));
   }
 
@@ -133,33 +132,30 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     }
   }
 
-  protected void removeInternal(final Consumer<T> consumer, final List<T> toDelete) {
+  protected void doRemove(final List<T> toDelete) {
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Throwable {
         for (final T t : toDelete) {
-          consumer.consume(t);
+          if (t.isValid()) {
+            t.undefine();
+          }
         }
       }
     }.execute();
   }
 
-  protected void doRemove() {
+  protected final void doRemove() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         final int[] selected = myCollectionPanel.getTable().getSelectedRows();
         if (selected == null || selected.length == 0) return;
-        List<T> selectedElements = new ArrayList<T>(selected.length);
+        final List<T> selectedElements = new ArrayList<T>(selected.length);
         for (final int i : selected) {
           selectedElements.add(myData.get(i));
         }
-        removeInternal(new Consumer<T>() {
-          public void consume(final T t) {
-            if (t.isValid()) {
-              t.undefine();
-            }
-            myData.remove(t);
-          }
-        }, selectedElements);
+
+        doRemove(selectedElements);
+        myData.removeAll(selectedElements);
 
         myCollectionPanel.getTableModel().fireTableDataChanged();
         int selection = selected[0];
