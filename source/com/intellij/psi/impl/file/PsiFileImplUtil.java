@@ -9,6 +9,7 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.ArrayList;
 
 public class PsiFileImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiFileImplUtil");
@@ -50,29 +51,25 @@ public class PsiFileImplUtil {
   }
 
   public static PsiFile[] getPsiFilesByVirtualFiles(VirtualFile[] files, PsiManager manager) {
-    PsiFile[] psiFiles = new PsiFile[files.length];
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
+    List<PsiFile> psiFiles = new ArrayList<PsiFile>();
+    for (VirtualFile file : files) {
       PsiFile psiFile = manager.findFile(file);
-      if (psiFile == null) {
-        LOG.error("psiFile==null:" + file);
-        continue;
+      if (psiFile != null) {
+        psiFiles.add(psiFile);
       }
-      psiFiles[i] = psiFile;
     }
-    return psiFiles;
+    return psiFiles.toArray(new PsiFile[psiFiles.size()]);
   }
+
   public static PsiFile[] getPsiFilesByVirtualFiles(List<VirtualFile> files, PsiManager manager) {
-    PsiFile[] psiFiles = new PsiFile[files.size()];
-    for (int i = 0; i < files.size(); i++) {
-      VirtualFile file = files.get(i);
+    List<PsiFile> psiFiles = new ArrayList<PsiFile>();
+
+    for (VirtualFile file : files) {
       PsiFile psiFile = manager.findFile(file);
-      if (psiFile == null) {
-        LOG.error("psiFile==null:" + file);
-        continue;
+      if (psiFile != null) {
+        psiFiles.add(psiFile);
       }
-      psiFiles[i] = psiFile;
     }
-    return psiFiles;
+    return psiFiles.toArray(new PsiFile[psiFiles.size()]);
   }
 }
