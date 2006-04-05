@@ -100,6 +100,8 @@ public class VcsDirtyScope {
 
     for (VirtualFile root : myAffectedContentRoots) {
       final Module module = VfsUtil.getModuleForFile(myProject, root);
+      if (module == null) continue; // Roots probably change. We'll handle this in next dirty scope processing iteration.
+
       final ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
 
       for (FilePath dir : myDirtyDirectoriesRecursively) {
