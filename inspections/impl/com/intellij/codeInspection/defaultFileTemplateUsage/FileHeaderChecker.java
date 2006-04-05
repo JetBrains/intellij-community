@@ -59,8 +59,7 @@ public class FileHeaderChecker {
       if (element == null) return null;
       LocalQuickFix[] quickFix = createQuickFix(element, matcher, offsetToProperty);
       final String description = InspectionsBundle.message("default.file.template.description");
-      ProblemDescriptor descriptor = manager.createProblemDescriptor(element, description, quickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-      return descriptor;
+      return manager.createProblemDescriptor(element, description, quickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
     return null;
   }
@@ -68,20 +67,26 @@ public class FileHeaderChecker {
   private static LocalQuickFix[] createQuickFix(final PsiDocComment element,
                                               final Matcher matcher,
                                               final TIntObjectHashMap<String> offsetToProperty) {
-    FileTemplate template = FileTemplateManager.getInstance().getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
+    final FileTemplate template = FileTemplateManager.getInstance().getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     final ReplaceWithFileTemplateFix replaceTemplateFix = new ReplaceWithFileTemplateFix() {
       public void applyFix(Project project, ProblemDescriptor descriptor) {
-        FileTemplate template = FileTemplateManager.getInstance().getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
+        String newText;
         try {
-          String newText = template.getText(computeProperties(matcher, offsetToProperty));
-          PsiDocComment newDoc = element.getManager().getElementFactory().createDocCommentFromText(newText, element);
-          element.replace(newDoc);
+          newText = template.getText(computeProperties(matcher, offsetToProperty));
         }
         catch (IOException e) {
           LOG.error(e);
+          return;
+        }
+        try {
+          PsiDocComment newDoc = element.getManager().getElementFactory().createDocCommentFromText(newText, element);
+          element.replace(newDoc);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
+        }
+        catch (IllegalStateException e) {
+          LOG.error("Cannot create doc comment from text: '"+newText+"'",e);
         }
       }
 
@@ -120,7 +125,7 @@ public class FileHeaderChecker {
       String escaped = escapeRegexChars("${"+name+"}");
       boolean first = true;
       for (int i = regex.indexOf(escaped); i!=-1 && i<regex.length(); i = regex.indexOf(escaped,i+1)) {
-        String replacement = first ? "(.*)" : "\\" + groupNumber + "";
+        String replacement = first ? "(.*)" : "\\" + groupNumber;
         final int delta = escaped.length() - replacement.length();
         int[] offs = offsetToProperty.keys();
         for (int off : offs) {
