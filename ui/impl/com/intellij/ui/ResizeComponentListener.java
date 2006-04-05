@@ -49,7 +49,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
         myComponent.setResizable(false); //do not paint icon in the corner
         myComponent.paint(g2);
         myComponent.setResizable(true);
-        myComponent.setImage2Paint(image);
+        myComponent.setDraggedState(true);
       }
     }
   }
@@ -65,7 +65,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   private void endOperation() {
     final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
     if (popupWindow != null) {
-      myComponent.setImage2Paint(null);
+      myComponent.setDraggedState(false);
       if (!SystemInfo.isMac) {
         myComponent.setBorder(BorderFactory.createEmptyBorder(2,2,2,2));
       }
@@ -145,12 +145,16 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
           myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
         }
         popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
+      } else {
+        myComponent.focusBorder(true);
       }
       e.consume();
     } else {
       if (!SystemInfo.isMac){
         myComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
+      } else {
+        myComponent.focusBorder(false);
       }
     }
   }
@@ -178,10 +182,13 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   private static int getDirection(Point startPoint, Rectangle bounds){
     if (SystemInfo.isMac){
       if (bounds.x + bounds.width - startPoint.x < 16 && //inside icon
-          startPoint.y - bounds.y - bounds.height < 16 && 
-          startPoint.x > startPoint.y){
+          bounds.y + bounds.height - startPoint.y < 16 &&
+          startPoint.x > startPoint.y &&
+          bounds.y + bounds.height - startPoint.y > 0 &&
+          bounds.x + bounds.width - startPoint.x > 0){
         return Cursor.SE_RESIZE_CURSOR;
       }
+      return Cursor.DEFAULT_CURSOR;
     }
     if (Math.abs(startPoint.x - bounds.x ) < SENSITIVITY){ //left bound
       if (Math.abs(startPoint.y - bounds.y) < SENSITIVITY){ //top
