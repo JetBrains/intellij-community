@@ -54,7 +54,7 @@ public interface PsiParameter extends PsiVariable {
 
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   @NotNull
   PsiTypeElement getTypeElement();
