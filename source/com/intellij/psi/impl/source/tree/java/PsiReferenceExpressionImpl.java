@@ -33,6 +33,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -291,8 +292,8 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
 
 
   public Object[] getVariants() {
-    LOG.assertTrue(false, "This method should _not_ be used for PsiJavaReference!");
-    return null;
+    //this reference's variants are rather obtained with processVariants()
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public boolean isSoft() {

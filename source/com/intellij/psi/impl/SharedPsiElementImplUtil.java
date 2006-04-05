@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class SharedPsiElementImplUtil {
@@ -26,20 +27,20 @@ public class SharedPsiElementImplUtil {
     if (element == null) return null;
     offset = thisElement.getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
 
+    List<PsiReference> referencesList = new ArrayList<PsiReference>();
     while(element != null) {
-      final PsiReference[] ref = extractReference(offset, element);
-      if (ref.length == 1) return ref[0];
-      else if(ref.length > 1) return new PsiMultiReference(ref, element);
-
+      addReferences(offset, element, referencesList);
       offset = element.getStartOffsetInParent() + offset;
       element = element.getParent();
     }
 
-    return null;
+    if (referencesList.isEmpty()) return null;
+    if (referencesList.size() == 1) return referencesList.get(0);
+    return new PsiMultiReference(referencesList.toArray(new PsiReference[referencesList.size()]),
+                                 referencesList.get(referencesList.size() - 1).getElement());
   }
 
-  private static PsiReference[] extractReference(int offset, PsiElement element) {
-    final List<PsiReference> referencesList = new ArrayList<PsiReference>();
+  private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences) {
     for (final PsiReference reference : element.getReferences()) {
       if (reference == null) {
         LOG.error(element.toString());
@@ -47,11 +48,9 @@ public class SharedPsiElementImplUtil {
       final TextRange range = reference.getRangeInElement();
       if (range.getStartOffset() <= offset &&
           (offset < range.getEndOffset() || (offset == range.getEndOffset() && range.getLength() == 0))) {
-        referencesList.add(reference);
+        outReferences.add(reference);
       }
     }
-
-    return referencesList.toArray(new PsiReference[referencesList.size()]);
   }
 
   @NotNull public static PsiReference[] getReferences(PsiElement thisElement) {
