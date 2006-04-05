@@ -47,6 +47,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsFile;
 import com.intellij.openapi.module.Module;
@@ -60,6 +61,9 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler;
@@ -83,6 +87,7 @@ import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -457,6 +462,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     if (myLineStatusTrackers.containsKey(document)) return;
 
+    final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
+    if (status == FileStatus.NOT_CHANGED ||
+        status == FileStatus.ADDED ||
+        status == FileStatus.UNKNOWN) return;
+
     AbstractVcs activeVcs = getVcsFor(virtualFile);
 
     if (activeVcs == null) return;
@@ -484,35 +494,53 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     alarm.addRequest(new Runnable() {
       public void run() {
         try {
-          try {
-            alarm.cancelAllRequests();
-            if (!virtualFile.isValid()) return;
-            final String lastUpToDateContent = upToDateRevisionProvider.getLastUpToDateContentFor(virtualFile, true);
-            if (lastUpToDateContent == null) return;
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (!myProject.isDisposed()) {
-                  synchronized (this) {
-                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                      public void run() {
-                        tracker.initialize(lastUpToDateContent);
-                      }
-                    });
-                  }
+          alarm.cancelAllRequests();
+          if (!virtualFile.isValid()) return;
+          final String lastUpToDateContent = getBaseVersionContent(virtualFile);
+          if (lastUpToDateContent == null) return;
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              if (!myProject.isDisposed()) {
+                synchronized (this) {
+                  ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                    public void run() {
+                      tracker.initialize(lastUpToDateContent);
+                    }
+                  });
                 }
               }
-            });
-          }
-          finally {
-            myLineStatusUpdateAlarms.remove(document);
-          }
+            }
+          });
         }
-        catch (VcsException e) {
-          //ignore
+        finally {
+          myLineStatusUpdateAlarms.remove(document);
         }
       }
     }, 10);
 
+  }
+
+  @Nullable
+  private String getBaseVersionContent(final VirtualFile file) {
+    final Change change = ChangeListManager.getInstance(myProject).getChange(file);
+    if (change != null) {
+      final ContentRevision beforeRevision = change.getBeforeRevision();
+      if (beforeRevision != null) {
+        return beforeRevision.getContent();
+      }
+      return null;
+    }
+
+    final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document != null && document.getModificationStamp() != file.getModificationStamp()) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        public String compute() {
+          return LoadTextUtil.loadText(file).toString();
+        }
+      });
+    }
+
+    return null;
   }
 
   public boolean checkVcsIsActive(AbstractVcs vcs) {
