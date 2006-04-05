@@ -459,6 +459,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private synchronized void installTracker(final VirtualFile virtualFile, final Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (virtualFile == null) return;
 
     if (myLineStatusTrackers.containsKey(document)) return;
 
@@ -470,7 +471,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     AbstractVcs activeVcs = getVcsFor(virtualFile);
 
     if (activeVcs == null) return;
-    if (virtualFile == null) return;
 
     if (!(virtualFile.getFileSystem() instanceof LocalFileSystem)) return;
 
