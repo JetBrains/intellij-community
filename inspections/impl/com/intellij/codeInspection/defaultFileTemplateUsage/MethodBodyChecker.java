@@ -67,7 +67,7 @@ public class MethodBodyChecker {
     PsiCodeBlock body = method.getBody();
     if (body == null) return;
     PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return;
+    if (aClass == null || aClass.isInterface()) return;
     List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
     final PsiMethod superMethod = superSignatures.size() ==0 ? null : superSignatures.get(0).getMethod();
     final PsiMethod templateMethod = getTemplateMethod(returnType, superSignatures, aClass);
