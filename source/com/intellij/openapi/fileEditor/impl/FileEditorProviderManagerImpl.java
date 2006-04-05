@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
@@ -105,10 +106,18 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   private static final class MyComparator implements Comparator<FileEditorProvider>{
     public static final MyComparator ourInstance = new MyComparator();
 
-    private MyComparator() {}
+    private static double getWeight(FileEditorProvider provider) {
+      return provider instanceof WeighedFileEditorProvider
+             ? ((WeighedFileEditorProvider) provider).getWeight()
+             : Double.MAX_VALUE;
+    }
 
     public int compare(FileEditorProvider provider1, FileEditorProvider provider2) {
-      return provider1.getPolicy().ordinal() - provider2.getPolicy().ordinal();
+      final int i1 = provider1.getPolicy().ordinal();
+      final int i2 = provider2.getPolicy().ordinal();
+      if (i1 != i2) return i1 - i2;
+      final double value = getWeight(provider1) - getWeight(provider2);
+      return value > 0 ? 1 : value < 0 ? -1 : 0;
     }
   }
 }
