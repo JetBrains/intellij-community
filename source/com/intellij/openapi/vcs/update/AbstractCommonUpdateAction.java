@@ -110,7 +110,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                                                                                 updatedFiles,
                                                                                 progressIndicator);
               processed++;
-              progressIndicator.setFraction((double)processed / (double)toBeProcessed);
+              if (progressIndicator != null) {
+                progressIndicator.setFraction((double)processed / (double)toBeProcessed);
+              }
               vcsExceptions.addAll(updateSession.getExceptions());
               updateSessions.add(updateSession);
             }
