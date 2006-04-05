@@ -64,12 +64,13 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
                 (PsiMethodCallExpression) location;
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        final PsiNewExpression qualifier =
-                (PsiNewExpression) methodExpression.getQualifierExpression();
-        if(qualifier == null) {
+        final PsiExpression qualifier =
+                methodExpression.getQualifierExpression();
+        if (!(qualifier instanceof PsiNewExpression)) {
             return null;
         }
-        final PsiExpressionList argumentList = qualifier.getArgumentList();
+        final PsiNewExpression newExpression = (PsiNewExpression) qualifier;
+        final PsiExpressionList argumentList = newExpression.getArgumentList();
         if(argumentList == null) {
             return null;
         }
@@ -78,7 +79,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
             return null;
         }
         final PsiExpression arg = expressions[0];
-        final PsiType type = qualifier.getType();
+        final PsiType type = newExpression.getType();
         if(type == null) {
             return null;
         }
