@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Anton Katilin
@@ -171,6 +173,16 @@ public final class XmlReader {
     component.getConstraints().restore(lwComponent.getConstraints());
 
     component.setCustomLayoutConstraints(lwComponent.getCustomLayoutConstraints());
+
+    HashMap clientProps = lwComponent.getDelegeeClientProperties();
+    for(Object o: clientProps.entrySet()) {
+      Map.Entry entry = (Map.Entry) o;
+      Object value = entry.getValue();
+      if (value instanceof StringDescriptor) {
+        value = ((StringDescriptor) value).getValue();
+      }
+      component.getDelegee().putClientProperty(entry.getKey(), value);
+    }
 
     if (component instanceof RadContainer) {
       final RadContainer container = (RadContainer)component;

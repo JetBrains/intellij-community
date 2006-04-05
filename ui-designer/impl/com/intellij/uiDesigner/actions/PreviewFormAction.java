@@ -189,7 +189,9 @@ public final class PreviewFormAction extends AnAction{
       if(errors.length != 0){
         Messages.showErrorDialog(
           module.getProject(),
-          UIDesignerBundle.message("error.cannot.preview.form", formFile.getPath().replace('/', File.separatorChar), errors[0]),
+          UIDesignerBundle.message("error.cannot.preview.form",
+                                   formFile.getPath().replace('/', File.separatorChar),
+                                   errors[0].getErrorMessage()),
           CommonBundle.getErrorTitle()
         );
         return;

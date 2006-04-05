@@ -452,6 +452,8 @@ public final class FormSourceCodeGenerator {
       }
     }
 
+    generateClientProperties(component, variable);
+
     // add component to parent
     if (!(component.getParent() instanceof LwRootContainer)) {
 
@@ -498,6 +500,43 @@ public final class FormSourceCodeGenerator {
         generateSetupCodeForComponent((LwComponent)container.getComponent(i), component2TempVariable, class2variableIndex, id2component,
                                       module, aClass);
       }
+    }
+  }
+
+  private void generateClientProperties(final LwComponent component, final String variable) throws CodeGenerationException {
+    HashMap props = component.getDelegeeClientProperties();
+    for (final Object o : props.entrySet()) {
+      Map.Entry e = (Map.Entry)o;
+      startMethodCall(variable, "putClientProperty");
+      push((String) e.getKey());
+
+      Object value = e.getValue();
+      if (value instanceof StringDescriptor) {
+        push(((StringDescriptor) value).getValue());
+      }
+      else if (value instanceof Boolean) {
+        if (((Boolean) value).booleanValue()) {
+          pushVar("Boolean.TRUE");
+        }
+        else {
+          pushVar("Boolean.FALSE");
+        }
+      }
+      else {
+        startConstructor(value.getClass().getName());
+        if (value instanceof Integer) {
+          push(((Integer) value).intValue());
+        }
+        else if (value instanceof Double) {
+          push(((Double) value).doubleValue());
+        }
+        else {
+          throw new CodeGenerationException(component.getId(), "Unknown client property value type");
+        }
+        endConstructor();
+      }
+
+      endMethod();
     }
   }
 

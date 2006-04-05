@@ -425,6 +425,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           !(component.getDelegee() instanceof JButton)) {
         addProperty(result, myButtonGroupProperty);
       }
+      if (!(component instanceof RadVSpacer || component instanceof RadHSpacer)) {
+        addProperty(result, ClientPropertiesProperty.getInstance(myProject));
+      }
 
       if (component.hasIntrospectedProperties()) {
         final Class componentClass = component.getComponentClass();
@@ -454,7 +457,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private void addProperty(final ArrayList<Property> result, final Property property) {
     result.add(property);
     if (myExpandedProperties.contains(property.getName())) {
-      for(Property child: property.getChildren()) {
+      for(Property child: property.getChildren(myComponent)) {
         addProperty(result, child);
       }
     }
@@ -548,7 +551,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     LOG.assertTrue(!myExpandedProperties.contains(property));
     myExpandedProperties.add(property.getName());
 
-    final Property[] children=property.getChildren();
+    final Property[] children=property.getChildren(myComponent);
     for (int i = 0; i < children.length; i++) {
       myProperties.add(index + i + 1, children[i]);
     }
@@ -572,7 +575,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     LOG.assertTrue(myExpandedProperties.contains(property.getName()));
     myExpandedProperties.remove(property.getName());
 
-    final Property[] children=property.getChildren();
+    final Property[] children=property.getChildren(myComponent);
     for (int i=0; i<children.length; i++){
       myProperties.remove(index + 1);
     }
@@ -780,7 +783,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         myPropertyNameRenderer.append(property.getName(), attrs);
 
         // 2. Icon
-        if(property.getChildren().length>0){
+        if(property.getChildren(myComponent).length>0){
           // This is composite property and we have to show +/- sign
           if(myExpandedProperties.contains(property.getName())){
             myPropertyNameRenderer.setIcon(myCollapseIcon);
@@ -900,7 +903,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
 
       final Property property = myProperties.get(row);
-      final Property[] children = property.getChildren();
+      final Property[] children = property.getChildren(myComponent);
       if (children.length == 0) {
         return;
       }
@@ -919,7 +922,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         int column = columnAtPoint(e.getPoint());
         if (row >= 0 && column == 0) {
           final Property property = myProperties.get(row);
-          if (property.getChildren().length == 0) {
+          if (property.getChildren(myComponent).length == 0) {
             startEditing(row);
           }
         }
@@ -1002,7 +1005,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
 
       final Property property=myProperties.get(selectedRow);
-      if(property.getChildren().length>0){
+      if(property.getChildren(myComponent).length>0){
         if(myExpandedProperties.contains(property.getName())){
           collapseProperty(selectedRow);
         }else{
@@ -1027,7 +1030,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         return;
       }
       final Property property=myProperties.get(selectedRow);
-      if(property.getChildren().length>0) {
+      if(property.getChildren(myComponent).length>0) {
         if (myExpand) {
           if (!myExpandedProperties.contains(property.getName())) {
             expandProperty(selectedRow);
@@ -1057,7 +1060,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if(editor != null){
         editor.updateUI();
       }
-      final Property[] children = property.getChildren();
+      final Property[] children = property.getChildren(myComponent);
       for (int i = children.length - 1; i >= 0; i--) {
         final Property child = children[i];
         if(!(child instanceof IntrospectedProperty)){
@@ -1086,6 +1089,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       updateUI(SameSizeHorizontallyProperty.getInstance(myProject));
       updateUI(SameSizeVerticallyProperty.getInstance(myProject));
       updateUI(CustomCreateProperty.getInstance(myProject));
+      updateUI(ClientPropertiesProperty.getInstance(myProject));
     }
   }
 

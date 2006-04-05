@@ -4,8 +4,8 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
@@ -19,7 +19,7 @@ public final class IntroIntProperty extends IntrospectedProperty<Integer> {
   private final PropertyEditor<Integer> myEditor;
 
   public IntroIntProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
-    this(name, readMethod, writeMethod, new IntRenderer(), new IntEditor(Integer.MIN_VALUE), storeAsClient);
+    this(name, readMethod, writeMethod, new LabelPropertyRenderer<Integer>(), new IntEditor(Integer.MIN_VALUE), storeAsClient);
   }
 
   public IntroIntProperty(final String name,

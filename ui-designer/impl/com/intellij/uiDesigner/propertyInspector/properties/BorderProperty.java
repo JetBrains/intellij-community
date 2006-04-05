@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.shared.BorderType;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   }
 
   @NotNull
-  public Property[] getChildren(){
+  public Property[] getChildren(final RadComponent component){
     return myChildren;
   }
 

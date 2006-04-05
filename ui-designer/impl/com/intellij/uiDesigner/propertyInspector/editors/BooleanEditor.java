@@ -33,7 +33,7 @@ public class BooleanEditor extends PropertyEditor<Boolean> {
     myInsideChange=true;
     try{
       myCheckBox.setBackground(UIUtil.getTableBackground());
-      myCheckBox.setSelected(value.booleanValue());
+      myCheckBox.setSelected(value != null && value.booleanValue());
       return myCheckBox;
     }finally{
       myInsideChange=false;

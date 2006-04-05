@@ -28,6 +28,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Iterator;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -446,6 +447,51 @@ public class AsmCodeGenerator {
         Type componentType = Type.getType(componentClass);
         generator.invokeVirtual(componentType, new Method(property.getWriteMethodName(),
                                                           Type.VOID_TYPE, new Type[] { setterArgType } ));
+      }
+
+      generateClientProperties(lwComponent, componentClass, generator, componentLocal);
+    }
+
+    private void generateClientProperties(final LwComponent lwComponent,
+                                          final Class componentClass,
+                                          final GeneratorAdapter generator,
+                                          final int componentLocal) throws CodeGenerationException {
+      HashMap props = lwComponent.getDelegeeClientProperties();
+      for (Iterator iterator = props.entrySet().iterator(); iterator.hasNext();) {
+        Map.Entry e = (Map.Entry) iterator.next();
+        generator.loadLocal(componentLocal);
+
+        generator.push((String) e.getKey());
+
+        Object value = e.getValue();
+        if (value instanceof StringDescriptor) {
+          generator.push(((StringDescriptor) value).getValue());
+        }
+        else {
+          Type valueType = Type.getType(value.getClass());
+          generator.newInstance(valueType);
+          generator.dup();
+          if (value instanceof Boolean) {
+            generator.push(((Boolean) value).booleanValue());
+            generator.invokeConstructor(valueType, Method.getMethod("void <init>(boolean)"));
+          }
+          else if (value instanceof Integer) {
+            generator.push(((Integer) value).intValue());
+            generator.invokeConstructor(valueType, Method.getMethod("void <init>(int)"));
+          }
+          else if (value instanceof Double) {
+            generator.push(((Double) value).doubleValue());
+            generator.invokeConstructor(valueType, Method.getMethod("void <init>(double)"));
+          }
+          else {
+            throw new CodeGenerationException(lwComponent.getId(), "Unknown client property value type");
+          }
+        }
+
+        Type componentType = Type.getType(componentClass);
+        Type objectType = Type.getType(Object.class);
+        generator.invokeVirtual(componentType, new Method("putClientProperty",
+                                                          Type.VOID_TYPE, new Type[] { objectType, objectType } ));
       }
     }
 

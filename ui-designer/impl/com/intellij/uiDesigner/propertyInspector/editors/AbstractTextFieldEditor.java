@@ -27,7 +27,9 @@ public abstract class AbstractTextFieldEditor<V> extends PropertyEditor<V> {
     SwingUtilities.updateComponentTreeUI(myTf);
   }
 
-  protected abstract void setValueFromComponent(RadComponent component, V value);
+  protected void setValueFromComponent(RadComponent component, V value) {
+    myTf.setText(value == null ? "" : value.toString());
+  }
 
   public JComponent getComponent(final RadComponent ignored, final V value, final boolean inplace) {
     setValueFromComponent(ignored, value);

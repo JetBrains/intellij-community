@@ -22,6 +22,7 @@ package com.intellij.uiDesigner;
 public class UIFormXmlConstants {
   public static final String ATTRIBUTE_BIND_TO_CLASS = "bind-to-class";
   public static final String ATTRIBUTE_VALUE = "value";
+  public static final String ATTRIBUTE_CLASS = "class";
   public static final String ATTRIBUTE_NOI18N = "noi18n";
   public static final String ATTRIBUTE_RESOURCE_BUNDLE = "resource-bundle";
   public static final String ATTRIBUTE_KEY = "key";
@@ -55,6 +56,7 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_NESTED_FORM = "nested-form";
   public static final String ELEMENT_TOOLBAR = "toolbar";
   public static final String ELEMENT_CARD = "card";
+  public static final String ELEMENT_CLIENT_PROPERTIES = "clientProperties";
 
   public static final String LAYOUT_INTELLIJ = "GridLayoutManager";
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";

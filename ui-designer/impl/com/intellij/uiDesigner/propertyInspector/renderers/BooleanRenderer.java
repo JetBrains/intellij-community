@@ -21,7 +21,7 @@ public class BooleanRenderer extends JCheckBox implements PropertyRenderer<Boole
       setBackground(UIUtil.getTableBackground());
     }
 
-    setSelected(value.booleanValue());
+    setSelected(value != null && value.booleanValue());
 
     return this;
   }

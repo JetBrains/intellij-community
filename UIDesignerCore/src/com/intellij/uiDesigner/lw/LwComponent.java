@@ -62,6 +62,7 @@ public abstract class LwComponent implements IComponent{
    */
   private Element myErrorComponentProperties;
   protected final HashMap myClientProperties;
+  protected final HashMap myDelegeeClientProperties;
   private boolean myCustomCreate = false;
 
   public LwComponent(final String className){
@@ -73,6 +74,7 @@ public abstract class LwComponent implements IComponent{
     myIntrospectedProperty2Value = new HashMap();
     myClassName = className;
     myClientProperties = new HashMap();
+    myDelegeeClientProperties = new HashMap();
   }
 
   public final String getId() {
@@ -230,6 +232,51 @@ public abstract class LwComponent implements IComponent{
         // Skip non readable properties
       }
     }
+
+    readClientProperties(element);
+  }
+
+  private void readClientProperties(final Element element) {
+    Element propertiesElement = LwXmlReader.getChild(element, UIFormXmlConstants.ELEMENT_CLIENT_PROPERTIES);
+    if (propertiesElement == null) return;
+    final List clientPropertyList = propertiesElement.getChildren();
+    for(int i=0; i<clientPropertyList.size(); i++) {
+      final Element prop = (Element) clientPropertyList.get(i);
+      final String propName = prop.getName();
+      final String className = LwXmlReader.getRequiredString(prop, UIFormXmlConstants.ATTRIBUTE_CLASS);
+
+      LwIntrospectedProperty lwProp;
+      if (className.equals(Integer.class.getName())) {
+        lwProp = new LwIntroIntProperty(propName);
+      }
+      else if (className.equals(Boolean.class.getName())) {
+        lwProp = new LwIntroBooleanProperty(propName);
+      }
+      else if (className.equals(Double.class.getName())) {
+        lwProp = new LwIntroDoubleProperty(propName);
+      }
+      else {
+        Class propClass;
+        try {
+          propClass = Class.forName(className);
+        }
+        catch (ClassNotFoundException e) {
+          continue;
+        }
+        lwProp = CompiledClassPropertiesProvider.propertyFromClass(propClass, propName);
+      }
+
+      if (lwProp != null) {
+        final Object value;
+        try {
+          value = lwProp.read(prop);
+        }
+        catch (Exception e) {
+          continue;
+        }
+        myDelegeeClientProperties.put(propName, value);
+      }
+    }
   }
 
   /**
@@ -266,5 +313,9 @@ public abstract class LwComponent implements IComponent{
       throw new IllegalArgumentException("key cannot be null");
     }
     myClientProperties.put(key, value);
+  }
+
+  public HashMap getDelegeeClientProperties() {
+    return myDelegeeClientProperties;
   }
 }

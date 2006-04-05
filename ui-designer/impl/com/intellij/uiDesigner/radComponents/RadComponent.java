@@ -16,6 +16,8 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.ClientPropertyProperty;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -570,6 +572,33 @@ public abstract class RadComponent implements IComponent {
       }
     }finally{
       writer.endElement(); // properties
+    }
+    writeClientProperties(writer);
+  }
+
+  private void writeClientProperties(final XmlWriter writer) {
+    boolean haveClientProperties = false;
+    try {
+      ClientPropertiesProperty cpp = ClientPropertiesProperty.getInstance(getProject());
+      for(Property prop: cpp.getChildren(this)) {
+        ClientPropertyProperty clientProp = (ClientPropertyProperty) prop;
+        final Object value = getDelegee().getClientProperty(clientProp.getName());
+        if (value != null) {
+          if (!haveClientProperties) {
+            writer.startElement(UIFormXmlConstants.ELEMENT_CLIENT_PROPERTIES);
+            haveClientProperties = true;
+          }
+          writer.startElement(clientProp.getName());
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_CLASS, value.getClass().getName());
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, value.toString());
+          writer.endElement();
+        }
+      }
+    }
+    finally {
+      if (haveClientProperties) {
+        writer.endElement();
+      }
     }
   }
 

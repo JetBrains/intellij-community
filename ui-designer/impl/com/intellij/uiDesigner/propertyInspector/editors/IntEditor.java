@@ -1,7 +1,6 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 
 /**
  * @author Anton Katilin
@@ -15,10 +14,6 @@ public final class IntEditor extends AbstractTextFieldEditor<Integer> {
    */
   public IntEditor(final int lowBoundary){
     myLowBoundary = lowBoundary;
-  }
-
-  protected void setValueFromComponent(final RadComponent component, final Integer value) {
-    myTf.setText(value.toString());
   }
 
   public Integer getValue() throws Exception{

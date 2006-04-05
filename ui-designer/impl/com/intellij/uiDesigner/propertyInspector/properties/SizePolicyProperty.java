@@ -42,7 +42,7 @@ public abstract class SizePolicyProperty extends Property<RadComponent, Integer>
     setValueImpl(component.getConstraints(), value.intValue());
   }
 
-  @NotNull public final Property[] getChildren(){
+  @NotNull public final Property[] getChildren(final RadComponent component){
     return myChildren;
   }
 

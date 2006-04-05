@@ -15,7 +15,7 @@ import java.awt.event.ActionEvent;
 /**
  * @author yole
  */
-public class FontEditor extends PropertyEditor {
+public class FontEditor extends PropertyEditor<FontDescriptor> {
   private TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private FontDescriptor myValue;
   private Project myProject;
@@ -37,13 +37,13 @@ public class FontEditor extends PropertyEditor {
     });
   }
 
-  public Object getValue() throws Exception {
+  public FontDescriptor getValue() throws Exception {
     return myValue;
   }
 
-  public JComponent getComponent(RadComponent component, Object value, boolean inplace) {
+  public JComponent getComponent(RadComponent component, FontDescriptor value, boolean inplace) {
     myProject = component.getModule().getProject();
-    myValue = (FontDescriptor) value;
+    myValue = value;
     myTextField.setText(IntroFontProperty.descriptorToString(myValue));
     return myTextField;
   }

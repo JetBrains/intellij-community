@@ -100,8 +100,9 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
 
   /**
    * @return child properties.
+   * @param component
    */
-  @NotNull public Property[] getChildren() {
+  @NotNull public Property[] getChildren(final RadComponent component) {
     return EMPTY_ARRAY;
   }
 

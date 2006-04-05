@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -34,7 +35,7 @@ public final class IntroDimensionProperty extends IntrospectedProperty<Dimension
   }
 
   @NotNull
-  public Property[] getChildren(){
+  public Property[] getChildren(final RadComponent component){
     return myChildren;
   }
 

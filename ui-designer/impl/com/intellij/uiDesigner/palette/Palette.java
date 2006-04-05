@@ -733,7 +733,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       if(editor != null){
         editor.updateUI();
       }
-      final Property[] children = property.getChildren();
+      final Property[] children = property.getChildren(null);
       for (int i = children.length - 1; i >= 0; i--) {
         updateUI(children[i]);
       }

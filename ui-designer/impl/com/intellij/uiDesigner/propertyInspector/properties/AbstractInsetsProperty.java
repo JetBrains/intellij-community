@@ -6,7 +6,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
   }
 
   @NotNull
-  public final Property[] getChildren(){
+  public final Property[] getChildren(final RadComponent component){
     return myChildren;
   }
 
@@ -49,12 +49,12 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
    * Insets.top
    */
   static final class MyTopProperty extends Property{
-    private final IntRenderer myRenderer;
+    private final LabelPropertyRenderer<Integer> myRenderer;
     private final IntEditor myEditor;
 
     public MyTopProperty(final Property parent){
       super(parent, "top");
-      myRenderer = new IntRenderer();
+      myRenderer = new LabelPropertyRenderer<Integer>();
       myEditor = new IntEditor(0);
     }
 
@@ -83,12 +83,12 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
    * Insets.left
    */
   static final class MyLeftProperty extends Property{
-    private final IntRenderer myRenderer;
+    private final LabelPropertyRenderer<Integer> myRenderer;
     private final IntEditor myEditor;
 
     public MyLeftProperty(final Property parent){
       super(parent, "left");
-      myRenderer = new IntRenderer();
+      myRenderer = new LabelPropertyRenderer<Integer>();
       myEditor = new IntEditor(0);
     }
 
@@ -117,12 +117,12 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
    * Insets.bottom
    */
   static final class MyBottomProperty extends Property{
-    private final IntRenderer myRenderer;
+    private final LabelPropertyRenderer<Integer> myRenderer;
     private final IntEditor myEditor;
 
     public MyBottomProperty(final Property parent){
       super(parent, "bottom");
-      myRenderer = new IntRenderer();
+      myRenderer = new LabelPropertyRenderer<Integer>();
       myEditor = new IntEditor(0);
     }
 
@@ -151,12 +151,12 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
    * Insets.right
    */
   static final class MyRightProperty extends Property{
-    private final IntRenderer myRenderer;
+    private final LabelPropertyRenderer<Integer> myRenderer;
     private final IntEditor myEditor;
 
     public MyRightProperty(final Property parent){
       super(parent, "right");
-      myRenderer = new IntRenderer();
+      myRenderer = new LabelPropertyRenderer<Integer>();
       myEditor = new IntEditor(0);
     }
 

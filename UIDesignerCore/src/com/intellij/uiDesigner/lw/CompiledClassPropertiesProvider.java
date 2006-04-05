@@ -88,52 +88,57 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
         continue;
       }
 
-      final LwIntrospectedProperty property;
+      final LwIntrospectedProperty property = propertyFromClass(descriptor.getPropertyType(), name);
 
-      final Class propertyType = descriptor.getPropertyType();
-      if (int.class.equals(propertyType)) { // int
-        property = new LwIntroIntProperty(name);
+      if (property != null) {
+        result.put(name, property);
       }
-      else if (boolean.class.equals(propertyType)) { // boolean
-        property = new LwIntroBooleanProperty(name);
-      }
-      else if (double.class.equals(propertyType)) { // double
-        property = new LwIntroDoubleProperty(name);
-      }
-      else if (String.class.equals(propertyType)) { // java.lang.String
-        property = new LwRbIntroStringProperty(name);
-      }
-      else if (Insets.class.equals(propertyType)) { // java.awt.Insets
-        property = new LwIntroInsetsProperty(name);
-      }
-      else if (Dimension.class.equals(propertyType)) { // java.awt.Dimension
-        property = new LwIntroDimensionProperty(name);
-      }
-      else if (Rectangle.class.equals(propertyType)) { // java.awt.Rectangle
-        property = new LwIntroRectangleProperty(name);
-      }
-      else if (Color.class.equals(propertyType)) {
-        property = new LwIntroColorProperty(name);
-      }
-      else if (Font.class.equals(propertyType)) {
-        property = new LwIntroFontProperty(name);
-      }
-      else if (Icon.class.equals(propertyType)) {
-        property = new LwIntroIconProperty(name);
-      }
-      else if (propertyType.isAssignableFrom(Component.class)) {
-        property = new LwIntroComponentProperty(name);
-      }
-      else {
-        // type is not supported
-        continue;
-      }
-
-      result.put(name, property);
     }
 
     myCache.put(className, result);
 
     return result;
+  }
+
+  public static LwIntrospectedProperty propertyFromClass(final Class propertyType, final String name) {
+    final LwIntrospectedProperty property;
+    if (int.class.equals(propertyType)) { // int
+      property = new LwIntroIntProperty(name);
+    }
+    else if (boolean.class.equals(propertyType)) { // boolean
+      property = new LwIntroBooleanProperty(name);
+    }
+    else if (double.class.equals(propertyType)) { // double
+      property = new LwIntroDoubleProperty(name);
+    }
+    else if (String.class.equals(propertyType)) { // java.lang.String
+      property = new LwRbIntroStringProperty(name);
+    }
+    else if (Insets.class.equals(propertyType)) { // java.awt.Insets
+      property = new LwIntroInsetsProperty(name);
+    }
+    else if (Dimension.class.equals(propertyType)) { // java.awt.Dimension
+      property = new LwIntroDimensionProperty(name);
+    }
+    else if (Rectangle.class.equals(propertyType)) { // java.awt.Rectangle
+      property = new LwIntroRectangleProperty(name);
+    }
+    else if (Color.class.equals(propertyType)) {
+      property = new LwIntroColorProperty(name);
+    }
+    else if (Font.class.equals(propertyType)) {
+      property = new LwIntroFontProperty(name);
+    }
+    else if (Icon.class.equals(propertyType)) {
+      property = new LwIntroIconProperty(name);
+    }
+    else if (propertyType.isAssignableFrom(Component.class)) {
+      property = new LwIntroComponentProperty(name);
+    }
+    else {
+      // type is not supported
+      property = null;
+    }
+    return property;
   }
 }

@@ -6,8 +6,8 @@ import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.RectangleRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +41,7 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
   }
 
   @NotNull
-  public Property[] getChildren(){
+  public Property[] getChildren(final RadComponent component){
     return myChildren;
   }
 
@@ -58,12 +58,12 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
    * X subproperty
    */
   private final class MyXProperty extends Property{
-    private final IntRenderer myRenderer;
+    private final LabelPropertyRenderer<Integer> myRenderer;
     private final IntEditor myEditor;
 
     public MyXProperty(){
       super(IntroRectangleProperty.this, "x");
-      myRenderer = new IntRenderer();
+      myRenderer = new LabelPropertyRenderer<Integer>();
       myEditor = new IntEditor(Integer.MIN_VALUE);
     }
 
@@ -92,12 +92,12 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
    * Y subproperty
    */
   private final class MyYProperty extends Property{
-    private final IntRenderer myRenderer;
+    private final LabelPropertyRenderer<Integer> myRenderer;
     private final IntEditor myEditor;
 
     public MyYProperty(){
       super(IntroRectangleProperty.this, "y");
-      myRenderer = new IntRenderer();
+      myRenderer = new LabelPropertyRenderer<Integer>();
       myEditor = new IntEditor(Integer.MIN_VALUE);
     }
 
@@ -126,12 +126,12 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
    * WIDTH subproperty
    */
   private final class MyWidthProperty extends Property{
-    private final IntRenderer myRenderer;
+    private final LabelPropertyRenderer<Integer> myRenderer;
     private final IntEditor myEditor;
 
     public MyWidthProperty(){
       super(IntroRectangleProperty.this, "width");
-      myRenderer = new IntRenderer();
+      myRenderer = new LabelPropertyRenderer<Integer>();
       myEditor = new IntEditor(0);
     }
 
@@ -160,12 +160,12 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
    * HEIGHT subproperty
    */
   private final class MyHeightProperty extends Property{
-    private final IntRenderer myRenderer;
+    private final LabelPropertyRenderer<Integer> myRenderer;
     private final IntEditor myEditor;
 
     public MyHeightProperty(){
       super(IntroRectangleProperty.this, "height");
-      myRenderer = new IntRenderer();
+      myRenderer = new LabelPropertyRenderer<Integer>();
       myEditor = new IntEditor(0);
     }
 
