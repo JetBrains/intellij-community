@@ -5,6 +5,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.DomElement;
+import com.intellij.ui.BooleanTableCellEditor;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -16,6 +17,10 @@ import javax.swing.table.TableCellEditor;
  */
 public class DomUIFactoryImpl extends DomUIFactory {
   protected TableCellEditor createCellEditor(DomElement element, Class type) {
+    if (Boolean.class.equals(type) || boolean.class.equals(type)) {
+      return new BooleanTableCellEditor();
+    }
+
     if (String.class.equals(type)) {
       return new DefaultCellEditor(removeBorder(new JTextField()));
     }
@@ -25,7 +30,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
     }
 
     if (Enum.class.isAssignableFrom(type)) {
-      return new DefaultCellEditor(removeBorder(ComboControl.createEnumComboBox(type)));
+      return new ComboTableCellEditor((Class<? extends Enum>)type, false);
     }
 
     assert false : "Type not supported: " + type;
