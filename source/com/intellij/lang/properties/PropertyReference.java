@@ -146,7 +146,7 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
   }
 
   public boolean isSoft() {
-    return true;
+    return false;
   }
 
   public String getUnresolvedMessagePattern() {
