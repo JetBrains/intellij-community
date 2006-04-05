@@ -199,6 +199,9 @@ class RunConfigurable extends BaseConfigurable {
         if (userObject1 instanceof ConfigurationType && userObject2 instanceof ConfigurationType){
           return ((ConfigurationType)userObject1).getDisplayName().compareTo(((ConfigurationType)userObject2).getDisplayName());
         }
+        if (userObject1 instanceof SingleConfigurationConfigurable && userObject2 instanceof SingleConfigurationConfigurable){
+          return ((SingleConfigurationConfigurable)userObject1).getNameText().compareTo(((SingleConfigurationConfigurable)userObject2).getNameText());
+        }
         return 0;
       }
     });
