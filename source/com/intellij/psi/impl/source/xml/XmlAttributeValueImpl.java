@@ -37,11 +37,11 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   public PsiElement replaceRangeInText(final TextRange range, String newSubText)
     throws IncorrectOperationException {
     XmlFile file = (XmlFile) getManager().getElementFactory().createFileFromText("dummy.xml", "<a attr=" + getNewText(range, newSubText) + "/>");
-    return XmlAttributeValueImpl.this.replace(file.getDocument().getRootTag().getAttributes()[0].getValueElement());
+    return replace(file.getDocument().getRootTag().getAttributes()[0].getValueElement());
   }
 
   private String getNewText(final TextRange range, String newSubstring) {
-    final String text = XmlAttributeValueImpl.this.getText();
+    final String text = getText();
     return text.substring(0, range.getStartOffset()) + newSubstring + text.substring(range.getEndOffset());
   }
 
