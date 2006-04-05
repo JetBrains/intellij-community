@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.completion.SmartCodeCompletionHandler;
+import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -18,16 +19,33 @@ public class SmartCodeCompletionAction extends BaseCodeInsightAction {
   }
 
   public void actionPerformedImpl(Project project, Editor editor) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.general");
     super.actionPerformedImpl(project, editor);
   }
 
   protected CodeInsightActionHandler getHandler() {
-    return new SmartCodeCompletionHandler();
+    return createHandler();
+  }
+
+  public static CodeInsightActionHandler createHandler() {
+    return new CodeInsightActionHandler() {
+      public void invoke(Project project, Editor editor, PsiFile file) {
+        if (file instanceof PsiJavaFile) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.general");
+          new SmartCodeCompletionHandler().invoke(project, editor, file);
+        } else {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.basic");
+          new CodeCompletionHandler().invoke(project, editor, file);
+        }
+      }
+
+      public boolean startInWriteAction() {
+        return true;
+      }
+    };
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file instanceof PsiJavaFile;
+    return true;
   }
 
   protected boolean isValidForLookup() {
