@@ -207,7 +207,7 @@ public class ActionsTree {
     if ((filter != null || shortcut != null) && mainGroup.initIds().isEmpty()){
       mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, false, filter != null ?
                                                                                                    ActionsTreeUtil.isActionFiltered(filter, false) :
-                                                                                                    ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut, false));
+                                                                                                   ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut, false));
     }
     myRoot = ActionsTreeUtil.createNode(mainGroup);
     myMainGroup = mainGroup;
@@ -360,6 +360,19 @@ public class ActionsTree {
     return null;
   }
 
+  private ArrayList<DefaultMutableTreeNode> getNodesByPaths(ArrayList<String> paths){
+    final ArrayList<DefaultMutableTreeNode> result = new ArrayList<DefaultMutableTreeNode>();
+    Enumeration enumeration = ((DefaultMutableTreeNode)myTreeTable.getTree().getModel().getRoot()).preorderEnumeration();
+    while (enumeration.hasMoreElements()) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
+      final String path = getPath(node);
+      if (paths.contains(path)) {
+        result.add(node);
+      }
+    }
+    return result;
+  }
+
   private String getPath(DefaultMutableTreeNode node) {
     Object userObject = node.getUserObject();
     if (userObject instanceof String) {
@@ -413,25 +426,20 @@ public class ActionsTree {
     }
 
     public void restorePaths() {
-      for (String path : myPathsToExpand) {
-        DefaultMutableTreeNode node = getNodeForPath(path);
-        if (node != null) {
-          myTree.expandPath(new TreePath(node.getPath()));
-        }
+      final ArrayList<DefaultMutableTreeNode> nodesToExpand = getNodesByPaths(myPathsToExpand);
+      for (DefaultMutableTreeNode node : nodesToExpand) {
+        myTree.expandPath(new TreePath(node.getPath()));
       }
 
       Alarm alarm = new Alarm();
       alarm.addRequest(new Runnable() {
         public void run() {
+          final ArrayList<DefaultMutableTreeNode> nodesToSelect = getNodesByPaths(mySelectionPaths);
           final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
-          for (String path : mySelectionPaths) {
-            final DefaultMutableTreeNode node = getNodeForPath(path);
-            if (node != null) {
+          for (DefaultMutableTreeNode node : nodesToSelect) {
               int rowForPath = myTree.getRowForPath(new TreePath(treeModel.getPathToRoot(node)));
               myTreeTable.getSelectionModel().setSelectionInterval(rowForPath, rowForPath);
               // TODO[anton] make selection visible
-
-            }
           }
         }
       }, 100);
