@@ -293,7 +293,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   @NotNull
   public RefManager getRefManager() {
     if (myRefManager == null) {
-      myRefManager = ((RefUtilImpl)RefUtil.getInstance()).getRefManager(myProject, myCurrentScope);
+      myRefManager = new RefManagerImpl(myProject, myCurrentScope, this);
     }
 
     return myRefManager;
@@ -748,39 +748,42 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final HashMap<String, Set<InspectionTool>> usedTools = new HashMap<String, Set<InspectionTool>>();
     final Map<String, Set<InspectionTool>> localTools = new HashMap<String, Set<InspectionTool>>();
     initializeTools(scope, usedTools, localTools, runWithEditorSettings);
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    try {
-      scope.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-        }
+    final Set<InspectionTool> currentProfileLocalTools = localTools.get(getCurrentProfile().getName());
+    if (runWithEditorSettings || (currentProfileLocalTools != null && currentProfileLocalTools.size() > 0)) {
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
+      try {
+        scope.accept(new PsiRecursiveElementVisitor() {
+          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          }
 
-        @Override
-        public void visitFile(PsiFile file) {
-          final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
-          InspectionProfile profile;
-          if (runWithEditorSettings) {
-            profile = profileManager.getInspectionProfile(file);
+          @Override
+          public void visitFile(PsiFile file) {
+            final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
+            InspectionProfile profile;
+            if (runWithEditorSettings) {
+              profile = profileManager.getInspectionProfile(file);
+            }
+            else {
+              profile = getCurrentProfile();
+            }
+            final VirtualFile virtualFile = file.getVirtualFile();
+            if (virtualFile != null) {
+              incrementJobDoneAmount(LOCAL_ANALYSIS, virtualFile.getPresentableUrl());
+            }
+            final Set<InspectionTool> tools = localTools.get(profile.getName());
+            for (InspectionTool tool : tools) {
+              ((LocalInspectionToolWrapper)tool).processFile(file, true, manager);
+              psiManager.dropResolveCaches();
+            }
           }
-          else {
-            profile = getCurrentProfile();
-          }
-          final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile != null) {
-            incrementJobDoneAmount(LOCAL_ANALYSIS, virtualFile.getPresentableUrl());
-          }
-          final Set<InspectionTool> tools = localTools.get(profile.getName());
-          for (InspectionTool tool : tools) {
-            ((LocalInspectionToolWrapper)tool).processFile(file, true, manager);
-            psiManager.dropResolveCaches();
-          }
-        }
-      });
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      LOG.error(e);
+        });
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
     for (Set<InspectionTool> tools : usedTools.values()) {
       for (InspectionTool tool : tools) {

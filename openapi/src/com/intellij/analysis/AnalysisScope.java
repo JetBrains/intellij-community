@@ -20,6 +20,8 @@ package com.intellij.analysis;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -161,6 +163,7 @@ public class AnalysisScope {
       //can't be
       fileIndex = null;
     }
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
         if (/*file instanceof PsiJavaFile && */!(file instanceof PsiCompiledElement)) {
@@ -172,6 +175,10 @@ public class AnalysisScope {
             }
           }
           myFilesSet.add(virtualFile);
+          if (indicator != null){
+            indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
+            indicator.setText2(virtualFile.getPresentableUrl());
+          }
         }
       }
     };
@@ -479,6 +486,11 @@ public class AnalysisScope {
 
   public int getFileCount() {
     if (myFilesSet == null) initFilesSet();
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) { //clear text after building analysis scope set
+      indicator.setText("");
+      indicator.setText2("");
+    }
     return myFilesSet.size();
   }
 

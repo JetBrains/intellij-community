@@ -51,7 +51,7 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
 
   @NotNull
   public JobDescriptor[] getJobDescriptors() {
-    return JobDescriptor.EMPTY_ARRAY;
+    return isGraphNeeded() ? new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH}: JobDescriptor.EMPTY_ARRAY;
   }
 
   public String getDisplayName() {

@@ -9,6 +9,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -44,11 +45,13 @@ public class RefManagerImpl extends RefManager {
   private boolean myIsInProcess = false;
 
   private List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<RefGraphAnnotator>();
+  private GlobalInspectionContextImpl myContext;
 
-  public RefManagerImpl(Project project, AnalysisScope scope) {
+  public RefManagerImpl(Project project, AnalysisScope scope, GlobalInspectionContextImpl context) {
     myDeclarationsFound = false;
     myProject = project;
     myScope = scope;
+    myContext = context;
     myRefProject = new RefProjectImpl(this);
     myRefTable = new HashMap<PsiElement, RefElement>();
 
@@ -99,6 +102,7 @@ public class RefManagerImpl extends RefManager {
     myRefTable = null;
     myPackages = null;
     myModules = null;
+    myContext = null;
     myGraphAnnotators.clear();
   }
 
@@ -240,6 +244,10 @@ public class RefManagerImpl extends RefManager {
 
     @Override
     public void visitFile(PsiFile file) {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        myContext.incrementJobDoneAmount(GlobalInspectionContextImpl.BUILD_GRAPH, virtualFile.getPresentableUrl());
+      }
       final PsiElement[] roots = file.getPsiRoots();
       for (PsiElement root : roots) {
         visitElement(root);
