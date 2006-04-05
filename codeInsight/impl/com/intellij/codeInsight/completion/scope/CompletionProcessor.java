@@ -10,12 +10,11 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.util.PsiUtil;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.oro.text.regex.Perl5Matcher;
 
 import java.util.*;
-
-import org.apache.oro.text.regex.PatternMatcher;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.Perl5Matcher;
 
 /**
  * Created by IntelliJ IDEA.
@@ -115,7 +114,7 @@ public class CompletionProcessor extends BaseScopeProcessor
     }
 
     PsiResolveHelper resolveHelper = myElement.getManager().getResolveHelper();
-    if(!(element instanceof PsiMember) || resolveHelper.isAccessible(((PsiMember)element), myElement, myQualifierClass)){
+    if(!(element instanceof PsiMember) || resolveHelper.isAccessible((PsiMember)element, myElement, myQualifierClass)){
       final String name = PsiUtil.getName(element);
       if(name != null && (CompletionUtil.checkName(name, myPrefix) || myMatcher.matches(name, myPattern))
          && myFilter.isClassAcceptable(element.getClass())
@@ -126,13 +125,12 @@ public class CompletionProcessor extends BaseScopeProcessor
   }
 
   private void add(CompletionElement element){
-    if(!myResultNames.contains(element.getUniqueId())){
-      myResultNames.add(element.getUniqueId());
+    if(myResultNames.add(element.getUniqueId())){
       myResults.add(element);
     }
   }
 
-  public Collection getResults(){
+  public Collection<CompletionElement> getResults(){
     return myResults;
   }
 

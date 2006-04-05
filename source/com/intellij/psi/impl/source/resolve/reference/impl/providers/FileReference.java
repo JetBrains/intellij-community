@@ -9,14 +9,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class FileReference implements PsiPolyVariantReference, QuickFixProvider {
+public class FileReference extends GenericReference implements PsiPolyVariantReference, QuickFixProvider {
   public static final FileReference[] EMPTY = new FileReference[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
 
@@ -38,17 +38,14 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
   private final FileReferenceSet myFileReferenceSet;
 
   public FileReference(final FileReferenceSet fileReferenceSet, TextRange range, int index, String text){
+    super(fileReferenceSet.getProvider());
     myFileReferenceSet = fileReferenceSet;
     myIndex = index;
     myRange = range;
     myText = text;
   }
 
-  public String getUnresolvedMessage(){
-    return getType().getUnresolvedMessage();
-  }
-
-  private Collection<PsiElement> getContexts(){
+  @NotNull private Collection<PsiElement> getContexts(){
     final FileReference contextRef = getContextReference();
     if (contextRef == null) {
       return myFileReferenceSet.getDefaultContexts(myFileReferenceSet.getElement());
@@ -61,6 +58,12 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
       }
       return result;
     }
+  }
+
+
+  public PsiElement getContext() {
+    final PsiReference contextRef = getContextReference();
+    return contextRef != null ? contextRef.resolve() : null;
   }
 
   @NotNull
@@ -151,7 +154,7 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
 
   }
 
-  private FileReference getContextReference(){
+  public FileReference getContextReference(){
     return myIndex > 0 ? myFileReferenceSet.getReference(myIndex - 1) : null;
   }
 
@@ -159,7 +162,7 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
     return myFileReferenceSet.getType(myIndex);
   }
 
-  private static ReferenceType getSoftenType(){
+  public ReferenceType getSoftenType(){
     return new ReferenceType(new int[] {ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.FILE, ReferenceType.DIRECTORY});
   }
 
@@ -257,15 +260,15 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
     return manipulator.handleContentChange(getElement(), range, newName);
   }
 
-  private static ElementManipulator<PsiElement> getManipulator(PsiElement currentElement){
-    return ReferenceProvidersRegistry.getInstance(currentElement.getProject()).getManipulator(currentElement);
-  }
-
   public void registerQuickfix(HighlightInfo info, PsiReference reference) {
     FileReferenceQuickFixProvider.registerQuickFix(info, reference);
   }
 
   public FileReferenceSet getFileReferenceSet() {
     return myFileReferenceSet;
+  }
+
+  public boolean needToCheckAccessibility() {
+    return false;
   }
 }

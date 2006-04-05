@@ -9,23 +9,24 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @see #notifyAll()
@@ -51,7 +52,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       if (handlerClass == null){
         handlerClass = CodeCompletionHandler.class;
       }
-      if (handlerClass.equals(this.getClass())){
+      if (handlerClass.equals(getClass())){
         if (!isAutocompleteCommonPrefixOnInvocation() || activeLookup.fillInCommonPrefix(true)) {
           return;
         }
@@ -182,7 +183,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       final Lookup lookup = showLookup(project, editor, items, prefix, data, file);
 
       if (lookup != null) {
-        lookup.putUserData(COMPLETION_HANDLER_CLASS_KEY, this.getClass());
+        lookup.putUserData(COMPLETION_HANDLER_CLASS_KEY, getClass());
 
         lookup.addLookupListener(
           new LookupAdapter() {
@@ -252,10 +253,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected abstract CompletionData getCompletionData(CompletionContext context, PsiElement element);
 
-  final private void complete(CompletionContext context, PsiElement lastElement,
+  private void complete(CompletionContext context, PsiElement lastElement,
                               CompletionData completionData, Set<LookupItem> lookupSet){
-    if(lastElement == null)
-      return;
+    if(lastElement == null) return;
     final PsiReference ref = lastElement.getContainingFile().findReferenceAt(context.offset);
     if (ref != null) {
       completionData.completeReference(ref, lookupSet, context, lastElement);
@@ -332,7 +332,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return data;
   }
 
-  protected PsiElement insertDummyIdentifier(final CompletionContext context){
+  protected static PsiElement insertDummyIdentifier(final CompletionContext context){
     final PsiFile fileCopy = createCopy(context);
     try {
       context.project.getComponent(BlockSupport.class).reparseRange(
@@ -416,21 +416,19 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       });
   }
 
-  public String findPrefix(PsiElement insertedElement, int offset, String dummyIdentifier, CompletionData completionData){
-    final String result = (completionData!=null)?
-      completionData.findPrefix(insertedElement, offset):
-      CompletionData.findPrefixStatic(insertedElement,offset);
+  public static String findPrefix(PsiElement insertedElement, int offset, String dummyIdentifier, CompletionData completionData){
+    final String result = completionData == null ?
+                          CompletionData.findPrefixStatic(insertedElement, offset) :
+                          completionData.findPrefix(insertedElement, offset);
 
-    if(result.endsWith(dummyIdentifier))
-      return result.substring(0, result.length() - dummyIdentifier.length());
-    return result;
+    return result.endsWith(dummyIdentifier) ? result.substring(0, result.length() - dummyIdentifier.length()) : result;
   }
 
   public boolean startInWriteAction() {
     return true;
   }
 
-  protected PsiFile createCopy(final CompletionContext context) {
+  protected static PsiFile createCopy(final CompletionContext context) {
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       public void visitClass(PsiClass aClass) {
         aClass.putCopyableUserData(PsiUtil.ORIGINAL_KEY, aClass);

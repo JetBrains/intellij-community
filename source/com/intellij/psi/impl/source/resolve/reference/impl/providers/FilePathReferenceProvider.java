@@ -21,36 +21,45 @@ import java.util.*;
 public class FilePathReferenceProvider implements PsiReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
-    PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
-    final Object value = literalExpression.getValue();
-    if (value instanceof String) {
-      String text = (String)value;
-      return new FileReferenceSet(text, literalExpression, 1, ReferenceType.FILE_TYPE, this, true){
-        @NotNull public Collection<PsiElement> getDefaultContexts(PsiElement position) {
-          return getRoots(position);
-        }
-
-        protected PsiScopeProcessor createProcessor(final List result, ReferenceType type)
-          throws ProcessorRegistry.IncompatibleReferenceTypeException {
-          final PsiScopeProcessor baseProcessor = super.createProcessor(result, type);
-          return new PsiScopeProcessor() {
-            public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-              return element instanceof PsiJavaFile && element instanceof PsiCompiledElement
-                     || baseProcessor.execute(element, substitutor);
-            }
-
-            public <T> T getHint(Class<T> hintClass) {
-              return baseProcessor.getHint(hintClass);
-            }
-
-            public void handleEvent(Event event, Object associated) {
-              baseProcessor.handleEvent(event, associated);
-            }
-          };
-        }
-      }.getAllReferences();
+    String text = null;
+    if (element instanceof PsiLiteralExpression) {
+      Object value = ((PsiLiteralExpression)element).getValue();
+      if (value instanceof String) {
+        text = (String)value;
+      }
     }
-    return PsiReference.EMPTY_ARRAY;
+    //else if (element instanceof XmlAttributeValue) {
+    //  text = ((XmlAttributeValue)element).getValue();
+    //}
+    if (text == null) return PsiReference.EMPTY_ARRAY;
+    return new FileReferenceSet(text, element, 1, ReferenceType.FILE_TYPE, this, true) {
+      protected boolean isSoft() {
+        return true;
+      }
+
+      @NotNull public Collection<PsiElement> getDefaultContexts(PsiElement position) {
+        return getRoots(position);
+      }
+
+      protected PsiScopeProcessor createProcessor(final List result, ReferenceType type)
+        throws ProcessorRegistry.IncompatibleReferenceTypeException {
+        final PsiScopeProcessor baseProcessor = super.createProcessor(result, type);
+        return new PsiScopeProcessor() {
+          public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+            return element instanceof PsiJavaFile && element instanceof PsiCompiledElement
+                   || baseProcessor.execute(element, substitutor);
+          }
+
+          public <T> T getHint(Class<T> hintClass) {
+            return baseProcessor.getHint(hintClass);
+          }
+
+          public void handleEvent(Event event, Object associated) {
+            baseProcessor.handleEvent(event, associated);
+          }
+        };
+      }
+    }.getAllReferences();
   }
 
   @NotNull

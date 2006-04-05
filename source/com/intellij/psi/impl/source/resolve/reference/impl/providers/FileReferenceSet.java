@@ -20,11 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Mar 16, 2005
- * Time: 9:43:15 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class FileReferenceSet {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet");
@@ -70,7 +66,7 @@ public class FileReferenceSet {
     myCaseSensitive = isCaseSensitive;
     myPathString = str.trim();
     myAllowEmptyFileReferenceAtEnd = allowEmptyFileReferenceAtEnd;
-    myOptions = (provider instanceof CustomizableReferenceProvider) ? ((CustomizableReferenceProvider)provider).getOptions() : null;
+    myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
 
     reparse(str);
   }
@@ -105,15 +101,15 @@ public class FileReferenceSet {
     while(currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == ' ') currentSlash++;
     if (currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == SEPARATOR) currentSlash++;
     int index = 0;
-    FileReference currentContextRef;
 
     while(true){
       final int nextSlash = str.indexOf(SEPARATOR, currentSlash + 1);
       final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + 1, nextSlash) : str.substring(currentSlash + 1);
       if (subreferenceText.length() > 0 || myAllowEmptyFileReferenceAtEnd) { // ? check at end
-        currentContextRef = new FileReference(this, new TextRange(myStartInElement + currentSlash + 1,
-                                                                  myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
-                                              index++, subreferenceText);
+        FileReference currentContextRef = new FileReference(this, new TextRange(myStartInElement + currentSlash + 1, myStartInElement + (
+          nextSlash > 0
+          ? nextSlash
+          : str.length())), index++, subreferenceText);
         referencesList.add(currentContextRef);
       }
       if ((currentSlash = nextSlash) < 0) {
@@ -214,6 +210,6 @@ public class FileReferenceSet {
   }
 
   protected PsiScopeProcessor createProcessor(final List result, ReferenceType type) throws ProcessorRegistry.IncompatibleReferenceTypeException {
-    return ProcessorRegistry.getInstance().getProcessorByType(type, result, null);
+    return ProcessorRegistry.getProcessorByType(type, result, null);
   }
 }

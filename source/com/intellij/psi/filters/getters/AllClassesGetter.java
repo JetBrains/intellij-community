@@ -7,6 +7,7 @@ import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.Comparing;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
@@ -37,9 +38,10 @@ public class AllClassesGetter implements ContextGetter{
     // Optimization:
     final String prefix = context.getUserData(CompletionUtil.COMPLETION_PREFIX);
 
-    if(myPrefixStr != prefix){
+    if(!Comparing.strEqual(prefix,myPrefixStr)){
       myMatcher = new Perl5Matcher();
       myPattern = CompletionUtil.createCampelHumpsMatcher(prefix);
+      myPrefixStr = prefix;
     }
 
     final GlobalSearchScope scope = context.getContainingFile().getResolveScope();

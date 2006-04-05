@@ -8,12 +8,15 @@ import com.intellij.codeInsight.i18n.CreatePropertyFix;
 import com.intellij.codeInsight.i18n.I18nUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -27,15 +30,20 @@ import java.util.Set;
 /**
  * @author cdr
  */
-public class PropertyReference implements PsiPolyVariantReference, EmptyResolveMessageProvider, QuickFixProvider {
+public class PropertyReference extends GenericReference implements PsiPolyVariantReference, EmptyResolveMessageProvider, QuickFixProvider {
   private final String myKey;
   private final PsiElement myElement;
   @Nullable private final String myBundleName;
 
   public PropertyReference(String key, final PsiElement element, @Nullable final String bundleName) {
+    super(getPropertiesProvider(element.getProject()));
     myKey = key;
     myElement = element;
     myBundleName = bundleName;
+  }
+
+  private static PsiReferenceProvider getPropertiesProvider(final Project project) {
+    return ReferenceProvidersRegistry.getInstance(project).getProviderByType(ReferenceProvidersRegistry.PROPERTIES_FILE_KEY_PROVIDER);
   }
 
   public PsiElement getElement() {
@@ -109,7 +117,7 @@ public class PropertyReference implements PsiPolyVariantReference, EmptyResolveM
 
   public Object[] getVariants() {
     Collection<VirtualFile> allPropertiesFiles = PropertiesFilesManager.getInstance().getAllPropertiesFiles();
-    Set<String> variants = new THashSet<String>();
+    Set<Object> variants = new THashSet<Object>();
     if (myBundleName != null) {
       PropertiesFile propFile = I18nUtil.propertiesFileByBundleName(myElement, myBundleName);
       addVariantsFromFile(propFile, variants);
@@ -125,20 +133,20 @@ public class PropertyReference implements PsiPolyVariantReference, EmptyResolveM
     return variants.toArray(new Object[variants.size()]);
   }
 
-  protected void addKey(String key, Set<String> variants) {
-    variants.add(key);
+  protected void addKey(Object property, Set<Object> variants) {
+    variants.add(property);
   }
 
-  private void addVariantsFromFile(final PropertiesFile propertiesFile, final Set<String> variants) {
+  private void addVariantsFromFile(final PropertiesFile propertiesFile, final Set<Object> variants) {
     if (propertiesFile == null) return;
     List<Property> properties = propertiesFile.getProperties();
     for (Property property : properties) {
-      addKey(property.getKey(), variants);
+      addKey(property, variants);
     }
   }
 
   public boolean isSoft() {
-    return false;
+    return true;
   }
 
   public String getUnresolvedMessagePattern() {
@@ -148,5 +156,27 @@ public class PropertyReference implements PsiPolyVariantReference, EmptyResolveM
   public void registerQuickfix(HighlightInfo info, PsiReference reference) {
     CreatePropertyFix fix = new CreatePropertyFix(myElement, myKey, myBundleName);
     QuickFixAction.registerQuickFixAction(info, fix);
+  }
+
+  /////////////////////////
+
+  public PsiElement getContext() {
+    return null;
+  }
+
+  public PsiReference getContextReference() {
+    return null;
+  }
+
+  public ReferenceType getType() {
+    return null;
+  }
+
+  public ReferenceType getSoftenType() {
+    return null;
+  }
+
+  public boolean needToCheckAccessibility() {
+    return false;
   }
 }

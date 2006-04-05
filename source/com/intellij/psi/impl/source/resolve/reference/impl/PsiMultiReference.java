@@ -25,7 +25,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
 
   private int myChoosenOne = -1;
 
-  public PsiMultiReference(PsiReference[] references, PsiElement element){
+  public PsiMultiReference(@NotNull PsiReference[] references, PsiElement element){
     myReferences = references;
     myElement = element;
   }
@@ -101,7 +101,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   public Object[] getVariants() {
-    Set variants = new HashSet();
+    Set<Object> variants = new HashSet<Object>();
     for(PsiReference ref: myReferences) {
       Object[] refVariants = ref.getVariants();
       for(Object refVariant : refVariants) {

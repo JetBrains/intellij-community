@@ -84,16 +84,16 @@ public class CompletionData {
 
   public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position){
     final CompletionVariant[] variants = findVariants(position, context);
-    boolean haveApplicableVariants = false;
+    boolean hasApplicableVariants = false;
 
     for (CompletionVariant variant : variants) {
       if (variant.hasReferenceFilter()) {
         variant.addReferenceCompletions(reference, position, set, context.prefix);
-        haveApplicableVariants = true;
+        hasApplicableVariants = true;
       }
     }
 
-    if(!haveApplicableVariants){
+    if(!hasApplicableVariants){
       myGenericVariant.addReferenceCompletions(reference, position, set, context.prefix);
     }
   }
@@ -253,7 +253,7 @@ public class CompletionData {
       return "";
     }
 
-    if(ref instanceof PsiJavaCodeReferenceElement){
+    if(ref instanceof PsiJavaCodeReferenceElement) {
       final PsiElement name = ((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
       if(name != null){
         offsetInElement = offset - name.getTextRange().getStartOffset();
@@ -261,7 +261,7 @@ public class CompletionData {
       }
       return "";
     }
-    else if(ref != null){
+    else if(ref != null) {
       offsetInElement = offset - ref.getElement().getTextRange().getStartOffset();
 
       String result = ref.getElement().getText().substring(ref.getRangeInElement().getStartOffset(), offsetInElement);

@@ -160,10 +160,9 @@ public class TargetElementUtil {
 
     if ((flags & REFERENCED_ELEMENT_ACCEPTED) != 0) {
       final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
-
-      if (referenceOrReferencedElement == null) {
-        return getReferenceOrReferencedElement(file, editor, flags, offset);
-      }
+      //if (referenceOrReferencedElement == null) {
+      //  return getReferenceOrReferencedElement(file, editor, flags, offset);
+      //}
       return referenceOrReferencedElement != null && referenceOrReferencedElement.isValid() ? referenceOrReferencedElement : null;
     }
 

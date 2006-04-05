@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -22,7 +23,7 @@ public final class LookupItem implements Comparable{
   public static final Object TAIL_TEXT_ATTR = Key.create("tailText");
   public static final Object TAIL_TEXT_SMALL_ATTR = Key.create("tailTextSmall");
   public static final Object FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
-  public static final Object FORCE_SHOW_FQN_ATTR = Key.create("forseFQNForClasses");
+  public static final Key<Object> FORCE_SHOW_FQN_ATTR = Key.create("forseFQNForClasses");
 
   public static final Object DO_NOT_AUTOCOMPLETE_ATTR = Key.create("DO_NOT_AUTOCOMPLETE_ATTR");
   public static final Object DO_AUTOCOMPLETE_ATTR = Key.create("DO_AUTOCOMPLETE_ATTR");
@@ -41,8 +42,7 @@ public final class LookupItem implements Comparable{
 
   private Object myObject;
   private String myLookupString;
-  private Map myAttributes = null;
-
+  private Map<Object,Object> myAttributes = null;
 
   public LookupItem(Object o, String lookupString){
     setObject(o);
@@ -65,18 +65,10 @@ public final class LookupItem implements Comparable{
     if (o instanceof LookupItem){
       LookupItem item = (LookupItem)o;
       return Comparing.equal(myObject, item.myObject)
-        && Comparing.equal(myLookupString, item.myLookupString)
-        && Comparing.equal(myAttributes, item.myAttributes);
+             && Comparing.equal(myLookupString, item.myLookupString)
+             && Comparing.equal(myAttributes, item.myAttributes);
     }
     return false;
-  }
-
-  public Map getAttributes(){
-    return myAttributes;
-  }
-
-  public void setAttributes(Map attributes){
-    myAttributes = attributes;
   }
 
   public int hashCode() {
@@ -107,7 +99,7 @@ public final class LookupItem implements Comparable{
     return myLookupString;
   }
 
-  public void setLookupString(String lookupString) {
+  public void setLookupString(@NotNull String lookupString) {
     myLookupString = lookupString;
   }
 
@@ -122,7 +114,7 @@ public final class LookupItem implements Comparable{
 
   public void setAttribute(Object key, Object value){
     if (myAttributes == null){
-      myAttributes = new HashMap(5);
+      myAttributes = new HashMap<Object, Object>(5);
     }
     myAttributes.put(key, value);
   }
@@ -139,7 +131,7 @@ public final class LookupItem implements Comparable{
   }
 
   public void setTailType(int type){
-    setAttribute(CompletionUtil.TAIL_TYPE_ATTR, new Integer(type));
+    setAttribute(CompletionUtil.TAIL_TYPE_ATTR, Integer.valueOf(type));
   }
 
   public int compareTo(Object o){

@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -27,13 +28,11 @@ public class LookupItemUtil{
   private LookupItemUtil() {
   }
 
-  public static LookupItem addLookupItem(Set<LookupItem> set, Object object, String prefix) {
-    LOG.assertTrue(object != null, "Lookup item can't be null!");
+  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix) {
     return addLookupItem(set, object, prefix, -1);
   }
 
-  public static LookupItem addLookupItem(Set<LookupItem> set, Object object, String prefix, InsertHandler handler) {
-    LOG.assertTrue(object != null, "Lookup item can't be null!");
+  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix, InsertHandler handler) {
     LookupItem item = addLookupItem(set, object, prefix, -1);
     if (item != null) {
       item.setAttribute(LookupItem.INSERT_HANDLER_ATTR, handler);
@@ -41,9 +40,7 @@ public class LookupItemUtil{
     return item;
   }
 
-  public static LookupItem addLookupItem(Set<LookupItem> set, Object object, String prefix, int tailType) {
-    LOG.assertTrue(object != null, "Lookup item can't be null!");
-    //TODO[ik]: remove the check: it is always false?
+  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix, int tailType) {
     if (object instanceof PsiType) {
       PsiType psiType = (PsiType)object;
       for (final LookupItem lookupItem : set) {
@@ -54,14 +51,11 @@ public class LookupItemUtil{
       }
     }
 
-    LookupItem item = LookupItemUtil.objectToLookupItem(object);
-    String text = item.getLookupString();
-    for (Object o : set) {
-      if(o instanceof LookupItem) {
-        final LookupItem lookupItem = (LookupItem)o;
-        if(lookupItem.getObject().equals(o)) return null;
-      }
+    for (LookupItem lookupItem : set) {
+      if(lookupItem.getObject().equals(lookupItem)) return null;
     }
+    LookupItem item = objectToLookupItem(object);
+    String text = item.getLookupString();
     if (CompletionUtil.startsWith(text, prefix)) {
       item.setLookupString(text);
       if (tailType >= 0) {
@@ -69,9 +63,7 @@ public class LookupItemUtil{
       }
       return set.add(item) ? item : null;
     }
-    else{
-      return null;
-    }
+    return null;
   }
 
   public static void addLookupItems(Set<LookupItem> set, Object[] objects, String prefix) {
@@ -104,10 +96,9 @@ public class LookupItemUtil{
 
   public static LookupItem objectToLookupItem(Object object) {
     if (object instanceof LookupItem) return (LookupItem)object;
-    
+
     String s = null;
     LookupItem item = new LookupItem(object, "");
-    int tailType = TailType.NONE;
     if (object instanceof PsiElement){
       PsiElement element = (PsiElement) object;
       if(element.getUserData(PsiUtil.ORIGINAL_KEY) != null){
@@ -117,6 +108,7 @@ public class LookupItemUtil{
       }
       s = PsiUtil.getName(element);
     }
+    int tailType = TailType.NONE;
     if (object instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)object;
       s = method.getName();
@@ -232,9 +224,9 @@ public class LookupItemUtil{
     if(substitutor != null){
       final PsiTypeParameter[] params = element.getTypeParameters();
       if(params.length > 0){
-        boolean flag = true;
         StringBuffer buffer = new StringBuffer();
         buffer.append("<");
+        boolean flag = true;
         for(int i = 0; i < params.length; i++){
           final PsiTypeParameter param = params[i];
           final PsiType type = substitutor.substitute(param);

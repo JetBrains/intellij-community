@@ -8,9 +8,7 @@ import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -28,14 +26,12 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
@@ -89,7 +85,7 @@ public class CompletionUtil {
   public static final Key<PsiElement> COPY_KEY = Key.create("COPY_KEY");
 
   public static PsiType getQualifierType(LookupItem item){
-    return (PsiType) item.getAttribute(CompletionUtil.QUALIFIER_TYPE_ATTR);
+    return (PsiType) item.getAttribute(QUALIFIER_TYPE_ATTR);
   }
 
   public static void setQualifierType(LookupItem item, PsiType type){
@@ -224,7 +220,7 @@ public class CompletionUtil {
         case CodeInsightSettings.FIRST_LETTER:
           if(name.length() > 0){
             if(prefix.length() > 0){
-              ret = (name.charAt(0) == prefix.charAt(0))
+              ret = name.charAt(0) == prefix.charAt(0)
                     && name.toLowerCase().startsWith(prefix.substring(1).toLowerCase(), 1);
             }
           }

@@ -11,6 +11,7 @@ import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
@@ -169,15 +170,12 @@ public class CompletionVariant {
   }
 
   public boolean isVariantApplicable(PsiElement position, PsiElement scope){
-    if(isScopeAcceptable(scope)){
-      return myPosition.isAcceptable(position, scope);
-    }
-    return false;
+    return isScopeAcceptable(scope) && myPosition.isAcceptable(position, scope);
   }
 
   public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, String prefix){
-    for (final Object ce : myCompletionsList) {
-      addReferenceCompletions(reference, position, set, prefix, (CompletionVariantItem)ce);
+    for (final CompletionVariantItem ce : myCompletionsList) {
+      addReferenceCompletions(reference, position, set, prefix, ce);
     }
   }
 
@@ -307,12 +305,11 @@ public class CompletionVariant {
         ((PsiJavaReference)reference).processVariants(processor);
       }
       else{
-        final Object[] completions = reference.getVariants();
+        Set<Object> variants = new THashSet<Object>();
+        filterVariants(reference, prefix, position, variants);
 
-        if(completions == null){
-          return;
-        }
-        for (Object completion : completions) {
+        if(variants.isEmpty()) return;
+        for (Object completion : variants) {
           if (completion instanceof PsiElement) {
             processor.execute((PsiElement)completion, PsiSubstitutor.EMPTY);
           }
@@ -328,15 +325,44 @@ public class CompletionVariant {
         }
       }
 
-      final Iterator resultIter = processor.getResults().iterator();
-      while(resultIter != null && resultIter.hasNext()){
-        final CompletionElement comElement = (CompletionElement) resultIter.next();
-        final LookupItem lookupItem = addLookupItem(set, item, comElement.getElement(), prefix);
-        lookupItem.setAttribute(LookupItem.SUBSTITUTOR, comElement.getSubstitutor());
-        if (comElement.getQualifier() != null){
-          CompletionUtil.setQualifierType(lookupItem, comElement.getQualifier());
+      Collection<CompletionElement> results = processor.getResults();
+      if (results != null) {
+        for (CompletionElement element : results) {
+          final LookupItem lookupItem = addLookupItem(set, item, element.getElement(), prefix);
+          lookupItem.setAttribute(LookupItem.SUBSTITUTOR, element.getSubstitutor());
+          if (element.getQualifier() != null){
+            CompletionUtil.setQualifierType(lookupItem, element.getQualifier());
+          }
         }
       }
+    }
+  }
+
+  private static void filterVariants(final PsiReference reference,
+                                     final String prefix,
+                                     final PsiElement position,
+                                     Collection<Object> variants) {
+    //if (reference instanceof PsiMultiReference) {
+    //  for (PsiReference ref : ((PsiMultiReference)reference).getReferences()) {
+    //    filterVariants(ref, prefix, position, variants);
+    //  }
+    //  return;
+    //}
+    //if (reference instanceof GenericReference) {
+    //  GenericReference genericReference = (GenericReference)reference;
+    //  if (prefix.length() == 0
+    //      && genericReference.getContextReference() == null
+    //      && position.getParent() instanceof PsiLiteralExpression
+    //      && ((String)((PsiLiteralExpression)position.getParent()).getValue()).indexOf(CompletionUtil.DUMMY_IDENTIFIER) != 0
+    //      && ((String)((PsiLiteralExpression)position.getParent()).getValue()).indexOf(CompletionUtil.DUMMY_IDENTIFIER) != 1
+    //    ) {
+    //    return;
+    //  }
+    //}
+
+    final Object[] completions = reference.getVariants();
+    if (completions != null) {
+      variants.addAll(Arrays.asList(completions));
     }
   }
 
