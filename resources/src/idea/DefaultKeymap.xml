@@ -797,9 +797,6 @@
     <action id="CollapseBlock">
       <keyboard-shortcut first-keystroke="control shift PERIOD"/>
     </action>
-    <action id="Vcs.ShowDiffAction">
-      <mouse-shortcut keystroke="button1 doubleClick"/>
-    </action>
 
     <action id="StructuralSearchPlugin.StructuralSearchAction" >
       <keyboard-shortcut first-keystroke="control shift S"/>
