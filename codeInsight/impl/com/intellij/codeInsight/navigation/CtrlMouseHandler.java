@@ -670,7 +670,7 @@ public class CtrlMouseHandler implements ProjectComponent {
         if (targetNavigateable(info.myTargetElement)) {
           installLinkHighlighter(info);
         }
-IDEADEV-5495
+        
         String text = JavaInfoGenerator.generateInfo(info.myTargetElement);
         if (text == null) return;
 
