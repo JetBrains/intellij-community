@@ -13,7 +13,13 @@ public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JT
     tree.getSelectionModel().addTreeSelectionListener(
       new TreeSelectionListener() {
         public void valueChanged(TreeSelectionEvent e) {
-          repaintHint();
+          try {
+            repaintHint();
+          }
+          catch (Exception e1) {
+            // Workaround for some race conditions in Swing, see
+            // http://www.intellij.net/tracker/idea/viewSCR?publicId=53961
+          }
         }
       }
     );
