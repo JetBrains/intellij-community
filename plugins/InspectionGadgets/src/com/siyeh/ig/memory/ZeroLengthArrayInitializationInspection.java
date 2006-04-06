@@ -21,12 +21,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ZeroLengthArrayInitializationInspection
-        extends ExpressionInspection {
+public class ZeroLengthArrayInitializationInspection extends BaseInspection {
 
     public String getID(){
         return "ZeroLengthArrayAllocation";
@@ -97,6 +97,9 @@ public class ZeroLengthArrayInitializationInspection
                 return;
             }
             if (expression.getParent() instanceof PsiNewExpression) {
+                return;
+            }
+            if (isDeclaredConstant(expression)) {
                 return;
             }
             registerError(expression);
