@@ -415,6 +415,7 @@ public class TemplateState implements Disposable {
 
               public void itemSelected(LookupEvent event) {
                 lookup.removeLookupListener(this);
+                if (isFinished()) return;
                 toProcessTab = true;
 
                 final LookupItem item = event.getItem();
