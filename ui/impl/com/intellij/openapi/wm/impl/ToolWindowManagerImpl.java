@@ -479,8 +479,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     // Activate another tool window if no active tool window exists and
     // window stack is enabled.
 
+    myActiveStack.remove(id, false); // hidden window should be at the top of stack
     if (wasActive) {
-      myActiveStack.remove(id, false); // hidden window should be at the top of stack
       if (myActiveStack.isEmpty()) {
         activateEditorComponentImpl(commandList);
       }
