@@ -3,71 +3,32 @@ package com.intellij.rt.execution.junit;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import java.lang.reflect.Method;
-
-/**
- * @noinspection HardCodedStringLiteral
- */
 public class TestAllInPackage2 extends TestSuite {
-  private final JUnit4API jUnit4API;
-
-  public TestAllInPackage2(final String packageName, String[] classNames, final JUnit4API is_junit4) {
-    super(packageName);
-    jUnit4API = is_junit4;
-
+  public TestAllInPackage2(IdeaTestRunner runner, final String name, String[] classMethodNames) {
+    super(name);
     int testClassCount = 0;
 
-    for (int i = 0; i < classNames.length; i++) {
-      String className = classNames[i];
-      try {
-        final Class candidateClass = Class.forName(className);
-        Test test = getTest(candidateClass);
-        if (test != null) {
-          addTest(test);
-          testClassCount++;
-        }
+    for (int i = 0; i < classMethodNames.length; i++) {
+      String classMethodName = classMethodNames[i];
+      Test suite = TestRunnerUtil.createClassOrMethodSuite(runner, classMethodName);
+      if (suite == null) {
+        return;
       }
-      catch (ClassNotFoundException e) {
-        System.err.println("Cannot load class: " + className + " " + e.getMessage());
+      if (suite instanceof TestSuite && ((TestSuite)suite).getName() == null) {
+        attachSuiteInfo(suite, classMethodName);
       }
-      catch (NoClassDefFoundError e) {
-        System.err.println("Cannot load class that " + className + " is dependant on");
-      }
-      catch (ExceptionInInitializerError e) {
-        e.getException().printStackTrace();
-        System.err.println("Cannot load class: " + className + " " + e.getException().getMessage());
-      }
+      addTest(suite);
+      testClassCount++;
     }
-
-    String classString = testClassCount == 1 ? "class" : "classes";
-    System.out.println(Integer.toString(testClassCount) +  " test "+ classString + " found in package \"" + packageName + "\"\n");
+    String message = TestRunnerUtil.testsFoundInPackageMesage(testClassCount, name);
+    System.out.println(message);
   }
 
-  private Test getTest(Class testClass) {
-    if (jUnit4API != null) {
-      Test test = jUnit4API.createClassSuite(testClass);
-      if (test != null) return test;
-    }
-    try {
-      Method suiteMethod = testClass.getMethod("suite", new Class[0]);
-      Test test = (Test)suiteMethod.invoke(null, new Class[0]);
-      return attachSuiteInfo(test, testClass);
-    }
-    catch (NoSuchMethodException e) {
-      return new TestSuite(testClass);
-    }
-    catch (Exception e) {
-      System.err.println("Failed to execute suite ()");
-      e.printStackTrace();
-    }
-    return null;
-  }
-
-  private static Test attachSuiteInfo(Test test, Class testClass) {
+  private static Test attachSuiteInfo(Test test, String name) {
     if (test instanceof TestSuite) {
       TestSuite testSuite = (TestSuite)test;
       if (testSuite.getName() == null)
-        testSuite.setName(testClass.getName());
+        testSuite.setName(name);
     }
     return test;
   }

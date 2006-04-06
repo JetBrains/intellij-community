@@ -20,7 +20,8 @@ public class IdeaTestRunner extends TestRunner {
 
   public static int startRunnerWithArgs(IdeaTestRunner testRunner, String[] args) {
     try {
-      TestResult result = testRunner.start(args);
+      Test suite = TestRunnerUtil.getTestSuite(testRunner, args);
+      TestResult result = testRunner.doRun(suite);
       if (!result.wasSuccessful()) {
         return -1;
       }
@@ -30,10 +31,6 @@ public class IdeaTestRunner extends TestRunner {
       e.printStackTrace(System.err);
       return -2;
     }
-  }
-
-  public Test getTest(String suiteClassName) {
-    return TestRunnerUtil.getTestSuite(this, suiteClassName);
   }
 
   public void clearStatus() {

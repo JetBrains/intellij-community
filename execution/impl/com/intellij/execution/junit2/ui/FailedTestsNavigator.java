@@ -63,7 +63,7 @@ public class FailedTestsNavigator implements OccurenceNavigator, TestProxyClient
   abstract class FailedTestInfo {
     private TestProxy myDefect = null;
     private List<TestProxy> myAllTests;
-    private List myDefects;
+    private List<TestProxy> myDefects;
 
     private TestProxy getDefect() {
       return myDefect;
@@ -95,7 +95,7 @@ public class FailedTestsNavigator implements OccurenceNavigator, TestProxyClient
       final int defectIndex = myDefects.indexOf(defect);
       if (defectIndex == -1 || defectIndex == getBoundIndex())
         return this;
-      myDefect = (TestProxy)myDefects.get(nextIndex(defectIndex));
+      myDefect = myDefects.get(nextIndex(defectIndex));
       return this;
     }
 

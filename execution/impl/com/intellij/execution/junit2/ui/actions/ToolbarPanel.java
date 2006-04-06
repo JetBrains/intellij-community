@@ -33,6 +33,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
   private final FailedTestsNavigator myOccurenceNavigator = new FailedTestsNavigator();
   private final ScrollToTestSourceAction myScrollToSource;
   @NonNls protected static final String TEST_SUITE_CLASS_NAME = "junit.framework.TestSuite";
+  private final RerunFailedTestsAction myRerunFailedTestsAction;
 
   public ToolbarPanel(final JUnitConsoleProperties properties) {
     super (new BorderLayout());
@@ -70,6 +71,8 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
                                               ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
                                               IconLoader.getIcon("/runConfigurations/sourceAtException.png"),
                                               properties, JUnitConsoleProperties.OPEN_FAILURE_LINE));
+    myRerunFailedTestsAction = new RerunFailedTestsAction();
+    actionGroup.add(myRerunFailedTestsAction);
     add(ActionManager.getInstance().
         createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).
         getComponent(), BorderLayout.CENTER);
@@ -81,6 +84,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
     RunningTestTracker.install(model);
     myTreeExpander.setModel(model);
     myOccurenceNavigator.setModel(model);
+    myRerunFailedTestsAction.setModel(model);
     JUnitActions.installAutoacrollToFirstDefect(model);
     model.addListener(new LvcsLabeler(model));
     model.addListener(new JUnitAdapter() {
