@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionBundle;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.Application;
@@ -12,6 +13,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -26,8 +28,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -92,15 +92,6 @@ public class LookupImpl extends LightweightHint implements Lookup {
     updateList();
 
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
-
-    myList.registerKeyboardAction(new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        hide();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-       JComponent.WHEN_IN_FOCUSED_WINDOW
-    );
-
 
     JScrollPane scrollPane = new JScrollPane(myList);
     scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -355,7 +346,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
 
     Point p = calculatePosition();
     HintManager hintManager = HintManager.getInstance();
-    hintManager.showEditorHint(this, myEditor, p, HintManager.UPDATE_BY_SCROLLING, 0, false);
+    hintManager.showEditorHint(this, myEditor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false);
   }
 
   private void selectMostPreferableItem(){
@@ -521,6 +512,11 @@ public class LookupImpl extends LightweightHint implements Lookup {
 
   public void hide(){
     if (myDisposed) return;
+    final JBPopup docInfoHint = JavaDocManager.getInstance(myProject).getDocInfoHint();
+    if (docInfoHint != null && docInfoHint.isVisible()){
+      docInfoHint.cancel();
+      return;
+    }
     myDisposed = true;
 
     myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
