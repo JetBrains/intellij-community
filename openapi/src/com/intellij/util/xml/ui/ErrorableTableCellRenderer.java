@@ -33,21 +33,14 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
   private T myCellValueDomElement;
 
 
-  public ErrorableTableCellRenderer(final T  cellValueDomElement,
-                                    final TableCellRenderer renderer,
-                                    final T rowDomElement) {
+  public ErrorableTableCellRenderer(final T cellValueDomElement, final TableCellRenderer renderer, final T rowDomElement) {
     myCellValueDomElement = cellValueDomElement;
     myRenderer = renderer;
     myRowDomElement = rowDomElement;
 
   }
 
-  public Component getTableCellRendererComponent(JTable table,
-                                                 Object value,
-                                                 boolean isSelected,
-                                                 boolean hasFocus,
-                                                 int row,
-                                                 int column) {
+  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     final Component component = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
     final java.util.List<DomElementProblemDescription> problems =
@@ -61,6 +54,10 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
       component.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
     }
 
+    if (hasErrors && (value == null || value.toString().trim().length() == 0)) {
+      // empty cell with errors
+      component.setBackground(new Color(255, 204, 204));
+    }
 
     final java.util.List<DomElementProblemDescription> problemDescriptions =
       DomElementAnnotationsManager.getInstance().getProblems(myRowDomElement, true, true);
@@ -79,9 +76,9 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
 
       wrapper.add(errorLabel, BorderLayout.EAST);
 
-      if(component instanceof JComponent) {
-          wrapper.setBorder(((JComponent)component).getBorder());
-          ((JComponent)component).setBorder(BorderFactory.createEmptyBorder());
+      if (component instanceof JComponent) {
+        wrapper.setBorder(((JComponent)component).getBorder());
+        ((JComponent)component).setBorder(BorderFactory.createEmptyBorder());
       }
 
 

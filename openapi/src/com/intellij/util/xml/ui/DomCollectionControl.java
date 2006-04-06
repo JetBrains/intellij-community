@@ -212,8 +212,16 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
   }
 
   public final void reset() {
+    final List<T> newData = getData();
+    if (myData.equals(newData)) {
+      final JTable table = myCollectionPanel.getTable();
+      table.revalidate();
+      table.repaint();
+      return;
+    }
+
     myData.clear();
-    myData.addAll(getData());
+    myData.addAll(newData);
     if (myCollectionPanel != null) {
       myCollectionPanel.setItems(myData);
     }

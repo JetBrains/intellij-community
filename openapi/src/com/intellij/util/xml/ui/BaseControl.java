@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.xml.DomElement;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,8 +29,11 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
   private DomWrapper<T> myDomWrapper;
   private boolean myCommitting;
 
-  protected Color myDefaultForegraund = Color.BLACK;
-  protected Color myErrorForeground = Color.RED;
+  protected Color myDefaultForeground =  SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor();
+  protected Color myErrorForeground = SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor();
+
+  protected Color myDefaultBackground = Color.WHITE;
+  protected Color myErrorBackground = new Color(255,204,204);
 
   protected BaseControl(final DomWrapper<T> domWrapper) {
     myDomWrapper = domWrapper;

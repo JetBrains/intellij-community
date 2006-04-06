@@ -8,7 +8,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventListener;
 import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.events.*;
 import jetbrains.fabrique.ui.treeStructure.*;
 import jetbrains.fabrique.ui.treeStructure.actions.CollapseAllAction;
 import jetbrains.fabrique.ui.treeStructure.actions.ExpandAllAction;
@@ -79,6 +79,31 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     });
 
     myDomEventListener = new DomEventListener() {
+
+      public void valueChanged(TagValueChangeEvent event) {
+        super.valueChanged(event);
+      }
+
+      public void elementDefined(ElementDefinedEvent event) {
+        super.elementDefined(event);
+      }
+
+      public void elementUndefined(ElementUndefinedEvent event) {
+        super.elementUndefined(event);
+      }
+
+      public void elementChanged(ElementChangedEvent event) {
+        super.elementChanged(event);
+      }
+
+      public void childAdded(CollectionElementAddedEvent event) {
+        super.childAdded(event);
+      }
+
+      public void childRemoved(CollectionElementRemovedEvent event) {
+        super.childRemoved(event);
+      }
+
       public void eventOccured(DomEvent event) {
         myBuilder.updateFromRoot(false);
       }
