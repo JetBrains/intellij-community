@@ -4,6 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiBundle;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -26,12 +27,15 @@ import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,6 +45,45 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class SchemaReferencesProvider implements PsiReferenceProvider {
+  @NonNls private static final String VALUE_ATTR_NAME = "value";
+  @NonNls private static final String PATTERN_TAG_NAME = "pattern";
+  @NonNls private static final String NAME_ATTR_NAME = "name";
+  @NonNls private static final String MEMBER_TYPES_ATTR_NAME = "memberTypes";
+
+  static class RegExpReference extends JspReferencesProvider.BasicAttributeValueReference implements
+                                                                                          EmptyResolveMessageProvider  {
+    private String message;
+
+    public RegExpReference(final PsiElement element) {
+      super(element);
+    }
+
+    @Nullable
+    public PsiElement resolve() {
+      try {
+        Pattern.compile(getCanonicalText());
+        message = null;
+        return myElement;
+      }
+      catch (Exception e) {
+        message = PsiBundle.message("invalid.reqular.expression.message", getCanonicalText());
+        return null;
+      }
+    }
+
+    public Object[] getVariants() {
+      return new Object[0];
+    }
+
+    public boolean isSoft() {
+      return false;
+    }
+
+    public String getUnresolvedMessagePattern() {
+      return message;
+    }
+  }
+
   static class NameReference implements PsiReference {
     private PsiElement myElement;
 
@@ -94,13 +137,23 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
   static class TypeOrElementOrAttributeReference implements PsiReference {
     private PsiElement myElement;
     private TextRange myRange;
+    @NonNls private static final String XML_NS_PREFIX = "xml";
+    @NonNls private static final String LANG_XML_NS_ATTR_NAME = "lang";
+    @NonNls private static final String BASE_XML_NS_ATTR_NAME = "base";
+    @NonNls private static final String SPACE_XML_NS_ATTR_NAME = "space";
+    @NonNls private static final String GROUP_TAG_NAME = "group";
+    @NonNls private static final String ATTRIBUTE_GROUP_TAG_NAME = "attributeGroup";
+    @NonNls private static final String ATTRIBUTE_TAG_NAME = "attribute";
+    @NonNls private static final String ELEMENT_TAG_NAME = "element";
+    @NonNls private static final String SIMPLE_TYPE_TAG_NAME = "simpleType";
+    @NonNls private static final String COMPLEX_TYPE_TAG_NAME = "complexType";
 
     enum ReferenceType {
       ElementReference, AttributeReference, GroupReference, AttributeGroupReference, TypeReference
     }
-    
+
     private ReferenceType myType;
-    
+
     TypeOrElementOrAttributeReference(PsiElement element) {
       this(element,new TextRange(1,element.getTextLength()-1));
     }
@@ -108,25 +161,25 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     TypeOrElementOrAttributeReference(PsiElement element, TextRange range) {
       myElement = element;
       myRange   = range;
-      
+
       final XmlAttribute attribute = PsiTreeUtil.getParentOfType(myElement, XmlAttribute.class);
       final XmlTag tag = attribute.getParent();
       final String localName = tag.getLocalName();
       final String attributeLocalName = attribute.getLocalName();
 
       if ("ref".equals(attributeLocalName) || "substitutionGroup".equals(attributeLocalName)) {
-        if (localName.equals("group")) {
+        if (localName.equals(GROUP_TAG_NAME)) {
           myType = ReferenceType.GroupReference;
-        } else if (localName.equals("attributeGroup")) {
+        } else if (localName.equals(ATTRIBUTE_GROUP_TAG_NAME)) {
           myType = ReferenceType.AttributeGroupReference;
-        } else if ("element".equals(localName)) {
+        } else if (ELEMENT_TAG_NAME.equals(localName)) {
           myType = ReferenceType.ElementReference;
-        } else if ("attribute".equals(localName)) {
+        } else if (ATTRIBUTE_TAG_NAME.equals(localName)) {
           myType = ReferenceType.AttributeReference;
         }
-      } else if ("type".equals(attributeLocalName) || 
-                 "base".equals(attributeLocalName) ||
-                 "memberTypes".equals(attributeLocalName)
+      } else if ("type".equals(attributeLocalName) ||
+                 BASE_XML_NS_ATTR_NAME.equals(attributeLocalName) ||
+                 MEMBER_TYPES_ATTR_NAME.equals(attributeLocalName)
                 ) {
         myType = ReferenceType.TypeReference;
       }
@@ -190,10 +243,10 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
             if (descriptor != null) return descriptor.getDeclaration();
 
-            if ("xml".equals(prefixByQualifiedName) &&
-                ( "lang".equals(localNameByQualifiedName) ||
-                  "base".equals(localNameByQualifiedName) ||
-                  "space".equals(localNameByQualifiedName)
+            if (XML_NS_PREFIX.equals(prefixByQualifiedName) &&
+                ( LANG_XML_NS_ATTR_NAME.equals(localNameByQualifiedName) ||
+                  BASE_XML_NS_ATTR_NAME.equals(localNameByQualifiedName) ||
+                  SPACE_XML_NS_ATTR_NAME.equals(localNameByQualifiedName)
                 )
                ) {
               return myElement; // for compatibility
@@ -256,9 +309,9 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       List<String> myElements = new ArrayList<String>(1);
       String namespace;
       XmlTag tag;
-      
+
       public boolean execute(final XmlTag element) {
-        String name = element.getAttributeValue("name");
+        String name = element.getAttributeValue(NAME_ATTR_NAME);
         final String prefixByNamespace = tag.getPrefixByNamespace(namespace);
         if (prefixByNamespace != null && prefixByNamespace.length() > 0) {
           name = prefixByNamespace + ":" + name;
@@ -267,31 +320,31 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
         return true;
       }
     }
-    
+
     public Object[] getVariants() {
       final XmlTag tag = PsiTreeUtil.getParentOfType(myElement, XmlTag.class);
       if (tag == null) return null;
-      
+
       String[] tagNames = null;
 
       switch (myType) {
         case GroupReference:
-          tagNames = new String[] {"group"};
+          tagNames = new String[] {GROUP_TAG_NAME};
           break;
         case AttributeGroupReference:
-          tagNames = new String[] {"attributeGroup"};
+          tagNames = new String[] {ATTRIBUTE_GROUP_TAG_NAME};
           break;
         case AttributeReference:
-          tagNames = new String[] {"attribute"};
+          tagNames = new String[] {ATTRIBUTE_TAG_NAME};
           break;
         case ElementReference:
-          tagNames = new String[] {"element"};
+          tagNames = new String[] {ELEMENT_TAG_NAME};
           break;
         case TypeReference:
-          tagNames = new String[] {"simpleType","complexType"};
+          tagNames = new String[] {SIMPLE_TYPE_TAG_NAME,COMPLEX_TYPE_TAG_NAME};
           break;
       }
-      
+
       CompletionProcessor processor = new CompletionProcessor();
       processor.tag = tag;
       HashSet<String> visitedNamespaces = new HashSet<String>(1);
@@ -300,7 +353,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       final XmlTag rootTag = document.getRootTag();
       String ourNamespace = rootTag != null ? rootTag.getAttributeValue("targetNamespace") : "";
       if (ourNamespace == null) ourNamespace = "";
-      
+
       for(String namespace:tag.knownNamespaces()) {
         if (ourNamespace.equals(namespace)) continue;
         final XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(namespace, true);
@@ -310,7 +363,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
           visitedNamespaces.add(namespace);
         }
       }
-      
+
       if (ourNamespace != null && ourNamespace.length() > 0) {
         XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
         if (nsDescriptor != null) {
@@ -322,7 +375,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
           );
         }
       }
-      
+
       return processor.myElements.toArray(new String[processor.myElements.size()]);
     }
 
@@ -348,13 +401,18 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (parent instanceof XmlAttribute &&
-        "name".equals(((XmlAttribute)parent).getName())
-       ) {
+    if (!(parent instanceof XmlAttribute)) return PsiReference.EMPTY_ARRAY;
+    final String attrName = ((XmlAttribute)parent).getName();
+
+    if (VALUE_ATTR_NAME.equals(attrName)) {
+      if (PATTERN_TAG_NAME.equals(((XmlAttribute)parent).getParent().getLocalName())) {
+        return new PsiReference[] { new RegExpReference(element) };
+      } else {
+        return PsiReference.EMPTY_ARRAY;
+      }
+    } else if (NAME_ATTR_NAME.equals(attrName)) {
       return new PsiReference[] { new NameReference(element) };
-    } else if (parent instanceof XmlAttribute &&
-               "memberTypes".equals(((XmlAttribute)parent).getName())
-              ) {
+    } else if (MEMBER_TYPES_ATTR_NAME.equals(attrName)) {
       final List<PsiReference> result = new ArrayList<PsiReference>(1);
       final String text = element.getText();
       int lastIndex = 1;
@@ -367,7 +425,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       }
 
       result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, text.length() - 1) ) );
-      
+
       return result.toArray(new PsiReference[result.size()]);
     } else {
       return new PsiReference[] { new TypeOrElementOrAttributeReference(element) };

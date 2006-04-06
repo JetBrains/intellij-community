@@ -513,7 +513,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerTypeWithProvider(SCHEMA_PROVIDER, schemaReferencesProvider);
 
     registerXmlAttributeValueReferenceProvider(
-      new String[] {"ref","type","base","name","substitutionGroup","memberTypes"},
+      new String[] {"ref","type","base","name","substitutionGroup","memberTypes","value"},
       new ScopeFilter(
         new ParentElementFilter(
           new NamespaceFilter(MetaRegistry.SCHEMA_URIS), 2
