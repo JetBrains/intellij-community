@@ -41,32 +41,21 @@ public class OpenFileDescriptor implements Navigatable {
 
   private final Project myProject;
 
-  /**
-   * @throws java.lang.IllegalArgumentException if <code>file</code> is <code>null</code>
-   */
-  public OpenFileDescriptor(Project project, VirtualFile file, int offset) {
+  public OpenFileDescriptor(Project project, @NotNull VirtualFile file, int offset) {
     this(project, file, -1, -1, offset);
   }
 
-  /**
-   * @throws java.lang.IllegalArgumentException if <code>file</code> is <code>null</code>
-   */
-  public OpenFileDescriptor(Project project, VirtualFile file, int line, int col) {
+  public OpenFileDescriptor(Project project, @NotNull VirtualFile file, int line, int col) {
     this(project, file, line, col, -1);
   }
 
-  /**
-   * @throws java.lang.IllegalArgumentException if <code>file</code> is <code>null</code>
-   */
-  public OpenFileDescriptor(Project project, VirtualFile file) {
+  public OpenFileDescriptor(Project project, @NotNull VirtualFile file) {
     this(project, file, -1, -1, -1);
   }
 
   private OpenFileDescriptor(Project project, VirtualFile file, int line, int col, int offset) {
     myProject = project;
-    if (file == null){
-      throw new IllegalArgumentException("file cannot be null");
-    }
+
     myFile = file;
     myLine = line;
     myColumn = col;
@@ -99,6 +88,10 @@ public class OpenFileDescriptor implements Navigatable {
   }
 
   public void navigate(boolean requestFocus) {
+    if (myProject == null) {
+      throw new IllegalStateException("Navigation is not possible with null project");
+    }
+
     FileEditor fileEditor = openFileAskingType(myProject, requestFocus);
     if (fileEditor == null) {
       final SelectInTarget projectSelector = SelectInManager.getInstance(myProject).getTarget(SelectInManager.PROJECT);
@@ -139,11 +132,11 @@ public class OpenFileDescriptor implements Navigatable {
   }
 
   public boolean canNavigate() {
-    return true;
+    return myProject != null;
   }
 
   public boolean canNavigateToSource() {
-    return true;
+    return myProject != null;
   }
 
   public Project getProject() {
