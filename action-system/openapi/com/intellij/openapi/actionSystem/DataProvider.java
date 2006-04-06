@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Allows a component hosting actions to provide context information to the actions. When a specific
@@ -36,5 +37,5 @@ public interface DataProvider {
    * @return the value, or null if no value is available in the current context for this identifier.
    */
   @Nullable
-  Object getData(String dataId);
+  Object getData(@NonNls String dataId);
 }
