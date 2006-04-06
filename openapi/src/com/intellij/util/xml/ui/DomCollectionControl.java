@@ -13,6 +13,9 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.highlighting.DomCollectionProblemDescriptor;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.ui.actions.DefaultAddAction;
 import org.jetbrains.annotations.NonNls;
@@ -176,6 +179,19 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     final CommitListener listener = myDispatcher.getMulticaster();
     listener.beforeCommit(this);
     listener.afterCommit(this);
+    validate();
+  }
+
+  private void validate() {
+    final List<DomElementProblemDescriptor> list = DomElementAnnotationsManager.getInstance().getProblems(getDomElement());
+    final List<String> messages = new ArrayList<String>();
+    for (final DomElementProblemDescriptor descriptor : list) {
+      if (descriptor instanceof DomCollectionProblemDescriptor
+          && myChildDescription.equals(((DomCollectionProblemDescriptor)descriptor).getChildDescription())) {
+        messages.add(descriptor.getDescriptionTemplate());
+      }
+    }
+    myCollectionPanel.setErrorMessages(messages.toArray(new String[messages.size()]));
   }
 
   public void dispose() {
@@ -208,18 +224,14 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
 
   public final void reset() {
     final List<T> newData = getData();
-    if (myData.equals(newData)) {
-      final JTable table = myCollectionPanel.getTable();
-      table.revalidate();
-      table.repaint();
-      return;
+    if (!myData.equals(newData)) {
+      myData.clear();
+      myData.addAll(newData);
+      if (myCollectionPanel != null) {
+        myCollectionPanel.setItems(myData);
+      }
     }
-
-    myData.clear();
-    myData.addAll(newData);
-    if (myCollectionPanel != null) {
-      myCollectionPanel.setItems(myData);
-    }
+    validate();
   }
 
   public List<T> getData() {

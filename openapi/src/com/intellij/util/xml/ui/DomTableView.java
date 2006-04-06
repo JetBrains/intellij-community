@@ -16,17 +16,19 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ToolTipHandlerProvider;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
-import com.intellij.util.Icons;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.*;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -71,6 +73,7 @@ public abstract class DomTableView extends JPanel {
   private final String myHelpID;
   private final String myEmptyPaneText;
   private final JPanel myInnerPanel;
+  private EmptyPane myEmptyPane;
 
   protected TableCellRenderer getTableCellRenderer(final int row, final int column, final TableCellRenderer superRenderer, final Object value) {
     final ColumnInfo columnInfo = (getTableModel()).getColumnInfos()[column];
@@ -112,8 +115,8 @@ public abstract class DomTableView extends JPanel {
     myInnerPanel.add(ScrollPaneFactory.createScrollPane(myTable), TREE);
     if (getEmptyPaneText() != null) {
       //noinspection HardCodedStringLiteral
-      EmptyPane emptyPane = new EmptyPane("<html>" + getEmptyPaneText() + "</html>");
-      final JComponent emptyPanel = emptyPane.getComponent();
+      myEmptyPane = new EmptyPane("<html>" + getEmptyPaneText() + "</html>");
+      final JComponent emptyPanel = myEmptyPane.getComponent();
       myInnerPanel.add(emptyPanel, EMPTY_PANE);
     }
 
@@ -124,6 +127,21 @@ public abstract class DomTableView extends JPanel {
 
   protected final void installPopup(final DefaultActionGroup group) {
     PopupHandler.installPopupHandler(myTable, group, ActionPlaces.J2EE_ATTRIBUTES_VIEW_POPUP, ActionManager.getInstance());
+  }
+
+  protected final void setErrorMessages(String[] messages) {
+    final boolean empty = messages.length == 0;
+    final String tooltipText = TooltipUtils.getTooltipText(messages);
+    if (myEmptyPane != null) {
+      myEmptyPane.getComponent().setBackground(empty ? UIUtil.getTreeTextBackground() : BaseControl.ERROR_BACKGROUND);
+      myEmptyPane.getComponent().setToolTipText(tooltipText);
+    }
+    final JViewport viewport = (JViewport)myTable.getParent();
+    final Color tableBackground = empty ? UIUtil.getTableBackground() : BaseControl.ERROR_BACKGROUND;
+    viewport.setBackground(tableBackground);
+    viewport.setToolTipText(tooltipText);
+    myTable.setBackground(tableBackground);
+    myTable.setToolTipText(tooltipText);
   }
 
   public final void setColumnInfos(final ColumnInfo[] columnInfos) {

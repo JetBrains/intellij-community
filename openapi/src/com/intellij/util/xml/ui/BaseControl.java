@@ -21,17 +21,17 @@ import java.awt.event.FocusListener;
  * @author peter
  */
 public abstract class BaseControl<Bound extends JComponent, T> implements DomUIControl {
+  public static final Color ERROR_BACKGROUND = new Color(255,204,204);
+  public static final Color ERROR_FOREGROUND = SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor();
+
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
 
   private Bound myBoundComponent;
   private DomWrapper<T> myDomWrapper;
   private boolean myCommitting;
 
-  protected Color myDefaultForeground =  SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor();
-  protected Color myErrorForeground = SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor();
-
-  protected Color myDefaultBackground = Color.WHITE;
-  protected Color myErrorBackground = new Color(255,204,204);
+  private Color myDefaultForeground;
+  private Color myDefaultBackground;
 
   protected BaseControl(final DomWrapper<T> domWrapper) {
     myDomWrapper = domWrapper;
@@ -43,8 +43,31 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
     initialize(null);
   }
 
+  protected JComponent getHighlightedComponent(Bound component) {
+    return component;
+  }
+
+  protected final Color getDefaultBackground() {
+    return myDefaultBackground;
+  }
+
+  protected final Color getDefaultForeground() {
+    return myDefaultForeground;
+  }
+
+  protected final Color getErrorBackground() {
+    return ERROR_BACKGROUND;
+  }
+
+  protected final Color getErrorForeground() {
+    return ERROR_FOREGROUND;
+  }
+
   private void initialize(final Bound boundComponent) {
     myBoundComponent = createMainComponent(boundComponent);
+    final JComponent highlightedComponent = getHighlightedComponent(myBoundComponent);
+    myDefaultForeground = highlightedComponent.getForeground();
+    myDefaultBackground = highlightedComponent.getBackground();
     final JComponent component = getComponentToListenFocusLost(myBoundComponent);
     if (component != null) {
       component.addFocusListener(new FocusListener() {
@@ -92,11 +115,12 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
   }
 
   public final void commit() {
-    assert myDomWrapper.isValid();
-    final T valueInControl = getValue(getComponent());
-    if (!valuesAreEqual(getValueFromXml(), valueInControl)) {
-      setValueToXml(valueInControl);
-      updateComponent();
+    if (myDomWrapper.isValid()) {
+      final T valueInControl = getValue(getComponent());
+      if (!valuesAreEqual(getValueFromXml(), valueInControl)) {
+        setValueToXml(valueInControl);
+        updateComponent();
+      }
     }
   }
 

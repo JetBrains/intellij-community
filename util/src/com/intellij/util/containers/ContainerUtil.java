@@ -215,6 +215,16 @@ public class ContainerUtil {
     return result;
   }
 
+  public static <T,V> List<V> findAll(Collection<? extends T> collection, Class<V> instanceOf) {
+    final ArrayList<V> result = new ArrayList<V>();
+    for (final T t : collection) {
+      if (instanceOf.isInstance(t)) {
+        result.add((V)t);
+      }
+    }
+    return result;
+  }
+
   public static <T> void removeDuplicates(Collection<T> collection) {
     Set<T> collected = new HashSet<T>();
     for (Iterator<T> iterator = collection.iterator(); iterator.hasNext();) {

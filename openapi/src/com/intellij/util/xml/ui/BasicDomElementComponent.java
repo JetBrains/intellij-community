@@ -11,9 +11,6 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.ui.UserActivityWatcher;
-import com.intellij.ui.UserActivityListener;
-import com.intellij.javaee.ui.DialogCommittableTab;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,7 +49,7 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
           if ((description.getValues(domElement)).size() == 1) {
             final GenericDomValue element = domElement.getManager().createStableValue(new Factory<GenericDomValue>() {
               public GenericDomValue create() {
-                return (GenericDomValue)description.getValues(domElement).get(0);
+                return domElement.isValid() ? (GenericDomValue)description.getValues(domElement).get(0) : null;
               }
             });
             boolean commitOnEveryChange = commitOnEveryChange(element);

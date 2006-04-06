@@ -37,6 +37,10 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
     public void documentChanged(DocumentEvent e) {
       if (myShowing) {
+        final PsiDocumentManager manager = getDocumentManager();
+        for (final Document document : getDocuments()) {
+          manager.commitDocument(document);
+        }
         reset();
       }
     }
