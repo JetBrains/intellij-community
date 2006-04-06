@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
@@ -135,18 +136,25 @@ public class JavaDocManager implements ProjectComponent {
   public JBPopup showJavaDocInfo(@NotNull PsiElement element) {
     final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
 
-    final JBPopup hint = new JBPopupImpl(component, component, true, true, JAVADOC_LOCATION_AND_SIZE, true, CodeInsightBundle.message("javadoc.info.title", SymbolPresentationUtil.getSymbolPresentableText(element))){
-      public void cancel() {
-        super.cancel();
 
-        if (fromQuickSearch()) {
-          ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
-        }
+    final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+      .setRequestFocus(true)
+      .setForceHeavyweight(true)
+      .setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE)
+      .setResizable(true)
+      .setMovable(true)
+      .setTitle(CodeInsightBundle.message("javadoc.info.title", SymbolPresentationUtil.getSymbolPresentableText(element)))
+      .setCallback(new Runnable(){
+        public void run() {
+          if (fromQuickSearch()) {
+            ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
+          }
 
-        myEditor = null;
-        myPreviouslyFocused = null;
-      }
-    };
+          myEditor = null;
+          myPreviouslyFocused = null;
+        }})
+      .createPopup();
+
 
     JBPopupImpl oldHint = (JBPopupImpl)getDocInfoHint();
 
@@ -262,19 +270,28 @@ public class JavaDocManager implements ProjectComponent {
       element.putUserData(ORIGINAL_ELEMENT_KEY,originalElement);
     } catch(RuntimeException ex) {} // PsiPackage does not allow putUserData
 
-    JBPopupImpl hint = new JBPopupImpl(component, component, requestFocus, false, JAVADOC_LOCATION_AND_SIZE, true, CodeInsightBundle.message("javadoc.info.title", SymbolPresentationUtil.getSymbolPresentableText(element))) {
-      public void cancel() {
-        super.cancel();
 
-        if (fromQuickSearch()) {
-          ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
-        }
+    final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+      .setRequestFocus(true)
+      .setForceHeavyweight(false)
+      .setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE)
+      .setResizable(true)
+      .setMovable(true)
+      .setTitle(CodeInsightBundle.message("javadoc.info.title", SymbolPresentationUtil.getSymbolPresentableText(element)))
+      .setCallback(new Runnable(){
+        public void run() {
 
-        myEditor = null;
-        myPreviouslyFocused = null;
-        myParameterInfoController = null;
-      }
-    };
+          if (fromQuickSearch()) {
+            ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
+          }
+
+          myEditor = null;
+          myPreviouslyFocused = null;
+          myParameterInfoController = null;
+        }})
+      .createPopup();
+
+
     component.setHint(hint);
 
     fetchDocInfo(getDefaultProvider(element), component);

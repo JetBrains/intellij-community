@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -525,8 +526,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               final HectorComponent component = new HectorComponent(psiFile);
               final Dimension dimension = component.getPreferredSize();
               Point point = new Point(x, y);
-              point = SwingUtilities.convertPoint(comp, point, myEditor.getComponent().getRootPane().getLayeredPane());
-              component.showComponent(myEditor, new Point(point.x - dimension.width, point.y));
+              component.showComponent(new RelativePoint(comp, new Point(point.x - dimension.width, point.y)));
             }
           });
           PsiFile file = (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE);

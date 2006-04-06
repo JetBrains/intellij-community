@@ -4,12 +4,11 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.HectorComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -18,10 +17,10 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.ui.InspectionProfileConfigurable;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,24 +46,21 @@ public class TogglePopupHintsPanel extends JPanel {
     myHectorLabel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         Point point = new Point(0, 0);
-        final Editor editor = getCurrentEditor();
         final PsiFile file = getCurrentFile();
-        if (editor != null && file != null) {
+        if (file != null) {
           if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
-          point = SwingUtilities.convertPoint(TogglePopupHintsPanel.this, point, editor.getComponent().getRootPane().getLayeredPane());
           final HectorComponent component = new HectorComponent(file);
           final Dimension dimension = component.getPreferredSize();
           point = new Point(point.x - dimension.width, point.y - dimension.height);
-          component.showComponent(editor, point);
+          component.showComponent(new RelativePoint(TogglePopupHintsPanel.this, point));
         }
       }
     });
     myHectorLabel.setIconTextGap(0);
     myInspectionProfileLabel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
-        final Editor editor = getCurrentEditor();
         final PsiFile file = getCurrentFile();
-        if (editor != null && file != null) {
+        if (file != null) {
           if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
           final Project project = getCurrentProject();
           final InspectionProfileConfigurable profileConfigurable = new InspectionProfileConfigurable(project);
@@ -128,12 +124,8 @@ public class TogglePopupHintsPanel extends JPanel {
     }
   }
 
-  private boolean isStateChangeable(PsiFile file) {
-    if (file == null) {
-      return false;
-    }
-    if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return false;
-    return getCurrentEditor() != null;
+  private static boolean isStateChangeable(PsiFile file) {
+    return file != null && DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file);
   }
 
   @Nullable
@@ -143,27 +135,16 @@ public class TogglePopupHintsPanel extends JPanel {
       return null;
     }
 
-    final Editor selectedTextEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (selectedTextEditor == null) {
-      return null;
+    final VirtualFile virtualFile = ((FileEditorManagerEx)FileEditorManager.getInstance(project)).getCurrentFile();
+    if (virtualFile != null){
+      return PsiManager.getInstance(project).findFile(virtualFile);
     }
-    final Document document = selectedTextEditor.getDocument();
-
-    return PsiDocumentManager.getInstance(project).getPsiFile(document);
+    return null;
   }
 
   @Nullable
   private Project getCurrentProject() {
     return (Project)DataManager.getInstance().getDataContext(this).getData(DataConstants.PROJECT);
-  }
-
-  @Nullable
-  private Editor getCurrentEditor() {
-    final Project project = getCurrentProject();
-    if (project == null) {
-      return null;
-    }
-    return FileEditorManager.getInstance(project).getSelectedTextEditor();
   }
 
   public Point getToolTipLocation(MouseEvent event) {

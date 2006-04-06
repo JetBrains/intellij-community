@@ -40,7 +40,7 @@
 
   <project-components>
     <component>
-      <interface-class>com.intellij.openapi.editor.impl.HectorComponentPanelsProvider</interface-class>
+      <interface-class>com.intellij.openapi.editor.HectorComponentPanelsProvider</interface-class>
       <implementation-class>com.intellij.jsp.impl.JspContextChooserPanelProvider</implementation-class>
     </component>
     <component>

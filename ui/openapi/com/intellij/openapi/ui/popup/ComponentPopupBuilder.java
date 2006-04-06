@@ -40,6 +40,8 @@ public interface ComponentPopupBuilder {
 
   ComponentPopupBuilder setDimensionServiceKey(final String dimensionServiceKey);
 
+  ComponentPopupBuilder setCallback(final Runnable runnable);
+
   @NotNull
   JBPopup createPopup();
 

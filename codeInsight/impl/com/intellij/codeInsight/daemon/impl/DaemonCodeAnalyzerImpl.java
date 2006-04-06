@@ -44,6 +44,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -391,8 +392,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     if (!file.isPhysical()) return false;
     if (file instanceof PsiCompiledElement) return false;
+    final FileType fileType = file.getFileType();
+    if (fileType == StdFileTypes.GUI_DESIGNER_FORM){
+      return true;
+    }
     if (file instanceof PsiPlainTextFile) {
-      final FileType fileType = file.getFileType();
       return fileType instanceof CustomFileType; // To enable T.O.D.O. highlighting
     }
     return true;
