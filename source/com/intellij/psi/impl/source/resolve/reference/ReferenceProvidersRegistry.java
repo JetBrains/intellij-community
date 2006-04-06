@@ -717,32 +717,22 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerReferenceProvider(null, scope, provider);
   }
 
-  public @NotNull PsiReferenceProvider[] getProvidersByElement(@NotNull PsiElement element, @Nullable Class hintClass) {
-    assert hintClass == null || hintClass.isInstance(element);
+  public @NotNull PsiReferenceProvider[] getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
+    assert clazz.isInstance(element);
 
     List<PsiReferenceProvider> ret = new ArrayList<PsiReferenceProvider>(1);
     PsiElement current;
     do {
       current = element;
 
-      if (hintClass != null) {
-        final ProviderBinding providerBinding = myBindingsMap.get(hintClass);
-        if (providerBinding != null) providerBinding.addAcceptableReferenceProviders(current, ret);
-      } else {
-        for(ProviderBinding providerBinding:myBindingsMap.values()) {
-          providerBinding.addAcceptableReferenceProviders(current, ret);
-        }
-      }
+      final ProviderBinding providerBinding = myBindingsMap.get(clazz);
+      if (providerBinding != null) providerBinding.addAcceptableReferenceProviders(current, ret);
 
       element = ResolveUtil.getContext(element);
     }
     while (!isScopeFinal(current.getClass()));
 
     return ret.size() > 0 ? ret.toArray(new PsiReferenceProvider[ret.size()]) : PsiReferenceProvider.EMPTY_ARRAY;
-  }
-
-  public @NotNull PsiReferenceProvider[] getProvidersByElement(@NotNull PsiElement element) {
-    return getProvidersByElement(element, null);
   }
 
   public @Nullable <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
