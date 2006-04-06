@@ -281,7 +281,7 @@ public class StringUtil {
     return a[s1.length() - 1][s2.length() - 1];
   }
 
-  public static final String wordsToBeginFromUpperCase(@NotNull String s) {
+  public static String wordsToBeginFromUpperCase(@NotNull String s) {
     StringBuffer buffer = null;
     for (int i = 0; i < s.length(); i++) {
       char prevChar = i == 0 ? ' ' : s.charAt(i - 1);
@@ -318,7 +318,7 @@ public class StringUtil {
   };
 
 
-  public static final boolean isPreposition(@NotNull String s, int firstChar, int lastChar) {
+  public static boolean isPreposition(@NotNull String s, int firstChar, int lastChar) {
     for (String preposition : ourPrepositions) {
       boolean found = false;
       if (lastChar - firstChar + 1 == preposition.length()) {
@@ -527,7 +527,7 @@ public class StringUtil {
     return h;
   }
 
-  public static int stringHashCode( char chars[], int from, int len ) {
+  public static int stringHashCode(char[] chars, int from, int len) {
     int h = 0;
     int to = from + len;
     for( int off = from; off < to; off++) {
@@ -536,7 +536,7 @@ public class StringUtil {
     return h;
   }
 
-  public static int stringHashCodeInsensitive( char chars[], int from, int len ) {
+  public static int stringHashCodeInsensitive(char[] chars, int from, int len) {
     int h = 0;
     int to = from + len;
     for( int off = from; off < to; off++) {
@@ -634,6 +634,33 @@ public class StringUtil {
     final StringBuffer buffer = new StringBuffer();
     repeatSymbol(buffer,aChar, count);
     return buffer.toString();
+  }
+
+  public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
+    final ArrayList<String> result = new ArrayList<String>();
+    StringBuilder builder = new StringBuilder();
+    boolean inQuotes = false;
+    for (int i = 0; i < s.length(); i++) {
+      final char c = s.charAt(i);
+      if (c == separator && !inQuotes) {
+        if (builder.length() > 0) {
+          result.add(builder.toString());
+          builder = new StringBuilder();
+        }
+        continue;
+      }
+
+      if (c == '"' && !(i > 0 && s.charAt(i-1) == '\\')) {
+        inQuotes = !inQuotes;
+      }
+      builder.append(c);
+    }
+
+    if (builder.length() > 0) {
+      result.add(builder.toString());
+    }
+
+    return result;
   }
 
   public static List<String> split(@NotNull String s, @NotNull String separator) {
