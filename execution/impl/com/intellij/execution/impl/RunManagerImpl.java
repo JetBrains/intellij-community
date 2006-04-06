@@ -163,7 +163,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public RunnerAndConfigurationSettingsImpl[] getConfigurationSettings(final ConfigurationType type) {
     LOG.assertTrue(type != null);
 
-    final List<RunnerAndConfigurationSettings> array = new ArrayList<RunnerAndConfigurationSettings>();
+    final TreeSet<RunnerAndConfigurationSettings> array = new TreeSet<RunnerAndConfigurationSettings>();
     for (RunnerAndConfigurationSettingsImpl configuration : myConfigurations.values()) {
       if (type.equals(configuration.getType())) {
         array.add(configuration);

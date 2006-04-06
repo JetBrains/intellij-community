@@ -21,7 +21,7 @@ import java.util.TreeMap;
 /**
  * @author dyoma
  */
-public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, Cloneable, RunnerAndConfigurationSettings {
+public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, Cloneable, RunnerAndConfigurationSettings, Comparable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunnerAndConfigurationSettings");
 
   @NonNls private static final String RUNNER_ELEMENT = "RunnerSettings";
@@ -225,6 +225,13 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
   private RunnerSettings createRunnerSettings(final JavaProgramRunner runner) {
     return new RunnerSettings<JDOMExternalizable>(runner.createConfigurationData(new InfoProvider(runner)), myConfiguration);
+  }
+
+  public int compareTo(final Object o) {
+    if (o instanceof RunnerAndConfigurationSettings) {
+      return getName().compareTo(((RunnerAndConfigurationSettings)o).getName());
+    }
+    return 0;
   }
 
   private class InfoProvider implements ConfigurationInfoProvider {
