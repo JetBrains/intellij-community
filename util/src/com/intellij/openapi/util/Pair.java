@@ -57,8 +57,8 @@ public final class Pair<A, B> {
     return hashCode;
   }
 
-  private int hashCode(final Object o) {
-    return (o instanceof Object[]) ? Arrays.asList((Object[])o).hashCode(): o.hashCode();
+  private static int hashCode(final Object o) {
+    return (o instanceof Object[]) ? Arrays.hashCode((Object[])o) : o.hashCode();
   }
 
   public String toString() {
