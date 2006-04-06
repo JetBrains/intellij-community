@@ -1105,6 +1105,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
         }
         else {
           // dispatch to catch clause
+          returnInstruction.offset--; // -1 for catch block init parameter instruction
           addElementOffsetLater(catchBlock, true);
         }
       }
