@@ -22,7 +22,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
 
-public interface DomElementProblemDescription extends CommonProblemDescriptor  {
+public interface DomElementProblemDescriptor extends CommonProblemDescriptor  {
   DomElement getDomElement();
   ProblemHighlightType getHighlightType();
   LocalQuickFix[] getFixes();

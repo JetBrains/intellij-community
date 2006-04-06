@@ -25,7 +25,6 @@ import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
-import java.util.List;
 
 /**
  * User: Sergey.Vasiliev
@@ -136,10 +135,6 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     for (final Document document : getDocuments()) {
       document.removeDocumentListener(myDocumentAdapter);
     }
-  }
-
-  public List<Warning> getWarnings() {
-    return null;
   }
 
   public final boolean isModified() {

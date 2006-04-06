@@ -11,9 +11,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -24,15 +21,15 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   private Map<DomFileElement, CachedValue<DomElementsProblemsHolder>> myCache =
     new HashMap<DomFileElement, CachedValue<DomElementsProblemsHolder>>();
 
-  public List<DomElementProblemDescription> getProblems(final DomElement domElement) {
+  public List<DomElementProblemDescriptor> getProblems(final DomElement domElement) {
      return getProblems(domElement, false);
   }
 
-  public List<DomElementProblemDescription> getProblems(DomElement domElement, boolean includeXmlProblems) {
+  public List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems) {
     return getProblems(domElement, includeXmlProblems, true);
   }
 
-  public List<DomElementProblemDescription> getProblems(DomElement domElement,  boolean includeXmlProblems, boolean withChildren) {
+  public List<DomElementProblemDescriptor> getProblems(DomElement domElement,  boolean includeXmlProblems, boolean withChildren) {
     if(domElement == null) return Collections.emptyList();
     
     if (myCache.get(domElement.getRoot()) == null) {

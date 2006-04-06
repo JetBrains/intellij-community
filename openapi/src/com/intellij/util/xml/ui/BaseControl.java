@@ -16,8 +16,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author peter
@@ -54,7 +52,7 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
         }
 
         public void focusLost(FocusEvent e) {
-          if (!e.isTemporary() && myDomWrapper.getDomElement().isValid()) {
+          if (!e.isTemporary() && myDomWrapper.isValid()) {
             commit();
           }
         }
@@ -94,7 +92,7 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
   }
 
   public final void commit() {
-    assert getDomElement().isValid();
+    assert myDomWrapper.isValid();
     final T valueInControl = getValue(getComponent());
     if (!valuesAreEqual(getValueFromXml(), valueInControl)) {
       setValueToXml(valueInControl);
@@ -121,10 +119,6 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
     if (!valuesAreEqual(t, getValue(getComponent()))) {
       setValue(getComponent(), t);
     }
-  }
-
-  public final List<Warning> getWarnings() {
-    return Collections.emptyList();
   }
 
   private void setValueToXml(final T value) {

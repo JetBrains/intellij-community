@@ -30,5 +30,9 @@ public class DomFixedWrapper<T> implements DomWrapper<T>{
     final DomElement element = getDomElement();
     return element.isValid() ? (T)DomUIFactory.GET_VALUE_METHOD.invoke(element) : null;
   }
-  
+
+  public boolean isValid() {
+    return myDomElement.isValid();
+  }
+
 }

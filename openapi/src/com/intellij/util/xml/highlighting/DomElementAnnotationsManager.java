@@ -28,9 +28,9 @@ public abstract class DomElementAnnotationsManager {
       return ApplicationManager.getApplication().getComponent(DomElementAnnotationsManager.class);
   }
 
-  public abstract List<DomElementProblemDescription> getProblems(DomElement domElement);
-  public abstract List<DomElementProblemDescription> getProblems(DomElement domElement, boolean includeXmlProblems);
-  public abstract List<DomElementProblemDescription> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren);
+  public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement);
+  public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems);
+  public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren);
 
   public abstract List<DomElementsAnnotator> getDomElementsAnnotators(DomElement domElement);
 

@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -205,10 +204,6 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
 
   public final DomElement getDomElement() {
     return myParentDomElement;
-  }
-
-  public List<Warning> getWarnings() {
-    return Collections.emptyList();
   }
 
   public final void reset() {

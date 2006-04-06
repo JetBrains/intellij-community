@@ -17,7 +17,7 @@
 
 package com.intellij.util.xml.ui;
 
-import com.intellij.util.xml.highlighting.DomElementProblemDescription;
+import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.DomElement;
 import com.intellij.openapi.util.IconLoader;
@@ -43,7 +43,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     final Component component = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-    final java.util.List<DomElementProblemDescription> problems =
+    final java.util.List<DomElementProblemDescriptor> problems =
       DomElementAnnotationsManager.getInstance().getProblems(myCellValueDomElement, true);
 
     final boolean hasErrors = problems.size() > 0;
@@ -59,10 +59,10 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
       component.setBackground(new Color(255, 204, 204));
     }
 
-    final java.util.List<DomElementProblemDescription> problemDescriptions =
+    final java.util.List<DomElementProblemDescriptor> problemDescriptors =
       DomElementAnnotationsManager.getInstance().getProblems(myRowDomElement, true, true);
 
-    if (table.getModel().getColumnCount() - 1 == column && problemDescriptions.size() > 0) {
+    if (table.getModel().getColumnCount() - 1 == column && problemDescriptors.size() > 0) {
       final JPanel wrapper = new JPanel(new BorderLayout());
       wrapper.add(component, BorderLayout.CENTER);
 
@@ -72,7 +72,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
 
       ToolTipManager.sharedInstance().registerComponent(errorLabel);
 
-      wrapper.setToolTipText(TooltipUtils.getTooltipText(problemDescriptions));
+      wrapper.setToolTipText(TooltipUtils.getTooltipText(problemDescriptors));
 
       wrapper.add(errorLabel, BorderLayout.EAST);
 
@@ -86,7 +86,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     }
     else {
       if (component instanceof JComponent) {
-        ((JComponent)component).setToolTipText(hasErrors ? TooltipUtils.getTooltipText(problemDescriptions) : null);
+        ((JComponent)component).setToolTipText(hasErrors ? TooltipUtils.getTooltipText(problemDescriptors) : null);
       }
 
       return component;

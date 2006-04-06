@@ -19,6 +19,7 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -27,11 +28,14 @@ public interface DomElementsProblemsHolder {
 
   void createProblem(DomElement domElement, @Nullable String message);
 
-  List<DomElementProblemDescription> getProblems(DomElement domElement);
+  void createProblem(DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message);
 
-  List<DomElementProblemDescription> getProblems(DomElement domElement, boolean includeXmlProblems);
+  List<DomElementProblemDescriptor> getProblems(DomElement domElement);
 
-  List<DomElementProblemDescription> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren);
+  List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems);
 
-  List<DomElementProblemDescription> getProblems(DomElement domElement, ProblemHighlightType severity);
+  List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren);
+
+  List<DomElementProblemDescriptor> getProblems(DomElement domElement, ProblemHighlightType severity);
+
 }

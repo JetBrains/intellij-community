@@ -30,4 +30,8 @@ public class DomStringWrapper implements DomWrapper<String>{
     return myDomElement.isValid() ? myDomElement.getStringValue() : null;
   }
 
+  public boolean isValid() {
+    return myDomElement.isValid();
+  }
+
 }

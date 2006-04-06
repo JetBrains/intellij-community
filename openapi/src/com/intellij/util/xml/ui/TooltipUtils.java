@@ -17,9 +17,8 @@
 
 package com.intellij.util.xml.ui;
 
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.xml.highlighting.DomElementProblemDescription;
+import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 
 import java.util.List;
 
@@ -29,17 +28,17 @@ import java.util.List;
 public class TooltipUtils {
   private static String MESSAGE_DELIMITER = "<hr size=1 noshade>";
 
-  public static String getTooltipText(List<DomElementProblemDescription> annotations) {
+  public static String getTooltipText(List<DomElementProblemDescriptor> annotations) {
     if (annotations.size() == 0) return null;
 
     return getTooltipText(getMessages(annotations));
   }
 
-  public static String getTooltipText(List<DomElementProblemDescription> annotations, String[] messages) {
+  public static String getTooltipText(List<DomElementProblemDescriptor> annotations, String[] messages) {
     return getTooltipText(ArrayUtil.mergeArrays(getMessages(annotations), messages, String.class));
   }
 
-  private static String[] getMessages(final List<DomElementProblemDescription> problems) {
+  private static String[] getMessages(final List<DomElementProblemDescriptor> problems) {
     String[] messages = new String[problems.size()];
     for (int i = 0; i < problems.size(); i++) {
       messages[i] = problems.get(i).getDescriptionTemplate();

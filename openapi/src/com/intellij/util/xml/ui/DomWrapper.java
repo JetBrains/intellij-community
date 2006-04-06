@@ -4,6 +4,7 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -11,7 +12,10 @@ import java.lang.reflect.InvocationTargetException;
  * @author peter
  */
 public interface DomWrapper<T> {
+  @Nullable
   DomElement getDomElement();
   void setValue(T value) throws IllegalAccessException, InvocationTargetException;
   T getValue() throws IllegalAccessException, InvocationTargetException;
+
+  boolean isValid();
 }

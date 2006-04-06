@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.psi.PsiReference;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -15,26 +16,30 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDescription> implements DomElementsProblemsHolder {
+public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDescriptor> implements DomElementsProblemsHolder {
 
   public void createProblem(DomElement domElement, @Nullable String message) {
     createProblem(domElement, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, message);
   }
 
+  public void createProblem(DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message) {
+    addProblem(new DomCollectionProblemDescriptorImpl(domElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, childDescription));
+  }
+
   @NotNull
-  public List<DomElementProblemDescription> getProblems(DomElement domElement) {
-    List<DomElementProblemDescription> problems = new ArrayList<DomElementProblemDescription>();
-    for (DomElementProblemDescription problemDescription : this) {
-      final DomElement domElement1 = problemDescription.getDomElement();
+  public List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
+    List<DomElementProblemDescriptor> problems = new ArrayList<DomElementProblemDescriptor>();
+    for (DomElementProblemDescriptor problemDescriptor : this) {
+      final DomElement domElement1 = problemDescriptor.getDomElement();
       if (domElement1.equals(domElement)) {
-        problems.add(problemDescription);
+        problems.add(problemDescriptor);
       }
     }
     return problems;
   }
 
-  public List<DomElementProblemDescription> getProblems(final DomElement domElement, boolean includeXmlProblems) {
-    List<DomElementProblemDescription> problems = getProblems(domElement);
+  public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, boolean includeXmlProblems) {
+    List<DomElementProblemDescriptor> problems = getProblems(domElement);
     if (includeXmlProblems) {
       problems.addAll(getXmlProblems(domElement));
     }
@@ -42,12 +47,12 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
     return problems;
   }
 
-  public List<DomElementProblemDescription> getProblems(final DomElement domElement,
+  public List<DomElementProblemDescriptor> getProblems(final DomElement domElement,
                                                         final boolean includeXmlProblems,
                                                         final boolean withChildren) {
     if (!withChildren) return getProblems(domElement);
 
-    final Set<DomElementProblemDescription> problems = new HashSet<DomElementProblemDescription>();
+    final Set<DomElementProblemDescriptor> problems = new HashSet<DomElementProblemDescriptor>();
 
     domElement.accept(new DomElementVisitor() {
       public void visitDomElement(DomElement element) {
@@ -56,14 +61,14 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
       }
     });
 
-    return new ArrayList<DomElementProblemDescription>(problems);
+    return new ArrayList<DomElementProblemDescriptor>(problems);
   }
 
-  public List<DomElementProblemDescription> getProblems(DomElement domElement, ProblemHighlightType severity) {
-    final List<DomElementProblemDescription> problems = new ArrayList<DomElementProblemDescription>();
-    for (DomElementProblemDescription problemDescription : this) {
-      if (problemDescription.getDomElement().equals(domElement) && problemDescription.getHighlightType().equals(severity)) {
-        problems.add(problemDescription);
+  public List<DomElementProblemDescriptor> getProblems(DomElement domElement, ProblemHighlightType severity) {
+    final List<DomElementProblemDescriptor> problems = new ArrayList<DomElementProblemDescriptor>();
+    for (DomElementProblemDescriptor problemDescriptor : this) {
+      if (problemDescriptor.getDomElement().equals(domElement) && problemDescriptor.getHighlightType().equals(severity)) {
+        problems.add(problemDescriptor);
       }
     }
 
@@ -71,11 +76,15 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
   }
 
   public void createProblem(DomElement domElement, ProblemHighlightType highlightType, String message) {
-    add(new DomElementProblemDescriptorImpl(domElement, message, highlightType));
+    addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType));
   }
 
-  private static Collection<DomElementProblemDescription> getXmlProblems(DomElement domElement) {
-    Collection<DomElementProblemDescription> problems = new ArrayList<DomElementProblemDescription>();
+  public final void addProblem(final DomElementProblemDescriptor problemDescriptor) {
+    add(problemDescriptor);
+  }
+
+  private static Collection<DomElementProblemDescriptor> getXmlProblems(DomElement domElement) {
+    Collection<DomElementProblemDescriptor> problems = new ArrayList<DomElementProblemDescriptor>();
     if (domElement.getXmlTag() != null) {
       problems.addAll(getResolveProblems(domElement));
 
@@ -83,8 +92,8 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
     return problems;
   }
 
-  private static Collection<DomElementProblemDescription> getResolveProblems(final DomElement domElement) {
-    Collection<DomElementProblemDescription> problems = new ArrayList<DomElementProblemDescription>();
+  private static Collection<DomElementProblemDescriptor> getResolveProblems(final DomElement domElement) {
+    Collection<DomElementProblemDescriptor> problems = new ArrayList<DomElementProblemDescriptor>();
     if (domElement.getXmlTag() != null) {
       for (PsiReference reference : domElement.getXmlTag().getReferences()) {
         if (XmlHighlightVisitor.hasBadResolve(reference)) {

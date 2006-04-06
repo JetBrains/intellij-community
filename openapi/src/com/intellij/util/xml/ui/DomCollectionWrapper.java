@@ -58,4 +58,8 @@ public class DomCollectionWrapper<T> implements DomWrapper<T>{
     final List<? extends DomElement> list = myChildDescription.getValues(myDomElement);
     return list.isEmpty() ? null : (T)myGetter.invoke(list.get(0));
   }
+
+  public boolean isValid() {
+    return myDomElement.isValid();
+  }
 }

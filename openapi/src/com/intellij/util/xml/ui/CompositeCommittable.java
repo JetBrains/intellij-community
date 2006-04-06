@@ -47,17 +47,6 @@ public class CompositeCommittable implements Committable {
     }
   }
 
-  public List<Warning> getWarnings() {
-    ArrayList<Warning> result = new ArrayList<Warning>();
-    for (final Committable committable : myComponents) {
-      List<Warning> warnings = committable.getWarnings();
-      if (warnings != null) {
-        result.addAll(warnings);
-      }
-    }
-    return result;
-  }
-
   public List<Committable> getChildren() {
     return myComponents;
   }
