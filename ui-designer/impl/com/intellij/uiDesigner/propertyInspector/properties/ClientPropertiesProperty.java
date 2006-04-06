@@ -4,31 +4,45 @@
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.uiDesigner.clientProperties.ClientPropertiesManager;
+import com.intellij.uiDesigner.clientProperties.ConfigureClientPropertiesDialog;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.ClientPropertiesManager;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author yole
  */
 public class ClientPropertiesProperty extends Property {
+  private Project myProject;
+
   public static ClientPropertiesProperty getInstance(Project project) {
     return project.getComponent(ClientPropertiesProperty.class);
   }
 
   private PropertyRenderer myRenderer = new LabelPropertyRenderer() {
     @Override protected void customize(final Object value) {
-      setText("");
+      setText(UIDesignerBundle.message("client.properties.configure"));
     }
   };
 
-  public ClientPropertiesProperty() {
+  private PropertyEditor myEditor = new MyPropertyEditor();
+
+  public ClientPropertiesProperty(Project project) {
     super(null, "Client Properties");
+    myProject = project;
   }
 
   public Object getValue(final RadComponent component) {
@@ -44,7 +58,7 @@ public class ClientPropertiesProperty extends Property {
   }
 
   public PropertyEditor getEditor() {
-    return null;
+    return myEditor;
   }
 
   @NotNull @Override
@@ -56,5 +70,37 @@ public class ClientPropertiesProperty extends Property {
       result [i] = new ClientPropertyProperty(this, props [i].getName(), props [i].getValueClass());
     }
     return result;
+  }
+
+  private class MyPropertyEditor extends PropertyEditor {
+    private TextFieldWithBrowseButton myTf = new TextFieldWithBrowseButton();
+
+    public MyPropertyEditor() {
+      myTf.setText(UIDesignerBundle.message("client.properties.configure"));
+      myTf.getTextField().setEditable(false);
+      myTf.getTextField().setBorder(null);
+      myTf.getTextField().setForeground(Color.BLACK);
+      myTf.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          ConfigureClientPropertiesDialog dlg = new ConfigureClientPropertiesDialog(myProject);
+          dlg.show();
+          if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+            dlg.save();
+          }
+        }
+      });
+    }
+
+    public Object getValue() throws Exception {
+      return null;
+    }
+
+    public JComponent getComponent(final RadComponent component, final Object value, final boolean inplace) {
+      return myTf;
+    }
+
+    public void updateUI() {
+      SwingUtilities.updateComponentTreeUI(myTf);
+    }
   }
 }

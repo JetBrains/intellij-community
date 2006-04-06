@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.clientProperties;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -25,6 +25,24 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
 
   public static ClientPropertiesManager getInstance(final Project project) {
     return project.getComponent(ClientPropertiesManager.class);
+  }
+
+  private final Map<String, List<ClientProperty>> myPropertyMap = new HashMap<String, List<ClientProperty>>();
+
+  public ClientPropertiesManager() {
+  }
+
+  private ClientPropertiesManager(final Map<String, List<ClientProperty>> propertyMap) {
+    myPropertyMap.putAll(propertyMap);
+  }
+
+  public ClientPropertiesManager clone() {
+    return new ClientPropertiesManager(myPropertyMap);
+  }
+
+  public void saveFrom(final ClientPropertiesManager manager) {
+    myPropertyMap.clear();
+    myPropertyMap.putAll(manager.myPropertyMap);
   }
 
   public void projectOpened() {
@@ -67,8 +85,6 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
     }
   }
 
-  private Map<String, List<ClientProperty>> myPropertyMap = new HashMap<String, List<ClientProperty>>();
-
   public void readExternal(Element element) throws InvalidDataException {
     myPropertyMap.clear();
     for(Object o: element.getChildren(ELEMENT_PROPERTIES)) {
@@ -97,6 +113,55 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
       }
       element.addContent(propertiesElement);
     }
+  }
+
+  public void addConfiguredProperty(final Class selectedClass, final ClientProperty enteredProperty) {
+    List<ClientProperty> list = myPropertyMap.get(selectedClass.getName());
+    if (list == null) {
+      list = new ArrayList<ClientProperty>();
+      myPropertyMap.put(selectedClass.getName(), list);
+    }
+    list.add(enteredProperty);
+  }
+
+  public void removeConfiguredProperty(final Class selectedClass, final String name) {
+    List<ClientProperty> list = myPropertyMap.get(selectedClass.getName());
+    if (list != null) {
+      for(ClientProperty prop: list) {
+        if (prop.getName().equals(name)) {
+          list.remove(prop);
+          break;
+        }
+      }
+    }
+  }
+
+  public List<Class> getConfiguredClasses() {
+    List<Class> result = new ArrayList<Class>();
+    for(String className: myPropertyMap.keySet()) {
+      try {
+        result.add(Class.forName(className));
+      }
+      catch (ClassNotFoundException e) {
+        // TODO: do something better than ignore?
+      }
+    }
+    return result;
+  }
+
+  public void addClientPropertyClass(final String className) {
+    if (!myPropertyMap.containsKey(className)) {
+      myPropertyMap.put(className, new ArrayList<ClientProperty>());
+    }
+  }
+
+  public void removeClientPropertyClass(final Class selectedClass) {
+    myPropertyMap.remove(selectedClass.getName());
+  }
+
+  public ClientProperty[] getConfiguredProperties(Class componentClass) {
+    final List<ClientProperty> list = myPropertyMap.get(componentClass.getName());
+    return list.toArray(new ClientProperty[list.size()]);
   }
 
   public ClientProperty[] getClientProperties(Class componentClass) {
