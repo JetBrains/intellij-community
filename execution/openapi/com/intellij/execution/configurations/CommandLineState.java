@@ -95,8 +95,7 @@ public abstract class CommandLineState implements RunnableState {
 
   public void setModulesToCompile(Module[] modulesToCompile) {
     if (modulesToCompile == null) modulesToCompile = Module.EMPTY_ARRAY;
-    for (int i = 0; i < modulesToCompile.length; i++) {
-      final Module module = modulesToCompile[i];
+    for (final Module module : modulesToCompile) {
       LOG.assertTrue(module != null);
     }
     myModulesToCompile = modulesToCompile;
