@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
@@ -156,13 +157,13 @@ public class SvnChangeProvider implements ChangeProvider {
       else if (statusType == SVNStatusType.STATUS_CONFLICTED ||
                statusType == SVNStatusType.STATUS_MERGED ||
                statusType == SVNStatusType.STATUS_MODIFIED) {
-        builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs), new CurrentContentRevision(filePath), fStatus));
+        builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs, status.getRevision()), new CurrentContentRevision(filePath), fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_ADDED) {
         builder.processChange(new Change(null, new CurrentContentRevision(filePath), fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_DELETED) {
-        builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs), null, fStatus));
+        builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs, status.getRevision()), null, fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_MISSING) {
         builder.processLocallyDeletedFile(filePath.getIOFile());
@@ -174,10 +175,12 @@ public class SvnChangeProvider implements ChangeProvider {
     private FilePath myFile;
     private String myContent = null;
     private SvnVcs myVcs;
+    private VcsRevisionNumber myRevNumber;
 
-    public SvnUpToDateRevision(final FilePath file, final SvnVcs vcs) {
+    public SvnUpToDateRevision(final FilePath file, final SvnVcs vcs, final SVNRevision revision) {
       myVcs = vcs;
       myFile = file;
+      myRevNumber = new SvnRevisionNumber(revision);
     }
 
     @Nullable
@@ -196,6 +199,10 @@ public class SvnChangeProvider implements ChangeProvider {
     @NotNull
     public FilePath getFile() {
       return myFile;
+    }
+
+    public VcsRevisionNumber getRevisionNumber() {
+      return myRevNumber;
     }
   }
 }
