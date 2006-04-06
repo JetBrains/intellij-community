@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -34,7 +36,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.lang.LangBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -665,9 +666,13 @@ public class CtrlMouseHandler implements ProjectComponent {
           info.myTargetElement != info.myElementAtPointer &&
           info.myTargetElement != info.myElementAtPointer.getParent()
         ) {
-        //if (info.myTargetElement.isPhysical()) {
-        installLinkHighlighter(info);
-        //}
+
+        if (targetNavigateable(info.myTargetElement)) {
+          installLinkHighlighter(info);
+        }
+IDEADEV-5495
+        String text = JavaInfoGenerator.generateInfo(info.myTargetElement);
+        if (text == null) return;
 
         internalComponent.addKeyListener(myEditorKeyListener);
         myEditor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
@@ -675,10 +680,6 @@ public class CtrlMouseHandler implements ProjectComponent {
         myStoredInfo = info;
         internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myFileEditorManagerListener);
-
-        String text = JavaInfoGenerator.generateInfo(info.myTargetElement); //JavaDocManager.getInstance(myProject).getDocInfo(info.myTargetElement);
-
-        if (text == null) return;
 
         JLabel label = HintUtil.createInformationLabel(text);
         label.setUI(new MultiLineLabelUI());
@@ -697,6 +698,15 @@ public class CtrlMouseHandler implements ProjectComponent {
                                    HintManager.HIDE_BY_SCROLLING,
                                    0, false);
       }
+    }
+
+    private boolean targetNavigateable(final PsiElement targetElement) {
+      PsiElement navElement = targetElement.getNavigationElement();
+      if (navElement instanceof Navigatable && ((Navigatable)navElement).canNavigate()) {
+          return true;
+      }
+
+      return false;
     }
 
     private void installLinkHighlighter(Info info) {
