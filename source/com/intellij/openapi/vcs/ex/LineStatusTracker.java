@@ -75,9 +75,14 @@ public class LineStatusTracker implements EditorColorsListener {
     try {
       CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
         public void run() {
-          myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), StringUtil.convertLineSeparators(upToDateContent));
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), StringUtil.convertLineSeparators(upToDateContent));
+            }
+          });
         }
       }, null, null);
+      
       myUpToDateDocument.setReadOnly(true);
       reinstallRanges();
 
