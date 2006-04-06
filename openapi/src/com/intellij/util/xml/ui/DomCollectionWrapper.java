@@ -3,10 +3,9 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.ui.DomUIFactory;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -39,7 +38,8 @@ public class DomCollectionWrapper<T> implements DomWrapper<T>{
   }
 
   public DomElement getDomElement() {
-    return myDomElement;
+    final List<? extends DomElement> list = myChildDescription.getValues(myDomElement);
+    return list.isEmpty() ? null : list.get(0);
   }
 
   public void setValue(final T value) throws IllegalAccessException, InvocationTargetException {
