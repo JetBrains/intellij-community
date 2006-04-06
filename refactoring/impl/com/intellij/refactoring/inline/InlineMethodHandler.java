@@ -34,13 +34,13 @@ class InlineMethodHandler {
       return;
     }
 
-    if (checkRecursive(method)) {
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+    if (reference == null && checkRecursive(method)) {
       String message = RefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", REFACTORING_NAME);
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
       return;
     }
 
-    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
     if (method.isConstructor()) {
       if (method.isVarArgs()) {
         String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", REFACTORING_NAME);
@@ -91,7 +91,7 @@ class InlineMethodHandler {
     return false;
   }
 
-  private static boolean checkRecursive(PsiMethod method) {
+  public static boolean checkRecursive(PsiMethod method) {
     return checkCalls(method.getBody(), method);
   }
 

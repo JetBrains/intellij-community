@@ -79,13 +79,20 @@ public class InlineMethodDialog extends RefactoringDialog implements InlineOptio
     myRbInlineThisOnly.setEnabled(myInvokedOnReference);
     final boolean writable = myMethod.isWritable();
     if(myInvokedOnReference) {
-      if (writable) {
-        final boolean inline_method_this = RefactoringSettings.getInstance().INLINE_METHOD_THIS;
-        myRbInlineThisOnly.setSelected(inline_method_this);
-        myRbInlineAll.setSelected(!inline_method_this);
-      } else {
+      if (InlineMethodHandler.checkRecursive(myMethod)) {
         myRbInlineAll.setSelected(false);
+        myRbInlineAll.setEnabled(false);
         myRbInlineThisOnly.setSelected(true);
+      } else {
+        if (writable) {
+          final boolean inline_method_this = RefactoringSettings.getInstance().INLINE_METHOD_THIS;
+          myRbInlineThisOnly.setSelected(inline_method_this);
+          myRbInlineAll.setSelected(!inline_method_this);
+        }
+        else {
+          myRbInlineAll.setSelected(false);
+          myRbInlineThisOnly.setSelected(true);
+        }
       }
     } else {
       myRbInlineAll.setSelected(true);
