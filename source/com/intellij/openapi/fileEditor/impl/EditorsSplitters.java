@@ -20,8 +20,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -357,14 +359,19 @@ public final class EditorsSplitters extends JPanel {
     return myCurrentWindow;
   }
 
-  public EditorWindow getOrCreateCurrentWindow() {
-    if (getCurrentWindow() == null) {
-      final Iterator<EditorWindow> iterator = myWindows.iterator();
-      if (iterator.hasNext()) {
-        setCurrentWindow(iterator.next(), false);
+  public EditorWindow getOrCreateCurrentWindow(final VirtualFile file) {
+    EditorWindow currentWindow = getCurrentWindow();
+    final EditorWindow[] windows = findWindows(file);
+    if (currentWindow == null) {
+      if (windows != null && windows.length > 0) {
+        setCurrentWindow(windows[0], false);
       }
       else {
         createCurrentWindow();
+      }
+    } else if (windows != null && windows.length > 0){
+      if (ArrayUtil.find(windows, currentWindow) == -1){
+        setCurrentWindow(windows[0], false);
       }
     }
     return getCurrentWindow();

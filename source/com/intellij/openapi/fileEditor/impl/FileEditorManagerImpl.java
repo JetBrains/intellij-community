@@ -14,10 +14,10 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -48,7 +48,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author Anton Katilin
@@ -422,7 +424,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   public Pair<FileEditor[], FileEditorProvider[]> openFileImpl(final VirtualFile file,
                                                                final boolean focusEditor,
                                                                final HistoryEntry entry) {
-    return openFileImpl2(mySplitters.getOrCreateCurrentWindow(), file, focusEditor, entry);
+    return openFileImpl2(mySplitters.getOrCreateCurrentWindow(file), file, focusEditor, entry);
   }
 
   public Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(final EditorWindow window,
@@ -474,7 +476,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         // File is not opened yet. In this case we have to create editors
         // and select the created EditorComposite.
         final FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
-        providers = editorProviderManager.getProviders(window.getManager().myProject, file);
+        providers = editorProviderManager.getProviders(myProject, file);
 
         if (providers.length == 0) {
           return Pair.create(EMPTY_EDITOR_ARRAY, EMPTY_PROVIDER_ARRAY);
@@ -485,25 +487,25 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         for (int i = 0; i < providers.length; i++) {
           final FileEditorProvider provider = providers[i];
           LOG.assertTrue(provider != null);
-          LOG.assertTrue(provider.accept(window.getManager().myProject, file));
-          final FileEditor editor = provider.createEditor(window.getManager().myProject, file);
+          LOG.assertTrue(provider.accept(myProject, file));
+          final FileEditor editor = provider.createEditor(myProject, file);
           editors[i] = editor;
           LOG.assertTrue(editor != null);
           LOG.assertTrue(editor.isValid());
 
           // Register PropertyChangeListener into editor
-          editor.addPropertyChangeListener(window.getManager().myEditorPropertyChangeListener);
+          editor.addPropertyChangeListener(myEditorPropertyChangeListener);
         }
 
         // Now we have to create EditorComposite and insert it into the TabbedEditorComponent.
         // After that we have to select opened editor.
-        newSelectedComposite = new EditorWithProviderComposite(file, editors, providers, window.getManager());
-        newSelectedComposite.addEditorManagerListener(window.getManager().myEditorManagerListener);
+        newSelectedComposite = new EditorWithProviderComposite(file, editors, providers, this);
+        newSelectedComposite.addEditorManagerListener(myEditorManagerListener);
       }
 
       window.setEditor(newSelectedComposite);
 
-      final EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(window.getManager().myProject);
+      final EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(myProject);
       for (int i = 0; i < editors.length; i++) {
         final FileEditor editor = editors[i];
         if (editor instanceof TextEditor) {
@@ -545,12 +547,11 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       }
 
       // Notify editors about selection changes
-      window.getManager().mySplitters.setCurrentWindow(window, false);
+      mySplitters.setCurrentWindow(window, false);
       newSelectedComposite.getSelectedEditor().selectNotify();
 
       if (newEditorCreated) {
-        final FileEditorManagerImpl fileEditorManager = window.getManager();
-        fileEditorManager.myDispatcher.getMulticaster().fileOpened(fileEditorManager, file);
+        myDispatcher.getMulticaster().fileOpened(this, file);
 
         //Add request to watch this editor's virtual file
         final VirtualFile parentDir = file.getParent();
@@ -566,19 +567,19 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
       // Transfer focus into editor
       if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
-        if ((focusEditor || ToolWindowManager.getInstance(window.getManager().myProject).isEditorComponentActive()) &&
+        if ((focusEditor || ToolWindowManager.getInstance(myProject).isEditorComponentActive()) &&
             !myDoNotTransferFocus) {
           //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
           window.setAsCurrentWindow(false);
-          ToolWindowManager.getInstance(window.getManager().myProject).activateEditorComponent();
+          ToolWindowManager.getInstance(myProject).activateEditorComponent();
         }
       }
 
       // Update frame and tab title
-      window.getManager().updateFileName(file);
+      updateFileName(file);
 
       // Make back/forward work
-      IdeDocumentHistory.getInstance(window.getManager().myProject).includeCurrentCommandAsNavigation();
+      IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
     }
     finally {
       window.myInsideTabChange--;
