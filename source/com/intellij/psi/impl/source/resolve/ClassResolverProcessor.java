@@ -1,15 +1,14 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.processor.PsiResolverProcessor;
+import com.intellij.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,6 +19,8 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private PsiElement myPlace;
   private PsiClass myAccessClass = null;
   private List<CandidateInfo> myCandidates = null;
+  private boolean myIsAccessibleCandidate;
+  private boolean myIsInaccessibleCandidate;
   private JavaResolveResult[] myResult = JavaResolveResult.EMPTY_ARRAY;
   private PsiElement myCurrentFileContext;
 
@@ -45,6 +46,12 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   public JavaResolveResult[] getResult() {
     if (myResult != null) return myResult;
     if (myCandidates == null) return myResult = JavaResolveResult.EMPTY_ARRAY;
+    if (myIsAccessibleCandidate && myIsInaccessibleCandidate) {
+      for (Iterator<CandidateInfo> iterator = myCandidates.iterator(); iterator.hasNext();) {
+        CandidateInfo info = iterator.next();
+        if (!info.isAccessible()) iterator.remove();
+      }
+    }
 
     myResult = myCandidates.toArray(new JavaResolveResult[myCandidates.size()]);
     return myResult;
@@ -83,6 +90,8 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       final String name = aClass.getName();
       if (myClassName.equals(name)) {
         boolean accessible = myPlace == null || checkAccessibility(aClass);
+        myIsAccessibleCandidate |= accessible;
+        myIsInaccessibleCandidate |= !accessible;
 
         myResult = null;
         if (myCandidates == null) {
