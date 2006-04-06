@@ -13,6 +13,7 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
+import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -20,6 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
@@ -172,24 +174,30 @@ public class CvsChangeProvider implements ChangeProvider {
 
     final Entry entry = CvsEntriesManager.getInstance().getEntryFor(dir, filePath.getName());
     final FileStatus status = CvsStatusProvider.getStatus(filePath.getVirtualFile(), entry);
-    processStatus(filePath, status, builder);
+    VcsRevisionNumber number = new CvsRevisionNumber(entry.getRevision());
+    processStatus(filePath, status, number, builder);
   }
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder) {
     final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir, entry.getFileName());
-    processStatus(filePath, CvsStatusProvider.getStatus(file, entry), builder);
+    final FileStatus statis = CvsStatusProvider.getStatus(file, entry);
+    final VcsRevisionNumber number = new CvsRevisionNumber(entry.getRevision());
+    processStatus(filePath, statis, number, builder);
   }
 
-  private void processStatus(final FilePath filePath, final FileStatus status, final ChangelistBuilder builder) {
+  private void processStatus(final FilePath filePath,
+                             final FileStatus status,
+                             final VcsRevisionNumber number,
+                             final ChangelistBuilder builder) {
     if (status == FileStatus.NOT_CHANGED) return;
     if (status == FileStatus.MODIFIED || status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS) {
-      builder.processChange(new Change(new CvsUpToDateRevision(filePath), new CurrentContentRevision(filePath), status));
+      builder.processChange(new Change(new CvsUpToDateRevision(filePath, number), new CurrentContentRevision(filePath), status));
     }
     else if (status == FileStatus.ADDED) {
       builder.processChange(new Change(null, new CurrentContentRevision(filePath), status));
     }
     else if (status == FileStatus.DELETED) {
-      builder.processChange(new Change(new CvsUpToDateRevision(filePath), null, status));
+      builder.processChange(new Change(new CvsUpToDateRevision(filePath, number), null, status));
     }
     else if (status == FileStatus.DELETED_FROM_FS) {
       builder.processLocallyDeletedFile(filePath.getIOFile());
@@ -201,8 +209,10 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private class CvsUpToDateRevision implements ContentRevision {
     private FilePath myPath;
+    private VcsRevisionNumber myRevisionNumber;
 
-    public CvsUpToDateRevision(final FilePath path) {
+    public CvsUpToDateRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
+      myRevisionNumber = revisionNumber;
       myPath = path;
     }
 
@@ -221,6 +231,10 @@ public class CvsChangeProvider implements ChangeProvider {
     @NotNull
     public FilePath getFile() {
       return myPath;
+    }
+
+    public VcsRevisionNumber getRevisionNumber() {
+      return myRevisionNumber;
     }
   }
 }

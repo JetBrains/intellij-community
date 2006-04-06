@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,5 +36,9 @@ public class CurrentContentRevision implements ContentRevision {
   @NotNull
   public FilePath getFile() {
     return myFile;
+  }
+
+  public VcsRevisionNumber getRevisionNumber() {
+    return VcsRevisionNumber.NULL;
   }
 }

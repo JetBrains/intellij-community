@@ -2,11 +2,9 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -114,10 +112,42 @@ public class LocalChangeList implements Cloneable, ChangeList {
 
   synchronized boolean doneProcessingChanges() {
     boolean changesDetected = !Comparing.equal(myChanges, myChangesBeforeUpdate);
+    replaceToOldChangesWherePossible();
     myOutdatedChanges = null;
     myReadChangesCache = null;
     myIsInUpdate = false;
     return changesDetected;
+  }
+
+  private void replaceToOldChangesWherePossible() {
+    Change[] newChanges = myChanges.toArray(new Change[myChanges.size()]);
+    for (int i = 0; i < newChanges.length; i++) {
+      Change oldChange = findOldChange(newChanges[i]);
+      if (oldChange != null) {
+        newChanges[i] = oldChange;
+      }
+    }
+    myChanges = new HashSet<Change>(Arrays.asList(newChanges));
+  }
+
+  private Change findOldChange(final Change newChange) {
+    for (Change oldChange : myChangesBeforeUpdate) {
+      if (oldChange.equals(newChange) && sameBeforeRevision(oldChange, newChange)) {
+        return oldChange;
+      }
+    }
+    return null;
+  }
+
+  private static boolean sameBeforeRevision(final Change change1, final Change change2) {
+    final ContentRevision b1 = change1.getBeforeRevision();
+    final ContentRevision b2 = change2.getBeforeRevision();
+    if (b1 != null && b2 != null) {
+      final VcsRevisionNumber rn1 = b1.getRevisionNumber();
+      final VcsRevisionNumber rn2 = b2.getRevisionNumber();
+      return rn1 != VcsRevisionNumber.NULL && rn2 != VcsRevisionNumber.NULL && rn1.compareTo(rn2) == 0;
+    }
+    return false;
   }
 
   public synchronized boolean equals(final Object o) {

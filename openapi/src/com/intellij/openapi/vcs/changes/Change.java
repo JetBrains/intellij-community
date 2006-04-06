@@ -67,11 +67,12 @@ public class Change {
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
+    final Change otherChange = ((Change)o);
 
     final ContentRevision br1 = getBeforeRevision();
-    final ContentRevision br2 = ((Change)o).getBeforeRevision();
+    final ContentRevision br2 = otherChange.getBeforeRevision();
     final ContentRevision ar1 = getAfterRevision();
-    final ContentRevision ar2 = ((Change)o).getAfterRevision();
+    final ContentRevision ar2 = otherChange.getAfterRevision();
 
     FilePath fbr1 = br1 != null ? br1.getFile() : null;
     FilePath fbr2 = br2 != null ? br2.getFile() : null;

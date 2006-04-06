@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,4 +23,13 @@ public interface ContentRevision {
    */
   @NotNull
   FilePath getFile();
+
+  /**
+   * Revision ID. Content revisions with same file path and revision number are considered to be equal and must have same content unless
+   * {@link VcsRevisionNumber#NULL} is returned. Use {@link VcsRevisionNumber#NULL} when revision number is not applicable like for
+   * the currently uncommited revision.
+   * @return revision ID in terms of version control
+   */
+  @NotNull
+  VcsRevisionNumber getRevisionNumber();
 }

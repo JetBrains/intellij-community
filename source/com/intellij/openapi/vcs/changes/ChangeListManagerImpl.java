@@ -17,6 +17,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -1044,6 +1045,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     @NotNull
     public FilePath getFile() {
       return myFile;
+    }
+
+    public VcsRevisionNumber getRevisionNumber() {
+      return VcsRevisionNumber.NULL;
     }
   }
 }
