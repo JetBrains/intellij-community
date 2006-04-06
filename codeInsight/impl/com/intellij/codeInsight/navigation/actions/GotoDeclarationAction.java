@@ -10,6 +10,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -63,7 +64,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static void chooseAmbiguousTarget(final Project project, final Editor editor, int offset) {
-    final Collection<PsiElement> candidates = suggestCandidates(project, editor, offset);
+    final PsiReference reference = TargetElementUtil.findReference(editor, offset);
+    final Collection<PsiElement> candidates = suggestCandidates(project, reference);
     if (candidates.size() == 1) {
       Navigatable navigatable = EditSourceUtil.getDescriptor(candidates.iterator().next());
       if (navigatable != null && navigatable.canNavigate()) {
@@ -72,13 +74,14 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
     else if (candidates.size() > 1) {
       PsiElement[] elements = candidates.toArray(new PsiElement[candidates.size()]);
-      String title = CodeInsightBundle.message("declaration.navigation.title", elements[0] instanceof PsiNamedElement ? ((PsiNamedElement)elements[0]).getName():elements[0].getText());
+      final TextRange range = reference.getRangeInElement();
+      final String refText = reference.getElement().getText().substring(range.getStartOffset(), range.getEndOffset());
+      String title = CodeInsightBundle.message("declaration.navigation.title", refText);
       NavigationUtil.getPsiElementPopup(elements, title).showInBestPositionFor(editor);
     }
   }
 
-  private static Collection<PsiElement> suggestCandidates(Project project, Editor editor, int offset) {
-    PsiReference reference = TargetElementUtil.findReference(editor, offset);
+  private static Collection<PsiElement> suggestCandidates(Project project, final PsiReference reference) {
     if (reference == null) {
       return Collections.emptyList();
     }
