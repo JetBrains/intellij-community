@@ -522,5 +522,16 @@ public class UIUtil {
   public static String[] getStandardFontSizes() {
     return new String[]{"8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"};
   }
+
+  public static void setupEnclosingDialogBounds(final JComponent component) {
+    component.revalidate();
+    component.repaint();
+    final Window window = SwingUtilities.windowForComponent(component);
+    if (window != null &&
+        (window.getSize().height < window.getMinimumSize().height ||
+         window.getSize().width < window.getMinimumSize().width)) {
+      window.pack();
+    }
+  }
 }
 

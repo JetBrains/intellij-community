@@ -242,7 +242,6 @@ class RunConfigurable extends BaseConfigurable {
     });
   }
 
-
   private void drawPressAddButtonMessage(final ConfigurationType configurationType) {
     final JEditorPane browser = new JEditorPane();
     browser.setBorder(null);
@@ -496,14 +495,7 @@ class RunConfigurable extends BaseConfigurable {
   private void setupDialogBounds() {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        myWholePanel.revalidate();
-        myWholePanel.repaint();
-        final Window window = SwingUtilities.windowForComponent(myWholePanel);
-        if (window != null &&
-            (window.getSize().height < window.getMinimumSize().height ||
-             window.getSize().width < window.getMinimumSize().width)) {
-          window.pack();
-        }
+        UIUtil.setupEnclosingDialogBounds(myWholePanel);
       }
     });
   }
