@@ -19,8 +19,8 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private PsiElement myPlace;
   private PsiClass myAccessClass = null;
   private List<CandidateInfo> myCandidates = null;
-  private boolean myIsAccessibleCandidate;
-  private boolean myIsInaccessibleCandidate;
+  private boolean myHasAccessibleCandidate;
+  private boolean myHasInaccessibleCandidate;
   private JavaResolveResult[] myResult = JavaResolveResult.EMPTY_ARRAY;
   private PsiElement myCurrentFileContext;
 
@@ -46,11 +46,12 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   public JavaResolveResult[] getResult() {
     if (myResult != null) return myResult;
     if (myCandidates == null) return myResult = JavaResolveResult.EMPTY_ARRAY;
-    if (myIsAccessibleCandidate && myIsInaccessibleCandidate) {
+    if (myHasAccessibleCandidate && myHasInaccessibleCandidate) {
       for (Iterator<CandidateInfo> iterator = myCandidates.iterator(); iterator.hasNext();) {
         CandidateInfo info = iterator.next();
         if (!info.isAccessible()) iterator.remove();
       }
+      myHasInaccessibleCandidate = false;
     }
 
     myResult = myCandidates.toArray(new JavaResolveResult[myCandidates.size()]);
@@ -90,8 +91,8 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       final String name = aClass.getName();
       if (myClassName.equals(name)) {
         boolean accessible = myPlace == null || checkAccessibility(aClass);
-        myIsAccessibleCandidate |= accessible;
-        myIsInaccessibleCandidate |= !accessible;
+        myHasAccessibleCandidate |= accessible;
+        myHasInaccessibleCandidate |= !accessible;
 
         myResult = null;
         if (myCandidates == null) {
@@ -159,12 +160,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       }
       else {
         if (aClass.getContainingClass() != null) {
-          if (myAccessClass != null) {
-            accessible = manager.getResolveHelper().isAccessible(aClass, myPlace, myAccessClass);
-          }
-          else {
-            accessible = true;
-          }
+          accessible = myAccessClass == null || manager.getResolveHelper().isAccessible(aClass, myPlace, myAccessClass);
         }
       }
     }
