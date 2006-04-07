@@ -97,7 +97,7 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
     }
   }
 
-  public static PerspectiveFileEditor createDomFileEditor(final String name,
+  public static DomFileEditor createDomFileEditor(final String name,
                                                           final DomElement element,
                                                           final CaptionComponent captionComponent,
                                                           final CommittablePanel committablePanel) {
