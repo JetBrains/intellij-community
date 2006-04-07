@@ -383,6 +383,16 @@ public class TreeModelBuilder {
         getMap(myModuleDirNodes, ScopeType.SOURCE).put(parent, null);
         dirNode = (PackageDependenciesNode)treeNode;
       }
+      if (myCompactEmptyMiddlePackages && dirNode instanceof DirectoryNode && dirNode.getChildCount() == 1) { //compact
+        final TreeNode treeNode = dirNode.getChildAt(0);
+        if (treeNode instanceof DirectoryNode){
+          dirNode.removeAllChildren();
+          for (int i = treeNode.getChildCount() - 1; i >= 0; i--){
+            dirNode.add((MutableTreeNode)treeNode.getChildAt(i));
+          }
+          ((DirectoryNode)dirNode).setCompactedDirNode((DirectoryNode)treeNode);
+        }
+      }
     }
     return dirNode;
   }
@@ -545,7 +555,8 @@ public class TreeModelBuilder {
         } else if (directoryNode.getParent() == null){    //find first node in tree
           DirectoryNode parentWrapper = ((DirectoryNode)directoryNode).getWrapper();
           if (parentWrapper != null) {
-            while (parentWrapper.getWrapper() != null){
+            while (parentWrapper.getWrapper() != null
+                   && parentWrapper.getWrapper().getCompactedDirNode() != null){
               parentWrapper = parentWrapper.getWrapper();
             }
             return parentWrapper;

@@ -438,7 +438,11 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
         TreePath path = selectedPaths[0];
         final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
         if (node instanceof DirectoryNode) {
-          return (PsiDirectory)node.getPsiElement();
+          DirectoryNode directoryNode = ((DirectoryNode)node);
+          while (directoryNode.getCompactedDirNode() != null){
+            directoryNode = directoryNode.getCompactedDirNode();
+          }
+          return (PsiDirectory)directoryNode.getPsiElement();
         }
         else if (node instanceof ClassNode) {
           final PsiElement psiClass = node.getPsiElement();

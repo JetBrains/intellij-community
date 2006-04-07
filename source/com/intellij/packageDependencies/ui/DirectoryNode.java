@@ -121,6 +121,6 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public DirectoryNode getCompactedDirNode() {
-    return myCompactedDirNode;
+    return myCompactPackages ? myCompactedDirNode : null;
   }
 }
