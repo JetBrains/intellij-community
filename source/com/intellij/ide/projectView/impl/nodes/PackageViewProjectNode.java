@@ -31,22 +31,20 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PackageViewProjectNode extends AbstractProjectNode {
   public PackageViewProjectNode(Project project, ViewSettings viewSettings) {
@@ -85,8 +83,8 @@ public class PackageViewProjectNode extends AbstractProjectNode {
         if (directoryPackage == null || PackageUtil.isPackageDefault(directoryPackage)) {
           // add subpackages
           final PsiDirectory[] subdirectories = directory.getSubdirectories();
-          for (int i = 0; i < subdirectories.length; i++) {
-            final PsiPackage aPackage = subdirectories[i].getPackage();
+          for (PsiDirectory subdirectory : subdirectories) {
+            final PsiPackage aPackage = subdirectory.getPackage();
             if (aPackage != null && !PackageUtil.isPackageDefault(aPackage)) {
               topLevelPackages.add(aPackage);
             }
@@ -100,8 +98,7 @@ public class PackageViewProjectNode extends AbstractProjectNode {
         }
       }
 
-      for (Iterator<PsiPackage> it = topLevelPackages.iterator(); it.hasNext();) {
-        final PsiPackage psiPackage = it.next();
+      for (final PsiPackage psiPackage : topLevelPackages) {
         PackageUtil.addPackageAsChild(children, psiPackage, null, getSettings(), false);
       }
 
