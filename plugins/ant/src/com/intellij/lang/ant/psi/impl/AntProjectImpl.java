@@ -76,8 +76,7 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     if (myTargets != null) return myTargets;
     final List<AntTarget> targets = new ArrayList<AntTarget>();
     for (final AntElement child : getChildren()) {
-      if (child instanceof AntTarget)
-        targets.add((AntTarget)child);
+      if (child instanceof AntTarget) targets.add((AntTarget)child);
     }
     return myTargets = targets.toArray(new AntTarget[targets.size()]);
   }
@@ -103,21 +102,5 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
       }
     }
     return null;
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  protected AntElement[] getChildrenInner() {
-    final XmlTag[] tags = getSourceElement().getSubTags();
-    final List<AntElement> children = new ArrayList<AntElement>();
-    for (final XmlTag tag : tags) {
-      final String tagName = tag.getName();
-      if ("target".equals(tagName)) {
-        children.add(new AntTargetImpl(this, tag));
-      }
-      else if("property".equals(tagName)) {
-        children.add(new AntPropertyImpl(this, tag));
-      }
-    }
-    return children.toArray(new AntElement[children.size()]);
   }
 }

@@ -2,7 +2,6 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.*;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AntCallImpl extends AntElementImpl implements AntCall {
+public class AntCallImpl extends AntTaskImpl implements AntCall {
 
   private AntTarget[] myDependsTargets = null;
   private AntProperty[] myParams = null;
@@ -30,11 +29,6 @@ public class AntCallImpl extends AntElementImpl implements AntCall {
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
-  }
-
-  @NotNull
-  public XmlTag getSourceElement() {
-    return (XmlTag)super.getSourceElement();
   }
 
   public AntTarget getTarget() {
@@ -57,7 +51,7 @@ public class AntCallImpl extends AntElementImpl implements AntCall {
 
   @NotNull
   public AntProperty[] getParams() {
-    if(myParams == null) {
+    if (myParams == null) {
       List<AntProperty> properties = new ArrayList<AntProperty>();
       for (AntElement element : getChildren()) {
         if (element instanceof AntProperty) {
@@ -85,20 +79,5 @@ public class AntCallImpl extends AntElementImpl implements AntCall {
       myDependsTargets = targets.toArray(new AntTarget[targets.size()]);
     }
     return myDependsTargets;
-  }
-
-  protected AntElement[] getChildrenInner() {
-    final XmlTag[] tags = getSourceElement().getSubTags();
-    final List<AntElement> children = new ArrayList<AntElement>();
-    for (final XmlTag tag : tags) {
-      @NonNls final String tagName = tag.getName();
-      if ("target".equals(tagName)) {
-        children.add(new AntTargetImpl(this, tag));
-      }
-      else if("param".equals(tagName)) {
-        children.add(new AntPropertyImpl(this, tag));
-      }
-    }
-    return children.toArray(new AntElement[children.size()]);
   }
 }

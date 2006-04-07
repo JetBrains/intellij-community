@@ -12,12 +12,11 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class AntPropertyImpl extends AntElementImpl implements AntProperty {
+public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   public AntPropertyImpl(AntElement parent, final XmlTag tag) {
     super(parent, tag);
@@ -45,11 +44,6 @@ public class AntPropertyImpl extends AntElementImpl implements AntProperty {
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
-  }
-
-  @NotNull
-  public XmlTag getSourceElement() {
-    return (XmlTag)super.getSourceElement();
   }
 
   @Nullable

@@ -2,17 +2,12 @@ package com.intellij.lang.ant.psi;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface AntProperty extends AntElement, PsiNamedElement {
+public interface AntProperty extends AntTask, PsiNamedElement {
 
-  public static AntProperty[] EMPTY_ARRAY = new AntProperty[0];
-
-  @NotNull
-  XmlTag getSourceElement();
+  AntProperty[] EMPTY_ARRAY = new AntProperty[0];
 
   @Nullable
   String getValue();

@@ -3,8 +3,12 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.config.AntDefaultIntrospector;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntTask;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -19,6 +23,19 @@ public class AntTaskImpl extends AntElementImpl implements AntTask {
     super(parent, sourceElement);
   }
 
+  public String toString() {
+    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append("AntTask[");
+      builder.append(getName());
+      builder.append("]");
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
+
   @NotNull
   public XmlTag getSourceElement() {
     return (XmlTag)super.getSourceElement();
@@ -26,6 +43,10 @@ public class AntTaskImpl extends AntElementImpl implements AntTask {
 
   public String getName() {
     return getSourceElement().getName();
+  }
+
+  public PsiElement setName(String name) throws IncorrectOperationException {
+    throw new IncorrectOperationException();
   }
 
   public String[] getAttributeNames() {
@@ -41,8 +62,8 @@ public class AntTaskImpl extends AntElementImpl implements AntTask {
     return myAttributeNames;
   }
 
-  public Class getAttributeType(final String attributeName) {
-    return AntDefaultIntrospector.getTaskClass(getName());
+  public Class getAttributeType(final String attr) {
+    return AntDefaultIntrospector.getTaskAttributeType(getName(), attr);
   }
 
   public String[] getNestedElements() {
@@ -56,5 +77,9 @@ public class AntTaskImpl extends AntElementImpl implements AntTask {
       }
     }
     return myAttributeNames;
+  }
+
+  public Class getNestedElementType(final String element) {
+    return AntDefaultIntrospector.getTaskNestedElementType(getName(), element);
   }
 }

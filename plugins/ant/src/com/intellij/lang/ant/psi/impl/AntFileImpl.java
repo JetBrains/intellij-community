@@ -36,7 +36,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
   @NotNull
   public PsiElement[] getChildren() {
     if (myChildren == null) {
-      myChildren = new PsiElement[]{ getAntParent() };
+      final AntProject project = getAntProject();
+      myChildren = (project != null) ? new PsiElement[]{project} : PsiElement.EMPTY_ARRAY;
     }
     return myChildren;
   }
@@ -51,7 +52,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
 
   @Nullable
   public AntProject getAntProject() {
-    if(myProject != null) return myProject;
+    if (myProject != null) return myProject;
     final XmlFile baseFile = getSourceElement();
     final XmlTag tag = baseFile.getDocument().getRootTag();
     return myProject = new AntProjectImpl(this, tag);

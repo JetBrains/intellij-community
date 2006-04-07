@@ -1,12 +1,9 @@
 package com.intellij.lang.ant.psi;
 
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public interface AntCall extends AntElement {
-  @NotNull
-  XmlTag getSourceElement();
+public interface AntCall extends AntTask {
 
   AntTarget getTarget();
 

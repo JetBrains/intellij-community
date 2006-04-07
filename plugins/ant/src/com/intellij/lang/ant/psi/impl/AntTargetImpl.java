@@ -111,16 +111,4 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
     }
     return myCalls;
   }
-
-  protected AntElement[] getChildrenInner() {
-    final XmlTag[] tags = getSourceElement().getSubTags();
-    final List<AntElement> children = new ArrayList<AntElement>();
-    for (final XmlTag tag : tags) {
-      @NonNls final String tagName = tag.getName();
-      if ("antcall".equals(tagName)) {
-        children.add(new AntCallImpl(this, tag));
-      }
-    }
-    return children.toArray(new AntElement[children.size()]);
-  }
 }

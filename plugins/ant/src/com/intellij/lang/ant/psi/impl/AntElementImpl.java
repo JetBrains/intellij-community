@@ -16,6 +16,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class AntElementImpl extends MetadataPsiElementBase implements AntElement {
+public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
   static final XmlAttribute[] EMPTY_ATTRIBUTES = new XmlAttribute[0];
 
@@ -40,6 +42,24 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
   @NotNull
   public AntLanguage getLanguage() {
     return AntSupport.getLanguage();
+  }
+
+  public String toString() {
+    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append("AntElement");
+      final XmlElement sourceElement = getSourceElement();
+      if (sourceElement instanceof XmlTag) {
+        XmlTag tag = (XmlTag)sourceElement;
+        builder.append("[");
+        builder.append(tag.getName());
+        builder.append("]");
+      }
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   @NotNull
@@ -73,7 +93,19 @@ public abstract class AntElementImpl extends MetadataPsiElementBase implements A
   @NotNull
   public AntElement[] getChildren() {
     if (myChildren != null) return myChildren;
-    return myChildren = getChildrenInner();
+    final XmlElement element = getSourceElement();
+    if (!(element instanceof XmlTag)) {
+      myChildren = getChildrenInner();
+    }
+    else {
+      final XmlTag[] tags = ((XmlTag)element).getSubTags();
+      final List<AntElement> children = new ArrayList<AntElement>();
+      for (final XmlTag tag : tags) {
+        children.add(AntElementFactory.createAntElement(this, tag));
+      }
+      myChildren = children.toArray(new AntElement[children.size()]);
+    }
+    return myChildren;
   }
 
   @Nullable
