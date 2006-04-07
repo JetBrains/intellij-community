@@ -31,7 +31,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.HashMap;
@@ -212,7 +211,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     for (Class<?> componentClass : componentClasses) {
       Object component = getComponent(componentClass);
-
+      if (!(component instanceof BaseComponent)) continue;
       String fileName;
       if (component instanceof NamedJDOMExternalizable) {
         fileName = ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
