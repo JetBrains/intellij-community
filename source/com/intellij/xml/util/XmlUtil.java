@@ -1163,7 +1163,7 @@ public class XmlUtil {
       start = CharsetToolkit.UTF8_BOM.length;
     }
 
-    if (start >= bytes.length) return null;
+    if (start + ENCODING_XML_PROLOG_BYTES.length >= bytes.length) return null;
     int i;
     for (i = 0; i < ENCODING_XML_PROLOG_BYTES.length; i++) {
       if (bytes[start+i] != ENCODING_XML_PROLOG_BYTES[i]) {
