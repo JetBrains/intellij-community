@@ -546,20 +546,7 @@ public final class FormEditingUtil {
     final String binding,
     final IComponent component
   ) {
-    if (componentToAssignBinding != component && binding.equals(component.getBinding())) {
-      return false;
-    }
-
-    if (component instanceof IContainer) {
-      final IContainer container = (IContainer)component;
-      for (int i=0; i < container.getComponentCount(); i++) {
-        if (!isBindingUnique(componentToAssignBinding, binding, container.getComponent(i))) {
-          return false;
-        }
-      }
-    }
-
-    return true;
+    return findComponentWithBinding(component, binding, componentToAssignBinding) == null;
   }
 
   @Nullable
