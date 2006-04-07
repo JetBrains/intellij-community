@@ -86,7 +86,7 @@ public final class FormEditingUtil {
       FormEditingUtil.iterate(component, new ComponentVisitor() {
         public boolean visit(final IComponent c) {
           RadComponent rc = (RadComponent) c;
-          BindingProperty.checkRemoveUnusedField(rc);
+          BindingProperty.checkRemoveUnusedField(rc, rc.getBinding());
           deletedComponentIds.add(rc.getId());
           return true;
         }

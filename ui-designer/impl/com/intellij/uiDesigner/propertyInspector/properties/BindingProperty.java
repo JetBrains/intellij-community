@@ -82,7 +82,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
       if (component.isCustomCreateRequired()) {
         throw new Exception(UIDesignerBundle.message("error.custom.create.binding.required"));
       }
-      checkRemoveUnusedField(component);
+      checkRemoveUnusedField(component, component.getBinding());
       component.setBinding(null);
       component.setCustomCreate(false);
       return;
@@ -131,7 +131,8 @@ public final class BindingProperty extends Property<RadComponent, String> {
       return;
     }
 
-    if(aClass.findFieldByName(value, true) != null){
+    if(aClass.findFieldByName(value, true) != null) {
+      checkRemoveUnusedField(component, oldBinding);
       return;
     }
 
@@ -177,7 +178,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   @Nullable
-  public static PsiField findBoundField(final RadComponent component) {
+  public static PsiField findBoundField(final RadComponent component, final String fieldName) {
     final Project project = component.getModule().getProject();
     final RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
     final String classToBind = root.getClassToBind();
@@ -185,7 +186,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
       final PsiManager manager = PsiManager.getInstance(project);
       PsiClass aClass = manager.findClass(classToBind, GlobalSearchScope.allScope(project));
       if (aClass != null) {
-        final PsiField oldBindingField = aClass.findFieldByName(component.getBinding(), false);
+        final PsiField oldBindingField = aClass.findFieldByName(fieldName, false);
         if (oldBindingField != null) {
           return oldBindingField;
         }
@@ -194,8 +195,8 @@ public final class BindingProperty extends Property<RadComponent, String> {
     return null;
   }
 
-  public static void checkRemoveUnusedField(final RadComponent component) {
-    final PsiField oldBindingField = findBoundField(component);
+  public static void checkRemoveUnusedField(final RadComponent component, final String fieldName) {
+    final PsiField oldBindingField = findBoundField(component, fieldName);
     if (oldBindingField == null) {
       return;
     }
@@ -246,7 +247,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     if (!component.isDefaultBinding()) {
       return;
     }
-    PsiField boundField = findBoundField(component);
+    PsiField boundField = findBoundField(component, component.getBinding());
     if (boundField == null || !isFieldUnreferenced(boundField)) {
       return;
     }
