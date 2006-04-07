@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
@@ -31,7 +32,11 @@ public class DefaultCharFilter implements CharFilter {
       boolean inJavaContext = false;
 
       if (psiElement != null) {
-        if (StdLanguages.JAVA.equals(psiElement.getLanguage())) {
+        PsiElement elementToTest = psiElement;
+        if (elementToTest instanceof PsiWhiteSpace) {
+          elementToTest = elementToTest.getParent(); // JSPX has whitespace with language Java
+        }
+        if (StdLanguages.JAVA.equals(elementToTest.getLanguage())) {
           inJavaContext = true;
         }
       }
