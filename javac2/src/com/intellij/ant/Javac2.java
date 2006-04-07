@@ -145,7 +145,7 @@ public final class Javac2 extends Javac{
       class2form.put(classToBind, formFile);
 
       final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
-                                                                  new AntNestedFormLoader(loader));
+                                                                  new AntNestedFormLoader(loader), false);
       codeGenerator.patchFile(classFile);
       final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 

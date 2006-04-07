@@ -183,7 +183,7 @@ public final class PreviewFormAction extends AnAction{
       CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
       CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + RUNTIME_BUNDLE_EXTENSION);
 
-      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, null);
+      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, null, true);
       codeGenerator.patchFile(tempFile);
       final FormErrorInfo[] errors = codeGenerator.getErrors();
       if(errors.length != 0){

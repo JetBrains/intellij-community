@@ -15,24 +15,25 @@
  */
 package com.intellij.uiDesigner.compiler;
 
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
-import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.objectweb.asm.*;
+import org.objectweb.asm.commons.EmptyVisitor;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
-import org.objectweb.asm.commons.EmptyVisitor;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Iterator;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.io.*;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author yole
@@ -57,6 +58,7 @@ public class AsmCodeGenerator {
   public static final String CREATE_COMPONENTS_METHOD_NAME = "createUIComponents";
   private static final Type ourButtonGroupType = Type.getType(ButtonGroup.class);
   private NestedFormLoader myFormLoader;
+  private final boolean myIgnoreCustomCreation;
 
   static {
     myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_INTELLIJ, new GridLayoutCodeGenerator());
@@ -79,8 +81,12 @@ public class AsmCodeGenerator {
     myPropertyCodeGenerators.put("javax.swing.Icon", new IconPropertyCodeGenerator());
   }
 
-  public AsmCodeGenerator(LwRootContainer rootContainer, ClassLoader loader, NestedFormLoader formLoader) {
+  public AsmCodeGenerator(LwRootContainer rootContainer,
+                          ClassLoader loader,
+                          NestedFormLoader formLoader,
+                          final boolean ignoreCustomCreation) {
     myFormLoader = formLoader;
+    myIgnoreCustomCreation = ignoreCustomCreation;
     if (loader == null){
       throw new IllegalArgumentException("loader cannot be null");
     }
@@ -244,7 +250,8 @@ public class AsmCodeGenerator {
     }
 
     public void visitEnd() {
-      final boolean haveCustomCreateComponents = Utils.getCustomCreateComponentCount(myRootContainer) > 0;
+      final boolean haveCustomCreateComponents = Utils.getCustomCreateComponentCount(myRootContainer) > 0 &&
+                                                 !myIgnoreCustomCreation;
       if (haveCustomCreateComponents && !myHaveCreateComponentsMethod) {
         myErrors.add(new FormErrorInfo(null, "Form contains components with Custom Create option but no createUIComponents() method"));
       }
@@ -324,7 +331,7 @@ public class AsmCodeGenerator {
       else {
         className = getComponentCodeGenerator(lwComponent.getParent()).mapComponentClass(lwComponent.getComponentClassName());
       }
-      final Type componentType = typeFromClassName(className);
+      Type componentType = typeFromClassName(className);
       int componentLocal = generator.newLocal(componentType);
 
       myIdToLocalMap.put(lwComponent.getId(), new Integer(componentLocal));
@@ -332,7 +339,24 @@ public class AsmCodeGenerator {
       Class componentClass = getComponentClass(className, myLoader);
       validateFieldBinding(lwComponent, componentClass);
 
-      if (!lwComponent.isCustomCreate()) {
+      if (myIgnoreCustomCreation) {
+        boolean creatable = true;
+        try {
+          final Constructor constructor = componentClass.getConstructor(new Class[0]);
+          if (!constructor.isAccessible()) {
+            creatable = false;
+          }
+        }
+        catch(NoSuchMethodException ex) {
+          creatable = false;
+        }
+        if (!creatable) {
+          componentClass = Utils.suggestReplacementClass(componentClass);
+          componentType = Type.getType(componentClass);
+        }
+      }
+
+      if (!lwComponent.isCustomCreate() || myIgnoreCustomCreation) {
         generator.newInstance(componentType);
         generator.dup();
         generator.invokeConstructor(componentType, Method.getMethod("void <init>()"));
@@ -419,6 +443,14 @@ public class AsmCodeGenerator {
           continue;
         }
         final String propertyClass = property.getPropertyClassName();
+        if (myIgnoreCustomCreation) {
+          try {
+            componentClass.getMethod(property.getWriteMethodName(), new Class[] { Class.forName(propertyClass) } );
+          }
+          catch (Exception e) {
+            continue;
+          }
+        }
         final PropertyCodeGenerator propGen = (PropertyCodeGenerator) myPropertyCodeGenerators.get(propertyClass);
 
 

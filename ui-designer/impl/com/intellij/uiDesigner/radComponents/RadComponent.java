@@ -3,10 +3,10 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RevalidateInfo;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.EventProcessor;
@@ -130,7 +130,7 @@ public abstract class RadComponent implements IComponent {
     }
     catch (NoSuchMethodException e) {
       try {
-        constructor = FormEditingUtil.suggestReplacementClass(myClass).getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
+        constructor = Utils.suggestReplacementClass(myClass).getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
       }
       catch (NoSuchMethodException e1) {
         throw new RuntimeException(e1);

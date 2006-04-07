@@ -295,7 +295,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
             LOG.assertTrue(classFile.exists(), classFile.getPath());
 
             final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
-                                                                        new PsiNestedFormLoader(module));
+                                                                        new PsiNestedFormLoader(module), false);
             codeGenerator.patchFile(classFile);
             final FormErrorInfo[] errors = codeGenerator.getErrors();
             final FormErrorInfo[] warnings = codeGenerator.getWarnings();

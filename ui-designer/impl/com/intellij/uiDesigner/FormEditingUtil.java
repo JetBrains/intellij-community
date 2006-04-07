@@ -674,25 +674,6 @@ public final class FormEditingUtil {
     return aClass.findMethodBySignature(method, true);
   }
 
-  public static Class suggestReplacementClass(Class componentClass) {
-    while(true) {
-      componentClass = componentClass.getSuperclass();
-      if (componentClass.equals(JComponent.class)) {
-        return JPanel.class;
-      }
-      if ((componentClass.getModifiers() & Modifier.ABSTRACT) != 0) {
-        continue;
-      }
-      try {
-        componentClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
-      }
-      catch(NoSuchMethodException ex) {
-        continue;
-      }
-      return componentClass;
-    }
-  }
-
   public static interface StringDescriptorVisitor<T extends IComponent> {
     boolean visit(T component, StringDescriptor descriptor);
   }

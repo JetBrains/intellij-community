@@ -262,4 +262,23 @@ public final class Utils {
     });
     return result [0];
   }
+
+  public static Class suggestReplacementClass(Class componentClass) {
+    while(true) {
+      componentClass = componentClass.getSuperclass();
+      if (componentClass.equals(JComponent.class)) {
+        return JPanel.class;
+      }
+      if ((componentClass.getModifiers() & Modifier.ABSTRACT) != 0) {
+        continue;
+      }
+      try {
+        componentClass.getConstructor(new Class[] {});
+      }
+      catch(NoSuchMethodException ex) {
+        continue;
+      }
+      return componentClass;
+    }
+  }
 }

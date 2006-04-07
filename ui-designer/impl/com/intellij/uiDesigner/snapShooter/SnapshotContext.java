@@ -6,6 +6,7 @@ package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -80,7 +81,7 @@ public class SnapshotContext {
       return myClassesToReplace.get(componentClass);
     }
 
-    Class replacementClass = FormEditingUtil.suggestReplacementClass(componentClass);
+    Class replacementClass = Utils.suggestReplacementClass(componentClass);
 
     // can't use Messages because Application does not exist
     int choice = JOptionPane.showOptionDialog(
