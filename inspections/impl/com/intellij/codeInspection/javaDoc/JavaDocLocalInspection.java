@@ -18,10 +18,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
@@ -181,7 +178,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
           options.ACCESS_JAVADOC_REQUIRED_FOR = modifiers[value - 1];
           for (Enumeration<Integer> enumeration = sliderLabels.keys(); enumeration.hasMoreElements();) {
             Integer key = enumeration.nextElement();
-            sliderLabels.get(key).setForeground(key <= value ? Color.black : new Color(100, 100, 100));
+            sliderLabels.get(key).setForeground(key.intValue() <= value ? Color.black : new Color(100, 100, 100));
           }
         }
       });
@@ -296,10 +293,14 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
       try {
         PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocCommentOwner.class);
-        PsiDocComment docComment = owner.getDocComment();
-        PsiDocTag tag = factory.createDocTagFromText("@" + myTag+" "+myValue, docComment);
-        PsiElement addedTag = docComment.add(tag);
-        moveCaretTo(addedTag);
+        if (owner != null) {
+          PsiDocComment docComment = owner.getDocComment();
+          PsiDocTag tag = factory.createDocTagFromText("@" + myTag+" "+myValue, docComment);
+          if (docComment != null) {
+            PsiElement addedTag = docComment.add(tag);
+            moveCaretTo(addedTag);
+          }
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -657,7 +658,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       if (tagInfo == null || !tagInfo.isValidInContext(context)) {
         final StringTokenizer tokenizer = new StringTokenizer(myAdditionalJavadocTags, ", ");
         while (tokenizer.hasMoreTokens()) {
-          if (tagName.equals(tokenizer.nextToken())) continue nextTag;
+          if (Comparing.strEqual(tagName, tokenizer.nextToken())) continue nextTag;
         }
 
         if (tagInfo == null){
@@ -768,17 +769,20 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         PsiDocTagValue value = tag.getValueElement();
         if (value instanceof PsiDocParamRef) {
           PsiDocParamRef paramRef = (PsiDocParamRef)value;
-          final String paramName = paramRef.getReference().getCanonicalText();
-          if (documentedParamNames == null) {
-            documentedParamNames = new HashSet<String>();
-          }
-          if (documentedParamNames.contains(paramName)) {
-            if (problems == null) {
-              problems = new ArrayList<ProblemDescriptor>(2);
+          final PsiReference reference = paramRef.getReference();
+          if (reference != null) {
+            final String paramName = reference.getCanonicalText();
+            if (documentedParamNames == null) {
+              documentedParamNames = new HashSet<String>();
             }
-            problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.duplicate.param", paramName), manager));
+            if (documentedParamNames.contains(paramName)) {
+              if (problems == null) {
+                problems = new ArrayList<ProblemDescriptor>(2);
+              }
+              problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.duplicate.param", paramName), manager));
+            }
+            documentedParamNames.add(paramName);
           }
-          documentedParamNames.add(paramName);
         }
       }
       else if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {

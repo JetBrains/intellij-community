@@ -19,13 +19,14 @@ package com.intellij.psi.javadoc;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiDocTag extends PsiElement, PsiNamedElement{
   PsiDocTag[] EMPTY_ARRAY = new PsiDocTag[0];
 
   PsiDocComment getContainingComment();
   PsiElement getNameElement();
-  @NonNls String getName();
+  @NonNls @NotNull String getName();
   PsiElement[] getDataElements();
   PsiDocTagValue getValueElement();
 }
