@@ -59,7 +59,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   @NonNls private static final String PREFIX_BODY = "body";
 
   public BindingProperty(final Project project){
-    super(null, "binding");
+    super(null, "field name");
     myProject = project;
     myEditor = new BindingEditor(project);
   }
@@ -163,6 +163,17 @@ public final class BindingProperty extends Property<RadComponent, String> {
 
     final RenameProcessor processor = new RenameProcessor(myProject, oldField, value, true, true);
     processor.run();
+  }
+
+
+  @Override
+  public boolean isModified(final RadComponent component) {
+    return component.getBinding() != null;
+  }
+
+  @Override
+  public void resetValue(final RadComponent component) throws Exception {
+    setValueImpl(component, "");
   }
 
   @Nullable
