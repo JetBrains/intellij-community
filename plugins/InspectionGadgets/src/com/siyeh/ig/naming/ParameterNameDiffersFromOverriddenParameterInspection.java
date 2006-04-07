@@ -17,11 +17,14 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameParameterFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
@@ -31,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JComponent;
 
 public class ParameterNameDiffersFromOverriddenParameterInspection
-        extends MethodInspection {
+        extends BaseInspection {
 
     /**
      * @noinspection PublicField
@@ -108,13 +111,16 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
             if (parameters.length == 0) {
                 return;
             }
-            final PsiMethod[] superMethods = method.findSuperMethods();
-            if (superMethods.length == 0) {
+            final Query<MethodSignatureBackedByPsiMethod> query =
+                    SuperMethodsSearch.search(
+                            method, method.getContainingClass(), true, false);
+            final MethodSignatureBackedByPsiMethod methodSignature =
+                    query.findFirst();
+            if (methodSignature == null) {
                 return;
             }
-            for (final PsiMethod superMethod : superMethods) {
-                checkParameters(superMethod, parameters);
-            }
+            final PsiMethod superMethod = methodSignature.getMethod();
+            checkParameters(superMethod, parameters);
         }
 
         private void checkParameters(PsiMethod superMethod,
