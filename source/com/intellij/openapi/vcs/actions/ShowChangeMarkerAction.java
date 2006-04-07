@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,7 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
     };
   }
 
-  protected boolean requiresEventDispatchThreadUpdate() {
+  protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;
   }
 

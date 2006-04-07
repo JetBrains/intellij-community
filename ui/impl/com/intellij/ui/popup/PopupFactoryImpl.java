@@ -287,7 +287,8 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
                                             presentation,
                                             ActionManager.getInstance(),
                                             0);
-    action.update(event);
+
+    action.beforeActionPerformedUpdate(event);
     if ((showDisabled || presentation.isEnabled()) && presentation.isVisible()) {
       String text = presentation.getText();
       if (showNumbers) {

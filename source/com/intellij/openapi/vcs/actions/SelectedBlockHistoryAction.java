@@ -1,16 +1,16 @@
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.impl.VcsBlockHistoryDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsUtil;
 
@@ -75,5 +75,9 @@ public class SelectedBlockHistoryAction extends FileHistoryAction {
 
   protected VcsHistoryProvider getProvider(AbstractVcs activeVcs) {
     return activeVcs.getVcsBlockHistoryProvider();
+  }
+
+  protected boolean forceSyncUpdate(final AnActionEvent e) {
+    return true;
   }
 }

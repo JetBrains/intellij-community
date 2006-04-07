@@ -31,8 +31,8 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AsyncUpdateAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -47,17 +47,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-public abstract class AbstractVcsAction extends AnAction {
-  private static final ExecutorService ourAsyncUpdateExecutor = Executors.newSingleThreadExecutor();
-
+public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> {
   public static Collection<AbstractVcs> getActiveVcses(VcsContext dataContext) {
     Collection<AbstractVcs> result = new HashSet<AbstractVcs>();
     Project project = dataContext.getProject();
@@ -102,43 +97,16 @@ public abstract class AbstractVcsAction extends AnAction {
     return null;
   }
 
-  // Async update
-  public final void update(AnActionEvent e) {
-    if (requiresEventDispatchThreadUpdate()) {
-      beforeActionPerformedUpdate(e);
-    }
-    else {
-      final VcsContext context = VcsContextWrapper.createCachedInstanceOn(e);
-      final Presentation originalPresentation = e.getPresentation();
-      final Presentation presentation = (Presentation) originalPresentation.clone();
-
-      ourAsyncUpdateExecutor.submit(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              update(context, presentation);
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  originalPresentation.copyFrom(presentation);
-                }
-              });
-            }
-          });
-        }
-      });
-
-      presentation.setVisible(true);
-      presentation.setEnabled(false);
-    }
+  protected VcsContext prepareDataFromContext(final AnActionEvent e) {
+    return VcsContextWrapper.createCachedInstanceOn(e);
   }
 
-  // Sync update
-  public void beforeActionPerformedUpdate(AnActionEvent e) {
-    update(VcsContextWrapper.createInstanceOn(e), e.getPresentation());
-  }
-
-  protected boolean requiresEventDispatchThreadUpdate() {
-    return false;
+  protected void performUpdate(final Presentation presentation, final VcsContext data) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        update(data, presentation);
+      }
+    });
   }
 
   public final void actionPerformed(AnActionEvent e) {
