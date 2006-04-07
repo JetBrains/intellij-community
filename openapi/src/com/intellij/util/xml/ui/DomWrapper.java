@@ -4,6 +4,7 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElement;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
@@ -18,4 +19,6 @@ public interface DomWrapper<T> {
   T getValue() throws IllegalAccessException, InvocationTargetException;
 
   boolean isValid();
+
+  Project getProject();
 }

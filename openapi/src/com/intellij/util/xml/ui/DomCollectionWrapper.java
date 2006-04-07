@@ -6,6 +6,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.openapi.project.Project;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -61,5 +62,9 @@ public class DomCollectionWrapper<T> implements DomWrapper<T>{
 
   public boolean isValid() {
     return myDomElement.isValid();
+  }
+
+  public Project getProject() {
+    return myDomElement.getManager().getProject();
   }
 }

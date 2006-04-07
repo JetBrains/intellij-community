@@ -17,9 +17,10 @@
 
 package com.intellij.util.xml.ui;
 
-import com.intellij.util.xml.DomElementNavigateProvider;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementNavigateProvider;
 
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -28,9 +29,9 @@ import java.util.List;
 public class DomUINavigationProvider implements DomElementNavigateProvider {
   public static String DOM_UI_NAVIGATION_PROVIDER_NAME = "DOM_UI_NAVIGATION_PROVIDER_NAME";
 
-  private AbstractDomElementComponent myComponent;
+  private CompositeCommittable myComponent;
 
-  protected DomUINavigationProvider(final AbstractDomElementComponent component) {
+  protected DomUINavigationProvider(final CompositeCommittable component) {
     myComponent = component;
   }
 
@@ -40,18 +41,44 @@ public class DomUINavigationProvider implements DomElementNavigateProvider {
   }
 
   public void navigate(DomElement domElement, boolean requestFocus) {
-    final DomUIControl domUIControl = getNavigationControl(myComponent, domElement);
+    final DomUIControl domUIControl = findDomControl(myComponent, domElement);
     if(domUIControl != null) {
       domUIControl.navigate(domElement);
     }
   }
 
   public boolean canNavigate(DomElement domElement) {
-    return getNavigationControl(myComponent, domElement) != null;
+    return findDomControl(myComponent, domElement) != null;
   }
 
-  private DomUIControl getNavigationControl(final CompositeCommittable compositCommitable, final DomElement domElement) {
-    //todo implement visitor for (Composite)Commitable ?
+  public static DomElement findDomElement(final BasicDomElementComponent compositCommitable) {
+    final Component component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
+    if (component != null) {
+      final DomElement domElement = findDomElement(compositCommitable, component);
+      if (domElement != null) {
+        return domElement;
+      }
+    }
+    return compositCommitable.getDomElement();
+  }
+
+  public static DomElement findDomElement(final CompositeCommittable compositCommitable, final Component component) {
+    final List<Committable> list = compositCommitable.getChildren();
+    for (Committable committable : list) {
+      if (committable instanceof DomUIControl) {
+        final DomUIControl uiControl = (DomUIControl)committable;
+        if (uiControl.getComponent().isAncestorOf(component)) {
+          return uiControl.getDomElement();
+        }
+      } else if (committable instanceof CompositeCommittable) {
+        final DomElement element = findDomElement((CompositeCommittable)committable, component);
+        if (element != null) return element;
+      }
+    }
+    return null;
+  }
+
+  public static DomUIControl findDomControl(final CompositeCommittable compositCommitable, final DomElement domElement) {
     final List<Committable> list = compositCommitable.getChildren();
     for (Committable committable : list) {
       if (committable instanceof DomUIControl) {
@@ -59,7 +86,7 @@ public class DomUINavigationProvider implements DomElementNavigateProvider {
             return (DomUIControl)committable;
           }
       } else if (committable instanceof CompositeCommittable) {
-        final DomUIControl control = getNavigationControl((CompositeCommittable)committable, domElement);
+        final DomUIControl control = findDomControl((CompositeCommittable)committable, domElement);
         if(control != null) return control;
       }
     }

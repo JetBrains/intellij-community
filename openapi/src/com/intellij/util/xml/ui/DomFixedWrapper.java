@@ -5,6 +5,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.openapi.project.Project;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -33,6 +34,10 @@ public class DomFixedWrapper<T> implements DomWrapper<T>{
 
   public boolean isValid() {
     return myDomElement.isValid();
+  }
+
+  public Project getProject() {
+    return myDomElement.getManager().getProject();
   }
 
 }

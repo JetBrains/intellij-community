@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
@@ -37,12 +38,14 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
     public void documentChanged(DocumentEvent e) {
       if (myShowing) {
-        final PsiDocumentManager manager = getDocumentManager();
-        for (final Document document : getDocuments()) {
-          manager.commitDocument(document);
-        }
+        commitAllDocuments();
         reset();
       }
+    }
+  };
+  private static final FileEditorState FILE_EDITOR_STATE = new FileEditorState() {
+    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+      return true;
     }
   };
 
@@ -194,6 +197,11 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     return null;
   }
 
+  @NotNull
+  public FileEditorState getState(FileEditorStateLevel level) {
+    return FILE_EDITOR_STATE;
+  }
 
-
+  public void setState(FileEditorState state) {
+  }
 }

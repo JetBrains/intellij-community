@@ -5,6 +5,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.openapi.project.Project;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -32,6 +33,10 @@ public class DomStringWrapper implements DomWrapper<String>{
 
   public boolean isValid() {
     return myDomElement.isValid();
+  }
+
+  public Project getProject() {
+    return myDomElement.getManager().getProject();
   }
 
 }

@@ -164,7 +164,7 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
   }
 
   protected final Project getProject() {
-    return getDomElement().getManager().getProject();
+    return myDomWrapper.getProject();
   }
 
   private T getValueFromXml() {
