@@ -105,8 +105,8 @@ public class XmlUtil {
   private static final @NonNls String JSF_URI2 = "http://java.sun.com/dtd/web-facesconfig_1_1.dtd";
   public static final @NonNls String[] JSF_URIS = { JSF_URI, JSF_URI2 };
   public static final @NonNls String[] WEB_XML_URIS = {
-    "http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
-    "http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd",
+    "http://java.sun.com/xml/ns/j2ee",
+    "http://java.sun.com/xml/ns/javaee",
     "http://java.sun.com/dtd/web-app_2_3.dtd",
     "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"
   };
