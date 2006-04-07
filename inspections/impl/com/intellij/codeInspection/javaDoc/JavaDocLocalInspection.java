@@ -422,9 +422,9 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       return null;
     }
     PsiDocComment docComment = psiMethod.getDocComment();
+    final PsiMethod[] superMethods = psiMethod.findSuperMethods();
     if (docComment == null) {
       if (isJavaDocRequired(psiMethod)) {
-        PsiMethod[] superMethods = psiMethod.findSuperMethods();
         if (superMethods.length > 0) return null;
         if (EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiMethod) instanceof EjbImplMethodRole) return null;
         return superMethods.length == 0
@@ -449,7 +449,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     boolean isReturnRequired = false;
     boolean isReturnAbsent = true;
-    if (!psiMethod.isConstructor() && PsiType.VOID != psiMethod.getReturnType() && isTagRequired(psiMethod, "return")) {
+    if (superMethods.length == 0 && !psiMethod.isConstructor() && PsiType.VOID != psiMethod.getReturnType() && isTagRequired(psiMethod, "return")) {
       isReturnRequired = true;
       for (PsiDocTag tag : tags) {
         if ("return".equals(tag.getName())) {
@@ -460,7 +460,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     ArrayList<PsiParameter> absentParameters = null;
-    if (isTagRequired(psiMethod, "param")) {
+    if (superMethods.length == 0 && isTagRequired(psiMethod, "param") ) {
       PsiParameter[] params = psiMethod.getParameterList().getParameters();
       for (PsiParameter param : params) {
         boolean found = false;
@@ -506,14 +506,14 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
         final PsiDocTagValue valueElement = tag.getValueElement();
         if (valueElement != null) {
-          problems.add(createDescriptor(psiMethod.getNameIdentifier(),
+          problems.add(createDescriptor(valueElement,
                                         InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@param " + valueElement.getText() + "</code>"),
                                         manager));
         }
       }
     }
 
-    if (isTagRequired(psiMethod, "@throws") && psiMethod.getThrowsList().getReferencedTypes().length > 0) {
+    if (superMethods.length == 0 && isTagRequired(psiMethod, "@throws") && psiMethod.getThrowsList().getReferencedTypes().length > 0) {
       boolean found = false;
       for (PsiDocTag tag : tags) {
         if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
@@ -539,7 +539,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     for (PsiDocTag tag : tags) {
       if ("param".equals(tag.getName())) {
-        if (JavaDocLocalInspection.extractTagDescription(tag).length() == 0) {
+        if (extractTagDescription(tag).length() == 0) {
           PsiDocTagValue value = tag.getValueElement();
           if (value instanceof PsiDocParamRef) {
             PsiDocParamRef paramRef = (PsiDocParamRef)value;
@@ -547,7 +547,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
             for (PsiParameter param : params) {
               if (paramRef.getReference().isReferenceTo(param)) {
                 if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
-                problems.add(createDescriptor(psiMethod.getNameIdentifier(),
+                problems.add(createDescriptor(value,
                                               InspectionsBundle.message("inspection.javadoc.method.problem.descriptor", "<code>@param</code>", "<code>" + param.getName() + "</code>"),
                                               manager));
               }
@@ -737,7 +737,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (psiElement instanceof PsiMethod) {
       psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
       while (psiElement != null) {
-        actualAccess = Math.max(actualAccess, JavaDocLocalInspection.getAccessNumber(refUtil.getAccessModifier(psiElement)));
+        actualAccess = Math.max(actualAccess, getAccessNumber(refUtil.getAccessModifier(psiElement)));
         psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
       }
 
