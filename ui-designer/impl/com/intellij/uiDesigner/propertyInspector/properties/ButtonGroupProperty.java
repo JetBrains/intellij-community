@@ -1,29 +1,33 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.radComponents.RadButtonGroup;
-import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.ComboBoxPropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
-import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author yole
  */
 public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> {
-  private LabelPropertyRenderer<RadButtonGroup> myRenderer = new LabelPropertyRenderer<RadButtonGroup>();
+  private LabelPropertyRenderer<RadButtonGroup> myRenderer = new LabelPropertyRenderer<RadButtonGroup>() {
+    @Override protected void customize(final RadButtonGroup value) {
+      setText(value == null ? "" : value.getName());
+    }
+  };
+
   private ComboBoxPropertyEditor<RadButtonGroup> myEditor = new MyPropertyEditor();
 
   public ButtonGroupProperty() {
@@ -31,20 +35,12 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
   }
 
   public RadButtonGroup getValue(RadComponent component) {
-    final RadRootContainer rootContainer = getRootContainer(component);
+    final RadRootContainer rootContainer = (RadRootContainer) FormEditingUtil.getRoot(component);
     return rootContainer == null ? null : rootContainer.findGroupForComponent(component);
   }
 
-  @Nullable private static RadRootContainer getRootContainer(final RadComponent component) {
-    RadContainer container = component.getParent();
-    while(container != null && !(container instanceof RadRootContainer)) {
-      container = container.getParent();
-    }
-    return (RadRootContainer) container;
-  }
-
   protected void setValueImpl(RadComponent component, RadButtonGroup value) throws Exception {
-    final RadRootContainer radRootContainer = getRootContainer(component);
+    final RadRootContainer radRootContainer = (RadRootContainer) FormEditingUtil.getRoot(component);
     assert radRootContainer != null;
     radRootContainer.setGroupForComponent(component, value);
   }
@@ -106,7 +102,7 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
 
     public JComponent getComponent(RadComponent component, RadButtonGroup value, boolean inplace) {
       myComponent = component;
-      myRootContainer = getRootContainer(myComponent);
+      myRootContainer = (RadRootContainer) FormEditingUtil.getRoot(myComponent);
       updateModel();
       return myCbx;
     }
