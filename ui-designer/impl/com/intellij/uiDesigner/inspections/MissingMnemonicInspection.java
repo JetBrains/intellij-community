@@ -32,7 +32,7 @@ public class MissingMnemonicInspection extends BaseFormInspection {
     }
     IProperty textProperty = FormInspectionUtil.findProperty(component, SwingProperties.TEXT);
     SupportCode.TextWithMnemonic twm = SupportCode.parseText(value);
-    if (twm.myMnemonicIndex < 0) {
+    if (twm.myMnemonicIndex < 0 && twm.myText.length() > 0) {
       if (FormInspectionUtil.isComponentClass(module, component, AbstractButton.class)) {
         collector.addError(getID(), textProperty,
                            UIDesignerBundle.message("inspection.missing.mnemonics.message", value),
