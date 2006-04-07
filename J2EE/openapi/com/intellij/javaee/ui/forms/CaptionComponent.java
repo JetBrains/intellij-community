@@ -1,12 +1,14 @@
 package com.intellij.javaee.ui.forms;
 
+import com.intellij.util.xml.ui.Committable;
+
 import javax.swing.*;
 import java.awt.*;
 
 /**
  * User: Sergey.Vasiliev
  */
-public class CaptionComponent extends JPanel {
+public class CaptionComponent extends JPanel implements Committable {
   private JPanel myRootPanel;
   private JLabel myCaptionLabel;
   private JLabel myDescriptionLabel;
@@ -68,8 +70,17 @@ public class CaptionComponent extends JPanel {
     myDescriptionLabel.setText(text);
   }
 
-  public void setBordered(final boolean bordered) {
+  public final void setBordered(final boolean bordered) {
     myBordered = bordered;
     updateBorder();
+  }
+
+  public final void commit() {
+  }
+
+  public void reset() {
+  }
+
+  public final void dispose() {
   }
 }

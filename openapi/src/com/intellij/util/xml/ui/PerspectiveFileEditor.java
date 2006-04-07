@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * User: Sergey.Vasiliev
@@ -35,6 +37,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   private final VirtualFile myFile;
   private final FileEditorManagerAdapter myFileEditorManagerAdapter;
   private boolean myShowing;
+  private final Set<Document> myCurrentDocuments = new HashSet<Document>();
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
     public void documentChanged(DocumentEvent e) {
       if (myShowing) {
@@ -55,35 +58,55 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     myFile = file;
 
     myFileEditorManagerAdapter = new FileEditorManagerAdapter() {
-     public void selectionChanged(FileEditorManagerEvent event) {
-       if (PerspectiveFileEditor.this.equals(event.getOldEditor())) {
-         deselectNotify();
-         if (event.getNewEditor() instanceof TextEditor) {
-           setSelectionInTextEditor((TextEditor)event.getNewEditor(), getSelectedDomElement());
-         }
-       }
-       else if (PerspectiveFileEditor.this.equals(event.getNewEditor())) {
-         selectNotify();
-         if (event.getOldEditor() instanceof TextEditor) {
-           setSelectedDomElement(getSelectedDomElementFromTextEditor((TextEditor)event.getOldEditor()));
-         } else if (event.getOldEditor() instanceof PerspectiveFileEditor) {
+      public void selectionChanged(FileEditorManagerEvent event) {
+        if (PerspectiveFileEditor.this.equals(event.getOldEditor())) {
+          deselectNotify();
+          if (event.getNewEditor() instanceof TextEditor) {
+            setSelectionInTextEditor((TextEditor)event.getNewEditor(), getSelectedDomElement());
+          }
+        }
+        else if (PerspectiveFileEditor.this.equals(event.getNewEditor())) {
+          selectNotify();
+          if (event.getOldEditor() instanceof TextEditor) {
+            setSelectedDomElement(getSelectedDomElementFromTextEditor((TextEditor)event.getOldEditor()));
+          } else if (event.getOldEditor() instanceof PerspectiveFileEditor) {
             setSelectedDomElement(((PerspectiveFileEditor)event.getOldEditor()).getSelectedDomElement());
-         }
-       }
-     }
+          }
+        }
+      }
     };
     FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myFileEditorManagerAdapter);
     startListeningDocuments();
   }
 
   protected final void startListeningDocuments() {
-    for (final Document document : getDocuments()) {
+    for (final Document document : myCurrentDocuments) {
       document.addDocumentListener(myDocumentAdapter);
     }
   }
 
   abstract protected DomElement getSelectedDomElement();
   abstract protected void setSelectedDomElement(DomElement domElement);
+
+  public final void addWatchedElement(final DomElement domElement) {
+    addWatchedDocument(getDocumentManager().getDocument(domElement.getRoot().getFile()));
+  }
+
+  public final void removeWatchedElement(final DomElement domElement) {
+    removeWatchedDocument(getDocumentManager().getDocument(domElement.getRoot().getFile()));
+  }
+
+  public final void addWatchedDocument(final Document document) {
+    stopListeningDocuments();
+    myCurrentDocuments.add(document);
+    startListeningDocuments();
+  }
+
+  public final void removeWatchedDocument(final Document document) {
+    stopListeningDocuments();
+    myCurrentDocuments.remove(document);
+    startListeningDocuments();
+  }
 
   protected DomElement getSelectedDomElementFromTextEditor(final TextEditor textEditor) {
     final PsiElement psiElement = getPsiFile().findElementAt(textEditor.getEditor().getCaretModel().getOffset());
@@ -111,7 +134,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     }
   }
 
-  private PsiDocumentManager getDocumentManager() {
+  protected final PsiDocumentManager getDocumentManager() {
     return PsiDocumentManager.getInstance(myProject);
   }
 
@@ -120,9 +143,8 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     return PsiManager.getInstance(myProject).findFile(myFile);
   }
 
-  public Document[] getDocuments() {
-    final PsiFile psiFile = getPsiFile();
-    return psiFile == null ? new Document[0] : new Document[]{getDocumentManager().getDocument(psiFile)};
+  public final Document[] getDocuments() {
+    return myCurrentDocuments.toArray(new Document[myCurrentDocuments.size()]);
   }
 
   public final Project getProject() {
@@ -136,10 +158,10 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   public void dispose() {
     stopListeningDocuments();
     FileEditorManager.getInstance(myProject).removeFileEditorManagerListener(myFileEditorManagerAdapter);
- }
+  }
 
   protected final void stopListeningDocuments() {
-    for (final Document document : getDocuments()) {
+    for (final Document document : myCurrentDocuments) {
       document.removeDocumentListener(myDocumentAdapter);
     }
   }
@@ -166,7 +188,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
   private void commitAllDocuments() {
     final PsiDocumentManager manager = getDocumentManager();
-    for (final Document document : getDocuments()) {
+    for (final Document document : myCurrentDocuments) {
       manager.commitDocument(document);
     }
   }

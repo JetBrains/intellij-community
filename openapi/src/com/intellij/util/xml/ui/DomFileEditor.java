@@ -4,27 +4,52 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.javaee.ui.forms.CaptionComponent;
+import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.ui.UserActivityListener;
+import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.xml.DomElement;
 
 import javax.swing.*;
+import java.awt.*;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 
 /**
  * @author peter
  */
 public abstract class DomFileEditor<T extends BasicDomElementComponent> extends PerspectiveFileEditor{
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final String myName;
   private final T myComponent;
+  private final UserActivityWatcher myUserActivityWatcher;
+  private final UserActivityListener myUserActivityListener;
 
   protected DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
     super(project, file);
     myComponent = component;
     myName = name;
+    myUserActivityWatcher = new UserActivityWatcher();
+    myUserActivityListener = new CommitablePanelUserActivityListener(myComponent);
+    myUserActivityWatcher.addUserActivityListener(myUserActivityListener);
+    myUserActivityWatcher.register(getComponent());
+    new MnemonicHelper().register(getComponent());
+    addWatchedElement(component.getDomElement());
+  }
+
+  public void dispose() {
+    myUserActivityWatcher.removeUserActivityListener(myUserActivityListener);
+    super.dispose();
   }
 
   public void commit() {
-    myComponent.commit();
+    if (checkIsValid()) {
+      myComponent.commit();
+    }
   }
 
   protected final T getDomComponent() {
@@ -50,7 +75,51 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
     }
   }
 
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    myPropertyChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    myPropertyChangeSupport.removePropertyChangeListener(listener);
+  }
+
+  protected final boolean checkIsValid() {
+    if (!myComponent.getDomElement().isValid()) {
+      myPropertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, Boolean.TRUE, Boolean.FALSE);
+      return false;
+    }
+    return true;
+  }
+
   public void reset() {
-    myComponent.reset();
+    if (checkIsValid()) {
+      myComponent.reset();
+    }
+  }
+
+  public static PerspectiveFileEditor createDomFileEditor(final String name,
+                                                          final DomElement element,
+                                                          final CaptionComponent captionComponent,
+                                                          final CommittablePanel committablePanel) {
+    final JComponent component1 = committablePanel.getComponent();
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(captionComponent, BorderLayout.NORTH);
+    panel.add(component1, BorderLayout.CENTER);
+
+    BasicDomElementComponent component = new BasicDomElementComponent(element) {
+      public JComponent getComponent() {
+        return panel;
+      }
+    };
+
+    component.addComponent(committablePanel);
+    component.addComponent(captionComponent);
+
+    final XmlFile file = element.getRoot().getFile();
+    return new DomFileEditor(file.getProject(), file.getVirtualFile(), name, component) {
+      public JComponent getPreferredFocusedComponent() {
+        return null;
+      }
+    };
   }
 }

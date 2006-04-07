@@ -7,6 +7,8 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValuesManager;
@@ -19,7 +21,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   private Map<Class, List<DomElementsAnnotator>> myClass2Annotator = new HashMap<Class, List<DomElementsAnnotator>>();
 
   private Map<DomFileElement, CachedValue<DomElementsProblemsHolder>> myCache =
-    new HashMap<DomFileElement, CachedValue<DomElementsProblemsHolder>>();
+    new WeakValueHashMap<DomFileElement, CachedValue<DomElementsProblemsHolder>>();
 
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement) {
      return getProblems(domElement, false);
@@ -30,53 +32,43 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   public List<DomElementProblemDescriptor> getProblems(DomElement domElement,  boolean includeXmlProblems, boolean withChildren) {
-    if(domElement == null) return Collections.emptyList();
-    
-    if (myCache.get(domElement.getRoot()) == null) {
-      myCache.put(domElement.getRoot(), getCachedValue(domElement));
+    if(domElement == null || !domElement.isValid()) return Collections.emptyList();
+
+    final DomFileElement<?> fileElement = domElement.getRoot();
+    if (myCache.get(fileElement) == null) {
+      myCache.put(fileElement, getCachedValue(fileElement));
     }
 
-    return  myCache.get(domElement.getRoot()).getValue().getProblems(domElement, includeXmlProblems, withChildren);
+    return myCache.get(fileElement).getValue().getProblems(domElement, includeXmlProblems, withChildren);
   }
 
-  private CachedValue<DomElementsProblemsHolder> getCachedValue(final DomElement domElement) {
-    final CachedValuesManager cachedValuesManager = PsiManager.getInstance(domElement.getManager().getProject()).getCachedValuesManager();
+  private CachedValue<DomElementsProblemsHolder> getCachedValue(final DomFileElement fileElement) {
+    final CachedValuesManager cachedValuesManager = PsiManager.getInstance(fileElement.getManager().getProject()).getCachedValuesManager();
 
     return cachedValuesManager.createCachedValue(new CachedValueProvider<DomElementsProblemsHolder>() {
       public Result<DomElementsProblemsHolder> compute() {
         final DomElementsProblemsHolder holder = new DomElementsProblemsHolderImpl();
-
-        final List<DomElementsAnnotator> annotators = getDomElementsAnnotators(domElement);
-
-        for (DomElementsAnnotator annotator : annotators) {
-          annotator.annotate((DomElement)domElement.getRoot().getRootElement(), holder);
+        final DomElement rootElement = fileElement.getRootElement();
+        final Class<?> type = DomUtil.getRawType(rootElement.getDomElementType());
+        for (DomElementsAnnotator annotator : getOrCreateAnnotators(type)) {
+          annotator.annotate(rootElement, holder);
         }
-
-        return new Result<DomElementsProblemsHolder>(holder, domElement.getRoot().getFile());
+        return new Result<DomElementsProblemsHolder>(holder, fileElement.getFile());
       }
     }, false);
   }
 
-  public List<DomElementsAnnotator> getDomElementsAnnotators(DomElement domElement) {
-    final Class key = getRootElementClass(domElement);
-
-    return myClass2Annotator.get(key) == null ? new ArrayList<DomElementsAnnotator>() : myClass2Annotator.get(key);
-  }
-
 
   public void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class aClass) {
-    final List<DomElementsAnnotator> annotators =
-      myClass2Annotator.get(aClass) == null ? new ArrayList<DomElementsAnnotator>() : myClass2Annotator.get(aClass);
+    final List<DomElementsAnnotator> annotators = getOrCreateAnnotators(aClass);
 
     annotators.add(annotator);
 
     myClass2Annotator.put(aClass, annotators);
   }
 
-  private static Class getRootElementClass(DomElement domElement) {
-    final DomElement rootElement = (DomElement)domElement.getRoot().getRootElement();
-
-    return (Class)rootElement.getDomElementType();
+  private List<DomElementsAnnotator> getOrCreateAnnotators(final Class aClass) {
+    return myClass2Annotator.get(aClass) == null ? new ArrayList<DomElementsAnnotator>() : myClass2Annotator.get(aClass);
   }
 
   @NonNls

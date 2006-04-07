@@ -32,7 +32,5 @@ public abstract class DomElementAnnotationsManager {
   public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems);
   public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren);
 
-  public abstract List<DomElementsAnnotator> getDomElementsAnnotators(DomElement domElement);
-
   public abstract void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class aClass);
 }
