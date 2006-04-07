@@ -40,9 +40,9 @@ public class AntPropertyValueReferenceProvider extends GenericReferenceProvider 
     int startIndex;
     int endIndex = -1;
     while ((startIndex = value.indexOf("${", endIndex + 1)) > endIndex) {
+      startIndex += 2;
       endIndex = value.indexOf('}', startIndex);
       if (endIndex < 0) break;
-      startIndex += 2;
       if (endIndex > startIndex) {
         final String propName = value.substring(startIndex, endIndex);
         AntElement temp = element;

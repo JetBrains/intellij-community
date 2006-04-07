@@ -23,8 +23,12 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    final XmlAttribute attribute = getAttribute();
+    final String oldName = getCanonicalText();
+    final String value = attribute.getValue();
+    attribute.setValue(value.replace("${" + oldName + '}', "${" + newElementName + '}'));
     final AntElement element = getElement();
-    //element.setName(newElementName);
+    element.subtreeChanged();
     return element;
   }
 
