@@ -21,14 +21,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class InnerClassMayBeStaticInspection extends ClassInspection {
+import java.util.Collection;
+
+public class InnerClassMayBeStaticInspection extends BaseInspection {
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "inner.class.may.be.static.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.PERFORMANCE_GROUP_NAME;
@@ -45,7 +55,7 @@ public class InnerClassMayBeStaticInspection extends ClassInspection {
     }
 
     private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix {
-        
+
         public String getName() {
             return InspectionGadgetsBundle.message("make.static.quickfix");
         }
@@ -56,11 +66,10 @@ public class InnerClassMayBeStaticInspection extends ClassInspection {
                     (PsiJavaToken)descriptor.getPsiElement();
             final PsiClass innerClass = (PsiClass)classNameToken.getParent();
             assert innerClass != null;
-            final PsiManager manager = innerClass.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final SearchScope useScope = innerClass.getUseScope();
-            final PsiReference[] references =
-                    searchHelper.findReferences(innerClass, useScope, false);
+            final Query<PsiReference> query =
+                    ReferencesSearch.search(innerClass, useScope);
+            final Collection<PsiReference> references = query.findAll();
             for (final PsiReference reference : references) {
                 final PsiElement element = reference.getElement();
                 final PsiElement parent = element.getParent();

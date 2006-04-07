@@ -11,3 +11,17 @@ public class InnerClassMayBeStaticInspection {
          }
      }
 }
+class IDEADEV_5513 {
+
+    private static class Inner  {
+        
+        private boolean b = false;
+
+        private class InnerInner {
+
+            public void foo() {
+                b = true;
+            }
+        }
+    }
+}
