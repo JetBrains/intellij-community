@@ -61,34 +61,34 @@ public class SymbolPresentationUtil {
 
   public static String getSymbolContainerText(PsiElement element) {
     String result = null;
-    if (element instanceof NavigationItem){
+
+    if (element instanceof Property) {
+      result = element.getContainingFile().getName();
+    }
+    else {
+      PsiElement container = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
+
+      if (container instanceof PsiClass) {
+        String qName = ((PsiClass)container).getQualifiedName();
+        if (qName != null) {
+          result = qName;
+        }
+        else {
+          result = ((PsiClass)container).getName();
+        }
+      }
+      else if (container instanceof PsiJavaFile) {
+        result = ((PsiJavaFile)container).getPackageName();
+      }
+      else {//TODO: local classes
+        result = null;
+      }
+    }
+
+    if (result == null && element instanceof NavigationItem){
       final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
       if (presentation != null){
         result = presentation.getLocationString();
-      }
-    }
-    if (result == null) {
-      if (element instanceof Property) {
-        result = element.getContainingFile().getName();
-      }
-      else {
-        PsiElement container = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
-
-        if (container instanceof PsiClass) {
-          String qName = ((PsiClass)container).getQualifiedName();
-          if (qName != null) {
-            result = qName;
-          }
-          else {
-            result = ((PsiClass)container).getName();
-          }
-        }
-        else if (container instanceof PsiJavaFile) {
-          result = ((PsiJavaFile)container).getPackageName();
-        }
-        else {//TODO: local classes
-          result = null;
-        }
       }
     }
 
