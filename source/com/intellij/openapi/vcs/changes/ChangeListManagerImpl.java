@@ -205,7 +205,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     menuGroup.add(commitAction);
     for (CommitExecutor executor : myExecutors) {
-      modelActionsGroup.add(new CommitUsingExecutorAction(executor));
+      menuGroup.add(new CommitUsingExecutorAction(executor));
     }
 
     menuGroup.add(rollbackAction);
