@@ -453,10 +453,15 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     final JSFReferencesProvider jsfProvider = new JSFReferencesProvider();
 
     registerXmlTagReferenceProvider(
-      new String[] { "property-name", "property-class",
-      //  "for", "id"
-      },
+      jsfProvider.getTagNames(),
       jsfNsFilter,
+      true,
+      jsfProvider
+    );
+
+    registerXmlAttributeValueReferenceProvider(
+      jsfProvider.getAttributeNames(),
+      new ParentElementFilter( new NamespaceFilter(XmlUtil.JSF_HTML_URI), 2),
       true,
       jsfProvider
     );
