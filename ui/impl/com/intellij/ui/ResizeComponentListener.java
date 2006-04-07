@@ -200,6 +200,10 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
       }
       return Cursor.DEFAULT_CURSOR;
     }
+    bounds = new Rectangle(bounds.x + 2, bounds.y + 2, bounds.width - 2, bounds.height - 2);
+    if (!bounds.contains(startPoint)){
+      return Cursor.DEFAULT_CURSOR;
+    }
     if (Math.abs(startPoint.x - bounds.x ) < SENSITIVITY){ //left bound
       if (Math.abs(startPoint.y - bounds.y) < SENSITIVITY){ //top
         return Cursor.NW_RESIZE_CURSOR;
