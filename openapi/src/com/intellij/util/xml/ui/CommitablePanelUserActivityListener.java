@@ -21,6 +21,7 @@ import com.intellij.ui.UserActivityListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.util.Alarm;
 
 /**
  * User: Sergey.Vasiliev
@@ -30,39 +31,42 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
 
   CommittablePanel myPanel;
 
-  private MergingUpdateQueue myUpdateQueue;
+  private Alarm myAlarm;
 
   public CommitablePanelUserActivityListener() {
   }
 
   public CommitablePanelUserActivityListener(final CommittablePanel panel) {
     myPanel = panel;
-    myUpdateQueue = new MergingUpdateQueue("DomCommitableUpdateQueue", 239, true, myPanel.getComponent());
-  }
+    myAlarm = new Alarm();
+ }
 
   final public void stateChanged() {
-    if (!myResetting) {
-      myUpdateQueue.queue(new Update("DoActivityUpdate") {
-        public void run() {
-          doActivity();
-        }
-      });
-    }
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(new Runnable() {
+      public void run() {
+        doActivity();
+      }
+    }, 239);
+
   }
 
   protected void doActivity() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
+    if (!myResetting) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
 
-        myResetting = true;
-        try {
-          applyChanges();
-        } finally {
-          myResetting = false;
+          myResetting = true;
+          try {
+            applyChanges();
+          }
+          finally {
+            myResetting = false;
+          }
+          doAfterApply();
         }
-        doAfterApply();
-      }
-    });
+      });
+    }
   }
 
   protected void applyChanges() {
