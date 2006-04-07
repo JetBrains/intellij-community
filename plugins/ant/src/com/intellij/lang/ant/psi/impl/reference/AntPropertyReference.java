@@ -23,7 +23,9 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return getElement();
+    final AntElement element = getElement();
+    //element.setName(newElementName);
+    return element;
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {

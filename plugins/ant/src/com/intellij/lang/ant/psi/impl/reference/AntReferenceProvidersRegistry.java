@@ -1,10 +1,7 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.impl.AntCallImpl;
-import com.intellij.lang.ant.psi.impl.AntProjectImpl;
-import com.intellij.lang.ant.psi.impl.AntPropertyImpl;
-import com.intellij.lang.ant.psi.impl.AntTargetImpl;
+import com.intellij.lang.ant.psi.impl.*;
 import com.intellij.lang.ant.psi.impl.reference.providers.AntPropertyFileReferenceProvider;
 import com.intellij.lang.ant.psi.impl.reference.providers.AntPropertyValueReferenceProvider;
 import com.intellij.lang.ant.psi.impl.reference.providers.AntSingleTargetReferenceProvider;
@@ -26,6 +23,8 @@ public class AntReferenceProvidersRegistry {
     ourProviders.put(AntTargetImpl.class, new GenericReferenceProvider[]{new AntTargetListReferenceProvider(), propValueProvider});
     ourProviders.put(AntCallImpl.class, new GenericReferenceProvider[]{new AntSingleTargetReferenceProvider(), propValueProvider});
     ourProviders.put(AntPropertyImpl.class, new GenericReferenceProvider[]{new AntPropertyFileReferenceProvider(), propValueProvider});
+    ourProviders.put(AntTaskImpl.class, new GenericReferenceProvider[]{propValueProvider});
+    ourProviders.put(AntElementImpl.class, new GenericReferenceProvider[]{propValueProvider});
   }
 
   private AntReferenceProvidersRegistry() {

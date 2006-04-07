@@ -25,7 +25,7 @@ public class AntPropertyValueReferenceProvider extends GenericReferenceProvider 
     if (attributes.length > 0) {
       List<PsiReference> refs = new ArrayList<PsiReference>();
       for (XmlAttribute attr : attributes) {
-        getAttributeReferences(antElement.getAntParent(), attr, refs);
+        getAttributeReferences(antElement, attr, refs);
       }
       if (refs.size() > 0) {
         return refs.toArray(new PsiReference[refs.size()]);
@@ -35,7 +35,6 @@ public class AntPropertyValueReferenceProvider extends GenericReferenceProvider 
   }
 
   private void getAttributeReferences(final AntElement element, final XmlAttribute attr, final List<PsiReference> refs) {
-    if (element == null) return;
     final String value = attr.getValue();
     final int offsetInPosition = attr.getValueElement().getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1;
     int startIndex;
@@ -45,14 +44,16 @@ public class AntPropertyValueReferenceProvider extends GenericReferenceProvider 
       if (endIndex < 0) break;
       startIndex += 2;
       if (endIndex > startIndex) {
-        final String propName = value.substring(startIndex, endIndex - startIndex);
+        final String propName = value.substring(startIndex, endIndex);
         AntElement temp = element;
         AntProperty result = null;
-        while (temp != null && (result = temp.getProperty(propName)) == null) {
+        do {
           temp = temp.getAntParent();
+          if (temp == null) break;
         }
+        while ((result = temp.getProperty(propName)) == null);
         if (result != null) {
-          refs.add(new AntPropertyReference(this, result, propName,
+          refs.add(new AntPropertyReference(this, element, propName,
                                             new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
         }
       }

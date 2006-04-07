@@ -17,6 +17,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
@@ -33,6 +35,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   private AntElement[] myChildren = null;
   private PsiReference[] myReferences = null;
   private XmlAttribute[] myAttributes = null;
+  private Map<String, AntProperty> myProperties = null;
 
   public AntElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(sourceElement);
@@ -78,12 +81,15 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
 
   @NotNull
   public AntProperty[] getProperties() {
-    return AntProperty.EMPTY_ARRAY;
+    instantiatelProperties();
+    final int propCount = myProperties.size();
+    return propCount == 0 ? AntProperty.EMPTY_ARRAY : myProperties.values().toArray(new AntProperty[propCount]);
   }
 
   @Nullable
   public AntProperty getProperty(final String name) {
-    return null;
+    instantiatelProperties();
+    return myProperties.get(name);
   }
 
   public PsiElement getParent() {
@@ -213,5 +219,17 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     final AntElementImpl element = (AntElementImpl)super.clone();
     element.clearCaches();
     return element;
+  }
+
+  private void instantiatelProperties() {
+    if (myProperties == null) {
+      myProperties = new HashMap<String, AntProperty>();
+      for (AntElement element : getChildren()) {
+        if (element instanceof AntProperty) {
+          AntProperty prop = (AntProperty)element;
+          myProperties.put(prop.getName(), prop);
+        }
+      }
+    }
   }
 }
