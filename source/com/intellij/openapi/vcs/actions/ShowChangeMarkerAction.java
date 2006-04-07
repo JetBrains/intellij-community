@@ -32,6 +32,10 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
     };
   }
 
+  protected boolean requiresEventDispatchThreadUpdate() {
+    return true;
+  }
+
   public ShowChangeMarkerAction() {
     myChangeMarkerContext = new ChangeMarkerContext() {
       public Range getRange(VcsContext context) {

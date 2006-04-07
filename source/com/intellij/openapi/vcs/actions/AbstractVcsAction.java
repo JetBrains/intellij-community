@@ -31,32 +31,39 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ModuleLevelVcsManager;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ModuleLevelVcsManager;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 
-import java.util.Collection;
-import java.util.List;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public abstract class AbstractVcsAction extends AnAction {
+  private static final ExecutorService ourAsyncUpdateExecutor = Executors.newSingleThreadExecutor();
+
   public static Collection<AbstractVcs> getActiveVcses(VcsContext dataContext) {
     Collection<AbstractVcs> result = new HashSet<AbstractVcs>();
     Project project = dataContext.getProject();
     if (project != null) {
       Module[] modules = ModuleManager.getInstance(project).getModules();
-      for (int i = 0; i < modules.length; i++) {
-        Module module = modules[i];
+      for (Module module : modules) {
         AbstractVcs activeVcs = ModuleLevelVcsManager.getInstance(module).getActiveVcs();
         if (activeVcs != null) {
           result.add(activeVcs);
@@ -66,13 +73,11 @@ public abstract class AbstractVcsAction extends AnAction {
     return result;
   }
 
-  protected FilePath[] filterDescindingFiles(FilePath[] roots, Project project) {
+  protected static FilePath[] filterDescindingFiles(FilePath[] roots, Project project) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     List<FilePath> result = new ArrayList<FilePath>(Arrays.asList(roots));
-    for (int i = 0; i < roots.length; i++) {
-      FilePath first = roots[i];
-      for (int j = 0; j < roots.length; j++) {
-        FilePath second = roots[j];
+    for (FilePath first : roots) {
+      for (FilePath second : roots) {
         Module firstModule = getModuleForPath(fileIndex, first);
         Module secondModule = getModuleForPath(fileIndex, second);
 
@@ -85,7 +90,7 @@ public abstract class AbstractVcsAction extends AnAction {
     return result.toArray(new FilePath[result.size()]);
   }
 
-  private Module getModuleForPath(ProjectFileIndex fileIndex, FilePath path) {
+  private static Module getModuleForPath(ProjectFileIndex fileIndex, FilePath path) {
     VirtualFile virtualFile = path.getVirtualFile();
     if (virtualFile != null) {
       return fileIndex.getModuleForFile(virtualFile);
@@ -97,9 +102,43 @@ public abstract class AbstractVcsAction extends AnAction {
     return null;
   }
 
+  // Async update
   public final void update(AnActionEvent e) {
-    super.update(e);
+    if (requiresEventDispatchThreadUpdate()) {
+      beforeActionPerformedUpdate(e);
+    }
+    else {
+      final VcsContext context = VcsContextWrapper.createCachedInstanceOn(e);
+      final Presentation originalPresentation = e.getPresentation();
+      final Presentation presentation = (Presentation) originalPresentation.clone();
+
+      ourAsyncUpdateExecutor.submit(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              update(context, presentation);
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  originalPresentation.copyFrom(presentation);
+                }
+              });
+            }
+          });
+        }
+      });
+
+      presentation.setVisible(true);
+      presentation.setEnabled(false);
+    }
+  }
+
+  // Sync update
+  public void beforeActionPerformedUpdate(AnActionEvent e) {
     update(VcsContextWrapper.createInstanceOn(e), e.getPresentation());
+  }
+
+  protected boolean requiresEventDispatchThreadUpdate() {
+    return false;
   }
 
   public final void actionPerformed(AnActionEvent e) {

@@ -234,6 +234,15 @@ public final class Presentation implements Cloneable {
     }
   }
 
+  public void copyFrom(Presentation presentation) {
+    setText(presentation.getText());
+    setDescription(presentation.getDescription());
+    setIcon(presentation.getIcon());
+    setDisabledIcon(presentation.getDisabledIcon());
+    setVisible(presentation.isVisible());
+    setEnabled(presentation.isEnabled());
+  }
+
   public Object getClientProperty(@NonNls String key){
     if(myUserMap==null){
       return null;
