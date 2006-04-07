@@ -166,6 +166,11 @@ public class IdeRootPane extends JRootPane{
 
   private void updateNavigationBarVisibility(){
     if (myNavigationBar != null) {
+      if (myUISettings.SHOW_NAVIGATION_BAR){
+        myNavigationBar.installListeners();
+      } else {
+        myNavigationBar.uninstallListeners();
+      }
       myNavigationBar.setVisible(myUISettings.SHOW_NAVIGATION_BAR);
       myNavigationBar.updateState(myUISettings.SHOW_NAVIGATION_BAR);
     }
@@ -179,6 +184,7 @@ public class IdeRootPane extends JRootPane{
   }
 
   public void deinstallNavigationBar(){
+    myNavigationBar.uninstallListeners();
     myNorthPanel.remove(myNavigationBar);
     myNavigationBar = null;
   }

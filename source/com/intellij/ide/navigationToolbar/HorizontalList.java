@@ -231,11 +231,11 @@ public class HorizontalList extends JPanel {
     paintComponent();
   }
 
-  private void clearBorder(JLabel label){
+  private static void clearBorder(JLabel label){
     label.setBorder(BorderFactory.createEmptyBorder(2,2,2,4));
   }
 
-  private void installDottedBorder(JLabel label){
+  private static void installDottedBorder(JLabel label){
     label.setBorder(new DottedBorder(new Insets(2,2,2,4), UIUtil.getListForeground()));
   }
 
