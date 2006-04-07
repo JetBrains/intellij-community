@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -174,7 +173,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
               processText(tool.getDisplayName().toLowerCase(), tool);
               final URL description = getDescriptionUrl(tool, tool.getDescriptionFileName());
               if (description != null) {
-                @NonNls String descriptionText = readInputStream(description.openStream()).toLowerCase();
+                @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
                 if (descriptionText != null) {
                   descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
                   processText(descriptionText, tool);
@@ -231,21 +230,5 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
       aClass = InspectCodePanel.class;
     }
     return ResourceUtil.getResource(aClass, "/inspectionDescriptions", descriptionFileName);
-  }
-
-  private static String readInputStream(InputStream in) {
-    try {
-      StringBuffer str = new StringBuffer();
-      int c = in.read();
-      while (c != -1) {
-        str.append((char)c);
-        c = in.read();
-      }
-      return str.toString();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    return null;
   }
 }

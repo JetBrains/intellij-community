@@ -28,7 +28,6 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.awt.*;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
@@ -367,7 +366,7 @@ public class Browser extends JPanel {
     @NonNls final String underConstruction = "<b>" + UNDER_CONSTRUCTION + "</b></html>";
     try {
       if (descriptionUrl != null){
-        @NonNls final String description = readInputStream(descriptionUrl.openStream());
+        @NonNls final String description = ResourceUtil.loadText(descriptionUrl);
         if (description != null && description.startsWith("<html>")) {
           page.append(description.substring(description.indexOf("<html>") + 6));
         } else {
@@ -388,22 +387,6 @@ public class Browser extends JPanel {
       }
     } finally {
       myCurrentEntity = null;
-    }
-  }
-
-  @Nullable
-  private static String readInputStream(InputStream in) {
-    try {
-      StringBuffer str = new StringBuffer();
-      int c = in.read();
-      while (c != -1) {
-        str.append((char)c);
-        c = in.read();
-      }
-      return str.toString();
-    }
-    catch (IOException e) {
-      return null;
     }
   }
 

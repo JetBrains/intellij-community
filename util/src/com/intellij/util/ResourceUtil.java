@@ -18,6 +18,7 @@ package com.intellij.util;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -105,7 +106,7 @@ public class ResourceUtil {
 
   public static @NotNull String loadText(@NotNull URL url) throws IOException {
     URLConnection connection = url.openConnection();
-    InputStream inputStream = connection.getInputStream();
+    InputStream inputStream = new BufferedInputStream(connection.getInputStream());
 
     InputStreamReader reader = null;
     try {
