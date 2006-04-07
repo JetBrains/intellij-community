@@ -36,6 +36,7 @@ import com.intellij.xml.impl.ant.AntPropertyDeclaration;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,6 +60,9 @@ public class XmlUtil {
   public static final String XML_SCHEMA_URI2 = "http://www.w3.org/1999/XMLSchema";
   public static final String XML_SCHEMA_URI3 = "http://www.w3.org/2000/10/XMLSchema";
   public static final String XML_SCHEMA_INSTANCE_URI = "http://www.w3.org/2001/XMLSchema-instance";
+
+  public static final String XSLT_URI = "http://www.w3.org/1999/XSL/Transform";
+
   public static final String ANT_URI = "http://ant.apache.org/schema.xsd";
   public static final String XHTML_URI = "http://www.w3.org/1999/xhtml";
   public static final String HTML_URI = "http://www.w3.org/1999/html";
@@ -254,6 +258,10 @@ public class XmlUtil {
       deepFlag,
       wideFlag
     );
+  }
+
+  public static boolean tagFromTemplateFramework(@NotNull final XmlTag tag) {
+    return XSLT_URI.equals(tag.getNamespace());
   }
 
   private static class XmlElementProcessor {

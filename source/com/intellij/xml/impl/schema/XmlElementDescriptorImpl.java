@@ -180,7 +180,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       return typeDescriptor.getAttributes();
     }
 
-    return new XmlAttributeDescriptor[0];
+    return XmlAttributeDescriptor.EMPTY;
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName){
@@ -256,6 +256,15 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
         } else if ((namespace == null || namespace.length() == 0) &&
                    element.getDefaultName().equals(localName)) {
           return element;
+        } else {
+          final XmlNSDescriptor descriptor = context instanceof XmlTag? ((XmlTag)context).getNSDescriptor(namespace, true) : null;
+
+          // schema's targetNamespace could be different from file systemId used as NS
+          if (descriptor instanceof XmlNSDescriptorImpl &&
+              ((XmlNSDescriptorImpl)descriptor).getDefaultNamespace().equals(namespaceByContext)
+             ) {
+            return element;
+          }
         }
       }
     }

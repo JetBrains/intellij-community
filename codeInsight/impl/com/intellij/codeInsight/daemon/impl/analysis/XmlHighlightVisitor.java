@@ -418,8 +418,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       if (parentDescriptor != null &&
           elementDescriptor == null &&
-          parentTag.getUserData(DO_NOT_VALIDATE_KEY) == null
-         ) {
+          parentTag.getUserData(DO_NOT_VALIDATE_KEY) == null &&
+          !XmlUtil.tagFromTemplateFramework(tag)
+      ) {
         addElementsForTag(
           tag,
           XmlErrorMessages.message("element.is.not.allowed.here", name),
@@ -429,7 +430,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         return;
       }
 
-      if (elementDescriptor instanceof AnyXmlElementDescriptor || parentDescriptor == null) {
+      if (elementDescriptor instanceof AnyXmlElementDescriptor ||
+          elementDescriptor == null
+         ) {
         elementDescriptor = tag.getDescriptor();
       }
 

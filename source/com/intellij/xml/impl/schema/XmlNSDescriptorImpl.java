@@ -150,7 +150,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       if(attrNamespace.equals(namespace) || XmlUtil.EMPTY_URI.equals(attrNamespace))
         return true;
     }
-    else return myTargetNamespace.equals(namespace);
+    else {
+      final boolean b = myTargetNamespace.equals(namespace);
+      if (b) return b;
+      return context.getNSDescriptor(namespace, true) == this; // schema's targetNamespace could be different from file systemId
+    }
     return false;
   }
 
@@ -410,7 +414,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
                       (nsDescriptor1 != XmlNSDescriptorImpl.this)?
                       nsDescriptor1.findTypeDescriptor(rTag, name):
                       nsDescriptor1.findTypeDescriptorImpl(rTag, name,visited1);
-                    return new Result<TypeDescriptor>(complexTypeDescriptor, new Object[]{rTag});
+                    return new Result<TypeDescriptor>(complexTypeDescriptor, rTag);
                   }
                 }, false
               );
@@ -431,7 +435,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     final CachedValue<TypeDescriptor> value = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
       public CachedValueProvider.Result<TypeDescriptor> compute() {
         final SimpleTypeDescriptor simpleTypeDescriptor = new SimpleTypeDescriptor(tag);
-        return new Result<TypeDescriptor>(simpleTypeDescriptor, new Object[]{tag});
+        return new Result<TypeDescriptor>(simpleTypeDescriptor, tag);
       }
     }, false);
     myTypesMap.put(pair, value);
@@ -448,7 +452,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           return new Result<TypeDescriptor>(null);
         }
         final ComplexTypeDescriptor complexTypeDescriptor = new ComplexTypeDescriptor(XmlNSDescriptorImpl.this, tag); 
-        return new Result<TypeDescriptor>(complexTypeDescriptor, new Object[]{tag});
+        return new Result<TypeDescriptor>(complexTypeDescriptor, tag);
       }
     }, false);
     myTypesMap.put(pair, value);
@@ -468,7 +472,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         final XmlElementDescriptor elementDescriptorFromParent = parentDescriptor.getElementDescriptor(tag);
 
         if (elementDescriptorFromParent instanceof AnyXmlElementDescriptor) {
-          final XmlElementDescriptor elementDescriptor = getElementDescriptor(tag.getLocalName(), tag.getNamespace());
+          final XmlElementDescriptor elementDescriptor = getElementDescriptor(tag.getLocalName(), namespace);
           if (elementDescriptor != null) return elementDescriptor;
         }
         return elementDescriptorFromParent;
@@ -487,7 +491,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           if (descriptor != null) elementDescriptor = descriptor.getElementDescriptor(tag);
         }
       }
-      
+
       return elementDescriptor;
     }
   }
