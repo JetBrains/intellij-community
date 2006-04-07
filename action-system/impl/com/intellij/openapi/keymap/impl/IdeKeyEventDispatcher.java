@@ -7,10 +7,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.impl.ui.KeyboardShortcutDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrame;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -27,8 +28,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * This class is automaton with finite number of state.
@@ -342,7 +341,7 @@ public final class IdeKeyEventDispatcher {
                                                           ActionManager.getInstance(),
                                                           0);
 
-      action.update(actionEvent);
+      action.beforeActionPerformedUpdate(actionEvent);
       if (!presentation.isEnabled()) {
         continue;
       }

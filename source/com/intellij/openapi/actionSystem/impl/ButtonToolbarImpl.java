@@ -113,7 +113,7 @@ public class ButtonToolbarImpl extends JPanel {
             ActionManager.getInstance(),
             e.getModifiers()
           );
-          action.update(event);
+          action.beforeActionPerformedUpdate(event);
           if (action.getTemplatePresentation().isEnabled()) {
             action.actionPerformed(event);
           }

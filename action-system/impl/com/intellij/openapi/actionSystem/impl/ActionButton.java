@@ -8,14 +8,13 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ActionButton extends JComponent implements ActionButtonComponent {
   private static final Insets ICON_INSETS = new Insets(2, 2, 2, 2);
@@ -96,7 +95,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
       ActionManager.getInstance(),
       e.getModifiers()
     );
-    myAction.update(event);
+    myAction.beforeActionPerformedUpdate(event);
     if (isButtonEnabled()) {
       ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(myAction, event.getDataContext());
       Component component = ((Component)event.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT));

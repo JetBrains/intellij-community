@@ -198,7 +198,7 @@ public class WelcomeScreen {
             actionManager,
             0
           );
-          action.update(evt);
+          action.beforeActionPerformedUpdate(evt);
           if (evt.getPresentation().isEnabled()) {
             action.actionPerformed(evt);
           }

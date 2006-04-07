@@ -17,11 +17,10 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents an entity that has a state, a presentation and can be performed.
@@ -188,6 +187,15 @@ public abstract class AnAction {
    * @param e Carries information on the invocation place and data available
    */
   public void update(AnActionEvent e) {
+  }
+
+  /**
+   * Same as {@link #update(AnActionEvent)} but is calls immediately before actionPerformed() as final check
+   * guard. Default implementation delegates to {@link #update(AnActionEvent)}. 
+   * @param e
+   */
+  public void beforeActionPerformedUpdate(AnActionEvent e) {
+    update(e);
   }
 
   /**

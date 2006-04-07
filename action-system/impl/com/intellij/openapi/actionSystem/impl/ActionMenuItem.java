@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,8 +19,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ActionMenuItem extends JMenuItem{
   private static final Icon ourCheckedIcon = IconLoader.getIcon("/actions/check.png");
@@ -141,7 +140,7 @@ public class ActionMenuItem extends JMenuItem{
         ActionManager.getInstance(),
         e.getModifiers()
       );
-      myAction.update(event);
+      myAction.beforeActionPerformedUpdate(event);
       if(myPresentation.isEnabled()){
         ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
         actionManager.fireBeforeActionPerformed(myAction, myContext);

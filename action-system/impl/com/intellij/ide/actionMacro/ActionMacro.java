@@ -229,7 +229,7 @@ public class ActionMacro implements JDOMExternalizable {
       if (action == null) return;
       Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
       AnActionEvent event = new AnActionEvent(null, context, "MACRO_PLAYBACK", presentation, ActionManager.getInstance(), 0);
-      action.update(event);
+      action.beforeActionPerformedUpdate(event);
       if (!presentation.isEnabled()) {
         return;
       }

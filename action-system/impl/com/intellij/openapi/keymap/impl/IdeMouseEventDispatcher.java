@@ -108,7 +108,7 @@ public final class IdeMouseEventDispatcher{
       AnActionEvent actionEvent=new AnActionEvent(e,dataContext,ActionPlaces.MAIN_MENU,presentation,
                                                   ActionManager.getInstance(),
                                                   e.getModifiers());
-      action.update(actionEvent);
+      action.beforeActionPerformedUpdate(actionEvent);
       if(presentation.isEnabled()){
         actionManager.fireBeforeActionPerformed(action, dataContext);
         Component c = (Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
