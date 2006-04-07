@@ -33,6 +33,7 @@ package com.intellij.psi.presentation.java;
 
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
@@ -59,27 +60,35 @@ public class SymbolPresentationUtil {
   }
 
   public static String getSymbolContainerText(PsiElement element) {
-    final String result;
-    if (element instanceof Property) {
-      result = element.getContainingFile().getName();
+    String result = null;
+    if (element instanceof NavigationItem){
+      final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
+      if (presentation != null){
+        result = presentation.getLocationString();
+      }
     }
-    else {
-      PsiElement container = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
+    if (result == null) {
+      if (element instanceof Property) {
+        result = element.getContainingFile().getName();
+      }
+      else {
+        PsiElement container = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
 
-      if (container instanceof PsiClass) {
-        String qName = ((PsiClass)container).getQualifiedName();
-        if (qName != null) {
-          result = qName;
+        if (container instanceof PsiClass) {
+          String qName = ((PsiClass)container).getQualifiedName();
+          if (qName != null) {
+            result = qName;
+          }
+          else {
+            result = ((PsiClass)container).getName();
+          }
         }
-        else {
-          result = ((PsiClass)container).getName();
+        else if (container instanceof PsiJavaFile) {
+          result = ((PsiJavaFile)container).getPackageName();
         }
-      }
-      else if (container instanceof PsiJavaFile) {
-        result = ((PsiJavaFile)container).getPackageName();
-      }
-      else {//TODO: local classes
-        result = null;
+        else {//TODO: local classes
+          result = null;
+        }
       }
     }
 
