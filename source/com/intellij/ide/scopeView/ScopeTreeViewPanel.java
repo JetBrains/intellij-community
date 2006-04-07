@@ -166,7 +166,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     myTreeExpansionMonitor.freeze();
     final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
     root.removeAllChildren();
-    if (scope == null){ //was deleted
+    if (scope == null || scope.getValue() == null) { //was deleted
       scope = DependencyValidationManager.getInstance(myProject).getProjectScope();
     }
     final PackageSet packageSet = scope.getValue();
