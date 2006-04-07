@@ -21,6 +21,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
+import org.objectweb.asm.commons.EmptyVisitor;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -153,8 +154,12 @@ public class AsmCodeGenerator {
       myErrors.add(new FormErrorInfo(null, "Error reading class data stream"));
       return null;
     }
+
+    FirstPassClassVisitor visitor = new FirstPassClassVisitor();
+    reader.accept(visitor, true);
+
     ClassWriter cw = new ClassWriter(true);
-    reader.accept(new FormClassVisitor(cw), false);
+    reader.accept(new FormClassVisitor(cw, visitor.isExplicitSetupCall()), false);
     myPatchedData = cw.toByteArray();
     return myPatchedData;
   }
@@ -194,9 +199,11 @@ public class AsmCodeGenerator {
     private Map myFieldDescMap = new HashMap();
     private Map myFieldAccessMap = new HashMap();
     private boolean myHaveCreateComponentsMethod = false;
+    private final boolean myExplicitSetupCall;
 
-    public FormClassVisitor(final ClassVisitor cv) {
+    public FormClassVisitor(final ClassVisitor cv, final boolean explicitSetupCall) {
       super(cv);
+      myExplicitSetupCall = explicitSetupCall;
     }
 
     public void visit(final int version,
@@ -224,7 +231,7 @@ public class AsmCodeGenerator {
       }
 
       final MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
-      if (name.equals(CONSTRUCTOR_NAME)) {
+      if (name.equals(CONSTRUCTOR_NAME) && !myExplicitSetupCall) {
         return new FormConstructorVisitor(methodVisitor, myClassName, mySuperName);
       }
       return methodVisitor;
@@ -671,6 +678,38 @@ public class AsmCodeGenerator {
         if (owner.equals(mySuperName) && !callsSelfConstructor) {
           mv.visitVarInsn(Opcodes.ALOAD, 0);
           mv.visitMethodInsn(Opcodes.INVOKESPECIAL, myClassName, SETUP_METHOD_NAME, "()V");
+        }
+      }
+    }
+  }
+
+  private static class FirstPassClassVisitor extends ClassAdapter {
+    private boolean myExplicitSetupCall = false;
+
+    public FirstPassClassVisitor() {
+      super(new EmptyVisitor());
+    }
+
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+      if (name.equals(CONSTRUCTOR_NAME)) {
+        final FirstPassConstructorVisitor visitor = new FirstPassConstructorVisitor();
+        return visitor;
+      }
+      return null;
+    }
+
+    public boolean isExplicitSetupCall() {
+      return myExplicitSetupCall;
+    }
+
+    private class FirstPassConstructorVisitor extends MethodAdapter {
+      public FirstPassConstructorVisitor() {
+        super(new EmptyVisitor());
+      }
+
+      public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
+        if (name.equals(SETUP_METHOD_NAME)) {
+          myExplicitSetupCall = true;
         }
       }
     }
