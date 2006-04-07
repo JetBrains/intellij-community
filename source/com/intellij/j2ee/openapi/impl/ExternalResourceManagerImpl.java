@@ -65,6 +65,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(J2EE_1_2 +  "web-jsptaglibrary_1_1.dtd","web-jsptaglibrary_1_1.dtd");
     addInternalResource(IBM_NS + "j2ee_web_services_client_1_1.xsd","j2ee_web_services_client_1_1.xsd");
 
+    addInternalResource("http://www.w3.org/1999/XSL/Transform","xslt-1_0.xsd");
     addInternalResource("http://www.w3.org/2001/XMLSchema", "XMLSchema.xsd");
     addInternalResource("http://www.w3.org/2001/XMLSchema-instance", "XMLSchema-instance.xsd");
     addInternalResource("http://www.w3.org/2001/xml.xsd","xml.xsd");
