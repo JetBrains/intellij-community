@@ -19,6 +19,8 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.ui.UserActivityListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 
 /**
  * User: Sergey.Vasiliev
@@ -28,29 +30,39 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
 
   CommittablePanel myPanel;
 
+  private MergingUpdateQueue myUpdateQueue;
+
   public CommitablePanelUserActivityListener() {
   }
 
   public CommitablePanelUserActivityListener(final CommittablePanel panel) {
     myPanel = panel;
+    myUpdateQueue = new MergingUpdateQueue("DomCommitableUpdateQueue", 239, true, myPanel.getComponent());
   }
 
   final public void stateChanged() {
     if (!myResetting) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      myUpdateQueue.queue(new Update("DoActivityUpdate") {
         public void run() {
-          myResetting = true;
-          try {
-              applyChanges();
-          }
-          finally {
-            myResetting = false;
-          }
-          doAfterApply();
+          doActivity();
         }
       });
     }
+  }
 
+  protected void doActivity() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+
+        myResetting = true;
+        try {
+          applyChanges();
+        } finally {
+          myResetting = false;
+        }
+        doAfterApply();
+      }
+    });
   }
 
   protected void applyChanges() {

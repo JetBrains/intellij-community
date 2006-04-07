@@ -8,6 +8,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventListener;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomChangeListener;
 import com.intellij.util.xml.events.*;
 import jetbrains.fabrique.ui.treeStructure.*;
 import jetbrains.fabrique.ui.treeStructure.actions.CollapseAllAction;
@@ -18,9 +19,10 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.Map;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +56,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     };
 
     myBuilder = new SimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE);
+
     myBuilder.setNodeDescriptorComparator(null);
     myBuilder.initRoot();
 
@@ -78,36 +81,12 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
       }
     });
 
-    myDomEventListener = new DomEventListener() {
-
-      public void valueChanged(TagValueChangeEvent event) {
-        super.valueChanged(event);
-      }
-
-      public void elementDefined(ElementDefinedEvent event) {
-        super.elementDefined(event);
-      }
-
-      public void elementUndefined(ElementUndefinedEvent event) {
-        super.elementUndefined(event);
-      }
-
-      public void elementChanged(ElementChangedEvent event) {
-        super.elementChanged(event);
-      }
-
-      public void childAdded(CollectionElementAddedEvent event) {
-        super.childAdded(event);
-      }
-
-      public void childRemoved(CollectionElementRemovedEvent event) {
-        super.childRemoved(event);
-      }
-
-      public void eventOccured(DomEvent event) {
-        myBuilder.updateFromRoot(false);
+    myDomEventListener = new DomChangeListener() {
+      protected void elementChanged(DomElement element) {
+         myBuilder.updateFromRoot(false);
       }
     };
+
     myDomManager = rootElement.getManager();
     myDomManager.addDomEventListener(myDomEventListener);
 
@@ -157,7 +136,16 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
   public void setSelectedDomElement(final DomElement domElement) {
     if(domElement == null) return;
 
-    final java.util.List<SimpleNode> parentsNodes = new ArrayList<SimpleNode>();
+    final List<SimpleNode> parentsNodes = getNodesFor(domElement);
+
+
+    if(parentsNodes.size() > 0) {
+        getTree().setSelectedNode(getBuilder(), parentsNodes.get(parentsNodes.size()-1), true);
+    }
+  }
+
+  private List<SimpleNode> getNodesFor(final DomElement domElement) {
+     final List<SimpleNode> parentsNodes  = new ArrayList<SimpleNode>();
 
     SimpleNodeVisitor visitor = new SimpleNodeVisitor() {
       public boolean accept(SimpleNode simpleNode) {
@@ -169,8 +157,13 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
         }
         return false;
       }
+    };
+    getTree().accept(getBuilder(), visitor);
 
-      private boolean isParent(final DomElement potentialParent, final DomElement domElement) {
+    return parentsNodes;
+  }
+
+  private boolean isParent(final DomElement potentialParent, final DomElement domElement) {
         DomElement currParent = domElement;
         while(currParent != null) {
           if(currParent.equals(potentialParent)) return true;
@@ -179,12 +172,5 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
         }
         return false;
       }
-    };
-
-    getTree().accept(getBuilder(), visitor);
-    if(parentsNodes.size() > 0) {
-        getTree().setSelectedNode(getBuilder(), parentsNodes.get(parentsNodes.size()-1), true);
-    }
-  };
 }
 
