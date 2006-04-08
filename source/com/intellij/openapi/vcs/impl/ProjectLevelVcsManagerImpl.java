@@ -346,7 +346,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     LineStatusTracker result = myLineStatusTrackers.get(document);
     if (result == null) {
       result = LineStatusTracker.createOn(document, lastUpToDateContent, getProject());
-      result.initialize(lastUpToDateContent);
       myLineStatusTrackers.put(document, result);
     }
     return result;
