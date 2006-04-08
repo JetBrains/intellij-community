@@ -181,12 +181,12 @@ public class ActionMenuItem extends JMenuItem {
     public void propertyChange(PropertyChangeEvent e) {
       String name = e.getPropertyName();
       if (Presentation.PROP_VISIBLE.equals(name)) {
-        ActionMenuItem.this.setVisible(myPresentation.isVisible());
-        if (SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU) {
-          final Container parent = getParent();
-          if (parent != null) {
-            parent.validate();
-          }
+        final boolean visible = myPresentation.isVisible();
+        if (!visible && SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU) {
+          ActionMenuItem.this.setEnabled(false);
+        }
+        else {
+          ActionMenuItem.this.setVisible(visible);
         }
       }
       else if (Presentation.PROP_ENABLED.equals(name)) {

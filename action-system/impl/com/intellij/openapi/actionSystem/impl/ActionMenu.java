@@ -190,10 +190,7 @@ public final class ActionMenu extends JMenu {
       if (Presentation.PROP_VISIBLE.equals(name)) {
         ActionMenu.this.setVisible(myPresentation.isVisible());
         if (SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU) {
-          final Container parent = getParent();
-          if (parent != null) {
-            parent.validate();
-          }
+          validateTree();
         }
       }
       else if (Presentation.PROP_ENABLED.equals(name)) {

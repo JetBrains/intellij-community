@@ -14,6 +14,8 @@ import java.util.ArrayList;
 public class Utils{
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.actionSystem.impl.Utils");
 
+  private Utils() {}
+
   public static void handleUpdateException(AnAction action,Presentation presentation,Exception exc){
     String id=ActionManagerEx.getInstance().getId(action);
     if(id!=null){
@@ -93,8 +95,7 @@ public class Utils{
 
   public static boolean hasVisibleChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
     AnAction[] children = group.getChildren(new AnActionEvent(null, context, place, factory.getPresentation(group),ActionManager.getInstance(), 0));
-    for (int j = 0; j < children.length; j++) {
-      AnAction anAction = children[j];
+    for (AnAction anAction : children) {
       if (anAction instanceof Separator) {
         continue;
       }
