@@ -163,6 +163,8 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   public void clearCaches() {
     myReferences = null;
     myChildren = null;
+    myAttributes = null;
+    myProperties = null;
   }
 
   @NotNull
