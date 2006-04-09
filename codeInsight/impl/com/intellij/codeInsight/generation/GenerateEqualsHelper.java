@@ -281,7 +281,11 @@ public class GenerateEqualsHelper implements Runnable {
   private void addClassInstance(@NonNls StringBuffer buffer) {
     buffer.append("\n");
     // A a = (A) object;
-    buffer.append("final ");
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
+    if (settings.GENERATE_FINAL_LOCALS) {
+      buffer.append("final ");
+    }
+
     buffer.append(myClass.getName());
     buffer.append(" ").append(myClassInstanceName).append(" = (");
     buffer.append(myClass.getName());
@@ -396,7 +400,11 @@ public class GenerateEqualsHelper implements Runnable {
   private String addTempForOneField(PsiField field, StringBuilder buffer) {
     if (field.getType() == PsiType.DOUBLE) {
       final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
-      buffer.append("final long ").append(name);
+      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
+      if (settings.GENERATE_FINAL_LOCALS) {
+        buffer.append("final ");
+      }
+      buffer.append("long ").append(name);
       addTempForDoubleInitialization(field, buffer);
       return name;
     }
