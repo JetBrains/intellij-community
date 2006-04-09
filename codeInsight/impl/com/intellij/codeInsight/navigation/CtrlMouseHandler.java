@@ -664,13 +664,11 @@ public class CtrlMouseHandler implements ProjectComponent {
       if (info.myTargetElement != null &&
           info.myElementAtPointer != null &&
           info.myTargetElement != info.myElementAtPointer &&
-          info.myTargetElement != info.myElementAtPointer.getParent()
+          info.myTargetElement != info.myElementAtPointer.getParent() &&
+          targetNavigateable(info.myTargetElement)
         ) {
 
-        if (targetNavigateable(info.myTargetElement)) {
-          installLinkHighlighter(info);
-        }
-        
+        installLinkHighlighter(info);
         myStoredCursor = internalComponent.getCursor();
         myStoredInfo = info;
 
