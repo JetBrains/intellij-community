@@ -1,38 +1,39 @@
 package com.intellij.lang.java;
 
-import com.intellij.ide.highlighter.JavaFileHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
-import com.intellij.lang.Commenter;
-import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.surroundWith.SurroundDescriptor;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.formatter.PsiBasedFormattingModel;
-import com.intellij.psi.formatter.FormattingDocumentModelImpl;
-import com.intellij.psi.formatter.java.AbstractJavaBlock;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.formatting.FormattingModel;
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurroundDescriptor;
 import com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDescriptor;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.ide.highlighter.JavaFileHighlighter;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
+import com.intellij.lang.Commenter;
+import com.intellij.lang.ImportOptimizer;
+import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.lang.surroundWith.SurroundDescriptor;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.FormattingDocumentModelImpl;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
+import com.intellij.psi.formatter.java.AbstractJavaBlock;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -120,5 +121,10 @@ public class JavaLanguage extends Language {
         return new JavaFileTreeModel((PsiJavaFile)psiFile);
       }
     };
+  }
+
+  @NotNull
+  public ImportOptimizer getImportOptimizer() {
+    return new JavaImportOptimizer();
   }
 }

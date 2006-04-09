@@ -27,14 +27,14 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.HashMap;
 
 /**
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
@@ -409,6 +408,15 @@ public abstract class Language {
     return EMPTY_SURROUND_DESCRIPTORS_ARRAY;
   }
 
+  /**
+   * Override this method to provide 'optimize imports' feature implementation
+   * @return <code>ImportOptimizer</code> interface implementations for this particular language.
+   */
+  @Nullable
+  public ImportOptimizer getImportOptimizer() {
+    return null;
+  }
+
   public String toString() {
     //noinspection HardCodedStringLiteral
     return "Language: " + myID;
@@ -420,7 +428,6 @@ public abstract class Language {
    *
    * @return The list of MIME types.
    */
-
   public String[] getMimeTypes() {
     return myMimeTypes;
   }
@@ -430,7 +437,6 @@ public abstract class Language {
    *
    * @return the name of the language.
    */
-
   @NotNull
   public String getID() {
     return myID;
