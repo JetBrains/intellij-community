@@ -65,12 +65,11 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
   private void getReportText(StringBuffer buffer, final ErrorTreeElement element, boolean withUsages, final int indent) {
     final String newline = SystemProperties.getLineSeparator();
     Object[] children = myStructure.getChildElements(element);
-    for (int idx = 0; idx < children.length; idx++) {
-      final Object child = children[idx];
-      if(!(child instanceof ErrorTreeElement)){
+    for (final Object child : children) {
+      if (!(child instanceof ErrorTreeElement)) {
         continue;
       }
-      if(!withUsages && child instanceof NavigatableMessageElement){
+      if (!withUsages && child instanceof NavigatableMessageElement) {
         continue;
       }
       final ErrorTreeElement childElement = (ErrorTreeElement)child;
@@ -83,7 +82,7 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
     }
   }
 
-  public void exportElement(ErrorTreeElement element, final StringBuffer buffer, int baseIntent, final String newline) {
+  public static void exportElement(ErrorTreeElement element, final StringBuffer buffer, int baseIntent, final String newline) {
     final int startLength = buffer.length();
     buffer.append(element.getKind().getPresentableText());
     buffer.append(element.getExportTextPrefix());
@@ -100,7 +99,7 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
     }
   }
 
-  private void shift(StringBuffer buffer, int indent) {
+  private static void shift(StringBuffer buffer, int indent) {
     for(int i=0; i<indent; i++) {
       buffer.append(' ');
     }
