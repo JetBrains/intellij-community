@@ -4,17 +4,7 @@
  */
 package com.intellij.ide.errorTreeView;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.pom.Navigatable;
-
-import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
