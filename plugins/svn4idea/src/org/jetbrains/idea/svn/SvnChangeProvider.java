@@ -187,7 +187,9 @@ public class SvnChangeProvider implements ChangeProvider {
     public String getContent() {
       if (myContent == null) {
         try {
-          myContent = myVcs.getUpToDateRevisionProvider().getLastUpToDateContentFor(myFile.getVirtualFile(), true);
+          final VirtualFile vFile = myFile.getVirtualFile();
+          if (vFile == null) return "";
+          myContent = myVcs.getUpToDateRevisionProvider().getLastUpToDateContentFor(vFile, true);
         }
         catch (VcsException e) {
           // Ignore
