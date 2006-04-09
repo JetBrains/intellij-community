@@ -243,8 +243,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     if (!(userObject instanceof ErrorTreeNodeDescriptor)) {
       return null;
     }
-    ErrorTreeNodeDescriptor treeNodeDescriptor = (ErrorTreeNodeDescriptor)userObject;
-    return treeNodeDescriptor;
+    return (ErrorTreeNodeDescriptor)userObject;
   }
 
   private void navigateToSource(final boolean focusEditor) {
@@ -493,7 +492,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
-  private class MyOccurenceNavigatorSupport extends OccurenceNavigatorSupport {
+  private static class MyOccurenceNavigatorSupport extends OccurenceNavigatorSupport {
     public MyOccurenceNavigatorSupport(final Tree tree) {
       super(tree);
     }
