@@ -100,6 +100,8 @@ public class EditorOptionsPanel {
   private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
   private JCheckBox myCbRenameLocalVariablesInplace;
   private JPanel myHighlightSettingsPanel;
+  private JRadioButton myRbPreferScrolling;
+  private JRadioButton myRbPreferMovingCaret;
   private ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
 
   private TabbedPaneWrapper myTabbedPaneWrapper;
@@ -293,6 +295,9 @@ public class EditorOptionsPanel {
     myCbEnableWheelFontChange.setSelected(editorSettings.isWheelFontChangeEnabled());
     myCbHonorCamelHumpsWhenSelectingByClicking.setSelected(editorSettings.isMouseClickSelectionHonorsCamelWords());
 
+    myRbPreferMovingCaret.setSelected(editorSettings.isRefrainFromScrolling());
+    myRbPreferScrolling.setSelected(!editorSettings.isRefrainFromScrolling());
+
     // Refactoring
     myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
 
@@ -424,6 +429,7 @@ public class EditorOptionsPanel {
     editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
     editorSettings.setMouseClickSelectionHonorsCamelWords(myCbHonorCamelHumpsWhenSelectingByClicking.isSelected());
+    editorSettings.setRefrainFromScrolling(myRbPreferMovingCaret.isSelected());
 
     Editor[] editors = EditorFactory.getInstance().getAllEditors();
     for (Editor editor : editors) {
@@ -563,6 +569,8 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
     isModified |= isModified(myCbEnableWheelFontChange, editorSettings.isWheelFontChangeEnabled());
     isModified |= isModified(myCbHonorCamelHumpsWhenSelectingByClicking, editorSettings.isMouseClickSelectionHonorsCamelWords());
+
+    isModified |= myRbPreferMovingCaret.isSelected() != editorSettings.isRefrainFromScrolling();
 
     // Refactoring
     isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());

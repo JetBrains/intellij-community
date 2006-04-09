@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -26,8 +27,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ScrollingModelImpl implements ScrollingModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.ScrollingModelImpl");
@@ -124,6 +123,14 @@ public class ScrollingModelImpl implements ScrollingModel {
 
   private Point calcOffsetsToScroll(LogicalPosition pos, ScrollType scrollType, Rectangle viewRect) {
     Point targetLocation = myEditor.logicalPositionToXY(pos);
+
+    if (myEditor.getSettings().isRefrainFromScrolling()) {
+      if (scrollType == ScrollType.CENTER ||
+          scrollType == ScrollType.CENTER_DOWN ||
+          scrollType == ScrollType.CENTER_UP) {
+        scrollType = ScrollType.RELATIVE;
+      }
+    }
 
     int spaceWidth = myEditor.getSpaceWidth(Font.PLAIN);
     int xInsets = myEditor.getSettings().getAdditionalColumnsCount() * spaceWidth;

@@ -91,4 +91,7 @@ public interface EditorSettings {
 
   boolean isVariableInplaceRenameEnabled();
   void setVariableInplaceRenameEnabled(boolean val);
+
+  boolean isRefrainFromScrolling();
+  void setRefrainFromScrolling(boolean b);
 }

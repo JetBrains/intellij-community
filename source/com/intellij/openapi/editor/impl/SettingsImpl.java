@@ -53,6 +53,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsWheelFontChangeEnabled = null;
   private Boolean myIsMouseClickSelectionHonorsCamelWords = null;
   private Boolean myIsRenameVariablesInplace = null;
+  private Boolean myIsRefrainFromScrolling = null;
 
   public boolean isRightMarginShown() {
     return myIsRightMarginShown != null
@@ -310,8 +311,17 @@ public class SettingsImpl implements EditorSettings {
     myIsRenameVariablesInplace = val? Boolean.TRUE : Boolean.FALSE;
   }
 
+  public boolean isRefrainFromScrolling() {
+    if (myIsRefrainFromScrolling != null) return myIsRefrainFromScrolling.booleanValue();
+    return EditorSettingsExternalizable.getInstance().isRefrainFromScrolling();
+  }
+
+
+  public void setRefrainFromScrolling(boolean b) {
+    myIsRefrainFromScrolling = b ? Boolean.TRUE : Boolean.FALSE;
+  }
+
   private void fireEditorRefresh() {
     myEditor.reinitSettings();
   }
-
 }

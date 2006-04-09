@@ -43,6 +43,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public String DEFAULT_PROPERTIES_FILES_CHARSET_NAME = CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
 
     public boolean RENAME_VARIABLES_INPLACE = true;
+    public boolean REFRAIN_FROM_SCROLLING = false;
 
     public Object clone() {
       try {
@@ -204,6 +205,14 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
   public void setStripTrailingSpaces(String stripTrailingSpaces) {
     myOptions.STRIP_TRAILING_SPACES = stripTrailingSpaces;
+  }
+
+  public boolean isRefrainFromScrolling() {
+    return myOptions.REFRAIN_FROM_SCROLLING;
+  }
+
+  public void setRefrainFromScrolling(boolean b) {
+    myOptions.REFRAIN_FROM_SCROLLING = b;
   }
 
   public Object clone() {
