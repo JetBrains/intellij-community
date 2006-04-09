@@ -91,6 +91,14 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     doTest("Impl", "IB", false);
   }
 
+  public void testIDEADEV5517() throws Exception {
+    doTest("Xyz", "Xint", false);
+  }
+
+  public void testIDEADEV5517Noop() throws Exception {
+    doTest("Xyz", "Xint", false);
+  }
+
   private void doTest(final String className, final String superClassName, final boolean replaceInstanceOf) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {

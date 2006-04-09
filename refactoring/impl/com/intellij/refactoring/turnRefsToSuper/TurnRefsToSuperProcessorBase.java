@@ -15,9 +15,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.AutomaticRenamingDialog;
@@ -26,6 +26,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Queue;
@@ -218,10 +219,11 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         parent = pparent;
         pparent = parent.getParent();
       }
-      final PsiTypeElement type = (PsiTypeElement)parent;
+      final PsiTypeElement typeElement = (PsiTypeElement)parent;
 
-      addLink(type, ref);
-      addLink(ref, type);
+      addLink(typeElement, ref);
+      addLink(ref, typeElement);
+
       if (pparent instanceof PsiVariable) {
         processVariableType((PsiVariable)pparent);
       }
@@ -229,11 +231,37 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         processMethodReturnType((PsiMethod)pparent);
       }
       else if (pparent instanceof PsiTypeCastExpression) {
-        addLink(pparent, type);
-        addLink(type, pparent);
+        addLink(pparent, typeElement);
+        addLink(typeElement, pparent);
       }
       else if (pparent instanceof PsiReferenceParameterList) {
-        markNode(ref); //Otherwise some really powerful and costy analysis needed
+        final PsiReferenceParameterList refParameterList = ((PsiReferenceParameterList)pparent);
+        final PsiElement ppparent = pparent.getParent();
+        if (ppparent instanceof PsiJavaCodeReferenceElement) {
+          final PsiJavaCodeReferenceElement classReference = (PsiJavaCodeReferenceElement)ppparent;
+          if (classReference.getParent() instanceof PsiReferenceList) {
+            final PsiReferenceList referenceList = ((PsiReferenceList)ppparent.getParent());
+            final PsiClass parentClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+            if (parentClass != null) {
+              if (referenceList.equals(parentClass.getExtendsList()) || referenceList.equals(parentClass.getImplementsList())) {
+                final PsiTypeElement[] typeParameterElements = refParameterList.getTypeParameterElements();
+                for (int i = 0; i < typeParameterElements.length; i++) {
+                  if (typeParameterElements[i] == typeElement) {
+                    final PsiElement resolved = classReference.resolve();
+                    if (resolved instanceof PsiClass) {
+                      final PsiTypeParameter[] typeParameters = ((PsiClass)resolved).getTypeParameters();
+                      if (typeParameters.length > i) {
+                        linkTypeParameterInstantiations(typeParameters[i], typeElement, parentClass);
+                        return;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        markNode(ref); //???
       }
     }
     else if (parent instanceof PsiNewExpression) {
@@ -253,6 +281,56 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     }
     else {
       markNode(ref);
+    }
+  }
+
+  private void linkTypeParameterInstantiations (PsiTypeParameter typeParameter, final PsiTypeElement instantiation, final PsiClass inheritingClass) {
+    final PsiTypeParameterListOwner owner = typeParameter.getOwner();
+    if (owner instanceof PsiClass) {
+      final PsiClass ownerClass = ((PsiClass)owner);
+      final LocalSearchScope derivedScope = new LocalSearchScope(inheritingClass);
+      final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(ownerClass, inheritingClass, PsiSubstitutor.EMPTY);
+      if (substitutor == null) return;
+      final LocalSearchScope baseScope = new LocalSearchScope(ownerClass);
+      ReferencesSearch.search(typeParameter, baseScope).forEach(new Processor<PsiReference>() {
+        public boolean process(final PsiReference ref) {
+          final PsiElement element = ref.getElement();
+          final PsiElement parent = element.getParent();
+          if (parent instanceof PsiTypeElement) {
+            final PsiElement pparent = parent.getParent();
+            if (pparent instanceof PsiMethod && parent.equals(((PsiMethod)pparent).getReturnTypeElement())) {
+              final PsiMethod method = (PsiMethod)pparent;
+              final MethodSignature signature = method.getSignature(substitutor);
+              if (PsiUtil.isAccessible(method, inheritingClass, null)) {
+                final PsiMethod inInheritor = MethodSignatureUtil.findMethodBySignature(inheritingClass, signature, false);
+                if (inInheritor != null && inInheritor.getReturnTypeElement() != null) {
+                  addLink(instantiation, method.getReturnTypeElement());
+                  addLink(method.getReturnTypeElement(), instantiation);
+                }
+              }
+            } else if (pparent instanceof PsiParameter) {
+              final PsiParameter parameter = (PsiParameter)pparent;
+              if (parameter.getDeclarationScope() instanceof PsiMethod) {
+                PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+                final int index = ((PsiParameterList)parameter.getParent()).getParameterIndex(parameter);
+                final MethodSignature signature = method.getSignature(substitutor);
+                if (PsiUtil.isAccessible(method, inheritingClass, null)) {
+                  final PsiMethod inInheritor = MethodSignatureUtil.findMethodBySignature(inheritingClass, signature, false);
+                  if (inInheritor != null) {
+                    final PsiParameter[] inheritorParams = inInheritor.getParameterList().getParameters();
+                    LOG.assertTrue(inheritorParams.length > index);
+                    final PsiTypeElement hisTypeElement = inheritorParams[index].getTypeElement();
+                    addLink(instantiation, hisTypeElement);
+                    addLink(hisTypeElement, instantiation);
+                  }
+                }
+              }
+            }
+          }
+
+          return true;
+        }
+      });
     }
   }
 
