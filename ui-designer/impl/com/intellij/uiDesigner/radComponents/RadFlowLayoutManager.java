@@ -90,6 +90,11 @@ public class RadFlowLayoutManager extends RadLayoutManager {
     container.addComponent(component);
   }
 
+  @Override
+  public boolean canAddWithoutConstraints() {
+    return true;
+  }
+
   private static class MyAlignProperty extends Property<RadContainer, Integer> {
     private IntEnumRenderer myRenderer;
     private IntEnumEditor myEditor;

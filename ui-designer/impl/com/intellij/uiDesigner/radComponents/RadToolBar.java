@@ -53,5 +53,10 @@ public class RadToolBar extends RadContainer {
     public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
       return new FlowDropLocation(RadToolBar.this, location, 0, 0, true);
     }
+
+    @Override
+    public boolean canAddWithoutConstraints() {
+      return true;
+    }
   }
 }

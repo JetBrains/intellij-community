@@ -39,17 +39,22 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
       final int row = c.getConstraints().getRow();
       int rowSpan = c.getConstraints().getRowSpan();
 
-      if (!insertedRows.contains(row) && !isSpaceBelowEmpty(c)) {
-        insertedRows.add(row);
-        for(int i=0; i<rowSpan; i++) {
-          GridChangeUtil.insertRowAfter(parent, row+rowSpan-1);
+      if (parent.isGrid()) {
+        if (!insertedRows.contains(row) && !isSpaceBelowEmpty(c)) {
+          insertedRows.add(row);
+          for(int i=0; i<rowSpan; i++) {
+            GridChangeUtil.insertRowAfter(parent, row+rowSpan-1);
+          }
         }
       }
+
       List<RadComponent> copyList = CutCopyPasteSupport.copyComponents(editor, Collections.singletonList(c));
       if (copyList != null) {
         RadComponent copy = copyList.get(0);
-        copy.getConstraints().setRow(row+rowSpan);
-        copy.getConstraints().setRowSpan(rowSpan);
+        if (parent.isGrid()) {
+          copy.getConstraints().setRow(row+rowSpan);
+          copy.getConstraints().setRowSpan(rowSpan);
+        }
         parent.addComponent(copy);
         copyBinding(c, copy);
         duplicates.add(copy);
@@ -91,12 +96,12 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     final RadContainer parent = FormEditingUtil.getSelectionParent(selection);
-    e.getPresentation().setEnabled(parent != null && parent.isGrid());
+    e.getPresentation().setEnabled(parent != null && (parent.isGrid() || parent.getLayoutManager().canAddWithoutConstraints()));
     // The action is enabled in any of the following cases:
     // 1) a single component is selected;
     // 2) all selected components have rowspan=1
     // 3) all selected components have the same row and rowspan
-    if (selection.size() > 1) {
+    if (selection.size() > 1 && parent != null && parent.isGrid()) {
       int aRow = selection.get(0).getConstraints().getRow();
       int aRowSpan = selection.get(0).getConstraints().getRowSpan();
       for(int i=1; i<selection.size(); i++) {
