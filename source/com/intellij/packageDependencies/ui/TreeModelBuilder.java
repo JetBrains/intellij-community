@@ -24,6 +24,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -355,7 +356,7 @@ public class TreeModelBuilder {
     }
   }
 
-  public PackageDependenciesNode removeNode(final PsiElement element, final PsiDirectory parent){
+  public DefaultMutableTreeNode removeNode(final PsiElement element, final PsiDirectory parent){
     if (element != null && element.isValid()) {
       boolean isMarked = false;
       if (element instanceof PsiFile){
@@ -369,9 +370,9 @@ public class TreeModelBuilder {
       }
       if (!isMarked) return null;
     }
-    PackageDependenciesNode dirNode = getModuleDirNode(parent, myFileIndex.getModuleForFile(parent.getVirtualFile()), ScopeType.SOURCE, null);
+    DefaultMutableTreeNode dirNode = getModuleDirNode(parent, myFileIndex.getModuleForFile(parent.getVirtualFile()), ScopeType.SOURCE, null);
     if (dirNode != null){
-      final PackageDependenciesNode[] classOrDirNodes = findNodeForPsiElement(dirNode, element);
+      final PackageDependenciesNode[] classOrDirNodes = findNodeForPsiElement((PackageDependenciesNode)dirNode, element);
       if (classOrDirNodes != null){
         for (PackageDependenciesNode classNode : classOrDirNodes) {
           classNode.removeFromParent();
@@ -381,7 +382,7 @@ public class TreeModelBuilder {
         final TreeNode treeNode = dirNode.getParent();
         dirNode.removeFromParent();
         getMap(myModuleDirNodes, ScopeType.SOURCE).put(parent, null);
-        dirNode = (PackageDependenciesNode)treeNode;
+        dirNode = (DefaultMutableTreeNode)treeNode;
       }
       if (myCompactEmptyMiddlePackages && dirNode instanceof DirectoryNode && dirNode.getChildCount() == 1) { //compact
         final TreeNode treeNode = dirNode.getChildAt(0);
@@ -397,7 +398,7 @@ public class TreeModelBuilder {
     return dirNode;
   }
 
-  public PackageDependenciesNode addFileNode(final PsiFile file){
+  public DefaultMutableTreeNode addFileNode(final PsiFile file){
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
     if (!isMarked) return null;
 

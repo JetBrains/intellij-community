@@ -325,7 +325,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           if (element instanceof PsiDirectory || element instanceof PsiPackage) {
             final PsiElement child = event.getChild();
             if (child instanceof PsiFile) {
-              final PackageDependenciesNode rootToReload = myBuilder.addFileNode((PsiFile)child);
+              final DefaultMutableTreeNode rootToReload = myBuilder.addFileNode((PsiFile)child);
               final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
               if (rootToReload != null) {
                 TreeUtil.sort(rootToReload, new DependencyNodeComparator());
@@ -351,7 +351,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           final PsiElement parent = event.getParent();
           myTreeExpansionMonitor.freeze();
           if (parent instanceof PsiDirectory && (child instanceof PsiFile || child instanceof PsiDirectory)) {
-            final PackageDependenciesNode node = myBuilder.removeNode(child, (PsiDirectory)parent);
+            final DefaultMutableTreeNode node = myBuilder.removeNode(child, (PsiDirectory)parent);
             if (node != null) {
               ((DefaultTreeModel)myTree.getModel()).reload(node);
             }
@@ -396,7 +396,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
       }, ModalityState.NON_MMODAL);
     }
 
-    private void collapseExpand(PackageDependenciesNode node){
+    private void collapseExpand(DefaultMutableTreeNode node){
       if (node == null) return;
       TreePath path = new TreePath(node.getPath());
       if (!myTree.isCollapsed(path)){
