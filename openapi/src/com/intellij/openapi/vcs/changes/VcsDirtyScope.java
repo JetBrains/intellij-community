@@ -1,8 +1,10 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -130,20 +132,24 @@ public class VcsDirtyScope {
     }
   }
 
-  public boolean belongsTo(FilePath path) {
+  public boolean belongsTo(final FilePath path) {
     if (myProject.isDisposed()) return false;
-    if (!myAffectedContentRoots.contains(getRootFor(myIndex, path))) return false;
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        if (!myAffectedContentRoots.contains(getRootFor(myIndex, path))) return Boolean.FALSE;
 
-    for (FilePath filePath : myDirtyDirectoriesRecursively) {
-      if (path.isUnder(filePath, false)) return true;
-    }
+        for (FilePath filePath : myDirtyDirectoriesRecursively) {
+          if (path.isUnder(filePath, false)) return Boolean.TRUE;
+        }
 
-    FilePath parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getIOFile().getParentFile());
-    for (FilePath filePath : myDirtyFiles) {
-      if (filePath.equals(parent) || filePath.equals(path)) return true;
-    }
+        FilePath parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getIOFile().getParentFile());
+        for (FilePath filePath : myDirtyFiles) {
+          if (filePath.equals(parent) || filePath.equals(path)) return Boolean.TRUE;
+        }
 
-    return false;
+        return Boolean.FALSE;
+      }
+    }).booleanValue();
   }
 
   public static VirtualFile getRootFor(ProjectFileIndex index, FilePath file) {
