@@ -1,14 +1,13 @@
 package com.intellij.execution.impl;
 
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.filters.*;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.DataAccessor;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -16,17 +15,18 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.actions.DiffActions;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
@@ -81,7 +81,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private static class TokenInfo{
     final ConsoleViewContentType contentType;
-    final int startOffset;
+    int startOffset;
     int endOffset;
     final TextAttributes attributes;
 
@@ -217,6 +217,29 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       myEditor = createEditor();
       requestFlushImmediately();
       add(myEditor.getComponent(), BorderLayout.CENTER);
+
+      myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+        public void documentChanged(DocumentEvent e) {
+          if (e.getNewLength() == 0) {
+            // string has beeen removed, move tokens down
+            synchronized (LOCK) {
+              int offset = e.getOffset();
+              int toRemoveLen = e.getOldLength();
+              int tIndex = findTokenInfoIndexByOffset(offset+toRemoveLen);
+              ArrayList<TokenInfo> newTokens = new ArrayList<TokenInfo>(myTokens.subList(tIndex, myTokens.size()));
+              for (TokenInfo token : newTokens) {
+                token.startOffset -= toRemoveLen;
+                token.endOffset -= toRemoveLen;
+              }
+              if (!newTokens.isEmpty()) {
+                newTokens.get(0).startOffset = 0;
+              }
+              myContentSize -= toRemoveLen;
+              myTokens = newTokens;
+            }
+          }
+        }
+      });
     }
     return this;
   }
@@ -238,10 +261,6 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       s = StringUtil.convertLineSeparators(s,  "\n");
       myContentSize += s.length();
       myDeferredOutput.append(s);
-      final int length = myDeferredOutput.length();
-      if (USE_CYCLIC_BUFFER && length > CYCLIC_BUFFER_SIZE) {
-        myDeferredOutput.delete(0, length - CYCLIC_BUFFER_SIZE);
-      }
       if (contentType == ConsoleViewContentType.USER_INPUT){
         myDeferredUserInput.append(s);
       }
@@ -257,25 +276,15 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       if (needNew){
         myTokens.add(new TokenInfo(contentType, myContentSize - s.length(), myContentSize));
       }
-    }
 
-    if (s.indexOf('\n') >= 0 || s.indexOf('\r') >= 0){
-      if (contentType == ConsoleViewContentType.USER_INPUT){
-        flushDeferredUserInput();
-      }
-    }
-    final Runnable requestFlush = new Runnable() {
-      public void run() {
-        if (myFlushAlarm.getActiveRequestCount() == 0 && myEditor != null) {
-          myFlushAlarm.addRequest(myFlushDeferredRunnable, FLUSH_DELAY, ModalityState.stateForComponent(myEditor.getComponent()));
+      if (s.indexOf('\n') >= 0 || s.indexOf('\r') >= 0) {
+        if (contentType == ConsoleViewContentType.USER_INPUT) {
+          flushDeferredUserInput();
         }
       }
-    };
-    if (EventQueue.isDispatchThread()) {
-      requestFlush.run();
-    }
-    else {
-      SwingUtilities.invokeLater(requestFlush);
+      if (myFlushAlarm.getActiveRequestCount() == 0 && myEditor != null) {
+        myFlushAlarm.addRequest(myFlushDeferredRunnable, FLUSH_DELAY, ModalityState.stateForComponent(myEditor.getComponent()));
+      }
     }
   }
 
@@ -295,67 +304,61 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     return true;
   }
 
-  private void flushDeferredText(){
+  private void flushDeferredText() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    synchronized(LOCK){
+    final String text;
+    synchronized (LOCK) {
       if (myOutputPaused) return;
       if (myDeferredOutput.length() == 0) return;
+      if (myEditor == null) return;
+
+      text = myDeferredOutput.substring(0, myDeferredOutput.length());
+      if (USE_CYCLIC_BUFFER) {
+        myDeferredOutput = new StringBuffer(Math.min(myDeferredOutput.length(), CYCLIC_BUFFER_SIZE));
+      }
+      else {
+        myDeferredOutput.setLength(0);
+      }
+    }
+    final Document document = myEditor.getDocument();
+    final int oldLineCount = document.getLineCount();
+    final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == myEditor.getDocument().getTextLength();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          public void run() {
+            document.insertString(document.getTextLength(), text);
+          }
+        }, null, null);
+      }
+    });
+    final int newLineCount = document.getLineCount();
+    if (oldLineCount < newLineCount) {
+      myPsiDisposedCheck.performCheck();
+      highlightHyperlinks(oldLineCount - 1, newLineCount - 2);
     }
 
-    if (myEditor != null) {
-      final String text = myDeferredOutput.substring(0, myDeferredOutput.length());
-      synchronized (LOCK) {
-        if (USE_CYCLIC_BUFFER) {
-          myDeferredOutput = new StringBuffer(Math.min(myDeferredOutput.length(), CYCLIC_BUFFER_SIZE));
-        }
-        else {
-          myDeferredOutput.setLength(0);
-        }
-      }
-      final Document document = myEditor.getDocument();
-      final int oldLineCount = document.getLineCount();
-      final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == myEditor.getDocument().getTextLength();
-      ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-              public void run() {
-                document.insertString(document.getTextLength(), text);
-              }
-            }, null, null);
-          }
-        }
-      );
-      final int newLineCount = document.getLineCount();
-      if (oldLineCount < newLineCount){
-        myPsiDisposedCheck.performCheck();
-        highlightHyperlinks(oldLineCount - 1, newLineCount - 2);
-      }
-
-      if (isAtEndOfDocument) {
-        myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
-        myEditor.getSelectionModel().removeSelection();
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      }
+    if (isAtEndOfDocument) {
+      myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
+      myEditor.getSelectionModel().removeSelection();
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
 
   private void flushDeferredUserInput() {
     if (myState.isRunning()){
-      synchronized(LOCK){
-        final String text = myDeferredUserInput.substring(0, myDeferredUserInput.length());
-        final int index = Math.max(text.lastIndexOf('\n'), text.lastIndexOf('\r'));
-        if (index < 0) return;
-        try{
-          myState.sendUserInput(text.substring(0, index + 1));
-        }
-        catch(IOException e){
-          return;
-        }
-        myDeferredUserInput.setLength(0);
-        myDeferredUserInput.append(text.substring(index + 1));
+      final String text = myDeferredUserInput.substring(0, myDeferredUserInput.length());
+      final int index = Math.max(text.lastIndexOf('\n'), text.lastIndexOf('\r'));
+      if (index < 0) return;
+      try{
+        myState.sendUserInput(text.substring(0, index + 1));
       }
+      catch(IOException e){
+        return;
+      }
+      myDeferredUserInput.setLength(0);
+      myDeferredUserInput.append(text.substring(index + 1));
     }
   }
 
@@ -376,7 +379,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     if (DataConstants.EDITOR.equals(dataId)) {
       return myEditor;
     }
-    if (DataConstantsEx.HELP_ID.equals(dataId)) {
+    if (DataConstants.HELP_ID.equals(dataId)) {
       return myHelpId;
     }
     return null;
@@ -535,10 +538,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
                             final HyperlinkInfo hyperlinkInfo) {
     TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : HYPERLINK_ATTRIBUTES;
     final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
-                                                                                 highlightEndOffset,
-                                                                                 HighlighterLayer.SELECTION - 1,
-                                                                                 textAttributes,
-                                                                                 HighlighterTargetArea.EXACT_RANGE);
+                                                                                       highlightEndOffset,
+                                                                                       HighlighterLayer.SELECTION - 1,
+                                                                                       textAttributes,
+                                                                                       HighlighterTargetArea.EXACT_RANGE);
     myHyperlinks.add(highlighter, hyperlinkInfo);
   }
 
@@ -573,7 +576,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     private boolean myHasEditor;
 
     public HighlighterIterator createIterator(final int startOffset) {
-      final int startIndex = findTokenInfoByOffset(myTokens, startOffset);
+      final int startIndex = findTokenInfoIndexByOffset(startOffset);
 
       return new HighlighterIterator(){
         private int myIndex = startIndex;
@@ -624,13 +627,13 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     }
   }
 
-  private static int findTokenInfoByOffset(final ArrayList<TokenInfo> tokens, final int offset) {
+  private int findTokenInfoIndexByOffset(final int offset) {
     int low = 0;
-    int high = tokens.size() - 1;
+    int high = myTokens.size() - 1;
 
     while(low <= high){
       final int mid = (low + high) / 2;
-      final TokenInfo midVal = tokens.get(mid);
+      final TokenInfo midVal = myTokens.get(mid);
       if (offset < midVal.startOffset){
         high = mid - 1;
       }
@@ -641,7 +644,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         return mid;
       }
     }
-    return tokens.size();
+    return myTokens.size();
   }
 
   private static class MyTypedHandler implements TypedActionHandler {
