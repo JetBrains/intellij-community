@@ -10,7 +10,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="action-system-impl" />
-    <orderEntry type="module" module-name="J2EE" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="util" />
