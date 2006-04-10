@@ -1,19 +1,19 @@
 package com.intellij.debugger.ui.tree.render.configurables;
 
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.tree.render.ExpressionChildrenRenderer;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.picocontainer.Disposable;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.picocontainer.Disposable;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -35,7 +35,7 @@ public class ClassChildrenExpressionConfigurable implements UnnamedConfigurable{
     myProject = project;
     myRenderer = renderer;
 
-    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);
+    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject, GlobalSearchScope.allScope(myProject));
     myChildrenEditor   = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "ClassChildrenExpression");
     myExpandableEditor = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "ClassChildrenExpression");
 

@@ -5,6 +5,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
 
@@ -124,7 +126,8 @@ public class ToggleFieldBreakpointAction extends AnAction {
         DebuggerTreeNodeImpl node = ((DebuggerTreeNodeImpl)tree.getSelectionPath().getLastPathComponent());
         if(node != null && node.getDescriptor() instanceof FieldDescriptorImpl) {
           Field field = ((FieldDescriptorImpl)node.getDescriptor()).getField();
-          PsiClass psiClass = DebuggerUtilsEx.findClass(field.declaringType().name(), project);
+          DebuggerSession session = tree.getDebuggerContext().getDebuggerSession();
+          PsiClass psiClass = DebuggerUtilsEx.findClass(field.declaringType().name(), project, (session != null) ? session.getSearchScope(): GlobalSearchScope.allScope(project));
           if(psiClass != null) {
             psiClass = (PsiClass) psiClass.getNavigationElement();
             final PsiField psiField = psiClass.findFieldByName(field.name(), true);

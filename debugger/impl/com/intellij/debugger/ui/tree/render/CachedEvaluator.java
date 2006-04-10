@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
 
 /**
@@ -47,7 +48,7 @@ public abstract class CachedEvaluator {
   protected Cache initEvaluatorAndChildrenExpression(final Project project) {
     final Cache cache = new Cache();
     try {
-      final PsiClass contextClass = DebuggerUtils.findClass(getClassName(), project);
+      final PsiClass contextClass = DebuggerUtils.findClass(getClassName(), project, GlobalSearchScope.allScope(project));
       if(contextClass == null) {
         throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
       }

@@ -100,10 +100,14 @@ public class PositionManagerImpl implements PositionManager {
 
   public SourcePosition getSourcePosition(final Location location) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(location == null) return null;
+    if(location == null) {
+      return null;
+    }
 
     PsiFile psiFile = getPsiFileByLocation(getDebugProcess().getProject(), location);
-    if(psiFile == null ) return null;
+    if(psiFile == null ) {
+      return null;
+    }
 
     int     lineNumber  = calcLineIndex(psiFile, location);
 
@@ -159,8 +163,7 @@ public class PositionManagerImpl implements PositionManager {
     return lineNumber;
   }
 
-  private static PsiFile getPsiFileByLocation(final Project project,
-                                              final Location location) {
+  private PsiFile getPsiFileByLocation(final Project project, final Location location) {
     if (location == null) {
       return null;
     }
@@ -170,12 +173,12 @@ public class PositionManagerImpl implements PositionManager {
     }
 
     final String originalQName = refType.name();
-    final PsiManager psiManager = PsiManager.getInstance(project);
     int dollar = originalQName.indexOf('$');
     final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
-    PsiClass psiClass = DebuggerUtils.findClass(qName, project);
-    if (psiClass == null) {
-      psiClass = psiManager.findClass(originalQName, GlobalSearchScope.allScope(project)); // try to lookup original name
+    final GlobalSearchScope searchScope = myDebugProcess.getSession().getSearchScope();
+    PsiClass psiClass = DebuggerUtils.findClass(qName, project, searchScope);
+    if (psiClass == null && dollar >= 0 /*originalName and qName really differ*/) {
+      psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name
     }
     
     if (psiClass != null) {

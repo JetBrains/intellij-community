@@ -972,16 +972,18 @@ public class CompileDriver {
 
       boolean needRecompile = false;
       boolean shouldDelete;
-
+      String reason;
       if (myOutputFilesOnDisk.contains(outputPath)) {
         if (sourceFile == null) {
           shouldDelete = scope.belongs(sourceUrl);
+          reason = "source file not found; [scope.belongs(sourceUrl)] = " + shouldDelete;
         }
         else {
           if (toCompile.contains(sourceFile)) {
             // some crazy users store their resources (which is source file for us) directly in the output dir
             // we should not delete files which are both output and source files
             shouldDelete = !FileUtil.pathsEqual(outputPath, VirtualFileManager.extractPath(sourceUrl));
+            reason = "source file found, is about to be compiled; shouldDelete= " + shouldDelete + " (" + outputPath + ") != " + VirtualFileManager.extractPath(sourceUrl);
           }
           else {
             final String currentOutputDir = getModuleOutputDirForFile(context, sourceFile);
@@ -993,15 +995,18 @@ public class CompileDriver {
               );
               if (pathsEqual) {
                 shouldDelete = false;
+                reason = "source file found, current output dir!=null; shouldDelete=false: className="+className;
               }
               else {
                 // output for this source has been changed or the output dir was changed, need to recompile to the new output dir
                 shouldDelete = true;
                 needRecompile = true;
+                reason = "source file found, current output dir!=null; shouldDelete=true: className="+className;
               }
             }
             else {
               shouldDelete = true;
+              reason = "source file found, current output dir==null";
             }
           }
         }
@@ -1010,8 +1015,11 @@ public class CompileDriver {
         // output for this source has been deleted or the output dir was changed, need to recompile
         needRecompile = true;
         shouldDelete = true;  // in case the output dir was changed, should delete from the previous location
+        reason = "myOutputFileOnDisk does not contain the output path";
       }
 
+      LOG.info("OutputPath \"" + outputPath + "\"; SHOULD_DELETE=" + shouldDelete + "; REASON: " + reason);
+      
       if (shouldDelete) {
         toDelete.add(outputPath);
       }

@@ -14,6 +14,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -128,6 +129,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private final Semaphore myWaitFor = new Semaphore();
   private boolean myBreakpointsMuted = false;
   private boolean myIsFailed = false;
+  private DebuggerSession mySession;
 
 
   protected DebugProcessImpl(Project project) {
@@ -1489,9 +1491,15 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
   }
 
+  public DebuggerSession getSession() {
+    return mySession;
+  }
 
-  public @Nullable ExecutionResult attachVirtualMachine(final RunProfileState state, final RemoteConnection remoteConnection, boolean pollConnection)
-    throws ExecutionException {
+  public @Nullable ExecutionResult attachVirtualMachine(final DebuggerSession session,
+                                                        final RunProfileState state,
+                                                        final RemoteConnection remoteConnection,
+                                                        boolean pollConnection) throws ExecutionException {
+    mySession = session;
     myWaitFor.down();
 
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());

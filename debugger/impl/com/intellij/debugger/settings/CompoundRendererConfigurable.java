@@ -4,6 +4,7 @@
  */
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -11,17 +12,17 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.Table;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -34,8 +35,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -158,7 +157,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   }
 
   private void updateContext(final String qName) {
-    PsiClass psiClass = DebuggerUtils.findClass(qName, myProject);
+    PsiClass psiClass = DebuggerUtils.findClass(qName, myProject, GlobalSearchScope.allScope(myProject));
     myLabelEditor.setContext(psiClass);
     myChildrenEditor.setContext(psiClass);
     myChildrenExpandedEditor.setContext(psiClass);

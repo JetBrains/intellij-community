@@ -36,6 +36,13 @@ public abstract class GlobalSearchScope extends SearchScope {
 
   public abstract boolean contains(VirtualFile file);
 
+  /**
+   * @param file1
+   * @param file2
+   * @return a positive integer (+1), if file1 is located in the classpath before file2,
+   *         a negative integer (-1), if file1 is located in the classpath after file2
+   *         zero - otherwise or when the file are not comparable.
+   */
   public abstract int compare(VirtualFile file1, VirtualFile file2);
 
   // optimization methods:

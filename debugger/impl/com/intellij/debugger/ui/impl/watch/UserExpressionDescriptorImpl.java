@@ -4,6 +4,8 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -11,7 +13,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
@@ -49,7 +50,7 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
     if(value instanceof ObjectReference) {
       final String typeName = value.type().name();
 
-      final PsiClass psiClass = DebuggerUtilsEx.findClass(myTypeName, myProject);
+      final PsiClass psiClass = DebuggerUtilsEx.findClass(myTypeName, myProject, ((DebugProcessImpl)context.getDebugProcess()).getSession().getSearchScope());
 
       if (psiClass == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", typeName));

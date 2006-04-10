@@ -86,7 +86,7 @@ public class ExceptionBreakpoint extends Breakpoint {
   public PsiClass getPsiClass() {
     return PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<PsiClass>() {
       public PsiClass compute() {
-        return myQualifiedName != null ? DebuggerUtilsEx.findClass(myQualifiedName, myProject) : null;
+        return myQualifiedName != null ? DebuggerUtilsEx.findClass(myQualifiedName, myProject, GlobalSearchScope.allScope(myProject)) : null;
       }
     });
   }
@@ -106,7 +106,7 @@ public class ExceptionBreakpoint extends Breakpoint {
   public void reload() {
   }
 
-  public void createRequest(DebugProcessImpl debugProcess) {
+  public void createRequest(final DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!ENABLED || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
       return;
@@ -114,7 +114,7 @@ public class ExceptionBreakpoint extends Breakpoint {
 
     SourcePosition classPosition = PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<SourcePosition>() {
       public SourcePosition compute() {
-        PsiClass psiClass = DebuggerUtilsEx.findClass(myQualifiedName, myProject);
+        PsiClass psiClass = DebuggerUtilsEx.findClass(myQualifiedName, myProject, debugProcess.getSession().getSearchScope());
 
         return psiClass != null ? SourcePosition.createFromElement(psiClass) : null;
       }

@@ -496,7 +496,7 @@ public class PackageUtil {
 
     public int compare(VirtualFile file1, VirtualFile file2) {
       final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
-      return fileIndex.getOrderEntryForFile(file1).compareTo(fileIndex.getOrderEntryForFile(file2));
+      return fileIndex.getOrderEntryForFile(file2).compareTo(fileIndex.getOrderEntryForFile(file1));
     }
 
     public boolean isSearchInModuleContent(Module aModule) {
@@ -538,7 +538,7 @@ public class PackageUtil {
         if (orderEntry1 != null) {
           final OrderEntry orderEntry2 = fileIndex.getOrderEntryForFile(file2);
           if (orderEntry2 != null) {
-            return orderEntry1.compareTo(orderEntry2);
+            return orderEntry2.compareTo(orderEntry1);
           }
           else {
             return 0;

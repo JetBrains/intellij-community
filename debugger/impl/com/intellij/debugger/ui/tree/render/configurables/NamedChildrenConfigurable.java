@@ -1,16 +1,17 @@
 package com.intellij.debugger.ui.tree.render.configurables;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.Table;
@@ -51,7 +52,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
     final String expressionColumnName = DebuggerBundle.message("label.named.children.configurable.table.header.column.expression");
     getModel().addColumn(expressionColumnName, (Object[])null);
 
-    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);
+    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject, GlobalSearchScope.allScope(myProject));
     myCompletionEditor = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(myProject, psiClass, "NamedChildrenConfigurable");
 
     myTable.setDragEnabled(false);

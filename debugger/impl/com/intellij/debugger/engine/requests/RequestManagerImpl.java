@@ -1,6 +1,5 @@
 package com.intellij.debugger.engine.requests;
 
-import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
@@ -21,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
@@ -128,7 +128,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         }
         final JVMName jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<JVMName>() {
           public JVMName compute() {
-            PsiClass psiClass = DebuggerUtilsEx.findClass(filter.getPattern(), myDebugProcess.getProject());
+            PsiClass psiClass = DebuggerUtilsEx.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSession().getSearchScope());
             if(psiClass == null) {
               return null;
             }

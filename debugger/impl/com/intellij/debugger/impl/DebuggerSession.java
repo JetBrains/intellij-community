@@ -24,13 +24,16 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.EventRequest;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,6 +70,7 @@ public class DebuggerSession {
 
   private final String mySessionName;
   private final DebugProcessImpl myDebugProcess;
+  private @NotNull GlobalSearchScope mySearchScope;
 
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
@@ -77,6 +81,11 @@ public class DebuggerSession {
     return mySteppingThroughThreads.contains(threadProxy);
   }
 
+  @NotNull
+  public GlobalSearchScope getSearchScope() {
+    LOG.assertTrue(mySearchScope != null, "Accessing Session's search scope before its initialization");
+    return mySearchScope;
+  }
 
   private class MyDebuggerStateManager extends DebuggerStateManager {
     private DebuggerContextImpl myDebuggerContext;
@@ -495,9 +504,21 @@ public class DebuggerSession {
   }
 
   protected @Nullable ExecutionResult attach(final RunProfileState state, final RemoteConnection remoteConnection, final boolean pollConnection) throws ExecutionException {
-    final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(state, remoteConnection, pollConnection);
+    final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(this, state, remoteConnection, pollConnection);
     final String addressDisplayName = DebuggerBundle.getAddressDisplayName(remoteConnection);
     final String transportName = DebuggerBundle.getTransportName(remoteConnection);
+    final Module[] modules = state.getModulesToCompile();
+    if (modules == null || modules.length == 0) {
+      mySearchScope = GlobalSearchScope.allScope(getProject());
+    }
+    else {
+      GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(modules[0], true);
+      for (int idx = 1; idx < modules.length; idx++) {
+        Module module = modules[idx];
+        scope = scope.uniteWith(GlobalSearchScope.moduleRuntimeScope(module, true));
+      }
+      mySearchScope = scope;
+    }
     getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_WAITING_ATTACH, EVENT_START_WAIT_ATTACH, DebuggerBundle.message("status.waiting.attach", addressDisplayName, transportName));
     return executionResult;
   }

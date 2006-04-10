@@ -1,16 +1,17 @@
 package com.intellij.debugger.ui.tree.render.configurables;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.tree.render.LabelRenderer;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +35,7 @@ public class ClassLabelExpressionConfigurable implements UnnamedConfigurable{
     myRenderer = renderer;
 
     myCompletionEditor = new LabeledComponent<CompletionEditor>();
-    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);
+    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject, GlobalSearchScope.allScope(myProject));
     myCompletionEditor.setComponent(((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(myProject, psiClass, "ClassLabelExpression"));
     myCompletionEditor.setText(DebuggerBundle.message("label.class.label.expression.configurable.node.label"));
 

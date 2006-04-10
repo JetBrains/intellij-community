@@ -15,8 +15,8 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -289,9 +289,8 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
     return getSuperType(subType, superType) != null;
   }
 
-  public static PsiClass findClass(String className, Project project) {
+  public static PsiClass findClass(String className, Project project, final GlobalSearchScope scope) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-
     final PsiManager psiManager = PsiManager.getInstance(project);
     if (getArrayClass(className) != null) {
       return psiManager.getElementFactory().getArrayClass();
@@ -299,7 +298,12 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
     if(project.isDefault()) {
       return null;
     }
-    return psiManager.findClass(className.replace('$', '.'), GlobalSearchScope.allScope(project));
+    final String _className = className.replace('$', '.');
+    final PsiClass aClass = psiManager.findClass(_className, scope);
+    if (aClass == null && scope != GlobalSearchScope.allScope(project)) {
+      return psiManager.findClass(_className, GlobalSearchScope.allScope(project)); 
+    }
+    return aClass;
   }
 
   public static PsiType getType(String className, Project project) {

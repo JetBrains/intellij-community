@@ -100,8 +100,8 @@ public class ModuleRuntimeClasspathScope extends GlobalSearchScope {
     final VirtualFile r1 = getFileRoot(file1);
     final VirtualFile r2 = getFileRoot(file2);
     for (VirtualFile root : myEntries) {
-      if (r1 == root) return -1;
-      if (r2 == root) return 1;
+      if (r1 == root) return 1;
+      if (r2 == root) return -1;
     }
     return 0;
   }
