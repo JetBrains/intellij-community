@@ -16,13 +16,14 @@
 package com.intellij.javaee.make;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.javaee.JavaeeModuleProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ModuleBuildProperties {
+public abstract class ModuleBuildProperties implements ModuleComponent {
   public static ModuleBuildProperties getInstance(Module module) {
     return module.getComponent(ModuleBuildProperties.class);
   }

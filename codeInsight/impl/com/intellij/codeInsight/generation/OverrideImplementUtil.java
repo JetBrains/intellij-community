@@ -1,12 +1,12 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.javaee.ejb.EjbUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +28,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.javaee.ejb.role.EjbRolesUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -122,19 +121,20 @@ public class OverrideImplementUtil {
                                                                 .isInheritor(concrete.getContainingClass(), true))) {
           if (finals.get(signature) == null) {
             PsiSubstitutor subst = GenerateMembersUtil.correctSubstitutor(abstractOne,
-                                                                                substitutors.get(abstractOne.getContainingClass()));
+                                                                          substitutors.get(abstractOne.getContainingClass()));
             CandidateInfo info = new CandidateInfo(abstractOne, subst);
             result.put(signature, info);
           }
         }
       }
 
-      PsiMethod[] ejbMethods = EjbUtil.getEjbMethodsToImplement(aClass);
-      for (PsiMethod method : ejbMethods) {
-        MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), method.getParameterList(),
-                                                                              method.getTypeParameterList(), PsiSubstitutor.EMPTY);
-        CandidateInfo info = new CandidateInfo(method, PsiSubstitutor.EMPTY);
-        result.put(signature, info);
+      for (final MethodImplementor implementor : getImplementors()) {
+        for (final PsiMethod method : implementor.getMethodsToImplement(aClass)) {
+          MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), method.getParameterList(),
+                                                                                method.getTypeParameterList(), PsiSubstitutor.EMPTY);
+          CandidateInfo info = new CandidateInfo(method, PsiSubstitutor.EMPTY);
+          result.put(signature, info);
+        }
       }
     } else {
       for (Map.Entry<MethodSignature, PsiMethod> entry : concretes.entrySet()) {
@@ -153,6 +153,10 @@ public class OverrideImplementUtil {
     }
 
     return result;
+  }
+
+  private static MethodImplementor[] getImplementors() {
+    return ApplicationManager.getApplication().getComponents(MethodImplementor.class);
   }
 
   /**
@@ -180,15 +184,21 @@ public class OverrideImplementUtil {
                                                        boolean insertAtOverride) throws IncorrectOperationException {
     if (!method.isValid() || !substitutor.isValid()) return PsiMethod.EMPTY_ARRAY;
 
-    PsiMethod[] results = EjbUtil.suggestImplementations(method);
-
-    if (results.length == 0){
+    List<PsiMethod> results = new ArrayList<PsiMethod>();
+    for (final MethodImplementor implementor : getImplementors()) {
+      results.addAll(Arrays.asList(implementor.createImplementationPrototypes(aClass, method)));
+    }
+    if (results.isEmpty()) {
       PsiMethod method1 = substitutor != PsiSubstitutor.EMPTY ?
                           GenerateMembersUtil.substituteGenericMethod(method, substitutor) : method;
 
       PsiElementFactory factory = method.getManager().getElementFactory();
       PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);
+      results.add(result);
+    }
 
+    for (Iterator<PsiMethod> iterator = results.iterator(); iterator.hasNext();) {
+      PsiMethod result = iterator.next();
       result.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, aClass.isInterface());
       result.getModifierList().setModifierProperty(PsiModifier.NATIVE, false);
 
@@ -202,7 +212,7 @@ public class OverrideImplementUtil {
       if (insertAtOverride && !method.isConstructor()) {
         PsiModifierList modifierList = result.getModifierList();
         if (modifierList.findAnnotation("java.lang.Override") == null) {
-          PsiAnnotation annotation = factory.createAnnotationFromText("@java.lang.Override", null);
+          PsiAnnotation annotation = method.getManager().getElementFactory().createAnnotationFromText("@java.lang.Override", null);
           modifierList.addAfter(annotation, null);
         }
       }
@@ -215,14 +225,6 @@ public class OverrideImplementUtil {
         result.add(body);
       }
 
-      results = new PsiMethod[]{result};
-    }
-
-    List<PsiMethod> list = new ArrayList<PsiMethod>();
-
-    for (PsiMethod result : results) {
-      EjbUtil.tuneMethodForEjb(EjbRolesUtil.getEjbRolesUtil().getEjbRole(aClass), method, result);
-
       setupMethodBody(result, method, aClass);
 
       // probably, it's better to reformat the whole method - it can go from other style sources
@@ -234,12 +236,12 @@ public class OverrideImplementUtil {
       result = (PsiMethod)codeStyleManager.reformat(result);
       settings.KEEP_LINE_BREAKS = keepBreaks;
 
-      if (aClass.findMethodBySignature(result, false) == null) {
-        list.add(result);
+      if (aClass.findMethodBySignature(result, false) != null) {
+        iterator.remove();
       }
     }
 
-    return list.toArray(new PsiMethod[list.size()]);
+    return results.toArray(new PsiMethod[results.size()]);
   }
 
   public static boolean isOverridable(PsiMethod method) {
@@ -266,13 +268,13 @@ public class OverrideImplementUtil {
   private static String callSuper (PsiMethod superMethod, PsiMethod overriding) {
     @NonNls StringBuffer buffer = new StringBuffer();
     if (!superMethod.isConstructor() && superMethod.getReturnType() != PsiType.VOID) {
-        buffer.append("return ");
+      buffer.append("return ");
     }
     buffer.append("super");
     PsiParameter[] parms = overriding.getParameterList().getParameters();
     if (!superMethod.isConstructor()){
-          buffer.append(".");
-          buffer.append(superMethod.getName());
+      buffer.append(".");
+      buffer.append(superMethod.getName());
     }
     buffer.append("(");
     for (int i = 0; i < parms.length; i++) {
@@ -326,11 +328,11 @@ public class OverrideImplementUtil {
       }
       catch (IncorrectOperationException e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                Messages.showErrorDialog(CodeInsightBundle.message("override.implement.broken.file.template.message"),
-                                         CodeInsightBundle.message("override.implement.broken.file.template.title"));
-              }
-            });
+          public void run() {
+            Messages.showErrorDialog(CodeInsightBundle.message("override.implement.broken.file.template.message"),
+                                     CodeInsightBundle.message("override.implement.broken.file.template.title"));
+          }
+        });
         return;
       }
       PsiCodeBlock oldBody = result.getBody();
