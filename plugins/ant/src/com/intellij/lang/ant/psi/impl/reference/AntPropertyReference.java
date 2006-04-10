@@ -10,7 +10,6 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 
 public class AntPropertyReference extends AntGenericReference {
 
@@ -54,9 +53,7 @@ public class AntPropertyReference extends AntGenericReference {
     return getReferenceType();
   }
 
-
-  @Nullable
-  public String getErrorDescription() {
+  public String getUnresolvedMessagePattern() {
     return AntBundle.getMessage("unknown.property", getCanonicalText());
   }
 }

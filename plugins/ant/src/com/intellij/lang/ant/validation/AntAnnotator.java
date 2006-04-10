@@ -50,7 +50,7 @@ public class AntAnnotator implements Annotator {
     AntGenericReference[] refs = (AntGenericReference[])element.getReferences();
     for (AntGenericReference ref : refs) {
       if (ref.resolve() == null) {
-        holder.createErrorAnnotation(ref.getRangeInElement(), ref.getErrorDescription());
+        holder.createErrorAnnotation(ref.getRangeInElement(), ref.getUnresolvedMessagePattern());
       }
     }
   }

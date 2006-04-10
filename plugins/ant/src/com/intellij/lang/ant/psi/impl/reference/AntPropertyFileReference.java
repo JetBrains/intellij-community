@@ -11,7 +11,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 
 public class AntPropertyFileReference extends AntGenericReference {
 
@@ -73,8 +72,7 @@ public class AntPropertyFileReference extends AntGenericReference {
     return getElement().getPropertiesFile();
   }
 
-  @Nullable
-  public String getErrorDescription() {
+  public String getUnresolvedMessagePattern() {
     return AntBundle.getMessage("properties.file.doesnt.exist", getCanonicalText());
   }
 }

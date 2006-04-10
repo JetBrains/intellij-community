@@ -14,7 +14,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericRefe
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
-import org.jetbrains.annotations.Nullable;
 
 public class AntTargetReference extends AntGenericReference {
 
@@ -88,8 +87,7 @@ public class AntTargetReference extends AntGenericReference {
     return false;
   }
 
-  @Nullable
-  public String getErrorDescription() {
+  public String getUnresolvedMessagePattern() {
     return AntBundle.getMessage("cannot.resolve.target", getCanonicalText());
   }
 
