@@ -103,7 +103,7 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
     if (myStoreAsClient) {
       return null;
     }
-    final Constructor constructor = component.getComponentClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
+    final Constructor constructor = component.getDelegee().getClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
     constructor.setAccessible(true);
     JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
     //noinspection unchecked

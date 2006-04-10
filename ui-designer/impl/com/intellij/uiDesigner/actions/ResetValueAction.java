@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
  * @author yole
  */
 public class ResetValueAction extends AbstractGuiEditorAction {
-  private static final Logger LOG = Logger.getInstance("#intellij.uiDesigner.actions.ResetValueAction");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.ResetValueAction");
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     final PropertyInspectorTable inspector = (PropertyInspectorTable)e.getDataContext().getData(PropertyInspectorTable.class.getName());
@@ -29,10 +30,15 @@ public class ResetValueAction extends AbstractGuiEditorAction {
   public static void doResetValue(final RadComponent component, final Property property, final GuiEditor editor) {
     try {
       if (!editor.ensureEditable()) return;
+      final PropertyInspector propertyInspector = UIDesignerToolWindowManager.getInstance(editor.getProject()).getPropertyInspector();
+      if (propertyInspector.isEditing()) {
+        propertyInspector.stopEditing();
+      }
+      //noinspection unchecked
       property.resetValue(component);
       component.getDelegee().invalidate();
       editor.refreshAndSave(false);
-      UIDesignerToolWindowManager.getInstance(editor.getProject()).getPropertyInspector().repaint();
+      propertyInspector.repaint();
     }
     catch (Exception e1) {
       LOG.error(e1);
@@ -43,6 +49,7 @@ public class ResetValueAction extends AbstractGuiEditorAction {
     PropertyInspectorTable inspector = (PropertyInspectorTable)e.getDataContext().getData(PropertyInspectorTable.class.getName());
     if (inspector != null) {
       final Property selectedProperty = inspector.getSelectedProperty();
+      //noinspection unchecked
       e.getPresentation().setEnabled(selectedProperty != null &&
                                      selection.size() == 1 &&
                                      selectedProperty.isModified(selection.get(0)));

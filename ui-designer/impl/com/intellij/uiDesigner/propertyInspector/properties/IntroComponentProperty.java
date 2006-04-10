@@ -57,7 +57,7 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
     if (getName().equals(SwingProperties.LABEL_FOR)) {
       String text = FormInspectionUtil.getText(component.getModule(), component);
-      if (text != null) {
+      if (text != null && value != null) {
         RadComponent valueComponent = FormEditingUtil.findComponentAnywhere(component, value);
         if (valueComponent != null) {
           BindingProperty.checkCreateBindingFromText(valueComponent, text);
