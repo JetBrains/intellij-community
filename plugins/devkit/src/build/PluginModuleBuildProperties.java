@@ -43,7 +43,7 @@ import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
 
 import java.io.File;
 
-public class PluginModuleBuildProperties extends ModuleBuildProperties implements ModuleComponent, JDOMExternalizable {
+public class PluginModuleBuildProperties extends ModuleBuildProperties implements JDOMExternalizable {
   private Module myModule;
   private JavaeeDeploymentItem myPluginXML;
   private VirtualFilePointer myPluginXMLPointer;
