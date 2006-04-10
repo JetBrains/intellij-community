@@ -167,9 +167,27 @@ public class LocalChangeList implements Cloneable, ChangeList {
     return myName.hashCode();
   }
 
-  public LocalChangeList clone() {
+  public synchronized LocalChangeList clone() {
     try {
-      return (LocalChangeList)super.clone();
+      final LocalChangeList copy = (LocalChangeList)super.clone();
+
+      if (myChanges != null) {
+        copy.myChanges = new HashSet<Change>(myChanges);
+      }
+
+      if (myChangesBeforeUpdate != null) {
+        copy.myChangesBeforeUpdate = new HashSet<Change>(myChangesBeforeUpdate);
+      }
+
+      if (myOutdatedChanges != null) {
+        copy.myOutdatedChanges = new ArrayList<Change>(myOutdatedChanges);
+      }
+
+      if (myReadChangesCache != null) {
+        copy.myReadChangesCache = new HashSet<Change>(myReadChangesCache);
+      }
+
+      return copy;
     }
     catch (CloneNotSupportedException e) {
       LOG.error(e);
