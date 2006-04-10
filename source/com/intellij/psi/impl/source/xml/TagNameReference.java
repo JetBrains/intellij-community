@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -60,9 +61,11 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
   }
 
   public PsiElement resolve() {
-    final XmlElementDescriptor descriptor = getElement().getDescriptor();
+    final XmlTag tag = getElement();
+    final XmlElementDescriptor descriptor = tag.getDescriptor();
+
     if (descriptor != null){
-      return descriptor.getDeclaration();
+      return descriptor instanceof AnyXmlElementDescriptor ? tag : descriptor.getDeclaration();
     }
     return null;
   }
