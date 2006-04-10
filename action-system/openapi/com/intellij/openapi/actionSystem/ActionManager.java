@@ -17,9 +17,9 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -143,4 +143,5 @@ public abstract class ActionManager {
    */
   public abstract JComponent createButtonToolbar(final String actionPlace, final ActionGroup messageActionGroup);
 
+  public abstract AnAction getActionOrStub(String id);
 }

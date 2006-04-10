@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -22,7 +21,7 @@ public class Group {
   /**
    * Group or action id (String) or Separator or QuickList
    */
-  private ArrayList myChildren;
+  private ArrayList<Object> myChildren;
 
   private Set<String> myIds = new HashSet<String>();
 
@@ -31,11 +30,11 @@ public class Group {
     myId = id;
     myIcon = icon;
     myOpenIcon = openIcon;
-    myChildren = new ArrayList();
+    myChildren = new ArrayList<Object>();
   }
 
   public Group(final String name, final Icon openIcon, final Icon icon) {
-    myChildren = new ArrayList();
+    myChildren = new ArrayList<Object>();
     myOpenIcon = openIcon;
     myIcon = icon;
     myName = name;
@@ -75,29 +74,11 @@ public class Group {
   }
 
   public boolean containsId(String id) {
-    /*for (int i=0; i < myChildren.size(); i++) {
-      Object child = myChildren.get(i);
-      if (child instanceof String) {
-        if (id.equals(child)) {
-          return true;
-        }
-      }
-      else if (child instanceof QuickList) {
-        if (((QuickList)child).getActionId().equals(id)) return true;
-      }
-      else if (child instanceof Group) {
-        if (((Group)child).containsId(id)) {
-          return true;
-        }
-      }
-    }
-    return false;*/
     return myIds.contains(id);
   }
 
   public Set<String> initIds(){
-    for (int i=0; i < myChildren.size(); i++) {
-      Object child = myChildren.get(i);
+    for (Object child : myChildren) {
       if (child instanceof String) {
         myIds.add((String)child);
       }
@@ -111,7 +92,7 @@ public class Group {
     return myIds;
   }
 
-  public ArrayList getChildren() {
+  public ArrayList<Object> getChildren() {
     return myChildren;
   }
 
@@ -137,14 +118,13 @@ public class Group {
   }
 
   public String getActionQualifiedPath(String id) {
-    for (Iterator iterator = myChildren.iterator(); iterator.hasNext();) {
-      Object child = iterator.next();
+    for (Object child : myChildren) {
       if (child instanceof QuickList) {
         child = ((QuickList)child).getActionId();
       }
       if (child instanceof String) {
         if (id.equals(child)) {
-          AnAction action = ActionManager.getInstance().getAction(id);
+          AnAction action = ActionManager.getInstance().getActionOrStub(id);
           String path;
           if (action != null) {
             path = action.getTemplatePresentation().getText();
@@ -180,9 +160,7 @@ public class Group {
   }
 
   public void addAll(Group group) {
-    Iterator<Object> iterator = group.getChildren().iterator();
-    while (iterator.hasNext()) {
-      Object o = iterator.next();
+    for (Object o : group.getChildren()) {
       if (o instanceof String) {
         addActionId((String)o);
       }
@@ -212,13 +190,14 @@ public class Group {
     if (groupToRestorePresentation != null){
       group.copyFrom(groupToRestorePresentation);
     }
-    for (Iterator<Object> iterator = myChildren.iterator(); iterator.hasNext();) {
-      Object o = iterator.next();
-      if (o instanceof String){
+    for (Object o : myChildren) {
+      if (o instanceof String) {
         group.add(actionManager.getAction((String)o));
-      } else if (o instanceof Separator){
+      }
+      else if (o instanceof Separator) {
         group.addSeparator();
-      } else if (o instanceof Group){
+      }
+      else if (o instanceof Group) {
         group.add(((Group)o).constructActionGroup(popup));
       }
     }

@@ -259,6 +259,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return new ButtonToolbarImpl(actionPlace, messageActionGroup, myDataManager, this);
   }
 
+  public AnAction getActionOrStub(String id) {
+    return getActionImpl(id, true);
+  }
+
   /**
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses
    *         of <code>AnAction</code>.

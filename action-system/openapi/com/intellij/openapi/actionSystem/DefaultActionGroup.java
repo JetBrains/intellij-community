@@ -255,4 +255,17 @@ public class DefaultActionGroup extends ActionGroup {
   public final int getChildrenCount(){
     return mySortedChildren.size() + myPairs.size();
   }
+
+  public final AnAction[] getChildActionsOrStubs(@Nullable AnActionEvent e){
+    // Mix sorted actions and pairs
+    int sortedSize = mySortedChildren.size();
+    AnAction[] children = new AnAction[sortedSize + myPairs.size()];
+    for(int i = 0; i < sortedSize; i++){
+      children[i] = mySortedChildren.get(i);
+    }
+    for(int i = 0; i < myPairs.size(); i++){
+      children[i + sortedSize] = myPairs.get(i).first;
+    }    
+    return children;
+  }
 }
