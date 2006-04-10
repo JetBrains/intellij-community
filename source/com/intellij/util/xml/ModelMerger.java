@@ -154,10 +154,10 @@ public class ModelMerger {
           return "Merger: " + Arrays.asList(myImplementations);
         }
         if ("hashCode".equals(methodName)) {
-          return System.identityHashCode(proxy);
+          return Arrays.hashCode(myImplementations);
         }
         if ("equals".equals(methodName)) {
-          return proxy == args[0];
+          return args[0] != null && ((MergedObject)args[0]).getImplementations().equals(Arrays.asList(myImplementations));
         }
         return null;
       }
