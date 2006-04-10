@@ -84,7 +84,6 @@ public final class InsertComponentProcessor extends EventProcessor {
     }
 
     if (myLastLocation.canDrop(getComponentToInsert())) {
-      
       myLastLocation.placeFeedback(myEditor.getActiveDecorationLayer(), getComponentToInsert());
     }
   }
@@ -248,7 +247,7 @@ public final class InsertComponentProcessor extends EventProcessor {
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
             location.processDrop(myEditor, components, null, item);
 
-            FormEditingUtil.selectSingleComponent(myInsertedComponent);
+            FormEditingUtil.selectSingleComponent(myEditor, myInsertedComponent);
 
             if (location.getContainer() != null && location.getContainer().isXY()) {
               Dimension newSize = myInsertedComponent.getPreferredSize();
@@ -260,7 +259,7 @@ public final class InsertComponentProcessor extends EventProcessor {
                 myInsertedComponent.getParent() instanceof RadRootContainer &&
                 myInsertedComponent instanceof RadAtomicComponent) {
               GridBuildUtil.convertToGrid(myEditor);
-              FormEditingUtil.selectSingleComponent(myInsertedComponent);
+              FormEditingUtil.selectSingleComponent(myEditor, myInsertedComponent);
             }
 
             checkBindTopLevelPanel();

@@ -112,7 +112,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
       FormEditingUtil.selectComponent(component);
     }
     else {
-      FormEditingUtil.selectSingleComponent(component);
+      FormEditingUtil.selectSingleComponent(myEditor, component);
     }
   }
 

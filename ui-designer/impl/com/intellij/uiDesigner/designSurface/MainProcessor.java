@@ -7,7 +7,6 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -274,8 +273,10 @@ public final class MainProcessor extends EventProcessor{
       return;
     }
 
-    if (!UIUtil.isControlKeyDown(e) && !e.isShiftDown() && !component.isSelected()) {
-      FormEditingUtil.selectSingleComponent(component);
+    if (!UIUtil.isControlKeyDown(e) && !e.isShiftDown()) {
+      if (!component.isSelected() || FormEditingUtil.getSelectedComponents(myEditor).size() != 1) {
+        FormEditingUtil.selectSingleComponent(myEditor, component);
+      }
     }
 
     final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), component.getDelegee());
@@ -288,8 +289,8 @@ public final class MainProcessor extends EventProcessor{
       }
       myCurrentProcessor = new ResizeProcessor(myEditor, component, resizeMask);
     }
-    else if (component instanceof RadRootContainer || ((component instanceof RadContainer) && e.isShiftDown())) {
-      myCurrentProcessor = new GroupSelectionProcessor(myEditor, (RadContainer)component);
+    else if (component instanceof RadRootContainer || e.isShiftDown()) {
+      myCurrentProcessor = new GroupSelectionProcessor(myEditor, component);
     }
     else if (!e.isShiftDown()) {
       myCurrentProcessor = new DragSelectionProcessor(myEditor);

@@ -41,6 +41,7 @@ import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -169,6 +170,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private GridCaptionPanel myVertCaptionPanel;
   private MyPaletteKeyListener myPaletteKeyListener;
   private MyPaletteDragListener myPaletteDragListener;
+  private ComponentPtr mySelectionAnchor;
 
   /**
    * @param file file to be edited
@@ -587,6 +589,16 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   public void refreshIntentionHint() {
     myQuickFixManager.refreshIntentionHint();
+  }
+
+  public void setSelectionAnchor(final RadComponent component) {
+    mySelectionAnchor = new ComponentPtr(this, component);
+  }
+
+  @Nullable
+  public RadComponent getSelectionAnchor() {
+    mySelectionAnchor.validate();
+    return mySelectionAnchor.getComponent();
   }
 
   public static final class ReplaceInfo {

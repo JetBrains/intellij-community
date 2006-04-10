@@ -3,6 +3,8 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.core.GridConstraints;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,7 +17,7 @@ import java.awt.event.MouseEvent;
  */
 public final class GroupSelectionProcessor extends EventProcessor {
   private final GuiEditor myEditor;
-  private final RadContainer myContainer;
+  private final RadComponent myComponent;
   private Point myStartPoint;
   private final MyRectanglePainter myRectangePainter;
 
@@ -23,9 +25,9 @@ public final class GroupSelectionProcessor extends EventProcessor {
    * @param container group where drag is started. This group should not be selected
    * after drag is complete.
    */
-  public GroupSelectionProcessor(final GuiEditor editor,final RadContainer container){
+  public GroupSelectionProcessor(final GuiEditor editor, final RadComponent component) {
     myEditor = editor;
-    myContainer = container;
+    myComponent = component;
     myRectangePainter=new MyRectanglePainter();
   }
 
@@ -44,6 +46,19 @@ public final class GroupSelectionProcessor extends EventProcessor {
     }
     else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
       final Rectangle rectangle = getRectangle(e);
+      if (e.isShiftDown() && rectangle.width <= 3 && rectangle.height <= 3) {
+        RadComponent component = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
+        if (component != null) {
+          RadComponent anchor = myEditor.getSelectionAnchor();
+          if (anchor == null || anchor.getParent() != component.getParent() || anchor.getParent() == null ||
+            !anchor.getParent().isGrid()) {
+            component.setSelected(!component.isSelected());
+          }
+          else {
+            selectComponentsInRange(component, anchor);
+          }
+        }
+      }
       markRectangle(myEditor.getRootContainer(), rectangle, e.getComponent());
       final JComponent dragLayer = myEditor.getDragLayer();
       dragLayer.remove(myRectangePainter);
@@ -52,7 +67,24 @@ public final class GroupSelectionProcessor extends EventProcessor {
     }
   }
 
-  protected boolean cancelOperation(){
+  private static void selectComponentsInRange(final RadComponent component, final RadComponent anchor) {
+    final GridConstraints c1 = component.getConstraints();
+    final GridConstraints c2 = anchor.getConstraints();
+    int startRow = Math.min(c1.getRow(), c2.getRow());
+    int startCol = Math.min(c1.getColumn(), c2.getColumn());
+    int endRow = Math.max(c1.getRow() + c1.getRowSpan(), c2.getRow() + c2.getRowSpan());
+    int endCol = Math.max(c1.getColumn() + c1.getColSpan(), c2.getColumn() + c2.getColSpan());
+    for(int row=startRow; row<endRow; row++) {
+      for(int col=startCol; col<endCol; col++) {
+        RadComponent c = anchor.getParent().getComponentAtGrid(row, col);
+        if (c != null) {
+          c.setSelected(true);
+        }
+      }
+    }
+  }
+
+  protected boolean cancelOperation() {
     final JComponent dragLayer = myEditor.getDragLayer();
     dragLayer.remove(myRectangePainter);
     dragLayer.repaint();
@@ -74,7 +106,7 @@ public final class GroupSelectionProcessor extends EventProcessor {
     final Rectangle rectangle,
     final Component coordinateOriginComponent
   ){
-    if (!(component instanceof RadRootContainer) && !component.equals(myContainer)) {
+    if (!(component instanceof RadRootContainer) && !component.equals(myComponent)) {
       final Rectangle bounds = component.getBounds();
       final Point point = SwingUtilities.convertPoint(component.getDelegee().getParent(), bounds.x, bounds.y, coordinateOriginComponent);
       bounds.setLocation(point);

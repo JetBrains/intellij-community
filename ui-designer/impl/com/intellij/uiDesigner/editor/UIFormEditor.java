@@ -124,14 +124,14 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   public void selectComponent(@NotNull final String binding) {
     final RadComponent component = (RadComponent) FormEditingUtil.findComponentWithBinding(myEditor.getRootContainer(), binding);
     if (component != null) {
-      FormEditingUtil.selectSingleComponent(component);
+      FormEditingUtil.selectSingleComponent(getEditor(), component);
     }
   }
 
   public void selectComponentById(@NotNull final String id) {
     final RadComponent component = FormEditingUtil.findComponent(myEditor.getRootContainer(), id);
     if (component != null) {
-      FormEditingUtil.selectSingleComponent(component);
+      FormEditingUtil.selectSingleComponent(getEditor(), component);
     }
   }
 

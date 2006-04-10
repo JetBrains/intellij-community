@@ -1,12 +1,13 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.dnd.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -65,10 +66,12 @@ public final class DragSelectionProcessor extends EventProcessor {
       myPressPoint = e.getPoint();
     }
     else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
-      if (!myDragStarted && UIUtil.isControlKeyDown(e)) {
+      if (!myDragStarted) {
         RadComponent component = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
         if (component != null) {
-          component.setSelected(!component.isSelected());
+          if (UIUtil.isControlKeyDown(e)) {
+            component.setSelected(!component.isSelected());
+          }
         }
       }
     }

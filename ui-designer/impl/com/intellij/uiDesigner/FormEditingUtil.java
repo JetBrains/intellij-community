@@ -2,44 +2,45 @@ package com.intellij.uiDesigner;
 
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.designSurface.Painter;
 import com.intellij.uiDesigner.designSurface.DraggedComponentList;
 import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.Painter;
+import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.editor.UIFormEditor;
-import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
-import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -605,7 +606,7 @@ public final class FormEditingUtil {
     return hasTab;
   }
 
-  public static void selectSingleComponent(final RadComponent component) {
+  public static void selectSingleComponent(final GuiEditor editor, final RadComponent component) {
     final RadContainer root = (RadContainer)getRoot(component);
     if (root == null) return;
 
@@ -614,6 +615,7 @@ public final class FormEditingUtil {
     try {
       clearSelection(root);
       selectComponent(component);
+      editor.setSelectionAnchor(component);
     }
     finally {
       builder.endUpdateSelection();
