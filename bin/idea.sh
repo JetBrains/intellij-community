@@ -35,8 +35,12 @@ if [ -z "$IDEA_MAIN_CLASS_NAME" ]; then
   IDEA_MAIN_CLASS_NAME="com.intellij.idea.Main"
 fi
 
+if [ -z "$IDEA_VM_OPTIONS" ]; then
+  IDEA_VM_OPTIONS="$IDEA_HOME/bin/idea.vmoptions"
+fi
+
 REQUIRED_JVM_ARGS="-Xbootclasspath/p:../lib/boot.jar: $IDEA_PROPERTIES_PROPERTY"
-JVM_ARGS=`tr '\n' ' ' < "$IDEA_HOME/bin/idea.vmoptions"`
+JVM_ARGS=`tr '\n' ' ' < "$IDEA_VM_OPTIONS"`
 JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
 
 CLASSPATH=../lib/idea.jar
