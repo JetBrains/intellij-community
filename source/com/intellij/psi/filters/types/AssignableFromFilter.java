@@ -3,11 +3,10 @@ package com.intellij.psi.filters.types;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.util.PsiUtil;
 import org.jdom.Element;
 
 
@@ -40,7 +39,12 @@ public class AssignableFromFilter implements ElementFilter{
     PsiType type = myType;
     if(type == null) {
       final PsiClass aClass = context.getManager().findClass(myClassName, context.getResolveScope());
-      type = aClass != null ? new PsiImmediateClassType(aClass, PsiSubstitutor.EMPTY) : null;
+      if (aClass != null) {
+        type = aClass.getManager().getElementFactory().createType(aClass, PsiSubstitutor.EMPTY);
+      }
+      else {
+        type = null;
+      }
     }
     if(type == null) return false;
     if(element == null) return false;

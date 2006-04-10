@@ -1,12 +1,11 @@
 package com.intellij.psi.filters.types;
 
-import com.intellij.psi.filters.FalseFilter;
-import com.intellij.psi.filters.OrFilter;
-import com.intellij.psi.filters.InitializableFilter;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.filters.FalseFilter;
+import com.intellij.psi.filters.InitializableFilter;
+import com.intellij.psi.filters.OrFilter;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,7 +24,9 @@ public class AssignableGroupFilter extends OrFilter implements InitializableFilt
   public void init(Object[] classes){
     for (Object aClass : classes) {
       if (aClass instanceof PsiClass) {
-        addFilter(new AssignableFromFilter(new PsiImmediateClassType((PsiClass)aClass, PsiSubstitutor.EMPTY)));
+        final PsiClass psiClass = (PsiClass)aClass;
+        PsiType type = psiClass.getManager().getElementFactory().createType(psiClass, PsiSubstitutor.EMPTY);
+        addFilter(new AssignableFromFilter(type));
       }
       if (aClass instanceof PsiType) {
         addFilter(new AssignableFromFilter((PsiType)aClass));
