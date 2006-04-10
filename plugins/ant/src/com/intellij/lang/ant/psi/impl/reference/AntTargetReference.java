@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntCall;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
@@ -13,6 +14,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericRefe
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.Nullable;
 
 public class AntTargetReference extends AntGenericReference {
 
@@ -84,6 +86,11 @@ public class AntTargetReference extends AntGenericReference {
 
   public boolean needToCheckAccessibility() {
     return false;
+  }
+
+  @Nullable
+  public String getErrorDescription() {
+    return AntBundle.getMessage("cannot.resolve.target", getCanonicalText());
   }
 
   private int getElementStartOffset() {

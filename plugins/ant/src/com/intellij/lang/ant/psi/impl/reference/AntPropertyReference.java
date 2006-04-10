@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.openapi.util.TextRange;
@@ -9,6 +10,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 public class AntPropertyReference extends AntGenericReference {
 
@@ -52,4 +54,9 @@ public class AntPropertyReference extends AntGenericReference {
     return getReferenceType();
   }
 
+
+  @Nullable
+  public String getErrorDescription() {
+    return AntBundle.getMessage("unknown.property", getCanonicalText());
+  }
 }

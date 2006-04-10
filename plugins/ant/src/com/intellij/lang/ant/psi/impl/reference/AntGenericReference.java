@@ -7,6 +7,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class AntGenericReference extends GenericReference {
 
@@ -19,8 +20,7 @@ public abstract class AntGenericReference extends GenericReference {
                                 final AntElement antElement,
                                 final String str,
                                 final TextRange textRange,
-                                final XmlAttribute attribute)
-  {
+                                final XmlAttribute attribute) {
     super(provider);
     myAntElement = antElement;
     myText = str;
@@ -51,6 +51,9 @@ public abstract class AntGenericReference extends GenericReference {
   public String getCanonicalText() {
     return myText;
   }
+
+  @Nullable
+  public abstract String getErrorDescription();
 
   protected XmlAttribute getAttribute() {
     return myAttribute;

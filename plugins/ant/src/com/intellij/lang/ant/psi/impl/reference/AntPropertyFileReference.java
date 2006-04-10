@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -10,6 +11,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 public class AntPropertyFileReference extends AntGenericReference {
 
@@ -19,7 +21,7 @@ public class AntPropertyFileReference extends AntGenericReference {
                                   final AntElement antElement,
                                   final String str,
                                   final TextRange textRange) {
-    super(provider,antElement, str, textRange, null);
+    super(provider, antElement, str, textRange, null);
   }
 
   public AntProperty getElement() {
@@ -69,5 +71,10 @@ public class AntPropertyFileReference extends AntGenericReference {
 
   public PsiElement resolve() {
     return getElement().getPropertiesFile();
+  }
+
+  @Nullable
+  public String getErrorDescription() {
+    return AntBundle.getMessage("properties.file.doesnt.exist", getCanonicalText());
   }
 }
