@@ -23,10 +23,10 @@ public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
   public IntroInsetsProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient){
     super(name, readMethod, writeMethod, storeAsClient);
     myChildren=new Property[]{
-      new AbstractInsetsProperty.MyTopProperty(this),
-      new AbstractInsetsProperty.MyLeftProperty(this),
-      new AbstractInsetsProperty.MyBottomProperty(this),
-      new AbstractInsetsProperty.MyRightProperty(this)
+      new IntFieldProperty(this, "top", 0),
+      new IntFieldProperty(this, "left", 0),
+      new IntFieldProperty(this, "bottom", 0),
+      new IntFieldProperty(this, "right", 0),
     };
     myRenderer=new InsetsPropertyRenderer();
   }

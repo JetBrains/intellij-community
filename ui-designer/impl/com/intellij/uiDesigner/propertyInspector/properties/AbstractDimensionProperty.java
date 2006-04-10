@@ -26,8 +26,8 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
   public AbstractDimensionProperty(@NonNls final String name){
     super(null, name);
     myChildren=new Property[]{
-      new MyWidthProperty(this),
-      new MyHeightProperty(this)
+      new IntFieldProperty(this, "width", -1),
+      new IntFieldProperty(this, "height", -1),
     };
     myRenderer=new DimensionRenderer();
   }
@@ -38,14 +38,14 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
   }
 
   @NotNull
-  public final PropertyRenderer<Dimension> getRenderer(){
+  public final PropertyRenderer<Dimension> getRenderer() {
     return myRenderer;
   }
 
   /**
    * This is not editable property (but it's children are editable)
    */
-  public final PropertyEditor<Dimension> getEditor(){
+  public final PropertyEditor<Dimension> getEditor() {
     return null;
   }
 
@@ -62,45 +62,5 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
 
   @Override public void resetValue(T component) throws Exception {
     setValueImpl(component, getValueImpl(FormEditingUtil.getDefaultConstraints(component)));
-  }
-
-  /**
-   * Child sub property which describe dimension's width
-   */
-  public final static class MyWidthProperty extends AbstractIntProperty {
-    public MyWidthProperty(final Property parent){
-      super(parent, "width", -1);
-    }
-
-    public Object getValue(final RadComponent component){
-      final Dimension dimension = (Dimension)getParent().getValue(component);
-      return new Integer(dimension.width);
-    }
-
-    protected void setValueImpl(final RadComponent component,final Object value) throws Exception{
-      final Dimension dimension=(Dimension)getParent().getValue(component);
-      dimension.width = ((Integer)value).intValue();
-      getParent().setValue(component, dimension);
-    }
-  }
-
-  /**
-   * Child sub property which describe dimension's height
-   */
-  public final static class MyHeightProperty extends AbstractIntProperty {
-    public MyHeightProperty(final Property parent) {
-      super(parent, "height", -1);
-    }
-
-    public Object getValue(final RadComponent component){
-      final Dimension dimension = (Dimension)getParent().getValue(component);
-      return new Integer(dimension.height);
-    }
-
-    protected void setValueImpl(final RadComponent component,final Object value) throws Exception{
-      final Dimension dimension = (Dimension)getParent().getValue(component);
-      dimension.height = ((Integer)value).intValue();
-      getParent().setValue(component, dimension);
-    }
   }
 }
