@@ -450,7 +450,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       getProviderByType(CLASS_REFERENCE_PROVIDER)
     );
 
-    final JSFReferencesProvider jsfProvider = new JSFReferencesProvider();
+    final JSFReferencesProvider jsfProvider = new JSFReferencesProvider(getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER));
 
     registerXmlTagReferenceProvider(
       jsfProvider.getTagNames(),
