@@ -6,6 +6,7 @@ import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.editors.IntRegexEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.DimensionRenderer;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +20,7 @@ import java.lang.reflect.Method;
 public final class IntroDimensionProperty extends IntrospectedProperty<Dimension> {
   private final Property[] myChildren;
   private final DimensionRenderer myRenderer;
+  private final IntRegexEditor<Dimension> myEditor;
 
   public IntroDimensionProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient){
     super(name, readMethod, writeMethod, storeAsClient);
@@ -27,24 +29,25 @@ public final class IntroDimensionProperty extends IntrospectedProperty<Dimension
       new IntFieldProperty(this, "height", -1),
     };
     myRenderer = new DimensionRenderer();
+    myEditor = new IntRegexEditor<Dimension>(Dimension.class, myRenderer, new int[] { -1, -1 });
   }
 
-  public void write(final Dimension value, final XmlWriter writer){
+  public void write(final Dimension value, final XmlWriter writer) {
     writer.addAttribute("width", value.width);
     writer.addAttribute("height", value.height);
   }
 
   @NotNull
-  public Property[] getChildren(final RadComponent component){
+  public Property[] getChildren(final RadComponent component) {
     return myChildren;
   }
 
   @NotNull
-  public PropertyRenderer<Dimension> getRenderer(){
+  public PropertyRenderer<Dimension> getRenderer() {
     return myRenderer;
   }
 
-  public PropertyEditor<Dimension> getEditor(){
-    return null;
+  public PropertyEditor<Dimension> getEditor() {
+    return myEditor;
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.editors.IntRegexEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRenderer;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +20,7 @@ import java.lang.reflect.Method;
 public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
   private final Property[] myChildren;
   private final InsetsPropertyRenderer myRenderer;
+  private final IntRegexEditor<Insets> myEditor;
 
   public IntroInsetsProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient){
     super(name, readMethod, writeMethod, storeAsClient);
@@ -29,6 +31,7 @@ public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
       new IntFieldProperty(this, "right", 0),
     };
     myRenderer=new InsetsPropertyRenderer();
+    myEditor = new IntRegexEditor<Insets>(Insets.class, myRenderer, new int[] { 0, 0, 0, 0 });
   }
 
   public void write(final Insets value, final XmlWriter writer) {
@@ -39,16 +42,16 @@ public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
   }
 
   @NotNull
-  public Property[] getChildren(final RadComponent component){
+  public Property[] getChildren(final RadComponent component) {
     return myChildren;
   }
 
   @NotNull
-  public PropertyRenderer<Insets> getRenderer(){
+  public PropertyRenderer<Insets> getRenderer() {
     return myRenderer;
   }
 
-  public PropertyEditor<Insets> getEditor(){
-    return null;
+  public PropertyEditor<Insets> getEditor() {
+    return myEditor;
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.editors.IntRegexEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.DimensionRenderer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,7 @@ import java.awt.*;
 public abstract class AbstractDimensionProperty<T extends RadComponent> extends Property<T, Dimension> {
   private final Property[] myChildren;
   private final DimensionRenderer myRenderer;
+  private final IntRegexEditor<Dimension> myEditor;
 
   public AbstractDimensionProperty(@NonNls final String name){
     super(null, name);
@@ -29,7 +31,8 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
       new IntFieldProperty(this, "width", -1),
       new IntFieldProperty(this, "height", -1),
     };
-    myRenderer=new DimensionRenderer();
+    myRenderer = new DimensionRenderer();
+    myEditor = new IntRegexEditor<Dimension>(Dimension.class, myRenderer, new int[] { -1, -1 });
   }
 
   @NotNull
@@ -42,11 +45,8 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
     return myRenderer;
   }
 
-  /**
-   * This is not editable property (but it's children are editable)
-   */
   public final PropertyEditor<Dimension> getEditor() {
-    return null;
+    return myEditor;
   }
 
   public Dimension getValue(T component) {

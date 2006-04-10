@@ -18,7 +18,7 @@ public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer
     setOpaque(true);
   }
 
-  public final JComponent getComponent(final RadComponent component, final V value, final boolean selected, final boolean hasFocus){
+  public final JLabel getComponent(final RadComponent component, final V value, final boolean selected, final boolean hasFocus){
     // Reset text and icon
     setText(null);
     setIcon(null);
