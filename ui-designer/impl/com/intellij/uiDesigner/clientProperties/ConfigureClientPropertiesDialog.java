@@ -194,7 +194,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      ClassNameInputDialog dlg = new ClassNameInputDialog(myRootPanel);
+      ClassNameInputDialog dlg = new ClassNameInputDialog(myProject, myRootPanel);
       dlg.show();
       if (dlg.getExitCode() == OK_EXIT_CODE) {
         String className = dlg.getClassName();
