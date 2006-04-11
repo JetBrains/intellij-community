@@ -1,7 +1,7 @@
 package com.intellij.psi.impl.meta;
 
-import com.intellij.ant.impl.dom.impl.RegisterInPsi;
 import com.intellij.jsp.impl.*;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
@@ -11,16 +11,18 @@ import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.RootTagFilter;
 import com.intellij.psi.filters.position.TargetNamespaceFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
+import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.impl.schema.NamedObjectDescriptor;
-import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.util.XmlUtil;
+import com.intellij.ant.impl.dom.impl.RegisterInPsi;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -33,7 +35,7 @@ import java.util.List;
  * Time: 3:31:09
  * To change this template use Options | File Templates.
  */
-public class MetaRegistry {
+public class MetaRegistry extends MetaDataRegistrar implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.meta.MetaRegistry");
   private static final List<MyBinding> ourBindings = new ArrayList<MyBinding>();
   public static final @NonNls String[] TAGLIB_URIS = new String[]{
@@ -235,8 +237,6 @@ public class MetaRegistry {
       ),
                          NamedObjectDescriptor.class);
     }
-    
-    RegisterInPsi.metaData();
   }
 
   public static final Key<SoftReference<CachedValue<PsiMetaData>>> META_DATA_KEY = Key.create("META DATA KEY");
@@ -252,6 +252,10 @@ public class MetaRegistry {
     element.putUserData(META_DATA_KEY, value);
   }
 
+  public MetaRegistry() {
+    RegisterInPsi.metaData(this);
+  }
+
   private final static SoftReference<CachedValue<PsiMetaData>> NULL = new SoftReference<CachedValue<PsiMetaData>>(null);
 
   public static PsiMetaData getMeta(final PsiElement element) {
@@ -261,7 +265,8 @@ public class MetaRegistry {
     if (value == null || (value != NULL && value.get() == null)) {
       for (final MyBinding binding : ourBindings) {
         try {
-          if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
+          if (binding.myFilter.isClassAcceptable(element.getClass()) &&
+              binding.myFilter.isAcceptable(element, element.getParent())) {
             final PsiMetaData data = binding.myDataClass.newInstance();
             final CachedValue<PsiMetaData> cachedValue = element.getManager().getCachedValuesManager()
               .createCachedValue(new CachedValueProvider<PsiMetaData>() {
@@ -300,6 +305,18 @@ public class MetaRegistry {
   public static void clearMetaForElement(PsiElement element) {
     element.putUserData(META_DATA_KEY, null);
   }
+
+  public <T extends PsiMetaData> void registerMetaData(ElementFilter filter, Class<T> metadataDescriptorClass) {
+    addMetadataBinding(filter, metadataDescriptorClass);
+  }
+
+  @NonNls
+  public String getComponentName() {
+    return "MetaRegistry";
+  }
+
+  public void initComponent() {}
+  public void disposeComponent() {}
 
   private static class MyBinding {
     ElementFilter myFilter;
