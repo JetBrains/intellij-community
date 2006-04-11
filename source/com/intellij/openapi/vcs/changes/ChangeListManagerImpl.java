@@ -46,7 +46,6 @@ import java.util.List;
  */
 public class ChangeListManagerImpl extends ChangeListManager implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
   private Project myProject;
-  private final ProjectLevelVcsManager myVcsManager;
   private static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -89,9 +88,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
   private List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
 
-  public ChangeListManagerImpl(final Project project, ProjectLevelVcsManager vcsManager) {
+  public ChangeListManagerImpl(final Project project) {
     myProject = project;
-    myVcsManager = vcsManager;
     myView = new ChangesListView(project);
     myUnversionedFilesHolder = new UnversionedFilesHolder(project);
   }
@@ -933,8 +931,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  public void moveChangesTo(final LocalChangeList list, final Change[] changes) {
+  public void moveChangesTo(LocalChangeList list, final Change[] changes) {
     synchronized (myChangeLists) {
+      list = findRealByCopy(list);
       for (LocalChangeList existingList : getChangeLists()) {
         for (Change change : changes) {
           removeChangeFromList(change, existingList);
@@ -1047,6 +1046,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       return myFile;
     }
 
+    @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return VcsRevisionNumber.NULL;
     }
