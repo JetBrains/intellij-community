@@ -198,15 +198,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     restoreState();
 
-    myOKButtonUpdateAlarm.addRequest(new Runnable() {
-      public void run() {
-        myOKButtonUpdateAlarm.cancelAllRequests();
-        myOKButtonUpdateAlarm.addRequest(this, 300, ModalityState.stateForComponent(myBrowser));
-        updateButtons();
-      }
-    }, 300, ModalityState.stateForComponent(myBrowser));
-
     init();
+    updateButtons();
   }
 
   private void updateComment() {
@@ -554,6 +547,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void updateButtons() {
     setOKActionEnabled(hasDiffs() &&
                        (mySession == null || mySession.canExecute(myBrowser.getCurrentIncludedChanges(), getCommitMessage())));
+    myOKButtonUpdateAlarm.cancelAllRequests();
+    myOKButtonUpdateAlarm.addRequest(new Runnable() {
+      public void run() {
+        updateButtons();
+      }
+    }, 300, ModalityState.stateForComponent(myBrowser));
   }
 
   @NonNls
