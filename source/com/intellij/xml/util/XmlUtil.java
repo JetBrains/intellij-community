@@ -556,15 +556,31 @@ public class XmlUtil {
 
   public static String[][] getDefaultNamespaces(final XmlDocument document) {
     final XmlFile file = getContainingFile(document);
-    if (file != null && file.getCopyableUserData(XmlFile.ANT_BUILD_FILE) != null) {
-      return new String[][]{new String[]{"", ANT_URI}};
-    }
 
-    XmlTag tag = document.getRootTag();
+    final XmlTag tag = document.getRootTag();
     if (tag == null) return new String[][]{new String[]{EMPTY_URI}};
-    if ("project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
-      if (tag.getAttributeValue("default") != null) {
-        return new String[][]{new String[]{"", ANT_URI}};
+
+    if (file != null) {
+      final @NotNull XmlFileNSInfoProvider[] nsProviders = document.getProject().getComponents(XmlFileNSInfoProvider.class);
+
+      NextProvider:
+      for(XmlFileNSInfoProvider nsProvider:nsProviders) {
+        final String[][] pairs = nsProvider.getDefaultNamespaces(file);
+
+        if (pairs != null &&
+            pairs.length > 0
+          ) {
+
+          for (final String[] nsMapping : pairs) {
+            if (nsMapping == null || nsMapping.length != 2 || nsMapping[0] == null || nsMapping[1] == null) {
+              LOG.debug("NSInfoProvider " + nsProvider + " gave wrong info about " + file.getVirtualFile());
+              continue NextProvider;
+            }
+          }
+
+
+          return pairs;
+        }
       }
     }
 
