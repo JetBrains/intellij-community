@@ -45,17 +45,8 @@ public class AntPropertyValueReferenceProvider extends GenericReferenceProvider 
       if (endIndex < 0) break;
       if (endIndex > startIndex) {
         final String propName = value.substring(startIndex, endIndex);
-        AntElement temp = element;
-        AntProperty result = null;
-        do {
-          temp = temp.getAntParent();
-          if (temp == null) break;
-        }
-        while ((result = temp.getProperty(propName)) == null);
-        if (result != null) {
-          refs.add(new AntPropertyReference(this, element, propName,
-                                            new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
-        }
+        refs.add(new AntPropertyReference(this, element, propName,
+                                          new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
       }
     }
   }

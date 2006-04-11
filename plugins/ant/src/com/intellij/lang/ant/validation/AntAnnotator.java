@@ -8,6 +8,7 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.impl.reference.AntGenericReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
@@ -28,9 +29,20 @@ public class AntAnnotator implements Annotator {
     final XmlTag sourceElement = task.getSourceElement();
     final String taskName = sourceElement.getName();
     for (XmlAttribute attr : sourceElement.getAttributes()) {
-      final String attrName = attr.getName();
-      if (AntDefaultIntrospector.getTaskAttributeType(taskName, attrName) == null) {
+      final Class type = AntDefaultIntrospector.getTaskAttributeType(taskName, attr.getName());
+      if (type == null) {
         holder.createErrorAnnotation(task, AntBundle.getMessage("attribute.is.not.allowed.for.the.task"));
+      }
+      else {
+        final String value = attr.getValue();
+        if (type.equals(int.class)) {
+          try {
+            Integer.parseInt(value);
+          }
+          catch (NumberFormatException e) {
+            holder.createErrorAnnotation(attr, AntBundle.getMessage("integer.attribute.has.invalid.value"));
+          }
+        }
       }
     }
   }
@@ -47,10 +59,10 @@ public class AntAnnotator implements Annotator {
   }
 
   private static void checkReferences(AntElement element, @NonNls AnnotationHolder holder) {
-    AntGenericReference[] refs = (AntGenericReference[])element.getReferences();
-    for (AntGenericReference ref : refs) {
+    PsiReference[] refs = element.getReferences();
+    for (PsiReference ref : refs) {
       if (ref.resolve() == null) {
-        holder.createErrorAnnotation(ref.getRangeInElement(), ref.getUnresolvedMessagePattern());
+        holder.createErrorAnnotation(ref.getRangeInElement(), ((AntGenericReference)ref).getUnresolvedMessagePattern());
       }
     }
   }
