@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author anna
  * @since 6.0
- * @see InspectionManager#createProblemDescriptor(String, QuickFix...)
+ * @see InspectionManager#createProblemDescriptor(String, QuickFix[])
  */
 public interface CommonProblemDescriptor {
   /**
