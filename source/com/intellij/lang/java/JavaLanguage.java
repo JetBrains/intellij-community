@@ -13,6 +13,7 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
@@ -126,5 +127,9 @@ public class JavaLanguage extends Language {
   @NotNull
   public ImportOptimizer getImportOptimizer() {
     return new JavaImportOptimizer();
+  }
+
+  public DocumentationProvider getDocumentationProvider() {
+    return new JavaDocumentationProvider();
   }
 }

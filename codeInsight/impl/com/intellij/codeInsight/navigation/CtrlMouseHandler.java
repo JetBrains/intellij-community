@@ -5,10 +5,9 @@ import com.intellij.ant.impl.dom.impl.PsiAntTarget;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
-import com.intellij.lang.LangBundle;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -20,8 +19,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
@@ -29,14 +26,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -179,113 +174,6 @@ public class CtrlMouseHandler implements ProjectComponent {
   private static class JavaInfoGenerator {
     private JavaInfoGenerator() {}
 
-    private static void newLine(StringBuffer buffer) {
-      // Don't know why space has to be added after newline for good text alignment...
-      buffer.append("\n ");
-    }
-
-    private static void generateType(@NonNls StringBuffer buffer, PsiType type, PsiElement context) {
-      if (type instanceof PsiPrimitiveType) {
-        buffer.append(type.getCanonicalText());
-
-        return;
-      }
-
-      if (type instanceof PsiWildcardType) {
-        PsiWildcardType wc = ((PsiWildcardType) type);
-        PsiType bound = wc.getBound();
-
-        buffer.append("?");
-
-        if (bound != null) {
-          buffer.append(wc.isExtends() ? " extends " : " super ");
-          generateType(buffer, bound, context);
-        }
-      }
-
-      if (type instanceof PsiArrayType) {
-        generateType(buffer, ((PsiArrayType) type).getComponentType(), context);
-        buffer.append("[]");
-
-        return;
-      }
-
-      if (type instanceof PsiClassType) {
-        PsiClassType.ClassResolveResult result = ((PsiClassType) type).resolveGenerics();
-        PsiClass psiClass = result.getElement();
-        PsiSubstitutor psiSubst = result.getSubstitutor();
-
-        if (psiClass == null || psiClass instanceof PsiTypeParameter) {
-          buffer.append(type.getPresentableText());
-          return;
-        }
-
-        buffer.append(JavaDocUtil.getShortestClassName(psiClass, context));
-
-        if (psiClass.hasTypeParameters()) {
-          StringBuffer subst = new StringBuffer();
-          boolean goodSubst = true;
-
-          PsiTypeParameter[] params = psiClass.getTypeParameters();
-
-          subst.append("<");
-          for (int i = 0; i < params.length; i++) {
-            PsiType t = psiSubst.substitute(params[i]);
-
-            if (t == null) {
-              goodSubst = false;
-              break;
-            }
-
-            generateType(subst, t, context);
-
-            if (i < params.length - 1) {
-              subst.append(", ");
-            }
-          }
-
-          if (goodSubst) {
-            subst.append(">");
-            String text = subst.toString();
-
-            buffer.append(text);
-          }
-        }
-      }
-    }
-
-    private static void generateInitializer(StringBuffer buffer, PsiVariable variable) {
-      PsiExpression initializer = variable.getInitializer();
-      if (initializer != null) {
-        String text = initializer.getText().trim();
-        int index1 = text.indexOf('\n');
-        if (index1 < 0) index1 = text.length();
-        int index2 = text.indexOf('\r');
-        if (index2 < 0) index2 = text.length();
-        int index = Math.min(index1, index2);
-        boolean trunc = index < text.length();
-        text = text.substring(0, index);
-        buffer.append(" = ");
-        buffer.append(text);
-        if (trunc) {
-          buffer.append("...");
-        }
-      }
-    }
-
-    private static void generateModifiers(StringBuffer buffer, PsiElement element) {
-      String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtil.JAVADOC_MODIFIERS_ONLY);
-
-      if (modifiers.length() > 0) {
-        buffer.append(modifiers);
-        buffer.append(" ");
-      }
-    }
-
-    private static String generatePackageInfo(PsiPackage aPackage) {
-      return aPackage.getQualifiedName();
-    }
-
     @Nullable
     private static String generateAttributeValueInfo(PsiAntElement antElement) {
       if (antElement instanceof PsiAntTarget) return null;
@@ -298,238 +186,17 @@ public class CtrlMouseHandler implements ProjectComponent {
       return null;
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static String generateClassInfo(PsiClass aClass) {
-      StringBuffer buffer = new StringBuffer();
-
-      if (aClass instanceof PsiAnonymousClass) return LangBundle.message("java.terms.anonymous.class");
-
-      PsiFile file = aClass.getContainingFile();
-      final Module module = ModuleUtil.findModuleForPsiElement(file);
-      if (module != null) {
-        buffer.append('[').append(module.getName()).append("] ");
-      }
-
-      if (file instanceof PsiJavaFile) {
-        String packageName = ((PsiJavaFile) file).getPackageName();
-        if (packageName.length() > 0) {
-          buffer.append(packageName);
-          newLine(buffer);
-        }
-      }
-
-      generateModifiers(buffer, aClass);
-
-      buffer.append(LangBundle.message(aClass.isInterface() ? "java.terms.interface" : aClass instanceof PsiTypeParameter ? "java.terms.type.parameter" : "java.terms.class") + " ");
-
-      buffer.append(JavaDocUtil.getShortestClassName(aClass, aClass));
-
-      if (aClass.hasTypeParameters()) {
-        PsiTypeParameter[] parms = aClass.getTypeParameters();
-
-        buffer.append("<");
-
-        for (int i = 0; i < parms.length; i++) {
-          PsiTypeParameter p = parms[i];
-
-          buffer.append(p.getName());
-
-          PsiClassType[] refs = p.getExtendsList().getReferencedTypes();
-
-          if (refs.length > 0) {
-            buffer.append(" extends ");
-
-            for (int j = 0; j < refs.length; j++) {
-              generateType(buffer, refs[j], aClass);
-
-              if (j < refs.length - 1) {
-                buffer.append(" & ");
-              }
-            }
-          }
-
-          if (i < parms.length - 1) {
-            buffer.append(", ");
-          }
-        }
-
-        buffer.append(">");
-      }
-
-      PsiReferenceList extendsList = aClass.getExtendsList();
-      PsiClassType[] refs = extendsList == null ? PsiClassType.EMPTY_ARRAY : extendsList.getReferencedTypes();
-      if (refs.length > 0 || !aClass.isInterface() && !"java.lang.Object".equals(aClass.getQualifiedName())) {
-        buffer.append(" extends ");
-        if (refs.length == 0) {
-          buffer.append("Object");
-        } else {
-          for (int i = 0; i < refs.length; i++) {
-            generateType(buffer, refs[i], aClass);
-
-            if (i < refs.length - 1) {
-              buffer.append(", ");
-            }
-          }
-        }
-      }
-
-      refs = aClass.getImplementsList().getReferencedTypes();
-      if (refs.length > 0) {
-        newLine(buffer);
-        buffer.append("implements ");
-        for (int i = 0; i < refs.length; i++) {
-          generateType(buffer, refs[i], aClass);
-
-          if (i < refs.length - 1) {
-            buffer.append(", ");
-          }
-        }
-      }
-
-      return buffer.toString();
-    }
-
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static String generateMethodInfo(PsiMethod method) {
-      StringBuffer buffer = new StringBuffer();
-
-      PsiClass parentClass = method.getContainingClass();
-
-      if (parentClass != null) {
-        buffer.append(JavaDocUtil.getShortestClassName(parentClass, method));
-        newLine(buffer);
-      }
-
-      generateModifiers(buffer, method);
-
-      PsiTypeParameter[] params = method.getTypeParameters();
-
-      if (params.length > 0) {
-        buffer.append("<");
-        for (int i = 0; i < params.length; i++) {
-          PsiTypeParameter param = params[i];
-
-          buffer.append(param.getName());
-
-          PsiClassType[] extendees = param.getExtendsList().getReferencedTypes();
-
-          if (extendees.length > 0) {
-            buffer.append(" extends ");
-
-            for (int j = 0; j < extendees.length; j++) {
-              generateType(buffer, extendees[j], method);
-
-              if (j < extendees.length - 1) {
-                buffer.append(" & ");
-              }
-            }
-          }
-
-          if (i < params.length - 1) {
-            buffer.append(", ");
-          }
-        }
-        buffer.append("> ");
-      }
-
-      if (method.getReturnType() != null) {
-        generateType(buffer, method.getReturnType(), method);
-        buffer.append(" ");
-      }
-
-      buffer.append(method.getName());
-
-      buffer.append(" (");
-      PsiParameter[] parms = method.getParameterList().getParameters();
-      for (int i = 0; i < parms.length; i++) {
-        PsiParameter parm = parms[i];
-        generateType(buffer, parm.getType(), method);
-        buffer.append(" ");
-        if (parm.getName() != null) {
-          buffer.append(parm.getName());
-        }
-        if (i < parms.length - 1) {
-          buffer.append(", ");
-        }
-      }
-
-      buffer.append(")");
-
-      PsiClassType[] refs = method.getThrowsList().getReferencedTypes();
-      if (refs.length > 0) {
-        newLine(buffer);
-        buffer.append(" throws ");
-        for (int i = 0; i < refs.length; i++) {
-          PsiClass throwsClass = refs[i].resolve();
-
-          if (throwsClass != null) {
-            buffer.append(JavaDocUtil.getShortestClassName(throwsClass, method));
-          } else {
-            buffer.append(refs[i].getPresentableText());
-          }
-
-          if (i < refs.length - 1) {
-            buffer.append(", ");
-          }
-        }
-      }
-
-      return buffer.toString();
-    }
-
-    private static String generateFieldInfo(PsiField field) {
-      StringBuffer buffer = new StringBuffer();
-      PsiClass parentClass = field.getContainingClass();
-
-      if (parentClass != null) {
-        buffer.append(JavaDocUtil.getShortestClassName(parentClass, field));
-        newLine(buffer);
-      }
-
-      generateModifiers(buffer, field);
-
-      generateType(buffer, field.getType(), field);
-      buffer.append(" ");
-      buffer.append(field.getName());
-
-      generateInitializer(buffer, field);
-
-      return buffer.toString();
-    }
-
-    private static String generateVariableInfo(PsiVariable variable) {
-      StringBuffer buffer = new StringBuffer();
-
-      generateModifiers(buffer, variable);
-
-      generateType(buffer, variable.getType(), variable);
-
-      buffer.append(" ");
-
-      buffer.append(variable.getName());
-      generateInitializer(buffer, variable);
-
-      return buffer.toString();
-    }
-
     private static String generateFileInfo(PsiFile file) {
       return file.getVirtualFile().getPresentableUrl();
     }
 
     @Nullable
     public static String generateInfo(PsiElement element) {
-      if (element instanceof PsiClass) {
-        return generateClassInfo((PsiClass) element);
-      } else if (element instanceof PsiMethod) {
-        return generateMethodInfo((PsiMethod) element);
-      } else if (element instanceof PsiField) {
-        return generateFieldInfo((PsiField) element);
-      } else if (element instanceof PsiVariable) {
-        return generateVariableInfo((PsiVariable) element);
-      } else if (element instanceof PsiFile) {
+      final DocumentationProvider documentationProvider = element.getLanguage().getDocumentationProvider();
+      if(documentationProvider != null) return documentationProvider.getQuickNavigateInfo(element);
+
+      if (element instanceof PsiFile) {
         return generateFileInfo((PsiFile) element);
-      } else if (element instanceof PsiPackage) {
-        return generatePackageInfo((PsiPackage) element);
       } else if (element instanceof PsiAntElement) {
         return generateAttributeValueInfo(((PsiAntElement) element));
       } else {

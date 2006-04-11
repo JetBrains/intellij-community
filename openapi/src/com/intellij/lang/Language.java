@@ -25,7 +25,9 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.refactoring.JavaNamesValidator;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -33,11 +35,9 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -455,16 +455,7 @@ public abstract class Language {
     return null;
   }
 
-  /**
-   * Default implementation of <code>RefactoringSupportProvider</code> to inherit from
-   */
-  protected static class DefaultRefactoringSupportProvider implements RefactoringSupportProvider {
-    public boolean isSafeDeleteAvailable(PsiElement element) {
-      return false;
-    }
-
-    public RefactoringActionHandler getIntroduceVariableHandler() {
-      return null;
-    }
+  public DocumentationProvider getDocumentationProvider() {
+    return null;
   }
 }
