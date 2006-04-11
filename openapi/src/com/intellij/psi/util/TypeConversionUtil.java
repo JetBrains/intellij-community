@@ -71,7 +71,7 @@ public class TypeConversionUtil {
    * @return true iff fromType can be casted to toType
    */
   public static boolean areTypesConvertible(PsiType fromType, PsiType toType) {
-    if (isPrimitiveAndNotNull(fromType) && isPrimitiveAndNotNull(toType)) {
+    if (isPrimitiveAndNotNullOrWrapper(fromType) && isPrimitiveAndNotNull(toType)) {
       final int fromTypeRank = getTypeRank(fromType);
       final int toTypeRank = getTypeRank(toType);
       return fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK;
