@@ -698,20 +698,25 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
+          final PsiManager psiManager = PsiManager.getInstance(myProject);
           try {
-            PsiManager.getInstance(myProject).startBatchFilesProcessingMode();
-            ((RefManagerImpl)getRefManager()).inspectionReadActionStarted();
-            EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
-            List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
-            runTools(needRepeatSearchRequest, scope, runWithEditorSettings, manager);
-            performPostRunFindUsages(needRepeatSearchRequest, manager);
+            psiManager.startBatchFilesProcessingMode();
+            psiManager.performActionWithFormatterDisabled(new Runnable() {
+              public void run() {
+                ((RefManagerImpl)getRefManager()).inspectionReadActionStarted();
+                EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
+                List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
+                runTools(needRepeatSearchRequest, scope, runWithEditorSettings, manager);
+                performPostRunFindUsages(needRepeatSearchRequest, manager);
+              }
+            });
           }
           catch (ProcessCanceledException e) {
             cleanup();
             throw e;
           }
           finally {
-            PsiManager.getInstance(myProject).finishBatchFilesProcessingMode();
+            psiManager.finishBatchFilesProcessingMode();
           }
         }
       });
