@@ -34,6 +34,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
   }
 
   public void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+    // the action is also reused as quickfix for NoScrollPaneInspection, so this code should be kept here
     if (!editor.ensureEditable()) {
       return;
     }
@@ -56,16 +57,21 @@ public class SurroundAction extends AbstractGuiEditorAction {
             newContainer.setLayoutManager(new RadGridLayoutManager());
           }
 
-          Rectangle rc = getSelectionBounds(selection);
+          Rectangle rc = new Rectangle(0, 0, 1, 1);
+          if (selectionParent.isGrid()) {
+            rc = getSelectionBounds(selection);
+          }
           for(RadComponent c: selection) {
             selectionParent.removeComponent(c);
           }
 
-          final GridConstraints newConstraints = newContainer.getConstraints();
-          newConstraints.setRow(rc.y);
-          newConstraints.setColumn(rc.x);
-          newConstraints.setRowSpan(rc.height);
-          newConstraints.setColSpan(rc.width);
+          if (selectionParent.isGrid()) {
+            final GridConstraints newConstraints = newContainer.getConstraints();
+            newConstraints.setRow(rc.y);
+            newConstraints.setColumn(rc.x);
+            newConstraints.setRowSpan(rc.height);
+            newConstraints.setColSpan(rc.width);
+          }
 
           if (selection.size() == 1) {
             newContainer.setCustomLayoutConstraints(selection.get(0).getCustomLayoutConstraints());
@@ -90,8 +96,10 @@ public class SurroundAction extends AbstractGuiEditorAction {
           }
 
           for(RadComponent c: selection) {
-            c.getConstraints().setRow(c.getConstraints().getRow() - rc.y);
-            c.getConstraints().setColumn(c.getConstraints().getColumn() - rc.x);
+            if (selectionParent.isGrid()) {
+              c.getConstraints().setRow(c.getConstraints().getRow() - rc.y);
+              c.getConstraints().setColumn(c.getConstraints().getColumn() - rc.x);
+            }
             newContainer.addComponent(c);
           }
           editor.refreshAndSave(true);
@@ -117,8 +125,8 @@ public class SurroundAction extends AbstractGuiEditorAction {
   protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(selectionParent != null &&
-                                   (selectionParent instanceof RadRootContainer || selectionParent.isGrid()) &&
-                                   isSelectionContiguous(selectionParent, selection) &&
+                                   ((!selectionParent.isGrid() && selection.size() == 1) ||
+                                     isSelectionContiguous(selectionParent, selection)) &&
                                    canWrapSelection(selection));
   }
 
@@ -133,6 +141,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
 
   private static boolean isSelectionContiguous(RadContainer selectionParent,
                                                ArrayList<RadComponent> selection) {
+    assert selectionParent.isGrid();
     Rectangle rc = getSelectionBounds(selection);
     for(RadComponent c: selectionParent.getComponents()) {
       if (!selection.contains(c) &&
