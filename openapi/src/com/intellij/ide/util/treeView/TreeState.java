@@ -291,7 +291,6 @@ public class TreeState implements JDOMExternalizable {
 
     if (userObject instanceof NodeDescriptor) {
       if (!pathElement.matchedWith((NodeDescriptor)userObject)) return false;
-      if (!pathElement.matchedWithByIndex((NodeDescriptor)userObject)) return false;
     }
     else {
       if (!pathElement.matchedWithByObject(userObject)) return false;
