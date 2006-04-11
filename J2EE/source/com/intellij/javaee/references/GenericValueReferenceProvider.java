@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class GenericValueReferenceProvider implements PsiReferenceProvider {
   @NotNull
   public GenericReference[] getReferencesByElement(PsiElement element) {
-    if (!(element instanceof XmlTag)) return new GenericReference[0];
+    if (!(element instanceof XmlTag)) return GenericReference.EMPTY_ARRAY;
     PsiElement originalElement = element.getUserData(PsiUtil.ORIGINAL_KEY);
     if (originalElement != null){
       element = originalElement;

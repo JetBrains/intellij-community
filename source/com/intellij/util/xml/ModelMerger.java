@@ -6,6 +6,8 @@ package com.intellij.util.xml;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xml.impl.AdvancedProxy;
 import com.intellij.util.xml.impl.DomImplUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.CommonProcessors;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -21,9 +23,33 @@ import java.util.*;
 public class ModelMerger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ModelMerger");
 
+  public static class ImplementationProcessor<T> implements Processor<T> {
+    private final Processor<T> myProcessor;
+
+    public ImplementationProcessor(Processor<T> processor) {
+      myProcessor = processor;
+    }
+
+    public boolean process(final T t) {
+      if (t instanceof MergedObject) {
+        for (T impl : ((MergedObject<T>)t).getImplementations()) {
+          if (!process(impl)) return false;
+        }
+      }
+      else {
+        if (!myProcessor.process(t)) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  private ModelMerger() {
+  }
+
   public interface MergedObject<V> {
-    public <T extends V> T findImplementation(Class<T> clazz);
-    public List<V> getImplementations();
+    List<V> getImplementations();
   }
 
   public static <T> T mergeModels(final Class<? extends T> aClass, final T... implementations) {
@@ -42,13 +68,21 @@ public class ModelMerger {
   }
 
   @Nullable
-  public static <T> T getImplementation(Object element, Class<T> clazz) {
-    if (element instanceof MergedObject) {
-      return ((MergedObject<T>)element).findImplementation(clazz);
-    }
-    else {
-      return element != null && clazz.isAssignableFrom(element.getClass()) ? (T)element : null;
-    }
+  public static <T, V> V getImplementation(final T element, final Class<V> clazz) {
+    CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>() {
+      public boolean process(final T t) {
+        return !clazz.isAssignableFrom(t.getClass()) || super.process(t);
+      }
+    };
+    new ImplementationProcessor<T>(processor).process(element);
+    return (V)processor.getFoundValue();
+  }
+
+  @NotNull
+  public static <T> List<T> getFilteredImplementations(final T element) {
+    final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(new ArrayList<T>());
+    new ImplementationProcessor<T>(processor).process(element);
+    return (List<T>)processor.getResults();
   }
 
   @NotNull
@@ -63,18 +97,6 @@ public class ModelMerger {
     else {
       return Collections.emptyList();
     }
-  }
-
-  public static <T> List<T> filterMergedImplementations(List<T> result, List<T> implementations) {
-    for (T t : implementations) {
-      if (t instanceof MergedObject) {
-        final MergedObject<T> mergedObject = (MergedObject<T>)t;
-        final List<T> impl = mergedObject.getImplementations();
-        filterMergedImplementations(result, impl);
-      }
-      else result.add(t);
-    }
-    return result;
   }
 
   private static void addAllInterfaces(Class aClass, List<Class> list) {
@@ -165,10 +187,7 @@ public class ModelMerger {
       try {
         if (MergedObject.class.equals(method.getDeclaringClass())) {
           @NonNls String methodName = method.getName();
-          if ("findImplementation".equals(methodName)) {
-            return findImplementation((Class<Object>)args[0]);
-          }
-          else if ("getImplementations".equals(methodName)) {
+          if ("getImplementations".equals(methodName)) {
             return Arrays.asList(myImplementations);
           }
           else assert false;
@@ -280,15 +299,6 @@ public class ModelMerger {
 
       results.add(o);
       return true;
-    }
-
-    public <V> V findImplementation(final Class<V> clazz) {
-      for (T t : ModelMerger.filterMergedImplementations(new ArrayList<T>(), Arrays.asList(myImplementations))) {
-        if (clazz.isAssignableFrom(t.getClass())) {
-          return (V)t;
-        }
-      }
-      return null;
     }
 
     public class MergedGenericValue extends ReadOnlyGenericValue implements MergedObject<GenericValue> {
