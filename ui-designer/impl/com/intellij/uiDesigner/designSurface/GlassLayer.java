@@ -41,6 +41,16 @@ final class GlassLayer extends JComponent implements DataProvider{
     registerKeyboardAction(new MoveSelectionToUpAction(myEditor, true, true), "EditorPageUpWithSelection");
     registerKeyboardAction(new MoveSelectionToDownAction(myEditor, true, true), "EditorPageDownWithSelection");
 
+    registerKeyboardAction(new MoveComponentAction(-1, 0, 0, 0), "EditorScrollUp");
+    registerKeyboardAction(new MoveComponentAction(1, 0, 0, 0), "EditorScrollDown");
+    registerKeyboardAction(new MoveComponentAction(0, -1, 0, 0), "EditorPreviousWord");
+    registerKeyboardAction(new MoveComponentAction(0, 1, 0, 0), "EditorNextWord");
+
+    registerKeyboardAction(new MoveComponentAction(0, 0, -1, 0), "MoveStatementUp");
+    registerKeyboardAction(new MoveComponentAction(0, 0, 1, 0), "MoveStatementDown");
+    registerKeyboardAction(new MoveComponentAction(0, 0, 0, -1), "EditorPreviousWordWithSelection");
+    registerKeyboardAction(new MoveComponentAction(0, 0, 0, 1), "EditorNextWordWithSelection");
+
     // F2 should start inplace editing
     final StartInplaceEditingAction startInplaceEditingAction = new StartInplaceEditingAction(editor);
     startInplaceEditingAction.registerCustomShortcutSet(
