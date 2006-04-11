@@ -245,7 +245,6 @@ public class ValueHint {
         if (myPopup != null) {
           myPopup.cancel();
         }
-        component.updateToolbar();
         myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, tree)
           .setRequestFocus(true)
           .setTitle(title)
@@ -431,31 +430,29 @@ public class ValueHint {
     private ArrayList<Pair<NodeDescriptorImpl, String>> myHistory = new ArrayList<Pair<NodeDescriptorImpl, String>>();
     private InspectDebuggerTree myTree;
     private int myCurrentIndex = -1;
-    private JPanel myToolbarPanel = new JPanel(new BorderLayout());
     public ActiveTooltipComponent(InspectDebuggerTree tree, final String title) {
       super(new BorderLayout());
       myTree = tree;
       myHistory.add(Pair.create(myTree.getInspectDescriptor(), title));
       add(ScrollPaneFactory.createScrollPane(tree), BorderLayout.CENTER);
-      add(myToolbarPanel, BorderLayout.NORTH);
+      add(createToolbar(), BorderLayout.NORTH);
     }
 
-    public void updateToolbar() {
+    private JComponent createToolbar() {
       DefaultActionGroup group = new DefaultActionGroup();
       group.add(createSetRoot());
 
       AnAction back = createGoBackAction();
+      back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.ALT_MASK)), this);
       group.add(back);
 
       AnAction forward = createGoForwardAction();
+      forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.ALT_MASK)), this);
       group.add(forward);
 
-      final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-      myToolbarPanel.removeAll();
-      myToolbarPanel.add(actionToolbar.getComponent(), BorderLayout.NORTH);
-      myToolbarPanel.repaint();
+      return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
     }
-    
+
     private AnAction createGoForwardAction(){
       return new AnAction(CodeInsightBundle.message("quick.definition.forward"), null, IconLoader.getIcon("/actions/forward.png")){
         public void actionPerformed(AnActionEvent e) {
