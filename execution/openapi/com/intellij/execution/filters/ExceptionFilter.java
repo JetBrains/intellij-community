@@ -21,14 +21,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ExceptionFilter implements Filter{
   private final Project myProject;
-  @NonNls protected static final String AT_STR = "at";
-  protected static final String AT_PREFIX = AT_STR + " ";
-  protected static final String _AT_STR = " " + AT_STR + " ";
+  @NonNls private static final String AT_STR = "at";
+  private static final String AT_PREFIX = AT_STR + " ";
+  private static final String _AT_STR = " " + AT_STR + " ";
 
-  public ExceptionFilter(final Project project) {
+  public ExceptionFilter(@NotNull final Project project) {
     myProject = project;
   }
 

@@ -16,21 +16,18 @@
 package com.intellij.execution.filters;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class CompositeFilter implements Filter {
-  private final List myFilters = new ArrayList();
+  private final List<Filter> myFilters = new ArrayList<Filter>();
 
   public Result applyFilter(final String line, final int entireLength) {
-    final Iterator itr = myFilters.iterator();
-    while (itr.hasNext()) {
-      final Result info = (((Filter)itr.next()).applyFilter(line, entireLength));
+    for (final Filter myFilter : myFilters) {
+      final Result info = myFilter.applyFilter(line, entireLength);
       if (info != null) {
         return info;
       }
     }
-
     return null;
   }
 

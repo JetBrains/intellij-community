@@ -234,7 +234,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
               if (!newTokens.isEmpty()) {
                 newTokens.get(0).startOffset = 0;
               }
-              myContentSize -= toRemoveLen;
+              myContentSize -= Math.min(myContentSize, toRemoveLen);
               myTokens = newTokens;
             }
           }
