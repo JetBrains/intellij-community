@@ -14,7 +14,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.awt.image.BufferedImage;
 
 /**
  * User: anna
@@ -38,15 +37,8 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
       if (myDirection == Cursor.DEFAULT_CURSOR){
         myStartPoint = null;
       } else {
-        final BufferedImage image = new BufferedImage(myComponent.getWidth(), myComponent.getHeight(), BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2 = (Graphics2D)image.getGraphics();
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_IN, 1));
         myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
         UIUtil.setEnabled(myComponent, false, true);
-        myComponent.setResizable(false); //do not paint icon in the corner
-        myComponent.paint(g2);
-        myComponent.setResizable(true);
-        myComponent.setDraggedState(true);
       }
     }
   }
