@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.WindowManager;
@@ -463,7 +464,11 @@ public class ProgressWindow extends BlockingProgressIndicator {
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myPanel, myCancelButton)
         .setForceHeavyweight(true)
         .setRequestFocus(true)
-        .createPopup();
+        .setCancelCallback(new Computable<Boolean>() {
+          public Boolean compute() {
+            return isCanceled() || !isRunning();
+          }
+        }).createPopup();
       myPopup.showInCenterOf(myParentWindow);
       StackingPopupDispatcher.onPopupHidden(myPopup); // Mouse click hiding is not necessary.
 

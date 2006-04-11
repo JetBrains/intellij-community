@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,7 +41,7 @@ public interface ComponentPopupBuilder {
 
   ComponentPopupBuilder setDimensionServiceKey(final String dimensionServiceKey);
 
-  ComponentPopupBuilder setCallback(final Runnable runnable);
+  ComponentPopupBuilder setCancelCallback(final Computable<Boolean> shouldProceed);
 
   @NotNull
   JBPopup createPopup();

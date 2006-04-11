@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
@@ -144,15 +145,17 @@ public class JavaDocManager implements ProjectComponent {
       .setResizable(true)
       .setMovable(true)
       .setTitle(CodeInsightBundle.message("javadoc.info.title", SymbolPresentationUtil.getSymbolPresentableText(element)))
-      .setCallback(new Runnable(){
-        public void run() {
+      .setCancelCallback(new Computable<Boolean>() {
+        public Boolean compute() {
           if (fromQuickSearch()) {
             ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
           }
 
           myEditor = null;
           myPreviouslyFocused = null;
-        }})
+          return Boolean.TRUE;
+        }
+      })
       .createPopup();
 
 
@@ -278,9 +281,8 @@ public class JavaDocManager implements ProjectComponent {
       .setResizable(true)
       .setMovable(true)
       .setTitle(CodeInsightBundle.message("javadoc.info.title", SymbolPresentationUtil.getSymbolPresentableText(element)))
-      .setCallback(new Runnable(){
-        public void run() {
-
+      .setCancelCallback(new Computable<Boolean>(){
+        public Boolean compute() {
           if (fromQuickSearch()) {
             ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
           }
@@ -288,7 +290,9 @@ public class JavaDocManager implements ProjectComponent {
           myEditor = null;
           myPreviouslyFocused = null;
           myParameterInfoController = null;
-        }})
+          return Boolean.TRUE;
+        }
+      })
       .createPopup();
 
 

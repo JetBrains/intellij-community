@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -168,9 +169,10 @@ public class HectorComponent extends JPanel {
     final JBPopup hector = JBPopupFactory.getInstance().createComponentPopupBuilder(this, null)
       .setRequestFocus(true)
       .setMovable(true)
-      .setCallback(new Runnable() {
-        public void run() {
+      .setCancelCallback(new Computable<Boolean>() {
+        public Boolean compute() {
           onClose();
+          return Boolean.TRUE;
         }
       })
       .createPopup();

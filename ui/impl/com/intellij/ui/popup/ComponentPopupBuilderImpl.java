@@ -6,6 +6,7 @@ package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,7 +24,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myRequestFocus;
   private boolean myForceHeavyweight;
   private String myDimensionServiceKey = null;
-  private Runnable myCallback = null;
+  private Computable<Boolean> myCallback = null;
 
 
   public ComponentPopupBuilderImpl(final JComponent component,
@@ -68,8 +69,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     return this;
   }
 
-  public ComponentPopupBuilder setCallback(final Runnable runnable) {
-    myCallback = runnable;
+  public ComponentPopupBuilder setCancelCallback(final Computable<Boolean> shouldProceed) {
+    myCallback = shouldProceed;
     return this;
   }
 
