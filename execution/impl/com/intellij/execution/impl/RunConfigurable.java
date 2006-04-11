@@ -209,8 +209,11 @@ class RunConfigurable extends BaseConfigurable {
 
   private void update() {
     updateDialog();
-    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getSelectionPath().getLastPathComponent();
-    ((DefaultTreeModel)myTree.getModel()).reload(node);
+    final TreePath selectionPath = myTree.getSelectionPath();
+    if (selectionPath != null) {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+      ((DefaultTreeModel)myTree.getModel()).reload(node);
+    }
   }
 
   private void installUpdateListeners(final SingleConfigurationConfigurable<RunConfiguration> info) {
