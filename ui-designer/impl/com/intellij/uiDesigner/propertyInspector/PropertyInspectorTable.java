@@ -692,7 +692,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   private final class MyPropertyEditorListener extends PropertyEditorAdapter{
-    public void valueCommited(final PropertyEditor source){
+    public void valueCommited(final PropertyEditor source, final boolean continueEditing){
       if(isEditing()){
         final Object value;
         try {
@@ -709,6 +709,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           return;
         }
         setValueAt(value, editingRow, editingColumn);
+        if (!continueEditing) {
+          cellEditor.stopCellEditing();
+        }
       }
     }
 

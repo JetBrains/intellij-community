@@ -42,7 +42,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     textField.addActionListener(
       new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          fireValueCommited();
+          fireValueCommited(false);
         }
       }
     );
@@ -157,7 +157,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
         return;
       }
       setValue(descriptor);
-      fireValueCommited();
+      fireValueCommited(true);
     }
   }
 }

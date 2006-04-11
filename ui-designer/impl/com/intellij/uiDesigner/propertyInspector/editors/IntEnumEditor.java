@@ -54,7 +54,7 @@ public final class IntEnumEditor extends PropertyEditor<Integer> {
 
     public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
       if (!myCancelled) {
-        fireValueCommited();
+        fireValueCommited(true);
       }
     }
 

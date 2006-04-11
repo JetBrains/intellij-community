@@ -6,7 +6,7 @@ import java.util.EventListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public interface PropertyEditorListener extends EventListener{
+public interface PropertyEditorListener extends EventListener {
   /**
    * This method is invoked when user finished editing.
    * For example, user pressed "Enter" in text field or selected
@@ -14,7 +14,7 @@ public interface PropertyEditorListener extends EventListener{
    * is cancelled. PropertyInspector, for example, applies
    * new value and continue editing.
    */
-  void valueCommited(PropertyEditor source);
+  void valueCommited(PropertyEditor source, final boolean continueEditing);
 
   /**
    * This method is invoked when user cancelled editing.

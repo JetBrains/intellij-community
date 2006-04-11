@@ -92,10 +92,10 @@ public abstract class PropertyEditor<V> {
     }
   }
 
-  protected final void fireValueCommited(){
+  protected final void fireValueCommited(final boolean continueEditing) {
     final PropertyEditorListener[] listeners=myListenerList.getListeners(PropertyEditorListener.class);
     for (PropertyEditorListener listener : listeners) {
-      listener.valueCommited(this);
+      listener.valueCommited(this, continueEditing);
     }
   }
 
