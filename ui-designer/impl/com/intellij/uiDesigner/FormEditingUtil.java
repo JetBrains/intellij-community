@@ -70,7 +70,7 @@ public final class FormEditingUtil {
     editor.refreshAndSave(true);
   }
 
-  public static void deleteComponents(final GuiEditor editor, final List<RadComponent> selection, final boolean deleteEmptyCells) {
+  public static void deleteComponents(final GuiEditor editor, final List<? extends RadComponent> selection, final boolean deleteEmptyCells) {
     final Set<String> deletedComponentIds = new HashSet<String>();
     for (final RadComponent component : selection) {
       boolean wasSelected = component.isSelected();

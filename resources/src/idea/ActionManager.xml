@@ -1347,6 +1347,7 @@
       <separator/>
       <action id="GuiDesigner.SurroundPopup" class="com.intellij.uiDesigner.actions.SurroundPopupAction"
         use-shortcut-of="SurroundWith"/>
+      <action id="GuiDesigner.Flatten" class="com.intellij.uiDesigner.actions.FlattenAction"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
@@ -1364,6 +1365,7 @@
       <reference ref="$Paste"/>
       <separator/>
       <reference ref="GuiDesigner.SurroundPopup"/>
+      <reference ref="GuiDesigner.Flatten"/>
       <reference ref="GuiDesigner.AddTab"/>
     </group>
 
