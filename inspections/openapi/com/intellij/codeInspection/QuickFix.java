@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.openapi.project.Project;
+
 /**
  * Common base interface for quick fixes provided by local and global inspections.
  *
@@ -22,7 +24,7 @@ package com.intellij.codeInspection;
  * @since 6.0
  * @see CommonProblemDescriptor#getFixes()
  */
-public interface QuickFix {
+public interface QuickFix<D extends CommonProblemDescriptor> {
   /**
    * Returns the name of the quick fix.
    *
@@ -32,4 +34,12 @@ public interface QuickFix {
 
   //to appear in "Apply Fix" statement when multiple Quick Fixes exist
   String getFamilyName();
+
+  /**
+   * Called to apply the fix.
+   *
+   * @param project    {@link com.intellij.openapi.project.Project}
+   * @param descriptor problem reported by the tool which provided this quick fix action
+   */
+  void applyFix(Project project, D descriptor);
 }

@@ -92,8 +92,8 @@ public abstract class QuickFixAction extends AnAction {
     if (invoker == null) return new RefElement[0];
     List<RefEntity> selection = new ArrayList<RefEntity>(Arrays.asList(invoker.getTree().getSelectedElements()));
     PsiDocumentManager.getInstance(invoker.getProject()).commitAllDocuments();
-    Collections.sort(selection, new Comparator() {
-      public int compare(Object o1, Object o2) {
+    Collections.sort(selection, new Comparator<RefEntity>() {
+      public int compare(RefEntity o1, RefEntity o2) {
         if (o1 instanceof RefElement && o2 instanceof RefElement) {
           RefElement r1 = (RefElement)o1;
           RefElement r2 = (RefElement)o2;
@@ -109,7 +109,7 @@ public abstract class QuickFixAction extends AnAction {
         if (o2 instanceof RefElement){
           return -1;
         }
-        return ((RefEntity)o1).getName().compareTo(((RefEntity)o2).getName());
+        return o1.getName().compareTo(o2.getName());
       }
     });
 
@@ -148,13 +148,10 @@ public abstract class QuickFixAction extends AnAction {
                         !((LocalQuickFixWrapper)quickFixAction).getFix().getClass().isInstance(fix)) {
                       continue;
                     }
-                    if (descriptor instanceof ProblemDescriptor) {
-                      if (((ProblemDescriptor)descriptor).getPsiElement() != null) {
-                        ((LocalQuickFix)fix).applyFix(project, (ProblemDescriptor)descriptor);
-                      }
-                    } else {
-                      ((GlobalQuickFix)fix).applyFix();
-                    }
+
+                    //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
+                    fix.applyFix(project, descriptor);
+
                     tool.ignoreProblem(descriptor, fix);
                   }
                 }

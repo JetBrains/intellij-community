@@ -441,11 +441,9 @@ public class Browser extends JPanel {
               Runnable command = new Runnable() {
                 public void run() {
                   CommandProcessor.getInstance().markCurrentCommandAsComplex(myView.getProject());
-                  if (descriptor instanceof ProblemDescriptor){
-                    ((LocalQuickFix)fixes[idx]).applyFix(myView.getProject(), (ProblemDescriptor)descriptor);
-                  } else {
-                    ((GlobalQuickFix)fixes[idx]).applyFix();
-                  }
+
+                  //CCE here means QuickFix was incorrectly inherited
+                  fixes[idx].applyFix(myView.getProject(), descriptor);
                 }
               };
               CommandProcessor.getInstance().executeCommand(myView.getProject(), command, fixes[idx].getName(), null);
@@ -463,9 +461,9 @@ public class Browser extends JPanel {
               Runnable command = new Runnable() {
                 public void run() {
                   CommandProcessor.getInstance().markCurrentCommandAsComplex(myView.getProject());
-                  if (!(descriptor instanceof ProblemDescriptor)){
-                    ((GlobalQuickFix)fixes[idx]).applyFix();
-                  }
+
+                  //CCE here means QuickFix was incorrectly inherited
+                  fixes[idx].applyFix(myView.getProject(), descriptor);
                 }
               };
               CommandProcessor.getInstance().executeCommand(myView.getProject(), command, fixes[idx].getName(), null);
