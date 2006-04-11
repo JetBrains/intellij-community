@@ -216,6 +216,7 @@ public class IntentionHintComponent extends JPanel {
       myOptionIntentions = new ArrayList<IntentionAction>();
       myOptionFixes = new ArrayList<IntentionAction>();
       myText = action.getText();
+      LOG.assertTrue(myText != null, "action "+action.getClass()+" text returned null");
       myAction = action;
       myDisplayName = displayName;
     }
@@ -507,14 +508,17 @@ public class IntentionHintComponent extends JPanel {
 
     public EnableDisableIntentionAction(IntentionAction action) {
       myActionFamilyName = action.getFamilyName();
+      LOG.assertTrue(myActionFamilyName != null, "action "+action.getClass()+" family returned null");
     }
 
+    @NotNull
     public String getText() {
       return mySettings.isEnabled(myActionFamilyName) ?
              CodeInsightBundle.message("disable.intention.action", myActionFamilyName) :
              CodeInsightBundle.message("enable.intention.action", myActionFamilyName);
     }
 
+    @NotNull
     public String getFamilyName() {
       return getText();
     }

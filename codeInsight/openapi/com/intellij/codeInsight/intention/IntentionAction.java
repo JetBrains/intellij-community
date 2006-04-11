@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Interface for intention actions. Intention actions are invoked by pressing
@@ -35,7 +36,7 @@ public interface IntentionAction {
    * @see #isAvailable(Project,Editor,PsiFile)
    * @return the text to show in the intention popup.
    */
-  String getText();
+  @NotNull String getText();
 
   /**
    * Returns the identifier of the family of intentions. This id is used to externalize
@@ -44,9 +45,9 @@ public interface IntentionAction {
    * is also used to locate the description and preview text for the intention.
    *
    * @return the intention family ID.
-   * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...) 
+   * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
    */
-  String getFamilyName();
+  @NotNull String getFamilyName();
 
   /**
    * Checks whether this intention is available at a caret offset in file.
