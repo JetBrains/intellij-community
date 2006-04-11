@@ -121,8 +121,7 @@ public class WrongPackageStatementInspection extends LocalInspectionTool {
     }
 
     public String getName() {
-      String text = QuickFixBundle.message("adjust.package.text", myTargetPackage.getQualifiedName());
-      return text;
+      return QuickFixBundle.message("adjust.package.text", myTargetPackage.getQualifiedName());
     }
 
     public String getFamilyName() {
@@ -131,6 +130,9 @@ public class WrongPackageStatementInspection extends LocalInspectionTool {
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
       if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
+
+      //hack. Need a way to check applicability of the fix
+      if (myStatement.isValid()) return;
 
       try {
         PsiElementFactory factory = myFile.getManager().getElementFactory();
