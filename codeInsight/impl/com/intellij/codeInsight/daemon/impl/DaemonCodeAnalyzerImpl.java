@@ -120,6 +120,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private final ExternalResourceListener myExternalResourceListener = new MyExternalResourceListener();
   private final AntConfigurationListener myAntConfigurationListener = new MyAntConfigurationListener();
   private final EditorMouseMotionListener myEditorMouseMotionListener = new MyEditorMouseMotionListener();
+  private final EditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
   private final ProfileChangeAdapter myProfileChangeListener = new MyProfileChangeListener();
 
   private final WindowFocusListener myIdeFrameFocusListener = new MyWindowFocusListener();
@@ -190,6 +191,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     eventMulticaster.addCaretListener(myCaretListener);
 
     eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener);
+    eventMulticaster.addEditorMouseListener(myEditorMouseListener);
 
     myEditorTracker = createEditorTracker();
     myEditorTracker.addEditorTrackerListener(new EditorTrackerListener() {
@@ -283,6 +285,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     eventMulticaster.removeDocumentListener(myDocumentListener);
     eventMulticaster.removeCaretListener(myCaretListener);
     eventMulticaster.removeEditorMouseMotionListener(myEditorMouseMotionListener);
+    eventMulticaster.removeEditorMouseListener(myEditorMouseListener);
 
     EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
     CommandProcessor.getInstance().removeCommandListener(myCommandListener);
@@ -838,6 +841,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return new EditorTracker(myProject);
   }
 
+  private class MyEditorMouseListener extends EditorMouseAdapter{
+
+    public void mouseExited(EditorMouseEvent e) {
+      DaemonTooltipUtil.cancelTooltips();
+    }
+  }
 
   private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
     public void mouseMoved(EditorMouseEvent e) {
