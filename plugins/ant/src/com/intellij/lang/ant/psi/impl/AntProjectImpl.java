@@ -140,7 +140,16 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     while (tasks.hasMoreElements()) {
       final String taskName = (String)tasks.nextElement();
       final Class taskClass = (Class)ht.get(taskName);
-      final IntrospectionHelper helper = IntrospectionHelper.getHelper(taskClass);
+      final IntrospectionHelper helper;
+      try {
+        helper = IntrospectionHelper.getHelper(taskClass);
+      }
+      catch (Exception e) {
+        // TODO[lvo]: please review.
+        // Problem creating introspector like classes this task depends on cannot be loaded or missing.
+        continue;
+      }
+
       final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
       final Enumeration attrEnum = helper.getAttributes();
       while (attrEnum.hasMoreElements()) {
