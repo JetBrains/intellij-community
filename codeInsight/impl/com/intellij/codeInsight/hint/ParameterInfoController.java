@@ -183,6 +183,12 @@ public class ParameterInfoController {
 
     myEditorDocumentListener = new DocumentAdapter(){
       public void documentChanged(DocumentEvent e) {
+        if (!myHandler.tracksParameterIndex()) {
+          myAlarm.cancelAllRequests();
+          addAlarmRequest();
+          return;
+        }
+
         CharSequence oldS = e.getOldFragment();
         if (CharArrayUtil.shiftForwardUntil(oldS, 0, myParameterCloseChars) < oldS.length()){
           myAlarm.cancelAllRequests();

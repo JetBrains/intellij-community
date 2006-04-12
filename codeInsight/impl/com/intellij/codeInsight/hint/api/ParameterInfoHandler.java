@@ -22,7 +22,7 @@ public interface ParameterInfoHandler <O,P> {
   @Nullable O findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context);
   void updateParameterInfo(final @NotNull O o, final UpdateParameterInfoContext context);
 
-  @NotNull String getParameterCloseChars();
+  @Nullable String getParameterCloseChars();
   boolean tracksParameterIndex();
   void updateUI(P p, ParameterInfoUIContext context);
 }

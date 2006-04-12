@@ -1,19 +1,18 @@
 package com.intellij.codeInsight.hint.api.impls;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.api.*;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.util.ArrayUtil;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +51,6 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
 
   public void showParameterInfo(final @NotNull XmlTag element, final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
-    //showXmlOrJspEditorHint(element, context.getEditor(), context.getItemsToShow(), context.getProject(), null);
   }
 
   public XmlTag findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
@@ -74,7 +72,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   public String getParameterCloseChars() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public boolean tracksParameterIndex() {

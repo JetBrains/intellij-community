@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -161,7 +162,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                                      int offset,
                                      ParameterInfoHandler handler
                                      ) {
-    showParameterHint(list, editor, candidates, project, new MyBestLocationPointProvider(list, editor, project),
+    showParameterHint(list, editor, candidates, project, new MyBestLocationPointProvider(list, editor, project,offset),
                       candidates.length > 1 ? highlighted: null,offset, handler);
   }
 
@@ -281,18 +282,20 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     private final PsiElement myList;
     private final Editor myEditor;
     private final Project myProject;
+    private final int myStartOffset;
 
-    public MyBestLocationPointProvider(final PsiElement list, final Editor editor, final Project project) {
+    public MyBestLocationPointProvider(final PsiElement list, final Editor editor, final Project project, int offset) {
       myList = list;
       myEditor = editor;
       myProject = project;
+      final TextRange textRange = myList.getTextRange();
+      myStartOffset = textRange.contains(offset) ? offset:textRange.getStartOffset() + 1;
     }
 
     public Point getBestPointPosition(LightweightHint hint) {
       String listText = myList.getText();
       final boolean isMultiline = listText.indexOf('\n') >= 0 || listText.indexOf('\r') >= 0;
-      int startOffset = myList.getTextRange().getStartOffset() + 1;
-      final LogicalPosition pos = myEditor.offsetToLogicalPosition(startOffset);
+      final LogicalPosition pos = myEditor.offsetToLogicalPosition(myStartOffset);
       Point p;
 
       if (!isMultiline) {
@@ -307,41 +310,6 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
         p.x = Math.max(p.x, 0);
       }
       return p;
-    }
-  }
-
-  private static class MyBestLocationPointProvider2 implements BestLocationPointProvider {
-    private final Editor myEditor;
-    private final PsiElement myParameterList;
-    private final Project myProject;
-
-    public MyBestLocationPointProvider2(final Editor editor, final PsiElement parameterList, final Project project) {
-      myEditor = editor;
-      myParameterList = parameterList;
-      myProject = project;
-    }
-
-    public Point getBestPointPosition(LightweightHint hint) {
-      LogicalPosition pos = myEditor.offsetToLogicalPosition(myParameterList.getTextRange().getEndOffset());
-      return chooseBestHintPosition(myProject, myEditor, pos.line, pos.column, hint);
-    }
-  }
-
-  private static class MyBestLocationPointProvider3 implements BestLocationPointProvider {
-    private final PsiElement myElement;
-    private final Editor myEditor;
-    private final Project myProject;
-
-    public MyBestLocationPointProvider3(final PsiElement element, final Editor editor, final Project project) {
-      myElement = element;
-      myEditor = editor;
-      myProject = project;
-    }
-
-    public Point getBestPointPosition(LightweightHint hint) {
-      final int startOffset = myElement.getTextOffset() + 1;
-      LogicalPosition pos = myEditor.offsetToLogicalPosition(startOffset);
-      return chooseBestHintPosition(myProject, myEditor, pos.line, pos.column, hint);
     }
   }
 }
