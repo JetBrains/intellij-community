@@ -285,6 +285,13 @@
         <constant value="2" message="property.focuslost.revert"/>
         <constant value="3" message="property.focuslost.persist"/>
       </property>
+      <property name="horizontalAlignment">
+        <constant value="2" message="property.left"/>
+        <constant value="0" message="property.center"/>
+        <constant value="4" message="property.right"/>
+        <constant value="10" message="property.leading"/>
+        <constant value="11" message="property.trailing"/>
+      </property>
     </enum-properties>
   </class>
 
