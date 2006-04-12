@@ -66,11 +66,15 @@ public final class FormEditingUtil {
    */
   public static void deleteSelection(final GuiEditor editor){
     final List<RadComponent> selection = getSelectedComponents(editor);
-    deleteComponents(editor, selection, true);
+    deleteComponents(selection, true);
     editor.refreshAndSave(true);
   }
 
-  public static void deleteComponents(final GuiEditor editor, final List<? extends RadComponent> selection, final boolean deleteEmptyCells) {
+  public static void deleteComponents(final List<? extends RadComponent> selection, final boolean deleteEmptyCells) {
+    if (selection.size() == 0) {
+      return;
+    }
+    RadRootContainer rootContainer = (RadRootContainer) getRoot(selection.get(0));
     final Set<String> deletedComponentIds = new HashSet<String>();
     for (final RadComponent component : selection) {
       boolean wasSelected = component.isSelected();
@@ -126,13 +130,13 @@ public final class FormEditingUtil {
       }
     }
 
-    FormEditingUtil.iterate(editor.getRootContainer(), new ComponentVisitor() {
+    FormEditingUtil.iterate(rootContainer, new ComponentVisitor() {
       public boolean visit(final IComponent component) {
         RadComponent rc = (RadComponent) component;
         for(IProperty p: component.getModifiedProperties()) {
           if (p instanceof IntroComponentProperty) {
             IntroComponentProperty icp = (IntroComponentProperty) p;
-            final String value = (String) icp.getValue(rc);
+            final String value = icp.getValue(rc);
             if (deletedComponentIds.contains(value)) {
               try {
                 icp.resetValue(rc);
@@ -480,7 +484,7 @@ public final class FormEditingUtil {
           return;
         }
 
-        deleteComponents(editor, componentsInColumn, false);
+        deleteComponents(componentsInColumn, false);
       }
     }
 
