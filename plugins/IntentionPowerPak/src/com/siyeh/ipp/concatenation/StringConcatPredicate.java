@@ -22,6 +22,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Nullable;
 
 class StringConcatPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(element instanceof PsiJavaToken){
             final PsiJavaToken token = (PsiJavaToken) element;
@@ -47,47 +48,31 @@ class StringConcatPredicate implements PsiElementPredicate{
 	    if (type == null || !type.equalsToText("java.lang.String")) {
 		    return false;
 	    }
-	    final PsiBinaryExpression subexpression = getSubexpression(binaryExpression);
-	    if (subexpression == null) {
+	    final PsiExpression rhs = binaryExpression.getROperand();
+	    if (rhs == null) {
 		    return false;
 	    }
-	    final PsiExpression lOperand = subexpression.getLOperand();
-	    if (lOperand instanceof PsiPrefixExpression) {
-		    final PsiType prefixExpressionType = lOperand.getType();
+	    final PsiExpression lhs = binaryExpression.getLOperand();
+	    final PsiExpression rightMostExpression = getRightmostExpression(lhs);
+	    if (rightMostExpression instanceof PsiPrefixExpression) {
+		    final PsiType prefixExpressionType = rightMostExpression.getType();
 		    if (prefixExpressionType == null ||
-		        prefixExpressionType.equalsToText("java.lang.String")) {
+				    prefixExpressionType.equalsToText("java.lang.String")) {
 			    return false;
 		    }
 	    }
-        return PsiUtil.isConstantExpression(subexpression);
+	    return PsiUtil.isConstantExpression(rhs) &&
+			    PsiUtil.isConstantExpression(rightMostExpression);
     }
 
-    /**
-     * Returns the smallest subexpression (if precendence allows it). example:
-     * variable + 2 + 3 normally gets evaluated left to right -> (variable + 2) +
-     * 3 this method returns the right most legal subexpression -> 2 + 3
-     */
-    @Nullable private static PsiBinaryExpression getSubexpression(PsiBinaryExpression expression){
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) expression.copy();
-        final PsiExpression rhs = binaryExpression.getROperand();
-        if(rhs == null){
-            return null;
-        }
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        if(!(lhs instanceof PsiBinaryExpression)){
-            return expression;
-        }
-        final PsiBinaryExpression lhsBinaryExpression = (PsiBinaryExpression) lhs;
-        final PsiExpression leftSide = lhsBinaryExpression.getROperand();
-        if(leftSide == null)
-        {
-            return null;
-        }
-        try{
-            lhs.replace(leftSide);
-        } catch(Throwable e){
-            return null;
-        }
-        return binaryExpression;
+    @Nullable private static PsiExpression getRightmostExpression(
+		    PsiExpression expression){
+	    if (expression instanceof PsiBinaryExpression) {
+		    final PsiBinaryExpression binaryExpression =
+				    (PsiBinaryExpression)expression;
+		    final PsiExpression rhs = binaryExpression.getROperand();
+		    return getRightmostExpression(rhs);
+	    }
+	    return expression;
     }
 }
