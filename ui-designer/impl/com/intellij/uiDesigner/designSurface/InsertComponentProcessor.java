@@ -5,6 +5,7 @@ import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -31,6 +32,8 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Anton Katilin
@@ -46,6 +49,17 @@ public final class InsertComponentProcessor extends EventProcessor {
   private GridInsertProcessor myGridInsertProcessor;
   private ComponentItem myComponentToInsert;
   private DropLocation myLastLocation;
+
+  private static Map<String, Class> myComponentClassMap = new HashMap<String, Class>();
+  static {
+    myComponentClassMap.put(JScrollPane.class.getName(), RadScrollPane.class);
+    myComponentClassMap.put(JPanel.class.getName(), RadContainer.class);
+    myComponentClassMap.put(VSpacer.class.getName(), RadVSpacer.class);
+    myComponentClassMap.put(HSpacer.class.getName(), RadHSpacer.class);
+    myComponentClassMap.put(JTabbedPane.class.getName(), RadTabbedPane.class);
+    myComponentClassMap.put(JSplitPane.class.getName(), RadSplitPane.class);
+    myComponentClassMap.put(JToolBar.class.getName(), RadToolBar.class);
+  }
 
   public InsertComponentProcessor(@NotNull final GuiEditor editor) {
     myEditor = editor;
@@ -310,73 +324,64 @@ public final class InsertComponentProcessor extends EventProcessor {
     RadComponent result;
     final String id = FormEditingUtil.generateId(editor.getRootContainer());
 
-    if (JScrollPane.class.getName().equals(item.getClassName())) {
-      result = new RadScrollPane(editor.getModule(), id);
-    }
-    else if (item == Palette.getInstance(editor.getProject()).getPanelItem()) {
-      result = new RadContainer(editor.getModule(), id);
+    Class radComponentClass = getRadComponentClass(item.getClassName());
+    if (radComponentClass != null) {
+      try {
+        result = (RadComponent) radComponentClass.getConstructor(Module.class, String.class).newInstance(editor.getModule(), id);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        return null;
+      }
     }
     else {
-      if (VSpacer.class.getName().equals(item.getClassName())) {
-        result = new RadVSpacer(editor.getModule(), id);
-      }
-      else if (HSpacer.class.getName().equals(item.getClassName())) {
-        result = new RadHSpacer(editor.getModule(), id);
-      }
-      else if (JTabbedPane.class.getName().equals(item.getClassName())) {
-        result = new RadTabbedPane(editor.getModule(), id);
-      }
-      else if (JSplitPane.class.getName().equals(item.getClassName())) {
-        result = new RadSplitPane(editor.getModule(), id);
-      }
-      else if (JToolBar.class.getName().equals(item.getClassName())) {
-        result = new RadToolBar(editor.getModule(), id);
+      PsiFile boundForm = item.getBoundForm();
+      if (boundForm != null) {
+        try {
+          result = new RadNestedForm(editor.getModule(), FormEditingUtil.buildResourceName(boundForm), id);
+        }
+        catch(Exception ex) {
+          result = RadErrorComponent.create(
+            editor.getModule(),
+            id,
+            item.getClassName(),
+            null,
+            ex.getMessage()
+          );
+        }
       }
       else {
-        PsiFile boundForm = item.getBoundForm();
-        if (boundForm != null) {
-          try {
-            result = new RadNestedForm(editor.getModule(), FormEditingUtil.buildResourceName(boundForm), id);
-          }
-          catch(Exception ex) {
-            result = RadErrorComponent.create(
-              editor.getModule(),
-              id,
-              item.getClassName(),
-              null,
-              ex.getMessage()
-            );
-          }
+        final ClassLoader loader = LoaderFactory.getInstance(editor.getProject()).getLoader(editor.getFile());
+        try {
+          final Class aClass = Class.forName(item.getClassName(), true, loader);
+          result = new RadAtomicComponent(editor.getModule(), aClass, id);
         }
-        else {
-          final ClassLoader loader = LoaderFactory.getInstance(editor.getProject()).getLoader(editor.getFile());
-          try {
-            final Class aClass = Class.forName(item.getClassName(), true, loader);
-            result = new RadAtomicComponent(editor.getModule(), aClass, id);
-          }
-          catch (final Exception exc) {
-            //noinspection NonConstantStringShouldBeStringBuffer
-            String errorDescription = Utils.validateJComponentClass(loader, item.getClassName(), true);
-            if (errorDescription == null) {
-              errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", item.getClassName());
-              final String message = FormEditingUtil.getExceptionMessage(exc);
-              if (message != null) {
-                errorDescription += ": " + message;
-              }
+        catch (final Exception exc) {
+          //noinspection NonConstantStringShouldBeStringBuffer
+          String errorDescription = Utils.validateJComponentClass(loader, item.getClassName(), true);
+          if (errorDescription == null) {
+            errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", item.getClassName());
+            final String message = FormEditingUtil.getExceptionMessage(exc);
+            if (message != null) {
+              errorDescription += ": " + message;
             }
-            result = RadErrorComponent.create(
-              editor.getModule(),
-              id,
-              item.getClassName(),
-              null,
-              errorDescription
-            );
           }
+          result = RadErrorComponent.create(
+            editor.getModule(),
+            id,
+            item.getClassName(),
+            null,
+            errorDescription
+          );
         }
       }
     }
     result.init(editor, item);
     return result;
+  }
+
+  public static Class getRadComponentClass(final String className) {
+    return myComponentClassMap.get(className);
   }
 
   private void checkBindTopLevelPanel() {
