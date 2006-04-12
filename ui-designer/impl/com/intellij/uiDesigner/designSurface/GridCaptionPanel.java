@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GridChangeUtil;
@@ -18,6 +19,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.dnd.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,8 +38,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   private GuiEditor myEditor;
   private boolean myIsRow;
   private RadContainer mySelectedContainer;
-  private ListSelectionModel mySelectionModel = new DefaultListSelectionModel();
+  private DefaultListSelectionModel mySelectionModel = new DefaultListSelectionModel();
   private int myResizeLine = -1;
+  private int myDropInsertLine = -1;
   private PreferredSizeProperty myPreferredSizeProperty = new PreferredSizeProperty();
   private LineFeedbackPainter myFeedbackPainter = new LineFeedbackPainter();
   private DeleteProvider myDeleteProvider = new MyDeleteProvider();
@@ -54,6 +57,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     addMouseListener(listener);
     addMouseMotionListener(listener);
     setFocusable(true);
+
+    DnDManager.getInstance(editor.getProject()).registerSource(new MyDnDSource(), this);
+    DnDManager.getInstance(editor.getProject()).registerTarget(new MyDnDTarget(), this);
   }
 
   @Override public Dimension getPreferredSize() {
@@ -62,6 +68,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   @Override public void paintComponent(Graphics g) {
     super.paintComponent(g);
+    Graphics2D g2d = (Graphics2D) g;
 
     final Rectangle bounds = getBounds();
 
@@ -87,7 +94,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
       int sizePolicy = layout.getCellSizePolicy(myIsRow, i);
       if ((sizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) {
-        Graphics2D g2d = (Graphics2D) g;
         Stroke oldStroke = g2d.getStroke();
         g2d.setStroke(new BasicStroke(2.0f));
         g.setColor(Color.BLUE);
@@ -112,6 +118,28 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
     else {
       g.drawLine(0, bounds.height-1, bounds.width, bounds.height-1);
+    }
+
+    if (myDropInsertLine >= 0) {
+      int[] lines = myIsRow ? layout.getHorizontalGridLines() : layout.getVerticalGridLines();
+      int coord = lines [myDropInsertLine];
+      if (myIsRow) {
+        coord = SwingUtilities.convertPoint(container.getDelegee(), 0, coord, this).y;
+      }
+      else {
+        coord = SwingUtilities.convertPoint(container.getDelegee(), coord, 0, this).x;
+      }
+      Stroke oldStroke = g2d.getStroke();
+      g2d.setStroke(new BasicStroke(2.0f));
+      g.setColor(Color.BLUE);
+      if (myIsRow) {
+        g.drawLine(bounds.x+1, coord, bounds.x+bounds.width-1, coord);
+      }
+      else {
+        g.drawLine(coord, bounds.y+1, coord, bounds.y+bounds.height-1);
+      }
+
+      g2d.setStroke(oldStroke);
     }
 
   }
@@ -172,6 +200,13 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     });
   }
 
+  private int getCellAt(Point pnt) {
+    if (mySelectedContainer == null) return -1;
+    GridLayoutManager layout = (GridLayoutManager) mySelectedContainer.getLayout();
+    pnt = SwingUtilities.convertPoint(this, pnt, mySelectedContainer.getDelegee());
+    return myIsRow ? layout.getRowAt(pnt.y) : layout.getColumnAt(pnt.x);
+  }
+
   private class MyMouseListener extends MouseAdapter implements MouseMotionListener {
     private static final int MINIMUM_RESIZED_SIZE = 8;
 
@@ -188,7 +223,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       myResizeLine = myIsRow
                      ? layout.getHorizontalGridLineNear(pnt.y, 4)
                      : layout.getVerticalGridLineNear(pnt.x, 4);
-      
+
       checkShowPopupMenu(e);
     }
 
@@ -204,24 +239,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       else {
         mySelectionModel.setSelectionInterval(cell, cell);
       }
-      /*
-      for(RadComponent component: container.getComponents()) {
-        GridConstraints c = component.getConstraints();
-        if (cell >= c.getCell(myIsRow) && cell < c.getCell(myIsRow) + c.getSpan(myIsRow)) {
-          component.setSelected(true);
-        }
-      }
-      */
       repaint();
     }
-
-    private int getCellAt(Point pnt) {
-      if (mySelectedContainer == null) return -1;
-      GridLayoutManager layout = (GridLayoutManager) mySelectedContainer.getLayout();
-      pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, pnt, mySelectedContainer.getDelegee());
-      return myIsRow ? layout.getRowAt(pnt.y) : layout.getColumnAt(pnt.x);
-    }
-
 
     @Override public void mouseReleased(MouseEvent e) {
       setCursor(Cursor.getDefaultCursor());
@@ -341,7 +360,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   private static class LineFeedbackPainter implements FeedbackPainter {
-
     public void paintFeedback(Graphics2D g, Rectangle rc) {
       g.setColor(LightColors.YELLOW);
       if (rc.width == 1) {
@@ -354,7 +372,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   private class MyDeleteProvider implements DeleteProvider {
-
     public void deleteElement(DataContext dataContext) {
       int selectedIndex = mySelectionModel.getMinSelectionIndex();
       if (selectedIndex >= 0) {
@@ -371,6 +388,133 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         return layout.getRowCount() > 1;
       }
       return layout.getColumnCount() > 1;
+    }
+  }
+
+  private class MyDnDSource implements DnDSource {
+    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+      int[] selectedCells = getSelectedCells(dragOrigin);
+      for(int cell: selectedCells) {
+        if (!canDragCell(cell)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    private int[] getSelectedCells(final Point dragOrigin) {
+      ArrayList<Integer> selection = new ArrayList<Integer>();
+      RadContainer container = getSelectedGridContainer();
+      if (container == null) {
+        return new int[0];
+      }
+      GridLayoutManager layout = (GridLayoutManager) container.getLayout();
+      int[] coords = myIsRow ? layout.getYs() : layout.getXs();
+      for(int i=0; i<coords.length; i++) {
+        if (mySelectionModel.isSelectedIndex(i)) {
+          selection.add(i);
+        }
+      }
+      if (selection.size() == 0) {
+        int cell = getCellAt(dragOrigin);
+        if (cell >= 0) {
+          return new int[] { cell };
+        }
+      }
+      int[] result = new int[selection.size()];
+      for(int i=0; i<selection.size(); i++) {
+        result [i] = selection.get(i).intValue();
+      }
+      return result;
+    }
+
+    private boolean canDragCell(final int cell) {
+      if (mySelectedContainer == null) return false;
+      for(RadComponent c: mySelectedContainer.getComponents()) {
+        if (c.getConstraints().contains(myIsRow, cell) && c.getConstraints().getSpan(myIsRow) > 1) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+      return new DnDDragStartBean(new MyDragBean(myIsRow, getSelectedCells(dragOrigin)));
+    }
+
+    @Nullable
+    public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void dragDropEnd() {
+    }
+
+    public void dropActionChanged(final int gestureModifiers) {
+    }
+  }
+
+  private class MyDnDTarget implements DnDTarget {
+    public boolean update(DnDEvent aEvent) {
+      aEvent.setDropPossible(false, null);
+      if (mySelectedContainer == null) {
+        return false;
+      }
+      if (!(aEvent.getAttachedObject() instanceof MyDragBean)) {
+        return false;
+      }
+      MyDragBean bean = (MyDragBean) aEvent.getAttachedObject();
+      if (bean.isRow != myIsRow || bean.cells.length == 0) {
+        return false;
+      }
+      int gridLine = getDropGridLine(aEvent);
+      setDropInsertLine(gridLine);
+      aEvent.setDropPossible(gridLine >= 0, null);
+      return false;
+    }
+
+    private int getDropGridLine(final DnDEvent aEvent) {
+      GridLayoutManager layout = (GridLayoutManager) mySelectedContainer.getLayout();
+      final Point point = aEvent.getPointOn(mySelectedContainer.getDelegee());
+      return myIsRow ? layout.getHorizontalGridLineNear(point.y, 20) : layout.getVerticalGridLineNear(point.x, 20);
+    }
+
+    public void drop(DnDEvent aEvent) {
+      if (!(aEvent.getAttachedObject() instanceof MyDragBean)) {
+        return;
+      }
+      MyDragBean dragBean = (MyDragBean) aEvent.getAttachedObject();
+      int targetCell = getDropGridLine(aEvent);
+      if (targetCell < 0) return;
+      GridChangeUtil.moveCells(mySelectedContainer, myIsRow, dragBean.cells, targetCell);
+      mySelectionModel.clearSelection();
+      mySelectedContainer.revalidate();
+      myEditor.refreshAndSave(true);
+      setDropInsertLine(-1);
+    }
+
+    public void cleanUpOnLeave() {
+      setDropInsertLine(-1);
+    }
+
+    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+    }
+
+    private void setDropInsertLine(final int i) {
+      if (myDropInsertLine != i) {
+        myDropInsertLine = i;
+        repaint();
+      }
+    }
+  }
+
+  private static class MyDragBean {
+    public boolean isRow;
+    public int[] cells;
+
+    public MyDragBean(final boolean row, final int[] cells) {
+      isRow = row;
+      this.cells = cells;
     }
   }
 }

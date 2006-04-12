@@ -3,6 +3,7 @@ package com.intellij.uiDesigner;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -239,6 +240,40 @@ public final class GridChangeUtil {
     }
     else {
       constraints.setColSpan(constraints.getColSpan() + delta);
+    }
+  }
+
+  public static void moveCells(final RadContainer container, final boolean isRow, final int[] cellsToMove, int targetCell) {
+    for(int i=0; i<cellsToMove.length; i++) {
+      final int sourceCell = cellsToMove[i];
+      moveCell(container, isRow, sourceCell, targetCell);
+      if (sourceCell < targetCell) {
+        for(int j=i+1; j<cellsToMove.length; j++) {
+          cellsToMove [j]--;
+        }
+      }
+      else {
+        targetCell++;
+      }
+    }
+  }
+
+  public static void moveCell(final RadContainer container, final boolean isRow, final int sourceCell, int targetCell) {
+    if (targetCell == sourceCell || targetCell == sourceCell+1) return;
+    // if column moved to left - components inbetween move to right, and vice versa
+    int delta = (sourceCell > targetCell) ? 1 : -1;
+    int startCell = Math.min(sourceCell, targetCell);
+    int endCell = Math.max(sourceCell, targetCell);
+    if (sourceCell < targetCell) targetCell--;
+    for(RadComponent c: container.getComponents()) {
+      GridConstraints constraints = c.getConstraints();
+      final int aCell = constraints.getCell(isRow);
+      if (aCell == sourceCell) {
+        constraints.setCell(isRow, targetCell);
+      }
+      else if (aCell >= startCell && aCell < endCell) {
+        constraints.setCell(isRow, aCell + delta);
+      }
     }
   }
 }
