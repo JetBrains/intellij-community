@@ -24,6 +24,7 @@ import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +38,7 @@ import java.util.HashMap;
 public final class ComponentItem implements Cloneable, PaletteItem, ComponentDragObject {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.ComponentItem");
 
-  private String myClassName;
+  @NonNls private String myClassName;
   private final GridConstraints myDefaultConstraints;
   /**
    * Do not use this member directly. Use {@link #getIcon()} instead.
@@ -338,6 +339,9 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
   }
 
   @Nullable public PsiFile getBoundForm() {
+    if (myClassName.startsWith("javax.swing")) {
+      return null;
+    }
     PsiManager psiManager = PsiManager.getInstance(myProject);
     PsiFile[] boundForms = psiManager.getSearchHelper().findFormsBoundToClass(myClassName.replace('$', '.'));
     if (boundForms != null && boundForms.length > 0) {
