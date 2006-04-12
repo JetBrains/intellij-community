@@ -701,7 +701,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    */
   @Nullable
   public IntrospectedProperty getInplaceProperty(@NotNull final RadComponent component) {
-    final String inplaceProperty = Properties.getInstance().getInplaceProperty(component.getClass());
+    final String inplaceProperty = Properties.getInstance().getInplaceProperty(component.getComponentClass());
     final IntrospectedProperty[] properties = getIntrospectedProperties(component);
     for (int i = properties.length - 1; i >= 0; i--) {
       final IntrospectedProperty property = properties[i];
