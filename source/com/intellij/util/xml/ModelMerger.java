@@ -75,6 +75,7 @@ public class ModelMerger {
 
   @Nullable
   public static <T, V> V getImplementation(final T element, final Class<V> clazz) {
+    if (element == null) return null;
     CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>() {
       public boolean process(final T t) {
         return !clazz.isAssignableFrom(t.getClass()) || super.process(t);
