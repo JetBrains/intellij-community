@@ -50,7 +50,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
     return getAntProject();
   }
 
-  @Nullable
+  @NotNull
   public AntProject getAntProject() {
     if (myProject != null) return myProject;
     final XmlFile baseFile = getSourceElement();
@@ -94,5 +94,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
 
   public void subtreeChanged() {
     clearCaches();
+  }
+
+  public String getTaskClassByName(final String name, final String namespace) {
+    return null;
   }
 }

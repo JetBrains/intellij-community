@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi;
 
+import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -23,4 +24,12 @@ public interface AntProject extends AntElement, PsiNamedElement {
 
   @Nullable
   AntTarget getDefaultTarget();
+
+  @NotNull
+  AntTaskDefinition[] getTaskDefinitions();
+
+  @Nullable
+  AntTaskDefinition getTaskDefinition(final String taskClassName);
+
+  void registerCustomTask(final String name, final String namespace, final AntTaskDefinition definition);
 }

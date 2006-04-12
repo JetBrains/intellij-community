@@ -36,6 +36,10 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   private PsiReference[] myReferences = null;
   private XmlAttribute[] myAttributes = null;
   private Map<String, AntProperty> myProperties = null;
+  /**
+   * Map of ns+elementid to task class names.
+   */
+  protected Map<String, String> myTaskIdToClassMap = null;
 
   public AntElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(sourceElement);
@@ -74,7 +78,8 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return myParent;
   }
 
-  @Nullable
+  @SuppressWarnings({"ConstantConditions"})
+  @NotNull
   public AntProject getAntProject() {
     return (AntProject)((this instanceof AntProject) ? this : PsiTreeUtil.getParentOfType(this, AntProject.class));
   }
@@ -187,6 +192,17 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     if (parent != null) parent.subtreeChanged();
   }
 
+  public String getTaskClassByName(final String name, final String namespace) {
+    String result = null;
+    if (myTaskIdToClassMap != null) {
+      result = myTaskIdToClassMap.get(namespace + name);
+    }
+    if (result == null) {
+      result = getAntParent().getTaskClassByName(name, namespace);
+    }
+    return result;
+  }
+
   public PsiElement findElementAt(int offset) {
     final int offsetInFile = offset + getTextRange().getStartOffset();
     for (final AntElement element : getChildren()) {
@@ -213,6 +229,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return myReferences = result.toArray(new PsiReference[result.size()]);
   }
 
+  @SuppressWarnings({"MethodMayBeStatic"})
   protected AntElement[] getChildrenInner() {
     return AntElement.EMPTY_ARRAY;
   }

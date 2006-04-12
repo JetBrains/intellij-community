@@ -16,7 +16,7 @@ public class AntBundle {
   @Nullable
   public static String getMessage(@NonNls final String key, Object... params) {
     if (theBundle == null) {
-      theBundle = ResourceBundle.getBundle("com.intellij.lang.ant.AntBundle");
+      theBundle = ResourceBundle.getBundle("com.intellij.lang.ant.resources.AntBundle");
     }
     return CommonBundle.message(theBundle, key, params);
   }

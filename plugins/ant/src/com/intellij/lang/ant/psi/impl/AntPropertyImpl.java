@@ -1,13 +1,14 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntProperty;
+import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -18,8 +19,8 @@ import java.io.File;
 
 public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
-  public AntPropertyImpl(AntElement parent, final XmlTag tag) {
-    super(parent, tag);
+  public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTaskDefinition definition) {
+    super(parent, sourceElement, definition);
   }
 
   public String toString() {
@@ -70,12 +71,9 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       }
       value = sourceElement.getAttributeValue("location");
       if (value != null) {
-        final AntProject project = getAntProject();
-        if (project != null) {
-          String baseDir = project.getBaseDir();
-          if (baseDir != null) {
-            return new File(baseDir, value).getAbsolutePath();
-          }
+        String baseDir = getAntProject().getBaseDir();
+        if (baseDir != null) {
+          return new File(baseDir, value).getAbsolutePath();
         }
         return value;
       }

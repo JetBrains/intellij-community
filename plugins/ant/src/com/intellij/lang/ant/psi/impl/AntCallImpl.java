@@ -1,6 +1,10 @@
 package com.intellij.lang.ant.psi.impl;
 
-import com.intellij.lang.ant.psi.*;
+import com.intellij.lang.ant.psi.AntCall;
+import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntProperty;
+import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -15,8 +19,8 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
   private AntTarget[] myDependsTargets = null;
   private AntProperty[] myParams = null;
 
-  public AntCallImpl(final AntElement parent, final XmlElement sourceElement) {
-    super(parent, sourceElement);
+  public AntCallImpl(final AntElement parent, final XmlElement sourceElement, final AntTaskDefinition definition) {
+    super(parent, sourceElement, definition);
   }
 
   public String toString() {
@@ -33,15 +37,11 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
 
   public AntTarget getTarget() {
     final String target = getSourceElement().getAttributeValue("target");
-    final AntProject project = getAntProject();
-    if (project != null) {
-      AntTarget result = project.getTarget(target);
-      if (result != null) {
-        result.setDependsTargets(getDependsTargets());
-      }
-      return result;
+    AntTarget result = getAntProject().getTarget(target);
+    if (result != null) {
+      result.setDependsTargets(getDependsTargets());
     }
-    return null;
+    return result;
   }
 
   public void setTarget(AntTarget target) throws IncorrectOperationException {

@@ -8,12 +8,13 @@ import org.jetbrains.annotations.Nullable;
 
 public interface AntElement extends PsiElement {
   AntElement[] EMPTY_ARRAY = new AntElement[0];
+
   @NotNull
   XmlElement getSourceElement();
 
   AntElement getAntParent();
 
-  @Nullable
+  @NotNull
   AntProject getAntProject();
 
   @NotNull
@@ -26,4 +27,6 @@ public interface AntElement extends PsiElement {
   XmlAttribute[] getAttributes();
 
   void subtreeChanged();
+
+  String getTaskClassByName(final String name, final String namespace);
 }
