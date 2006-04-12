@@ -39,6 +39,8 @@ import java.awt.event.MouseEvent;
 public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
   private static final Icon ERRORS_FOUND_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
 
+  private static final int ALARM_PERIOD = 241;
+
   private DomElement[] myDomElements;
   private DomManager myDomManager;
 
@@ -61,7 +63,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
 
     myErrorStripeRenderer = new DomElementsRefreshStatusRenderer(myDomManager.getProject(), document, file);
 
-    updatePanel();
+    addUpdateRequest();
 
     myDomChangeListener = new DomChangeListener() {
       protected void elementChanged(DomElement element) {
@@ -79,12 +81,16 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
     setToolTipText(myErrorStripeRenderer.getTooltipMessage());
 
     if (!myErrorStripeRenderer.getDaemonCodeAnalyzerStatus().inspectionFinished) {
-      myAlarm.addRequest(new Runnable() {
-        public void run() {
-          updatePanel();
-        }
-      }, 241);
+      addUpdateRequest();
     }
+  }
+
+  private void addUpdateRequest() {
+    myAlarm.addRequest(new Runnable() {
+      public void run() {
+        updatePanel();
+      }
+    }, ALARM_PERIOD);
   }
 
   protected void paintComponent(Graphics g) {
