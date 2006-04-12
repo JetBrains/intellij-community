@@ -1,6 +1,7 @@
 package com.intellij.javaee.ui.forms;
 
 import com.intellij.util.xml.ui.Committable;
+import com.intellij.util.xml.ui.CommittablePanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,6 +14,8 @@ public class CaptionComponent extends JPanel implements Committable {
   private JLabel myCaptionLabel;
   private JLabel myDescriptionLabel;
   private JLabel myIconLabel;
+  private JPanel myErrorPanel;
+  private CommittablePanel myCommittableErrorPanel;
 
   private boolean myBordered = true;
 
@@ -24,7 +27,7 @@ public class CaptionComponent extends JPanel implements Committable {
 
   public CaptionComponent(String text) {
     this();
-    setText(text);  
+    setText(text);
   }
 
   private void updateBorder() {
@@ -37,7 +40,7 @@ public class CaptionComponent extends JPanel implements Committable {
   }
 
   public void setText(final String text) {
-    if(text == null) return;
+    if (text == null) return;
 
     myCaptionLabel.setText(text);
   }
@@ -58,7 +61,6 @@ public class CaptionComponent extends JPanel implements Committable {
   public boolean isBordered() {
     return myBordered;
   }
-                        
 
   public String getDescriptionText() {
     return myDescriptionLabel.getText();
@@ -82,5 +84,17 @@ public class CaptionComponent extends JPanel implements Committable {
   }
 
   public final void dispose() {
+     if (myCommittableErrorPanel != null) myCommittableErrorPanel.dispose();
+  }
+
+  public void initErrorPanel(final CommittablePanel errorPanel) {
+    myCommittableErrorPanel = errorPanel;
+    
+    final JComponent component = errorPanel.getComponent();
+
+    component.setBackground(getBackground());
+    
+    myErrorPanel.setLayout(new BorderLayout());
+    myErrorPanel.add(component, BorderLayout.CENTER);
   }
 }

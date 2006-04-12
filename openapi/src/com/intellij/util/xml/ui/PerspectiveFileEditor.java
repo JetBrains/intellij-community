@@ -36,7 +36,8 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   private final Project myProject;
   private final VirtualFile myFile;
   private final FileEditorManagerAdapter myFileEditorManagerAdapter;
-  private boolean myShowing;
+
+  private boolean myShowing;              
   private final Set<Document> myCurrentDocuments = new HashSet<Document>();
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
     public void documentChanged(DocumentEvent e) {

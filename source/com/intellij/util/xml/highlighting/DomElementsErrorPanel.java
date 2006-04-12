@@ -1,0 +1,147 @@
+/*
+ * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
+ */
+
+package com.intellij.util.xml.highlighting;
+
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomChangeListener;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.ui.CommittablePanel;
+import com.intellij.util.Alarm;
+import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.Disposable;
+import com.intellij.codeInsight.daemon.impl.RefreshStatusRenderer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.hint.LineTooltipRenderer;
+import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.lang.annotation.HighlightSeverity;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseEvent;
+
+/**
+ * User: Sergey.Vasiliev
+ */
+public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
+  private static final Icon ERRORS_FOUND_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
+
+  private DomElement[] myDomElements;
+  private DomManager myDomManager;
+
+  private final DomChangeListener myDomChangeListener;
+  private final DomElementsRefreshStatusRenderer myErrorStripeRenderer;
+
+  private final Alarm myAlarm = new Alarm();
+
+  public DomElementsErrorPanel(final DomElement domElement) {
+    this(new DomElement[]{domElement}, domElement.getManager(), domElement.getRoot().getFile());
+  }
+
+  public DomElementsErrorPanel(final DomElement[] domElements, DomManager domManager, PsiFile file) {
+    myDomElements = domElements;
+    myDomManager = domManager;
+
+    final Document document = PsiDocumentManager.getInstance(myDomManager.getProject()).getDocument(file);
+
+    setPreferredSize(getDimention());
+
+    myErrorStripeRenderer = new DomElementsRefreshStatusRenderer(myDomManager.getProject(), document, file);
+
+    updatePanel();
+
+    myDomChangeListener = new DomChangeListener() {
+      protected void elementChanged(DomElement element) {
+        updatePanel();
+      }
+    };
+
+    myDomManager.addDomEventListener(myDomChangeListener);
+  }
+
+  private void updatePanel() {
+    myAlarm.cancelAllRequests();
+
+    repaint();
+    setToolTipText(myErrorStripeRenderer.getTooltipMessage());
+
+    if (!myErrorStripeRenderer.getDaemonCodeAnalyzerStatus().inspectionFinished) {
+      myAlarm.addRequest(new Runnable() {
+        public void run() {
+          updatePanel();
+        }
+      }, 241);
+    }
+  }
+
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+
+    myErrorStripeRenderer.paint(this, g, new Rectangle(0, 0, getWidth(), getHeight()));
+  }
+
+  public ErrorStripeRenderer getErrorStripeRenderer() {
+    return myErrorStripeRenderer;
+  }
+
+  public void dispose() {
+    myDomManager.removeDomEventListener(myDomChangeListener);
+  }
+
+  public JComponent getComponent() {
+    return this;
+  }
+
+  public void commit() {
+
+  }
+
+  public void reset() {
+
+  }
+
+  protected Dimension getDimention() {
+    return new Dimension(ERRORS_FOUND_ICON.getIconWidth() + 2, ERRORS_FOUND_ICON.getIconHeight() + 2);
+  }
+
+  private class DomElementsRefreshStatusRenderer extends RefreshStatusRenderer {
+    public DomElementsRefreshStatusRenderer(final Project project, final Document document, final PsiFile xmlFile) {
+      super(project, (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project), document, xmlFile);
+    }
+
+    protected int getErrorsCount(final HighlightSeverity minSeverity) {
+      int sum = 0;
+      for (DomElement element : myDomElements) {
+        sum += DomElementAnnotationsManager.getInstance().getProblems(element, true, true).size();
+      }
+      return sum;
+    }
+
+    public DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
+      return super.getDaemonCodeAnalyzerStatus();
+    }
+  }
+
+  // private static class MyRefreshStatusRenderer extends RefreshStatusRenderer {
+  //  public MyRefreshStatusRenderer(final Project project, final Document document, final XmlFile xmlFile) {
+  //    super(project, (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project), document, xmlFile);
+  //  }
+  //
+  //  public DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
+  //    return super.getDaemonCodeAnalyzerStatus();
+  //  }
+  //}
+}

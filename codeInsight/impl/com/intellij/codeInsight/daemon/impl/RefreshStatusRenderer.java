@@ -66,12 +66,15 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
       status.errorAnalyzingFinished = true;
       for (int i = 0; i < status.errorCount.length; i++) {
         final HighlightSeverity minSeverity = SeverityRegistrar.getSeverityByIndex(i);
-        HighlightInfo[] infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, minSeverity, myProject);
-        status.errorCount[i] = infos.length;
+        status.errorCount[i] = getErrorsCount(minSeverity);
       }
       status.inspectionFinished = myHighlighter.isInspectionCompleted(myFile);
     }
     return status;
+  }
+
+  protected int getErrorsCount(final HighlightSeverity minSeverity) {
+    return DaemonCodeAnalyzerImpl.getHighlights(myDocument, minSeverity, myProject).length;
   }
 
   public RefreshStatusRenderer(Project project, DaemonCodeAnalyzerImpl highlighter, Document document, PsiFile file) {
