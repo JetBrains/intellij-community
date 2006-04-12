@@ -412,7 +412,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   static String getTagValue(final XmlTag tag) {
     final XmlText[] textElements = tag.getValue().getTextElements();
-    return textElements.length != 0 ? textElements[0].getValue().trim() : null;
+    return textElements.length != 0 ? textElements[0].getValue().trim() : "";
   }
 
   public final String toString() {
