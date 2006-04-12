@@ -168,11 +168,11 @@ public class ProgressWindow extends BlockingProgressIndicator {
     LOG.assertTrue(!myStoppedAlready);
     myInstallFunAlarm.cancelAllRequests();
 
+    super.stop();
     if (myDialog != null) {
       myDialog.hide();
       myFocusTrackback.restoreFocus();
     }
-    super.stop();
     myStoppedAlready = true;
 
     SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
