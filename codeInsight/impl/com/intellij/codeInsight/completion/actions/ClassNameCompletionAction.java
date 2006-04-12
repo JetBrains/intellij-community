@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.xml.XmlFile;
 
 /**
@@ -28,7 +29,7 @@ public class ClassNameCompletionAction extends BaseCodeInsightAction {
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file instanceof PsiJavaFile || file instanceof XmlFile;
+    return file instanceof PsiJavaFile || file instanceof XmlFile || file instanceof PsiCodeFragment;
   }
 
   protected boolean isValidForLookup() {
