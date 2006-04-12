@@ -53,4 +53,8 @@ public class PluginDescriptorMetaData implements DeploymentDescriptorMetaData {
   public boolean isDescriptorOptional() {
     return false;
   }
+
+  public boolean isStandard() {
+    return false;
+  }
 }
