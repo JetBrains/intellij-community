@@ -3,18 +3,19 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -62,4 +63,7 @@ public abstract class DomManager implements ProjectComponent {
    * @return stable DOM element
    */
   public abstract <T extends DomElement> T createStableValue(Factory<T> provider);
+
+  public abstract void registerFileLoader(Consumer<XmlFile> consumer);
+  public abstract void unregisterFileLoader(Consumer<XmlFile> consumer);
 }

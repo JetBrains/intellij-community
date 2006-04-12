@@ -7,7 +7,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.PomModel;
@@ -19,9 +18,11 @@ import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -56,17 +57,14 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private final Map<Type, InvocationCache> myInvocationCaches = new HashMap<Type, InvocationCache>();
   private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private final List<Function<DomElement, Collection<PsiElement>>> myPsiElementProviders = new ArrayList<Function<DomElement, Collection<PsiElement>>>();
+  private final Set<Consumer<XmlFile>> myFileLoaders = new HashSet<Consumer<XmlFile>>();
+  private final Map<XmlFile,Object> myNonDomFiles = new WeakHashMap<XmlFile, Object>();
 
   private DomEventListener[] myCachedListeners;
   private PomModelListener myXmlListener;
   private Project myProject;
   private PomModel myPomModel;
   private boolean myChanging;
-  private static final Condition<DomElement> INVALID = new Condition<DomElement>() {
-    public boolean value(final DomElement object) {
-      return false;
-    }
-  };
 
   public DomManagerImpl(final PomModel pomModel, final Project project) {
     myPomModel = pomModel;
@@ -86,6 +84,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         return xmlAspect.equals(aspect);
       }
     };
+    ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(XmlTag.class, new DomClassReferenceProvider());
   }
 
   public final void addDomEventListener(DomEventListener listener) {
@@ -302,7 +301,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   @Nullable
-  private static DomInvocationHandler _getDomElement(final XmlTag tag) {
+  private DomInvocationHandler _getDomElement(final XmlTag tag) {
     if (tag == null) return null;
 
     DomInvocationHandler invocationHandler = getCachedElement(tag);
@@ -312,15 +311,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag == null) {
-      final XmlFile xmlFile = (XmlFile)tag.getContainingFile();
-      if (xmlFile != null) {
-        final DomFileElementImpl element = getCachedElement(xmlFile);
-        if (element != null) {
-          return element.getRootHandler();
-        }
-      }
-
-      return null;
+      return getDomFileElement((XmlFile)tag.getContainingFile());
     }
 
     DomInvocationHandler parent = _getDomElement(parentTag);
@@ -333,6 +324,27 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
     childDescription.getValues(parent.getProxy());
     return getCachedElement(tag);
+  }
+
+  private DomInvocationHandler getDomFileElement(final XmlFile xmlFile) {
+    if (xmlFile != null && !myNonDomFiles.containsKey(xmlFile)) {
+      DomFileElementImpl element = getCachedElement(xmlFile);
+      if (element == null) {
+        for (final Consumer<XmlFile> fileLoader : myFileLoaders) {
+          fileLoader.consume(xmlFile);
+        }
+        element = getCachedElement(xmlFile);
+        if (element == null) {
+          myNonDomFiles.put(xmlFile, new Object());
+        }
+      }
+
+      if (element != null) {
+        return element.getRootHandler();
+      }
+    }
+
+    return null;
   }
 
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
@@ -355,6 +367,14 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     intf.addAll(Arrays.asList(initial.getClass().getInterfaces()));
     intf.add(StableElement.class);
     return AdvancedProxy.createProxy((Class<? extends T>)initial.getClass().getSuperclass(), intf.toArray(new Class[intf.size()]), handler, Collections.<JavaMethodSignature>emptySet());
+  }
+
+  public void registerFileLoader(Consumer<XmlFile> consumer) {
+    myFileLoaders.add(consumer);
+  }
+
+  public void unregisterFileLoader(Consumer<XmlFile> consumer) {
+    myFileLoaders.remove(consumer);
   }
 
   private static class StableInvocationHandler<T extends DomElement> implements InvocationHandler, StableElement {
