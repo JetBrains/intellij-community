@@ -6,6 +6,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -37,6 +38,10 @@ public class DomStringWrapper implements DomWrapper<String>{
 
   public Project getProject() {
     return myDomElement.getManager().getProject();
+  }
+
+  public GlobalSearchScope getResolveScope() {
+    return myDomElement.getResolveScope();
   }
 
 }

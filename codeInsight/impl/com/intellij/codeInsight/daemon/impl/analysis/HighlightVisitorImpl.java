@@ -116,16 +116,30 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitElement(PsiElement element) {
     Language lang = element.getLanguage();
     List<Annotator> annotators = lang.getAnnotators();
+    boolean hasAnnotators = false;
     if (annotators.size() > 0) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < annotators.size(); i++) {
-        Annotator annotator = annotators.get(i);
-        annotator.annotate(element, myAnnotationHolder);
+        annotators.get(i).annotate(element, myAnnotationHolder);
       }
-      convertAnnotationsToHighlightInfos();
+      hasAnnotators = true;
     }
     else if (element instanceof OuterLanguageElement) {
       myXmlVisitor.visitJspElement((OuterLanguageElement)element);
+    }
+
+    final PsiFile psiFile = element.getContainingFile();
+    if (psiFile instanceof PsiCodeFragment) {
+      Annotator[] fileAnnotators = ((PsiCodeFragment)psiFile).getAnnotators();
+      if (fileAnnotators.length > 0) {
+        for (final Annotator annotator : fileAnnotators) {
+          annotator.annotate(element, myAnnotationHolder);
+        }
+        hasAnnotators = true;
+      }
+    }
+    if (hasAnnotators) {
+      convertAnnotationsToHighlightInfos();
     }
   }
 

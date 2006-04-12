@@ -68,7 +68,7 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     myListeners.remove(listener);
   }
 
-  private void fireUIChanged() {
+  protected final void fireUIChanged() {
     myIsModified = true;
     UserActivityListener[] listeners = myListeners.toArray(new UserActivityListener[myListeners.size()]);
     for (UserActivityListener listener : listeners) {

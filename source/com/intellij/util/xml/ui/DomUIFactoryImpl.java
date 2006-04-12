@@ -3,19 +3,25 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.DomElement;
 import com.intellij.ui.BooleanTableCellEditor;
+import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellEditor;
+import java.awt.*;
 
 /**
  * @author peter
  */
 public class DomUIFactoryImpl extends DomUIFactory {
+
   protected TableCellEditor createCellEditor(DomElement element, Class type) {
     if (Boolean.class.equals(type) || boolean.class.equals(type)) {
       return new BooleanTableCellEditor();
@@ -35,6 +41,34 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
     assert false : "Type not supported: " + type;
     return null;
+  }
+
+  public UserActivityWatcher createEditorAwareUserActivityWatcher() {
+    return new UserActivityWatcher() {
+      private DocumentAdapter myListener = new DocumentAdapter() {
+        public void documentChanged(DocumentEvent e) {
+          fireUIChanged();
+        }
+      };
+
+      protected void processComponent(final Component component) {
+        super.processComponent(component);
+        if (component instanceof EditorComponentImpl) {
+          ((EditorComponentImpl)component).getEditor().getDocument().addDocumentListener(myListener);
+        }
+      }
+
+      protected void unprocessComponent(final Component component) {
+        super.unprocessComponent(component);
+        if (component instanceof EditorComponentImpl) {
+          ((EditorComponentImpl)component).getEditor().getDocument().removeDocumentListener(myListener);
+        }
+      }
+    };
+  }
+
+  public BaseControl createPsiClassControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
+    return new PsiClassControl2(wrapper, commitOnEveryChange);
   }
 
   private static <T extends JComponent> T removeBorder(final T component) {

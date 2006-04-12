@@ -7,6 +7,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -66,5 +67,9 @@ public class DomCollectionWrapper<T> implements DomWrapper<T>{
 
   public Project getProject() {
     return myDomElement.getManager().getProject();
+  }
+
+  public GlobalSearchScope getResolveScope() {
+    return myDomElement.getResolveScope();
   }
 }

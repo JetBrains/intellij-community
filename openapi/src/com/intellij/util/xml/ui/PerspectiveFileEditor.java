@@ -78,6 +78,14 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     };
     FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myFileEditorManagerAdapter);
     startListeningDocuments();
+
+    final PsiFile psiFile = getPsiFile();
+    if (psiFile != null) {
+      final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+      if (document != null) {
+        addWatchedDocument(document);
+      }
+    }
   }
 
   protected final void startListeningDocuments() {

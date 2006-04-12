@@ -15,11 +15,20 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.annotation.Annotator;
+
 /**
  * Represents a fragment of Java code which exists outside of a project structure (for example,
  * in a foreign language code or in a user interface element other than the main source code editor).
  */
 public interface PsiCodeFragment extends PsiImportHolder {
+
+  Annotator[] getAnnotators();
+
+  void addAnnotator(Annotator annotator);
+
+  void removeAnnotator(Annotator annotator);
+
 
   /**
    * Returns the type corresponding to the <code>this</code> keyword in the code fragment.

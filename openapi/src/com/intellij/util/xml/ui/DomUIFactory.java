@@ -12,6 +12,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.ui.UserActivityWatcher;
 
 import javax.swing.table.TableCellEditor;
 import java.lang.reflect.Method;
@@ -56,11 +57,12 @@ public abstract class DomUIFactory implements ApplicationComponent {
   }
 
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element, boolean commitOnEveryChange) {
+    final DomStringWrapper stringWrapper = new DomStringWrapper(element);
     if (type.equals(PsiClass.class)) {
-      return new PsiClassControl(new DomStringWrapper(element), commitOnEveryChange);
+      return getDomUIFactory().createPsiClassControl(stringWrapper, commitOnEveryChange);
     }
     if (type instanceof Class && Enum.class.isAssignableFrom((Class)type)) {
-      return new ComboControl(new DomStringWrapper(element), (Class)type);
+      return new ComboControl(stringWrapper, (Class)type);
     }
 
     final DomFixedWrapper wrapper = new DomFixedWrapper(element);
@@ -85,6 +87,10 @@ public abstract class DomUIFactory implements ApplicationComponent {
   }
 
   protected abstract TableCellEditor createCellEditor(DomElement element, Class type);
+
+  public abstract UserActivityWatcher createEditorAwareUserActivityWatcher();
+
+  public abstract BaseControl createPsiClassControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
   public static DomUIFactory getDomUIFactory() {
     return ApplicationManager.getApplication().getComponent(DomUIFactory.class);

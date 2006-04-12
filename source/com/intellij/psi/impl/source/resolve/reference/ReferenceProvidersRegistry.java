@@ -437,6 +437,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     );
 
     final NamespaceFilter jsfNsFilter = new NamespaceFilter(XmlUtil.JSF_URIS);
+    /*
     registerXmlTagReferenceProvider(
       new String[] {
         "render-kit-class","renderer-class","managed-bean-class","attribute-class","component-class",
@@ -449,6 +450,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       true,
       getProviderByType(CLASS_REFERENCE_PROVIDER)
     );
+    */
 
     final JSFReferencesProvider jsfProvider = new JSFReferencesProvider(getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER));
 

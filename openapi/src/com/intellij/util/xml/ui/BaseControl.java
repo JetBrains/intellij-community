@@ -16,6 +16,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author peter
@@ -106,6 +107,10 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
     return myDomWrapper.getDomElement();
   }
 
+  public final DomWrapper<T> getDomWrapper() {
+    return myDomWrapper;
+  }
+
   public final Bound getComponent() {
     checkInitialized();
     return myBoundComponent;
@@ -115,12 +120,9 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
   }
 
   public final void commit() {
-    if (myDomWrapper.isValid()) {
-      final T valueInControl = getValue(getComponent());
-      if (!valuesAreEqual(getValueFromXml(), valueInControl)) {
-        setValueToXml(valueInControl);
-        updateComponent();
-      }
+    if (myDomWrapper.isValid() && !isCommitted()) {
+      setValueToXml(getValue(getComponent()));
+      updateComponent();
     }
   }
 
@@ -139,10 +141,13 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
   }
 
   protected void doReset() {
-    final T t = getValueFromXml();
-    if (!valuesAreEqual(t, getValue(getComponent()))) {
-      setValue(getComponent(), t);
+    if (!isCommitted()) {
+      setValue(getComponent(), getValueFromXml());
     }
+  }
+
+  protected final boolean isCommitted() {
+    return valuesAreEqual(getValueFromXml(), getValue(getComponent()));
   }
 
   private void setValueToXml(final T value) {
@@ -171,7 +176,10 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
     try {
       return myDomWrapper.getValue();
     }
-    catch (Exception e) {
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+    catch (InvocationTargetException e) {
       throw new RuntimeException(e);
     }
   }

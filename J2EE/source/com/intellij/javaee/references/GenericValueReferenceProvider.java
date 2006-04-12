@@ -7,15 +7,18 @@ import com.intellij.javaee.JavaeeModuleProperties;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.jsf.FacesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +36,22 @@ public abstract class GenericValueReferenceProvider implements PsiReferenceProvi
     final Module module = ModuleUtil.findModuleForPsiElement(element);
     if (module == null) return GenericReference.EMPTY_ARRAY;
 
+    //todo[peter] introduce an entity to DomManager
     final JavaeeModuleProperties properties = JavaeeModuleProperties.getInstance(module);
-    if (properties == null) return GenericReference.EMPTY_ARRAY;
+    if (properties != null) {
+      properties.ensureDomLoaded();
+    }
+    final PsiFile psiFile = element.getContainingFile();
+    if (psiFile instanceof XmlFile) {
+      final XmlFile xmlFile = (XmlFile)psiFile;
+      final FacesManager facesManager = FacesManager.getFacesManager();
+      if (facesManager.isFacesDtd(xmlFile)) {
+        facesManager.getFacesConfig(xmlFile);
+      }
+    }
 
-    properties.ensureDomLoaded();
     final XmlTag tag = (XmlTag)element;
-    final DomElement domElement = DomManager.getDomManager(properties.getModule().getProject()).getDomElement(tag);
+    final DomElement domElement = DomManager.getDomManager(module.getProject()).getDomElement(tag);
     if (!(domElement instanceof GenericDomValue)) return GenericReference.EMPTY_ARRAY;
 
     final GenericReference reference = getReferenceByElement((GenericDomValue)domElement);
