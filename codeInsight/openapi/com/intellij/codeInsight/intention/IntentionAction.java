@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * Alt-Enter in the code editor at the location where an intention is available,
  * and can be enabled or disabled in the "Intentions" settings dialog.
  *
- * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
+ * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String[])
  */
 public interface IntentionAction {
   /**
@@ -45,7 +45,7 @@ public interface IntentionAction {
    * is also used to locate the description and preview text for the intention.
    *
    * @return the intention family ID.
-   * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
+   * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String[])
    */
   @NotNull String getFamilyName();
 
@@ -56,6 +56,7 @@ public interface IntentionAction {
    * @param project the project in which the availability is checked.
    * @param editor the editor in which the intention will be invoked.
    * @param file the file open in the editor.
+   * @return true if the intention is available, false otherwise.
    */
   boolean isAvailable(Project project, Editor editor, PsiFile file);
 
