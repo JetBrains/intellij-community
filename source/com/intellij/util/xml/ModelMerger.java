@@ -52,10 +52,16 @@ public class ModelMerger {
     List<V> getImplementations();
   }
 
+
   public static <T> T mergeModels(final Class<? extends T> aClass, final T... implementations) {
     final MergingInvocationHandler<T> handler = new MergingInvocationHandler<T>(implementations);
     return mergeModels(handler, aClass, implementations);
   }
+
+  public static <T> T mergeModels(final Class<? extends T> aClass, final Collection<? extends T> implementations) {
+    return (T) mergeModels(aClass, implementations.toArray());
+  }
+
 
   public static <T>T mergeModels(final MergingInvocationHandler<T> handler,
                                   final Class<? extends T> aClass,
