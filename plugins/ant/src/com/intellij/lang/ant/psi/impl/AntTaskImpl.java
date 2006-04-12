@@ -11,6 +11,8 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+
 public class AntTaskImpl extends AntElementImpl implements AntTask {
 
   private AntTaskDefinition myDefinition;
@@ -54,11 +56,11 @@ public class AntTaskImpl extends AntElementImpl implements AntTask {
 
   protected void registerCustomTask(final String name, final String namespace, final AntTaskDefinition definition) {
     if (myDefinition != null) {
-      /*if(!myDefinitionCloned) myDefinition = myDefinition.clone();
+      if (!myDefinitionCloned) myDefinition = myDefinition.clone();
       myDefinition.registerNestedTask(definition.getClassName());
-      if(myTaskIdToClassMap == null ) {
+      if (myTaskIdToClassMap == null) {
         myTaskIdToClassMap = new HashMap<String, String>();
-      }*/
+      }
       myTaskIdToClassMap.put(namespace + name, definition.getClassName());
       getAntProject().registerCustomTask(name, namespace, definition);
     }

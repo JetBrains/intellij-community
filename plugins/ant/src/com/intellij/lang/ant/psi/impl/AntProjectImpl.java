@@ -130,12 +130,12 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
   public AntTaskDefinition getTaskDefinition(final String taskClassName) {
     if (myTaskDefinitions != null) return myTaskDefinitions.get(taskClassName);
     myTaskDefinitions = new HashMap<String, AntTaskDefinition>();
+    myTaskIdToClassMap = new HashMap<String, String>();
     Project project = new Project();
     project.init();
     final Hashtable ht = project.getTaskDefinitions();
     if (ht == null) return null;
     // first pass creates taskdefinitons without nested elements
-    int index = 0;
     final Enumeration tasks = ht.keys();
     while (tasks.hasMoreElements()) {
       final String taskName = (String)tasks.nextElement();
@@ -158,6 +158,7 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
       }
       AntTaskDefinition def = new AntTaskDefinitionImpl(this, taskName, getSourceElement().getNamespace(), taskClass.getName(), attributes);
       myTaskDefinitions.put(def.getClassName(), def);
+      myTaskIdToClassMap.put(def.getNamespace() + def.getName(), def.getClassName());
     }
 
     // second pass updates nested elements of known task definitions
@@ -177,10 +178,12 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     myTaskIdToClassMap = null;
     myTaskDefinitionArray = null;
     myTaskDefinitions.put(definition.getClassName(), definition);
+    getTaskDefinition(null);
     myTaskIdToClassMap.put(namespace + name, definition.getClassName());
   }
 
   public String getTaskClassByName(final String name, final String namespace) {
+    getTaskDefinition(null);
     return myTaskIdToClassMap.get(namespace + name);
   }
 }
