@@ -3,9 +3,12 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.ParameterInfoController;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -19,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
@@ -30,7 +34,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.xml.util.documentation.HtmlDocumentationProvider;
@@ -51,30 +54,6 @@ public class JavaDocManager implements ProjectComponent {
   private final Project myProject;
   private Editor myEditor = null;
   private ParameterInfoController myParameterInfoController;
-  private LookupListener myActiveLookupListener = new LookupListener() {
-    public void itemSelected(LookupEvent event) {
-      //do nothing
-    }
-
-    public void lookupCanceled(LookupEvent event) {
-      //do nothing
-    }
-
-    public void currentItemChanged(LookupEvent event) {
-      final LookupItem item = event.getItem();
-      if (item != null && myEditor != null) {
-        final Object o = item.getObject();
-        if (o instanceof PsiElement) {
-          final PsiFile file = ((PsiElement)o).getContainingFile();
-          if (file != null) {
-            Editor editor = myEditor;
-            showJavaDocInfo(myEditor, file, false);
-            myEditor = editor;
-          }
-        }
-      }
-    }
-  };
   private Alarm myUpdateDocAlarm = new Alarm();
   private WeakReference<JBPopup> myDocInfoHintRef;
   private Component myPreviouslyFocused = null;
@@ -139,7 +118,13 @@ public class JavaDocManager implements ProjectComponent {
 
 
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-      .setRequestFocus(true)
+      .setRequestFocusIfNotLookupOrSearch(myProject)
+      .setLookupAndSearchUpdater(new Condition<PsiElement>() {
+        public boolean value(final PsiElement element) {
+          showJavaDocInfo(element);
+          return false;
+        }
+      }, myProject)
       .setForceHeavyweight(true)
       .setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE)
       .setResizable(true)
@@ -275,7 +260,22 @@ public class JavaDocManager implements ProjectComponent {
 
 
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-      .setRequestFocus(true)
+      .setRequestFocusIfNotLookupOrSearch(myProject)
+      .setLookupAndSearchUpdater(new Condition<PsiElement>() {
+        public boolean value(final PsiElement element) {
+          if (myEditor != null){
+            final PsiFile file = element.getContainingFile();
+            if (file != null) {
+              Editor editor = myEditor;
+              showJavaDocInfo(myEditor, file, false);
+              myEditor = editor;
+            }
+          } else {
+            showJavaDocInfo(element);
+          }
+          return false;
+        }
+      }, myProject)
       .setForceHeavyweight(false)
       .setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE)
       .setResizable(true)
@@ -693,69 +693,12 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   void showHint(final JBPopup hint) {
-    final JBPopupImpl popup = (JBPopupImpl)hint;
-    final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
-    if (activeLookup != null && myEditor != null){
-      popup.setRequestFocus(false);
-
-      activeLookup.removeLookupListener(myActiveLookupListener);
-      activeLookup.addLookupListener(myActiveLookupListener);
-
-      final JLayeredPane layeredPane = myEditor.getContentComponent().getRootPane().getLayeredPane();
-      final Point layeredPanePoint = new Point(activeLookup.getBounds().x, activeLookup.getBounds().y);
-      Dimension preferredTextFieldPanelSize = popup.getComponent().getPreferredSize();
-      final RelativePoint relativePoint = new RelativePoint(layeredPane,
-                                                            new Point(layeredPanePoint.x,
-                                                                      layeredPanePoint.y - preferredTextFieldPanelSize.height - myEditor.getLineHeight() - 2));
-      cropToFitBounds(layeredPane, relativePoint, layeredPanePoint, popup);
-      popup.show(relativePoint);
-      return;
-    }
-    if (fromQuickSearch() && myPreviouslyFocused != null){
-      popup.setRequestFocus(false);
-      Window window = SwingUtilities.windowForComponent(myPreviouslyFocused);
-      JLayeredPane layeredPane;
-      if (window instanceof JFrame) {
-        layeredPane = ((JFrame)window).getLayeredPane();
-      }
-      else if (window instanceof JDialog) {
-        layeredPane = ((JDialog)window).getLayeredPane();
-      }
-      else {
-        throw new IllegalStateException("cannot find parent window: project=" + myProject + "; window=" + window);
-      }
-      final Point layeredPanePoint = SwingUtilities.convertPoint(myPreviouslyFocused.getParent(), 0, 0, layeredPane);
-      Dimension preferredTextFieldPanelSize = popup.getComponent().getPreferredSize();
-      final RelativePoint relativePoint = new RelativePoint(layeredPane,
-                                                            new Point(layeredPanePoint.x,
-                                                                      layeredPanePoint.y - preferredTextFieldPanelSize.height - myPreviouslyFocused.getHeight() - 2));
-      cropToFitBounds(layeredPane, relativePoint, layeredPanePoint, popup);
-      popup.show(relativePoint);
-      return;
-    }
     if (myEditor != null) {
-      popup.showInBestPositionFor(myEditor);
+      hint.showInBestPositionFor(myEditor);
     }
     else if (myPreviouslyFocused != null) {
-      popup.showInCenterOf(myPreviouslyFocused);
+      hint.showInBestPositionFor(DataManager.getInstance().getDataContext(myPreviouslyFocused));
     }
-  }
-
-  private static void cropToFitBounds(final JLayeredPane layeredPane,
-                                      final RelativePoint startPoint,
-                                      final Point layeredPanePoint,
-                                      final JBPopupImpl popup) {
-    popup.setDimensionServiceKey(null);
-    final Rectangle rectangle = new Rectangle(layeredPane.getX(),
-                                              Math.max(startPoint.getScreenPoint().y, layeredPane.getY()),
-                                              layeredPane.getWidth(),
-                                              new RelativePoint(layeredPane, layeredPanePoint).getScreenPoint().y);
-    final Dimension dimension = popup.getContent().getPreferredSize();
-    final Rectangle bounds = new Rectangle(layeredPane.getX(), layeredPane.getY(), dimension.width, dimension.height);
-    if (bounds.getMaxY() > rectangle.getMaxY()) {
-      bounds.height = (int) rectangle.getMaxY() - bounds.y + 2;
-    }
-    popup.getContent().setPreferredSize(new Dimension(bounds.width, bounds.height));
   }
 
   public void requestFocus() {

@@ -4,16 +4,15 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionBundle;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -512,9 +511,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
 
   public void hide(){
     if (myDisposed) return;
-    final JBPopup docInfoHint = JavaDocManager.getInstance(myProject).getDocInfoHint();
-    if (docInfoHint != null && docInfoHint.isVisible()){
-      docInfoHint.cancel();
+    if (IdeEventQueue.getInstance().getPopupManager().closeActivePopup()) {
       return;
     }
     myDisposed = true;

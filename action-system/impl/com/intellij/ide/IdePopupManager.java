@@ -2,6 +2,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.IdePopup;
+import com.intellij.ui.popup.StackingPopupDispatcher;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -39,5 +40,9 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
 
   public void resetActivePopup() {
     myActivePopup = null;
+  }
+
+  public boolean closeActivePopup(){
+    return myActivePopup instanceof StackingPopupDispatcher && ((StackingPopupDispatcher)myActivePopup).closeActivePopup();
   }
 }

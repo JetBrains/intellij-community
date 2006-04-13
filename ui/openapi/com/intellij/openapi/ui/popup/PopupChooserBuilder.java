@@ -16,13 +16,18 @@
 
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.TreeTable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -45,7 +50,7 @@ public class PopupChooserBuilder {
   private String myDimensionServiceKey = null;
 
   public PopupChooserBuilder(@NotNull JList list) {
-    myChooserComponent = list;
+    myChooserComponent = new MyListWrapper(list);
   }
 
   public PopupChooserBuilder(@NotNull JTable table) {
@@ -133,8 +138,8 @@ public class PopupChooserBuilder {
     myChooserComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     final JScrollPane scrollPane;
-    if (myChooserComponent instanceof JList) {
-      scrollPane = createScrollPane((JList)myChooserComponent);
+    if (myChooserComponent instanceof MyListWrapper) {
+      scrollPane = createScrollPane((MyListWrapper)myChooserComponent);
     }
     else if (myChooserComponent instanceof JTable) {
       scrollPane = createScrollPane((JTable)myChooserComponent);
@@ -243,7 +248,8 @@ public class PopupChooserBuilder {
   }
 
   @NotNull
-  public static JScrollPane createScrollPane(final JList list) {
+  public static JScrollPane createScrollPane(MyListWrapper wrapper) {
+    final JList list = wrapper.getList();
     list.addMouseMotionListener(new MouseMotionAdapter() {
       public void mouseMoved(MouseEvent e) {
         Point point = e.getPoint();
@@ -259,7 +265,7 @@ public class PopupChooserBuilder {
     }
 
     int modelSize = list.getModel().getSize();
-    JScrollPane scrollPane = new JScrollPane(list);
+    JScrollPane scrollPane = new JScrollPane(wrapper);
     scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
     if (modelSize > 0 && modelSize <= 20) {
       list.setVisibleRowCount(0);
@@ -270,5 +276,40 @@ public class PopupChooserBuilder {
     }
 
     return scrollPane;
+  }
+
+  private static class MyListWrapper extends JPanel implements DataProvider {
+    private JList myList;
+
+    public MyListWrapper(final JList list) {
+      super(new BorderLayout());
+      myList = list;
+      add(myList, BorderLayout.CENTER);
+    }
+
+    public JList getList() {
+      return myList;
+    }
+
+    @Nullable
+    public Object getData(@NonNls String dataId) {
+      if (dataId.equals(DataConstants.PSI_ELEMENT)){
+        final Object selectedValue = myList.getSelectedValue();
+        if (selectedValue instanceof PsiElement){
+          return selectedValue;
+        }
+      }
+      return null;
+    }
+
+    public void setBorder(Border border) {
+      if (myList != null){
+        myList.setBorder(border);
+      }
+    }
+
+    public void requestFocus() {
+      myList.requestFocus();
+    }
   }
 }

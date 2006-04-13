@@ -1,6 +1,5 @@
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.actionSystem.*;
@@ -14,6 +13,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
@@ -22,11 +22,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.popup.JBPopupImpl;
+import com.intellij.ui.popup.PopupOwner;
 import com.intellij.util.Alarm;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.ui.UIUtil;
 import org.apache.oro.text.regex.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -144,6 +147,9 @@ public abstract class ChooseByNameBase{
     }
 
     public void registerHint(JBPopup h) {
+      if (myHint != null && myHint.isVisible() && myHint != h){
+        myHint.cancel();
+      }
       myHint = h;
     }
 
@@ -171,6 +177,15 @@ public abstract class ChooseByNameBase{
 
     public JBPopup getHint() {
       return myHint;
+    }
+
+    public void updateHint(PsiElement element) {
+      if (myHint == null || !myHint.isVisible()) return;
+      final Condition<PsiElement> popupUpdater = ((JBPopupImpl)myHint).getPopupUpdater();
+      if (popupUpdater != null){
+        myHint.cancel();
+        popupUpdater.value(element);
+      }
     }
   }
 
@@ -390,8 +405,7 @@ public abstract class ChooseByNameBase{
     final JBPopup hint = myTextFieldPanel.getHint();
     final Object element = getChosenElement();
     if (hint != null && element instanceof PsiElement){
-      myTextFieldPanel.unregisterHint();
-      myTextFieldPanel.registerHint(JavaDocManager.getInstance(myProject).showJavaDocInfo((PsiElement)element));
+      myTextFieldPanel.updateHint((PsiElement)element);      
     }
   }
 
@@ -715,7 +729,7 @@ public abstract class ChooseByNameBase{
     return component instanceof MyTextField;
   }
 
-  private final class MyTextField extends JTextField {
+  private final class MyTextField extends JTextField implements PopupOwner {
     private final KeyStroke myCompletionKeyStroke;
     private final KeyStroke forwardStroke;
     private final KeyStroke backStroke;
@@ -829,6 +843,11 @@ public abstract class ChooseByNameBase{
       myTextField.setCaretPosition(newPattern.length());
 
       rebuildList(0, REBUILD_DELAY, null, ModalityState.current());
+    }
+
+    @Nullable
+    public Point getBestPopupPosition() {
+      return new Point(myTextFieldPanel.getWidth(), getHeight());
     }
   }
 

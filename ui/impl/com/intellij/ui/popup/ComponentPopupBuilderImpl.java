@@ -4,12 +4,19 @@
 
 package com.intellij.ui.popup;
 
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * User: anna
@@ -25,6 +32,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myForceHeavyweight;
   private String myDimensionServiceKey = null;
   private Computable<Boolean> myCallback = null;
+  private Condition<PsiElement> myPopupUpdater;
+  private Project myProject;
 
 
   public ComponentPopupBuilderImpl(final JComponent component,
@@ -64,18 +73,41 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     return this;
   }
 
+  @NotNull
   public ComponentPopupBuilder setDimensionServiceKey(final String dimensionServiceKey) {
     myDimensionServiceKey = dimensionServiceKey;
     return this;
   }
 
+  @NotNull
   public ComponentPopupBuilder setCancelCallback(final Computable<Boolean> shouldProceed) {
     myCallback = shouldProceed;
     return this;
   }
 
   @NotNull
+  public ComponentPopupBuilder setLookupAndSearchUpdater(final Condition<PsiElement> updater, Project project) {
+    myPopupUpdater = updater;
+    myProject = project;
+    return this;
+  }
+
+  @NotNull
   public JBPopup createPopup() {
-    return new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight, myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null, myCallback);
+    final JBPopupImpl popup = new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight,
+                                              myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
+                                              myCallback);
+    if (myPopupUpdater != null) {
+      popup.setPopupUpdater(myPopupUpdater, myProject);
+    }
+    return popup;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setRequestFocusIfNotLookupOrSearch(Project project) {
+    final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
+    boolean fromQuickSearch =  focusedComponent != null && focusedComponent.getParent() instanceof ChooseByNameBase.JPanelProvider;
+    myRequestFocus = !fromQuickSearch && LookupManager.getInstance(project).getActiveLookup() == null;
+    return this;
   }
 }

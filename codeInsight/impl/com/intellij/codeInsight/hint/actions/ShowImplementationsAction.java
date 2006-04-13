@@ -37,6 +37,7 @@ import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -45,20 +46,24 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
-import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
 import java.util.*;
 
 public class ShowImplementationsAction extends AnAction {
+
+  public ShowImplementationsAction() {
+    setEnabledInModalContext(true);
+  }
+
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-    final RelativePoint hintPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
 
     if (project == null || file == null) return;
 
@@ -125,6 +130,23 @@ public class ShowImplementationsAction extends AnAction {
       }
     }
 
+    showImplementations(impls, project, text, editor);
+  }
+
+  private static void updateElementImplementations(final PsiElement element, final Editor editor, final Project project) {
+    PsiElement[] impls = null;
+    String text = "";
+    if (element != null) {
+      if (element instanceof PsiPackage) return;
+
+      impls = getSelfAndImplementations(editor, element.getContainingFile(), element);
+      text = SymbolPresentationUtil.getSymbolPresentableText(element);
+    }
+
+    showImplementations(impls, project, text, editor);
+  }
+
+  private static void showImplementations(final PsiElement[] impls, final Project project, final String text, final Editor editor) {
     if (impls == null || impls.length == 0) return;
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickdefinition");
@@ -135,20 +157,24 @@ public class ShowImplementationsAction extends AnAction {
     // These two invokeLaters necessary for the focus to get back to the editor after progress dialog in inheritance
     // search. To be removed after progress indicator will no longer be a modal dialog.
 
-    final PsiElement[] implsFinal = impls;
-    final String title = text;
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            final ImplementationViewComponent component = new ImplementationViewComponent(implsFinal);
+            final ImplementationViewComponent component = new ImplementationViewComponent(impls);
             if (component.hasElementsToShow()) {
               final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
-                .setRequestFocus(true)
+                .setRequestFocusIfNotLookupOrSearch(project)
+                .setLookupAndSearchUpdater(new Condition<PsiElement>() {
+                  public boolean value(final PsiElement element) {
+                    updateElementImplementations(element, editor, project);
+                    return false;
+                  }
+                }, project)
                 .setResizable(true)
                 .setMovable(true)
-                .setTitle(CodeInsightBundle.message("implementation.view.title", title)).createPopup();
-              popup.show(hintPosition);
+                .setTitle(CodeInsightBundle.message("implementation.view.title", text)).createPopup();
+              popup.showInBestPositionFor(DataManager.getInstance().getDataContext());
               component.setHint(popup);
             }
           }

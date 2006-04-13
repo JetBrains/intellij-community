@@ -16,7 +16,10 @@
 
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,11 +40,24 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setRequestFocus(boolean requestFocus);
 
   @NotNull
+  ComponentPopupBuilder setRequestFocusIfNotLookupOrSearch(Project project);
+
+  @NotNull
   ComponentPopupBuilder setForceHeavyweight(boolean forceHeavyweight);
 
+  @NotNull
   ComponentPopupBuilder setDimensionServiceKey(final String dimensionServiceKey);
 
+  @NotNull
   ComponentPopupBuilder setCancelCallback(final Computable<Boolean> shouldProceed);
+
+  /**
+   * @param updater recreates popup in accordance to selected (in lookup or Ctrl N) psiElement. Current popup will be closed automatically
+   * @param project
+   * @return this
+   */
+  @NotNull
+  ComponentPopupBuilder setLookupAndSearchUpdater(final Condition<PsiElement> updater, Project project);
 
   @NotNull
   JBPopup createPopup();

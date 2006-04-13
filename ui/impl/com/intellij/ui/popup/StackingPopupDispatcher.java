@@ -117,4 +117,13 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
      return false;
    }
   }
+
+  public boolean closeActivePopup() {
+    final JBPopupImpl popup = myStack.pop();
+    if (popup != null && popup.isVisible()){
+      popup.cancel();
+      return true;
+    }
+    return false;
+  }
 }
