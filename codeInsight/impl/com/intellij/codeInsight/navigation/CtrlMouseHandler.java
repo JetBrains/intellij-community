@@ -336,16 +336,17 @@ public class CtrlMouseHandler implements ProjectComponent {
         ) {
 
         installLinkHighlighter(info);
-        myStoredCursor = internalComponent.getCursor();
-        myStoredInfo = info;
-
-        String text = JavaInfoGenerator.generateInfo(info.myTargetElement);
-        if (text == null) return;
 
         internalComponent.addKeyListener(myEditorKeyListener);
         myEditor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
+        myStoredCursor = internalComponent.getCursor();
+        myStoredInfo = info;
         internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myFileEditorManagerListener);
+
+        String text = JavaInfoGenerator.generateInfo(info.myTargetElement); //JavaDocManager.getInstance(myProject).getDocInfo(info.myTargetElement);
+
+        if (text == null) return;
 
         JLabel label = HintUtil.createInformationLabel(text);
         label.setUI(new MultiLineLabelUI());
