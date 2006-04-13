@@ -16,6 +16,7 @@ import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.IndexPatternProvider;
@@ -108,7 +109,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         final Language lang = file.getLanguage();
         Lexer lexer = lang.getSyntaxHighlighter(file.getProject(), file.getVirtualFile()).getHighlightingLexer();
         TokenSet commentTokens = null;
-        if (file instanceof PsiJavaFile) {
+        if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
           lexer = new JavaLexer(((PsiJavaFile)file).getLanguageLevel());
           commentTokens = TokenSet.orSet(ElementType.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
         }
@@ -165,8 +166,12 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       }
 
       if (isComment) {
-        commentStarts.add(lexer.getTokenStart());
-        commentEnds.add(lexer.getTokenEnd());
+        final boolean jspToken = lexer.getTokenType() == JspTokenType.JSP_COMMENT;
+        final int startDelta = jspToken ? "<%--".length() : 0;
+        final int endDelta = jspToken ? "--%>".length() : 0;
+
+        commentStarts.add(lexer.getTokenStart() + startDelta);
+        commentEnds.add(lexer.getTokenEnd() - endDelta);
       }
     }
   }
