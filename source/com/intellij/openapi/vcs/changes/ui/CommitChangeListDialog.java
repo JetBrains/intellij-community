@@ -261,6 +261,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       if (result == CheckinHandler.ReturnResult.COMMIT) continue;
       if (result == CheckinHandler.ReturnResult.CANCEL) return false;
       if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
+        final ChangeList changeList = myBrowser.getSelectedChangeList();
+        moveToFailedList(changeList,
+                         getCommitMessage(),
+                         getIncludedChanges(),
+                         VcsBundle.message("commit.dialog.rejected.commit.template", changeList.getName()));
         doCancelAction();
         return false;
       }
@@ -318,7 +323,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (mySession != null) {
       return new Runnable() {
         public void run() {
-          mySession.execute(myBrowser.getCurrentIncludedChanges(), getCommitMessage());
+          mySession.execute(getIncludedChanges(), getCommitMessage());
         }
       };
     }
@@ -327,7 +332,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       public void run() {
         try {
           final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
-          ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.PerVcsProcessor<Change>() {
+          ChangesUtil.processChangesByVcs(myProject, getIncludedChanges(), new ChangesUtil.PerVcsProcessor<Change>() {
             public void process(AbstractVcs vcs, List<Change> changes) {
               final ChangeProvider provider = vcs.getChangeProvider();
               if (provider != null) {
@@ -375,18 +380,28 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       for (CheckinHandler handler : checkinHandlers) {
         handler.checkinSuccessful();
       }
+      final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+      final ChangeList list = myBrowser.getSelectedChangeList();
+      final List<Change> includedChanges = getIncludedChanges();
+      if (list instanceof LocalChangeList) {
+        final LocalChangeList localList = (LocalChangeList)list;
+        if (includedChanges.containsAll(list.getChanges()) && !localList.isDefault()) {
+          changeListManager.removeChangeList(localList);
+        }
+        /*
+        else if (localList.isDefault()) {
+          Messages.showInfoMessage(myProject, "You have been commiting default change list and excluded some changes.\n" +
+                                              "Would you like these changes to be moved to another change list?", "Partial Default Change List Commit");
+        }
+        */
+      }
     }
     else {
       for (CheckinHandler handler : checkinHandlers) {
         handler.checkinFailed(errors);
       }
 
-      final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-      final LocalChangeList failedList =
-        changeListManager.addChangeList(VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()));
-
-      failedList.setComment(commitMessage);
-      changeListManager.moveChangesTo(failedList, failedChanges.toArray(new Change[failedChanges.size()]));
+      moveToFailedList(changeList, commitMessage, failedChanges, VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()));
     }
 
     config.ERROR_OCCURED = errorsSize > 0;
@@ -409,6 +424,21 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }, ModalityState.NON_MMODAL);
 
+  }
+
+  private void moveToFailedList(final ChangeList changeList,
+                                final String commitMessage,
+                                final List<Change> failedChanges,
+                                final String newChangelistName) {
+    // No need to move since we'll get exactly the same changelist.
+    if (failedChanges.containsAll(changeList.getChanges())) return;
+
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    final LocalChangeList failedList =
+      changeListManager.addChangeList(newChangelistName);
+
+    failedList.setComment(commitMessage);
+    changeListManager.moveChangesTo(failedList, failedChanges.toArray(new Change[failedChanges.size()]));
   }
 
   private static List<VcsException> collectErrors(final List<VcsException> vcsExceptions) {
@@ -466,7 +496,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public boolean hasDiffs() {
-    return !myBrowser.getCurrentIncludedChanges().isEmpty();
+    return !getIncludedChanges().isEmpty();
   }
 
   public void addSelectionChangeListener(SelectionChangeListener listener) {
@@ -479,7 +509,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   public Collection<VirtualFile> getVirtualFiles() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (Change change: myBrowser.getCurrentIncludedChanges()) {
+    for (Change change: getIncludedChanges()) {
       final FilePath path = ChangesUtil.getFilePath(change);
       final VirtualFile vFile = path.getVirtualFile();
       if (vFile != null) {
@@ -492,7 +522,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   public Collection<File> getFiles() {
     List<File> result = new ArrayList<File>();
-    for (Change change: myBrowser.getCurrentIncludedChanges()) {
+    for (Change change: getIncludedChanges()) {
       final FilePath path = ChangesUtil.getFilePath(change);
       final File file = path.getIOFile();
       if (file != null) {
@@ -504,7 +534,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private FilePath[] getPaths() {
-    List<FilePath> result = ChangesUtil.getPaths(myBrowser.getCurrentIncludedChanges());
+    List<FilePath> result = ChangesUtil.getPaths(getIncludedChanges());
     return result.toArray(new FilePath[result.size()]);
   }
 
@@ -546,13 +576,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void updateButtons() {
     setOKActionEnabled(hasDiffs() &&
-                       (mySession == null || mySession.canExecute(myBrowser.getCurrentIncludedChanges(), getCommitMessage())));
+                       (mySession == null || mySession.canExecute(getIncludedChanges(), getCommitMessage())));
     myOKButtonUpdateAlarm.cancelAllRequests();
     myOKButtonUpdateAlarm.addRequest(new Runnable() {
       public void run() {
         updateButtons();
       }
     }, 300, ModalityState.stateForComponent(myBrowser));
+  }
+
+  private List<Change> getIncludedChanges() {
+    return myBrowser.getCurrentIncludedChanges();
   }
 
   @NonNls
