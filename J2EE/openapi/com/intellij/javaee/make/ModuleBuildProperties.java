@@ -45,6 +45,8 @@ public abstract class ModuleBuildProperties implements ModuleComponent {
 
   public abstract boolean isSyncExplodedDir();
 
+  public abstract boolean isBuildExternalDependencies();
+
   @Nullable
   public abstract J2EEBuildParticipant getBuildParticipant();
 
