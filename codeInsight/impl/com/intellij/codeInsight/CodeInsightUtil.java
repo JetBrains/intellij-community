@@ -1,7 +1,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,11 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -31,6 +27,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -381,7 +378,17 @@ public class CodeInsightUtil {
     return true;
   }
 
+  @Nullable
   public static PsiFile getFormFile(PsiField field) {
+    PsiReference ref = getFormReference(field);
+    if (ref != null) {
+      return ref.getElement().getContainingFile();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiReference getFormReference(PsiField field) {
     final PsiSearchHelper searchHelper = field.getManager().getSearchHelper();
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass != null && containingClass.getQualifiedName() != null) {
@@ -390,7 +397,7 @@ public class CodeInsightUtil {
         final PsiReference[] refs = formFile.getReferences();
         for (final PsiReference ref : refs) {
           if (ref.isReferenceTo(field)) {
-            return formFile;
+            return ref;
           }
         }
       }

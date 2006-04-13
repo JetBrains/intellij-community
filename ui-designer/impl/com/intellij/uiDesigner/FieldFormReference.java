@@ -13,16 +13,23 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  *         Date: Jul 5, 2005
  */
-final class FieldFormReference extends ReferenceInForm {
+public final class FieldFormReference extends ReferenceInForm {
   private final PsiReference myClassReference;
   private final String myComponentClassName;
   private final TextRange myComponentClassNameRange;
+  private final boolean myCustomCreate;
 
-  public FieldFormReference(final PsiPlainTextFile file, final PsiReference aClass, final TextRange fieldNameRange, @Nullable String componentClassName, @Nullable TextRange componentClassNameRange) {
+  public FieldFormReference(final PsiPlainTextFile file,
+                            final PsiReference aClass,
+                            final TextRange fieldNameRange,
+                            @Nullable String componentClassName,
+                            @Nullable TextRange componentClassNameRange,
+                            final boolean customCreate) {
     super(file, fieldNameRange);
     myClassReference = aClass;
     myComponentClassName = componentClassName;
     myComponentClassNameRange = componentClassNameRange;
+    myCustomCreate = customCreate;
   }
 
   public PsiElement resolve() {
@@ -33,12 +40,16 @@ final class FieldFormReference extends ReferenceInForm {
     return null;
   }
 
-  protected @Nullable String getComponentClassName() {
+  @Nullable String getComponentClassName() {
     return myComponentClassName;
   }
 
-  protected @Nullable TextRange getComponentClassNameTextRange() {
+  @Nullable TextRange getComponentClassNameTextRange() {
     return myComponentClassNameRange;
+  }
+
+  public boolean isCustomCreate() {
+    return myCustomCreate;
   }
 
   public PsiElement bindToElement(final PsiElement element) throws IncorrectOperationException {

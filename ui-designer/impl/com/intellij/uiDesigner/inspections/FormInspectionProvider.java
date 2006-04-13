@@ -24,7 +24,8 @@ public class FormInspectionProvider implements ApplicationComponent, InspectionT
       MissingMnemonicInspection.class,
       NoLabelForInspection.class,
       NoButtonGroupInspection.class,
-      NoScrollPaneInspection.class
+      NoScrollPaneInspection.class,
+      BoundFieldAssignmentInspection.class
     };
   }
 }
