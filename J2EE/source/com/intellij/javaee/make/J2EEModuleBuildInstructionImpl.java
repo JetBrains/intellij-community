@@ -63,9 +63,9 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
         MakeUtilImpl.writeManifest(buildRecipe, context, target);
       }
     }
+    catch (IOException e) {throw e;}
+    catch (RuntimeException e) {throw e;}
     catch (Exception e) {
-      if (e instanceof IOException) throw (IOException)e;
-      if (e instanceof RuntimeException) throw (RuntimeException)e;
     }
   }
 
@@ -99,7 +99,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
       String moduleName = ModuleUtil.getModuleNameInReadAction(getModule());
       tempFile = File.createTempFile(moduleName+"___", TMP_FILE_SUFFIX);
       tempFile.deleteOnExit();
-      makeJar(context, tempFile, childDependencies, fileFilter);
+      makeJar(context, tempFile, childDependencies, fileFilter, true);
       childDependencies.visitInstructions(new BuildInstructionVisitor() {
         public boolean visitFileCopyInstruction(FileCopyInstruction instruction) throws Exception {
           File file = new File(PathUtil.getCanonicalPath(MakeUtil.appendToPath(tempFile.getPath(), instruction.getOutputRelativePath())));
@@ -133,9 +133,13 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
         }
       }, false);
     }
+    catch (IOException e) {
+      throw e;
+    }
+    catch (RuntimeException e) {
+      throw e;
+    }
     catch (Exception e) {
-      if (e instanceof IOException) throw (IOException)e;
-      if (e instanceof RuntimeException) throw (RuntimeException)e;
     }
   }
 
@@ -143,29 +147,35 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
   public void makeJar(final CompileContext context,
                       final File jarFile,
                       final BuildRecipe dependencies,
-                      final FileFilter fileFilter) throws IOException {
+                      final FileFilter fileFilter,
+                      final boolean processExternalDependencies) throws IOException {
     final BuildRecipe buildRecipe = getChildInstructions(context);
     final Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
     if (manifest == null) {
       context.addMessage(CompilerMessageCategory.WARNING, J2EEBundle.message("message.text.using.user.supplied.manifest"),null,-1,-1);
     }
     FileUtil.createParentDirs(jarFile);
-    final JarOutputStream jarOutputStream = manifest == null ?
-                                            new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile))) :
-                                            new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)), manifest);
+    final BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(jarFile));
+    final JarOutputStream jarOutputStream = manifest == null ? new JarOutputStream(out) : new JarOutputStream(out, manifest);
 
     final Set<String> tempWrittenRelativePaths = new THashSet<String>();
     try {
       buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
         public boolean visitInstruction(BuildInstruction instruction) throws IOException {
-          instruction.addFilesToJar(context, jarFile, jarOutputStream, dependencies, tempWrittenRelativePaths, fileFilter);
+          if (processExternalDependencies || !instruction.isExternalDependencyInstruction()) {
+            instruction.addFilesToJar(context, jarFile, jarOutputStream, dependencies, tempWrittenRelativePaths, fileFilter);
+          }
           return true;
         }
       }, false);
     }
+    catch (IOException e) {
+      throw e;
+    }
+    catch (RuntimeException e) {
+      throw e;
+    }
     catch (Exception e) {
-      if (e instanceof IOException) throw (IOException)e;
-      if (e instanceof RuntimeException) throw (RuntimeException)e;
     }
     finally {
       jarOutputStream.close();
