@@ -135,21 +135,14 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     project.init();
     final Hashtable ht = project.getTaskDefinitions();
     if (ht == null) return null;
+
     // first pass creates taskdefinitons without nested elements
     final Enumeration tasks = ht.keys();
     while (tasks.hasMoreElements()) {
       final String taskName = (String)tasks.nextElement();
       final Class taskClass = (Class)ht.get(taskName);
-      final IntrospectionHelper helper;
-      try {
-        helper = IntrospectionHelper.getHelper(taskClass);
-      }
-      catch (Exception e) {
-        // TODO[lvo]: please review.
-        // Problem creating introspector like classes this task depends on cannot be loaded or missing.
-        continue;
-      }
-
+      final IntrospectionHelper helper = getHelperExceptionSafe(taskClass);
+      if (helper == null) continue;
       final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
       final Enumeration attrEnum = helper.getAttributes();
       while (attrEnum.hasMoreElements()) {
@@ -173,7 +166,8 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     // second pass updates nested elements of known task definitions
     for (AntTaskDefinition def : myTaskDefinitions.values()) {
       final Class taskClass = (Class)ht.get(def.getName());
-      final IntrospectionHelper helper = IntrospectionHelper.getHelper(taskClass);
+      final IntrospectionHelper helper = getHelperExceptionSafe(taskClass);
+      if (helper == null) continue;
       final Enumeration nestedEnum = helper.getNestedElements();
       while (nestedEnum.hasMoreElements()) {
         final String nestedElement = (String)nestedEnum.nextElement();
@@ -194,5 +188,16 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
   public String getTaskClassByName(final String name, final String namespace) {
     getTaskDefinition(null);
     return myTaskIdToClassMap.get(namespace + name);
+  }
+
+  private static IntrospectionHelper getHelperExceptionSafe(Class c) {
+    try {
+      return IntrospectionHelper.getHelper(c);
+    }
+    catch (Exception e) {
+      // TODO[lvo]: please review.
+      // Problem creating introspector like classes this task depends on cannot be loaded or missing.
+    }
+    return null;
   }
 }
