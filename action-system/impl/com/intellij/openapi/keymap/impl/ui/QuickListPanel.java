@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -137,11 +138,19 @@ public class QuickListPanel {
     myDescription.setText(origin.getDescription());
 
     String[] ids = origin.getActionIds();
-    for (int i = 0; i < ids.length; i++) {
-      includeActionId(ids[i]);
+    for (String id : ids) {
+      includeActionId(id);
     }
 
     update();
+  }
+
+  public void addNameListener(DocumentAdapter adapter){
+    myDisplayName.getDocument().addDocumentListener(adapter);
+  }
+
+  public void addDescriptionListener(final DocumentAdapter adapter) {
+    myDescription.getDocument().addDocumentListener(adapter);
   }
 
   private void excludeSelectionAction() {
@@ -154,8 +163,8 @@ public class QuickListPanel {
 
   private void includeSelectedAction() {
     String[] ids = getTreeSelectedActionIds();
-    for (int i = 0; i < ids.length; i++) {
-      includeActionId(ids[i]);
+    for (String id : ids) {
+      includeActionId(id);
     }
     DefaultListModel listModel = (DefaultListModel)myActionsList.getModel();
     int size = listModel.getSize();
@@ -163,8 +172,8 @@ public class QuickListPanel {
     if (size > 0) {
       selectionModel.removeIndexInterval(0, size - 1);
     }
-    for (int i = 0; i < ids.length; i++) {
-      int idx = listModel.lastIndexOf(ids[i]);
+    for (String id1 : ids) {
+      int idx = listModel.lastIndexOf(id1);
       if (idx >= 0) {
         selectionModel.addSelectionInterval(idx, idx);
       }
@@ -209,8 +218,8 @@ public class QuickListPanel {
     if (paths == null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     ArrayList<String> actions = new ArrayList<String>();
-    for (int i = 0; i < paths.length; i++) {
-      Object node = paths[i].getLastPathComponent();
+    for (TreePath path : paths) {
+      Object node = path.getLastPathComponent();
       if (node instanceof DefaultMutableTreeNode) {
         DefaultMutableTreeNode defNode = (DefaultMutableTreeNode)node;
         Object userObject = defNode.getUserObject();
