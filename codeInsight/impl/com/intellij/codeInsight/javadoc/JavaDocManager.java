@@ -318,14 +318,16 @@ public class JavaDocManager implements ProjectComponent {
     return element;
   }
 
-  public JavaDocProvider getDefaultProvider(final PsiElement element) {
+  public JavaDocProvider getDefaultProvider(final PsiElement _element) {
     return new JavaDocProvider() {
+      private SmartPsiElementPointer element = SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element);
+
       public String getJavaDoc() {
-        return getDocInfo(element);
+        return getDocInfo(element.getElement());
       }
 
       public PsiElement getElement() {
-        return element;
+        return element.getElement();
       }
     };
   }

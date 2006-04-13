@@ -10,10 +10,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -35,7 +32,7 @@ public class JavaDocInfoComponent extends JPanel {
     private static final int MIN_HEIGHT = 45;
 
     private final JavaDocManager myManager;
-    private PsiElement myElement;
+    private SmartPsiElementPointer myElement;
 
     private Stack<Context> myBackStack = new Stack<Context>();
     private Stack<Context> myForwardStack = new Stack<Context>();
@@ -45,11 +42,11 @@ public class JavaDocInfoComponent extends JPanel {
     private JLabel myElementLabel;
 
     private static class Context {
-        final PsiElement element;
+        final SmartPsiElementPointer element;
         final String text;
         final Rectangle viewRect;
 
-        public Context(PsiElement element, String text, Rectangle viewRect) {
+        public Context(SmartPsiElementPointer element, String text, Rectangle viewRect) {
             this.element = element;
             this.text = text;
             this.viewRect = viewRect;
@@ -203,7 +200,7 @@ public class JavaDocInfoComponent extends JPanel {
     }
 
     public PsiElement getElement() {
-        return myElement;
+        return myElement.getElement();
     }
 
     public void setText(String text) {
@@ -218,11 +215,15 @@ public class JavaDocInfoComponent extends JPanel {
         }
     }
 
-    public void setData(PsiElement element, String text) {
+    public void setData(PsiElement _element, String text) {
         if (myElement != null) {
             myBackStack.push(saveContext());
             myForwardStack.clear();
         }
+
+        final SmartPsiElementPointer element = _element != null ?
+          SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element):
+          null;
 
         if (element != null) {
             myElement = element;
@@ -233,11 +234,11 @@ public class JavaDocInfoComponent extends JPanel {
         setDataInternal(element, text, new Rectangle(0, 0));
     }
 
-    private void setDataInternal(PsiElement element, String text, final Rectangle viewRect) {
+    private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect) {
         setDataInternal(element, text, viewRect, false);
     }
 
-    private void setDataInternal(PsiElement element, String text, final Rectangle viewRect, boolean skip) {
+    private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, boolean skip) {
         boolean justShown = false;
 
         myElement = element;
@@ -285,7 +286,7 @@ public class JavaDocInfoComponent extends JPanel {
     }
 
     private void restoreContext(Context context) {
-        setDataInternal(context.element, context.text, context.viewRect);
+      setDataInternal(context.element, context.text, context.viewRect);
     }
 
   //TODO: Move to a more proper place
@@ -328,7 +329,7 @@ public class JavaDocInfoComponent extends JPanel {
     }
 
     private void updateControlState() {
-        customizeElementLabel(myElement, myElementLabel);
+        customizeElementLabel(myElement != null ? myElement.getElement():null, myElementLabel);
         myToolBar.updateActionsImmediately(); // update faster
         setControlPanelVisible(true);//(!myBackStack.isEmpty() || !myForwardStack.isEmpty());
     }
@@ -371,7 +372,7 @@ public class JavaDocInfoComponent extends JPanel {
 
         public void actionPerformed(AnActionEvent e) {
             if (myElement != null) {
-                myManager.openJavaDoc(myElement);
+                myManager.openJavaDoc(myElement.getElement());
             }
         }
 
