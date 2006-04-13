@@ -8,6 +8,7 @@ import com.intellij.util.xml.impl.AdvancedProxy;
 import com.intellij.util.xml.impl.DomImplUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.containers.WeakArrayHashMap;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,7 @@ import java.util.*;
  */
 public class ModelMerger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ModelMerger");
+  private static final WeakArrayHashMap ourMergedMap = new WeakArrayHashMap();
 
   public static class ImplementationProcessor<T> implements Processor<T> {
     private final Processor<T> myProcessor;
@@ -54,8 +56,13 @@ public class ModelMerger {
 
 
   public static <T> T mergeModels(final Class<? extends T> aClass, final T... implementations) {
+    final Object o = ourMergedMap.get(implementations);
+    if (o != null) {
+      return (T) o;
+    }
+
     final MergingInvocationHandler<T> handler = new MergingInvocationHandler<T>(implementations);
-    return mergeModels(handler, aClass, implementations);
+    return _mergeModels(aClass, handler, implementations);
   }
 
   public static <T> T mergeModels(final Class<? extends T> aClass, final Collection<? extends T> implementations) {
@@ -66,11 +73,23 @@ public class ModelMerger {
   public static <T>T mergeModels(final MergingInvocationHandler<T> handler,
                                   final Class<? extends T> aClass,
                                   final T... implementations) {
+    final Object o = ourMergedMap.get(implementations);
+    if (o != null) {
+      return (T) o;
+    }
+
+    return _mergeModels(aClass, handler, implementations);
+  }
+
+  private static <T> T _mergeModels(final Class<? extends T> aClass,
+                                    final MergingInvocationHandler<T> handler,
+                                    final T... implementations) {
     final Set<Class> commonClasses = getCommonClasses(implementations);
     commonClasses.add(MergedObject.class);
     commonClasses.remove(aClass);
-    return AdvancedProxy.createProxy(handler, aClass,
-                                     commonClasses.toArray(new Class[commonClasses.size()]));
+    final T t = AdvancedProxy.createProxy(handler, aClass, commonClasses.toArray(new Class[commonClasses.size()]));
+    ourMergedMap.put(implementations, t);
+    return t;
   }
 
   @Nullable
