@@ -2,18 +2,14 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package com.intellij.designer.deprecated;
+package com.intellij.openapi.util.io;
 
 import java.io.*;
 
-/**
- *
- * @author Oleg Melnik
- */
-/**
- * @deprecated
- */
 public class StreamUtil {
+  private StreamUtil() {
+  }
+
   /**
    * @param inputStream source stream
    * @param outputStream destination stream
@@ -22,7 +18,8 @@ public class StreamUtil {
    */
   public static int copyStreamContent(InputStream inputStream, OutputStream outputStream) throws IOException {
     final byte[] buffer = new byte[10 * 1024];
-    int count, total = 0;
+    int count;
+    int total = 0;
     while ((count = inputStream.read(buffer)) > 0) {
       outputStream.write(buffer, 0, count);
       total += count;
@@ -34,14 +31,12 @@ public class StreamUtil {
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     copyStreamContent(inputStream, outputStream);
     inputStream.close();
-    final byte[] result = outputStream.toByteArray();
-    return result;
+    return outputStream.toByteArray();
   }
 
   public static String readText(InputStream inputStream) throws IOException {
     final byte[] data = loadFromStream(inputStream);
-    final String result = new String(data);
-    return result;
+    return new String(data);
   }
 
   public static String convertSeparators(String s) {
@@ -58,14 +53,13 @@ public class StreamUtil {
 
     int dst = 0;
     char prev = ' ';
-    for( int src = 0; src < buffer.length; src++ ) {
-      char c = buffer[src];
-      switch( c ) {
-        case '\r':
+    for (char c : buffer) {
+      switch (c) {
+        case'\r':
           buffer[dst++] = '\n';
           break;
-        case '\n':
-          if( prev != '\r' ) {
+        case'\n':
+          if (prev != '\r') {
             buffer[dst++] = '\n';
           }
           break;
@@ -76,7 +70,7 @@ public class StreamUtil {
       prev = c;
     }
 
-    char chars[] = new char[dst];
+    char[] chars = new char[dst];
     System.arraycopy(buffer, 0, chars, 0, chars.length);
     return chars;
   }
@@ -93,7 +87,6 @@ public class StreamUtil {
       }
     }
 
-    char[] buffer = writer.toCharArray();
-    return buffer;
+    return writer.toCharArray();
   }
 }

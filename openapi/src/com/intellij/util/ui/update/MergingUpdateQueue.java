@@ -19,8 +19,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
 
   private boolean myActive;
 
-  // protected for Fabrique:
-  protected final Set<Update> mySheduledUpdates = new TreeSet<Update>();
+  private final Set<Update> mySheduledUpdates = new TreeSet<Update>();
 
   private Alarm myWaiterForMerge = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
@@ -158,14 +157,18 @@ public class MergingUpdateQueue implements Runnable, Disposable {
       if (each.executeInWriteAction()) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            each.run();
+            execute(each);
           }
         });
       }
       else {
-        each.run();
+        execute(each);
       }
     }
+  }
+
+  protected void execute(final Update each) {
+    each.run();
   }
 
   public void queue(final Update update) {
