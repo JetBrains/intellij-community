@@ -56,7 +56,10 @@ public class AntTaskImpl extends AntElementImpl implements AntTask {
 
   protected void registerCustomTask(final String name, final String namespace, final AntTaskDefinition definition) {
     if (myDefinition != null) {
-      if (!myDefinitionCloned) myDefinition = myDefinition.clone();
+      if (!myDefinitionCloned) {
+        myDefinitionCloned = true;
+        myDefinition = myDefinition.clone();
+      }
       myDefinition.registerNestedTask(definition.getClassName());
       if (myTaskIdToClassMap == null) {
         myTaskIdToClassMap = new HashMap<String, String>();

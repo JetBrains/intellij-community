@@ -38,7 +38,7 @@ public class AntAnnotator implements Annotator {
         }
       }
     }
-    //checkReferences(element, holder);
+    checkReferences(element, holder);
   }
 
   private static void checkValidAttributes(AntTask task, AntTaskDefinition def, AnnotationHolder holder) {

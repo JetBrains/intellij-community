@@ -177,17 +177,17 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
       final Enumeration nestedEnum = helper.getNestedElements();
       while (nestedEnum.hasMoreElements()) {
         final String nestedElement = (String)nestedEnum.nextElement();
-        def.registerNestedTask(getTaskClassByName(nestedElement, def.getNamespace()));
+        final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
+        def.registerNestedTask(className);
+        myTaskIdToClassMap.put(nestedElement, className);
       }
     }
     return myTaskDefinitions.get(taskClassName);
   }
 
   public void registerCustomTask(final String name, final String namespace, final AntTaskDefinition definition) {
-    myTaskIdToClassMap = null;
     myTaskDefinitionArray = null;
     myTaskDefinitions.put(definition.getClassName(), definition);
-    getTaskDefinition(null);
     myTaskIdToClassMap.put(namespace + name, definition.getClassName());
   }
 
