@@ -3,9 +3,10 @@
  */
 package com.intellij.util.xml.reflect;
 
+import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -13,6 +14,9 @@ import java.util.List;
  * @author peter
  */
 public interface DomGenericInfo {
+
+  @Nullable
+  String getElementName(DomElement element);
 
   @NotNull
   List<DomChildrenDescription> getChildrenDescriptions();

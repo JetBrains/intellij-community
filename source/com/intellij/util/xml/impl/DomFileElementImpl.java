@@ -43,6 +43,11 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
       return "NO TAG NAME";
     }
 
+    @Nullable
+    public String getElementName(DomElement element) {
+      return null;
+    }
+
     @NotNull
     public List<DomChildrenDescription> getChildrenDescriptions() {
       return Collections.emptyList();

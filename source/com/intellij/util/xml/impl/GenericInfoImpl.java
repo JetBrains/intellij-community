@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
@@ -24,6 +25,7 @@ import java.util.*;
  * @author peter
  */
 public class GenericInfoImpl implements DomGenericInfo {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.GenericInfoImpl");
   private final Class<? extends DomElement> myClass;
   private DomManagerImpl myDomManager;
   private final BidirectionalMap<JavaMethodSignature, Pair<String, Integer>> myFixedChildrenMethods = new BidirectionalMap<JavaMethodSignature, Pair<String, Integer>>();
@@ -34,6 +36,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   private final Map<JavaMethodSignature, String> myAttributeChildrenMethods = new HashMap<JavaMethodSignature, String>();
   private final Map<JavaMethodSignature, Set<String>> myCompositeChildrenMethods = new HashMap<JavaMethodSignature, Set<String>>();
   private final Map<JavaMethodSignature, Pair<String,Set<String>>> myCompositeCollectionAdditionMethods = new HashMap<JavaMethodSignature, Pair<String,Set<String>>>();
+  @Nullable private Method myNameValueGetter;
   private boolean myValueElement;
   private boolean myInitialized;
   private static final HashSet ADDER_PARAMETER_TYPES = new HashSet<Class>(Arrays.asList(Class.class, int.class));
@@ -152,9 +155,12 @@ public class GenericInfoImpl implements DomGenericInfo {
 
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       final Method method = iterator.next();
-      if (isCoreMethod(method) || DomImplUtil.isTagValueSetter(method) ||
-          isCustomMethod(JavaMethodSignature.getSignature(method))) {
-        removedSignatures.add(JavaMethodSignature.getSignature(method));
+      final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
+      if (isCoreMethod(method) || DomImplUtil.isTagValueSetter(method) || isCustomMethod(signature)) {
+        if (signature.findAnnotation(NameValue.class, myClass) != null) {
+          myNameValueGetter = method;
+        }
+        removedSignatures.add(signature);
         iterator.remove();
       }
     }
@@ -162,7 +168,11 @@ public class GenericInfoImpl implements DomGenericInfo {
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       Method method = iterator.next();
       if (DomImplUtil.isGetter(method) && processGetterMethod(method)) {
-        removedSignatures.add(JavaMethodSignature.getSignature(method));
+        final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
+        if (signature.findAnnotation(NameValue.class, myClass) != null) {
+          myNameValueGetter = method;
+        }
+        removedSignatures.add(signature);
         iterator.remove();
       }
     }
@@ -539,6 +549,25 @@ public class GenericInfoImpl implements DomGenericInfo {
       }
     }
     return methods;
+  }
+
+  @Nullable
+  public String getElementName(DomElement element) {
+    if (myNameValueGetter == null) {
+      return null;
+    }
+    final Object o;
+    try {
+      o = myNameValueGetter.invoke(element);
+      return o == null || o instanceof String ? (String) o : ((GenericValue) o).getStringValue();
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
+    catch (InvocationTargetException e) {
+      LOG.error(e);
+    }
+    return null;
   }
 
   @NotNull

@@ -24,7 +24,8 @@ public class BasicDomElementPresentation implements DomElementPresentation {
   }
 
   public String getElementName() {
-    return getTypeName();
+    final String name = myElement.getGenericInfo().getElementName(myElement);
+    return name == null ? getTypeName() : name;
   }
 
   public String getTypeName() {
