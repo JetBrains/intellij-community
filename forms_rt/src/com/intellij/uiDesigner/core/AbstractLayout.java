@@ -72,7 +72,7 @@ public abstract class AbstractLayout implements LayoutManager2 {
    * the container hierarchy to find "inherited" HGAP property. Note, that
    * the method always return positive value.
    */
-  protected static final int getHGapImpl(Container container){
+  protected static int getHGapImpl(Container container){
     if(container==null){
       throw new IllegalArgumentException("container cannot be null");
     }
@@ -115,7 +115,7 @@ public abstract class AbstractLayout implements LayoutManager2 {
    * the container hierarchy to find "inherited" HGAP property. Note, that
    * the method always return positive value.
    */
-  protected static final int getVGapImpl(Container container){
+  protected static int getVGapImpl(Container container){
     if(container==null){
       throw new IllegalArgumentException("container cannot be null");
     }
@@ -229,4 +229,10 @@ public abstract class AbstractLayout implements LayoutManager2 {
   public final float getLayoutAlignmentY(final Container container){
     return 0.5f;
   }
+
+  public abstract Dimension maximumLayoutSize(Container target);
+  public abstract void invalidateLayout(Container target);
+  public abstract Dimension preferredLayoutSize(Container parent);
+  public abstract Dimension minimumLayoutSize(Container parent);
+  public abstract void layoutContainer(Container parent);
 }
