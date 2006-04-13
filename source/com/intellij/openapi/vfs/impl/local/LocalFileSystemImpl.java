@@ -12,10 +12,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
-import com.intellij.util.containers.HashMap;
 import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private static final Key DELETED_STATUS = Key.create("DELETED_STATUS");
 
   private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
-  public Map<String, VirtualFileImpl> myUnaccountedFiles = new HashMap<String, VirtualFileImpl>();
 
   private static class WatchRequestImpl implements WatchRequest {
     public String myRootPath;
@@ -263,7 +261,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
           if (root == null) return null;
         }
         else {
-          /*if (!createIfNoCache && !((VirtualFileImpl)root).areChildrenCached()) return null;
+          if (!createIfNoCache && !((VirtualFileImpl)root).areChildrenCached()) return null;
           VirtualFile child = root.findChild(name);
           if (child == null) {
             if (refreshIfNotFound) {
@@ -275,29 +273,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
               return null;
             }
           }
-          root = child;*/
-
-          if (!((VirtualFileImpl)root).areChildrenCached()) {
-            if (!createIfNoCache) return null;
-            root = ((VirtualFileImpl)root).findSingleChild(name, refreshIfNotFound);
-            if (root == null) return null;
-            /*root = root.findChild(name);
-            if (root == null) return null;*/
-          }
-          else {
-            VirtualFile child = root.findChild(name);
-            if (child == null) {
-              if (refreshIfNotFound) {
-                root.refresh(false, false);
-                child = root.findChild(name);
-                if (child == null) return null;
-              }
-              else {
-                return null;
-              }
-            }
-            root = child;
-          }
+          root = child;
         }
       }
 
@@ -337,7 +313,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException {
-    if(!(virtualFile instanceof VirtualFileImpl)) return virtualFile.contentsToByteArray(); 
+    if(!(virtualFile instanceof VirtualFileImpl)) return virtualFile.contentsToByteArray();
     VirtualFileImpl virtualFileImpl = (VirtualFileImpl)virtualFile;
     InputStream inputStream = virtualFileImpl.getPhysicalFileInputStream();
     try {
@@ -434,28 +410,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                 index = runPath.lastIndexOf('/');
               }
             }
-          }
-        }
-
-        for (final Map.Entry<String,VirtualFileImpl> entry : myUnaccountedFiles.entrySet()) {
-          final VirtualFileImpl file = entry.getValue();
-          if (!file.getPhysicalFile().exists()) {
-            final Runnable action = new Runnable() {
-              public void run() {
-                if (!file.isValid()) return;
-                boolean isDirectory = file.isDirectory();
-                fireBeforeFileDeletion(null, file);
-                synchronized (LOCK) {
-                  myUnaccountedFiles.remove(entry.getKey());
-                }
-                fireFileDeleted(null, file, file.getName(), isDirectory, null);
-              }
-            };
-            getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
-
-          } else {
-            //TODO: isRecursive could be optimized???
-            refresh(file, file.areChildrenCached(), false, modalityState, asynchronous, false);
           }
         }
 
