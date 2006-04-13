@@ -1,5 +1,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 
 /**
@@ -31,8 +33,7 @@ public class EditChangelistPanel {
   }
 
   public void setEnabled(boolean b) {
-    myNameTextField.setEnabled(b);
-    myDescriptionTextArea.setEnabled(b);
+    UIUtil.setEnabled(myContent, b, true);
   }
 
   public void requestFocus() {
