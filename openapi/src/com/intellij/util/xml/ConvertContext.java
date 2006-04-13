@@ -11,6 +11,8 @@ import com.intellij.psi.xml.XmlFile;
  * @author peter
  */
 public interface ConvertContext {
+  DomElement getInvocationElement();
+
   PsiClass findClass(String name);
 
   XmlTag getTag();

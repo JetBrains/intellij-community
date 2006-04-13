@@ -267,7 +267,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myTagName;
   }
 
-  private DomElement findCallerProxy(Method method) {
+  protected final DomElement findCallerProxy(Method method) {
     final DomElement element = (DomElement)ModelMerger.getInvocationStack().findDeepestInvocation(method, new Condition<DomElement>() {
       public boolean value(final DomElement object) {
         return object == null;
@@ -376,22 +376,22 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   protected final Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
     if (DomImplUtil.isTagValueGetter(method)) {
-      return createGetValueInvocation(getConverter(method, true));
+      return createGetValueInvocation(getConverter(method, true), method);
     }
 
     if (DomImplUtil.isTagValueSetter(method)) {
-      return createSetValueInvocation(getConverter(method, false));
+      return createSetValueInvocation(getConverter(method, false), method);
     }
 
     return myGenericInfoImpl.createInvocation(method);
   }
 
-  protected Invocation createSetValueInvocation(final Converter converter) {
-    return new SetValueInvocation(converter);
+  protected Invocation createSetValueInvocation(final Converter converter, final Method method) {
+    return new SetValueInvocation(converter, method);
   }
 
-  protected Invocation createGetValueInvocation(final Converter converter) {
-    return new GetValueInvocation(converter);
+  protected Invocation createGetValueInvocation(final Converter converter, final Method method) {
+    return new GetValueInvocation(converter, method);
   }
 
   @NotNull

@@ -8,14 +8,18 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.Converter;
 
+import java.lang.reflect.Method;
+
 /**
  * @author peter
  */
 public abstract class SetInvocation implements Invocation {
-  private Converter myConverter;
+  private final Converter myConverter;
+  private final Method myMethod;
 
-  protected SetInvocation(final Converter converter) {
+  protected SetInvocation(final Converter converter, final Method method) {
     myConverter = converter;
+    myMethod = method;
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
@@ -38,7 +42,7 @@ public abstract class SetInvocation implements Invocation {
         if (args[0] == null) {
           handler.undefineInternal();
         } else {
-          setValue(handler, myConverter.toString(args[0], new ConvertContextImpl(handler)));
+          setValue(handler, myConverter.toString(args[0], new ConvertContextImpl(handler, myMethod)));
         }
       }
     }

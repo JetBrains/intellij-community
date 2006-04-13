@@ -8,8 +8,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.module.Module;
+
+import java.lang.reflect.Method;
 
 /**
  * @author peter
@@ -17,10 +20,18 @@ import com.intellij.openapi.module.Module;
 public class ConvertContextImpl implements ConvertContext {
   private final XmlTag myTag;
   private final XmlFile myFile;
+  private final DomInvocationHandler myHandler;
+  private final Method myMethod;
 
-  public ConvertContextImpl(final DomInvocationHandler handler) {
+  public ConvertContextImpl(final DomInvocationHandler handler, final Method method) {
+    myHandler = handler;
+    myMethod = method;
     myFile = handler.getFile();
     myTag = handler.getXmlTag();
+  }
+
+  public final DomElement getInvocationElement() {
+    return myHandler.findCallerProxy(myMethod);
   }
 
   public final PsiClass findClass(String name) {

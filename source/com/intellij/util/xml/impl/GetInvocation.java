@@ -6,13 +6,17 @@ package com.intellij.util.xml.impl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.Converter;
 
+import java.lang.reflect.Method;
+
 /**
  * @author peter
  */
 public abstract class GetInvocation implements Invocation {
-  private Converter myConverter;
+  private final Converter myConverter;
+  private final Method myMethod;
 
-  protected GetInvocation(final Converter converter) {
+  protected GetInvocation(final Converter converter, final Method method) {
+    myMethod = method;
     assert converter != null;
     myConverter = converter;
   }
@@ -32,7 +36,7 @@ public abstract class GetInvocation implements Invocation {
     }
 
     final String tagValue = tagNotNull ? getValue(tag, handler) : null;
-    return tagValue == null? null: myConverter.fromString(tagValue, new ConvertContextImpl(handler));
+    return tagValue == null? null: myConverter.fromString(tagValue, new ConvertContextImpl(handler, myMethod));
   }
 
   protected abstract String getValue(XmlTag tag, DomInvocationHandler handler);
