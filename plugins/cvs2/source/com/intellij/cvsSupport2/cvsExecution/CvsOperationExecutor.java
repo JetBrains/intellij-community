@@ -200,7 +200,7 @@ public class CvsOperationExecutor {
   }
 
   private boolean doNotShowProgress() {
-    return isInProgress() || isInTestMode() || !myShowProgress;
+    return isInProgress() || isInTestMode() || !myShowProgress || !ApplicationManager.getApplication().isDispatchThread();
   }
 
   private boolean isInTestMode() {

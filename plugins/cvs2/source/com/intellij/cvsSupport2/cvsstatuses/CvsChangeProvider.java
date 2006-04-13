@@ -51,7 +51,13 @@ public class CvsChangeProvider implements ChangeProvider {
 
     for (FilePath path : dirtyScope.getDirtyFiles()) {
       if (path.isDirectory()) {
-        processEntriesIn(path.getVirtualFile(), dirtyScope, builder, false);
+        final VirtualFile dir = path.getVirtualFile();
+        if (dir != null) {
+          processEntriesIn(dir, dirtyScope, builder, false);
+        }
+        else {
+          processFile(path, builder);
+        }
       }
       else {
         processFile(path, builder);

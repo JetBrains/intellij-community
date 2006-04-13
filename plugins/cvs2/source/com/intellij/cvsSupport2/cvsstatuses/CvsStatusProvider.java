@@ -87,7 +87,7 @@ public class CvsStatusProvider {
   }
 
   private static FileStatus getFileStatusForAbsentFile(Entry entry) {
-    if (entry.isDirectory()) {
+    if (entry == null || entry.isDirectory()) {
       return FileStatus.UNKNOWN;
     }
     if (entry.isRemoved()) {
