@@ -4,12 +4,15 @@
 
 package com.intellij.uiDesigner.clientProperties;
 
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.components.ProjectComponent;
+import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -18,16 +21,21 @@ import java.util.*;
  * @author yole
  */
 public class ClientPropertiesManager implements ProjectComponent, JDOMExternalizable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.clientProperties.ClientPropertiesManager");
+
   @NonNls private static final String ELEMENT_PROPERTIES = "properties";
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
+  @NonNls private static final String COMPONENT_NAME = "ClientPropertiesManager";
 
   public static ClientPropertiesManager getInstance(final Project project) {
     return project.getComponent(ClientPropertiesManager.class);
   }
 
-  private final Map<String, List<ClientProperty>> myPropertyMap = new HashMap<String, List<ClientProperty>>();
+  private static ClientPropertiesManager ourDefaultManager;
+
+  private final Map<String, List<ClientProperty>> myPropertyMap = new TreeMap<String, List<ClientProperty>>();
 
   public ClientPropertiesManager() {
   }
@@ -46,6 +54,23 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
   }
 
   public void projectOpened() {
+    checkInitDefaultManager();
+  }
+
+  private static void checkInitDefaultManager() {
+    if (ourDefaultManager == null) {
+      ourDefaultManager = new ClientPropertiesManager();
+      try {
+        //noinspection HardCodedStringLiteral
+        final Document document = new SAXBuilder().build(ClientPropertiesManager.class.getResource("/" + COMPONENT_NAME + ".xml"));
+        //noinspection HardCodedStringLiteral
+        final Element child = document.getRootElement();
+        ourDefaultManager.readExternal(child);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public void projectClosed() {
@@ -53,7 +78,7 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
 
   @NonNls
   public String getComponentName() {
-    return "ClientPropertiesManager";
+    return COMPONENT_NAME;
   }
 
   public void initComponent() {
@@ -83,6 +108,25 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
       ClientProperty prop = (ClientProperty) o;
       return myName.compareTo(prop.getName());
     }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final ClientProperty that = (ClientProperty)o;
+
+      if (!myClass.equals(that.myClass)) return false;
+      if (!myName.equals(that.myName)) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = myName.hashCode();
+      result = 31 * result + myClass.hashCode();
+      return result;
+    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -102,6 +146,9 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
+    if (equals(ourDefaultManager)) {
+      throw new WriteExternalException();
+    }
     for(Map.Entry<String, List<ClientProperty>> entry: myPropertyMap.entrySet()) {
       Element propertiesElement = new Element(ELEMENT_PROPERTIES);
       propertiesElement.setAttribute(ATTRIBUTE_CLASS, entry.getKey());
@@ -175,5 +222,29 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
     }
     Collections.sort(result);
     return result.toArray(new ClientProperty[result.size()]);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof ClientPropertiesManager)) {
+      return false;
+    }
+    ClientPropertiesManager rhs = (ClientPropertiesManager) obj;
+    if (rhs.myPropertyMap.size() != myPropertyMap.size()) {
+      return false;
+    }
+    for(Map.Entry<String, List<ClientProperty>> entry: myPropertyMap.entrySet()) {
+      List<ClientProperty> rhsList = rhs.myPropertyMap.get(entry.getKey());
+      if (rhsList == null || rhsList.size() != entry.getValue().size()) {
+        return false;
+      }
+
+      for(ClientProperty prop: entry.getValue()) {
+        if (!rhsList.contains(prop)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
