@@ -31,7 +31,7 @@ public class AntAnnotator implements Annotator {
         if (parent instanceof AntTask) {
           final AntTask parentTask = (AntTask)parent;
           final AntTaskDefinition parentDef = parentTask.getTaskDefinition();
-          if (parentDef != null && parentDef.getTaskDefinition(def.getClassName()) == null) {
+          if (parentDef != null && parentDef.getNestedClassName(def.getTaskId()) == null) {
             final TextRange textRange = new TextRange(0, task.getName().length()).shiftRight(task.getSourceElement().getTextOffset());
             holder.createErrorAnnotation(textRange, AntBundle.getMessage("nested.element.is.not.allowed.for.the.task"));
           }

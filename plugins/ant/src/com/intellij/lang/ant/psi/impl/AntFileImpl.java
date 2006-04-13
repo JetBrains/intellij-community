@@ -37,7 +37,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
   public PsiElement[] getChildren() {
     if (myChildren == null) {
       final AntProject project = getAntProject();
-      myChildren = (project != null) ? new PsiElement[]{project} : PsiElement.EMPTY_ARRAY;
+      myChildren = new PsiElement[]{project};
     }
     return myChildren;
   }
@@ -94,9 +94,5 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
 
   public void subtreeChanged() {
     clearCaches();
-  }
-
-  public String getTaskClassByName(final String name, final String namespace) {
-    return null;
   }
 }

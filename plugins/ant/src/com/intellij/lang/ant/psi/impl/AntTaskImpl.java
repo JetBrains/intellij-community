@@ -3,6 +3,8 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
+import com.intellij.lang.ant.psi.introspection.impl.AntTaskDefinitionImpl;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -11,15 +13,20 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-
 public class AntTaskImpl extends AntElementImpl implements AntTask {
 
-  private AntTaskDefinition myDefinition;
+  private AntTaskDefinitionImpl myDefinition;
+  private boolean myDefinitionCloned = false;
 
   public AntTaskImpl(final AntElement parent, final XmlElement sourceElement, final AntTaskDefinition definition) {
     super(parent, sourceElement);
-    myDefinition = definition;
+    myDefinition = (AntTaskDefinitionImpl)definition;
+    final Pair<String, String> taskId = new Pair<String, String>(getSourceElement().getName(), getSourceElement().getNamespace());
+    if (definition != null && !definition.getTaskId().equals(taskId)) {
+      myDefinition = new AntTaskDefinitionImpl(myDefinition);
+      myDefinition.setTaskId(taskId);
+      myDefinitionCloned = true;
+    }
   }
 
   public String toString() {
@@ -52,20 +59,14 @@ public class AntTaskImpl extends AntElementImpl implements AntTask {
     return myDefinition;
   }
 
-  private boolean myDefinitionCloned = false;
-
-  protected void registerCustomTask(final String name, final String namespace, final AntTaskDefinition definition) {
+  protected void registerCustomTask(final AntTaskDefinition def) {
     if (myDefinition != null) {
       if (!myDefinitionCloned) {
+        myDefinition = new AntTaskDefinitionImpl(myDefinition);
         myDefinitionCloned = true;
-        myDefinition = myDefinition.clone();
       }
-      myDefinition.registerNestedTask(definition.getClassName());
-      if (myTaskIdToClassMap == null) {
-        myTaskIdToClassMap = new HashMap<String, String>();
-      }
-      myTaskIdToClassMap.put(namespace + name, definition.getClassName());
-      getAntProject().registerCustomTask(name, namespace, definition);
+      myDefinition.registerNestedTask(def.getTaskId(), def.getClassName());
+      getAntProject().registerCustomTask(def);
     }
   }
 }

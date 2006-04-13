@@ -1,56 +1,49 @@
 package com.intellij.lang.ant.psi.introspection.impl;
 
-import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class AntTaskDefinitionImpl implements AntTaskDefinition {
-  private final AntProject myProject;
-  private final String myName;
-  private final String myNamespace;
+
+  private Pair<String, String> myTaskId;
   private final String myClassName;
   /**
    * Attribute names to their types.
    */
   private final Map<String, AntAttributeType> myAttributes;
   /**
-   * Set of class names of allowed nested elements.
+   * Task ids to their class names.
    */
-  private final Set<String> myNestedClassNames;
+  private final Map<Pair<String, String>, String> myNestedClassNames;
 
-  public AntTaskDefinitionImpl(AntProject project,
-                               final String name,
-                               final String namespace,
-                               final String className,
-                               final Map<String, AntAttributeType> attributes) {
-    this(project, name, namespace, className, attributes, new HashSet<String>());
+  public AntTaskDefinitionImpl(final AntTaskDefinitionImpl base) {
+    myTaskId = base.getTaskId();
+    myClassName = base.getClassName();
+    myAttributes = new HashMap<String, AntAttributeType>(base.myAttributes);
+    myNestedClassNames = new HashMap<Pair<String, String>, String>(base.myNestedClassNames);
   }
 
-  public AntTaskDefinitionImpl(AntProject project,
-                               final String name,
-                               final String namespace,
+  public AntTaskDefinitionImpl(final Pair<String, String> taskId,
                                final String className,
                                final Map<String, AntAttributeType> attributes,
-                               final Set<String> nestedElements) {
-    myProject = project;
-    myName = name;
-    myNamespace = namespace;
+                               final Map<Pair<String, String>, String> nestedElements) {
+    myTaskId = taskId;
     myClassName = className;
     myAttributes = attributes;
     myNestedClassNames = nestedElements;
   }
 
-  public String getName() {
-    return myName;
+  public Pair<String, String> getTaskId() {
+    return myTaskId;
   }
 
-  public String getNamespace() {
-    return myNamespace;
+  public void setTaskId(final Pair<String, String> taskId) {
+    myTaskId = taskId;
   }
 
   public String getClassName() {
@@ -65,30 +58,17 @@ public class AntTaskDefinitionImpl implements AntTaskDefinition {
     return myAttributes.get(attr);
   }
 
-  public AntTaskDefinition[] getNestedElements() {
-    AntTaskDefinition[] result = EMPTY_ARRAY;
-    final int count = myNestedClassNames.size();
-    if (count > 0) {
-      result = new AntTaskDefinition[count];
-      int index = 0;
-      for (String className : myNestedClassNames) {
-        result[index++] = myProject.getTaskDefinition(className);
-      }
-    }
-    return result;
+  @SuppressWarnings({"unchecked"})
+  public Pair<String, String>[] getNestedElements() {
+    return myNestedClassNames.keySet().toArray(new Pair[myNestedClassNames.size()]);
   }
 
-  public AntTaskDefinition getTaskDefinition(final String className) {
-    return myProject.getTaskDefinition(className);
+  @Nullable
+  public String getNestedClassName(Pair<String, String> taskId) {
+    return myNestedClassNames.get(taskId);
   }
 
-  public void registerNestedTask(final String taskClassName) {
-    myNestedClassNames.add(taskClassName);
-  }
-
-
-  public AntTaskDefinition clone() {
-    return new AntTaskDefinitionImpl(myProject, getClassName(), getNamespace(), getClassName(),
-                                     new HashMap<String, AntAttributeType>(myAttributes), new HashSet<String>(myNestedClassNames));
+  public void registerNestedTask(Pair<String, String> taskId, String taskClassName) {
+    myNestedClassNames.put(taskId, taskClassName);
   }
 }

@@ -26,10 +26,10 @@ public interface AntProject extends AntElement, PsiNamedElement {
   AntTarget getDefaultTarget();
 
   @NotNull
-  AntTaskDefinition[] getTaskDefinitions();
+  AntTaskDefinition[] getBaseTaskDefinitions();
 
   @Nullable
-  AntTaskDefinition getTaskDefinition(final String taskClassName);
+  AntTaskDefinition getBaseTaskDefinition(final String taskClassName);
 
-  void registerCustomTask(final String name, final String namespace, final AntTaskDefinition definition);
+  void registerCustomTask(final AntTaskDefinition definition);
 }

@@ -1,12 +1,11 @@
 package com.intellij.lang.ant.psi.introspection;
 
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
+
 public interface AntTaskDefinition extends Cloneable {
 
-  AntTaskDefinition[] EMPTY_ARRAY = new AntTaskDefinition[0];
-
-  String getName();
-
-  String getNamespace();
+  Pair<String, String> getTaskId();
 
   String getClassName();
 
@@ -14,11 +13,8 @@ public interface AntTaskDefinition extends Cloneable {
 
   AntAttributeType getAttributeType(String attr);
 
-  AntTaskDefinition[] getNestedElements();
+  Pair<String, String>[] getNestedElements();
 
-  AntTaskDefinition getTaskDefinition(String className);
-
-  void registerNestedTask(String taskClassName);
-
-  AntTaskDefinition clone();
+  @Nullable
+  String getNestedClassName(Pair<String, String> taskId);
 }

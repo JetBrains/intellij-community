@@ -6,6 +6,7 @@ import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
 import com.intellij.lang.ant.psi.introspection.impl.AntTaskDefinitionImpl;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -24,7 +25,6 @@ import java.util.*;
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
 public class AntProjectImpl extends AntElementImpl implements AntProject {
   final static AntTarget[] EMPTY_TARGETS = new AntTarget[0];
-
   private AntTarget[] myTargets;
   /**
    * Map of class names to task definitions.
@@ -120,17 +120,16 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
   }
 
   @NotNull
-  public AntTaskDefinition[] getTaskDefinitions() {
+  public AntTaskDefinition[] getBaseTaskDefinitions() {
     if (myTaskDefinitionArray != null) return myTaskDefinitionArray;
-    getTaskDefinition(null);
+    getBaseTaskDefinition(null);
     return myTaskDefinitionArray = myTaskDefinitions.values().toArray(new AntTaskDefinition[myTaskDefinitions.size()]);
   }
 
   @Nullable
-  public AntTaskDefinition getTaskDefinition(final String taskClassName) {
+  public AntTaskDefinition getBaseTaskDefinition(final String taskClassName) {
     if (myTaskDefinitions != null) return myTaskDefinitions.get(taskClassName);
     myTaskDefinitions = new HashMap<String, AntTaskDefinition>();
-    myTaskIdToClassMap = new HashMap<String, String>();
     Project project = new Project();
     project.init();
     final Hashtable ht = project.getTaskDefinitions();
@@ -158,43 +157,31 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
           attributes.put(attr, AntAttributeType.STRING);
         }
       }
-      AntTaskDefinition def = new AntTaskDefinitionImpl(this, taskName, getSourceElement().getNamespace(), taskClass.getName(), attributes);
-      myTaskDefinitions.put(def.getClassName(), def);
-      myTaskIdToClassMap.put(def.getNamespace() + def.getName(), def.getClassName());
-    }
-
-    // second pass updates nested elements of known task definitions
-    for (AntTaskDefinition def : myTaskDefinitions.values()) {
-      final Class taskClass = (Class)ht.get(def.getName());
-      final IntrospectionHelper helper = getHelperExceptionSafe(taskClass);
-      if (helper == null) continue;
+      HashMap<Pair<String, String>, String> nestedDefinitions = new HashMap<Pair<String, String>, String>();
       final Enumeration nestedEnum = helper.getNestedElements();
       while (nestedEnum.hasMoreElements()) {
         final String nestedElement = (String)nestedEnum.nextElement();
         final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
-        def.registerNestedTask(className);
-        myTaskIdToClassMap.put(nestedElement, className);
+        nestedDefinitions.put(new Pair<String, String>(nestedElement, ""), className);
       }
+      AntTaskDefinition def = new AntTaskDefinitionImpl(new Pair<String, String>(taskName, getSourceElement().getNamespace()),
+                                                        taskClass.getName(), attributes, nestedDefinitions);
+      myTaskDefinitions.put(def.getClassName(), def);
     }
+
     return myTaskDefinitions.get(taskClassName);
   }
 
-  public void registerCustomTask(final String name, final String namespace, final AntTaskDefinition definition) {
+  public void registerCustomTask(final AntTaskDefinition definition) {
     myTaskDefinitionArray = null;
     myTaskDefinitions.put(definition.getClassName(), definition);
-    myTaskIdToClassMap.put(namespace + name, definition.getClassName());
-  }
-
-  public String getTaskClassByName(final String name, final String namespace) {
-    getTaskDefinition(null);
-    return myTaskIdToClassMap.get(namespace + name);
   }
 
   private static IntrospectionHelper getHelperExceptionSafe(Class c) {
     try {
       return IntrospectionHelper.getHelper(c);
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       // TODO[lvo]: please review.
       // Problem creating introspector like classes this task depends on cannot be loaded or missing.
     }

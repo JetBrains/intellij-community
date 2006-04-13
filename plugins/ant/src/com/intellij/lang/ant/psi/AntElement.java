@@ -27,6 +27,4 @@ public interface AntElement extends PsiElement {
   XmlAttribute[] getAttributes();
 
   void subtreeChanged();
-
-  String getTaskClassByName(final String name, final String namespace);
 }

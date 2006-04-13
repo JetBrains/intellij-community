@@ -1,6 +1,9 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntTask;
+import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import org.apache.tools.ant.taskdefs.CallTarget;
@@ -20,7 +23,22 @@ public class AntElementFactory {
   @NotNull
   public static AntElement createAntElement(final AntElement parent, final XmlTag tag) {
     instantiate();
-    final String className = parent.getTaskClassByName(tag.getName(), tag.getNamespace());
+    String className = null;
+    final Pair<String, String> taskId = new Pair<String, String>(tag.getName(), tag.getNamespace());
+    if (parent instanceof AntTask) {
+      final AntTaskDefinition def = ((AntTask)parent).getTaskDefinition();
+      if (def != null) {
+        className = def.getNestedClassName(taskId);
+      }
+    }
+    else {
+      for (AntTaskDefinition def : parent.getAntProject().getBaseTaskDefinitions()) {
+        if (taskId.equals(def.getTaskId())) {
+          className = def.getClassName();
+          break;
+        }
+      }
+    }
     return createAntTask(tag, parent, className);
   }
 
@@ -35,7 +53,7 @@ public class AntElementFactory {
     if (antTaskCreator != null) {
       return antTaskCreator.create(parent, tag);
     }
-    return new AntTaskImpl(parent, tag, parent.getAntProject().getTaskDefinition(className));
+    return new AntTaskImpl(parent, tag, parent.getAntProject().getBaseTaskDefinition(className));
   }
 
   private static void instantiate() {
@@ -43,12 +61,12 @@ public class AntElementFactory {
       antTaskTypeToKnownAntTaskCreatorMap = new HashMap<String, AntTaskCreator>();
       antTaskTypeToKnownAntTaskCreatorMap.put(Property.class.getName(), new AntTaskCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntPropertyImpl(parent, tag, parent.getAntProject().getTaskDefinition(Property.class.getName()));
+          return new AntPropertyImpl(parent, tag, parent.getAntProject().getBaseTaskDefinition(Property.class.getName()));
         }
       });
       antTaskTypeToKnownAntTaskCreatorMap.put(CallTarget.class.getName(), new AntTaskCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntCallImpl(parent, tag, parent.getAntProject().getTaskDefinition(CallTarget.class.getName()));
+          return new AntCallImpl(parent, tag, parent.getAntProject().getBaseTaskDefinition(CallTarget.class.getName()));
         }
       });
     }
