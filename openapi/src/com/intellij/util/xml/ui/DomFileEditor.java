@@ -4,7 +4,6 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.javaee.ui.forms.CaptionComponent;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -13,6 +12,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.CaptionComponent;
 
 import javax.swing.*;
 import java.awt.*;

@@ -4,9 +4,14 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.javaee.J2EEBundle;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -14,19 +19,14 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -82,7 +82,7 @@ public class PsiClassControl2 extends BaseControl<PsiClassPanel, String> {
 
   public static PsiClass showClassChooserDialog(final Project project, final GlobalSearchScope resolveScope) {
     TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-      .createInheritanceClassChooser(J2EEBundle.message("choose.class"), resolveScope, null, true, true, new Condition<PsiClass>() {
+      .createInheritanceClassChooser(UIBundle.message("choose.class"), resolveScope, null, true, true, new Condition<PsiClass>() {
         public boolean value(final PsiClass object) {
           return true;
         }

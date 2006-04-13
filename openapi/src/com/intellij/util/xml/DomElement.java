@@ -30,8 +30,10 @@ public interface DomElement {
 
   boolean isValid();
 
+  @NotNull
   DomGenericInfo getGenericInfo();
 
+  @NotNull
   String getXmlElementName();
 
   void accept(final DomElementVisitor visitor);
