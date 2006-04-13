@@ -266,6 +266,13 @@ import java.util.Map;
     throw new UnsupportedOperationException();
   }
 
+  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+  }
+
+
+  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+  }
+
   public void registerFileAsOpened(VirtualFile file, Editor editor) {
     myVirtualFile2Editor.put(file, editor);
     myActiveFile = file;

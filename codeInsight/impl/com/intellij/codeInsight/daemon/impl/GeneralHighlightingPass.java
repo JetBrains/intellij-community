@@ -223,7 +223,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         for (PsiElement element : elements) {
           ProgressManager.getInstance().checkCanceled();
 
-          if (skipParentsSet.contains(element)) {
+          if (element != myFile && skipParentsSet.contains(element)) {
             skipParentsSet.add(element.getParent());
             continue;
           }

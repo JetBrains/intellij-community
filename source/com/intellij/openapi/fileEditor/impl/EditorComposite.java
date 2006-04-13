@@ -15,6 +15,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class hides internal structure of UI component which represent
@@ -53,6 +55,7 @@ public abstract class EditorComposite{
   private FileEditor mySelectedEditor;
   private final FileEditorManager myFileEditorManager;
   private final long myInitialFileModificationStamp;
+  private Map<FileEditor, FileEditorInfoPane> myInfoPanes = new HashMap<FileEditor, FileEditorInfoPane>();
 
   /**
    * @param file <code>file</code> for which composite is being constructed
@@ -102,13 +105,13 @@ public abstract class EditorComposite{
         }
       };
       for (FileEditor editor : editors) {
-        wrapper.addTab(editor.getName(), editor.getComponent());
+        wrapper.addTab(editor.getName(), createEditorComponent(editor));
       }
       myTabbedPaneWrapper.addChangeListener(new MyChangeListener());
     }
     else if(editors.length==1){
       myTabbedPaneWrapper=null;
-      myComponent = new MyComponent(editors[0].getComponent()){
+      myComponent = new MyComponent(createEditorComponent(editors[0])){
         public void requestFocus() {
           JComponent component = editors[0].getPreferredFocusedComponent();
           if (component != null) {
@@ -132,6 +135,17 @@ public abstract class EditorComposite{
     mySelectedEditor = editors[0];
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
+  }
+
+  private JComponent createEditorComponent(final FileEditor editor) {
+    JPanel component = new JPanel(new BorderLayout());
+    component.add(editor.getComponent(), BorderLayout.CENTER);
+
+    FileEditorInfoPane infoPane = new FileEditorInfoPane();
+    component.add(infoPane, BorderLayout.NORTH);
+    myInfoPanes.put(editor, infoPane);
+
+    return component;
   }
 
   /**
@@ -214,6 +228,10 @@ public abstract class EditorComposite{
    */
   public FileEditor[] getEditors() {
     return myEditors;
+  }
+
+  public FileEditorInfoPane getPane(FileEditor editor) {
+    return myInfoPanes.get(editor);
   }
 
   /**

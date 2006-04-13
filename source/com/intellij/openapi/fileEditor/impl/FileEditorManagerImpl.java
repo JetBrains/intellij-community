@@ -806,6 +806,21 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return result.toArray(new FileEditor[result.size()]);
   }
 
+  public void showEditorAnnotation(FileEditor editor, JComponent annotationComoponent) {
+    final EditorComposite composite = getEditorComposite(editor);
+    if (composite != null) {
+      composite.getPane(editor).addInfo(annotationComoponent);
+    }
+  }
+
+
+  public void removeEditorAnnotation(FileEditor editor, JComponent annotationComoponent) {
+    final EditorComposite composite = getEditorComposite(editor);
+    if (composite != null) {
+      composite.getPane(editor).removeInfo(annotationComoponent);
+    }
+  }
+
   public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
     assertThread();
     myDispatcher.addListener(listener);

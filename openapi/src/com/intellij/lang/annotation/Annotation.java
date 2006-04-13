@@ -62,6 +62,7 @@ public final class Annotation {
   private Boolean myNeedsUpdateOnTyping = null;
   private String myTooltip;
   private boolean myAfterEndOfLine = false;
+  private boolean myIsFileLevelAnnotation = false;
   private GutterIconRenderer myGutterIconRenderer;
 
   /**
@@ -278,6 +279,24 @@ public final class Annotation {
    */
   public void setAfterEndOfLine(final boolean afterEndOfLine) {
     myAfterEndOfLine = afterEndOfLine;
+  }
+
+  /**
+   * File level annoations are visualized differently than lesser range annotations by showing a title bar on top of the
+   * editor rather than applying text attributes to the text range.
+   * @return <code>true</code> if this particular annotation have been defined as file level.
+   */
+  public boolean isFileLevelAnnotation() {
+    return myIsFileLevelAnnotation;
+  }
+
+  /**
+   * File level annoations are visualized differently than lesser range annotations by showing a title bar on top of the
+   * editor rather than applying text attributes to the text range.
+   * @param isFileLevelAnnotation <code>true</code> if this particular annotation should be visualized at file level.
+   */
+  public void setFileLevelAnnotation(final boolean isFileLevelAnnotation) {
+    myIsFileLevelAnnotation = isFileLevelAnnotation;
   }
 
   /**

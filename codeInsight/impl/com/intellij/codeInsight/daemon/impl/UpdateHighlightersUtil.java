@@ -15,11 +15,18 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -35,7 +42,33 @@ public class UpdateHighlightersUtil {
   public static final int[] POST_HIGHLIGHT_GROUPS = new int[]{POST_HIGHLIGHTERS_GROUP, INSPECTION_HIGHLIGHTERS_GROUP, EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP};
   public static final int[] NORMAL_HIGHLIGHT_GROUPS = new int[]{NORMAL_HIGHLIGHTERS_GROUP};
 
+  private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
+
   private UpdateHighlightersUtil() {}
+
+  private static void cleanFileLevelHighlights(Project project, Document document, final int group) {
+    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile != null) {
+      if (psiFile.getViewProvider().isPhysical()) {
+        VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
+        final FileEditorManager manager = FileEditorManager.getInstance(project);
+        for (FileEditor fileEditor : manager.getEditors(vFile)) {
+          final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+          if (infos != null) {
+            List<HighlightInfo> infosToRemove = new ArrayList<HighlightInfo>();
+            for (HighlightInfo info : infos) {
+              if (info.group == group) {
+                manager.removeEditorAnnotation(fileEditor, info.fileLevelComponent);
+                infosToRemove.add(info);
+              }
+            }
+            infos.removeAll(infosToRemove);
+          }
+        }
+      }
+    }
+
+  }
 
   public static void setHighlightersToEditor(Project project,
                                              Document document,
@@ -46,20 +79,16 @@ public class UpdateHighlightersUtil {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<HighlightInfo> array = new ArrayList<HighlightInfo>();
 
+    cleanFileLevelHighlights(project, document, group);
+
     HighlightInfo[] oldHighlights = DaemonCodeAnalyzerImpl.getHighlights(document, project);
 
     if (oldHighlights != null) {
       for (HighlightInfo info : oldHighlights) {
         RangeHighlighter highlighter = info.highlighter;
         boolean toRemove;
-        if (!highlighter.isValid()) {
-          toRemove = true;
-        }
-        else {
-          toRemove = info.group == group
-                     && startOffset <= highlighter.getStartOffset()
-                     && highlighter.getEndOffset() <= endOffset;
-        }
+        toRemove = !highlighter.isValid() ||
+                   info.group == group && startOffset <= highlighter.getStartOffset() && highlighter.getEndOffset() <= endOffset;
 
         if (toRemove) {
           document.getMarkupModel(project).removeHighlighter(highlighter);
@@ -75,7 +104,10 @@ public class UpdateHighlightersUtil {
 
     for (HighlightInfo info : highlights) {
       int layer;
-      if (info.startOffset < startOffset || info.endOffset > endOffset) continue;
+      int infoEndOffset = info.endOffset;
+      int infoStartOffset = info.startOffset;
+
+      if (infoStartOffset < startOffset || infoEndOffset > endOffset) continue;
       HighlightSeverity severity = info.getSeverity();
       if (severity == HighlightSeverity.INFORMATION) {
         layer = HighlighterLayer.ADDITIONAL_SYNTAX;
@@ -87,25 +119,50 @@ public class UpdateHighlightersUtil {
         layer = HighlighterLayer.ERROR;
       }
 
-      int infoEndOffset = info.endOffset;
-      if (infoEndOffset > document.getTextLength()) {
+      final int docLength = document.getTextLength();
+      if (infoEndOffset > docLength) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Invalid HighlightInfo created: (" + info.startOffset + ":" + infoEndOffset + ")" + info.description);
+          LOG.debug("Invalid HighlightInfo created: (" + infoStartOffset + ":" + infoEndOffset + ")" + info.description);
         }
 
-        infoEndOffset = document.getTextLength();
+        infoEndOffset = docLength;
+      }
+
+      if (info.isFileLevelAnnotation) {
+        final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+        if (psiFile != null) {
+          if (psiFile.getViewProvider().isPhysical()) {
+            VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
+            final FileEditorManager manager = FileEditorManager.getInstance(project);
+            for (FileEditor fileEditor : manager.getEditors(vFile)) {
+              final JLabel comoponent = new JLabel(info.description);
+              manager.showEditorAnnotation(fileEditor, comoponent);
+              List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+              if (fileLevelInfos == null) {
+                fileLevelInfos = new ArrayList<HighlightInfo>();
+                fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
+              }
+              info.fileLevelComponent = comoponent;
+              info.group = group;
+              fileLevelInfos.add(info);
+            }
+
+            continue;
+          }
+        }
       }
 
       RangeHighlighterEx highlighter = (RangeHighlighterEx)document.getMarkupModel(project).addRangeHighlighter(
-        info.startOffset,
+        infoStartOffset,
         infoEndOffset,
         layer,
         info.getTextAttributes(),
         HighlighterTargetArea.EXACT_RANGE);
+
       //highlighter.setUserObject(info); // debug purposes only!
       info.highlighter = highlighter;
       highlighter.setAfterEndOfLine(info.isAfterEndOfLine);
-      info.text = document.getCharsSequence().subSequence(info.startOffset, info.endOffset).toString();
+      info.text = document.getCharsSequence().subSequence(infoStartOffset, infoEndOffset).toString();
       info.group = group;
 
       highlighter.setErrorStripeMarkColor(info.getErrorStripeMarkColor());
@@ -113,7 +170,7 @@ public class UpdateHighlightersUtil {
       highlighter.setGutterIconRenderer(info.getGutterIconRenderer());
 
       HashMap<TextRange, RangeMarker> ranges2markers = new HashMap<TextRange, RangeMarker>();
-      ranges2markers.put(new TextRange(info.startOffset, info.endOffset), info.highlighter);
+      ranges2markers.put(new TextRange(infoStartOffset, infoEndOffset), info.highlighter);
       if (info.quickFixActionRanges != null) {
         info.quickFixActionMarkers = new ArrayList<Pair<Pair<Pair<IntentionAction,String>, List<IntentionAction>>, RangeMarker>>();
         for (Pair<Pair<Pair<IntentionAction,String>,List<IntentionAction>>,TextRange> pair : info.quickFixActionRanges) {

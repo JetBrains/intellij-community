@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 public abstract class FileEditorManager {
@@ -98,6 +99,10 @@ public abstract class FileEditorManager {
    * @return all open editors
    */
   public abstract FileEditor[] getAllEditors();
+
+  public abstract void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent);
+  public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent);
+
 
   /**
    * Adds specified <code>listener</code>

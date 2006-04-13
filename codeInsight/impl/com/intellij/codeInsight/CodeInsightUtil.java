@@ -206,6 +206,8 @@ public class CodeInsightUtil {
       list.add(parent);
       parent = includeAllParents ? parent.getParent() : null;
     }
+    
+    list.add(root);
 
     return Collections.unmodifiableList(list);
   }

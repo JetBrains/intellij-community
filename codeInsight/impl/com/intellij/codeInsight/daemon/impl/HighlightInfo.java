@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class HighlightInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfo");
   private Boolean myNeedsUpdateOnTyping = null;
   private static final Key<HighlightInfoFilter[]> FILTERS = new Key<HighlightInfoFilter[]>("HighlightInfoFilter[]");
+  public JComponent fileLevelComponent;
 
   public HighlightSeverity getSeverity() {
     return severity;
@@ -162,6 +164,7 @@ public class HighlightInfo {
   public final HighlightSeverity severity;
 
   public boolean isAfterEndOfLine = false;
+  public boolean isFileLevelAnnotation = false; 
   public int navigationShift = 0;
 
   public RangeHighlighter highlighter;

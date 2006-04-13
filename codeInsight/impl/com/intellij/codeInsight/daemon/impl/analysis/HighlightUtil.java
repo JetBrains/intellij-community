@@ -5,7 +5,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -2043,6 +2043,8 @@ public class HighlightUtil {
                                            annotation.getEndOffset(), annotation.getMessage(), annotation.getTooltip(),
                                            annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
     info.setGutterIconRenderer(annotation.getGutterIconRenderer());
+    info.isFileLevelAnnotation = annotation.isFileLevelAnnotation();
+
     List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
     if (fixes != null) {
       for (Annotation.QuickFixInfo quickFixInfo : fixes) {

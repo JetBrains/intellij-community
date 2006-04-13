@@ -211,6 +211,11 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     TextRange textRange = ((ProblemDescriptorImpl)problemDescriptor).getTextRange();
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(highlightInfoType, textRange, message, toolTip);
     highlightInfo.isAfterEndOfLine = problemDescriptor.isAfterEndOfLine();
+
+    if (problemDescriptor.getPsiElement() instanceof PsiFile) {
+      highlightInfo.isFileLevelAnnotation = true;
+    }
+
     return highlightInfo;
   }
 
