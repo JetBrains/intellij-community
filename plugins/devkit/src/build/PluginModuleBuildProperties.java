@@ -90,6 +90,10 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     return true;
   }
 
+  public boolean isBuildExternalDependencies() {
+    return false;
+  }
+
   @Nullable
   public J2EEBuildParticipant getBuildParticipant() {
     return null;
