@@ -454,8 +454,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
             getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
 
           } else {
-            //TODO: isRecursive could be optimized
-            file.refreshInternal(true, modalityState, false, asynchronous);
+            //TODO: isRecursive could be optimized???
+            refresh(file, file.areChildrenCached(), false, modalityState, asynchronous, false);
           }
         }
 
