@@ -4,15 +4,15 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.WeakArrayHashMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
 import com.intellij.util.xml.impl.DomImplUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.containers.WeakArrayHashMap;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,6 +24,11 @@ import java.util.*;
 public class ModelMerger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ModelMerger");
   private static final WeakArrayHashMap ourMergedMap = new WeakArrayHashMap();
+  private static final InvocationStack ourInvocationStack = new InvocationStack();
+
+  public static InvocationStack getInvocationStack() {
+    return ourInvocationStack;
+  }
 
   public static class ImplementationProcessor<T> implements Processor<T> {
     private final Processor<T> myProcessor;
@@ -196,61 +201,67 @@ public class ModelMerger {
 
 
     public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-      if (Object.class.equals(method.getDeclaringClass())) {
-        @NonNls String methodName = method.getName();
-        if ("toString".equals(methodName)) {
-          return "Merger: " + Arrays.asList(myImplementations);
-        }
-        if ("hashCode".equals(methodName)) {
-          return Arrays.hashCode(myImplementations);
-        }
-        if ("equals".equals(methodName)) {
-          return args[0] != null && ((MergedObject)args[0]).getImplementations().equals(Arrays.asList(myImplementations));
-        }
-        return null;
-      }
-
+      ourInvocationStack.push(method, proxy);
       try {
-        if (MergedObject.class.equals(method.getDeclaringClass())) {
+        if (Object.class.equals(method.getDeclaringClass())) {
           @NonNls String methodName = method.getName();
-          if ("getImplementations".equals(methodName)) {
-            return Arrays.asList(myImplementations);
+          if ("toString".equals(methodName)) {
+            return "Merger: " + Arrays.asList(myImplementations);
           }
-          else assert false;
-        }
-        final Class returnType = method.getReturnType();
-        if (signaturesNotToMerge.size() > 0) {
-          final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
-          if (signaturesNotToMerge.contains(signature)) {
-            for (final T t : myImplementations) {
-              final Object o = method.invoke(t, args);
-              if (o != null) return o;
-            }
-            return null;
+          if ("hashCode".equals(methodName)) {
+            return Arrays.hashCode(myImplementations);
           }
-        }
-        if (Collection.class.isAssignableFrom(returnType)) {
-          return getMergedImplementations(method, args,
-                                          DomUtil.getRawType(DomImplUtil.extractCollectionElementType(method.getGenericReturnType())));
-        }
-
-        if (GenericValue.class.isAssignableFrom(returnType)) {
-          return new MergedGenericValue(method, args);
-        }
-
-        if (void.class == returnType) {
-          for (final T t : myImplementations) {
-            method.invoke(t, args);
+          if ("equals".equals(methodName)) {
+            return args[0] != null && ((MergedObject)args[0]).getImplementations().equals(Arrays.asList(myImplementations));
           }
           return null;
         }
 
-        List<Object> results = getMergedImplementations(method, args, method.getReturnType());
+        try {
+          if (MergedObject.class.equals(method.getDeclaringClass())) {
+            @NonNls String methodName = method.getName();
+            if ("getImplementations".equals(methodName)) {
+              return Arrays.asList(myImplementations);
+            }
+            else assert false;
+          }
+          final Class returnType = method.getReturnType();
+          if (signaturesNotToMerge.size() > 0) {
+            final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
+            if (signaturesNotToMerge.contains(signature)) {
+              for (final T t : myImplementations) {
+                final Object o = method.invoke(t, args);
+                if (o != null) return o;
+              }
+              return null;
+            }
+          }
+          if (Collection.class.isAssignableFrom(returnType)) {
+            return getMergedImplementations(method, args,
+                                            DomUtil.getRawType(DomImplUtil.extractCollectionElementType(method.getGenericReturnType())));
+          }
 
-        return results.isEmpty() ? null : results.get(0);
+          if (GenericValue.class.isAssignableFrom(returnType)) {
+            return new MergedGenericValue(method, args);
+          }
+
+          if (void.class == returnType) {
+            for (final T t : myImplementations) {
+              method.invoke(t, args);
+            }
+            return null;
+          }
+
+          List<Object> results = getMergedImplementations(method, args, method.getReturnType());
+
+          return results.isEmpty() ? null : results.get(0);
+        }
+        catch (InvocationTargetException ex) {
+          throw ex.getTargetException();
+        }
       }
-      catch (InvocationTargetException ex) {
-        throw ex.getTargetException();
+      finally {
+        ourInvocationStack.pop();
       }
     }
 

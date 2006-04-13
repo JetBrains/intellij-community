@@ -170,6 +170,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     throw new UnsupportedOperationException("Method createMockCopy is not yet implemented in " + getClass().getName());
   }
 
+  public Collection<DomElement> getAllChildren() {
+    return (Collection<DomElement>)Collections.singleton(getRootElement());
+  }
+
   @NotNull
   public T getRootElement() {
     return (T)getRootHandler().getProxy();

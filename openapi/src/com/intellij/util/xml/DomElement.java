@@ -56,4 +56,5 @@ public interface DomElement {
   void copyFrom(DomElement other);
 
   DomElement createMockCopy(final boolean physical);
+
 }

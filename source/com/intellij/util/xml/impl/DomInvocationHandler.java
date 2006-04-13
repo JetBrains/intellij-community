@@ -3,20 +3,23 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.xml.ElementPresentation;
-import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +35,18 @@ import java.util.*;
 public abstract class DomInvocationHandler implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   private static final String ATTRIBUTES = "@";
+  public static Method ACCEPT_METHOD = null;
+  public static Method ACCEPT_CHILDREN_METHOD = null;
+
+  static {
+    try {
+      ACCEPT_METHOD = DomElement.class.getMethod("accept", DomElementVisitor.class);
+      ACCEPT_CHILDREN_METHOD = DomElement.class.getMethod("acceptChildren", DomElementVisitor.class);
+    }
+    catch (NoSuchMethodException e) {
+      Logger.getInstance("#com.intellij.util.xml.ui.DomUIFactory").error(e);
+    }
+  }
 
   private final Type myAbstractType;
   private Type myType;
@@ -252,21 +267,28 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myTagName;
   }
 
+  private DomElement findCallerProxy(Method method) {
+    final DomElement element = (DomElement)ModelMerger.getInvocationStack().findDeepestInvocation(method, new Condition<DomElement>() {
+      public boolean value(final DomElement object) {
+        return object == null;
+      }
+    });
+    return element == null ? getProxy() : element;
+  }
+
   public void accept(final DomElementVisitor visitor) {
-    DomImplUtil.tryAccept(visitor, DomUtil.getRawType(myType), getProxy());
+    DomImplUtil.tryAccept(visitor, DomUtil.getRawType(myType), findCallerProxy(ACCEPT_METHOD));
   }
 
   public final void acceptChildren(DomElementVisitor visitor) {
-    for (DomInvocationHandler handler : getAllChildren()) {
-      handler.accept(visitor);
+    final DomElement element = findCallerProxy(ACCEPT_CHILDREN_METHOD);
+    final List<DomChildrenDescription> list = getGenericInfo().getChildrenDescriptions();
+    for (final DomChildrenDescription description : list) {
+      final List<? extends DomElement> values = description.getValues(element);
+      for (final DomElement value : values) {
+        value.accept(visitor);
+      }
     }
-  }
-
-  private Collection<DomInvocationHandler> getAllChildren() {
-    initializeAllChildren();
-    Set<DomInvocationHandler> result = new HashSet<DomInvocationHandler>(myFixedChildren.values());
-    result.addAll(getCollectionChildren());
-    return result;
   }
 
   public final void initializeAllChildren() {
@@ -390,10 +412,13 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
+      ModelMerger.getInvocationStack().push(method, null);
       return doInvoke(JavaMethodSignature.getSignature(method), args);
     }
     catch (InvocationTargetException ex) {
       throw ex.getTargetException();
+    } finally {
+      ModelMerger.getInvocationStack().pop();
     }
   }
 
