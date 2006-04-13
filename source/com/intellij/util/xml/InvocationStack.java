@@ -41,7 +41,7 @@ public class InvocationStack<T> {
         return null;
       }
     }
-    return stack.get(0).second;
+    return stack.isEmpty() ? null : stack.get(0).second;
   }
 
   public final Pair<JavaMethodSignature,T> pop() {

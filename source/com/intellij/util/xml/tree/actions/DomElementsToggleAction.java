@@ -4,11 +4,10 @@
 
 package com.intellij.util.xml.tree.actions;
 
-import com.intellij.util.xml.ElementPresentationManager;
-import com.intellij.util.xml.ElementPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
 
@@ -30,9 +29,11 @@ public class DomElementsToggleAction extends ToggleAction {
     myTreeView = treeView;
     myClass = aClass;
 
-    final ElementPresentation presentation = ElementPresentationManager.getPresentationForClass(myClass);
-    myIcon = presentation == null || presentation.getIcon()==null ? IconLoader.getIcon("/nodes/pointcut.png") : presentation.getIcon();
-    myText = presentation == null ? myClass.getSimpleName() : presentation.getElementName();
+    myIcon = ElementPresentationManager.getIcon(myClass);
+    if (myIcon == null) {
+      myIcon = IconLoader.getIcon("/nodes/pointcut.png");
+    }
+    myText = ElementPresentationManager.getTypeName(myClass);
 
     if(getHiders() == null) myTreeView.getRootElement().getRoot().putUserData(BaseDomElementNode.TREE_NODES_HIDERS_KEY, new HashMap<Class, Boolean>());
 

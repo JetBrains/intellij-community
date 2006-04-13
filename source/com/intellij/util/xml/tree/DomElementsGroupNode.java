@@ -1,10 +1,10 @@
 package com.intellij.util.xml.tree;
 
-import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.javaee.J2EEBundle;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.xml.ElementPresentation;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
@@ -84,9 +84,6 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
   public Icon getNodeIcon() {
-    final ElementPresentation presentation =
-      ElementPresentationManager.getPresentationForClass(DomUtil.getRawType(myChildDescription.getType()));
-
-    return presentation == null ? null: presentation.getIcon();
+    return ElementPresentationManager.getIcon(DomUtil.getRawType(myChildDescription.getType()));
   }
 }

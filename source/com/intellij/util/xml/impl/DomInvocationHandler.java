@@ -24,6 +24,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -352,11 +353,19 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   @NotNull
   public ElementPresentation getPresentation() {
-    final ElementPresentation presentation = ElementPresentationManager.getElementPresentation(getProxy());
-    if (presentation != null) {
-      return presentation;
-    }
-    return new BasicDomElementPresentation(getProxy());
+    return new ElementPresentation() {
+      public String getElementName() {
+        return ElementPresentationManager.getElementName(getProxy());
+      }
+
+      public String getTypeName() {
+        return ElementPresentationManager.getTypeName(getProxy());
+      }
+
+      public Icon getIcon() {
+        return ElementPresentationManager.getIcon(getProxy());
+      }
+    };
   }
 
   public final GlobalSearchScope getResolveScope() {

@@ -4,8 +4,6 @@
 
 package com.intellij.util.xml.ui.actions;
 
-import com.intellij.util.xml.ElementPresentation;
-import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -83,12 +81,7 @@ public abstract class AddDomElementAction<T extends DomElement> extends AnAction
     final ClassChooser chooser = ClassChooserManager.getClassChooser(DomUtil.getRawType(getDomCollectionChildDescription(e).getType()));
     return ContainerUtil.map2Array(chooser.getChooserClasses(), AnAction.class, new Function<Class, AnAction>() {
       public AnAction fun(final Class s) {
-        final ElementPresentation presentation = ElementPresentationManager.getPresentationForClass(s);
-
-        final String name = presentation == null ? s.getSimpleName() : presentation.getElementName();
-        final Icon icon = presentation == null ? null : presentation.getIcon();
-
-        return createDefaultAction(e, name, icon, s);
+        return createDefaultAction(e, ElementPresentationManager.getTypeName(s), ElementPresentationManager.getIcon(s), s);
       }
     });
   }

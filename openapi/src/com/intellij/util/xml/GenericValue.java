@@ -12,6 +12,7 @@ public interface GenericValue<T> {
 
   @TagValue
   @Nullable
+  @NameValue
   String getStringValue();
 
   @Nullable
