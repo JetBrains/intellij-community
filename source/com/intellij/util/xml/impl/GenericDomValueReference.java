@@ -17,6 +17,10 @@ import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.ModelMerger;
+
+import java.util.List;
 
 /**
  * author: lesya
@@ -61,23 +65,28 @@ public class GenericDomValueReference extends GenericReference {
     return new ReferenceType(ReferenceType.UNKNOWN);
   }
 
-  public PsiElement resolveInner() {
-      final Object o = myXmlValue.getValue();
-      if (o instanceof PsiClass) {
-        return (PsiClass)o;
-      }
-    return null;
-    //todo[peter] resolve reference
-/*
-    List<XmlDataOwner> definitions = myXmlObjectsManager.resolve(myXmlValue.getReferenceClass(),
-                                                                 myValue,
-                                                                 myXmlValue.getReferenceScope(), myLinkFile);
-    if (definitions.isEmpty()) {
-      return null;
+  private PsiElement resolveInner(Object o) {
+    if (o instanceof PsiElement) {
+      return (PsiElement)o;
     }
-    else {
-      return ((XmlBasedObjectImpl)(definitions.get(0)).getXmlData()).getXmlTag();
-    }*/
+    if (o instanceof DomElement) {
+      return ((DomElement)o).getXmlTag();
+    }
+    if (o instanceof ModelMerger.MergedObject) {
+      final ModelMerger.MergedObject mergedObject = (ModelMerger.MergedObject)o;
+      final List list = mergedObject.getImplementations();
+      for (final Object o1 : list) {
+        final PsiElement psiElement = resolveInner(o1);
+        if (psiElement != null) {
+          return psiElement;
+        }
+      }
+    }
+    return null;
+  }
+
+  public PsiElement resolveInner() {
+    return resolveInner(myXmlValue.getValue());
   }
 
   public ReferenceType getSoftenType() {
@@ -108,7 +117,7 @@ public class GenericDomValueReference extends GenericReference {
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     //try {
-      myXmlValue.setStringValue(newElementName);
+    myXmlValue.setStringValue(newElementName);
     /*}
     catch (ReadOnlyDeploymentDescriptorModificationException e) {
       VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(new VirtualFile[]{e.getVirtualFile()});
@@ -118,17 +127,17 @@ public class GenericDomValueReference extends GenericReference {
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     //try {
-      if (element instanceof PsiClass) {
-        myXmlValue.setStringValue(((PsiClass)element).getName());
-        return myXmlValue.getXmlTag();
-      }
-      else if (element instanceof XmlTag) {
-        myXmlValue.setStringValue(((XmlTag)element).getName());
-        return myXmlValue.getXmlTag();
-      }
-      else {
-        return null;
-      }
+    if (element instanceof PsiClass) {
+      myXmlValue.setStringValue(((PsiClass)element).getName());
+      return myXmlValue.getXmlTag();
+    }
+    else if (element instanceof XmlTag) {
+      myXmlValue.setStringValue(((XmlTag)element).getName());
+      return myXmlValue.getXmlTag();
+    }
+    else {
+      return null;
+    }
     /*}
     catch (ReadOnlyDeploymentDescriptorModificationException e) {
       return null;

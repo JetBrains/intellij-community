@@ -84,7 +84,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         return xmlAspect.equals(aspect);
       }
     };
-    ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(XmlTag.class, new DomClassReferenceProvider());
+    ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(XmlTag.class, new GenericValueReferenceProvider());
   }
 
   public final void addDomEventListener(DomEventListener listener) {

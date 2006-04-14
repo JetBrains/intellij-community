@@ -14,14 +14,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public abstract class GenericValueReferenceProvider implements PsiReferenceProvider {
+public class GenericValueReferenceProvider implements PsiReferenceProvider {
   @NotNull
   public GenericReference[] getReferencesByElement(PsiElement element) {
     if (!(element instanceof XmlTag)) return GenericReference.EMPTY_ARRAY;
@@ -36,12 +36,16 @@ public abstract class GenericValueReferenceProvider implements PsiReferenceProvi
     final DomElement domElement = DomManager.getDomManager(module.getProject()).getDomElement(tag);
     if (!(domElement instanceof GenericDomValue)) return GenericReference.EMPTY_ARRAY;
 
-    final GenericReference reference = getReferenceByElement((GenericDomValue)domElement);
-    return reference != null ? new GenericReference[]{reference} : GenericReference.EMPTY_ARRAY;
-  }
+    final Class parameter = DomUtil.getGenericValueType(domElement.getDomElementType());
+    if (!String.class.isAssignableFrom(parameter) &&
+        !Number.class.isAssignableFrom(parameter) && 
+        !Boolean.class.isAssignableFrom(parameter) &&
+        !Enum.class.isAssignableFrom(parameter)) {
+      return new GenericReference[]{new GenericDomValueReference(this, (GenericDomValue)domElement)};
+    }
 
-  @Nullable
-  protected abstract GenericReference getReferenceByElement(GenericDomValue value);
+    return GenericReference.EMPTY_ARRAY;
+  }
 
   @NotNull
   public GenericReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
