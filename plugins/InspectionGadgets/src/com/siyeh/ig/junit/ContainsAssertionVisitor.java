@@ -22,36 +22,33 @@ import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-class ContainsAssertionVisitor extends PsiRecursiveElementVisitor{
+class ContainsAssertionVisitor extends PsiRecursiveElementVisitor {
     private boolean containsAssertion = false;
 
-    public void visitElement(@NotNull PsiElement element){
-        if(!containsAssertion){
+    public void visitElement(@NotNull PsiElement element) {
+        if (!containsAssertion) {
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
-        if(containsAssertion){
+    public void visitMethodCallExpression(
+            @NotNull PsiMethodCallExpression call) {
+        if (containsAssertion) {
             return;
         }
         super.visitMethodCallExpression(call);
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-        if(methodExpression == null){
-            return;
-        }
         @NonNls final String methodName = methodExpression.getReferenceName();
-        if(methodName == null)
-        {
+        if (methodName == null) {
             return;
         }
-        if(methodName.startsWith("assert") || methodName.startsWith("fail")){
+        if (methodName.startsWith("assert") || methodName.startsWith("fail")) {
             containsAssertion = true;
         }
     }
 
-    public boolean containsAssertion(){
+    public boolean containsAssertion() {
         return containsAssertion;
     }
 }

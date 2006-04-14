@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
@@ -50,7 +51,8 @@ public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
             @NonNls final String methodName = method.getName();
-            if (!methodName.startsWith("test")) {
+            if (!methodName.startsWith("test") && !AnnotationUtil.isAnnotated(
+                    method, "org.junit.Test", true)) {
                 return;
             }
             final PsiType returnType = method.getReturnType();
@@ -58,20 +60,24 @@ public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
+            if (parameterList == null) {
+                return;
+            }
             final PsiParameter[] parameters = parameterList.getParameters();
             if (parameters == null) {
                 return;
             }
-            if (parameters.length == 0
-                    && returnType.equals(PsiType.VOID)
-                    && method.hasModifierProperty(PsiModifier.PUBLIC)) {
+            if (parameters.length == 0 && returnType.equals(PsiType.VOID) &&
+                    method.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;
             }
             final PsiClass targetClass = method.getContainingClass();
-            if (targetClass == null ||
-                    !ClassUtils.isSubclass(targetClass,
-                            "junit.framework.TestCase")) {
-                return;
+            if (!AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
+                if (targetClass == null || !ClassUtils.isSubclass(targetClass,
+                                                                  "junit.framework.TestCase"))
+                {
+                    return;
+                }
             }
             registerMethodError(method);
         }

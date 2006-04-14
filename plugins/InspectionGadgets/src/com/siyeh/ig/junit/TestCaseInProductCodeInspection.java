@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2005 Dave Griffith
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -9,7 +9,7 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRnS OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestCaseInProductCodeInspection extends ClassInspection {
 
+    private final MoveClassFix fix = new MoveClassFix();
+
     public String getID() {
         return "JUnitTestCaseInProductSource";
     }
@@ -44,7 +46,7 @@ public class TestCaseInProductCodeInspection extends ClassInspection {
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return new MoveClassFix();
+        return fix;
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -55,8 +57,7 @@ public class TestCaseInProductCodeInspection extends ClassInspection {
         return new TestCaseInProductCodeVisitor();
     }
 
-    private static class TestCaseInProductCodeVisitor
-            extends BaseInspectionVisitor {
+    private static class TestCaseInProductCodeVisitor extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             if (TestUtils.isTest(aClass)) {

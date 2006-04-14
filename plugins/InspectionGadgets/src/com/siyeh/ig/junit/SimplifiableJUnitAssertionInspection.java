@@ -16,9 +16,11 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -100,12 +102,18 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
             }
             @NonNls final StringBuffer newExpression =
                     new StringBuffer();
+            final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(callExpression,
+                                                                           PsiMethod.class);
+            if(containingMethod!=null && AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true))
+            {
+                newExpression.append("org.junit.Assert.");
+            }
             newExpression.append("fail(");
             if (message != null) {
                 newExpression.append(message.getText());
             }
             newExpression.append(')');
-            replaceExpression(callExpression,
+            replaceExpressionAndShorten(callExpression,
                     newExpression.toString());
         }
 
@@ -161,6 +169,12 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
             }
             @NonNls final StringBuffer newExpression =
                     new StringBuffer();
+            final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
+                    callExpression, PsiMethod.class);
+            if (containingMethod != null && AnnotationUtil.isAnnotated(
+                    containingMethod, "org.junit.Test", true)) {
+                newExpression.append("org.junit.Assert.");
+            }
             newExpression.append("assertEquals(");
             if (message != null) {
                 newExpression.append(message.getText());
@@ -175,7 +189,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
                 newExpression.append(",0.0");
             }
             newExpression.append(')');
-            replaceExpression(callExpression,
+            replaceExpressionAndShorten(callExpression,
                     newExpression.toString());
         }
 
@@ -224,6 +238,12 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
                             literalValue.substring(1);
             @NonNls final StringBuffer newExpression =
                     new StringBuffer();
+            final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
+                    callExpression, PsiMethod.class);
+            if (containingMethod != null && AnnotationUtil.isAnnotated(
+                    containingMethod, "org.junit.Test", true)) {
+                newExpression.append("org.junit.Assert.");
+            }
             newExpression.append("assert");
             newExpression.append(uppercaseLiteralValue);
             newExpression.append('(');
@@ -233,7 +253,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
             }
             newExpression.append(compareValue);
             newExpression.append(')');
-            replaceExpression(callExpression,
+            replaceExpressionAndShorten(callExpression,
                     newExpression.toString());
         }
 
@@ -475,8 +495,9 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
         }
         final PsiClass targetClass = method.getContainingClass();
         return targetClass != null &&
-                ClassUtils.isSubclass(targetClass,
-                        "junit.framework.Assert");
+                (ClassUtils.isSubclass(targetClass,
+                        "junit.framework.Assert") ||
+                        "org.junit.Assert".equals(targetClass.getQualifiedName()));
     }
 
     private static boolean isAssertFalse(PsiMethodCallExpression expression) {
@@ -492,8 +513,8 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
         }
         final PsiClass targetClass = method.getContainingClass();
         return targetClass != null &&
-                ClassUtils.isSubclass(targetClass,
-                        "junit.framework.Assert");
+                (ClassUtils.isSubclass(targetClass, "junit.framework.Assert") ||
+                        "org.junit.Assert".equals(targetClass.getQualifiedName()));
     }
 
     private static boolean isAssertEquals(PsiMethodCallExpression expression) {
@@ -509,7 +530,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
         }
         final PsiClass targetClass = method.getContainingClass();
         return targetClass != null &&
-                ClassUtils.isSubclass(targetClass,
-                        "junit.framework.Assert");
+                (ClassUtils.isSubclass(targetClass, "junit.framework.Assert") ||
+                        "org.junit.Assert".equals(targetClass.getQualifiedName()));
     }
 }
