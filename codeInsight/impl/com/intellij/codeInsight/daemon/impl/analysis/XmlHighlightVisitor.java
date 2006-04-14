@@ -576,7 +576,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     XmlProlog prolog = file.getDocument().getProlog();
 
-    if (prolog == null) {
+    if (prolog == null || prolog.getUserData(DO_NOT_VALIDATE_KEY) != null) {
       return;
     }
 
