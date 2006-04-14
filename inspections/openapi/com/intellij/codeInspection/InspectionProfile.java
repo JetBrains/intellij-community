@@ -1,8 +1,7 @@
-package com.intellij.codeInspection.ex;
+package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.profile.Profile;
 
 /**

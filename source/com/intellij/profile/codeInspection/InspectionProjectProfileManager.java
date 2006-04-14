@@ -15,7 +15,7 @@
  */
 package com.intellij.profile.codeInspection;
 
-import com.intellij.codeInspection.ex.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.openapi.components.ProjectComponent;

@@ -11,6 +11,7 @@ package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;

@@ -12,8 +12,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAct
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
-import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;

@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;

@@ -2,11 +2,10 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.codeInspection.ex;
+package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 
@@ -39,8 +38,6 @@ public interface ModifiableModel extends Profile {
   boolean isChanged();
 
   void setModified(final boolean toolsSettingsChanged);
-
-  VisibleTreeState getExpandedNodes();
 
   boolean isProperSetting(HighlightDisplayKey key);
 

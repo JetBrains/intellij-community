@@ -11,13 +11,16 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * User: anna
  * Date: Dec 18, 2004
  */
-public class VisibleTreeState implements JDOMExternalizable {
+public class VisibleTreeState implements JDOMExternalizable{
 
   @NonNls private static final String EXPANDED = "expanded_node";
   @NonNls private static final String SELECTED = "selected_node";
@@ -51,8 +54,8 @@ public class VisibleTreeState implements JDOMExternalizable {
       TreeUtil.selectFirstNode(tree);
     }
     else {
-      for (Iterator<TreePath> iterator = toSelect.iterator(); iterator.hasNext();) {
-        TreeUtil.selectPath(tree, iterator.next());
+      for (final TreePath aToSelect : toSelect) {
+        TreeUtil.selectPath(tree, aToSelect);
       }
     }
   }
@@ -86,10 +89,10 @@ public class VisibleTreeState implements JDOMExternalizable {
   public void saveVisibleState(Tree tree) {
     myExpandedNodes.clear();
     final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)tree.getModel().getRoot();
-    Enumeration expanded = tree.getExpandedDescendants(new TreePath(rootNode.getPath()));
+    Enumeration<TreePath> expanded = tree.getExpandedDescendants(new TreePath(rootNode.getPath()));
     if (expanded != null) {
       while (expanded.hasMoreElements()) {
-        final TreePath treePath = (TreePath)expanded.nextElement();
+        final TreePath treePath = expanded.nextElement();
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
         String expandedNode;
         if (node.getUserObject() instanceof Descriptor) {
@@ -119,12 +122,14 @@ public class VisibleTreeState implements JDOMExternalizable {
 
   public void readExternal(Element element) throws InvalidDataException {
     myExpandedNodes.clear();
-    for (Iterator<Element> iterator = element.getChildren(EXPANDED).iterator(); iterator.hasNext();) {
-      myExpandedNodes.add(iterator.next().getAttributeValue(NAME));
+    List list = element.getChildren(EXPANDED);
+    for (final Object element1 : list) {
+      myExpandedNodes.add(((Element)element1).getAttributeValue(NAME));
     }
     mySelectedNodes.clear();
-    for (Iterator<Element> iterator = element.getChildren(SELECTED).iterator(); iterator.hasNext();) {
-      mySelectedNodes.add(iterator.next().getAttributeValue(NAME));
+    list = element.getChildren(SELECTED);
+    for (Object child : list) {
+      mySelectedNodes.add(((Element)child).getAttributeValue(NAME));
     }
   }
 
