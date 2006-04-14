@@ -311,5 +311,9 @@ public class PopupChooserBuilder {
     public void requestFocus() {
       myList.requestFocus();
     }
+
+    public synchronized void addMouseListener(MouseListener l) {
+      myList.addMouseListener(l);
+    }
   }
 }
