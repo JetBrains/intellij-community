@@ -58,7 +58,7 @@ public class PublicStaticCollectionFieldInspection extends FieldInspection {
                 return;
             }
             final PsiType type = field.getType();
-            if (!CollectionUtils.isCollectionClass(type)) {
+            if (!CollectionUtils.isCollectionClassOrInterface(type)) {
                 return;
             }
             registerFieldError(field);
