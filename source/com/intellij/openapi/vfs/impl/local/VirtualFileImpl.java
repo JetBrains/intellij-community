@@ -208,6 +208,10 @@ public class VirtualFileImpl extends VirtualFile {
               if (child == null) {
                 child = new VirtualFileImpl(this, f, f.isDirectory());
               } else {
+                if (!child.isValid()) {
+                  child = new VirtualFileImpl(this, f, f.isDirectory());
+                }
+
                 ourFileSystem.myUnaccountedFiles.remove(childPath);
               }
               myChildren[i] = child;
