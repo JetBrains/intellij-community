@@ -19,7 +19,6 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessNotCreatedException;
-import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -104,7 +103,7 @@ public class GeneralCommandLine {
     checkWorkingDirectory();
     try {
       final String[] commands = getCommands();
-      if(commands[0] == null) throw new CantRunException(J2EEBundle.message("run.configuration.error.executable.not.specified"));
+      if(commands[0] == null) throw new CantRunException(ExecutionBundle.message("run.configuration.error.executable.not.specified"));
 
       return myWorkDirectory != null
              ? Runtime.getRuntime().exec(commands, getEnvParamsArray(), myWorkDirectory)
@@ -121,10 +120,10 @@ public class GeneralCommandLine {
     }
     if (!myWorkDirectory.exists()) {
       throw new ExecutionException(
-        J2EEBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
+        ExecutionBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
     }
     if (!myWorkDirectory.isDirectory()) {
-      throw new ExecutionException(J2EEBundle.message("run.configuration.error.working.directory.not.directory"));
+      throw new ExecutionException(ExecutionBundle.message("run.configuration.error.working.directory.not.directory"));
     }
   }
 
@@ -183,12 +182,12 @@ public class GeneralCommandLine {
             final GeneralCommandLine commandLine = new GeneralCommandLine();
             final ProjectJdk jdk = javaParameters.getJdk();
             if(jdk == null) {
-              throw new CantRunException(J2EEBundle.message("run.configuration.error.no.jdk.specified"));
+              throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
             }
 
             final String exePath = jdk.getVMExecutablePath();
             if(exePath == null) {
-              throw new CantRunException(J2EEBundle.message("run.configuration.cannot.find.vm.executable"));
+              throw new CantRunException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"));
             }
             commandLine.setExePath(exePath);
             ParametersList parametersList = javaParameters.getVMParametersList();
