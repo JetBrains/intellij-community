@@ -75,7 +75,7 @@ public interface Converter<T> {
         return context.getFile().getManager().getElementFactory().createTypeFromText(s, null);
       }
       catch (IncorrectOperationException e) {
-        throw new RuntimeException(e);
+        return null;
       }
     }
 
