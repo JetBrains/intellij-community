@@ -163,7 +163,7 @@ public class KeymapPanel extends JPanel {
     currentKeysLabel.setLabelFor(myShortcutsList);
     JScrollPane scrollPane = new JScrollPane(myShortcutsList);
     scrollPane.setPreferredSize(new Dimension(160, 200));
-    panel.add(scrollPane, new GridBagConstraints(1,1,1,1,1,1,GridBagConstraints.WEST,GridBagConstraints.BOTH, new Insets(0, 0, 0, 8), 0, 0));
+    panel.add(scrollPane, new GridBagConstraints(1,1,1,1,1,1,GridBagConstraints.WEST,GridBagConstraints.BOTH, new Insets(0, 0, 0, 2), 0, 0));
 
     panel.add(
       createShortcutsButtonsPanel(),
