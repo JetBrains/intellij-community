@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TitledSeparator;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,6 +40,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private ScopeChooserCombo myScopeCombo;
   private JCheckBox myInspectTestSource;
   private JComboBox myChangeLists;
+  private TitledSeparator myTitledSeparator;
   private Project myProject;
   private boolean myRememberScope;
   private String myAnalysisNoon;
@@ -69,7 +70,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     final UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).getUIOptions();
 
-    myPanel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon));
+    myTitledSeparator.setText(myAnalysisNoon);
 
     //include test option
     myInspectTestSource.setSelected(uiOptions.ANALYZE_TEST_SOURCES);
