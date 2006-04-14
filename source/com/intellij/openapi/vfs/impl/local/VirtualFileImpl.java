@@ -204,15 +204,9 @@ public class VirtualFileImpl extends VirtualFile {
             for (int i = 0; i < length; ++i) {
               PhysicalFile f = files[i];
               String childPath = path + f.getName();
-              VirtualFileImpl child = ourFileSystem.myUnaccountedFiles.get(childPath);
-              if (child == null) {
+              VirtualFileImpl child = ourFileSystem.myUnaccountedFiles.remove(childPath);
+              if (child == null || !child.isValid()) {
                 child = new VirtualFileImpl(this, f, f.isDirectory());
-              } else {
-                if (!child.isValid()) {
-                  child = new VirtualFileImpl(this, f, f.isDirectory());
-                }
-
-                ourFileSystem.myUnaccountedFiles.remove(childPath);
               }
               myChildren[i] = child;
             }
