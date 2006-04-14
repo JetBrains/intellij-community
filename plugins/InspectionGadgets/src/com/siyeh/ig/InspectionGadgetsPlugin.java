@@ -914,6 +914,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(TestCaseWithNoTestMethodsInspection.class);
         m_inspectionClasses.add(TestCaseInProductCodeInspection.class);
         m_inspectionClasses.add(UnconstructableTestCaseInspection.class);
+        m_inspectionClasses.add(BeforeOrAfterIsPublicVoidNoArgInspection.class);
+        m_inspectionClasses.add(BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection.class);
     }
 
     public void disposeComponent() {
