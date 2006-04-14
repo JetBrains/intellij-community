@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.util.xml.*;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ public class ConverterManagerImpl implements ConverterManager {
     registerConverter(Boolean.class, Converter.BOOLEAN_CONVERTER);
     registerConverter(String.class, Converter.EMPTY_CONVERTER);
     registerConverter(PsiClass.class, Converter.PSI_CLASS_CONVERTER);
+    registerConverter(PsiType.class, Converter.PSI_TYPE_CONVERTER);
   }
 
   final Converter getConverter(Method method, final boolean getter, Type classType, Converter genericConverter) throws IllegalAccessException, InstantiationException {

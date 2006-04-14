@@ -27,7 +27,4 @@ public class EnumConverter<T extends Enum> implements Converter<T>{
     return getStringValue(t);
   }
 
-  public final Class<T> getDestinationType() {
-    return myType;
-  }
 }

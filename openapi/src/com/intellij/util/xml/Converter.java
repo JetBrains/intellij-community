@@ -4,6 +4,8 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author peter
@@ -11,7 +13,6 @@ import com.intellij.psi.PsiClass;
 public interface Converter<T> {
   T fromString(String s, final ConvertContext context);
   String toString(T t, final ConvertContext context);
-  Class<T> getDestinationType();
 
   Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
     public Integer fromString(final String s, final ConvertContext context) {
@@ -27,9 +28,6 @@ public interface Converter<T> {
       return t.toString();
     }
 
-    public Class<Integer> getDestinationType() {
-      return Integer.class;
-    }
   };
 
   Converter<Boolean> BOOLEAN_CONVERTER = new Converter<Boolean>() {
@@ -47,9 +45,6 @@ public interface Converter<T> {
       return t.toString();
     }
 
-    public Class<Boolean> getDestinationType() {
-      return Boolean.class;
-    }
   };
 
   Converter<String> EMPTY_CONVERTER = new Converter<String>() {
@@ -61,9 +56,6 @@ public interface Converter<T> {
       return t;
     }
 
-    public Class<String> getDestinationType() {
-      return String.class;
-    }
   };
 
   Converter<PsiClass> PSI_CLASS_CONVERTER = new Converter<PsiClass>() {
@@ -75,9 +67,22 @@ public interface Converter<T> {
       return t.getQualifiedName();
     }
 
-    public Class<PsiClass> getDestinationType() {
-      return PsiClass.class;
+  };
+
+  Converter<PsiType> PSI_TYPE_CONVERTER = new Converter<PsiType>() {
+    public PsiType fromString(final String s, final ConvertContext context) {
+      try {
+        return context.getFile().getManager().getElementFactory().createTypeFromText(s, null);
+      }
+      catch (IncorrectOperationException e) {
+        throw new RuntimeException(e);
+      }
     }
+
+    public String toString(final PsiType t, final ConvertContext context) {
+      return t.getCanonicalText();
+    }
+
   };
 
 }

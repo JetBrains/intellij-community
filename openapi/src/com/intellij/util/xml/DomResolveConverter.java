@@ -41,10 +41,6 @@ public class DomResolveConverter<T extends DomElement> implements Converter<T>{
     return (T) result[0];
   }
 
-  public final Class<T> getDestinationType() {
-    return myClass;
-  }
-
   public final String toString(final T t, final ConvertContext context) {
     return t.getPresentation().getElementName();
   }

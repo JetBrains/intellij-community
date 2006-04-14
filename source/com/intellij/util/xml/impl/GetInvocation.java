@@ -24,14 +24,13 @@ public abstract class GetInvocation implements Invocation {
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     assert handler.isValid();
     final XmlTag tag = handler.getXmlTag();
-    final Class destinationType = myConverter.getDestinationType();
     final boolean tagNotNull = tag != null;
     if (handler.isIndicator()) {
-      if ((destinationType == Boolean.class || destinationType == boolean.class)) {
-        return tagNotNull;
-      } else {
-        assert String.class == destinationType;
+      if (myConverter == Converter.EMPTY_CONVERTER) {
         return tagNotNull ? "" : null;
+      }
+      else {
+        return tagNotNull;
       }
     }
 
