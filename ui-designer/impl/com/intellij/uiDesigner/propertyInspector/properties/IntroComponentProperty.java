@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.ComponentEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Filter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,9 +59,12 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
     if (getName().equals(SwingProperties.LABEL_FOR)) {
       String text = FormInspectionUtil.getText(component.getModule(), component);
       if (text != null && value != null) {
-        RadComponent valueComponent = FormEditingUtil.findComponentAnywhere(component, value);
-        if (valueComponent != null) {
-          BindingProperty.checkCreateBindingFromText(valueComponent, text);
+        RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
+        if (root != null) {
+          RadComponent valueComponent = FormEditingUtil.findComponent(root, value);
+          if (valueComponent != null) {
+            BindingProperty.checkCreateBindingFromText(valueComponent, text);
+          }
         }
       }
     }

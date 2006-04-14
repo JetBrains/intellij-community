@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -175,6 +176,11 @@ public final class BindingProperty extends Property<RadComponent, String> {
   @Override
   public void resetValue(final RadComponent component) throws Exception {
     setValueImpl(component, "");
+  }
+
+  @Override
+  public boolean appliesToSelection(final List<RadComponent> selection) {
+    return selection.size() == 1;
   }
 
   @Nullable

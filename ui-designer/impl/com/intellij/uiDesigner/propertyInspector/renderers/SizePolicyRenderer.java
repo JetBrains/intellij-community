@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.propertyInspector.renderers;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -14,7 +15,7 @@ public final class SizePolicyRenderer extends LabelPropertyRenderer<Integer> {
     myBuffer=new StringBuffer();
   }
 
-  protected void customize(final Integer value){
+  protected void customize(@NotNull final Integer value) {
     final int policy=value.intValue();
     myBuffer.setLength(0);
 

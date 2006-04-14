@@ -1,8 +1,9 @@
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -18,7 +19,7 @@ public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer
     setOpaque(true);
   }
 
-  public final JLabel getComponent(final RadComponent component, final V value, final boolean selected, final boolean hasFocus){
+  public final JLabel getComponent(final RadRootContainer rootContainer, final V value, final boolean selected, final boolean hasFocus){
     // Reset text and icon
     setText(null);
     setIcon(null);
@@ -32,7 +33,9 @@ public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer
       setBackground(UIUtil.getTableBackground());
     }
 
-    customize(value);
+    if (value != null) {
+      customize(value);
+    }
 
     return this;
   }
@@ -42,7 +45,7 @@ public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer
    * attributes. Note, that background and foreground colors are already
    * set.
    */
-  protected void customize(V value) {
-    setText(value == null ? "" : value.toString());
+  protected void customize(@NotNull V value) {
+    setText(value.toString());
   }
 }

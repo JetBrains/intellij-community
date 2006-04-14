@@ -9,22 +9,13 @@ import com.intellij.uiDesigner.UIDesignerBundle;
  */
 public final class ClassToBindRenderer extends LabelPropertyRenderer<String> {
   public void customize(final String value){
-    final String text;
-
-    if(value != null){
-      final String className = PsiNameHelper.getShortClassName(value);
-      if(value.length() == className.length()){ // class in default package
-        text = className;
-      }
-      else{
-        final String packageName = value.substring(0, value.length() - className.length() - 1);
-        text = UIDesignerBundle.message("class.in.package", className, packageName);
-      }
+    final String className = PsiNameHelper.getShortClassName(value);
+    if(value.length() == className.length()){ // class in default package
+      setText(className);
     }
     else{
-      text = null;
+      final String packageName = value.substring(0, value.length() - className.length() - 1);
+      setText(UIDesignerBundle.message("class.in.package", className, packageName));
     }
-
-    setText(text);
   }
 }

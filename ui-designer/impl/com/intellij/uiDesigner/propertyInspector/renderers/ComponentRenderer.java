@@ -4,6 +4,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -18,11 +19,11 @@ import javax.swing.*;
  * @author yole
  */
 public class ComponentRenderer extends ColoredListCellRenderer implements PropertyRenderer<String> {
-  public JComponent getComponent(final RadComponent component, String value, boolean selected, boolean hasFocus) {
+  public JComponent getComponent(final RadRootContainer rootContainer, String value, boolean selected, boolean hasFocus) {
     clear();
     setBackground(selected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
     if (value != null && value.length() > 0) {
-      RadComponent target = FormEditingUtil.findComponentAnywhere(component, value);
+      RadComponent target = FormEditingUtil.findComponent(rootContainer, value);
       if (target != null) {
         renderComponent(target, selected);
       }

@@ -3,24 +3,26 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.ColorRenderer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.ColorChooserUI;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author yole
@@ -59,7 +61,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
   }
 
   private void updateTextField() {
-    myTextField.setText(myValue.toString());
+    myTextField.setText(myValue == null ? "" : myValue.toString());
   }
 
   public void updateUI() {
@@ -91,10 +93,10 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
       return myColorChooser;
     }
 
-    private void selectTabForColor(final ColorDescriptor value) {
+    private void selectTabForColor(@Nullable final ColorDescriptor value) {
       String tabName;
 
-      if (value.getSwingColor() != null) {
+      if (value == null || value.getSwingColor() != null) {
         tabName = mySwingChooserPanel.getDisplayName();
       }
       else if (value.getSystemColor() != null) {

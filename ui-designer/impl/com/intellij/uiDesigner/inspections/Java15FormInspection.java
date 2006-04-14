@@ -17,6 +17,8 @@ import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 
+import java.util.Collections;
+
 /**
  * @author yole
  */
@@ -59,7 +61,7 @@ public class Java15FormInspection extends BaseFormInspection {
 
 
     public void run() {
-      ResetValueAction.doResetValue(myComponent, myProperty, myEditor);
+      ResetValueAction.doResetValue(Collections.singletonList(myComponent), myProperty, myEditor);
     }
   }
 }

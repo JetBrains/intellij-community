@@ -33,6 +33,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.lang.reflect.Field;
 import java.util.Vector;
+import java.util.List;
 
 /**
  * @author yole
@@ -236,6 +237,11 @@ public class RadCardLayoutManager extends RadLayoutManager {
 
     public PropertyEditor<String> getEditor() {
       return myEditor;
+    }
+
+    @Override
+    public boolean appliesToSelection(final List<RadComponent> selection) {
+      return selection.size() == 1;
     }
   }
 }

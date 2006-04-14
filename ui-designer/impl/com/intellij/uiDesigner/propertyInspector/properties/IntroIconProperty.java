@@ -25,11 +25,9 @@ public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroIconProperty_";
 
   private LabelPropertyRenderer<IconDescriptor> myRenderer = new LabelPropertyRenderer<IconDescriptor>() {
-    protected void customize(IconDescriptor value) {
-      if (value != null) {
-        setIcon(value.getIcon());
-        setText(value.getIconPath());
-      }
+    protected void customize(@NotNull IconDescriptor value) {
+      setIcon(value.getIcon());
+      setText(value.getIconPath());
     }
   };
 

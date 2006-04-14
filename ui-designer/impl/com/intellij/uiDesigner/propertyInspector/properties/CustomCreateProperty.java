@@ -30,6 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author yole
@@ -69,13 +70,26 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     return myEditor;
   }
 
+  @Override
+  public boolean appliesToSelection(final List<RadComponent> selection) {
+    if (selection.size() > 1) {
+      // possible "enabled" state may be different
+      for(RadComponent c: selection) {
+        if (c.isCustomCreateRequired()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   protected void setValueImpl(final RadComponent component, final Boolean value) throws Exception {
     if (value.booleanValue() && component.getBinding() == null) {
       String initialBinding = BindingProperty.getDefaultBinding(component);
       final PsiNameHelper nameHelper = PsiManager.getInstance(component.getProject()).getNameHelper();
       String binding = Messages.showInputDialog(
         component.getProject(),
-        UIDesignerBundle.message("custom.create.field.name.prompt"), 
+        UIDesignerBundle.message("custom.create.field.name.prompt"),
         UIDesignerBundle.message("custom.create.title"), Messages.getQuestionIcon(),
         initialBinding,
         new InputValidator() {

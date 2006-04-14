@@ -95,7 +95,7 @@ public final class PropertyInspector extends JPanel{
   public void synchWithTree(final boolean forceSynch){
     final RadComponent[] selectedComponents = myComponentTree.getSelectedComponents();
     final CardLayout cardLayout = (CardLayout)getLayout();
-    if(selectedComponents.length == 1){
+    if(selectedComponents.length >= 1){
       cardLayout.show(this, INSPECTOR_CARD);
       myInspectorTable.synchWithTree(forceSynch);
     }

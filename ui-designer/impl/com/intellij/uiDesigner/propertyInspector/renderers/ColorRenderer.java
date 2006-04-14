@@ -1,8 +1,8 @@
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -23,7 +23,7 @@ public class ColorRenderer extends ColoredListCellRenderer implements PropertyRe
     setOpaque(true);
   }
 
-  public JComponent getComponent(RadComponent component, ColorDescriptor value, boolean selected, boolean hasFocus) {
+  public JComponent getComponent(RadRootContainer rootContainer, ColorDescriptor value, boolean selected, boolean hasFocus) {
     prepareComponent(value, selected);
     return this;
   }
@@ -33,8 +33,10 @@ public class ColorRenderer extends ColoredListCellRenderer implements PropertyRe
     clear();
     setIcon(myEmptyIcon);
     setBackground(selected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
-    append(myColorDescriptor.toString(),
-           selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+    if (myColorDescriptor != null) {
+      append(myColorDescriptor.toString(),
+             selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+    }
   }
 
   @Override protected void paintComponent(Graphics g) {

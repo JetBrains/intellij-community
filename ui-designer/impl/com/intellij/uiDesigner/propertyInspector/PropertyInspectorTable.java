@@ -89,7 +89,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   /**
    * Component to be edited
    */
-  private RadComponent myComponent;
+  @NotNull private final List<RadComponent> mySelection = new ArrayList<RadComponent>();
   /**
    * If true then inspector will show "expert" properties
    */
@@ -143,7 +143,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     finishEditing();
     myEditor = editor;
     if (myEditor == null) {
-      myComponent = null;
+      mySelection.clear();
       myProperties.clear();
       myModel.fireTableDataChanged();
     }
@@ -169,17 +169,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       return null;
     }
 
-    final Module module = myEditor.getModule();
-
-    final PsiClass aClass = PsiManager.getInstance(module.getProject()).findClass(
-      myComponent.getComponentClassName(),
-      GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
-    );
-
-    if (aClass == null){
-      return null;
-    }
-
     return myProperties.get(selectedRow);
   }
 
@@ -188,10 +177,17 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    */
   public PsiClass getComponentClass(){
     final Module module = myEditor.getModule();
+
+    if (mySelection.size() == 0) return null;
+    String className = mySelection.get(0).getComponentClassName();
+    for(int i=1; i<mySelection.size(); i++) {
+      if (!Comparing.equal(mySelection.get(i).getComponentClassName(), className)) {
+        return null;
+      }
+    }
+
     final PsiClass aClass = PsiManager.getInstance(module.getProject()).findClass(
-      myComponent.getComponentClassName(),
-      GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
-    );
+      className, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
     return aClass;
   }
 
@@ -314,15 +310,20 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
     myInsideSynch = true;
     try {
-      final RadComponent newSelectedComponent = myComponentTree.getSelectedComponent();
-      if (newSelectedComponent == null) {  // possible when switching away from form editor (IDEADEV-5222)
-        return;
+      RadComponent[] newSelection = myComponentTree.getSelectedComponents();
+      if (!forceSynch && mySelection.size() == newSelection.length) {
+        boolean anyChanges = false;
+        for(RadComponent c: newSelection) {
+          if (!mySelection.contains(c)) {
+            anyChanges = true;
+            break;
+          }
+        }
+        if (!anyChanges) return;
       }
 
-      if(!forceSynch && newSelectedComponent.equals(myComponent)){
-        // Nothing changed
-        return;
-      }
+      mySelection.clear();
+      Collections.addAll(mySelection, newSelection);
 
       if (isEditing()){
         cellEditor.stopCellEditing();
@@ -335,9 +336,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         selectedProperty=myProperties.get(selectedRow);
       }
 
-      myComponent = newSelectedComponent;
-      myProperties.clear();
-      collectProperties(myComponent, myProperties);
+      collectPropertiesForSelection();
       myModel.fireTableDataChanged();
 
       // Try to restore selection
@@ -349,10 +348,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       int indexToSelect=-1;
       for(int i=reversePath.size()-1;i>=0;i--){
         final Property property=reversePath.get(i);
-        int index=findPropertyByName(property.getName());
+        int index=findPropertyByName(myProperties, property.getName());
         if(index==-1 && indexToSelect!=-1){ // try to expand parent and try again
           expandProperty(indexToSelect);
-          index=findPropertyByName(property.getName());
+          index=findPropertyByName(myProperties, property.getName());
           if(index!=-1){
             indexToSelect=index;
           }else{
@@ -376,13 +375,56 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
   }
 
+  private void collectPropertiesForSelection() {
+    myProperties.clear();
+    if (mySelection.size() > 0) {
+      collectProperties(mySelection.get(0), myProperties);
+
+      for(int propIndex=myProperties.size()-1; propIndex >= 0; propIndex--) {
+        if (!myProperties.get(propIndex).appliesToSelection(mySelection)) {
+          myProperties.remove(propIndex);
+        }
+      }
+
+      for(int i=1; i<mySelection.size(); i++) {
+        ArrayList<Property> otherProperties = new ArrayList<Property>();
+        collectProperties(mySelection.get(i), otherProperties);
+        for(int propIndex=myProperties.size()-1; propIndex >= 0; propIndex--) {
+          final Property prop = myProperties.get(propIndex);
+          int otherPropIndex = findPropertyByName(otherProperties, prop.getName());
+          if (otherPropIndex < 0) {
+            myProperties.remove(propIndex);
+            continue;
+          }
+          final Property otherProp = otherProperties.get(otherPropIndex);
+          if (!otherProp.getClass().equals(prop.getClass())) {
+            myProperties.remove(propIndex);
+            continue;
+          }
+          Property[] children = prop.getChildren(mySelection.get(0));
+          Property[] otherChildren = otherProp.getChildren(mySelection.get(i));
+          if (children.length != otherChildren.length) {
+            myProperties.remove(propIndex);
+            continue;
+          }
+          for(int childIndex=0; childIndex<children.length; childIndex++) {
+            if (!Comparing.equal(children [childIndex].getName(), otherChildren [childIndex].getName())) {
+              myProperties.remove(propIndex);
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
   /**
    * @return index of the property with specified <code>name</code>.
    * If there is no such property then the method returns <code>-1</code>.
    */
-  private int findPropertyByName(final String name){
-    for(int i=myProperties.size()-1;i>=0;i--){
-      final Property property=myProperties.get(i);
+  private int findPropertyByName(final ArrayList<Property> properties, final String name){
+    for(int i=properties.size()-1;i>=0;i--){
+      final Property property=properties.get(i);
       if(property.getName().equals(name)){
         return i;
       }
@@ -448,6 +490,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
                                        final RadComponent component,
                                        final ArrayList<Property> result) {
     for(Property prop: containerProperties) {
+      //noinspection unchecked
       if (prop.appliesTo(component)) {
         addProperty(result, prop);
       }
@@ -457,10 +500,14 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private void addProperty(final ArrayList<Property> result, final Property property) {
     result.add(property);
     if (myExpandedProperties.contains(property.getName())) {
-      for(Property child: property.getChildren(myComponent)) {
+      for(Property child: getPropChildren(property)) {
         addProperty(result, child);
       }
     }
+  }
+
+  private Property[] getPropChildren(final Property property) {
+    return property.getChildren(mySelection.get(0));
   }
 
   public TableCellEditor getCellEditor(final int row, final int column){
@@ -551,7 +598,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     LOG.assertTrue(!myExpandedProperties.contains(property));
     myExpandedProperties.add(property.getName());
 
-    final Property[] children=property.getChildren(myComponent);
+    final Property[] children=getPropChildren(property);
     for (int i = 0; i < children.length; i++) {
       myProperties.add(index + i + 1, children[i]);
     }
@@ -575,7 +622,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     LOG.assertTrue(myExpandedProperties.contains(property.getName()));
     myExpandedProperties.remove(property.getName());
 
-    final Property[] children=property.getChildren(myComponent);
+    final Property[] children=getPropChildren(property);
     for (int i=0; i<children.length; i++){
       myProperties.remove(index + 1);
     }
@@ -587,18 +634,23 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
   }
 
-  ErrorInfo getErrorInfoForRow(final int row){
+  @Nullable
+  ErrorInfo getErrorInfoForRow(final int row) {
     LOG.assertTrue(row < myProperties.size());
+    if (mySelection.size() != 1) {
+      return null;
+    }
+    RadComponent component = mySelection.get(0);
     final Property property = myProperties.get(row);
     ErrorInfo errorInfo = null;
     if(myClassToBindProperty.equals(property)){
-      errorInfo = (ErrorInfo)myComponent.getClientProperty(ErrorAnalyzer.CLIENT_PROP_CLASS_TO_BIND_ERROR);
+      errorInfo = (ErrorInfo)component.getClientProperty(ErrorAnalyzer.CLIENT_PROP_CLASS_TO_BIND_ERROR);
     }
     else if(myBindingProperty.equals(property)){
-      errorInfo = (ErrorInfo)myComponent.getClientProperty(ErrorAnalyzer.CLIENT_PROP_BINDING_ERROR);
+      errorInfo = (ErrorInfo)component.getClientProperty(ErrorAnalyzer.CLIENT_PROP_BINDING_ERROR);
     }
     else {
-      ArrayList<ErrorInfo> errors = (ArrayList<ErrorInfo>) myComponent.getClientProperty(ErrorAnalyzer.CLIENT_PROP_ERROR_ARRAY);
+      ArrayList<ErrorInfo> errors = (ArrayList<ErrorInfo>) component.getClientProperty(ErrorAnalyzer.CLIENT_PROP_ERROR_ARRAY);
       if (errors != null) {
         for(ErrorInfo err: errors) {
           if (property.getName().equals(err.getPropertyName())) {
@@ -628,6 +680,77 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       return null;
     }
     return getErrorForRow(row);
+  }
+
+  private Object getSelectionValue(final Property property) {
+    if (mySelection.size() == 0) {
+      return null;
+    }
+    //noinspection unchecked
+    Object result = property.getValue(mySelection.get(0));
+    for(int i=1; i<mySelection.size(); i++) {
+      Object otherValue = null;
+      if (property instanceof IntrospectedProperty) {
+        IntrospectedProperty[] props = Palette.getInstance(myProject).getIntrospectedProperties(mySelection.get(i));
+        for(IntrospectedProperty otherProperty: props) {
+          if (otherProperty.getName().equals(property.getName())) {
+            otherValue = otherProperty.getValue(mySelection.get(i));
+            break;            
+          }
+        }
+      }
+      else {
+        //noinspection unchecked
+        otherValue = property.getValue(mySelection.get(i));
+      }
+      if (!Comparing.equal(result, otherValue)) {
+        return null;
+      }
+    }
+    return result;
+  }
+
+  private void setSelectionValue(Property property, Object newValue) {
+    if (!setPropValue(property, mySelection.get(0), newValue)) return;
+    for(int i=1; i<mySelection.size(); i++) {
+      if (property instanceof IntrospectedProperty) {
+        IntrospectedProperty[] props = Palette.getInstance(myProject).getIntrospectedProperties(mySelection.get(i));
+        for(IntrospectedProperty otherProperty: props) {
+          if (otherProperty.getName().equals(property.getName())) {
+            if (!setPropValue(otherProperty, mySelection.get(i), newValue)) return;
+            break;
+          }
+        }
+      }
+      else {
+        if (!setPropValue(property, mySelection.get(i), newValue)) return;
+      }
+    }
+  }
+
+  private static boolean setPropValue(final Property property, final RadComponent c, final Object newValue) {
+    try {
+      //noinspection unchecked
+      property.setValue(c, newValue);
+    }
+    catch (Throwable e) {
+      if(e instanceof InvocationTargetException){ // special handling of warapped exceptions
+        e = ((InvocationTargetException)e).getTargetException();
+      }
+      Messages.showMessageDialog(e.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
+      return false;
+    }
+    return true;
+  }
+
+  public boolean isModifiedForSelection(final Property property) {
+    for(RadComponent c: mySelection) {
+      //noinspection unchecked
+      if (property.isModified(c)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -669,23 +792,14 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final Property property=myProperties.get(row);
 
       // Optimization: do nothing if value doesn't change
-      final Object oldValue=property.getValue(myComponent);
+      final Object oldValue=getSelectionValue(property);
       if(Comparing.equal(oldValue,newValue)){
         return;
       }
       if (!myEditor.ensureEditable()) {
         return;
       }
-      try {
-        property.setValue(myComponent, newValue);
-      }
-      catch (Throwable e) {
-        if(e instanceof InvocationTargetException){ // special handling of warapped exceptions
-          e = ((InvocationTargetException)e).getTargetException();
-        }
-        Messages.showMessageDialog(e.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
-        return;
-      }
+      setSelectionValue(property, newValue);
 
       myEditor.refreshAndSave(false);
     }
@@ -786,7 +900,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         myPropertyNameRenderer.append(property.getName(), attrs);
 
         // 2. Icon
-        if(property.getChildren(myComponent).length>0){
+        if(getPropChildren(property).length>0){
           // This is composite property and we have to show +/- sign
           if(myExpandedProperties.contains(property.getName())){
             myPropertyNameRenderer.setIcon(myCollapseIcon);
@@ -806,11 +920,13 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
       else if(column==1){ // painter for second column
         final PropertyRenderer renderer=property.getRenderer();
-        final JComponent component = renderer.getComponent(myComponent, property.getValue(myComponent),selected,hasFocus);
+        //noinspection unchecked
+        final JComponent component = renderer.getComponent(myEditor.getRootContainer(), getSelectionValue(property),
+                                                           selected, hasFocus);
         if (!selected) {
           component.setBackground(background);
         }
-        if (property.isModified(myComponent)) {
+        if (isModifiedForSelection(property)) {
           component.setFont(table.getFont().deriveFont(Font.BOLD));
         }
         else {
@@ -825,7 +941,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if (!selected) {
         myPropertyNameRenderer.setForeground(PropertyInspectorTable.this.getForeground());
         if(property instanceof IntrospectedProperty){
-          final Class componentClass = myComponent.getComponentClass();
+          final Class componentClass = mySelection.get(0).getComponentClass();
           if (Properties.getInstance().isExpertProperty(componentClass, property.getName())) {
             myPropertyNameRenderer.setForeground(Color.LIGHT_GRAY);
           }
@@ -839,11 +955,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       // 1. Text
       ErrorInfo errInfo = getErrorInfoForRow(row);
 
+      boolean modified = isModifiedForSelection(property);
       if (errInfo == null) {
-        return property.isModified(myComponent) ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        return modified ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
       }
 
-      boolean modified = property.isModified(myComponent);
       final HighlightSeverity severity = errInfo.getHighlightDisplayLevel().getSeverity();
       Map<HighlightSeverity, SimpleTextAttributes> cache = modified ? myModifiedHighlightAttributes : myHighlightAttributes;
       SimpleTextAttributes result = cache.get(severity);
@@ -887,7 +1003,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     public Component getTableCellEditorComponent(final JTable table, final Object value, final boolean isSelected, final int row, final int column){
       LOG.assertTrue(value!=null);
       final Property property=(Property)value;
-      return myEditor.getComponent(myComponent, property.getValue(myComponent), false);
+      return myEditor.getComponent(mySelection.get(0), getSelectionValue(property), false);
     }
   }
 
@@ -906,7 +1022,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
 
       final Property property = myProperties.get(row);
-      final Property[] children = property.getChildren(myComponent);
+      final Property[] children = getPropChildren(property);
       if (children.length == 0) {
         return;
       }
@@ -925,7 +1041,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         int column = columnAtPoint(e.getPoint());
         if (row >= 0 && column == 0) {
           final Property property = myProperties.get(row);
-          if (property.getChildren(myComponent).length == 0) {
+          if (getPropChildren(property).length == 0) {
             startEditing(row);
           }
         }
@@ -1008,7 +1124,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
 
       final Property property=myProperties.get(selectedRow);
-      if(property.getChildren(myComponent).length>0){
+      if(getPropChildren(property).length>0){
         if(myExpandedProperties.contains(property.getName())){
           collapseProperty(selectedRow);
         }else{
@@ -1033,7 +1149,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         return;
       }
       final Property property=myProperties.get(selectedRow);
-      if(property.getChildren(myComponent).length>0) {
+      if(getPropChildren(property).length>0) {
         if (myExpand) {
           if (!myExpandedProperties.contains(property.getName())) {
             expandProperty(selectedRow);
@@ -1063,7 +1179,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if(editor != null){
         editor.updateUI();
       }
-      final Property[] children = property.getChildren(myComponent);
+      final Property[] children = getPropChildren(property);
       for (int i = children.length - 1; i >= 0; i--) {
         final Property child = children[i];
         if(!(child instanceof IntrospectedProperty)){

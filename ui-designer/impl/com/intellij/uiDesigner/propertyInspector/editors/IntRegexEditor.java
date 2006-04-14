@@ -6,7 +6,9 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.FormEditingUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -37,7 +39,8 @@ public class IntRegexEditor<T> extends AbstractTextFieldEditor<T> {
 
   @Override
   protected void setValueFromComponent(final RadComponent component, final T value) {
-    JLabel label = myRenderer.getComponent(component, value, false, false);
+    RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
+    JLabel label = myRenderer.getComponent(root, value, false, false);
     myTf.setText(label.getText());
   }
 

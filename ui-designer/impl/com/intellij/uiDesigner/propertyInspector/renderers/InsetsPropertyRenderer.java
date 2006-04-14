@@ -1,6 +1,6 @@
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
-import com.intellij.psi.PsiKeyword;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.Insets;
 
@@ -15,18 +15,13 @@ public final class InsetsPropertyRenderer extends LabelPropertyRenderer<Insets> 
     myBuffer=new StringBuffer();
   }
 
-  protected void customize(final Insets value){
+  protected void customize(@NotNull final Insets value){
     myBuffer.setLength(0);
     myBuffer.append('[');
-    if (value != null) {
-      myBuffer.append(value.top).append(", ");
-      myBuffer.append(value.left).append(", ");
-      myBuffer.append(value.bottom).append(", ");
-      myBuffer.append(value.right);
-    }
-    else {
-      myBuffer.append(PsiKeyword.NULL);
-    }
+    myBuffer.append(value.top).append(", ");
+    myBuffer.append(value.left).append(", ");
+    myBuffer.append(value.bottom).append(", ");
+    myBuffer.append(value.right);
     myBuffer.append("]");
 
     setText(myBuffer.substring(0, myBuffer.length())); // [jeka] important! do not use toString() on the StringBuffer that is reused

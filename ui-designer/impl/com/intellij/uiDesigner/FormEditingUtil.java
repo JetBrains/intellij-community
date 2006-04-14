@@ -497,21 +497,6 @@ public final class FormEditingUtil {
     editor.refreshAndSave(true);
   }
 
-  public static boolean idAlreadyExist(final String id, final RadComponent component) {
-    if (id.equals(component.getId())) {
-      return true;
-    }
-    if (component instanceof RadContainer) {
-      final RadContainer container = (RadContainer)component;
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        if (idAlreadyExist(id, container.getComponent(i))) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   /**
    * @return id
      * @param rootContainer
@@ -519,7 +504,7 @@ public final class FormEditingUtil {
   public static String generateId(final RadRootContainer rootContainer) {
     while (true) {
       final String id = Integer.toString((int)(Math.random() * 1024 * 1024), 16);
-      if (!idAlreadyExist(id, rootContainer)) {
+      if (findComponent(rootContainer, id) == null) {
         return id;
       }
     }
@@ -753,18 +738,6 @@ public final class FormEditingUtil {
       }
     }
     return null;
-  }
-
-  @Nullable
-  public static RadComponent findComponentAnywhere(@NotNull final RadComponent component, @NotNull final String valueId) {
-    RadContainer container = component.getParent();
-    if (container == null) {
-      return null;
-    }
-    while (container.getParent() != null) {
-      container = container.getParent();
-    }
-    return findComponent(container, valueId);
   }
 
   @Nullable

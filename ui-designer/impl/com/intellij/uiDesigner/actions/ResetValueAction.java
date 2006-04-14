@@ -23,11 +23,10 @@ public class ResetValueAction extends AbstractGuiEditorAction {
     assert inspector != null;
     final Property property = inspector.getSelectedProperty();
     assert property != null;
-    final RadComponent component = selection.get(0);
-    doResetValue(component, property, editor);
+    doResetValue(selection, property, editor);
   }
 
-  public static void doResetValue(final RadComponent component, final Property property, final GuiEditor editor) {
+  public static void doResetValue(final List<RadComponent> selection, final Property property, final GuiEditor editor) {
     try {
       if (!editor.ensureEditable()) return;
       final PropertyInspector propertyInspector = UIDesignerToolWindowManager.getInstance(editor.getProject()).getPropertyInspector();
@@ -35,8 +34,14 @@ public class ResetValueAction extends AbstractGuiEditorAction {
         propertyInspector.stopEditing();
       }
       //noinspection unchecked
-      property.resetValue(component);
-      component.getDelegee().invalidate();
+      for(RadComponent component: selection) {
+        //noinspection unchecked
+        if (property.isModified(component)) {
+          //noinspection unchecked
+          property.resetValue(component);
+          component.getDelegee().invalidate();
+        }
+      }
       editor.refreshAndSave(false);
       propertyInspector.repaint();
     }
@@ -51,8 +56,8 @@ public class ResetValueAction extends AbstractGuiEditorAction {
       final Property selectedProperty = inspector.getSelectedProperty();
       //noinspection unchecked
       e.getPresentation().setEnabled(selectedProperty != null &&
-                                     selection.size() == 1 &&
-                                     selectedProperty.isModified(selection.get(0)));
+                                     selection.size() > 0 &&
+                                     inspector.isModifiedForSelection(selectedProperty));
     }
     else {
       e.getPresentation().setEnabled(false);

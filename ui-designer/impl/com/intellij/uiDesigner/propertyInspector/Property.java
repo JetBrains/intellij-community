@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -84,7 +86,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
       component.markPropertyAsModified(topmostParent);
     }
     else {
-      component.removeModifiedProperty(topmostParent);      
+      component.removeModifiedProperty(topmostParent);
     }
   }
 
@@ -128,5 +130,9 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
   }
 
   public void resetValue(T component) throws Exception {
+  }
+
+  public boolean appliesToSelection(List<RadComponent> selection) {
+    return true;
   }
 }
