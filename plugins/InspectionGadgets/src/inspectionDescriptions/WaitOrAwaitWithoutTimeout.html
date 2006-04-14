@@ -1,0 +1,11 @@
+<html>
+<body><table> <tr> <td valign="top" height="150">
+<font face="verdana" size="-1">
+This inspection reports on any call to <b><font color="#000080">Object.wait()</font></b> or  <b><font color="#000080">Condition.await()</font></b> which
+does not specify a timeout.  Such calls may be dangerous in high-availability programs, as failures in one
+component may result in blockages of the waiting component,
+if <b><font color="#000080">notify()</font></b>/<b><font color="#000080">notifyAll()</font></b>
+or <b><font color="#000080">signal()</font></b>/<b><font color="#000080">signalAll()</font></b> never
+get called.
+</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</html>
