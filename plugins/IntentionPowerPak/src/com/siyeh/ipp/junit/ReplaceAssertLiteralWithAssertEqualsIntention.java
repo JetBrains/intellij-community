@@ -28,7 +28,6 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
   protected String getTextForElement(PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = call.getArgumentList();
-    assert argumentList != null;
     final PsiExpression[] args = argumentList.getExpressions();
     final PsiReferenceExpression methodExpression =
       call.getMethodExpression();
@@ -56,19 +55,19 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
       (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression =
       call.getMethodExpression();
-    final PsiExpression qualifierExp =
-      methodExpression.getQualifierExpression();
+    final PsiElement qualifier =
+      methodExpression.getQualifier();
     @NonNls final String methodName = methodExpression.getReferenceName();
     assert methodName != null;
     final String literal = methodName.substring("assert".length())
       .toLowerCase();
 
-    final String qualifier;
-    if (qualifierExp == null) {
-      qualifier = "";
+    final String qualifierText;
+    if (qualifier == null) {
+      qualifierText = "";
     }
     else {
-      qualifier = qualifierExp.getText() + '.';
+      qualifierText = qualifier.getText() + '.';
     }
     final PsiExpressionList argumentList = call.getArgumentList();
     assert argumentList != null;
@@ -76,12 +75,12 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
 
     @NonNls final String callString;
     if (args.length == 1) {
-      callString = qualifier + "assertEquals(" + literal + ", " +
+      callString = qualifierText + "assertEquals(" + literal + ", " +
                    args[0].getText() + ')';
     }
     else {
       callString =
-        qualifier + "assertEquals(" + args[0].getText() + ", " +
+        qualifierText + "assertEquals(" + args[0].getText() + ", " +
         literal +
         ", " + args[1].getText() +
         ')';

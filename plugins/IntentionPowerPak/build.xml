@@ -3,8 +3,8 @@
 <project name ="IntentionPowerPack" default ="compile">
 
     <property name="src.dir" value="src"/>
-    <property name="idea.dir" value="c:/IntelliJ-IDEA-3341`"/>
-    <property name="idea.plugin.dir" value="C:\Documents and Settings\dgriffith\.IntelliJIdea\config\plugins"/>
+    <property name="idea.dir" value="c:/Demetra"/>
+    <property name="idea.plugin.dir" value="C:\Documents and Settings\dgriffith\.IntelliJIdea60\config\plugins"/>
 
     <property name="debug" value="true"/>
     <property name="optimize" value="off"/>
@@ -15,7 +15,6 @@
     <property name="dist.zip.file" value="${project.fullname}.${project.version}.zip"/>
 
     <path id="project.class.path">
-
         <pathelement location="${idea.dir}/lib/openAPI.jar"/>
         <pathelement location="${idea.dir}/lib/idea.jar"/>
         <pathelement location="${idea.dir}/lib/jdom.jar"/>
@@ -48,6 +47,9 @@
             </fileset>
             <fileset dir="src">
                 <include name="intentionDescriptions/**/*"/>
+            </fileset>
+            <fileset dir="src">
+                <include name="**/*.properties"/>
             </fileset>
         </jar>
         <mkdir dir="${idea.plugin.dir}"/>

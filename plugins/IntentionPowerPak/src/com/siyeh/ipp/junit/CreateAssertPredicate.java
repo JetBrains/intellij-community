@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
@@ -36,9 +37,6 @@ class CreateAssertPredicate implements PsiElementPredicate{
         final PsiExpressionStatement statement =
                 (PsiExpressionStatement) element;
         final PsiExpression expression = statement.getExpression();
-            if (expression == null) {
-                    return false;
-            }
         final PsiElement parent = expression.getParent();
         if(!(parent instanceof PsiExpressionStatement)){
             return false;
@@ -47,14 +45,17 @@ class CreateAssertPredicate implements PsiElementPredicate{
         if(!PsiType.BOOLEAN.equals(type)){
             return false;
         }
+        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
+                expression, PsiMethod.class);
+        if (AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test",
+                                       true)) {
+            return true;
+        }
         final PsiClass containingClass =
                 PsiTreeUtil.getParentOfType(expression, PsiClass.class);
         if(!isTest(containingClass)){
             return false;
         }
-
-        final PsiMethod containingMethod =
-                PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
         return isTestMethod(containingMethod);
     }
 
@@ -83,7 +84,7 @@ class CreateAssertPredicate implements PsiElementPredicate{
             return false;
         }
         @NonNls final String methodName = method.getName();
-        return methodName != null && methodName.startsWith("test");
+        return methodName.startsWith("test");
     }
 
     private static boolean isTest(PsiClass aClass){

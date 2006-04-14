@@ -1,5 +1,7 @@
 package com.siyeh.ipp;
 
+import org.junit.Assert;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
@@ -290,7 +292,7 @@ public class ManualTestClass
         String bar = "foo";
 
         // test changing this to assertEquals  and back
-        assertTrue("foo", foo);
+        Assert.assertTrue("foo", foo);
 
         // test changing this to assertEquals  and back
         assertTrue(foo);

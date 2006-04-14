@@ -29,7 +29,6 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention extends MutablyNamedI
 
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = call.getArgumentList();
-    assert argumentList != null;
     final PsiExpression[] args = argumentList.getExpressions();
     final String assertString;
     if (args.length == 2) {
@@ -53,14 +52,14 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention extends MutablyNamedI
     final PsiMethodCallExpression call =
       (PsiMethodCallExpression)element;
     final PsiReferenceExpression expression = call.getMethodExpression();
-    final PsiExpression qualifierExp = expression.getQualifierExpression();
+    final PsiElement qualifier = expression.getQualifier();
 
-    final String qualifier;
-    if (qualifierExp == null) {
-      qualifier = "";
+    final String qualifierText;
+    if (qualifier == null) {
+      qualifierText = "";
     }
     else {
-      qualifier = qualifierExp.getText() + '.';
+      qualifierText = qualifier.getText() + '.';
     }
 
     final PsiExpressionList argumentList = call.getArgumentList();
@@ -78,7 +77,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention extends MutablyNamedI
       else {
         otherArg = args[0];
       }
-      callString = qualifier + getAssertString(argText) + '(' +
+      callString = qualifierText + getAssertString(argText) + '(' +
                    otherArg.getText() + ')';
     }
     else {
@@ -92,7 +91,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention extends MutablyNamedI
       else {
         otherArg = args[1];
       }
-      callString = qualifier + getAssertString(argText) + '(' +
+      callString = qualifierText + getAssertString(argText) + '(' +
                    args[0].getText() + ", " + otherArg.getText() + ')';
     }
     replaceExpression(callString, call);

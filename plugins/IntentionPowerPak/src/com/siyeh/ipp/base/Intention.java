@@ -142,6 +142,20 @@ public abstract class Intention implements IntentionAction{
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
     }
+    
+    protected static void replaceStatementAndShorten(@NonNls @NotNull String newStatement,
+                                           @NonNls @NotNull PsiStatement statement)
+            throws IncorrectOperationException{
+        final PsiManager mgr = statement.getManager();
+        final PsiElementFactory factory = mgr.getElementFactory();
+        final PsiStatement newCall =
+                factory.createStatementFromText(newStatement, statement);
+        final PsiElement insertedElement = statement.replace(newCall);
+        final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+        final PsiElement shortenedElement = codeStyleManager.shortenClassReferences(
+                insertedElement);
+        codeStyleManager.reformat(shortenedElement);
+    }
 
     @Nullable PsiElement findMatchingElement(PsiFile file,
                                              Editor editor){

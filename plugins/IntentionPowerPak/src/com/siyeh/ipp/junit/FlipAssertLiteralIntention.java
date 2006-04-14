@@ -59,15 +59,15 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
     else {
       toMethodName = "assertTrue";
     }
-    final PsiExpression qualifierExp =
-      methodExpression.getQualifierExpression();
+    final PsiElement qualifier =
+      methodExpression.getQualifier();
 
-    final String qualifier;
-    if (qualifierExp == null) {
-      qualifier = "";
+    final String qualifierText;
+    if (qualifier == null) {
+        qualifierText = "";
     }
     else {
-      qualifier = qualifierExp.getText() + '.';
+        qualifierText = qualifier.getText() + '.';
     }
     final PsiExpressionList argumentList = call.getArgumentList();
     assert argumentList != null;
@@ -75,13 +75,12 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
     final String callString;
     if (args.length == 1) {
       final PsiExpression arg = args[0];
-      callString = qualifier + toMethodName + '(' +
+      callString = qualifierText + toMethodName + '(' +
                    BoolUtils.getNegatedExpressionText(arg) + ')';
     }
     else {
       final PsiExpression arg = args[1];
-      callString =
-        qualifier + toMethodName + '(' + args[0].getText() + ',' +
+      callString = qualifierText + toMethodName + '(' + args[0].getText() + ',' +
         BoolUtils.getNegatedExpressionText(arg) +
         ')';
     }

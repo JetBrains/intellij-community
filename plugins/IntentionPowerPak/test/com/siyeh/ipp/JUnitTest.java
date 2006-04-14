@@ -6,6 +6,7 @@ public class JUnitTest extends TestCase {
     Object x;
     Object y;
     int z;
+    
     public void test()
     {
           true;
