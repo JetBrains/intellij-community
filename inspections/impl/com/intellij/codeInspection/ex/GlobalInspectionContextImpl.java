@@ -9,6 +9,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
@@ -883,7 +884,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public void refreshViews() {
-    myView.updateView(false);
+    if (myView != null) {
+      myView.updateView(false);
+    }
   }
 
   public void incrementJobDoneAmount(JobDescriptor job, String message) {
