@@ -12,9 +12,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.HashMap;
 import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private static final Key DELETED_STATUS = Key.create("DELETED_STATUS");
 
   private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
+  public Map<String, VirtualFileImpl> myUnaccountedFiles = new HashMap<String, VirtualFileImpl>();
 
   private static class WatchRequestImpl implements WatchRequest {
     public String myRootPath;
@@ -261,19 +263,25 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
           if (root == null) return null;
         }
         else {
-          if (!createIfNoCache && !((VirtualFileImpl)root).areChildrenCached()) return null;
-          VirtualFile child = root.findChild(name);
-          if (child == null) {
-            if (refreshIfNotFound) {
-              root.refresh(false, false);
-              child = root.findChild(name);
-              if (child == null) return null;
-            }
-            else {
-              return null;
-            }
+          if (!((VirtualFileImpl)root).areChildrenCached()) {
+            if (!createIfNoCache) return null;
+            root = ((VirtualFileImpl)root).findSingleChild(name);
+            if (root == null) return null;
           }
-          root = child;
+          else {
+            VirtualFile child = root.findChild(name);
+            if (child == null) {
+              if (refreshIfNotFound) {
+                root.refresh(false, false);
+                child = root.findChild(name);
+                if (child == null) return null;
+              }
+              else {
+                return null;
+              }
+            }
+            root = child;
+          }
         }
       }
 
@@ -388,28 +396,35 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
               refresh(rootFile, recursively, false, modalityState, asynchronous, true);
             }
           } else {
-            final boolean physicalExists = new File(request.getFileSystemRootPath()).exists();
-            if (physicalExists) {
-              int index = runPath.lastIndexOf('/');
-              while(index >= 0) {
-                String parentPath = runPath.substring(0, index);
-                final VirtualFileImpl vParent = (VirtualFileImpl)_findFileByPath(parentPath, false);
-                if (vParent != null) {
-                  final String path = runPath;
-                  getManager().addEventToFireByRefresh(new Runnable() {
-                    public void run() {
-                      final VirtualFileImpl newVFile = new VirtualFileImpl(path);
-                      vParent.addChild(newVFile);
-                      fireFileCreated(null, newVFile);
-                    }
-                  }, asynchronous, modalityState);
-                  break;
-                }
+            final String fileSystemPath = request.getFileSystemRootPath();
+            checkFileCreated(fileSystemPath, runPath, asynchronous, modalityState);
+          }
+        }
 
-                runPath = parentPath;
-                index = runPath.lastIndexOf('/');
-              }
+        for (final Map.Entry<String,VirtualFileImpl> entry : myUnaccountedFiles.entrySet()) {
+          final VirtualFileImpl file = entry.getValue();
+          if (file != null) {
+            if (!file.getPhysicalFile().exists()) {
+              final Runnable action = new Runnable() {
+                public void run() {
+                  if (!file.isValid()) return;
+                  boolean isDirectory = file.isDirectory();
+                  fireBeforeFileDeletion(null, file);
+                  synchronized (LOCK) {
+                    myUnaccountedFiles.put(entry.getKey(), null);
+                  }
+                  fireFileDeleted(null, file, file.getName(), isDirectory, null);
+                }
+              };
+              getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
+
+            } else {
+              refresh(file, true, false, modalityState, asynchronous, false);
             }
+          } else {
+            final String vfsPath = entry.getKey();
+            final String fsPath = vfsPath.replace('/', File.separatorChar);
+            checkFileCreated(fsPath, vfsPath, asynchronous, modalityState);
           }
         }
 
@@ -429,6 +444,34 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     else {
       runnable.run();
       endTask.run();
+    }
+  }
+
+  private void checkFileCreated(final String fileSystemPath,
+                                String vfsPath,
+                                final boolean asynchronous,
+                                final ModalityState modalityState) {
+    final boolean physicalExists = new File(fileSystemPath).exists();
+    if (physicalExists) {
+      int index = vfsPath.lastIndexOf('/');
+      while(index >= 0) {
+        String parentPath = vfsPath.substring(0, index);
+        final VirtualFileImpl vParent = (VirtualFileImpl)_findFileByPath(parentPath, false);
+        if (vParent != null) {
+          final String path = vfsPath;
+          getManager().addEventToFireByRefresh(new Runnable() {
+            public void run() {
+              final VirtualFileImpl newVFile = new VirtualFileImpl(path);
+              vParent.addChild(newVFile);
+              fireFileCreated(null, newVFile);
+            }
+          }, asynchronous, modalityState);
+          break;
+        }
+
+        vfsPath = parentPath;
+        index = vfsPath.lastIndexOf('/');
+      }
     }
   }
 

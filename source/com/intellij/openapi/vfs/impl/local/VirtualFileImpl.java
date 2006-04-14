@@ -200,15 +200,51 @@ public class VirtualFileImpl extends VirtualFile {
           }
           else {
             myChildren = new VirtualFileImpl[ length ];
+            String path = getPath() + "/";
             for (int i = 0; i < length; ++i) {
               PhysicalFile f = files[i];
-              myChildren[i] = new VirtualFileImpl(this, f, f.isDirectory());
+              String childPath = path + f.getName();
+              VirtualFileImpl child = ourFileSystem.myUnaccountedFiles.get(childPath);
+              if (child == null) {
+                child = new VirtualFileImpl(this, f, f.isDirectory());
+              } else {
+                ourFileSystem.myUnaccountedFiles.remove(childPath);
+              }
+              myChildren[i] = child;
             }
           }
         }
       }
     }
     return myChildren;
+  }
+
+  VirtualFile findSingleChild(String name) {
+
+    if (!isDirectory()) return null;
+    if (myChildren != null) return super.findChild(name);
+    synchronized (ourFileSystem.LOCK) {
+      String path = getPath() + "/" + name;
+      VirtualFileImpl child = ourFileSystem.myUnaccountedFiles.get(path);
+      if (child != null) {
+        if (child.isValid()) {
+          return child;
+        } else {
+          ourFileSystem.myUnaccountedFiles.remove(path);
+        }
+      }
+
+      PhysicalFile physicalFile = new IoFile(path);
+      if (physicalFile.exists()) {
+        child = new VirtualFileImpl(this, physicalFile, physicalFile.isDirectory());
+        ourFileSystem.myUnaccountedFiles.put(path, child);
+        return child;
+      } else {
+        ourFileSystem.myUnaccountedFiles.put(path, null);
+      }
+    }
+
+    return null;
   }
 
   public InputStream getInputStream() throws IOException {
