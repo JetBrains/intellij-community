@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.CommonBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -866,7 +867,9 @@ public class KeymapPanel extends JPanel {
           }
         }
       });
-      myTextField.setBorder(null);
+      if (!LafManager.getInstance().isUnderAquaLookAndFeel()) {
+        myTextField.setBorder(null);
+      }
     }
 
     public Component getEditorComponent() {
