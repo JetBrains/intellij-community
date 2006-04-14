@@ -579,6 +579,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
+  public LocalChangeList getDefaultChangelist() {
+    return myDefaultChangelist;
+  }
+
   private LocalChangeList findRealByCopy(LocalChangeList list) {
     for (LocalChangeList changeList : myChangeLists) {
       if (changeList.equals(list)) {

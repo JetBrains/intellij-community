@@ -32,6 +32,7 @@ public abstract class ChangeListManager {
 
   public abstract LocalChangeList addChangeList(@NotNull String name);
   public abstract void setDefaultChangeList(@NotNull LocalChangeList list);
+  public abstract LocalChangeList getDefaultChangelist();
 
   public abstract LocalChangeList getChangeList(Change change);
 

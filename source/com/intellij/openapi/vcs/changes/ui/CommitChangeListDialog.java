@@ -55,6 +55,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private LocalChangeList myLastSelectedList = null;
   private String myLastKnownComment = "";
+  private boolean myAllOfDefaultChangeListChangesIncluded;
 
   private static void commit(Project project, List<LocalChangeList> list, final List<Change> changes, final CommitExecutor executor) {
     new CommitChangeListDialog(project, list, changes, executor).show();
@@ -98,6 +99,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     super(project, true);
     myProject = project;
     mySession = executor != null ? executor.createCommitSession() : null;
+
+    LocalChangeList defaultList = ChangeListManager.getInstance(project).getDefaultChangelist();
+    myAllOfDefaultChangeListChangesIncluded = changes.containsAll(defaultList.getChanges());
 
     myBrowser = new ChangesBrowser(project, changeLists, changes);
     myBrowser.addSelectedListChangeListener(new ChangesBrowser.SelectedListChangeListener() {
@@ -388,12 +392,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         if (includedChanges.containsAll(list.getChanges()) && !localList.isDefault()) {
           changeListManager.removeChangeList(localList);
         }
-        /*
-        else if (localList.isDefault()) {
-          Messages.showInfoMessage(myProject, "You have been commiting default change list and excluded some changes.\n" +
-                                              "Would you like these changes to be moved to another change list?", "Partial Default Change List Commit");
+        else if (!includedChanges.containsAll(list.getChanges()) && localList.isDefault() && myAllOfDefaultChangeListChangesIncluded) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              final int rc = Messages.showYesNoDialog(myProject, "You have exluded some files from default change list when commiting.\n" +
+                                                                 "Would you like remaining work to be moved to another change list?",
+                                                      "Partial Default Change List Commit", Messages.getQuestionIcon());
+              if (rc == 0) {
+                final Collection<Change> changes = changeListManager.getDefaultChangelist().getChanges();
+                MoveChangesToAnotherListAction.askAndMove(myProject, changes.toArray(new Change[changes.size()]));
+              }
+            }
+          }, ModalityState.NON_MMODAL);
         }
-        */
       }
     }
     else {
