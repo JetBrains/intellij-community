@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -145,7 +146,7 @@ public class DomUtil {
   }
 
   @Nullable
-  public static <T extends DomElement> T findByName(List<T> list, String name) {
+  public static <T extends DomElement> T findByName(@NotNull List<T> list, @NotNull String name) {
     for (T element: list) {
       String elementName = element.getGenericInfo().getElementName(element);
       if (elementName != null && elementName.equals(name)) {
@@ -155,7 +156,8 @@ public class DomUtil {
     return null;
   }
 
-  public static String[] getElementNames(List<? extends DomElement> list) {
+  @NotNull
+  public static String[] getElementNames(@NotNull List<? extends DomElement> list) {
     String[] result = new String[list.size()];
     if (list.size() > 0) {
       for (int i = 0; i < list.size(); i++) {
