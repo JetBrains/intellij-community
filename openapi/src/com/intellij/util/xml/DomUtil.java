@@ -3,7 +3,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.lang.annotation.Annotation;
@@ -12,12 +11,17 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
+import java.util.List;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class DomUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomUtil");
+
+  private DomUtil() {
+  }
 
   public static Class getGenericValueType(Type type) {
     return getClassFromGenericType(GenericValue.class.getTypeParameters()[0], type);
@@ -140,4 +144,24 @@ public class DomUtil {
     return JavaMethodSignature.getSignature(method).findAnnotation(annotationClass, method.getDeclaringClass());
   }
 
+  @Nullable
+  public static <T extends DomElement> T findByName(List<T> list, String name) {
+    for (T element: list) {
+      String elementName = element.getGenericInfo().getElementName(element);
+      if (elementName != null && elementName.equals(name)) {
+        return element;
+      }
+    }
+    return null;
+  }
+
+  public static String[] getElementNames(List<? extends DomElement> list) {
+    String[] result = new String[list.size()];
+    if (list.size() > 0) {
+      for (int i = 0; i < list.size(); i++) {
+        result[i] = list.get(i).getGenericInfo().getElementName(list.get(i));
+      }
+    }
+    return result;
+  }
 }
