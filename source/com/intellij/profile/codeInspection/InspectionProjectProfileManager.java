@@ -103,8 +103,8 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable(){
       public void run() {
         Set<Profile> profiles = new HashSet<Profile>();
-        profiles.addAll(getProfiles());
-        profiles.addAll(InspectionProfileManager.getInstance().getProfiles());
+        profiles.addAll(getProfiles().values());
+        profiles.addAll(InspectionProfileManager.getInstance().getProfiles().values());
         for (Profile profile : profiles) {
           initProfileWrapper(profile);
         }

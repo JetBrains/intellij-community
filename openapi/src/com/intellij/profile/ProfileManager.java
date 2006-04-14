@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.Map;
 
 /**
  * User: anna
@@ -29,7 +29,7 @@ import java.util.Collection;
 public interface ProfileManager {
   String getProfileType();
 
-  Collection<Profile> getProfiles();
+  Map<String,Profile> getProfiles();
 
   Profile getProfile(@NotNull String name);
 

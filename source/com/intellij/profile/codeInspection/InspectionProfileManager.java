@@ -69,7 +69,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
   }
 
   public void disposeComponent() {
-    final Collection<Profile> profiles = getProfiles();
+    final Collection<Profile> profiles = getProfiles().values();
     for (Profile profile : profiles) {
       ((InspectionProfile)profile).save();
     }

@@ -179,8 +179,8 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     return myProfileType;
   }
 
-  public Collection<Profile> getProfiles() {
-    return myProfiles.values();
+  public Map<String,Profile> getProfiles() {
+    return myProfiles;
   }
 
   public void clearProfileScopeAssignments() {
