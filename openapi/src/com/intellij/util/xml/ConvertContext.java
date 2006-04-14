@@ -6,6 +6,7 @@ package com.intellij.util.xml;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.openapi.module.Module;
 
 /**
  * @author peter
@@ -18,4 +19,6 @@ public interface ConvertContext {
   XmlTag getTag();
 
   XmlFile getFile();
+
+  Module getModule();
 }

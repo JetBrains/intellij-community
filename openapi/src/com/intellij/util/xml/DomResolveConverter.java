@@ -31,7 +31,7 @@ public class DomResolveConverter<T extends DomElement> implements Converter<T>{
     context.getInvocationElement().getRoot().acceptChildren(new DomElementVisitor() {
       public void visitDomElement(DomElement element) {
         if (result[0] != null) return;
-        if (myClass.isInstance(element) && s.equals(element.getPresentation().getElementName())) {
+        if (myClass.isInstance(element) && s.equals(element.getGenericInfo().getElementName(element))) {
           result[0] = element;
         } else {
           element.acceptChildren(this);
@@ -42,6 +42,6 @@ public class DomResolveConverter<T extends DomElement> implements Converter<T>{
   }
 
   public final String toString(final T t, final ConvertContext context) {
-    return t.getPresentation().getElementName();
+    return t.getGenericInfo().getElementName(t);
   }
 }

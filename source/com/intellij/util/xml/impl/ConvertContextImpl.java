@@ -56,5 +56,9 @@ public class ConvertContextImpl implements ConvertContext {
     return myFile;
   }
 
+  public Module getModule() {
+    return myHandler.getModule();
+  }
+
 
 }

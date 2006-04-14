@@ -17,16 +17,16 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author peter
@@ -136,6 +136,14 @@ public class ElementPresentationManager {
       }
     }
     return null;
+  }
+
+  public static <T> T findByName(Collection<T> collection, final String name) {
+    return ContainerUtil.find(collection, new Condition<T>() {
+      public boolean value(final T object) {
+        return Comparing.equal(name, getElementName(object));
+      }
+    });
   }
 
 }
