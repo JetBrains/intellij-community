@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.JavaMethodSignature;
@@ -30,6 +31,18 @@ public class InvocationCache {
         public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
           final XmlTag tag = handler.getXmlTag();
           return tag != null ? tag.getAttribute(handler.getXmlElementName(), null) : null;
+        }
+      });
+      ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttributeValue")), new Invocation() {
+        public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+          final XmlTag tag = handler.getXmlTag();
+          if (tag != null) {
+            final XmlAttribute attribute = tag.getAttribute(handler.getXmlElementName(), null);
+            if (attribute != null) {
+              return attribute.getValueElement();
+            }
+          }
+          return null;
         }
       });
     }
