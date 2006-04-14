@@ -3,14 +3,15 @@
 <project name="InspectionGadgets" default="compile">
     <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="project.class.path"/>
     <property name="src.dir" value="src"/>
-    <property name="idea.dir" value="c:/IntelliJ IDEA 5.0"/>
-    <property name="idea.plugin.dir" value="C:\Documents and Settings\dgriffith\.IntelliJIdea50\config\plugins"/>
+    <property name="idea.dir" value="c:/Demetra"/>
+    <property name="idea.plugin.dir" value="C:\Documents and Settings\dgriffith\.IntelliJIdea60\config\plugins"/>
     <property name="debug" value="true"/>
     <property name="optimize" value="off"/>
     <property name="deprecation" value="off"/>
     <property name="project.fullname" value="InspectionGadgets"/>
     <property name="project.version" value="1.0"/>
     <property name="jar.file" value="InspectionGadgets.jar"/>
+    <property name="resources.file" value="resources_en.jar"/>
     <property name="dist.zip.file" value="${project.fullname}.${project.version}.zip"/>
 
     <path id="project.class.path">
@@ -44,12 +45,24 @@
             <fileset dir=".">
                 <include name="META-INF/plugin.xml"/>
             </fileset>
-            <fileset dir="src">
-                <include name="inspectionDescriptions/*.html"/>
+
+        </jar>
+        <delete file="${resources.file}"/>
+        <jar
+            jarfile="${resources.file}">
+            <fileset dir="${src.dir}">
+                <include name="inspectionDescriptions/**"/>
             </fileset>
+            <fileset dir="src">
+                <include name="com/siyeh/InspectionGadgetsBundle.properties"/>
+            </fileset>
+
         </jar>
         <mkdir dir="${idea.plugin.dir}"/>
-        <copy file="${jar.file}" todir="${idea.plugin.dir}" overwrite="true" />
+        <mkdir dir="${idea.plugin.dir}/InspectionGadgets"/>
+        <mkdir dir="${idea.plugin.dir}/InspectionGadgets/lib"/>
+        <copy file="${jar.file}" todir="${idea.plugin.dir}/InspectionGadgets/lib" overwrite="true" />
+        <copy file="${resources.file}" todir="${idea.plugin.dir}/InspectionGadgets/lib" overwrite="true" />
     </target>
 
     <target name="clean" depends="init" description="Cleans up the distribution">

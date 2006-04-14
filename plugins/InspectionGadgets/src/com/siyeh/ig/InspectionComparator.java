@@ -15,19 +15,19 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
 
 import java.util.Comparator;
 
-class InspectionComparator implements Comparator<Class<? extends LocalInspectionTool>> {
+class InspectionComparator implements Comparator<Class<? extends InspectionProfileEntry>> {
     InspectionComparator() {
         super();
     }
 
-    public int compare(Class<? extends LocalInspectionTool> class1,
-                       Class<? extends LocalInspectionTool> class2) {
-        final LocalInspectionTool inspection1;
-        final LocalInspectionTool inspection2;
+    public int compare(Class<? extends InspectionProfileEntry> class1,
+                       Class<? extends InspectionProfileEntry> class2) {
+        final InspectionProfileEntry inspection1;
+        final InspectionProfileEntry inspection2;
         try {
             inspection1 = class1.newInstance();
             inspection2 = class2.newInstance();

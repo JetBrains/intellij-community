@@ -20,20 +20,12 @@
     Complex assignments
     Mixed logical operators without parentheses
     Use of XML class without factory
-    wait() without corresponding notify()
-    notify() without corresponding wait()
-    await() without corresponding signal()
-    signal() without corresponding await()
     Thread started multiple times
     Thread started without being named.
     Eternal thread
     Poor handling of interrupted flag
-    integer multiplication/left-shift implicitly cast to long
-    wait() or await() without timeout
     lock for atomic operation
     Daemon thread
     Looping thread doesn't check for interrupt
     join() on eternal thread
-
-    Static import quickfix
-    Static inheritance to static import quickfix
+    Splittable lock
