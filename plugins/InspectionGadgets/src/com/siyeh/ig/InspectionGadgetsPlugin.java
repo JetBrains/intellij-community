@@ -387,6 +387,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private void registerBugInspections() {
         m_inspectionClasses.add(ObjectToStringInspection.class);
         m_inspectionClasses.add(IntegerDivisionInFloatingPointContextInspection.class);
+        m_inspectionClasses.add(IntegerMultiplicationImplicitCastToLongInspection.class);
         m_inspectionClasses.add(NonShortCircuitBooleanInspection.class);
         m_inspectionClasses.add(ComparisonOfShortAndCharInspection.class);
         m_inspectionClasses.add(AssignmentUsedAsConditionInspection.class);
@@ -663,6 +664,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ForCanBeForeachInspection.class);
         m_inspectionClasses.add(WhileCanBeForeachInspection.class);
         m_inspectionClasses.add(IndexOfReplaceableByContainsInspection.class);
+        m_inspectionClasses.add(UnaryPlusInspection.class);
     }
 
     private void registerStyleInspections() {
@@ -730,6 +732,11 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerThreadingInspections() {
+        m_inspectionClasses.add(NotifyWithoutCorrespondingWaitInspection.class);
+        m_inspectionClasses.add(SignalWithoutCorrespondingAwaitInspection.class);
+        m_inspectionClasses.add(WaitWithoutCorrespondingNotifyInspection.class);
+        m_inspectionClasses.add(AwaitWithoutCorrespondingSignalInspection.class);
+        m_inspectionClasses.add(WaitOrAwaitWithoutTimeoutInspection.class);
         m_inspectionClasses.add(DoubleCheckedLockingInspection.class);
         m_inspectionClasses.add(BusyWaitInspection.class);
         m_inspectionClasses.add(SleepWhileHoldingLockInspection.class);
@@ -914,6 +921,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(TestCaseWithNoTestMethodsInspection.class);
         m_inspectionClasses.add(TestCaseInProductCodeInspection.class);
         m_inspectionClasses.add(UnconstructableTestCaseInspection.class);
+        m_inspectionClasses.add(TestMethodInProductCodeInspection.class);
         m_inspectionClasses.add(BeforeOrAfterIsPublicVoidNoArgInspection.class);
         m_inspectionClasses.add(BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection.class);
     }

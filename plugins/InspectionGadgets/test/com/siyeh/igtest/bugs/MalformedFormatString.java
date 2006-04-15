@@ -7,6 +7,7 @@ public class MalformedFormatString {
 
     public void foo()
     {
+        String.format("%", 3.0);
         System.out.printf("%", 3.0);
         System.out.printf("%q", 3.0);
         System.out.printf("%d", 3.0);
