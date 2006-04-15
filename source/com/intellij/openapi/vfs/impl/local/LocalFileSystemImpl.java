@@ -12,10 +12,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
-import com.intellij.util.containers.HashMap;
 import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -401,7 +401,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
           }
         }
 
-        for (final Map.Entry<String,VirtualFileImpl> entry : myUnaccountedFiles.entrySet()) {
+        final Set<Map.Entry<String, VirtualFileImpl>> entries = new HashSet<Map.Entry<String, VirtualFileImpl>>(myUnaccountedFiles.entrySet());
+        for (final Map.Entry<String,VirtualFileImpl> entry : entries) {
           final VirtualFileImpl file = entry.getValue();
           if (file != null) {
             if (!file.getPhysicalFile().exists()) {
