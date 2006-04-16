@@ -422,7 +422,7 @@ public class FileManagerImpl implements FileManager {
       for (long classId : classIds) {
         PsiClass aClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(classId);
         VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-        if (scope.contains(vFile)) {
+        if (fileIsInScope(scope, vFile)) {
           result.add(aClass);
         }
       }
@@ -587,13 +587,30 @@ public class FileManagerImpl implements FileManager {
         continue;
       }
       VirtualFile vFile = file.getVirtualFile();
-      if (!scope.contains(vFile)) continue;
+      if (!fileIsInScope(scope, vFile)) continue;
       if (bestFile == null || scope.compare(vFile, bestFile) > 0) {
         bestFile = vFile;
         bestClass = aClass;
       }
     }
     return bestClass;
+  }
+
+  private boolean fileIsInScope(final GlobalSearchScope scope, final VirtualFile vFile) {
+    if (!scope.contains(vFile)) return false;
+
+    if (vFile.getFileType() == StdFileTypes.CLASS) {
+      // See IDEADEV-5626
+      final VirtualFile root = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getClassRootForFile(vFile);
+      VirtualFile parent = vFile.getParent();
+      final PsiNameHelper nameHelper = myManager.getNameHelper();
+      while (parent != null && parent != root) {
+        if (!nameHelper.isIdentifier(parent.getName())) return false;
+        parent = parent.getParent();
+      }
+    }
+
+    return true;
   }
 
   public PsiFile getCachedPsiFileInner(VirtualFile file) {
