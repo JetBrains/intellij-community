@@ -135,16 +135,10 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
   }
 
   public boolean getScrollableTracksViewportWidth() {
-    if (getParent() instanceof JViewport) {
-      return getParent().getWidth() > getPreferredSize().width;
-    }
-    return false;
+    return getParent()instanceof JViewport && getParent().getWidth() > getPreferredSize().width;
   }
 
   public boolean getScrollableTracksViewportHeight() {
-    if (getParent() instanceof JViewport) {
-      return getParent().getHeight() > getPreferredSize().height;
-    }
-    return false;
+    return getParent()instanceof JViewport && getParent().getHeight() > getPreferredSize().height;
   }
 }
