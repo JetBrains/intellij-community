@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.diagnostic.Logger;
+
 import javax.swing.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,6 +28,8 @@ import java.util.concurrent.Executors;
  * @author max
  */
 public abstract class AsyncUpdateAction<T> extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.AsyncUpdateAction");
+
   private static final ExecutorService ourUpdaterService = Executors.newSingleThreadExecutor();
 
   // Async update
@@ -39,6 +43,11 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
           performUpdate(realPresentation, data);
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              if (originalPresentation.isVisible() != realPresentation.isVisible()) {
+                LOG.error("Async update is not supported for actions that change their visibility." +
+                          "Either stop extending AsyncUpdateAction or override forceSyncUpdate() to return true." +
+                          "Action class is: " + AsyncUpdateAction.this.getClass().getName());
+              }
               originalPresentation.copyFrom(realPresentation);
             }
           });

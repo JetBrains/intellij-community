@@ -31,6 +31,7 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -491,6 +492,10 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       }
     }
     return result.toArray(new FilePath[result.size()]);
+  }
+
+  protected boolean forceSyncUpdate(final AnActionEvent e) {
+    return true;
   }
 
   protected abstract boolean shouldShowDialog(VcsContext context);

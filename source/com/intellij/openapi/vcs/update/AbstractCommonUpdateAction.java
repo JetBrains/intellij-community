@@ -31,6 +31,7 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
@@ -337,6 +338,10 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       presentation.setEnabled(false);
     }
 
+  }
+
+  protected boolean forceSyncUpdate(final AnActionEvent e) {
+    return true;
   }
 
   private boolean updateSupportingVcsesAreEmpty(final Project project) {
