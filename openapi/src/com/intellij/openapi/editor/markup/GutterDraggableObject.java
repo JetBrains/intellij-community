@@ -28,7 +28,7 @@ public interface GutterDraggableObject {
   /**
    * Called when the drag and drop operation is successfully completed.
    */
-  public void removeSelf();
+  void removeSelf();
 
   /**
    * Called when the icon is dropped over the specified line.
@@ -36,7 +36,7 @@ public interface GutterDraggableObject {
    * @param line the line over which the icon has been dropped.
    * @return true if the drag and drop operation has completed successfully, false otherwise.
    */
-  public boolean copy(int line);
+  boolean copy(int line);
 
   /**
    * Returns the cursor to show when the drag is over the specified line.
