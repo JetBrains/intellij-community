@@ -86,7 +86,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
         if (type.isAssignableFrom(info1.type)) return new ExpectedTypeInfoImpl[] {info1};
       }
       else if (info1.kind == TYPE_OR_SUBTYPE) {
-        PsiType type = dimCount == info1.dimCount ? this.type : this.getType();
+        PsiType type = dimCount == info1.dimCount ? this.type : getType();
         PsiType otherType = dimCount == info1.dimCount ? info1.type : info1.getType();
         if (type.isAssignableFrom(otherType)) return new ExpectedTypeInfoImpl[] {info1};
         else if (otherType.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {this};
@@ -101,12 +101,12 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
         if (info1.type.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {info1};
       }
       else if (info1.kind == TYPE_OR_SUBTYPE) {
-        PsiType type = dimCount == info1.dimCount ? this.type : this.getType();
+        PsiType type = dimCount == info1.dimCount ? this.type : getType();
         PsiType otherType = dimCount == info1.dimCount ? info1.type : info1.getType();
         if (otherType.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {this};
       }
       else if (info1.kind == TYPE_OR_SUPERTYPE) {
-        PsiType type = dimCount == info1.dimCount ? this.type : this.getType();
+        PsiType type = dimCount == info1.dimCount ? this.type : getType();
         PsiType otherType = dimCount == info1.dimCount ? info1.type : info1.getType();
         if (type.isAssignableFrom(otherType)) return new ExpectedTypeInfoImpl[] {this};
         else if (otherType.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {info1};
