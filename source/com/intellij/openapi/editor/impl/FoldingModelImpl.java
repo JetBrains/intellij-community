@@ -333,10 +333,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
       myCachedTopLevelRegions = topLevels.toArray(new FoldRegion[topLevels.size()]);
 
-      Arrays.sort(myCachedTopLevelRegions, new Comparator() {
-        public int compare(Object o1, Object o2) {
-          FoldRegion r1 = (FoldRegion) o1;
-          FoldRegion r2 = (FoldRegion) o2;
+      Arrays.sort(myCachedTopLevelRegions, new Comparator<FoldRegion>() {
+        public int compare(FoldRegion r1, FoldRegion r2) {
           int end1 = r1.getEndOffset();
           int end2 = r2.getEndOffset();
           if (end1 < end2) return -1;
@@ -357,10 +355,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
       myCachedVisible = visible.toArray(new FoldRegion[visible.size()]);
 
-      Arrays.sort(myCachedVisible, new Comparator() {
-        public int compare(Object o1, Object o2) {
-          FoldRegion r1 = (FoldRegion) o1;
-          FoldRegion r2 = (FoldRegion) o2;
+      Arrays.sort(myCachedVisible, new Comparator<FoldRegion>() {
+        public int compare(FoldRegion r1, FoldRegion r2) {
           int end1 = r1.getEndOffset();
           int end2 = r2.getEndOffset();
           if (end1 < end2) return 1;
@@ -479,8 +475,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     public FoldRegion[] fetchCollapsedAt(int offset) {
       if (!isFoldingEnabled()) return new FoldRegion[0];
       ArrayList<FoldRegion> allCollapsed = new ArrayList<FoldRegion>();
-      for (int i = 0; i < myRegions.size(); i++) {
-        FoldRegion region = myRegions.get(i);
+      for (FoldRegion region : myRegions) {
         if (!region.isExpanded() && contains(region, offset)) {
           allCollapsed.add(region);
         }
@@ -491,9 +486,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     public boolean intersectsRegion(int startOffset, int endOffset) {
       if (!FoldingModelImpl.this.isFoldingEnabled()) return true;
-      for (int i = 0; i < myRegions.size(); i++) {
-        FoldRegion region = myRegions.get(i);
-        boolean contains1 = contains(region, startOffset), contains2 = contains(region, endOffset);
+      for (FoldRegion region : myRegions) {
+        boolean contains1 = contains(region, startOffset);
+        boolean contains2 = contains(region, endOffset);
         if ((contains1 && !contains2) || (!contains1 && contains2)) {
           return true;
         }
