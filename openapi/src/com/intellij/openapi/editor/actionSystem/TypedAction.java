@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -35,7 +34,6 @@ import com.intellij.psi.PsiTreeChangeListener;
  * @see EditorActionManager#getTypedAction()
  */
 public class TypedAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actionSystem.TypedAction");
 
   private static final Object TYPING_COMMAND_GROUP = Key.create("Typing");
 
