@@ -39,7 +39,7 @@ public class ChangeType {
 
   public TextDiffType getTextDiffType() { return getTypeKey(); }
 
-  private RangeHighlighter addBlock(String text, ChangeSide changeSide, MarkupHolder markup, TextDiffType diffType) {
+  private static RangeHighlighter addBlock(String text, ChangeSide changeSide, MarkupHolder markup, TextDiffType diffType) {
     int length = text.length();
     int start = changeSide.getStart();
     int end = start + length;
@@ -75,7 +75,7 @@ public class ChangeType {
     return CHANGE;
   }
 
-  public void apply(RangeMarker original, RangeMarker target) {
+  public static void apply(RangeMarker original, RangeMarker target) {
     Document document = target.getDocument();
     if (DocumentUtil.isEmpty(original)) {
       int offset = target.getStartOffset();
