@@ -615,7 +615,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
       for (String dirtyFile : dirtyFiles) {
         String path = dirtyFile.replace(File.separatorChar, '/');
-        VirtualFile file = findFileByPath(path, false, false);
+        VirtualFile file = findFileByPath(path, true, false);
         if (file != null) {
           synchronized (myRefreshStatusMap) {
             if (myRefreshStatusMap.get(file) == null) {
