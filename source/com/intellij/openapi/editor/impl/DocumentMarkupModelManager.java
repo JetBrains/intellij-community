@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.WeakHashMap;
 
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -14,7 +13,7 @@ import java.util.Set;
 public class DocumentMarkupModelManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentMarkupModelManager");
 
-  private WeakHashMap myDocumentSet = new WeakHashMap();
+  private WeakHashMap<DocumentImpl,String> myDocumentSet = new WeakHashMap<DocumentImpl, String>();
   private Project myProject;
   private boolean myIsDisposed = false;
 
@@ -55,9 +54,8 @@ public class DocumentMarkupModelManager implements ProjectComponent {
   private void cleanup() {
     if (!myIsDisposed) {
       myIsDisposed = true;
-      Set docs = myDocumentSet.keySet();
-      for(Iterator iterator = docs.iterator(); iterator.hasNext(); ) {
-        DocumentImpl doc = (DocumentImpl)iterator.next();
+      Set<DocumentImpl> docs = myDocumentSet.keySet();
+      for (DocumentImpl doc : docs) {
         doc.removeMarkupModel(myProject);
       }
     }
