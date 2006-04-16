@@ -15,18 +15,7 @@
  */
 package com.intellij.openapi.editor.markup;
 
-import org.jetbrains.annotations.NonNls;
-
-public final class SeparatorPlacement {
-  public static final SeparatorPlacement TOP = new SeparatorPlacement("TOP");
-  public static final SeparatorPlacement BOTTOM = new SeparatorPlacement("BOTTOM");
-  private String myDebugName;
-
-  private SeparatorPlacement(@NonNls String debugName) {
-    myDebugName = debugName;
-  }
-
-  public String toString() {
-    return myDebugName;
-  }
+public enum SeparatorPlacement {
+  TOP,
+  BOTTOM
 }
