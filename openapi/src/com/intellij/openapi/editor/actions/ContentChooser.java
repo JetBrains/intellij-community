@@ -36,13 +36,14 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private static final Icon textIcon = IconLoader.getIcon("/fileTypes/text.png");
 
   private JList myList;
-  private java.util.List<Data> myAllContents;
+  private List<Data> myAllContents;
 
   private Editor myViewer;
   private final boolean myUseIdeaEditor;
@@ -173,7 +174,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
 
   private void rebuildListContent() {
-    java.util.List<Data> allContents = new ArrayList<Data>(getContents());
+    List<Data> allContents = new ArrayList<Data>(getContents());
     ArrayList<String> shortened = new ArrayList<String>();
     for (Data content : allContents) {
       String fullString = getStringRepresentationFor(content);
@@ -207,14 +208,14 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   protected abstract String getStringRepresentationFor(final Data content);
 
-  protected abstract java.util.List<Data> getContents();
+  protected abstract List<Data> getContents();
 
   public int getSelectedIndex() {
     if (myList.getSelectedIndex() == -1) return 0;
     return myList.getSelectedIndex();
   }
 
-  public java.util.List<Data> getAllContents() {
+  public List<Data> getAllContents() {
     return myAllContents;
   }
 
