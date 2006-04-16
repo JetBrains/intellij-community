@@ -18,15 +18,13 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
-import java.io.Writer;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the contents of a text file loaded into memory, and possibly opened in an IDEA
@@ -250,7 +248,7 @@ public interface Document extends UserDataHolder {
    * range cause {@link ReadOnlyFragmentModificationException} to be thrown).
    *
    * @param startOffset the start offset of the text range to mark as read-only.
-   * @param startOffset the end offset of the text range to mark as read-only.
+   * @param endOffset the end offset of the text range to mark as read-only.
    * @return the marker instance.
    * @see #removeGuardedBlock(RangeMarker)
    * @see #startGuardedBlockChecking()
