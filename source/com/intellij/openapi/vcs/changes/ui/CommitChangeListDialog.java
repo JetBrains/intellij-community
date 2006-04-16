@@ -53,7 +53,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private Project myProject;
   private final CommitSession mySession;
   private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private LocalChangeList myLastSelectedList = null;
   private String myLastKnownComment = "";
   private boolean myAllOfDefaultChangeListChangesIncluded;
 
@@ -221,8 +220,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     myCommitMessageArea.setText(listComment);
-
-    myLastSelectedList = list;
   }
 
 
@@ -396,9 +393,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         else if (!includedChanges.containsAll(list.getChanges()) && localList.isDefault() && myAllOfDefaultChangeListChangesIncluded) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              final int rc = Messages.showYesNoDialog(myProject, "You have exluded some files from default change list when commiting.\n" +
-                                                                 "Would you like remaining work to be moved to another change list?",
-                                                      "Partial Default Change List Commit", Messages.getQuestionIcon());
+              final int rc = Messages.showYesNoDialog(myProject,
+                                                      VcsBundle.message("changes.commit.partial.offer.to.move.text"),
+                                                      VcsBundle.message("changes.commit.partial.offer.to.move.title"),
+                                                      Messages.getQuestionIcon());
               if (rc == 0) {
                 final Collection<Change> changes = changeListManager.getDefaultChangelist().getChanges();
                 MoveChangesToAnotherListAction.askAndMove(myProject, changes.toArray(new Change[changes.size()]));
