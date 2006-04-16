@@ -180,7 +180,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
     final Entry entry = CvsEntriesManager.getInstance().getEntryFor(dir, filePath.getName());
     final FileStatus status = CvsStatusProvider.getStatus(filePath.getVirtualFile(), entry);
-    VcsRevisionNumber number = new CvsRevisionNumber(entry.getRevision());
+    VcsRevisionNumber number = entry != null ? new CvsRevisionNumber(entry.getRevision()) : VcsRevisionNumber.NULL;
     processStatus(filePath, status, number, builder);
   }
 
