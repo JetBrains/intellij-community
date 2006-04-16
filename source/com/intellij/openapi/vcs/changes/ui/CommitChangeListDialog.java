@@ -213,13 +213,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     final LocalChangeList list = (LocalChangeList)myBrowser.getSelectedChangeList();
-    final String listComment = list.getComment();
-    if (!StringUtil.isEmptyOrSpaces(listComment)) {
-      myCommitMessageArea.setText(listComment);
+
+    String listComment = list.getComment();
+    if (StringUtil.isEmptyOrSpaces(listComment)) {
+      final String listTitle = list.getName();
+      if (!VcsBundle.message("changes.default.changlist.name").equals(listTitle)) {
+        listComment = listTitle;
+      }
+      else {
+        listComment = myLastKnownComment;
+      }
     }
-    else {
-      myCommitMessageArea.setText(myLastKnownComment);
-    }
+
+    myCommitMessageArea.setText(listComment);
 
     myLastSelectedList = list;
   }
