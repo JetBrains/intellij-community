@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -34,6 +35,6 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
   protected Runnable preprocessFile(final PsiFile file) throws IncorrectOperationException {
     final ImportOptimizer optimizer = file.getLanguage().getImportOptimizer();
-    return optimizer != null ? optimizer.processFile(file) : null;
+    return optimizer != null ? optimizer.processFile(file) : EmptyRunnable.getInstance();
   }
 }

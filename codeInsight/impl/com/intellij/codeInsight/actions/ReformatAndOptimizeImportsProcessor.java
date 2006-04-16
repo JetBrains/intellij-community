@@ -50,6 +50,8 @@ public class ReformatAndOptimizeImportsProcessor extends AbstractLayoutCodeProce
   protected Runnable preprocessFile(PsiFile file) throws IncorrectOperationException {
     final Runnable r1 = myReformatCodeProcessor.preprocessFile(file);
     final Runnable r2 = myOptimizeImportsProcessor.preprocessFile(file);
+    if (r1 == null) return r2;
+    if (r2 == null) return r1;
     return new Runnable() {
       public void run() {
         r1.run();
