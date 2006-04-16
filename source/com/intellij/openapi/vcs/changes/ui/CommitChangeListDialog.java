@@ -207,11 +207,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateComment() {
-    final String currentComment = myCommitMessageArea.getComment();
-    if (myLastSelectedList != null) {
-      myLastSelectedList.setComment(currentComment);
-    }
-
     final LocalChangeList list = (LocalChangeList)myBrowser.getSelectedChangeList();
 
     String listComment = list.getComment();
