@@ -2,11 +2,10 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorActionManagerImpl extends EditorActionManager implements ApplicationComponent {
