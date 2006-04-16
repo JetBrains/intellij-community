@@ -74,7 +74,8 @@ public class TypeConversionUtil {
     if (isPrimitiveAndNotNull(fromType) || isPrimitiveAndNotNull(toType)) {
       final int fromTypeRank = getTypeRank(fromType);
       final int toTypeRank = getTypeRank(toType);
-      return fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK;
+      return fromTypeRank == toTypeRank ||
+             fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK;
     }
 
     //type can be casted via widening reference conversion
