@@ -84,6 +84,8 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   @NonNls private static final String ELEMENT_MACRO = "macro";
   private GlobalSearchScope myAllScope;
   private GlobalSearchScope myProjectScope;
+  @NonNls private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
+  @NonNls private static final String DUMMY_PROJECT_NAME = "Dummy (Mock) Project";
 
   protected ProjectImpl(ProjectManagerImpl manager,
                         String filePath,
@@ -286,6 +288,9 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   }
 
   public String getName() {
+    if (isDefault()) return TEMPLATE_PROJECT_NAME;
+    if (isDummy()) return DUMMY_PROJECT_NAME;
+
     String temp = myProjectFile.getFileName();
     if (temp.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
       temp = temp.substring(0, temp.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length());
