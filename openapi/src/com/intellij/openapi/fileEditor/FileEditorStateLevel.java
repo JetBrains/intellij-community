@@ -15,23 +15,11 @@
  */
 package com.intellij.openapi.fileEditor;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
  * @author Vladimir Kondratyev
  */
-public final class FileEditorStateLevel {
-  public static final FileEditorStateLevel FULL = new FileEditorStateLevel("full");
-  public static final FileEditorStateLevel UNDO = new FileEditorStateLevel("undo");
-  public static final FileEditorStateLevel NAVIGATION = new FileEditorStateLevel("navigation");
-
-  private final String myText;
-
-  private FileEditorStateLevel(@NonNls final String text) {
-    myText = text;
-  }
-
-  @NonNls public String toString() {
-    return "FileEditorStateLevel["+myText+"]";
-  }
+public enum FileEditorStateLevel {
+  FULL,
+  UNDO,
+  NAVIGATION
 }
