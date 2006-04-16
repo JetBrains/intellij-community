@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
