@@ -378,10 +378,10 @@ public class FileManagerImpl implements FileManager {
 
   public PsiDirectory findDirectory(VirtualFile vFile) {
     LOG.assertTrue(myInitialized, "Access to psi files should be performed only after startup activity");
-    LOG.assertTrue(!myDisposed);
+    LOG.assertTrue(!myDisposed, "Access to psi files should not be performed after disposal");
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    LOG.assertTrue(vFile.isValid(), vFile.getName());
+    LOG.assertTrue(vFile.isValid(), "File is not valid:" + vFile.getName());
 
     if (!vFile.isDirectory()) return null;
 
