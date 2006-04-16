@@ -26,4 +26,9 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
     int dotIndex = fullName.lastIndexOf('.');
     return (dotIndex >= 0) ? fullName.substring(dotIndex + 1) : fullName;
   }
+
+
+  public void accept(RefVisitor refVisitor) {
+    refVisitor.visitPackage(this);
+  }
 }

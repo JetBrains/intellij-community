@@ -613,7 +613,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
             newTemplate = PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
           }
         }
-      } else if (refUtil.isCallToSuperMethod(expression, (PsiMethod) getElement())) return;
+      } else if (RefUtilImpl.isCallToSuperMethod(expression, (PsiMethod) getElement())) return;
 
       //noinspection StringEquality
       if (myReturnValueTemplate == RETURN_VALUE_UNDEFINED) {

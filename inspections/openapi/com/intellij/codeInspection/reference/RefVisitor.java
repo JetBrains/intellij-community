@@ -50,4 +50,8 @@ public class RefVisitor {
   public void visitModule(RefModule module){
     visitElement(module);
   }
+
+  public void visitPackage(RefPackage aPackage) {
+    visitElement(aPackage);
+  }
 }
