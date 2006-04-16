@@ -15,20 +15,9 @@
  */
 package com.intellij.openapi.editor.markup;
 
-import org.jetbrains.annotations.NonNls;
-
-public class EffectType {
-  public static final EffectType LINE_UNDERSCORE = new EffectType("LINE_UNDERSCORE");
-  public static final EffectType WAVE_UNDERSCORE = new EffectType("WAVE_UNDERSCORE");
-  public static final EffectType BOXED = new EffectType("BOXED");
-  public static final EffectType STRIKEOUT = new EffectType("STRIKEOUT");
-
-  private final String myDebugName;
-  private EffectType(@NonNls String debugName) {
-    myDebugName = debugName;
-  }
-
-  public String toString() {
-    return myDebugName;
-  }
+public enum EffectType {
+  LINE_UNDERSCORE,
+  WAVE_UNDERSCORE,
+  BOXED,
+  STRIKEOUT
 }
