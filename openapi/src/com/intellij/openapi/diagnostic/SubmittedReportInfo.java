@@ -15,37 +15,25 @@
  */
 package com.intellij.openapi.diagnostic;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
  * Simple bean representing error submission status.
  */
 public class SubmittedReportInfo {
-  public static class SubmissionStatus {
+  public enum SubmissionStatus {
     /**
      * Issue have been succesfully created
      */
-    public static SubmissionStatus NEW_ISSUE = new SubmissionStatus("NEW_ISSUE");
+    NEW_ISSUE,
 
     /**
-     * Issue user have been trying to submit is actually a duplicate of existing one
+     * Issue is actually a duplicate of existing one
      */
-    public static SubmissionStatus DUPLICATE = new SubmissionStatus("DUPLICATE");
+    DUPLICATE,
 
     /**
      * Submission failed. (For network connection reasons for example)
      */
-    public static SubmissionStatus FAILED = new SubmissionStatus("FAILED");
-    private String myName;
-
-    private SubmissionStatus(@NonNls String name) {
-      myName = name;
-    }
-
-    @NonNls
-    public String toString() {
-      return "SubmissionStatus[" + myName + "]";
-    }
+    FAILED
   }
 
   private String myURL;
