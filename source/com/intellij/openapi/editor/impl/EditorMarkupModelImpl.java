@@ -455,19 +455,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private List<RangeHighlighter> getSortedHighlighters() {
     if (myCachedSortedHighlighters == null) {
       myCachedSortedHighlighters = new ArrayList<RangeHighlighter>();
-      RangeHighlighter[] highlighters = getAllHighlighters();
-      for (RangeHighlighter highlighter : highlighters) {
+
+      for (RangeHighlighter highlighter : getAllHighlighters()) {
         if (highlighter.getErrorStripeMarkColor() != null) {
           myCachedSortedHighlighters.add(highlighter);
         }
       }
+
       final MarkupModel docMarkup = getDocument().getMarkupModel(myEditor.myProject);
-      if (docMarkup != null) {
-        highlighters = docMarkup.getAllHighlighters();
-        for (RangeHighlighter highlighter : highlighters) {
-          if (highlighter.getErrorStripeMarkColor() != null) {
-            myCachedSortedHighlighters.add(highlighter);
-          }
+      for (RangeHighlighter highlighter : docMarkup.getAllHighlighters()) {
+        if (highlighter.getErrorStripeMarkColor() != null) {
+          myCachedSortedHighlighters.add(highlighter);
         }
       }
 
