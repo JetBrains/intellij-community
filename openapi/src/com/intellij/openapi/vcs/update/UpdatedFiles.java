@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import org.jdom.Element;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class UpdatedFiles implements JDOMExternalizable {
@@ -47,8 +46,7 @@ public class UpdatedFiles implements JDOMExternalizable {
   }
 
   public boolean isEmpty() {
-    for (Iterator<FileGroup> iterator = myGroups.iterator(); iterator.hasNext();) {
-      FileGroup fileGroup = iterator.next();
+    for (FileGroup fileGroup : myGroups) {
       if (!fileGroup.isEmpty()) return false;
     }
     return true;
@@ -60,9 +58,8 @@ public class UpdatedFiles implements JDOMExternalizable {
     return findByIdIn(myGroups, id);
   }
 
-  private FileGroup findByIdIn(List<FileGroup> groups, String id) {
-    for (Iterator<FileGroup> iterator = groups.iterator(); iterator.hasNext();) {
-      FileGroup fileGroup = iterator.next();
+  private static FileGroup findByIdIn(List<FileGroup> groups, String id) {
+    for (FileGroup fileGroup : groups) {
       if (id.equals(fileGroup.getId())) return fileGroup;
       FileGroup foundInChildren = findByIdIn(fileGroup.getChildren(), id);
       if (foundInChildren != null) return foundInChildren;
