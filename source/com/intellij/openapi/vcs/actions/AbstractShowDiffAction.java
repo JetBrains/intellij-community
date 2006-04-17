@@ -1,11 +1,13 @@
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
@@ -13,7 +15,6 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsFileContent;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProcessCanceledException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,6 +28,10 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
   protected static void updateDiffAction(final Presentation presentation, final VcsContext vcsContext) {
     presentation.setEnabled(isEnabled(vcsContext));
     presentation.setVisible(isVisible(vcsContext));
+  }
+
+  protected boolean forceSyncUpdate(final AnActionEvent e) {
+    return true;
   }
 
   protected static boolean isVisible(final VcsContext vcsContext) {
