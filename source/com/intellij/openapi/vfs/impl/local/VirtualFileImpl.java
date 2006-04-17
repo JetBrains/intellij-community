@@ -74,7 +74,6 @@ public class VirtualFileImpl extends VirtualFile {
       String systemPath = path.replace('/', File.separatorChar);
       myDirectoryFlag = new IoFile(systemPath).isDirectory();
     }
-    LOG.assertTrue(myName.length() > 0);
   }
 
   boolean areChildrenCached() {
