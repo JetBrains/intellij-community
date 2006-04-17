@@ -38,19 +38,22 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    if (!HighlightUtil.isRootInspected(myFile)) return;
-    final List<ExternalAnnotator> externalAnnotators = myFile.getLanguage().getExternalAnnotators();
-    
-    if (externalAnnotators.size() > 0) {
-      final HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject, myStartOffset, myEndOffset);
-      
-      for (HighlightInfo error : errors) {
-        if (error.group != UpdateHighlightersUtil.EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP) {
-          return;
+    final PsiFile[] psiRoots = myFile.getPsiRoots();
+    for (PsiFile psiRoot : psiRoots) {
+      if (!HighlightUtil.isRootInspected(psiRoot)) continue;
+      final List<ExternalAnnotator> externalAnnotators = psiRoot.getLanguage().getExternalAnnotators();
+
+      if (externalAnnotators.size() > 0) {
+        final HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject, myStartOffset, myEndOffset);
+
+        for (HighlightInfo error : errors) {
+          if (error.group != UpdateHighlightersUtil.EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP) {
+            return;
+          }
         }
-      }
-      for(ExternalAnnotator externalAnnotator: externalAnnotators) {
-        externalAnnotator.annotate(myFile, myAnnotationHolder);
+        for(ExternalAnnotator externalAnnotator: externalAnnotators) {
+          externalAnnotator.annotate(psiRoot, myAnnotationHolder);
+        }
       }
     }
   }
