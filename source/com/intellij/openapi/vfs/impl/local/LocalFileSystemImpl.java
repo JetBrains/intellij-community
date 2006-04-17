@@ -241,15 +241,17 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
     initRoots();
     for (VirtualFile root : myFSRootsToPaths.keySet()) {
-      String rootPath = root.getPath();
-      if (!FileUtil.startsWith(path, rootPath)) continue;
-      if (path.length() == rootPath.length()) return root;
+      //noinspection NonConstantStringShouldBeStringBuffer
+      String runPath = root.getPath();
+      if (runPath.endsWith("/")) runPath = runPath.substring(0, runPath.length() - 1);
+      if (!FileUtil.startsWith(path, runPath)) continue;
+      if (path.length() == runPath.length()) return root;
       String tail;
-      if (path.charAt(rootPath.length()) == '/') {
-        tail = path.substring(rootPath.length() + 1);
+      if (path.charAt(runPath.length()) == '/') {
+        tail = path.substring(runPath.length() + 1);
       }
-      else if (StringUtil.endsWithChar(rootPath, '/')) {
-        tail = path.substring(rootPath.length());
+      else if (StringUtil.endsWithChar(runPath, '/')) {
+        tail = path.substring(runPath.length());
       }
       else {
         continue;
@@ -259,14 +261,21 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         final String name = tokenizer.nextToken();
         if (".".equals(name)) continue;
         if ("..".equals(name)) {
+          runPath = runPath.substring(0, runPath.lastIndexOf("/"));
           root = root.getParent();
           if (root == null) return null;
         }
         else {
+          runPath = runPath + "/" + name;
           if (!((VirtualFileImpl)root).areChildrenCached()) {
-            if (!createIfNoCache) return null;
-            root = ((VirtualFileImpl)root).findSingleChild(name);
-            if (root == null) return null;
+            VirtualFile child = myUnaccountedFiles.get(runPath);
+            if (child == null || !child.isValid()) {
+              if (!createIfNoCache) return null;
+              root = ((VirtualFileImpl)root).findSingleChild(name);
+              if (root == null) return null;
+            } else {
+              root = child;
+            }
           }
           else {
             VirtualFile child = root.findChild(name);
@@ -615,7 +624,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
       for (String dirtyFile : dirtyFiles) {
         String path = dirtyFile.replace(File.separatorChar, '/');
-        VirtualFile file = findFileByPath(path, true, false);
+        VirtualFile file = findFileByPath(path, false, false);
         if (file != null) {
           synchronized (myRefreshStatusMap) {
             if (myRefreshStatusMap.get(file) == null) {

@@ -66,7 +66,7 @@ public class VirtualFileImpl extends VirtualFile {
     int lastSlash = path.lastIndexOf('/');
     LOG.assertTrue(lastSlash >= 0);
     if (lastSlash == path.length() - 1) { // 'c:/' or '/'
-      setName(path);
+      setName(path.substring(0, lastSlash));
       myDirectoryFlag = true;
     }
     else {
@@ -118,21 +118,17 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   private int appendPath(char[] buffer, char separatorChar) {
-    int currentLength = myParent == null ? 0 : myParent.appendPath(buffer, separatorChar);
-
-    if (currentLength > 0 && buffer[currentLength - 1] != separatorChar) {
+    int currentLength;
+    if (myParent != null) {
+      currentLength = myParent.appendPath(buffer, separatorChar);
       buffer[currentLength++] = separatorChar;
+    } else {
+      currentLength = 0;
     }
 
-    String name = myName;
-    final int nameLength = name.length();
-
-    name.getChars(0, nameLength, buffer, currentLength);
-    int newLength = currentLength + nameLength;
-    if (currentLength == 0 && separatorChar != '/') {
-      StringUtil.replaceChar(buffer, '/', separatorChar, currentLength, newLength); // root may contain '/' char
-    }
-    return newLength;
+    final int nameLength = myName.length();
+    myName.getChars(0, nameLength, buffer, currentLength);
+    return currentLength + nameLength;
   }
 
   @NotNull
