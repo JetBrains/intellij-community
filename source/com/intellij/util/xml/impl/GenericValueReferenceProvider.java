@@ -61,6 +61,11 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
   private GenericDomValueReference createReference(DomElement element) {
     if (!(element instanceof GenericDomValue)) return null;
 
+    if (element instanceof GenericAttributeValue) {
+      if (((GenericAttributeValue)element).getXmlAttributeValue() == null) return null;
+    }
+    else if (element.getXmlTag().getValue().getTextElements().length == 0) return null;
+
     GenericDomValue domElement = (GenericDomValue) element;
     final Class parameter = DomUtil.getGenericValueType(domElement.getDomElementType());
       if (PsiType.class.isAssignableFrom(parameter)) {
@@ -74,10 +79,6 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
           public Object[] getVariants() {
             return new Object[]{"239", "42"};
           }
-
-          public PsiElement resolveInner() {
-            return getValueElement();
-          }
         };
       }
       if (Enum.class.isAssignableFrom(parameter)) {
@@ -90,20 +91,12 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
               }
             });
           }
-
-          public PsiElement resolveInner() {
-            return getValueElement();
-          }
         };
       }
       if (Boolean.class.isAssignableFrom(parameter)) {
         return new GenericDomValueReference(this, domElement) {
           public Object[] getVariants() {
             return new Object[]{"true", "false"};
-          }
-
-          public PsiElement resolveInner() {
-            return getValueElement();
           }
         };
       }

@@ -3,33 +3,41 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.util.Function;
 
 /**
  * @author peter
  */
 public class NamedEnumUtil {
-
-  public static <T extends Enum> T getEnumElementByValue(final Class<T> enumClass, final String value) {
-    if (NamedEnum.class.isAssignableFrom(enumClass)) {
-      for (final T t : enumClass.getEnumConstants()) {
-        if (Comparing.equal(((NamedEnum)t).getValue(), value)) {
-          return t;
-        }
+  private static final Function<Enum, String> NAMED_SHOW = new Function<Enum, String>() {
+    public String fun(final Enum s) {
+      return ((NamedEnum) s).getValue();
+    }
+  };
+  private static final Function<Enum, String> SIMPLE_SHOW = new Function<Enum, String>() {
+    public String fun(final Enum s) {
+      return s.name();
+    }
+  };
+  
+  public static <T extends Enum> T getEnumElementByValue(final Class<T> enumClass, final String value, Function<Enum, String> show) {
+    for (final T t : enumClass.getEnumConstants()) {
+      if (value.equals(show.fun(t))) {
+        return t;
       }
-    } else {
-      return (T) Enum.valueOf(enumClass, value);
     }
     return null;
   }
+  public static <T extends Enum> T getEnumElementByValue(final Class<T> enumClass, final String value) {
+    return getEnumElementByValue(enumClass, value, getShow(enumClass));
+  }
+
+  private static <T extends Enum> Function<Enum, String> getShow(final Class<T> enumClass) {
+    return NamedEnum.class.isAssignableFrom(enumClass) ? NAMED_SHOW : SIMPLE_SHOW;
+  }
 
   public static <T extends Enum> String getEnumValueByElement(final T element) {
-    if (element == null) return null;
-    if (NamedEnum.class.isAssignableFrom(element.getClass())) {
-      return ((NamedEnum) element).getValue();
-    } else {
-      return element.name();
-    }
+    return element == null ? null : getShow(element.getClass()).fun(element);
   }
 
 }

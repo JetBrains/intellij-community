@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -12,14 +13,19 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.ui.DomUIFactory;
 
 import java.util.List;
+import java.util.Collection;
 
 /**
  * author: lesya
  */
 public class GenericDomValueReference<T> extends GenericReference {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.GenericDomValueReference");
   private final GenericDomValue<T> myGenericValue;
   private final XmlElement myContextElement;
   private final TextRange myTextRange;
@@ -83,10 +89,10 @@ public class GenericDomValueReference<T> extends GenericReference {
         }
       }
     }
-    return null;
+    return o != null ? getValueElement() : null;
   }
 
-  public PsiElement resolveInner() {
+  public final PsiElement resolveInner() {
     final T value = myGenericValue.getValue();
     return value == null ? null : resolveInner(value);
   }
@@ -134,4 +140,25 @@ public class GenericDomValueReference<T> extends GenericReference {
     return null;
   }
 
+  public Object[] getVariants() {
+    try {
+      final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(myGenericValue);
+      final Converter converter = handler.getConverter(DomUIFactory.GET_VALUE_METHOD, true);
+      if (converter instanceof ResolvingConverter) {
+        final Collection variants = ((ResolvingConverter)converter).getVariants();
+        return ContainerUtil.map2Array(variants, String.class, new Function() {
+          public Object fun(final Object s) {
+            return converter.toString(s, new ConvertContextImpl(handler, DomUIFactory.GET_VALUE_METHOD));
+          }
+        });
+      }
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
+    catch (InstantiationException e) {
+      LOG.error(e);
+    }
+    return super.getVariants();
+  }
 }

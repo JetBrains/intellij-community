@@ -16,11 +16,11 @@ public class EnumConverter<T extends Enum> implements Converter<T>{
   }
 
   private String getStringValue(final T anEnum) {
-    return myIsNamedEnum ? ((NamedEnum)anEnum).getValue() : anEnum.name();
+    return NamedEnumUtil.getEnumValueByElement(anEnum);
   }
 
   public final T fromString(final String s, final ConvertContext context) {
-    return myIsNamedEnum ? (T) NamedEnumUtil.getEnumElementByValue((Class)myType, s) : (T) Enum.valueOf((Class)myType, s);
+    return (T)NamedEnumUtil.getEnumElementByValue((Class)myType, s);
   }
 
   public final String toString(final T t, final ConvertContext context) {
