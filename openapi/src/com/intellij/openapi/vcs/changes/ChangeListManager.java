@@ -56,5 +56,7 @@ public abstract class ChangeListManager {
   public abstract void removeChangeListListner(ChangeListListener listener);
 
   public abstract void registerCommitExecutor(CommitExecutor executor);
-
+  
+  public abstract void commitChanges(LocalChangeList changeList, List<Change> changes);
+  public abstract void reopenFiles(List<FilePath> paths);
 }

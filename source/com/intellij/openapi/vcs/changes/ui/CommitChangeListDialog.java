@@ -1,11 +1,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsAction;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -24,7 +20,6 @@ import com.intellij.openapi.vcs.ui.CheckinDialog;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import gnu.trove.THashSet;
@@ -264,10 +259,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       if (result == CheckinHandler.ReturnResult.CANCEL) return false;
       if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
         final ChangeList changeList = myBrowser.getSelectedChangeList();
-        moveToFailedList(changeList,
+        CommitHelper.moveToFailedList(changeList,
                          getCommitMessage(),
                          getIncludedChanges(),
-                         VcsBundle.message("commit.dialog.rejected.commit.template", changeList.getName()));
+                         VcsBundle.message("commit.dialog.rejected.commit.template", changeList.getName()),
+                         myProject);
         doCancelAction();
         return false;
       }
@@ -307,160 +303,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void doCommit() {
-    final Runnable checkinAction = new Runnable() {
-      public void run() {
-        final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
-        final List<Change> changesFailedToCommit = new ArrayList<Change>();
-
-        ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(checkinAction(vcsExceptions, changesFailedToCommit, myBrowser.getSelectedChangeList()), myActionName, true, myProject);
-      }
-    };
-
-    AbstractVcsHelper.getInstance(myProject).optimizeImportsAndReformatCode(getVirtualFiles(),
-                                                                            VcsConfiguration.getInstance(myProject), checkinAction, true);
+    new CommitHelper(myProject, myBrowser.getSelectedChangeList(), getIncludedChanges(), myActionName, getCommitMessage(), 
+                     mySession, myHandlers, myAllOfDefaultChangeListChangesIncluded).doCommit();
   }
-
-  private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit, final ChangeList changeList) {
-    if (mySession != null) {
-      return new Runnable() {
-        public void run() {
-          mySession.execute(getIncludedChanges(), getCommitMessage());
-        }
-      };
-    }
-
-    return new Runnable() {
-      public void run() {
-        try {
-          final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
-          ChangesUtil.processChangesByVcs(myProject, getIncludedChanges(), new ChangesUtil.PerVcsProcessor<Change>() {
-            public void process(AbstractVcs vcs, List<Change> changes) {
-              final ChangeProvider provider = vcs.getChangeProvider();
-              if (provider != null) {
-                List<FilePath> paths = ChangesUtil.getPaths(changes);
-                pathsToRefresh.addAll(paths);
-                final List<VcsException> exceptions = provider.commit(changes, getCommitMessage());
-                if (exceptions.size() > 0) {
-                  vcsExceptions.addAll(exceptions);
-                  changesFailedToCommit.addAll(changes);
-                }
-              }
-            }
-          });
-
-          final LvcsAction lvcsAction = LocalVcs.getInstance(myProject).startAction(myActionName, "", true);
-          VirtualFileManager.getInstance().refresh(true, new Runnable() {
-            public void run() {
-              lvcsAction.finish();
-              FileStatusManager.getInstance(myProject).fileStatusesChanged();
-              for (FilePath path : pathsToRefresh) {
-                VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
-              }
-            }
-          });
-          AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, myActionName);
-        }
-        finally {
-          commitCompleted(vcsExceptions, changeList, changesFailedToCommit, VcsConfiguration.getInstance(myProject), myHandlers, getCommitMessage());
-        }
-      }
-    };
-  }
-
-  private void commitCompleted(final List<VcsException> allExceptions,
-                               final ChangeList changeList,
-                               final List<Change> failedChanges,
-                               VcsConfiguration config,
-                               final List<CheckinHandler> checkinHandlers,
-                               String commitMessage) {
-    final List<VcsException> errors = collectErrors(allExceptions);
-    final int errorsSize = errors.size();
-    final int warningsSize = allExceptions.size() - errorsSize;
-
-    if (errorsSize == 0) {
-      for (CheckinHandler handler : checkinHandlers) {
-        handler.checkinSuccessful();
-      }
-      final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-      final ChangeList list = myBrowser.getSelectedChangeList();
-      final List<Change> includedChanges = getIncludedChanges();
-      if (list instanceof LocalChangeList) {
-        final LocalChangeList localList = (LocalChangeList)list;
-        if (includedChanges.containsAll(list.getChanges()) && !localList.isDefault()) {
-          changeListManager.removeChangeList(localList);
-        }
-        else if (!includedChanges.containsAll(list.getChanges()) && localList.isDefault() && myAllOfDefaultChangeListChangesIncluded) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              final int rc = Messages.showYesNoDialog(myProject,
-                                                      VcsBundle.message("changes.commit.partial.offer.to.move.text"),
-                                                      VcsBundle.message("changes.commit.partial.offer.to.move.title"),
-                                                      Messages.getQuestionIcon());
-              if (rc == 0) {
-                final Collection<Change> changes = changeListManager.getDefaultChangelist().getChanges();
-                MoveChangesToAnotherListAction.askAndMove(myProject, changes.toArray(new Change[changes.size()]));
-              }
-            }
-          }, ModalityState.NON_MMODAL);
-        }
-      }
-    }
-    else {
-      for (CheckinHandler handler : checkinHandlers) {
-        handler.checkinFailed(errors);
-      }
-
-      moveToFailedList(changeList, commitMessage, failedChanges, VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()));
-    }
-
-    config.ERROR_OCCURED = errorsSize > 0;
-
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (errorsSize > 0 && warningsSize > 0) {
-          Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors.and.warnings"),
-                                   VcsBundle.message("message.title.commit"));
-        }
-        else if (errorsSize > 0) {
-          Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors"), VcsBundle.message("message.title.commit"));
-        }
-        else if (warningsSize > 0) {
-          Messages
-            .showErrorDialog(VcsBundle.message("message.text.commit.finished.with.warnings"), VcsBundle.message("message.title.commit"));
-        }
-
-      }
-    }, ModalityState.NON_MMODAL);
-
-  }
-
-  private void moveToFailedList(final ChangeList changeList,
-                                final String commitMessage,
-                                final List<Change> failedChanges,
-                                final String newChangelistName) {
-    // No need to move since we'll get exactly the same changelist.
-    if (failedChanges.containsAll(changeList.getChanges())) return;
-
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    final LocalChangeList failedList =
-      changeListManager.addChangeList(newChangelistName);
-
-    failedList.setComment(commitMessage);
-    changeListManager.moveChangesTo(failedList, failedChanges.toArray(new Change[failedChanges.size()]));
-  }
-
-  private static List<VcsException> collectErrors(final List<VcsException> vcsExceptions) {
-    final ArrayList<VcsException> result = new ArrayList<VcsException>();
-    for (VcsException vcsException : vcsExceptions) {
-      if (!vcsException.isWarning()) {
-        result.add(vcsException);
-      }
-    }
-    return result;
-  }
-
+  
   @Nullable
   protected JComponent createCenterPanel() {
     myRootPane = new Splitter(true);

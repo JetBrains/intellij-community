@@ -17,7 +17,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -965,6 +967,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myExecutors.add(executor);
   }
 
+  public void commitChanges(LocalChangeList changeList, List<Change> changes) {
+    new CommitHelper(myProject, changeList, changes, changeList.getName(), 
+                     changeList.getComment(), null, new ArrayList<CheckinHandler>(), false).doCommit();
+  }
+
   @SuppressWarnings({"unchecked"})
   public void readExternal(Element element) throws InvalidDataException {
     SHOW_FLATTEN_MODE = Boolean.valueOf(element.getAttributeValue(ATT_FLATTENED_VIEW)).booleanValue();
@@ -1054,5 +1061,29 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     public VcsRevisionNumber getRevisionNumber() {
       return VcsRevisionNumber.NULL;
     }
+  }
+
+
+  public void reopenFiles(List<FilePath> paths) {
+    final ReadonlyStatusHandlerImpl readonlyStatusHandler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandlerImpl.getInstance(myProject);
+    final boolean savedOption = readonlyStatusHandler.SHOW_DIALOG;
+    readonlyStatusHandler.SHOW_DIALOG = false;
+    try {
+      readonlyStatusHandler.ensureFilesWritable(collectFiles(paths));
+    }
+    finally {
+      readonlyStatusHandler.SHOW_DIALOG = savedOption;
+    }
+  }
+
+  private VirtualFile[] collectFiles(final List<FilePath> paths) {
+    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (FilePath path : paths) {
+      if (path.getVirtualFile() != null) {
+        result.add(path.getVirtualFile());
+      }
+    }
+    
+    return result.toArray(new VirtualFile[result.size()]); 
   }
 }
