@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,6 +89,9 @@ public class VirtualFileImpl extends VirtualFile {
 
   PhysicalFile getPhysicalFile() {
     String path = getPath(File.separatorChar);
+    if (ourFileSystem.isRoot(this)) {
+      path += "/";
+    }
     return new IoFile(path);
   }
 
