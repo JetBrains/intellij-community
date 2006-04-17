@@ -36,12 +36,12 @@ public final class CompilerMessageImpl implements CompilerMessage {
     myProject = project;
     myCategory = category;
     myNavigatable = navigatable;
-    myMessage = (message != null)? message : "";
+    myMessage = message == null ? "" : message;
     myRow = row;
     myColumn = column;
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        myFile = (url != null)? VirtualFileManager.getInstance().findFileByUrl(url) : null;
+        myFile = url == null ? null : VirtualFileManager.getInstance().findFileByUrl(url);
       }
     });
   }

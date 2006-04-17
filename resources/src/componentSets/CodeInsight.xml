@@ -116,5 +116,13 @@
       <implementation-class>com.intellij.codeInsight.ExpectedTypesProviderImpl</implementation-class>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.problems.WolfTheProblemSolver</implementation-class>
+      <skipForDummyProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.problems.ProblemsToolWindow</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 </components>

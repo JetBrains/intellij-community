@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.problems.ProblemsToolWindow;
 import com.intellij.javaee.ejb.role.EjbImplMethodRole;
 import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.intellij.javaee.ejb.role.EjbRolesUtil;
@@ -16,6 +17,8 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,9 +26,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
+import com.intellij.util.ui.MessageCategory;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,9 +57,9 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
 
-  public GeneralHighlightingPass(Project project,
-                                 PsiFile file,
-                                 Document document,
+  public GeneralHighlightingPass(@NotNull Project project,
+                                 @NotNull PsiFile file,
+                                 @NotNull Document document,
                                  int startOffset,
                                  int endOffset,
                                  boolean isCompiled,
@@ -148,6 +153,35 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       }
     }
     myHighlights = result;
+    reportToProblemsToolWindow(result);
+  }
+
+  private void reportToProblemsToolWindow(final Collection<HighlightInfo> infos) {
+    ProblemsToolWindow problemsToolWindow = ProblemsToolWindow.getInstance(myProject);
+
+    VirtualFile file = myFile.getVirtualFile();
+    String groupName = file.getPresentableUrl();
+    problemsToolWindow.clearGroupChildren(file);
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    for (HighlightInfo info : infos) {
+      HighlightSeverity severity = info.getSeverity();
+      if (severity != HighlightSeverity.WARNING && severity != HighlightSeverity.ERROR) {
+        continue;
+      }
+      OpenFileDescriptor navigatable = new OpenFileDescriptor(myProject, file, info.fixStartOffset);
+      int line = document.getLineNumber(info.fixStartOffset);
+      int column = info.fixStartOffset - document.getLineStartOffset(line);
+      String prefix = "("+line + ", " + column + ")";
+      problemsToolWindow.addMessage(getKind(info),new String[]{info.description}, groupName, navigatable,  "", prefix, file);
+    }
+  }
+
+  private static int getKind(final HighlightInfo info) {
+    HighlightSeverity severity = info.getSeverity();
+    if (severity == HighlightSeverity.INFORMATION) return MessageCategory.INFORMATION;
+    if (severity == HighlightSeverity.WARNING) return MessageCategory.WARNING;
+    if (severity == HighlightSeverity.ERROR) return MessageCategory.ERROR;
+    return MessageCategory.STATISTICS;
   }
 
 
@@ -196,7 +230,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   }
 
   //for tests only
-  public Collection<HighlightInfo> getHighlights() {
+  @NotNull public Collection<HighlightInfo> getHighlights() {
     return myHighlights;
   }
 

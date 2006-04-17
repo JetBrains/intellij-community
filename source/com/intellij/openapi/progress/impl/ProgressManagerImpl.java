@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiLock;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -120,9 +121,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
     }
   }
 
-  public void runProcess(Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    LOG.assertTrue(process != null);
-
+  public void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     Thread currentThread = Thread.currentThread();
 
     ProgressIndicator oldIndicator;

@@ -199,6 +199,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     myBuilder.updateTree();
   }
 
+  public void updateTree() {
+    myBuilder.updateTree();
+  }
   public void addMessage(int type, String[] text, VirtualFile file, int line, int column, Object data) {
     myErrorViewStructure.addMessage(ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, file, line, column, data);
     myBuilder.updateTree();
@@ -207,6 +210,10 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public void addMessage(int type, String[] text, String groupName, Navigatable navigatable, String exportTextPrefix, String rendererTextPrefix, Object data) {
     myErrorViewStructure.addNavigatableMessage(groupName, navigatable, ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, data, exportTextPrefix, rendererTextPrefix);
     myBuilder.updateTree();
+  }
+
+  public ErrorViewStructure getErrorViewStructure() {
+    return myErrorViewStructure;
   }
 
   public static String createExportPrefix(int line) {

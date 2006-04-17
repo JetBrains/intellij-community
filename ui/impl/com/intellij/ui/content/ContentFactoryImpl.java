@@ -3,7 +3,6 @@ package com.intellij.ui.content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 
 import javax.swing.*;
 
@@ -13,10 +12,10 @@ public class ContentFactoryImpl implements ContentFactory {
   }
 
   public ContentManagerImpl createContentManager(ContentUI contentUI, boolean canCloseContents, Project project) {
-    return new ContentManagerImpl(contentUI, canCloseContents, project, ProjectManager.getInstance());
+    return new ContentManagerImpl(contentUI, canCloseContents, project);
   }
 
   public ContentManager createContentManager(boolean canCloseContents, Project project) {
-    return new ContentManagerImpl(new TabbedPaneContentUI(), canCloseContents, project, ProjectManager.getInstance());
+    return new ContentManagerImpl(new TabbedPaneContentUI(), canCloseContents, project);
   }
 }

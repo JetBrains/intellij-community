@@ -52,8 +52,8 @@ public class ErrorViewFactoryImpl implements ErrorViewFactory {
       protected void addExtraPopupMenuActions(DefaultActionGroup group) {
         super.addExtraPopupMenuActions(group);
         if (extraPopupMenuActions != null){
-          for (int i = 0; i < extraPopupMenuActions.length; i++) {
-            group.add(extraPopupMenuActions[i]);
+          for (AnAction extraPopupMenuAction : extraPopupMenuActions) {
+            group.add(extraPopupMenuAction);
           }
         }
       }
@@ -61,8 +61,8 @@ public class ErrorViewFactoryImpl implements ErrorViewFactory {
       protected void fillRightToolbarGroup(DefaultActionGroup group) {
         super.fillRightToolbarGroup(group);
         if (extraRightToolbarGroupActions != null){
-          for (int i = 0; i < extraRightToolbarGroupActions.length; i++) {
-            group.add(extraRightToolbarGroupActions[i]);
+          for (AnAction extraRightToolbarGroupAction : extraRightToolbarGroupActions) {
+            group.add(extraRightToolbarGroupAction);
           }
         }
       }

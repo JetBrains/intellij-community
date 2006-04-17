@@ -12,11 +12,11 @@ import org.jetbrains.annotations.NonNls;
  * @author Eugene Zhuravlev
  *         Date: Nov 12, 2004
  */
-public class ErrorTreeElementKind {
-  public static final ErrorTreeElementKind INFO = new ErrorTreeElementKind("INFO", IdeBundle.message("errortree.information"));
-  public static final ErrorTreeElementKind ERROR = new ErrorTreeElementKind("ERROR", IdeBundle.message("errortree.error"));
-  public static final ErrorTreeElementKind WARNING = new ErrorTreeElementKind("WARNING", IdeBundle.message("errortree.warning"));
-  public static final ErrorTreeElementKind GENERIC = new ErrorTreeElementKind("GENERIC", "");
+public enum ErrorTreeElementKind {
+  INFO ("INFO", IdeBundle.message("errortree.information")),
+  ERROR ("ERROR", IdeBundle.message("errortree.error")),
+  WARNING ("WARNING", IdeBundle.message("errortree.warning")),
+  GENERIC ("GENERIC", "");
 
   private final String myText;
   private final String myPresentableText;

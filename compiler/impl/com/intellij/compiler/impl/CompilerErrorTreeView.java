@@ -70,8 +70,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
       if (filePresentableText == null) return null;
 
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePresentableText.replace('\\', '/'));
-      return file;
+      return LocalFileSystem.getInstance().findFileByPath(filePresentableText.replace('\\', '/'));
     }
 
     private String getSelectedFilePresentableText(final ErrorTreeElement selectedElement) {

@@ -4,7 +4,6 @@ package com.intellij.ui.content.impl;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -19,8 +18,8 @@ import com.intellij.ui.content.TabbedPaneContentUI;
 public class MessageViewImpl extends ContentManagerImpl implements ProjectComponent, MessageView {
   private Project myProject;
 
-  public MessageViewImpl(Project project, ProjectManager projectManager) {
-    super(new TabbedPaneContentUI(), true, project, projectManager);
+  public MessageViewImpl(Project project) {
+    super(new TabbedPaneContentUI(), true, project);
     myProject = project;
   }
 

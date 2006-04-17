@@ -21,33 +21,32 @@ package com.intellij.openapi.compiler;
  * @see CompilerMessage#getCategory()
  * @see CompileContext#addMessage(CompilerMessageCategory, String, String, int, int) 
  */
-public interface CompilerMessageCategory {
-  CompilerMessageCategory ERROR = new CompilerMessageCategory() {
+public enum CompilerMessageCategory {
+  ERROR {
     public String toString() {
       return CompilerBundle.message("message.category.error");
     }
-
     public String getPresentableText() {
       return toString();
     }
-  };
-  CompilerMessageCategory WARNING = new CompilerMessageCategory() {
+  },
+  WARNING {
     public String toString() {
       return CompilerBundle.message("message.category.warning");
     }
     public String getPresentableText() {
       return toString();
     }
-  };
-  CompilerMessageCategory INFORMATION = new CompilerMessageCategory() {
+  },
+  INFORMATION {
     public String toString() {
       return CompilerBundle.message("message.category.information");
     }
     public String getPresentableText() {
       return toString();
     }
-  };
-  CompilerMessageCategory STATISTICS = new CompilerMessageCategory() {
+  },
+  STATISTICS {
     public String toString() {
       return CompilerBundle.message("message.category.statistics");
     }
@@ -56,5 +55,5 @@ public interface CompilerMessageCategory {
     }
   };
 
-  String getPresentableText();
+  public abstract String getPresentableText();
 }

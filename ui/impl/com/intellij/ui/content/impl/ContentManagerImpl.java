@@ -36,7 +36,7 @@ public class ContentManagerImpl implements ContentManager {
    * WARNING: as this class adds listener to the ProjectManager which is removed on projectClosed event, all instances of this class
    * must be created on already OPENED projects, otherwise there will be memory leak!
    */
-  public ContentManagerImpl(ContentUI contentUI, boolean canCloseContents, Project project, final ProjectManager projectManager) {
+  public ContentManagerImpl(ContentUI contentUI, boolean canCloseContents, Project project) {
     myCanCloseContents = canCloseContents;
     myContents = new ArrayList<Content>();
     myListeners = new EventListenerList();
@@ -48,8 +48,8 @@ public class ContentManagerImpl implements ContentManager {
       public void projectClosed(Project project) {
         if (project == myProject) {
           Content[] contents = myContents.toArray(new Content[myContents.size()]);
-          for (int i = 0; i < contents.length; i++) {
-            removeContent(contents[i]);
+          for (Content content : contents) {
+            removeContent(content);
           }
         }
       }
@@ -94,7 +94,7 @@ public class ContentManagerImpl implements ContentManager {
       }
 
 
-      boolean wasSelected = (content == mySelectedContent);
+      boolean wasSelected = content == mySelectedContent;
       int indexToSelect = -1;
       if (wasSelected) {
         int i = indexToBeRemoved - 1;
@@ -145,8 +145,7 @@ public class ContentManagerImpl implements ContentManager {
 
   public void removeAllContents() {
     Content[] contents = getContents();
-    for (int i = 0; i < contents.length; i++) {
-      Content content = contents[i];
+    for (Content content : contents) {
       removeContent(content);
     }
   }
@@ -156,13 +155,12 @@ public class ContentManagerImpl implements ContentManager {
   }
 
   public Content[] getContents() {
-    return (Content[])myContents.toArray(new ContentImpl[myContents.size()]);
+    return myContents.toArray(new ContentImpl[myContents.size()]);
   }
 
   //TODO[anton,vova] is this method needed?
   public Content findContent(String displayName) {
-    for (int i = 0; i < myContents.size(); i++) {
-      Content content = myContents.get(i);
+    for (Content content : myContents) {
       if (content.getDisplayName().equals(displayName)) {
         return content;
       }
@@ -176,8 +174,7 @@ public class ContentManagerImpl implements ContentManager {
 
   public Content getContent(JComponent component) {
     Content[] contents = getContents();
-    for (int i = 0; i < contents.length; i++) {
-      Content content = contents[i];
+    for (Content content : contents) {
       if (Comparing.equal(component, content.getComponent())) {
         return content;
       }
@@ -256,33 +253,33 @@ public class ContentManagerImpl implements ContentManager {
 
   protected void fireContentAdded(Content content, int newIndex) {
     ContentManagerEvent event = new ContentManagerEvent(this, content, newIndex);
-    ContentManagerListener[] listeners = (ContentManagerListener[])myListeners.getListeners(ContentManagerListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].contentAdded(event);
+    ContentManagerListener[] listeners = myListeners.getListeners(ContentManagerListener.class);
+    for (ContentManagerListener listener : listeners) {
+      listener.contentAdded(event);
     }
   }
 
   protected void fireContentRemoved(Content content, int oldIndex) {
     ContentManagerEvent event = new ContentManagerEvent(this, content, oldIndex);
-    ContentManagerListener[] listeners = (ContentManagerListener[])myListeners.getListeners(ContentManagerListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].contentRemoved(event);
+    ContentManagerListener[] listeners = myListeners.getListeners(ContentManagerListener.class);
+    for (ContentManagerListener listener : listeners) {
+      listener.contentRemoved(event);
     }
   }
 
   protected void fireSelectionChanged(Content content, int index) {
     ContentManagerEvent event = new ContentManagerEvent(this, content, index);
-    ContentManagerListener[] listeners = (ContentManagerListener[])myListeners.getListeners(ContentManagerListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].selectionChanged(event);
+    ContentManagerListener[] listeners = myListeners.getListeners(ContentManagerListener.class);
+    for (ContentManagerListener listener : listeners) {
+      listener.selectionChanged(event);
     }
   }
 
   protected boolean fireContentRemoveQuery(Content content, int oldIndex) {
     ContentManagerEvent event = new ContentManagerEvent(this, content, oldIndex);
-    ContentManagerListener[] listeners = (ContentManagerListener[])myListeners.getListeners(ContentManagerListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].contentRemoveQuery(event);
+    ContentManagerListener[] listeners = myListeners.getListeners(ContentManagerListener.class);
+    for (ContentManagerListener listener : listeners) {
+      listener.contentRemoveQuery(event);
       if (event.isConsumed()) {
         return false;
       }

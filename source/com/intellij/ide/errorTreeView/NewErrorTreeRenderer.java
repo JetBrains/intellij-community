@@ -12,11 +12,10 @@ import java.awt.*;
  *
  */
 public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
-
-  private static Icon ourFileIcon = IconLoader.getIcon("/fileTypes/java.png");
-  private static Icon ourErrorIcon = IconLoader.getIcon("/compiler/error.png");
-  private static Icon ourWarningIcon = IconLoader.getIcon("/compiler/warning.png");
-  private static Icon ourInfoIcon = IconLoader.getIcon("/compiler/information.png");
+  private final static Icon ourFileIcon = IconLoader.getIcon("/fileTypes/java.png");
+  private final static Icon ourErrorIcon = IconLoader.getIcon("/compiler/error.png");
+  private final static Icon ourWarningIcon = IconLoader.getIcon("/compiler/warning.png");
+  private final static Icon ourInfoIcon = IconLoader.getIcon("/compiler/information.png");
 
   private NewErrorTreeRenderer() {
   }
@@ -54,9 +53,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     Icon icon = null;
 
     if (element instanceof GroupingElement) {
-      if (ourFileIcon != null) {
-        icon = ourFileIcon;
-      }
+      icon = ourFileIcon;
     }
     else if (element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
       ErrorTreeElementKind kind = element.getKind();
