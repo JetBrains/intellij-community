@@ -90,7 +90,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     if (status == null) return null;
     String text = HTML_HEADER;
     if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
-      text += DaemonBundle.message("analysis.havent.been.run");
+      text += DaemonBundle.message("analysis.hasnot.been.run");
       text += HTML_FOOTER;
       return text;
     }
