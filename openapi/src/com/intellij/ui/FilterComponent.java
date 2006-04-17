@@ -50,6 +50,10 @@ public abstract class FilterComponent extends JPanel {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           e.consume();
         }
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE && getFilter().length() > 0){
+          myFilter.setText("");
+          e.consume();
+        }
         myUpdateAlarm.cancelAllRequests();
         myUpdateAlarm.addRequest(new Runnable(){
           public void run() {
