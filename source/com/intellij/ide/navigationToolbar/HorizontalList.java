@@ -280,6 +280,7 @@ public class HorizontalList extends JPanel {
     }, new Runnable() {
       public void run() {
         //just select
+        requestFocusInWindow();
       }
     }, index));
   }
