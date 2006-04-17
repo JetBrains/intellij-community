@@ -49,6 +49,9 @@ public class FileEditorInfoPane extends JPanel {
       }
     });
 
+    myPrevButton.setVisible(false);
+    myNextButton.setVisible(false);
+
     add(buttonsPanel, BorderLayout.EAST);
 
     setBorder(IdeBorderFactory.createBorder());
