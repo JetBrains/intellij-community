@@ -15,8 +15,10 @@
  */
 package com.intellij.util;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,6 +37,27 @@ public class CommonProcessors {
 
     public CollectProcessor() {
       myCollection = new ArrayList<T>();
+    }
+
+    public boolean process(T t) {
+      myCollection.add(t);
+      return true;
+    }
+
+    public <T> T[] toArray(T[] a) {
+      return myCollection.toArray(a);
+    }
+
+    public Collection<T> getResults() {
+      return myCollection;
+    }
+  }
+
+  public static class CollectUniquesProcessor<T> implements Processor<T> {
+    private final Set<T> myCollection;
+
+    public CollectUniquesProcessor() {
+      myCollection = new HashSet<T>();
     }
 
     public boolean process(T t) {

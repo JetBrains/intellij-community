@@ -46,7 +46,7 @@ public final class QueryInstance<Result, Parameter> implements Query<Result> {
   @NotNull
   public Collection<Result> findAll() {
     assertNotProcessing();
-    final CommonProcessors.CollectProcessor<Result> processor = new CommonProcessors.CollectProcessor<Result>();
+    final CommonProcessors.CollectUniquesProcessor<Result> processor = new CommonProcessors.CollectUniquesProcessor<Result>();
     forEach(processor);
     return processor.getResults();
   }

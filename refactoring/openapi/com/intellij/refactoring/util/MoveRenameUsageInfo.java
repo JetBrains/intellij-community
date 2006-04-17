@@ -67,7 +67,9 @@ public class MoveRenameUsageInfo extends UsageInfo{
   public PsiReference getReference() {
     if (myReference != null) {
       final PsiElement element = myReference.getElement();
-      if (element != null && element.isValid()) return myReference;
+      if (element != null &&
+          !(element instanceof PsiFile) && //hack!!!
+          element.isValid()) return myReference;
     }
 
     if (myReferenceRangeMarker == null) return null;

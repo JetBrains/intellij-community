@@ -35,6 +35,8 @@ import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -235,6 +237,20 @@ public class IdTableBuilding {
                                   public boolean visit(IComponent iComponent) {
                                     String componentClassName = iComponent.getComponentClassName();
                                     addClassAndPackagesNames(componentClassName, wordsTable);
+                                    final String binding = iComponent.getBinding();
+                                    if (binding != null) {
+                                      IdCacheUtil.addOccurrence(wordsTable, binding, UsageSearchContext.IN_FOREIGN_LANGUAGES);
+                                    }
+                                    final IProperty[] properties = iComponent.getModifiedProperties();
+                                    for (IProperty property : properties) {
+                                      final Object value = property.getPropertyValue(iComponent);
+                                      if (value instanceof StringDescriptor) {
+                                        final String key = ((StringDescriptor)value).getKey();
+                                        if (key != null) {
+                                          IdCacheUtil.addOccurrence(wordsTable, key, UsageSearchContext.IN_FOREIGN_LANGUAGES);
+                                        }
+                                      }
+                                    }
                                     return true;
                                   }
                                 });
