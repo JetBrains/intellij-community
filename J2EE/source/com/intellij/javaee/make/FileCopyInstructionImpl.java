@@ -116,11 +116,11 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
       }
     }
     else {
-      String s = J2EEBundle.message("file.copy.instruction.message.text", myFile);
-      for (FileCopyInstructionImpl fileCopyInstruction : myChangedSet) {
-        s += fileCopyInstruction + ", ";
+      StringBuilder builder = new StringBuilder(J2EEBundle.message("file.copy.instruction.message.text", myFile));
+      for (FileCopyInstruction fileCopyInstruction : myChangedSet) {
+        builder.append(fileCopyInstruction).append(", ");
       }
-      return s;
+      return builder.toString();
     }
   }
 
@@ -233,5 +233,8 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
       boolean targetFileExists = (!isExplodedEnabled || fileInExplodedPath != null) && (!jarEnabled || jarFile != null);
       processingItem.addInstructionInfo(new InstructionProcessingItem.InstructionInfo(this, outputRelativePath, targetModule, targetFileExists));
     }
+  }
+
+  public void clearCaches() {
   }
 }

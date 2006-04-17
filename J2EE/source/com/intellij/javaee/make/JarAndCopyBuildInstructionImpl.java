@@ -97,6 +97,9 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
     myJarFile = jarFile;
   }
 
+  public void clearCaches() {
+    myJarFile = null;
+  }
 
   public boolean accept(BuildInstructionVisitor visitor) throws Exception {
     return visitor.visitJarAndCopyBuildInstruction(this);
