@@ -20,6 +20,7 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -36,6 +37,15 @@ public interface DomElementsProblemsHolder {
 
   List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren);
 
-  List<DomElementProblemDescriptor> getProblems(DomElement domElement, ProblemHighlightType severity);
+  List<DomElementProblemDescriptor> getProblems(DomElement domElement,
+                                                final boolean includeXmlProblems,
+                                                final boolean withChildren,
+                                                HighlightSeverity minSeverity);
+
+  List<DomElementProblemDescriptor> getAllProblems();
+
+  HighlightSeverity getDefaultHighlightSeverity();
+
+  void setDefaultHighlightSeverity(final HighlightSeverity defaultHighlightSeverity);
 
 }

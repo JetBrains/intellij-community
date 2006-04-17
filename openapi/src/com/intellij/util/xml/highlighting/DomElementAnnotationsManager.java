@@ -18,7 +18,9 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.lang.annotation.HighlightSeverity;
 
 import java.util.List;
 
@@ -31,6 +33,9 @@ public abstract class DomElementAnnotationsManager {
   public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement);
   public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems);
   public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren);
+  public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren, HighlightSeverity minSeverity);
+
+  public abstract List<DomElementProblemDescriptor> getAllProblems(final DomFileElement<?> fileElement, HighlightSeverity minSeverity);
 
   public abstract void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class aClass);
 }

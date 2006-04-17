@@ -21,9 +21,10 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.lang.annotation.HighlightSeverity;
 
 public interface DomElementProblemDescriptor extends CommonProblemDescriptor  {
   DomElement getDomElement();
-  ProblemHighlightType getHighlightType();
+  HighlightSeverity getHighlightSeverity();
   LocalQuickFix[] getFixes();
 }

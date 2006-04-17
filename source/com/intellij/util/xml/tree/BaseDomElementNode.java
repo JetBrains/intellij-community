@@ -10,6 +10,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.lang.annotation.HighlightSeverity;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
 import java.util.*;
@@ -91,7 +92,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     clearColoredText();
     boolean isExpanded = isExpanded();
 
-    final List<DomElementProblemDescriptor> problems = DomElementAnnotationsManager.getInstance().getProblems(myDomElement, true, highlightIfChildrenHasProblems());
+    final List<DomElementProblemDescriptor> problems = DomElementAnnotationsManager.getInstance().getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
     if (problems.size() > 0) {
       addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems), SimpleTextAttributes.ERROR_ATTRIBUTES); //new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.BLACK, Color.RED)
     } else  if (myDomElement.getXmlTag() != null) {

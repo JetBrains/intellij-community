@@ -29,6 +29,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -92,7 +93,7 @@ public abstract class DomTableView extends JPanel {
     myEmptyPaneText = emptyPaneText;
     myHelpID = helpID;
 
-    ToolTipHandlerProvider.getToolTipHandlerProvider().install(myTable);
+    //ToolTipHandlerProvider.getToolTipHandlerProvider().install(myTable);
 
     final JTableHeader header = myTable.getTableHeader();
     header.addMouseMotionListener(new MouseMotionAdapter() {
@@ -142,6 +143,7 @@ public abstract class DomTableView extends JPanel {
     viewport.setToolTipText(tooltipText);
     myTable.setBackground(tableBackground);
     myTable.setToolTipText(tooltipText);
+    if (tooltipText == null) ToolTipManager.sharedInstance().registerComponent(myTable);
   }
 
   public final void setColumnInfos(final ColumnInfo[] columnInfos) {
@@ -211,6 +213,10 @@ public abstract class DomTableView extends JPanel {
 
   protected final void updateTooltip(final MouseEvent e) {
     final int i = myTable.columnAtPoint(e.getPoint());
+    final int k = myTable.rowAtPoint(e.getPoint());
+
+    //myTable.getTableHeader().setToolTipText(((DefaultTableCellRenderer)myTable.getCellRenderer(i,k)).getToolTipText();
+
     if (i >= 0) {
       myTable.getTableHeader().setToolTipText(myTableModel.getColumnInfos()[i].getTooltipText());
     }

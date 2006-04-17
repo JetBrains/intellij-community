@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -24,22 +25,50 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     new WeakValueHashMap<DomFileElement, CachedValue<DomElementsProblemsHolder>>();
 
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement) {
-     return getProblems(domElement, false);
+    return getProblems(domElement, false);
   }
 
   public List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems) {
-    return getProblems(domElement, includeXmlProblems, true);
+    return getProblems(domElement, includeXmlProblems, true, HighlightSeverity.ERROR);
   }
 
-  public List<DomElementProblemDescriptor> getProblems(DomElement domElement,  boolean includeXmlProblems, boolean withChildren) {
-    if(domElement == null || !domElement.isValid()) return Collections.emptyList();
+  /**
+   * Result is: Errors and Warnings
+   * @param domElement
+   * @param includeXmlProblems
+   * @param withChildren
+   * @return
+   */
+  public List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren) {
+    if (domElement == null || !domElement.isValid()) return Collections.emptyList();
+
+    final DomElementsProblemsHolder holder = getDomElementsProblemsHolder(domElement.getRoot());
+
+    return holder.getProblems(domElement, includeXmlProblems, withChildren);
+  }
+
+  public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
+                                                       boolean includeXmlProblems,
+                                                       boolean withChildren,
+                                                       HighlightSeverity minSeverity) {
+    if (domElement == null || !domElement.isValid()) return Collections.emptyList();
 
     final DomFileElement<?> fileElement = domElement.getRoot();
+    final DomElementsProblemsHolder holder = getDomElementsProblemsHolder(fileElement);
+
+    return holder.getProblems(domElement, includeXmlProblems, withChildren, minSeverity);
+  }
+
+  public List<DomElementProblemDescriptor> getAllProblems(final DomFileElement<?> fileElement, HighlightSeverity minSeverity) {
+    return getDomElementsProblemsHolder(fileElement).getAllProblems();
+  }
+
+  public DomElementsProblemsHolder getDomElementsProblemsHolder(final DomFileElement<?> fileElement) {
     if (myCache.get(fileElement) == null) {
       myCache.put(fileElement, getCachedValue(fileElement));
     }
 
-    return myCache.get(fileElement).getValue().getProblems(domElement, includeXmlProblems, withChildren);
+    return myCache.get(fileElement).getValue();
   }
 
   private CachedValue<DomElementsProblemsHolder> getCachedValue(final DomFileElement fileElement) {

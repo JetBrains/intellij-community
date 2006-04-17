@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 public abstract class BaseControl<Bound extends JComponent, T> implements DomUIControl {
   public static final Color ERROR_BACKGROUND = new Color(255,204,204);
   public static final Color ERROR_FOREGROUND = SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor();
+  public static final Color WARNING_BACKGROUND = new Color(255,255,204);
 
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
 
@@ -60,9 +61,14 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
     return ERROR_BACKGROUND;
   }
 
+  protected final Color getWarningBackground() {
+    return WARNING_BACKGROUND;
+  }
+
   protected final Color getErrorForeground() {
     return ERROR_FOREGROUND;
   }
+
 
   private void initialize(final Bound boundComponent) {
     myBoundComponent = createMainComponent(boundComponent);
@@ -82,6 +88,8 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
         }
       });
     }
+
+    updateComponent();
   }
 
   @Nullable

@@ -16,6 +16,7 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
@@ -239,7 +240,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo processIdentifier(PsiIdentifier identifier) {
-    InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(identifier);
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(identifier);
     if (!profile.isToolEnabled(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME))) return null;
     final UnusedSymbolLocalInspection unusedSymbolInspection = (UnusedSymbolLocalInspection)((LocalInspectionToolWrapper)profile.getInspectionTool(UnusedSymbolLocalInspection.SHORT_NAME)).getTool();
     if (InspectionManagerEx.inspectionResultSuppressed(identifier, unusedSymbolInspection.getID())) return null;

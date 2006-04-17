@@ -9,6 +9,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -31,6 +32,7 @@ import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -138,17 +140,33 @@ public class PsiClassControl2 extends BaseControl<PsiClassPanel, String> {
 
   protected void updateComponent() {
     final EditorTextField textField = getTextField();
-    final Editor editor = textField.getEditor();
-    if (editor != null && isCommitted()) {
+
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          final List<DomElementProblemDescriptor> problems = DomElementAnnotationsManager.getInstance().getProblems(getDomElement(), true);
-          final boolean shouldHighlighBackground = problems.size() > 0 && textField.getText().trim().length() == 0;
-          textField.setBackground(shouldHighlighBackground ? getErrorBackground() : getDefaultBackground());
+          final List<DomElementProblemDescriptor> errorProblems = DomElementAnnotationsManager.getInstance().getProblems(getDomElement(), true);
+          final List<DomElementProblemDescriptor> warningProblems =
+               DomElementAnnotationsManager.getInstance().getProblems(getDomElement(), true, true, HighlightSeverity.WARNING);
+
+          Color background = getDefaultBackground();
+          if (errorProblems.size() > 0 && textField.getText().trim().length() == 0) {
+            background = getErrorBackground();
+          }
+          else if (warningProblems.size() > 0) {
+            background = getWarningBackground();
+          }
+          textField.setBackground(background);
+
+          //todo!!! tooltip text isn't showed
+          errorProblems.addAll(warningProblems);
+          textField.setToolTipText(TooltipUtils.getTooltipText(errorProblems));
+
+          final Editor editor = textField.getEditor();
+          if (editor != null && isCommitted()) {
           DaemonCodeAnalyzer.getInstance(getProject()).updateVisibleHighlighters(editor);
+          }
         }
       });
-    }
+
   }
 
   private EditorTextField getTextField() {

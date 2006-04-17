@@ -54,7 +54,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return getInspectionProfile(psiFile).getName();
   }
 
-  public InspectionProfileImpl getInspectionProfile(@NotNull final PsiElement psiElement){
+  public InspectionProfile getInspectionProfile(@NotNull final PsiElement psiElement){
     final PsiFile psiFile = psiElement.getContainingFile();
     LOG.assertTrue(psiFile != null);
 
@@ -64,7 +64,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public InspectionProfileWrapper getProfileWrapper(final PsiElement psiElement){
-    final InspectionProfileImpl profile = getInspectionProfile(psiElement);
+    final InspectionProfile profile = getInspectionProfile(psiElement);
     final String profileName = profile.getName();
     if (!myName2Profile.containsKey(profileName)){
       initProfileWrapper(profile);

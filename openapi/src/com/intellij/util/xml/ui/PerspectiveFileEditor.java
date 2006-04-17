@@ -25,6 +25,7 @@ import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.util.Set;
 import java.util.HashSet;
@@ -42,8 +43,12 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
     public void documentChanged(DocumentEvent e) {
       if (myShowing) {
-        commitAllDocuments();
-        reset();
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            commitAllDocuments();
+            reset();
+          }
+        });
       }
     }
   };

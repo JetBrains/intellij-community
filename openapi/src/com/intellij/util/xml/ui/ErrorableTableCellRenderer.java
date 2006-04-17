@@ -21,16 +21,22 @@ import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.DomElement;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.lang.annotation.HighlightSeverity;
 
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTableCellRenderer {
   private final TableCellRenderer myRenderer;
   private final T myRowDomElement;
   private T myCellValueDomElement;
+
+  final Color myErrorBackground = new Color(255, 204, 204);
+  final Color myWarningBackground = new Color(255, 255, 204);
 
 
   public ErrorableTableCellRenderer(final T cellValueDomElement, final TableCellRenderer renderer, final T rowDomElement) {
@@ -43,10 +49,13 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     final Component component = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-    final java.util.List<DomElementProblemDescriptor> problems =
+    final List<DomElementProblemDescriptor> errorProblems =
       DomElementAnnotationsManager.getInstance().getProblems(myCellValueDomElement, true);
+    final List<DomElementProblemDescriptor> warningProblems =
+      DomElementAnnotationsManager.getInstance().getProblems(myCellValueDomElement, true, true, HighlightSeverity.WARNING);
 
-    final boolean hasErrors = problems.size() > 0;
+
+    final boolean hasErrors = errorProblems.size() > 0;
     if (hasErrors) {
       component.setForeground(Color.RED);
     }
@@ -54,15 +63,19 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
       component.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
     }
 
+    // highlight empty cell with errors
     if (hasErrors && (value == null || value.toString().trim().length() == 0)) {
-      // empty cell with errors
-      component.setBackground(new Color(255, 204, 204));
+      component.setBackground(myErrorBackground);
+    }
+    else if (warningProblems.size() > 0) {
+      component.setBackground(myWarningBackground);
+      if(isSelected) component.setForeground(Color.BLACK);
     }
 
-    final java.util.List<DomElementProblemDescriptor> problemDescriptors =
+    final List<DomElementProblemDescriptor> errorDescriptors =
       DomElementAnnotationsManager.getInstance().getProblems(myRowDomElement, true, true);
 
-    if (table.getModel().getColumnCount() - 1 == column && problemDescriptors.size() > 0) {
+    if (table.getModel().getColumnCount() - 1 == column && errorDescriptors.size() > 0) {
       final JPanel wrapper = new JPanel(new BorderLayout());
       wrapper.add(component, BorderLayout.CENTER);
 
@@ -70,9 +83,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
 
       final JLabel errorLabel = new JLabel(getErrorIcon());
 
-      ToolTipManager.sharedInstance().registerComponent(errorLabel);
-
-      wrapper.setToolTipText(TooltipUtils.getTooltipText(problemDescriptors));
+      wrapper.setToolTipText(TooltipUtils.getTooltipText(errorDescriptors));
 
       wrapper.add(errorLabel, BorderLayout.EAST);
 
@@ -86,9 +97,8 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     }
     else {
       if (component instanceof JComponent) {
-        ((JComponent)component).setToolTipText(hasErrors ? TooltipUtils.getTooltipText(problemDescriptors) : null);
+        ((JComponent)component).setToolTipText(errorDescriptors.size() > 0 ? TooltipUtils.getTooltipText(errorDescriptors) : null);
       }
-
       return component;
     }
   }
