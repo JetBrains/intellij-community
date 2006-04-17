@@ -4,6 +4,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.xml.XmlTag;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -11,6 +12,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
@@ -146,7 +149,7 @@ public class DomUtil {
   }
 
   @Nullable
-  public static <T extends DomElement> T findByName(@NotNull List<T> list, @NotNull String name) {
+  public static <T extends DomElement> T findByName(@NotNull Collection<T> list, @NotNull String name) {
     for (T element: list) {
       String elementName = element.getGenericInfo().getElementName(element);
       if (elementName != null && elementName.equals(name)) {
@@ -157,11 +160,28 @@ public class DomUtil {
   }
 
   @NotNull
-  public static String[] getElementNames(@NotNull List<? extends DomElement> list) {
-    String[] result = new String[list.size()];
+  public static String[] getElementNames(@NotNull Collection<? extends DomElement> list) {
+    ArrayList<String> result = new ArrayList<String>(list.size());
     if (list.size() > 0) {
-      for (int i = 0; i < list.size(); i++) {
-        result[i] = list.get(i).getGenericInfo().getElementName(list.get(i));
+      for (DomElement element: list) {
+        String name = element.getGenericInfo().getElementName(element);
+        if (name != null) {
+          result.add(name);
+        }
+      }
+    }
+    return result.toArray(new String[result.size()]);
+  }
+
+  @NotNull
+  public static List<XmlTag> getElementTags(@NotNull Collection<? extends DomElement> list) {
+    ArrayList<XmlTag> result = new ArrayList<XmlTag>(list.size());
+    if (list.size() > 0) {
+      for (DomElement element: list) {
+        XmlTag tag = element.getXmlTag();
+        if (tag != null) {
+          result.add(tag);
+        }
       }
     }
     return result;
