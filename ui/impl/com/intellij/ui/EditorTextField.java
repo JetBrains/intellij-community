@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 
@@ -28,6 +29,7 @@ import java.util.ArrayList;
  */
 public class EditorTextField extends JPanel implements DocumentListener, TextComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
+  public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
 
   private Document myDocument;
   private Project myProject;
@@ -38,6 +40,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   private ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private boolean myIsListenerInstalled = false;
   private boolean myIsViewer;
+  private boolean myIsSupplementary;
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor = null;
   private boolean myUseTextFieldPreferredSize = true;
@@ -72,6 +75,13 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
       public void focusLost(FocusEvent e) {
       }
     });
+  }
+
+  public void setSupplementary(boolean supplementary) {
+    myIsSupplementary = supplementary;
+    if (myEditor != null) {
+      myEditor.putUserData(SUPPLEMENTARY_KEY, supplementary);
+    }
   }
 
   public void setFontInheritedFromLAF(boolean b) {
@@ -320,6 +330,8 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     if (myUseTextFieldPreferredSize) {
       editor.getComponent().setPreferredSize(new JTextField().getPreferredSize());
     }
+
+    editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
 
     return editor;
   }

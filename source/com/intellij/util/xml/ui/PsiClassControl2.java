@@ -103,6 +103,7 @@ public class PsiClassControl2 extends BaseControl<PsiClassPanel, String> {
       boundedComponent = new PsiClassPanel();
     }
     final ReferenceEditorWithBrowseButton editor = new ReferenceEditorWithBrowseButton(null, "", PsiManager.getInstance(project), true);
+    editor.getEditorTextField().setSupplementary(true);
     final GlobalSearchScope resolveScope = getDomWrapper().getResolveScope();
     editor.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
