@@ -298,7 +298,7 @@ public class TreeTable extends Table {
 
   public boolean editCellAt(int row, int column, EventObject e) {
     boolean editResult = super.editCellAt(row, column, e);
-    if (e != null && isTreeColumn(column)){
+    if (e instanceof MouseEvent && isTreeColumn(column)){
       MouseEvent me = (MouseEvent)e;
       MouseEvent newEvent = new MouseEvent(myTree, me.getID(),
         me.getWhen(), me.getModifiers(),
