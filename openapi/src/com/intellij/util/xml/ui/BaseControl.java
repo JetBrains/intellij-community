@@ -129,7 +129,7 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
 
   public final void commit() {
     if (myDomWrapper.isValid() && !isCommitted()) {
-      setValueToXml(getValue(getComponent()));
+      setValueToXml(getValue());
       updateComponent();
     }
   }
@@ -150,12 +150,12 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
 
   protected void doReset() {
     if (!isCommitted()) {
-      setValue(getComponent(), getValueFromXml());
+      setValue(getValueFromXml());
     }
   }
 
   protected final boolean isCommitted() {
-    return valuesAreEqual(getValueFromXml(), getValue(getComponent()));
+    return valuesAreEqual(getValueFromXml(), getValue());
   }
 
   private void setValueToXml(final T value) {
@@ -200,7 +200,7 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
   public void navigate(DomElement element) {
   }
 
-  protected abstract T getValue(Bound component);
-  protected abstract void setValue(Bound component, T value);
+  protected abstract T getValue();
+  protected abstract void setValue(T value);
 
 }

@@ -29,13 +29,13 @@ public class BooleanControl extends BaseControl<JCheckBox, Boolean> {
     return checkBox;
   }
 
-  protected Boolean getValue(final JCheckBox component) {
-    return myUndefined ? null : component.isSelected();
+  protected Boolean getValue() {
+    return myUndefined ? null : getComponent().isSelected();
   }
 
-  protected void setValue(final JCheckBox component, final Boolean value) {
+  protected void setValue(final Boolean value) {
     myUndefined = value == null;
-    component.setSelected(value != null && value);
+    getComponent().setSelected(value != null && value);
   }
 
 }

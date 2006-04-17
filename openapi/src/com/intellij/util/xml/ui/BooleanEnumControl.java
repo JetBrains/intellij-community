@@ -41,13 +41,13 @@ public class BooleanEnumControl extends BaseControl<JCheckBox, String> {
     return checkBox;
   }
 
-  protected String getValue(final JCheckBox component) {
-    return myUndefined ? null : (component.isSelected() ? mySelectedValue : myUnselectedValue);
+  protected String getValue() {
+    return myUndefined ? null : (getComponent().isSelected() ? mySelectedValue : myUnselectedValue);
   }
 
-  protected void setValue(final JCheckBox component, final String value) {
+  protected void setValue(final String value) {
     myUndefined = value == null;
-    component.setSelected(mySelectedValue.equals(value));
+    getComponent().setSelected(mySelectedValue.equals(value));
   }
 
 }

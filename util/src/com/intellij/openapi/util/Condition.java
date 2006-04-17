@@ -37,4 +37,10 @@ public interface Condition<T> {
       else return new Not<T>(condition);
     }
   }
+
+  Condition TRUE = new Condition() {
+    public boolean value(final Object object) {
+      return true;
+    }
+  };
 }

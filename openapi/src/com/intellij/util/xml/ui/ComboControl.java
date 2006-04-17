@@ -108,16 +108,17 @@ public class ComboControl extends BaseControl<JComboBox, String> {
       comboBox.addItem(s);
       mySet.add(s);
     }
-    setValue(comboBox, oldSelected);
+    setValue(oldSelected);
     super.doReset();
     comboBox.addActionListener(myCommitListener);
   }
 
-  protected final String getValue(final JComboBox component) {
-    return (String)component.getSelectedItem();
+  protected final String getValue() {
+    return (String)getComponent().getSelectedItem();
   }
 
-  protected final void setValue(final JComboBox component, final String value) {
+  protected final void setValue(final String value) {
+    final JComboBox component = getComponent();
     if (!isValidValue(value)) {
       component.setEditable(true);
     }
