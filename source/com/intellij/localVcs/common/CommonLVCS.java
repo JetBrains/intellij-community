@@ -61,6 +61,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   @NonNls protected static final String ACTIVITIES_FILE_NAME = "activities.dat";
   @NonNls protected static final String TRANSACTION_LOC_FILE_NAME = "transaction.lock";
 
+  private static final int REASONABLE_ACTION_NAME_LENGTH = 1024;
+
   private final LocalVcsPurgingProviderImpl myLocalVcsPurgingProvider = new LocalVcsPurgingProviderImpl();
 
   private File myVcsLocation;
@@ -70,12 +72,11 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private boolean myIsLocked = false;
   private boolean myVcsWasRebuilt = false;
 
-  public CommonLVCS(
-    final Project project,
-    final ProjectRootManager projectRootManager,
-    final FileTypeManager fileTypeManager,
-    final StartupManagerImpl startupManagerEx,
-    final LvcsConfiguration configuration) {
+  public CommonLVCS(final Project project,
+                    final ProjectRootManager projectRootManager,
+                    final FileTypeManager fileTypeManager,
+                    final StartupManagerImpl startupManagerEx,
+                    final LvcsConfiguration configuration) {
 
     myProject = project;
     myFileIndex = projectRootManager.getFileIndex();
@@ -84,13 +85,11 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     myVcsLocation = findProjectVcsLocation(myProject.getProjectFile());
     myImplementation = new OldLvcsImplemetation(project, this);
 
-    startupManagerEx.registerPreStartupActivity(
-      new Runnable() {
-        public void run() {
-          runStartupActivity();
-        }
+    startupManagerEx.registerPreStartupActivity(new Runnable() {
+      public void run() {
+        runStartupActivity();
       }
-    );
+    });
   }
 
   public synchronized LvcsConfiguration getConfiguration() {
@@ -118,9 +117,9 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized boolean rollbackToLabel(final LvcsLabel label,
-                                 final boolean requestConfirmation,
-                                 final String confirmationMessage,
-                                 final String confirmationTitle) {
+                                              final boolean requestConfirmation,
+                                              final String confirmationMessage,
+                                              final String confirmationTitle) {
     return myImplementation.rollbackToLabel(label, requestConfirmation, confirmationMessage, confirmationTitle);
   }
 
@@ -228,9 +227,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   private synchronized void runSyncOperation(StructureSyncOperation operation) {
-    LvcsRootSynchronizer sync = new LvcsRootSynchronizer(this,
-                                                         myTracker,
-                                                         operation);
+    LvcsRootSynchronizer sync = new LvcsRootSynchronizer(this, myTracker, operation);
     sync.syncProjectRoots();
   }
 
@@ -268,7 +265,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized boolean isUnderVcs(VirtualFile file) {
-    if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+    if (!(file.getFileSystem()instanceof LocalFileSystem)) {
       return false;
     }
     if (!myFileIndex.isInContent(file)) return false;
@@ -295,8 +292,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     if (configuration.LOCAL_VCS_PURGING_PERIOD == DO_NOT_PERFORM_PURGING) return 0;
     long purgingPeriod = configuration.LOCAL_VCS_PURGING_PERIOD;
     if (!configuration.LOCAL_VCS_ENABLED) purgingPeriod = 0;
-    long timeToPurgeBefore = myUserActivitiesRegistry.getAbsoluteTimeForActivePeriod(System.currentTimeMillis(),
-                                                                                     purgingPeriod);
+    long timeToPurgeBefore = myUserActivitiesRegistry.getAbsoluteTimeForActivePeriod(System.currentTimeMillis(), purgingPeriod);
     return myImplementation.purge(timeToPurgeBefore);
   }
 
@@ -321,7 +317,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     catch (IOException e) {
       LOG.error(e);
     }
-    LOG.info( "Closed local history at " + myVcsLocation.getAbsolutePath() );
+    LOG.info("Closed local history at " + myVcsLocation.getAbsolutePath());
   }
 
   public synchronized VirtualFileListener getVirtualFileListener() {
@@ -338,8 +334,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     contentRequestedFor(file);
     LvcsFile lvcsFile = findFile(path);
     if (lvcsFile != null && lvcsFile.getTimeStamp() != file.getTimeStamp()) {
-      LOG.error("lvcsFile.getTimeStamp() = " + lvcsFile.getTimeStamp() + ", " +
-                "file.getTimeStamp()=" + file.getTimeStamp() + ", file=" + file);
+      LOG.error(
+        "lvcsFile.getTimeStamp() = " + lvcsFile.getTimeStamp() + ", " + "file.getTimeStamp()=" + file.getTimeStamp() + ", file=" + file);
     }
     if ((lvcsFile == null) && (fileOrParentIsDeleted(file))) {
       return null;
@@ -380,6 +376,9 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   public synchronized LvcsAction startAction(String action, String path, boolean isExternalChanges) {
     if (action == null) return LvcsAction.EMPTY;
+    if (action.length() > REASONABLE_ACTION_NAME_LENGTH) {
+      action = action.substring(0, REASONABLE_ACTION_NAME_LENGTH);
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: started(action='" + action + "')");
     }
@@ -417,8 +416,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
       try {
         Charset charset = file.getCharset();
         LOG.assertTrue(charset != null);
-        myImplementation.commitFile(lvcsFile.getRevision(),
-                                    unsavedDocument.getText().getBytes(charset.name()));
+        myImplementation.commitFile(lvcsFile.getRevision(), unsavedDocument.getText().getBytes(charset.name()));
       }
       catch (UnsupportedEncodingException e) {
         LOG.error(e);
@@ -699,8 +697,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         Messages.showMessageDialog(LocalVcsBundle.message("message.text.local.history.corrupt.with.message", message),
-                                   LocalVcsBundle.message("message.title.local.history.corrupt"),
-                                   Messages.getWarningIcon());
+                                   LocalVcsBundle.message("message.title.local.history.corrupt"), Messages.getWarningIcon());
       }
     }, ModalityState.NON_MMODAL);
     Runnable rebuildAction = new Runnable() {
