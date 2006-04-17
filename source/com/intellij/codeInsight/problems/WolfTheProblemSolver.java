@@ -56,7 +56,7 @@ public class WolfTheProblemSolver implements ProjectComponent {
     return project.getComponent(WolfTheProblemSolver.class);
   }
 
-  public WolfTheProblemSolver(Project project, ToolWindowManagerEx toolWindowManagerEx) {
+  public WolfTheProblemSolver(Project project) {
     myProject = project;
     myProgress = new ProgressIndicatorBase(){
       public boolean isCanceled() {
@@ -67,26 +67,28 @@ public class WolfTheProblemSolver implements ProjectComponent {
         return "Progress: canceled="+isCanceled()+"; mycanceled="+myDaemonStopped;
       }
     };
-    toolWindowManagerEx.addToolWindowManagerListener(new ToolWindowManagerAdapter(){
-      public void stateChanged() {
-        ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-        if (window == null) return;
-        synchronized (WolfTheProblemSolver.this) {
-          boolean visible = window.isVisible();
-          if (myProblemsAreVisible != visible) {
-            if (visible && myRestartOnBecomeVisible) {
-              restartChecking();
-              myRestartOnBecomeVisible = false;
-            }
-            myProblemsAreVisible = visible;
-          }
-        }
-      }
-    });
   }
 
   public void projectOpened() {
-
+    ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
+    if (toolWindowManagerEx != null) { //in tests ?
+      toolWindowManagerEx.addToolWindowManagerListener(new ToolWindowManagerAdapter(){
+        public void stateChanged() {
+          ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+          if (window == null) return;
+          synchronized (WolfTheProblemSolver.this) {
+            boolean visible = window.isVisible();
+            if (myProblemsAreVisible != visible) {
+              if (visible && myRestartOnBecomeVisible) {
+                restartChecking();
+                myRestartOnBecomeVisible = false;
+              }
+              myProblemsAreVisible = visible;
+            }
+          }
+        }
+      });
+    }
   }
 
   public void projectClosed() {
