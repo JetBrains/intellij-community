@@ -5,19 +5,19 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagValue;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class GenericValueReferenceProvider implements PsiReferenceProvider {
   @NotNull
   public GenericReference[] getReferencesByElement(PsiElement element) {
-    if (!(element instanceof XmlTag)) return GenericReference.EMPTY_ARRAY;
+    if (!(element instanceof XmlTag || element instanceof XmlAttribute)) return GenericReference.EMPTY_ARRAY;
     PsiElement originalElement = element.getUserData(PsiUtil.ORIGINAL_KEY);
     if (originalElement != null){
       element = originalElement;
@@ -34,45 +34,69 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     final Module module = ModuleUtil.findModuleForPsiElement(element);
     if (module == null) return GenericReference.EMPTY_ARRAY;
 
-    final XmlTag tag = (XmlTag)element;
+    final XmlTag tag = element instanceof XmlTag ? (XmlTag) element : ((XmlAttribute) element).getParent();
+    if (element == tag && tag.getValue().getTextElements().length ==0) return GenericReference.EMPTY_ARRAY;
+
     final DomElement domElement = DomManager.getDomManager(module.getProject()).getDomElement(tag);
     if (!(domElement instanceof GenericDomValue)) return GenericReference.EMPTY_ARRAY;
 
     final Class parameter = DomUtil.getGenericValueType(domElement.getDomElementType());
-    final XmlTagValue tagValue = tag.getValue();
-    final int tagValueOffset = tagValue.getTextRange().getStartOffset() - tag.getTextRange().getStartOffset();
     if (PsiType.class.isAssignableFrom(parameter)) {
-      final String text = tagValue.getText();
-      final PsiTypeCodeFragment codeFragment = element.getManager().getElementFactory().createTypeCodeFragment(text, null, false);
-      for (final PsiElement psiElement : codeFragment.getChildren()) {
-        if (psiElement instanceof PsiTypeElement) {
-          final TextRange componentRange = getInnermostTypeElement((PsiTypeElement)psiElement).getTextRange();
-          final int startOffset = componentRange.getStartOffset() + tagValueOffset;
-          return new GenericReference[]{new PsiTypeReference(this, (GenericDomValue<PsiType>)domElement, new TextRange(startOffset, startOffset + componentRange.getLength()))};
+      return new GenericReference[]{new PsiTypeReference(this, (GenericDomValue<PsiType>)domElement)};
+    }
+    if (PsiClass.class.isAssignableFrom(parameter)) {
+      return new GenericReference[]{new PsiClassReference(this, (GenericDomValue<PsiClass>)domElement)};
+    }
+    if (Integer.class.isAssignableFrom(parameter)) {
+      return new GenericReference[]{new GenericDomValueReference(this, (GenericDomValue) domElement) {
+        public Object[] getVariants() {
+          return new Object[]{"239", "42"};
+        }
+
+        public PsiElement resolveInner() {
+          return getValueElement();
         }
       }
+      };
+    }
+    if (Enum.class.isAssignableFrom(parameter)) {
+      return new GenericReference[]{new GenericDomValueReference(this, (GenericDomValue) domElement) {
+        public Object[] getVariants() {
+          final Enum[] enumConstants = (Enum[])parameter.getEnumConstants();
+          return ContainerUtil.map2Array(enumConstants, String.class, new Function<Enum, String>() {
+            public String fun(final Enum s) {
+              return NamedEnumUtil.getEnumValueByElement(s);
+            }
+          });
+        }
+
+        public PsiElement resolveInner() {
+          return getValueElement();
+        }
+      }
+      };
+    }
+    if (Boolean.class.isAssignableFrom(parameter)) {
+      return new GenericReference[]{new GenericDomValueReference(this, (GenericDomValue) domElement) {
+        public Object[] getVariants() {
+          return new Object[]{"true", "false"};
+        }
+
+        public PsiElement resolveInner() {
+          return getValueElement();
+        }
+      }
+      };
     }
 
-    if (!String.class.isAssignableFrom(parameter) &&
-        !Number.class.isAssignableFrom(parameter) &&
-        !Boolean.class.isAssignableFrom(parameter) &&
-        !Enum.class.isAssignableFrom(parameter)) {
-      final String trimmedText = tagValue.getTrimmedText();
-      final int inside = tagValue.getText().indexOf(trimmedText);
-      final int startOffset = tagValueOffset + inside;
-      return new GenericReference[]{new GenericDomValueReference(this, (GenericDomValue)domElement, new TextRange(startOffset, startOffset + trimmedText.length()))};
+
+    if (!String.class.isAssignableFrom(parameter)) {
+      return new GenericReference[]{new GenericDomValueReference(this, (GenericDomValue) domElement)};
     }
 
     return GenericReference.EMPTY_ARRAY;
   }
 
-  private PsiTypeElement getInnermostTypeElement(PsiTypeElement element) {
-    final PsiElement child = element.getFirstChild();
-    if (child instanceof PsiTypeElement) {
-      return getInnermostTypeElement((PsiTypeElement)child);
-    }
-    return element;
-  }
 
   @NotNull
   public GenericReference[] getReferencesByElement(PsiElement element, ReferenceType type) {

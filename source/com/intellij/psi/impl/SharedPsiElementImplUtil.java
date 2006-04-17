@@ -46,8 +46,7 @@ public class SharedPsiElementImplUtil {
         LOG.error(element.toString());
       }
       final TextRange range = reference.getRangeInElement();
-      if (range.getStartOffset() <= offset &&
-          (offset < range.getEndOffset() || (offset == range.getEndOffset() && range.getLength() == 0))) {
+      if (range.getStartOffset() <= offset && offset <= range.getEndOffset()) {
         outReferences.add(reference);
       }
     }

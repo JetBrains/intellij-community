@@ -5,20 +5,14 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.ModelMerger;
-import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.*;
 
 import java.util.List;
 
@@ -26,19 +20,43 @@ import java.util.List;
  * author: lesya
  */
 public class GenericDomValueReference<T> extends GenericReference {
-  private final GenericDomValue<T> myXmlValue;
-  private final XmlElement myElement;
+  private final GenericDomValue<T> myGenericValue;
+  private final XmlElement myContextElement;
   private final TextRange myTextRange;
+  private final XmlElement myValueElement;
 
-  public GenericDomValueReference(final PsiReferenceProvider provider, GenericDomValue<T> xmlValue, TextRange textRange) {
+  public GenericDomValueReference(final PsiReferenceProvider provider, GenericDomValue<T> xmlValue) {
     super(provider);
-    myXmlValue = xmlValue;
-    myTextRange = textRange;
-    myElement = xmlValue instanceof GenericAttributeValue ? ((GenericAttributeValue) xmlValue).getXmlAttributeValue() : xmlValue.getXmlTag();
+    myGenericValue = xmlValue;
+    final XmlTag tag = xmlValue.getXmlTag();
+    myValueElement = xmlValue instanceof GenericAttributeValue
+                     ? ((GenericAttributeValue)xmlValue).getXmlAttributeValue()
+                     : tag.getValue().getTextElements()[0];
+    myContextElement = (XmlElement)myValueElement.getParent();
+    final TextRange range = getTextRange(myValueElement.getText());
+    myTextRange = range.shiftRight(myValueElement.getTextRange().getStartOffset() - myContextElement.getTextRange().getStartOffset());
+  }
+
+  protected final PsiManager getPsiManager() {
+    return PsiManager.getInstance(myGenericValue.getManager().getProject());
+  }
+
+  protected final XmlElement getValueElement() {
+    return myValueElement;
+  }
+
+  protected TextRange getTextRange(String text) {
+    final String trimmedText = text.trim();
+    final int inside = text.indexOf(trimmedText);
+    return new TextRange(inside, inside + trimmedText.length());
+  }
+
+  protected final GenericDomValue<T> getGenericValue() {
+    return myGenericValue;
   }
 
   public XmlElement getContext() {
-    return myElement;
+    return myContextElement;
   }
 
   public PsiReference getContextReference() {
@@ -69,7 +87,8 @@ public class GenericDomValueReference<T> extends GenericReference {
   }
 
   public PsiElement resolveInner() {
-    return resolveInner(myXmlValue.getValue());
+    final T value = myGenericValue.getValue();
+    return value == null ? null : resolveInner(value);
   }
 
   public ReferenceType getSoftenType() {
@@ -81,7 +100,7 @@ public class GenericDomValueReference<T> extends GenericReference {
   }
 
   public XmlElement getElement() {
-    return myElement;
+    return myContextElement;
   }
 
   public TextRange getRangeInElement() {
@@ -89,28 +108,30 @@ public class GenericDomValueReference<T> extends GenericReference {
   }
 
   public String getCanonicalText() {
-    String value = myXmlValue.getStringValue();
-    return value != null ? value : J2EEBundle.message("unknown.j2ee.reference.canonical.text");
+    String value = myGenericValue.getStringValue();
+    if (value != null) {
+      final TextRange textRange = getTextRange(value);
+      return value.substring(textRange.getStartOffset(), textRange.getEndOffset());
+    }
+    return J2EEBundle.message("unknown.j2ee.reference.canonical.text");
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    myXmlValue.setStringValue(newElementName);
-    return myXmlValue.getXmlTag();
+    myGenericValue.setStringValue(newElementName);
+    return myGenericValue.getXmlTag();
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-    if (element instanceof PsiClass) {
-      myXmlValue.setStringValue(((PsiClass)element).getName());
-      return myXmlValue.getXmlTag();
-    }
     if (element instanceof XmlTag) {
-      myXmlValue.setStringValue(((XmlTag)element).getName());
-      return myXmlValue.getXmlTag();
+      DomElement domElement = myGenericValue.getManager().getDomElement((XmlTag) element);
+      if (domElement != null) {
+        myGenericValue.setStringValue(domElement.getGenericInfo().getElementName(domElement));
+      } else {
+        myGenericValue.setStringValue(((XmlTag)element).getName());
+      }
+      return myGenericValue.getXmlTag();
     }
     return null;
   }
 
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
 }

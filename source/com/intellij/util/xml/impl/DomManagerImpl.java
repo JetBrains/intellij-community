@@ -330,6 +330,14 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     if (xmlFile != null && !myNonDomFiles.containsKey(xmlFile)) {
       DomFileElementImpl element = getCachedElement(xmlFile);
       if (element == null) {
+        final XmlFile originalFile = (XmlFile)xmlFile.getOriginalFile();
+        final DomInvocationHandler originalElement = getDomFileElement(originalFile);
+        if (originalElement != null) {
+          final Class<? extends DomElement> aClass = (Class<? extends DomElement>)DomUtil.getRawType(originalElement.getDomElementType());
+          final String rootTagName = originalElement.getXmlElementName();
+          return getFileElement(xmlFile, aClass, rootTagName).getRootHandler();
+        }
+
         for (final Consumer<XmlFile> fileLoader : myFileLoaders) {
           fileLoader.consume(xmlFile);
         }
