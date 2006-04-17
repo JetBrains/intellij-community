@@ -23,6 +23,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Stack;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement {
@@ -48,6 +49,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   private ArrayList<RefElement> myOutReferences;
   private ArrayList<RefElement> myInReferences;
+
+  private HashSet<RefClass> myOutTypeReferences;
 
   private boolean myIsDeleted ;
   private Module myModule;
@@ -228,6 +231,13 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     }
   }
 
+  public void addOutTypeRefernce(RefClass refClass){
+    if (myOutTypeReferences == null){
+      myOutTypeReferences = new HashSet<RefClass>();
+    }
+    myOutTypeReferences.add(refClass);
+  }
+
   @NotNull
   public Collection<RefElement> getOutReferences() {
     if (myOutReferences == null){
@@ -242,6 +252,11 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
       myInReferences = new ArrayList<RefElement>();
     }
     return myInReferences;
+  }
+
+  @NotNull
+  public Collection<RefClass> getOutTypeReferences() {
+    return myOutTypeReferences;
   }
 
   public void addInReference(RefElement refElement) {

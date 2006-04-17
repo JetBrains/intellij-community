@@ -93,6 +93,12 @@ public interface RefElement extends RefEntity {
   @NotNull Collection<RefElement> getInReferences();
 
   /**
+   * Returns the collection of references used in this element.
+   * @return the collection of used types
+   */
+  @NotNull Collection<RefClass> getOutTypeReferences();
+
+  /**
    * Checks if the element is <code>final</code>.
    *
    * @return true if the element is final, false otherwise.
