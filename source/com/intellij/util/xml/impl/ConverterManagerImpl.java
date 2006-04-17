@@ -25,8 +25,8 @@ public class ConverterManagerImpl implements ConverterManager {
   public ConverterManagerImpl() {
     registerConverter(int.class, Converter.INTEGER_CONVERTER);
     registerConverter(Integer.class, Converter.INTEGER_CONVERTER);
-    registerConverter(boolean.class, Converter.BOOLEAN_CONVERTER);
-    registerConverter(Boolean.class, Converter.BOOLEAN_CONVERTER);
+    registerConverter(boolean.class, ResolvingConverter.BOOLEAN_CONVERTER);
+    registerConverter(Boolean.class, ResolvingConverter.BOOLEAN_CONVERTER);
     registerConverter(String.class, Converter.EMPTY_CONVERTER);
     registerConverter(PsiClass.class, Converter.PSI_CLASS_CONVERTER);
     registerConverter(PsiType.class, Converter.PSI_TYPE_CONVERTER);

@@ -145,10 +145,11 @@ public class GenericDomValueReference<T> extends GenericReference {
       final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(myGenericValue);
       final Converter converter = handler.getConverter(DomUIFactory.GET_VALUE_METHOD, true);
       if (converter instanceof ResolvingConverter) {
-        final Collection variants = ((ResolvingConverter)converter).getVariants();
+        final ConvertContextImpl convertContext = new ConvertContextImpl(handler, DomUIFactory.GET_VALUE_METHOD);
+        final Collection variants = ((ResolvingConverter)converter).getVariants(convertContext);
         return ContainerUtil.map2Array(variants, String.class, new Function() {
           public Object fun(final Object s) {
-            return converter.toString(s, new ConvertContextImpl(handler, DomUIFactory.GET_VALUE_METHOD));
+            return converter.toString(s, convertContext);
           }
         });
       }

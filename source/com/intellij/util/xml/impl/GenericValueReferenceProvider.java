@@ -12,8 +12,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -78,25 +76,6 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
         return new GenericDomValueReference(this, domElement) {
           public Object[] getVariants() {
             return new Object[]{"239", "42"};
-          }
-        };
-      }
-      if (Enum.class.isAssignableFrom(parameter)) {
-        return new GenericDomValueReference(this, domElement) {
-          public Object[] getVariants() {
-            final Enum[] enumConstants = (Enum[])parameter.getEnumConstants();
-            return ContainerUtil.map2Array(enumConstants, String.class, new Function<Enum, String>() {
-              public String fun(final Enum s) {
-                return NamedEnumUtil.getEnumValueByElement(s);
-              }
-            });
-          }
-        };
-      }
-      if (Boolean.class.isAssignableFrom(parameter)) {
-        return new GenericDomValueReference(this, domElement) {
-          public Object[] getVariants() {
-            return new Object[]{"true", "false"};
           }
         };
       }

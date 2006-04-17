@@ -30,23 +30,6 @@ public interface Converter<T> {
 
   };
 
-  Converter<Boolean> BOOLEAN_CONVERTER = new Converter<Boolean>() {
-    public Boolean fromString(final String s, final ConvertContext context) {
-      if ("true".equalsIgnoreCase(s)) {
-        return Boolean.TRUE;
-      }
-      if ("false".equalsIgnoreCase(s)) {
-        return Boolean.FALSE;
-      }
-      return null;
-    }
-
-    public String toString(final Boolean t, final ConvertContext context) {
-      return t.toString();
-    }
-
-  };
-
   Converter<String> EMPTY_CONVERTER = new Converter<String>() {
     public String fromString(final String s, final ConvertContext context) {
       return s;

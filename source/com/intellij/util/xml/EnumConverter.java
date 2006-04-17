@@ -3,16 +3,17 @@
  */
 package com.intellij.util.xml;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 /**
  * @author peter
  */
-public class EnumConverter<T extends Enum> implements Converter<T>{
+public class EnumConverter<T extends Enum> implements ResolvingConverter<T>{
   private final Class<T> myType;
-  private final boolean myIsNamedEnum;
 
   public EnumConverter(final Class<T> aClass) {
     myType = aClass;
-    myIsNamedEnum = NamedEnum.class.isAssignableFrom(aClass);
   }
 
   private String getStringValue(final T anEnum) {
@@ -27,4 +28,7 @@ public class EnumConverter<T extends Enum> implements Converter<T>{
     return getStringValue(t);
   }
 
+  public Collection<T> getVariants(final ConvertContext context) {
+    return Arrays.asList(myType.getEnumConstants());
+  }
 }

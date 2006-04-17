@@ -16,10 +16,14 @@
  */
 package com.intellij.util.xml;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * @author peter
  */
-public class DomResolveConverter<T extends DomElement> implements Converter<T>{
+public class DomResolveConverter<T extends DomElement> implements ResolvingConverter<T>{
   private final Class<T> myClass;
 
   public DomResolveConverter(final Class<T> aClass) {
@@ -43,5 +47,18 @@ public class DomResolveConverter<T extends DomElement> implements Converter<T>{
 
   public final String toString(final T t, final ConvertContext context) {
     return t.getGenericInfo().getElementName(t);
+  }
+
+  public Collection<T> getVariants(final ConvertContext context) {
+    final List<T> result = new ArrayList<T>();
+    context.getInvocationElement().getRoot().acceptChildren(new DomElementVisitor() {
+      public void visitDomElement(DomElement element) {
+        if (myClass.isInstance(element)) {
+          result.add((T)element);
+        }
+        element.acceptChildren(this);
+      }
+    });
+    return result;
   }
 }

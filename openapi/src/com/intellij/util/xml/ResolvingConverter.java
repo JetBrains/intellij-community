@@ -17,10 +17,31 @@
 package com.intellij.util.xml;
 
 import java.util.Collection;
+import java.util.Arrays;
 
 /**
  * @author peter
  */
 public interface ResolvingConverter<T> extends Converter<T> {
-  Collection<T> getVariants();
+  Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<Boolean>() {
+    public Boolean fromString(final String s, final ConvertContext context) {
+      if ("true".equalsIgnoreCase(s)) {
+        return Boolean.TRUE;
+      }
+      if ("false".equalsIgnoreCase(s)) {
+        return Boolean.FALSE;
+      }
+      return null;
+    }
+
+    public String toString(final Boolean t, final ConvertContext context) {
+      return t.toString();
+    }
+
+    public Collection<Boolean> getVariants(final ConvertContext context) {
+      return Arrays.asList(Boolean.FALSE, Boolean.TRUE);
+    }
+  };
+
+  Collection<T> getVariants(final ConvertContext context);
 }
