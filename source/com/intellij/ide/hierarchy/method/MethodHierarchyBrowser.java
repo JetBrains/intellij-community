@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -93,10 +94,17 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
       myOccurrenceNavigators.put(key, new OccurenceNavigatorSupport(tree){
         @Nullable
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
-          MethodHierarchyNodeDescriptor nodeDescriptor = (MethodHierarchyNodeDescriptor)node.getUserObject();
-          final PsiElement psiElement = nodeDescriptor.getTargetElement();
-          if (psiElement == null || !psiElement.isValid()) return null;
-          return new OpenFileDescriptor(psiElement.getProject(), psiElement.getContainingFile().getVirtualFile(), psiElement.getTextOffset());
+          final Object userObject = node.getUserObject();
+          if (userObject instanceof MethodHierarchyNodeDescriptor) {
+            MethodHierarchyNodeDescriptor nodeDescriptor = (MethodHierarchyNodeDescriptor)userObject;
+            final PsiElement psiElement = nodeDescriptor.getTargetElement();
+            if (psiElement == null || !psiElement.isValid()) return null;
+            final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
+            if (virtualFile != null) {
+              return new OpenFileDescriptor(psiElement.getProject(), virtualFile, psiElement.getTextOffset());
+            }
+          }
+          return null;
         }
 
         public String getNextOccurenceActionName() {
@@ -114,7 +122,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     add(createLegendPanel(), BorderLayout.SOUTH);
   }
 
-  private JPanel createLegendPanel() {
+  private static JPanel createLegendPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
     JLabel label;
