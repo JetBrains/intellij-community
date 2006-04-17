@@ -66,9 +66,14 @@ public class ConverterManagerImpl implements ConverterManager {
   @Nullable
   private Converter getDefaultConverter(final Class aClass) {
     Converter converter = myConvertersByClass.get(aClass);
-    if (converter == null && Enum.class.isAssignableFrom(aClass)) {
-      converter = new EnumConverter(aClass);
-      registerConverter(aClass, converter);
+    if (converter == null) {
+      if (Enum.class.isAssignableFrom(aClass)) {
+        converter = new EnumConverter(aClass);
+        registerConverter(aClass, converter);
+      } else if (DomElement.class.isAssignableFrom(aClass)) {
+        converter = new DomResolveConverter(aClass);
+        registerConverter(aClass, converter);
+      }
     }
     return converter;
   }
