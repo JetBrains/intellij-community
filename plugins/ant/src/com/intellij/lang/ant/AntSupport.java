@@ -29,7 +29,7 @@ public class AntSupport implements ApplicationComponent {
 
   @NonNls
   public String getComponentName() {
-    return "AntSupportComponent";
+    return "AntSupport";
   }
 
   public void initComponent() {

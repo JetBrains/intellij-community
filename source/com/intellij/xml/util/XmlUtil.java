@@ -552,12 +552,11 @@ public class XmlUtil {
     if (tag == null) return new String[][]{new String[]{EMPTY_URI}};
 
     if (file != null) {
-      final @NotNull XmlFileNSInfoProvider[] nsProviders = document.getProject().getComponents(XmlFileNSInfoProvider.class);
+      final @NotNull XmlFileNSInfoProvider[] nsProviders = ApplicationManager.getApplication().getComponents(XmlFileNSInfoProvider.class);
 
       NextProvider:
       for (XmlFileNSInfoProvider nsProvider : nsProviders) {
         final String[][] pairs = nsProvider.getDefaultNamespaces(file);
-
         if (pairs != null && pairs.length > 0) {
 
           for (final String[] nsMapping : pairs) {
@@ -566,8 +565,6 @@ public class XmlUtil {
               continue NextProvider;
             }
           }
-
-
           return pairs;
         }
       }

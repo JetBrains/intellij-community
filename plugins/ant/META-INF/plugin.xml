@@ -1,8 +1,8 @@
 <idea-plugin version="2">
   <name>Ant Support</name>
   <id>AntSupport</id>
-  <version>6.0</version>
-  <idea-version min="5.0" max="6.0"/>
+  <version>1.0</version>
+  <idea-version min="6.0"/>
 
   <extensions xmlns="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -13,11 +13,9 @@
       <interface-class>com.intellij.lang.ant.AntSupport</interface-class>
       <implementation-class>com.intellij.lang.ant.AntSupport</implementation-class>
     </component>
-  </application-components>
-  <project-components>
     <component>
       <interface-class>com.intellij.psi.xml.XmlFileNSInfoProvider</interface-class>
       <implementation-class>com.intellij.lang.ant.AntDefaultNSProvider</implementation-class>
     </component>
-  </project-components>
+  </application-components>
 </idea-plugin>
