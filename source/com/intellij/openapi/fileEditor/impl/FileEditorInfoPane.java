@@ -4,10 +4,13 @@
 
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ui.IdeBorderFactory;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 /**
  * @author max
@@ -17,11 +20,13 @@ public class FileEditorInfoPane extends JPanel {
   private final JPanel myCards;
   private final JButton myPrevButton;
   private final JButton myNextButton;
+  private java.util.List<JComponent> myComponents;
 
   public FileEditorInfoPane() {
     super(new BorderLayout());
     final CardLayout layout = new CardLayout();
     myCards = new JPanel(layout);
+    myComponents = new ArrayList<JComponent>();
     add(myCards, BorderLayout.CENTER);
     JPanel buttonsPanel = new JPanel(new GridLayout(1, 2));
     myPrevButton = new JButton("<");
@@ -33,38 +38,45 @@ public class FileEditorInfoPane extends JPanel {
     myPrevButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         layout.previous(myCards);
+        updateButtons();
       }
     });
 
     myNextButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         layout.next(myCards);
+        updateButtons();
       }
     });
+
+    add(buttonsPanel, BorderLayout.EAST);
+
+    setBorder(IdeBorderFactory.createBorder());
   }
 
   public void addInfo(JComponent component) {
+    myComponents.add(component);
     myCards.add(component, String.valueOf(myCounter++));
     updateButtons();
     validate();
   }
 
   public void removeInfo(JComponent component) {
+    myComponents.remove(component);
     myCards.remove(component);
     updateButtons();
     validate();
   }
 
   private int getCurrentCard() {
-    final Component[] components = getComponents();
-    for (int i = 0; i < components.length; i++) {
-      if (components[i].isVisible()) return i;
+    for (int i = 0; i < myComponents.size(); i++) {
+      if (myComponents.get(i).isVisible()) return i;
     }
     return -1;
   }
 
   private void updateButtons() {
-    int count = getComponentCount();
+    int count = myComponents.size();
     if (count > 0) {
       setVisible(true);
       if (count == 1) {

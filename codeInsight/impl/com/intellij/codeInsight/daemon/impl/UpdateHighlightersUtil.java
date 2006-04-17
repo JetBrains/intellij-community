@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,6 +18,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -26,9 +28,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class UpdateHighlightersUtil {
@@ -135,16 +137,19 @@ public class UpdateHighlightersUtil {
             VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
             final FileEditorManager manager = FileEditorManager.getInstance(project);
             for (FileEditor fileEditor : manager.getEditors(vFile)) {
-              final JLabel comoponent = new JLabel(info.description);
-              manager.showEditorAnnotation(fileEditor, comoponent);
-              List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-              if (fileLevelInfos == null) {
-                fileLevelInfos = new ArrayList<HighlightInfo>();
-                fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
+              if (fileEditor instanceof TextEditor) {
+                FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.description, info.severity, info.quickFixActionRanges,
+                                                                                        project, ((TextEditor)fileEditor).getEditor());
+                manager.showEditorAnnotation(fileEditor, component);
+                List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+                if (fileLevelInfos == null) {
+                  fileLevelInfos = new ArrayList<HighlightInfo>();
+                  fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
+                }
+                info.fileLevelComponent = component;
+                info.group = group;
+                fileLevelInfos.add(info);
               }
-              info.fileLevelComponent = comoponent;
-              info.group = group;
-              fileLevelInfos.add(info);
             }
 
             continue;
@@ -196,6 +201,17 @@ public class UpdateHighlightersUtil {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Added segment highlighters:" + highlights.size());
     }
+  }
+
+  private static List<IntentionAction> getQuickFixes(final HighlightInfo info) {
+    if (info.quickFixActionRanges != null) {
+      List<IntentionAction> actions = new ArrayList<IntentionAction>();
+      for (Pair<Pair<Pair<IntentionAction, String>, List<IntentionAction>>, TextRange> pair : info.quickFixActionRanges) {
+        actions.add(pair.getFirst().getFirst().getFirst());
+      }
+      return actions;
+    }
+    return Collections.emptyList();
   }
 
   public static final int NORMAL_MARKERS_GROUP = 1;

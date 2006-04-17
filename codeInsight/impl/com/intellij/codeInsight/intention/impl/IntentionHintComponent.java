@@ -81,8 +81,8 @@ public class IntentionHintComponent extends JPanel {
     private IntentionManagerSettings mySettings;
     private List<IntentionAction> myQuickFixes;
 
-    public IntentionListStep(ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes,
-                             ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions) {
+    public IntentionListStep(List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes,
+                             List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions) {
       mySettings = IntentionManagerSettings.getInstance();
       ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> allActions = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>(quickFixes);
       allActions.addAll(intentions);
@@ -253,8 +253,8 @@ public class IntentionHintComponent extends JPanel {
 
   public static IntentionHintComponent showIntentionHint(Project project,
                                                          Editor view,
-                                                         ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions,
-                                                         ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes,
+                                                         List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions,
+                                                         List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes,
                                                          boolean showExpanded) {
     final IntentionHintComponent component = new IntentionHintComponent(project, view, intentions, quickFixes);
 
@@ -273,8 +273,8 @@ public class IntentionHintComponent extends JPanel {
     return component;
   }
 
-  public void updateIfNotShowingPopup(ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickfixes,
-                                      ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions) {
+  public void updateIfNotShowingPopup(List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickfixes,
+                                      List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions) {
     if (!myPopupShown) {
       myPopup = JBPopupFactory.getInstance().createWizardStep(new IntentionListStep(quickfixes, intentions));
     }
@@ -319,8 +319,8 @@ public class IntentionHintComponent extends JPanel {
 
   public IntentionHintComponent(Project project,
                                 Editor editor,
-                                ArrayList<Pair<Pair<IntentionAction, String>,  List<IntentionAction>>> intentions,
-                                ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes) {
+                                List<Pair<Pair<IntentionAction, String>,  List<IntentionAction>>> intentions,
+                                List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myProject = project;
     myEditor = editor;
