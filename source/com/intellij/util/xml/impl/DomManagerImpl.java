@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -413,7 +414,12 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         }
       }
 
-      return method.invoke(myCachedValue, args);
+      try {
+        return method.invoke(myCachedValue, args);
+      }
+      catch (InvocationTargetException e) {
+        throw e.getCause();
+      }
     }
 
     public final void revalidate() {

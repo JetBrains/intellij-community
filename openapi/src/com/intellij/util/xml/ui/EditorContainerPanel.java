@@ -14,11 +14,17 @@
  * limitations under the License.
  *
  */
-
 package com.intellij.util.xml.ui;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author peter
  */
-public class PsiClassPanel extends EditorContainerPanel {
+public class EditorContainerPanel extends JPanel {
+  public EditorContainerPanel() {
+    super(new BorderLayout());
+    setFocusable(false);
+  }
 }

@@ -71,6 +71,14 @@ public class DomUIFactoryImpl extends DomUIFactory {
     return new PsiClassControl2(wrapper, commitOnEveryChange);
   }
 
+  public BaseControl createPsiTypeControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
+    return new PsiTypeControl(wrapper, commitOnEveryChange);
+  }
+
+  public BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
+    return new TextControl(wrapper, commitOnEveryChange);
+  }
+
   private static <T extends JComponent> T removeBorder(final T component) {
     component.setBorder(new EmptyBorder(0, 0, 0, 0));
     return component;

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -58,8 +59,11 @@ public abstract class DomUIFactory implements ApplicationComponent {
 
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element, boolean commitOnEveryChange) {
     final DomStringWrapper stringWrapper = new DomStringWrapper(element);
-    if (type.equals(PsiClass.class)) {
+    if (PsiClass.class.isAssignableFrom(DomUtil.getRawType(type))) {
       return getDomUIFactory().createPsiClassControl(stringWrapper, commitOnEveryChange);
+    }
+    if (type.equals(PsiType.class)) {
+      return getDomUIFactory().createPsiTypeControl(stringWrapper, commitOnEveryChange);
     }
     if (type instanceof Class && Enum.class.isAssignableFrom((Class)type)) {
       return new ComboControl(stringWrapper, (Class)type);
@@ -70,7 +74,7 @@ public abstract class DomUIFactory implements ApplicationComponent {
       return new BooleanControl(wrapper);
     }
     if (type.equals(String.class)) {
-      return new StringControl(wrapper, commitOnEveryChange);
+      return getDomUIFactory().createTextControl(wrapper, commitOnEveryChange);
     }
 
     throw new IllegalArgumentException("Not supported: " + type);
@@ -91,6 +95,10 @@ public abstract class DomUIFactory implements ApplicationComponent {
   public abstract UserActivityWatcher createEditorAwareUserActivityWatcher();
 
   public abstract BaseControl createPsiClassControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
+
+  public abstract BaseControl createPsiTypeControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
+
+  public abstract BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
   public static DomUIFactory getDomUIFactory() {
     return ApplicationManager.getApplication().getComponent(DomUIFactory.class);

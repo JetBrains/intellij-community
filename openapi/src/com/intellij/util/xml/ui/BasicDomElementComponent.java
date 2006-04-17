@@ -14,6 +14,7 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -59,6 +60,8 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
               control = new BigStringControl(new DomFixedWrapper(element), commitOnEveryChange);
             } else if (boundComponent instanceof TextFieldWithBrowseButton) {
               control = new PsiClassControl(new DomStringWrapper(element), commitOnEveryChange);
+            } else if (boundComponent instanceof JTextComponent) {
+              control = new StringControl(new DomStringWrapper(element), commitOnEveryChange);
             } else {
               control = DomUIFactory.createControl(element, commitOnEveryChange);
             }

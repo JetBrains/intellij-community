@@ -32,6 +32,10 @@ import java.awt.*;
  */
 public abstract class EditorTextFieldControl<T extends JComponent> extends BaseControl<T, String> {
   private static final JTextField J_TEXT_FIELD = new JTextField() {
+    public void addNotify() {
+      throw new UnsupportedOperationException("Shouldn't be shown");
+    }
+
     public void setVisible(boolean aFlag) {
       throw new UnsupportedOperationException("Shouldn't be shown");
     }
