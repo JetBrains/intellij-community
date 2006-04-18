@@ -489,6 +489,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(PublicMethodNotExposedInInterfaceInspection.class);
         m_inspectionClasses.add(InstanceofThisInspection.class);
         m_inspectionClasses.add(MethodOnlyUsedFromInnerClassInspection.class);
+        m_inspectionClasses.add(StaticMethodOnlyUsedInOneClassInspection.class);
     }
 
     private void registerClassLayoutInspections() {
