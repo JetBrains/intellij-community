@@ -10,6 +10,8 @@ import com.intellij.util.containers.HashMap;
 import javax.swing.*;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 public class IgnoreWhiteSpacesAction extends ComboBoxAction {
   private final Map<ComparisonPolicy, AnAction> myActions = new HashMap<ComparisonPolicy, AnAction>();
   private static final ComparisonPolicy[] ourActionOrder = new ComparisonPolicy[]{
@@ -26,10 +28,10 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction {
     myDiffPanel = diffPanel;
   }
 
+  @NotNull
   protected DefaultActionGroup createPopupActionGroup(JComponent button) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    for (int i = 0; i < ourActionOrder.length; i++) {
-      ComparisonPolicy comparisonPolicy = ourActionOrder[i];
+    for (ComparisonPolicy comparisonPolicy : ourActionOrder) {
       actionGroup.add(myActions.get(comparisonPolicy));
     }
     return actionGroup;
