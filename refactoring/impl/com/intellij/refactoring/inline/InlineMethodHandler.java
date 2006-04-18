@@ -15,7 +15,8 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 class InlineMethodHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
 
-  public void invoke(final Project project, Editor editor, final PsiMethod method) {
+  public void invoke(final Project project, Editor editor, PsiMethod method) {
+    method = (PsiMethod)method.getNavigationElement();
     if (method.getBody() == null){
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
