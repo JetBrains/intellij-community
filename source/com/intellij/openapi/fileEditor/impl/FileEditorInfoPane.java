@@ -21,6 +21,7 @@ public class FileEditorInfoPane extends JPanel {
   private final JButton myPrevButton;
   private final JButton myNextButton;
   private java.util.List<JComponent> myComponents;
+  private final JPanel myButtonsPanel;
 
   public FileEditorInfoPane() {
     super(new BorderLayout());
@@ -28,12 +29,12 @@ public class FileEditorInfoPane extends JPanel {
     myCards = new JPanel(layout);
     myComponents = new ArrayList<JComponent>();
     add(myCards, BorderLayout.CENTER);
-    JPanel buttonsPanel = new JPanel(new GridLayout(1, 2));
     myPrevButton = new JButton("<");
     myNextButton = new JButton(">");
 
-    buttonsPanel.add(myPrevButton);
-    buttonsPanel.add(myNextButton);
+    myButtonsPanel = new JPanel(new GridLayout(1, 2));
+    myButtonsPanel.add(myPrevButton);
+    myButtonsPanel.add(myNextButton);
 
     myPrevButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -48,13 +49,11 @@ public class FileEditorInfoPane extends JPanel {
         updateButtons();
       }
     });
-
-    myPrevButton.setVisible(false);
-    myNextButton.setVisible(false);
-
-    add(buttonsPanel, BorderLayout.EAST);
-
     setBorder(IdeBorderFactory.createBorder());
+
+    add(myButtonsPanel, BorderLayout.EAST);
+    myButtonsPanel.setVisible(false);
+    setVisible(false);
   }
 
   public void addInfo(JComponent component) {
@@ -83,12 +82,10 @@ public class FileEditorInfoPane extends JPanel {
     if (count > 0) {
       setVisible(true);
       if (count == 1) {
-        myNextButton.setVisible(false);
-        myPrevButton.setVisible(false);
+        myButtonsPanel.setVisible(false);
       }
       else {
-        myNextButton.setVisible(true);
-        myPrevButton.setVisible(true);
+        myButtonsPanel.setVisible(true);
         int currentCard = getCurrentCard();
         myNextButton.setEnabled(currentCard + 1 < count);
         myPrevButton.setEnabled(currentCard - 1 >= 0);
