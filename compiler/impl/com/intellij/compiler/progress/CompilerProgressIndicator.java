@@ -79,7 +79,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   public void addMessage(final CompilerMessage message) {
     if (CompilerMessageCategory.ERROR.equals(message.getCategory())) {
       myErrorCount += 1;
-      openMessageView();
+      openMessageView();                                      
     }
     if (CompilerMessageCategory.WARNING.equals(message.getCategory())) {
       myWarningCount += 1;
