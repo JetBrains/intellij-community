@@ -28,6 +28,8 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
   private final String myActionPlace;
@@ -51,6 +53,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return panel;
   }
 
+  @NotNull
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
 
   protected class ComboBoxButton extends JButton {
@@ -92,7 +95,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       );
       repaint();
-      menuComponent.show(this, 0, this.getHeight());
+      menuComponent.show(this, 0, getHeight());
     }
 
     public void removeNotify() {
