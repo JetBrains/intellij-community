@@ -6,13 +6,13 @@ package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.Function;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -21,10 +21,14 @@ import java.awt.event.ActionListener;
  * @author ven
  */
 public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor{
-  private final Factory<Document> myFactory;
+  private final Function<String,Document> myFactory;
 
-  public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener, final Project project, final Factory<Document> factory) {
-    super(new EditorTextField(factory.create(), project, StdFileTypes.JAVA), browseActionListener);
+  public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener, final Project project, final Function<String,Document> factory, String text) {
+    this(browseActionListener, new EditorTextField(factory.fun(text), project, StdFileTypes.JAVA), factory);
+  }
+
+  public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener, final EditorTextField editorTextField, final Function<String,Document> factory) {
+    super(editorTextField, browseActionListener);
     myFactory = factory;
   }
 
@@ -32,11 +36,11 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
                                          final String text,
                                          final PsiManager manager,
                                          final boolean toAcceptClasses) {
-    this(browseActionListener, manager.getProject(), new Factory<Document>() {
-      public Document create() {
-        return createDocument(text, manager, toAcceptClasses);
+    this(browseActionListener, manager.getProject(), new Function<String,Document>() {
+      public Document fun(final String s) {
+        return createDocument(s, manager, toAcceptClasses);
       }
-    });
+    }, text);
   }
 
   public static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
@@ -62,7 +66,7 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
   }
 
   public void setText(final String text){
-    getEditorTextField().setDocument(myFactory.create());
+    getEditorTextField().setDocument(myFactory.fun(text));
   }
 
   public void setTextFieldPreferredWidth(final int charCount) {

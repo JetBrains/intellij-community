@@ -5,6 +5,8 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -32,7 +34,17 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
       boundedComponent = new TextPanel();
     }
     final PsiCodeFragmentImpl psiFile = new PsiCodeFragmentImpl(project, ElementType.PLAIN_TEXT, true, "a.txt", "");
-    final EditorTextField editorTextField = new EditorTextField(PsiDocumentManager.getInstance(project).getDocument(psiFile), project, StdFileTypes.PLAIN_TEXT);
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+    final TextPanel boundedComponent1 = boundedComponent;
+    final EditorTextField editorTextField = new EditorTextField(document, project, StdFileTypes.PLAIN_TEXT) {
+      protected EditorEx createEditor() {
+        final EditorEx editor = super.createEditor();
+        if (boundedComponent1 instanceof MultiLineTextPanel) {
+          editor.setOneLineMode(false);
+        }
+        return editor;
+      }
+    };
     boundedComponent.add(editorTextField);
     return boundedComponent;
   }

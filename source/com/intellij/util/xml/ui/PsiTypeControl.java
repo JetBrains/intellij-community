@@ -5,10 +5,10 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.util.Function;
 
 /**
  * @author peter
@@ -32,11 +32,11 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
       boundedComponent = new PsiTypePanel();
     }
     return PsiClassControl2.initReferenceEditorWithBrowseButton(boundedComponent,
-                                                                new ReferenceEditorWithBrowseButton(null, project, new Factory<Document>() {
-                                                                  public Document create() {
-                                                                    return ReferenceEditorWithBrowseButton.createTypeDocument("", PsiManager.getInstance(project));
+                                                                new ReferenceEditorWithBrowseButton(null, project, new Function<String, Document>() {
+                                                                  public Document fun(final String s) {
+                                                                    return ReferenceEditorWithBrowseButton.createTypeDocument(s, PsiManager.getInstance(project));
                                                                   }
-                                                                }), this);
+                                                                }, ""), this);
   }
 
 
