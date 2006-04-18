@@ -35,10 +35,6 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
   private final T myRowDomElement;
   private T myCellValueDomElement;
 
-  final Color myErrorBackground = new Color(255, 204, 204);
-  final Color myWarningBackground = new Color(255, 255, 204);
-
-
   public ErrorableTableCellRenderer(final T cellValueDomElement, final TableCellRenderer renderer, final T rowDomElement) {
     myCellValueDomElement = cellValueDomElement;
     myRenderer = renderer;
@@ -65,10 +61,10 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
 
     // highlight empty cell with errors
     if (hasErrors && (value == null || value.toString().trim().length() == 0)) {
-      component.setBackground(myErrorBackground);
+      component.setBackground(BaseControl.ERROR_BACKGROUND);
     }
     else if (warningProblems.size() > 0) {
-      component.setBackground(myWarningBackground);
+      component.setBackground(BaseControl.WARNING_BACKGROUND);
       if(isSelected) component.setForeground(Color.BLACK);
     }
 
