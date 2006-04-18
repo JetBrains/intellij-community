@@ -613,6 +613,13 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   void removeChild(VirtualFileImpl child) {
+    if (ourFileSystem.myUnaccountedFiles.containsValue(child)) {
+      //this file is not in its parent myChildren
+      ourFileSystem.myUnaccountedFiles.put(child.getPath(), null);
+      child.myParent = null;
+      return;
+    }
+
     getChildren(); // to initialize myChildren
 
     synchronized (ourFileSystem.LOCK) {

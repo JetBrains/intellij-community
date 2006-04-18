@@ -998,11 +998,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
     boolean isDirectory = file.isDirectory();
 
+    parent.removeChild(file);
+    
     if (!handled) {
       delete(physicalFile);
     }
 
-    parent.removeChild(file);
     fireFileDeleted(requestor, file, name, isDirectory, parent);
 
     if (handled && isDirectory && physicalFile.exists()) {
