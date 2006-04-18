@@ -100,6 +100,8 @@ public abstract class DomUIFactory implements ApplicationComponent {
 
   public abstract BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
+  public abstract BaseControl createBigTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
+
   public static DomUIFactory getDomUIFactory() {
     return ApplicationManager.getApplication().getComponent(DomUIFactory.class);
   }

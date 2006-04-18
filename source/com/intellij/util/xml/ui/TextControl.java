@@ -12,6 +12,8 @@ import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.ui.EditorTextField;
 
+import javax.swing.*;
+
 /**
  * @author peter
  */
@@ -40,7 +42,9 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         if (boundedComponent1 instanceof MultiLineTextPanel) {
+          MultiLineTextPanel panel = (MultiLineTextPanel) boundedComponent1;
           editor.setOneLineMode(false);
+          editor.getComponent().setPreferredSize(new JTextArea(panel.getRowCount(), 50).getPreferredSize());
         }
         return editor;
       }
