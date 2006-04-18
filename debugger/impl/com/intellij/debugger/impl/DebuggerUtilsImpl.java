@@ -1,28 +1,33 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
-import com.intellij.debugger.engine.StackFrameContext;
+import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.StackFrameContext;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
-import com.intellij.debugger.ui.*;
+import com.intellij.debugger.ui.CompletionEditor;
+import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
+import com.intellij.execution.ExecutionException;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.psi.*;
-import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.execution.ExecutionException;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.util.net.NetUtils;
 import com.sun.jdi.Value;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 
-import java.net.ServerSocket;
 import java.io.IOException;
 
 /*
@@ -109,34 +114,17 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return new DebuggerExpressionComboBox(project, context, recentsId);
   }
 
-  private static int findAvailableSocketPort() throws ExecutionException {
-    int port;
-    try {
-      final ServerSocket serverSocket = new ServerSocket(0);
-      port = serverSocket.getLocalPort();
-      //workaround for linux : calling close() immediately after opening socket
-      //may result that socket is not closed
-      synchronized(serverSocket) {
-        try {
-          serverSocket.wait(1);
-        }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-      }
-      serverSocket.close();
-    }
-    catch (IOException e) {
-      throw new ExecutionException(DebugProcessImpl.processError(e));
-    }
-    return port;
-  }
-
   public String findAvailableDebugAddress(final boolean useSockets) throws ExecutionException {
     final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
 
     if(useSockets) {
-      final int freePort = findAvailableSocketPort();
+      final int freePort;
+      try {
+        freePort = NetUtils.findAvailableSocketPort();
+      }
+      catch (IOException e) {
+        throw new ExecutionException(DebugProcessImpl.processError(e));
+      }
       return Integer.toString(freePort);
     }
 
