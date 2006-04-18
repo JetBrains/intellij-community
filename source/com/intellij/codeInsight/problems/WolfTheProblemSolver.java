@@ -193,4 +193,10 @@ public class WolfTheProblemSolver implements ProjectComponent {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(myCheckingRequest, 200);
   }
+
+  public void clearProblemFiles() {
+    synchronized (myProblemFiles) {
+      myProblemFiles.clear();
+    }
+  }
 }

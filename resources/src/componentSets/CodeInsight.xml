@@ -121,7 +121,8 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.problems.ProblemsToolWindow</implementation-class>
+      <interface-class>com.intellij.codeInsight.problems.ProblemsToolWindow</interface-class>
+      <implementation-class>com.intellij.codeInsight.problems.ProblemsToolWindowImpl</implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>

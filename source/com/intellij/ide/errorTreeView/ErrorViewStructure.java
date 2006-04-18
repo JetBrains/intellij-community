@@ -204,9 +204,11 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     for (final String path : myGroupNames) {
       synchronized (myGroupNameToMessagesMap) {
         final List<NavigatableMessageElement> messages = myGroupNameToMessagesMap.get(path);
-        for (final NavigatableMessageElement navigatableMessageElement : messages) {
-          if (kind.equals(navigatableMessageElement.getKind())) {
-            return navigatableMessageElement;
+        if (messages != null) {
+          for (final NavigatableMessageElement navigatableMessageElement : messages) {
+            if (kind.equals(navigatableMessageElement.getKind())) {
+              return navigatableMessageElement;
+            }
           }
         }
       }
@@ -225,6 +227,6 @@ public class ErrorViewStructure extends AbstractTreeStructure {
 
     public String getExportTextPrefix() {
       return "";
-    }
+    }  
   }
 }

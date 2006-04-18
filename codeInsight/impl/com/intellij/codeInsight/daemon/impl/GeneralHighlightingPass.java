@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.problems.ProblemsToolWindow;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.problems.ProblemsToolWindow;
 import com.intellij.javaee.ejb.role.EjbImplMethodRole;
 import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.intellij.javaee.ejb.role.EjbRolesUtil;
@@ -158,7 +158,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
   private void reportToProblemsToolWindow(final Collection<HighlightInfo> infos) {
     ProblemsToolWindow problemsToolWindow = ProblemsToolWindow.getInstance(myProject);
-
     VirtualFile file = myFile.getVirtualFile();
     String groupName = file.getPresentableUrl();
     problemsToolWindow.clearGroupChildren(file);

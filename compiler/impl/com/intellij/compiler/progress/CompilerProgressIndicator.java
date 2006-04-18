@@ -5,7 +5,6 @@
  */
 package com.intellij.compiler.progress;
 
-import com.intellij.codeInsight.problems.ProblemsToolWindow;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
@@ -28,6 +27,7 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.codeInsight.problems.ProblemsToolWindow;
 
 import javax.swing.*;
 import java.awt.*;
@@ -77,10 +77,9 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   }
 
   public void addMessage(final CompilerMessage message) {
-    openMessageView();
-
     if (CompilerMessageCategory.ERROR.equals(message.getCategory())) {
       myErrorCount += 1;
+      openMessageView();
     }
     if (CompilerMessageCategory.WARNING.equals(message.getCategory())) {
       myWarningCount += 1;
