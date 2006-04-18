@@ -16,7 +16,7 @@ public class EditRunConfigurationsAction extends AnAction{
     dialog.show();
   }
 
-  private Project getProject(final AnActionEvent e) {
+  private static Project getProject(final AnActionEvent e) {
     return (Project)e.getDataContext().getData(DataConstants.PROJECT);
   }
 
