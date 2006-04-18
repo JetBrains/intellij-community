@@ -16,6 +16,8 @@ import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author cdr
  */
@@ -66,6 +68,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       return ((PropertiesGroupingStructureViewModel)getTreeModel()).getSeparator();
     }
 
+    @NotNull
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
       myActionGroup = new DefaultActionGroup();
       refillActionGroup();
