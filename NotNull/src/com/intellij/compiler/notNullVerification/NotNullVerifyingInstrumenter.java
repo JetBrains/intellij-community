@@ -11,6 +11,7 @@ import java.util.ArrayList;
 public class NotNullVerifyingInstrumenter extends ClassAdapter {
 
   private boolean myIsModification = false;
+  private String myClassName;
 
   public NotNullVerifyingInstrumenter(final ClassVisitor classVisitor) {
     super(classVisitor);
@@ -20,6 +21,15 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
     return myIsModification;
   }
 
+  public void visit(final int version,
+                    final int access,
+                    final String name,
+                    final String signature,
+                    final String superName,
+                    final String[] interfaces) {
+    super.visit(version, access, name, signature, superName, interfaces);
+    myClassName = name;
+  }
 
   public MethodVisitor visitMethod(
     final int access,
@@ -74,7 +84,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
           }
           mv.visitVarInsn(Opcodes.ALOAD, var);
 
-          generateConditionalThrow("Argument " + param + " for @NotNull parameter must not be null",
+          generateConditionalThrow("Argument " + param + " for @NotNull parameter of " + myClassName + "." + name + " must not be null",
                                    "java/lang/IllegalArgumentException");
         }
       }
@@ -82,7 +92,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
       public void visitInsn(int opcode) {
         if (opcode == Opcodes.ARETURN && myIsNotNull) {
           mv.visitInsn(Opcodes.DUP);
-          generateConditionalThrow("@NotNull method must not return null",
+          generateConditionalThrow("@NotNull method " + myClassName + "." + name + " must not return null",
                                    "java/lang/IllegalStateException");
         }
 
@@ -108,5 +118,4 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
       }
     };
   }
-
 }
