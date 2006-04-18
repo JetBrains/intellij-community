@@ -4,17 +4,8 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
-import com.intellij.uiDesigner.UIDesignerBundle;
-
-import javax.swing.*;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.AWTEventListener;
-import java.awt.event.KeyEvent;
-import java.awt.Toolkit;
-import java.awt.AWTEvent;
+import java.lang.reflect.Method;
 
 /**
  * @author yole
@@ -24,36 +15,18 @@ public class SnapShooter {
   }
 
   public static void main(String[] args) throws Throwable {
-    final JFrame snapShotFrame = new JFrame(UIDesignerBundle.message("swing.inspector.title"));
-    JButton takeSnapShotButton = new JButton("Take snapshot (PrintScreen)");
-    takeSnapShotButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        SnapShooterDialog dlg = new SnapShooterDialog();
-        dlg.showDialog(snapShotFrame);
-      }
-    });
+    System.out.println("Initializing SnapShooter");
 
-    Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-      public void eventDispatched(AWTEvent event) {
-        if (event instanceof KeyEvent) {
-          KeyEvent keyEvent = (KeyEvent) event;
-          if (keyEvent.getID() == KeyEvent.KEY_RELEASED && keyEvent.getKeyCode() == KeyEvent.VK_PRINTSCREEN) {
-            SnapShooterDialog dlg = new SnapShooterDialog();
-            dlg.showDialog(snapShotFrame);
-          }
-        }
-      }
-    }, AWTEvent.KEY_EVENT_MASK);
+    int port = Integer.parseInt(args [0]);
 
+    final Thread thread = new Thread(new SnapShooterDaemon(port));
+    thread.setDaemon(true);
+    thread.start();
 
-    snapShotFrame.setContentPane(takeSnapShotButton);
-    snapShotFrame.pack();
-    snapShotFrame.setVisible(true);
-
-    String mainClass = args[0];
-    String[] parms = new String[args.length - 1];
-    for (int j = 1; j < args.length; j++) {
-      parms[j - 1] = args[j];
+    String mainClass = args[1];
+    String[] parms = new String[args.length - 2];
+    for (int j = 2; j < args.length; j++) {
+      parms[j - 2] = args[j];
     }
     //noinspection HardCodedStringLiteral
     Method m = Class.forName(mainClass).getMethod("main", parms.getClass());

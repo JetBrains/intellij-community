@@ -26,6 +26,8 @@
     <orderEntry type="module" module-name="action-system-impl" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="compiler-impl" />
+    <orderEntry type="module" module-name="UIDesignerCore" />
+    <orderEntry type="module" module-name="forms_rt" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

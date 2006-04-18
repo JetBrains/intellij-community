@@ -183,6 +183,7 @@
       <separator/>
       <action id="NewForm" class="com.intellij.uiDesigner.actions.CreateFormAction"/>
       <action id="NewDialog" class="com.intellij.uiDesigner.actions.CreateDialogAction"/>
+      <action id="NewFormSnapshot" class="com.intellij.uiDesigner.snapShooter.CreateSnapShotAction"/>
       <separator/>
       <reference ref="J2EEGenerateGroup"/>
     </group>

@@ -8,24 +8,35 @@ import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.junit2.configuration.RunConfigurationModule;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.util.*;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.util.PathUtil;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.snapShooter.SnapShooter;
+import com.intellij.util.PathUtil;
+import com.intellij.util.net.NetUtils;
+import com.intellij.xml.util.XmlUtil;
+import gnu.trove.THashMap;
+import org.jdom.Document;
 import org.jdom.Element;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class ApplicationConfiguration extends SingleClassConfiguration implements RunJavaConfiguration {
 
@@ -37,6 +48,8 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
   public String ALTERNATIVE_JRE_PATH;
   public boolean ENABLE_SWING_INSPECTOR;
 
+  private int myLastSnapShooterPort;
+
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
     super(name, new RunConfigurationModule(project, true), applicationConfigurationType.getConfigurationFactories()[0]);
   }
@@ -45,23 +58,7 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
                                   final RunnerInfo runnerInfo,
                                   RunnerSettings runnerSettings,
                                   ConfigurationPerRunnerSettings configurationSettings) {
-    final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
-      protected JavaParameters createJavaParameters() throws ExecutionException {
-        final JavaParameters params = new JavaParameters();
-        JavaParametersUtil.configureModule(getConfigurationModule(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
-        JavaParametersUtil.configureConfiguration(params, ApplicationConfiguration.this);
-        if (ENABLE_SWING_INSPECTOR) {
-          params.getProgramParametersList().prepend(MAIN_CLASS_NAME);
-          params.getClassPath().addTail(PathUtil.getJarPathForClass(SnapShooter.class));       // idea.jar
-          params.getClassPath().addTail(PathUtil.getJarPathForClass(ProjectComponent.class));  // openapi.jar
-          params.setMainClass("com.intellij.uiDesigner.snapShooter.SnapShooter");
-        }
-        else {
-          params.setMainClass(MAIN_CLASS_NAME);
-        }
-        return params;
-      }
-    };
+    final JavaCommandLineState state = new MyJavaCommandLineState(runnerSettings, configurationSettings);
     state.setConsoleBuilder(TextConsoleBuidlerFactory.getInstance().createBuilder(getProject()));
     state.setModulesToCompile(getModules());
     return state;
@@ -174,5 +171,57 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
     super.writeExternal(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
+  }
+
+  public int getLastSnapShooterPort() {
+    return myLastSnapShooterPort;
+  }
+
+  private class MyJavaCommandLineState extends JavaCommandLineState {
+    public MyJavaCommandLineState(final RunnerSettings runnerSettings, final ConfigurationPerRunnerSettings configurationSettings) {
+      super(runnerSettings, configurationSettings);
+    }
+
+    protected JavaParameters createJavaParameters() throws ExecutionException {
+      final JavaParameters params = new JavaParameters();
+      JavaParametersUtil.configureModule(getConfigurationModule(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
+      JavaParametersUtil.configureConfiguration(params, ApplicationConfiguration.this);
+
+      if (ENABLE_SWING_INSPECTOR) {
+        try {
+          myLastSnapShooterPort = NetUtils.findAvailableSocketPort();
+        }
+        catch(IOException ex) {
+          myLastSnapShooterPort = -1;
+        }
+      }
+
+      if (ENABLE_SWING_INSPECTOR && myLastSnapShooterPort != -1) {
+        params.getProgramParametersList().prepend(MAIN_CLASS_NAME);
+        params.getProgramParametersList().prepend(Integer.toString(myLastSnapShooterPort));
+        Set<String> paths = new TreeSet<String>();
+        paths.add(PathUtil.getJarPathForClass(SnapShooter.class));         // ui-designer-impl
+        paths.add(PathUtil.getJarPathForClass(BaseComponent.class));       // appcore-api
+        paths.add(PathUtil.getJarPathForClass(ProjectComponent.class));    // openapi
+        paths.add(PathUtil.getJarPathForClass(LwComponent.class));         // UIDesignerCore
+        paths.add(PathUtil.getJarPathForClass(GridConstraints.class));     // forms_rt
+        paths.add(PathUtil.getJarPathForClass(JDOMExternalizable.class));  // util
+        paths.add(PathUtil.getJarPathForClass(Document.class));            // JDOM
+        paths.add(PathUtil.getJarPathForClass(LafManagerListener.class));  // ui-impl
+        paths.add(PathUtil.getJarPathForClass(DataProvider.class));        // action-system-openapi
+        paths.add(PathUtil.getJarPathForClass(XmlUtil.class));             // idea
+        paths.add(PathUtil.getJarPathForClass(Navigatable.class));         // pom
+        paths.add(PathUtil.getJarPathForClass(AreaInstance.class));        // extensions
+        paths.add(PathUtil.getJarPathForClass(THashMap.class));            // trove4j
+        for(String path: paths) {
+          params.getClassPath().addTail(path);
+        }
+        params.setMainClass("com.intellij.uiDesigner.snapShooter.SnapShooter");
+      }
+      else {
+        params.setMainClass(MAIN_CLASS_NAME);
+      }
+      return params;
+    }
   }
 }

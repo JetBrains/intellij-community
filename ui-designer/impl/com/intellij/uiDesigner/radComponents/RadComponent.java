@@ -577,6 +577,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   private void writeClientProperties(final XmlWriter writer) {
+    if (myModule == null) return;
     boolean haveClientProperties = false;
     try {
       ClientPropertiesProperty cpp = ClientPropertiesProperty.getInstance(getProject());
@@ -662,16 +663,6 @@ public abstract class RadComponent implements IComponent {
     else {
       Class componentClass = component.getClass();
 
-      try {
-        componentClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
-      }
-      catch (NoSuchMethodException e) {
-        componentClass = context.getReplacementClass(componentClass);
-      }
-      if (componentClass == null) {
-        return null;
-      }
-
       if (component instanceof JPanel) {
         RadContainer container = new RadContainer(componentClass, id, context.getPalette());
         final RadLayoutManager manager = RadLayoutManager.createFromLayout(component.getLayout());
@@ -689,7 +680,8 @@ public abstract class RadComponent implements IComponent {
     context.registerComponent(component, result);
     result.importSnapshotComponent(context, component);
 
-    final IntrospectedProperty[] properties = context.getPalette().getIntrospectedProperties(component.getClass(), result.getClass());
+    final IntrospectedProperty[] properties = context.getPalette().getIntrospectedProperties(component.getClass(),
+                                                                                             result.getDelegee().getClass());
     for(IntrospectedProperty prop: properties) {
       prop.importSnapshotValue(component, result);
     }

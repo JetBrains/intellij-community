@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,12 +19,16 @@ public final class GroupItem implements Cloneable, PaletteGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.GroupItem");
 
   @NotNull private String myName;
-  @NotNull private final ArrayList<ComponentItem> myItems;
+  @NotNull private final ArrayList<ComponentItem> myItems = new ArrayList<ComponentItem>();
   private boolean myReadOnly = false;
+  private boolean mySpecialGroup = false;
 
   public GroupItem(@NotNull final String name) {
     setName(name);
-    myItems = new ArrayList<ComponentItem>();
+  }
+
+  public GroupItem(final boolean specialGroup) {
+    mySpecialGroup = specialGroup;
   }
 
   /**
@@ -48,6 +53,9 @@ public final class GroupItem implements Cloneable, PaletteGroup {
   }
 
   @NotNull public String getName() {
+    if (mySpecialGroup) {
+      return UIDesignerBundle.message("palette.special.group");
+    }
     return myName;
   }
 

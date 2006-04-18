@@ -58,7 +58,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   /*Listeners, etc*/
   private final ArrayList<Listener> myListeners;
   private Project myProject;
-  private GroupItem mySpecialGroup = new GroupItem(UIDesignerBundle.message("palette.special.group"));
+  private GroupItem mySpecialGroup = new GroupItem(true);
 
   /**
    * Predefined item for javax.swing.JPanel
