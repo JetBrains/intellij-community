@@ -10,6 +10,7 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -34,6 +35,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
     return super.createCustomComponent(presentation);
   }
 
+  @NotNull
   protected DefaultActionGroup createPopupActionGroup(JComponent button) {
     DefaultActionGroup group = new DefaultActionGroup();
     GuiEditor editor = myLastEditor;
