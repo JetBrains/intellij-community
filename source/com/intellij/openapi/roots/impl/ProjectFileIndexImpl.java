@@ -39,7 +39,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
       VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile contentRoot : contentRoots) {
         DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(contentRoot);
-        if (info == null) continue; // is exluded or ignored
+        if (info == null) continue; // is excluded or ignored
         if (!module.equals(info.module)) continue; // maybe 2 modules have the same content root?
 
         VirtualFile parent = contentRoot.getParent();

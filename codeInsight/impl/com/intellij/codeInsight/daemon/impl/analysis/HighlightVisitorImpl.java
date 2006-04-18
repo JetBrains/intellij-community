@@ -161,7 +161,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       final VirtualFile vFile = file.getVirtualFile();
       if (CompilerManager.getInstance(file.getProject()).isExcludedFromCompilation(vFile)) {
         final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, file,
-                                                                     "Warning. This file is exluded from compliation");
+                                                                     "Warning. This file is excluded from compliation");
         info.isFileLevelAnnotation = true;
         myHolder.add(info);
       }

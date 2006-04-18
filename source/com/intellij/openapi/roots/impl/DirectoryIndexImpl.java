@@ -226,7 +226,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
         VirtualFile[] excludeRoots = contentEntry.getExcludeFolderFiles();
         for (VirtualFile excludeRoot : excludeRoots) {
-          // Output paths should be exluded (if marked as such) regardless if they're under corresponding module's content root
+          // Output paths should be excluded (if marked as such) regardless if they're under corresponding module's content root
           if (!VfsUtil.isAncestor(contentRoot, excludeRoot, false)) {
             if (rootManager.getCompilerOutputPath() == excludeRoot || rootManager.getCompilerOutputPathForTests() == excludeRoot) {
               putForFileAndAllAncestors(excludeRootsMap, excludeRoot, excludeRoot);
