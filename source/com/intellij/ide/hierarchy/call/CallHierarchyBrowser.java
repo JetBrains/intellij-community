@@ -5,6 +5,7 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.CommonActionsFactory;
+import com.intellij.ide.actions.RefreshAction;
 import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
@@ -29,6 +30,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -52,11 +54,11 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
 
   private Content myContent;
   private final Project myProject;
-  private final Hashtable<String,HierarchyTreeBuilder> myBuilders = new Hashtable<String, HierarchyTreeBuilder>();
-  private final Hashtable<Object,JTree> myType2TreeMap = new Hashtable<Object, JTree>();
-  private final Hashtable<String,String> myType2ScopeMap = new Hashtable<String, String>();
+  private final Map<String,HierarchyTreeBuilder> myBuilders = new HashMap<String, HierarchyTreeBuilder>();
+  private final Map<Object,JTree> myType2TreeMap = new HashMap<Object, JTree>();
+  private final Map<String,String> myType2ScopeMap = new HashMap<String, String>();
 
-  private final RefreshAction myRefreshAction = new RefreshAction();
+  private final MyRefreshAction myRefreshAction = new MyRefreshAction();
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private SmartPsiElementPointer mySmartPsiElementPointer;
   private final CardLayout myCardLayout;
@@ -103,9 +105,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
     myType2TreeMap.put(CalleeMethodsTreeStructure.TYPE, createTree());
     myType2TreeMap.put(CallerMethodsTreeStructure.TYPE, createTree());
 
-    final Enumeration<Object> keys = myType2TreeMap.keys();
-    while (keys.hasMoreElements()) {
-      final Object key = keys.nextElement();
+    for (Object key : myType2TreeMap.keySet()) {
       final JTree tree = myType2TreeMap.get(key);
       myOccurenceNavigators.put(key, new OccurenceNavigatorSupport(tree){
         @Nullable
@@ -332,8 +332,8 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
     }
   }
 
-  final class RefreshAction extends com.intellij.ide.actions.RefreshAction {
-    public RefreshAction() {
+  final class MyRefreshAction extends RefreshAction {
+    public MyRefreshAction() {
       super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), IconLoader.getIcon("/actions/sync.png"));
     }
 
@@ -400,8 +400,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
     if (node == null) return null;
     final Object userObject = node.getUserObject();
     if (!(userObject instanceof CallHierarchyNodeDescriptor)) return null;
-    final PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)userObject).getEnclosingElement();
-    return enclosingElement;
+    return ((CallHierarchyNodeDescriptor)userObject).getEnclosingElement();
   }
 
   private DefaultMutableTreeNode getSelectedNode() {
@@ -579,6 +578,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
       presentation.setText(getCurrentScopeType());
     }
 
+    @NotNull
     protected final DefaultActionGroup createPopupActionGroup(final JComponent button) {
       final DefaultActionGroup group = new DefaultActionGroup();
 
