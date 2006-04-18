@@ -19,6 +19,8 @@ import com.intellij.util.IJSwingUtilities;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class RunConfigurationAction extends ComboBoxAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.RunConfigurationAction");
   private static final Key<ComboBoxAction.ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
@@ -34,11 +36,11 @@ public class RunConfigurationAction extends ComboBoxAction {
     button.showPopup();
   }
 
-  private IdeFrame findFrame(final Component component) {
+  private static IdeFrame findFrame(final Component component) {
     return IJSwingUtilities.findParentOfType(component, IdeFrame.class);
   }
 
-  private IdeFrame findFrame(final DataContext dataContext) {
+  private static IdeFrame findFrame(final DataContext dataContext) {
     return findFrame((Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT));
   }
 
@@ -69,7 +71,7 @@ public class RunConfigurationAction extends ComboBoxAction {
     }
   }
 
-  private void updateButton(final RunConfiguration configuration, final Project project, final Presentation presentation) {
+  private static void updateButton(final RunConfiguration configuration, final Project project, final Presentation presentation) {
     if (project != null && configuration != null) {
       presentation.setText(getConfigurationDescription(configuration), false);
       setConfigurationIcon(presentation, configuration, project);
@@ -80,12 +82,12 @@ public class RunConfigurationAction extends ComboBoxAction {
     }
   }
 
-  private void setConfigurationIcon(final Presentation presentation, final RunConfiguration configuration, final Project project) {
+  private static void setConfigurationIcon(final Presentation presentation, final RunConfiguration configuration, final Project project) {
     presentation.setIcon(ExecutionUtil.getConfigurationIcon(project, configuration));
   }
 
   public JComponent createCustomComponent(final Presentation presentation) {
-    final ComboBoxAction.ComboBoxButton comboboxButton = new ComboBoxAction.ComboBoxButton(presentation) {
+    return new ComboBoxButton(presentation) {
       protected void updateButtonSize() {
         super.updateButtonSize();
         final Dimension preferredSize = getPreferredSize();
@@ -103,10 +105,10 @@ public class RunConfigurationAction extends ComboBoxAction {
         frame.getRootPane().putClientProperty(BUTTON_KEY, this);
       }
     };
-    return comboboxButton;
   }
 
 
+  @NotNull
   protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
     final DefaultActionGroup allActionsGroup = new DefaultActionGroup();
     final Project project = (Project)DataManager.getInstance().getDataContext(button).getData(DataConstants.PROJECT);
@@ -114,14 +116,13 @@ public class RunConfigurationAction extends ComboBoxAction {
       final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
 
       final ConfigurationType[] types = runManager.getConfigurationFactories();
-      for (int i = 0; i < types.length; i++) {
+      for (ConfigurationType type : types) {
         final DefaultActionGroup actionGroup = new DefaultActionGroup();
-        final RunnerAndConfigurationSettingsImpl[] configurations = runManager.getConfigurationSettings(types[i]);
-        for (int j = 0; j < configurations.length; j++) {
-          final RunnerAndConfigurationSettingsImpl configuration = configurations[j];
+        final RunnerAndConfigurationSettingsImpl[] configurations = runManager.getConfigurationSettings(type);
+        for (final RunnerAndConfigurationSettingsImpl configuration : configurations) {
           //if (runManager.canRunConfiguration(configuration)) {
-            final MenuAction action = new MenuAction(configuration, project);
-            actionGroup.add(action);
+          final MenuAction action = new MenuAction(configuration, project);
+          actionGroup.add(action);
           //}
         }
         allActionsGroup.add(actionGroup);
@@ -134,7 +135,7 @@ public class RunConfigurationAction extends ComboBoxAction {
     return allActionsGroup;
   }
 
-  class SaveTemporaryAction extends AnAction {
+  static class SaveTemporaryAction extends AnAction {
     public void actionPerformed(final AnActionEvent e) {
       final RunManager runManager = RunManager.getInstance(getProject(e));
       runManager.makeStable(runManager.getTempConfiguration());
@@ -157,17 +158,17 @@ public class RunConfigurationAction extends ComboBoxAction {
       presentation.setEnabled(true);
     }
 
-    private Project getProject(final AnActionEvent e) {
+    private static Project getProject(final AnActionEvent e) {
       return (Project)e.getDataContext().getData(DataConstants.PROJECT);
     }
 
-    private void disable(final Presentation presentation) {
+    private static void disable(final Presentation presentation) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
     }
   }
 
-  class MenuAction extends AnAction {
+  static class MenuAction extends AnAction {
     private RunnerAndConfigurationSettingsImpl myConfiguration;
     private Project myProject;
 
@@ -198,7 +199,7 @@ public class RunConfigurationAction extends ComboBoxAction {
     }
   }
 
-  private String getConfigurationDescription(final RunConfiguration configuration) {
+  private static String getConfigurationDescription(final RunConfiguration configuration) {
     return configuration.getName();
   }
 }
