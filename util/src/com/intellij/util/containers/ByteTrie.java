@@ -1,15 +1,14 @@
 package com.intellij.util.containers;
 
-import java.util.ArrayList;
-import java.io.UnsupportedEncodingException;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-
 import org.jetbrains.annotations.NonNls;
+
+import java.io.ByteArrayOutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 
 public class ByteTrie {
   private static final String EMPTY_STRING = "";
-  @NonNls private static final String UTF_8_CHARSET_NAME = "UTF-8".intern();
+  @NonNls private static final String UTF_8_CHARSET_NAME = "UTF-8";
   private final ArrayList<Node> myAllNodes;
 
   private class Node {
