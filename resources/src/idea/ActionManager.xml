@@ -123,6 +123,12 @@
       <action id="ApplyJavaeeStyle" class="com.intellij.javaee.module.view.ApplyJavaeeStyleAction"/>
       <group id="GeneratePersistenceMapping" class="com.intellij.javaee.persistence.view.GeneratePersistenceMappingActionGroup" popup="true"/>
     </group>
+    <group id="JavaeeEditorGenerateGroup">
+      <action id="GenerateEJBReference" class="com.intellij.codeInsight.generation.actions.GenerateEJBReference"/>
+      <action id="GenerateResourceReference" class="com.intellij.codeInsight.generation.actions.GenerateResourceReference"/>
+      <action id="GenerateInterceptorMethods" class="com.intellij.codeInsight.generation.actions.GenerateInterceptorMethods"/>
+      <action id="GenerateEntityListenerMethods" class="com.intellij.codeInsight.generation.actions.GenerateEntityListenerMethods"/>
+    </group>
 
     <group id="J2EEGenerateGroup">
       <action id="CreatePersistenceUnit" class="com.intellij.javaee.persistence.view.CreatePersistenceUnitAction"/>
@@ -152,6 +158,7 @@
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
       <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.GenerateDelegateAction"/>
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
+      <reference ref="JavaeeEditorGenerateGroup"/>
     </group>
 
     <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="/actions/moveDown.png"/>
