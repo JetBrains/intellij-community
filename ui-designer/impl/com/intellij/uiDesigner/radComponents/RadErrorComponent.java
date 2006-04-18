@@ -1,14 +1,16 @@
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
+import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.XmlWriter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
 
 /**
  * @author Anton Katilin
@@ -31,25 +33,17 @@ public final class RadErrorComponent extends RadAtomicComponent {
     return new RadErrorComponent(module, id, componentClassName, properties, errorDescription);
   }
 
-  /**
-   * @param properties can be <code>null</code>
-   * @param errorDescription
-   */
   private RadErrorComponent(
     final Module module,
     final String id,
-    final String componentClassName,
-    final Element properties,
-    final String errorDescription
+    @NotNull final String componentClassName,
+    @Nullable final Element properties,
+    @NotNull final String errorDescription
   ) {
     super(module, MyComponent.class, id);
 
-    LOG.assertTrue(componentClassName != null);
     myComponentClassName = componentClassName;
-
-    LOG.assertTrue(errorDescription != null);
     myErrorDescription = errorDescription;
-
     myProperties = properties;
   }
 
