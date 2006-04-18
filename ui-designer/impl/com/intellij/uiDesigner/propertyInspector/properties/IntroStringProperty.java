@@ -35,7 +35,8 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
   private static final String CLIENT_PROP_NAME_2_DESCRIPTOR = "name2descriptor";
 
   private final StringRenderer myRenderer;
-  private final StringEditor myEditor;
+  private StringEditor myEditor;
+  private final Project myProject;
 
   public IntroStringProperty(final String name,
                              final Method readMethod,
@@ -43,8 +44,8 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
                              final Project project,
                              final boolean storeAsClient) {
     super(name, readMethod, writeMethod, storeAsClient);
+    myProject = project;
     myRenderer = new StringRenderer();
-    myEditor = new StringEditor(project);
   }
 
   @NotNull
@@ -53,6 +54,9 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
   }
 
   public PropertyEditor<StringDescriptor> getEditor() {
+    if (myEditor == null) {
+      myEditor = new StringEditor(myProject);
+    }
     return myEditor;
   }
 

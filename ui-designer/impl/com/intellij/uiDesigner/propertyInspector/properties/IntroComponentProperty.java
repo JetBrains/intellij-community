@@ -27,6 +27,8 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
   private ComponentRenderer myRenderer = new ComponentRenderer();
   private ComponentEditor myEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroComponentProperty_";
+  private final Class myPropertyType;
+  private final Filter<RadComponent> myFilter;
 
   public IntroComponentProperty(String name,
                                 Method readMethod,
@@ -35,7 +37,8 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
                                 Filter<RadComponent> filter,
                                 final boolean storeAsClient) {
     super(name, readMethod, writeMethod, storeAsClient);
-    myEditor = new ComponentEditor(propertyType, filter);
+    myPropertyType = propertyType;
+    myFilter = filter;
   }
 
   @NotNull public PropertyRenderer<String> getRenderer() {
@@ -43,6 +46,9 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
   }
 
   public PropertyEditor<String> getEditor() {
+    if (myEditor == null) {
+      myEditor = new ComponentEditor(myPropertyType, myFilter);
+    }
     return myEditor;
   }
 

@@ -35,7 +35,6 @@ public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
 
   public IntroIconProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
     super(name, readMethod, writeMethod, storeAsClient);
-    myEditor = new IconEditor();
   }
 
   public void write(@NotNull IconDescriptor value, XmlWriter writer) {
@@ -47,6 +46,9 @@ public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
   }
 
   @Nullable public PropertyEditor<IconDescriptor> getEditor() {
+    if (myEditor == null) {
+      myEditor = new IconEditor();
+    }
     return myEditor;
   }
 

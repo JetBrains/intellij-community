@@ -29,7 +29,6 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
 
   public IntroFontProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
     super(name, readMethod, writeMethod, storeAsClient);
-    myFontEditor = new FontEditor(name);
   }
 
   public void write(@NotNull FontDescriptor value, XmlWriter writer) {
@@ -49,6 +48,9 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   }
 
   @Nullable public PropertyEditor<FontDescriptor> getEditor() {
+    if (myFontEditor == null) {
+      myFontEditor = new FontEditor(getName());
+    }
     return myFontEditor;
   }
 
