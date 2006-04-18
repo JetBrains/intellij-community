@@ -52,8 +52,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private FileTypeManager myFileTypeManager;
   private LvcsAction myAction = null;
   private final Project myProject;
-
-  private LvcsConfiguration myConfiguration;
+  private final LvcsConfiguration myConfiguration;
 
   private static final int DO_NOT_PERFORM_PURGING = -1;
 
@@ -92,7 +91,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     });
   }
 
-  public synchronized LvcsConfiguration getConfiguration() {
+  public LvcsConfiguration getConfiguration() {
     return myConfiguration;
   }
 
@@ -197,7 +196,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     runSyncOperation(realOperation);
   }
 
-  public synchronized long getPurgingPeriod() {
+  public long getPurgingPeriod() {
     if (!myConfiguration.LOCAL_VCS_ENABLED) return 0;
     return myConfiguration.LOCAL_VCS_PURGING_PERIOD;
   }
@@ -222,7 +221,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     myImplementation.markSourcesAsCurrent(label);
   }
 
-  public synchronized boolean isEnabled() {
+  public boolean isEnabled() {
     return myConfiguration.LOCAL_VCS_ENABLED;
   }
 
@@ -275,10 +274,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
     else {
       final FileType type = myFileTypeManager.getFileTypeByFile(file);
-      if (type == StdFileTypes.IDEA_WORKSPACE) return false;
-      if (type == StdFileTypes.IDEA_PROJECT) return false;
-      if (type == StdFileTypes.IDEA_MODULE) return false;
-      return !type.isBinary();
+      return isValidFileType(type);
     }
   }
 
@@ -287,11 +283,10 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized int purge() {
-
     final LvcsConfiguration configuration = LvcsConfiguration.getInstance();
     if (configuration.LOCAL_VCS_PURGING_PERIOD == DO_NOT_PERFORM_PURGING) return 0;
     long purgingPeriod = configuration.LOCAL_VCS_PURGING_PERIOD;
-    if (!configuration.LOCAL_VCS_ENABLED) purgingPeriod = 0;
+    if (!isEnabled()) purgingPeriod = 0;
     long timeToPurgeBefore = myUserActivitiesRegistry.getAbsoluteTimeForActivePeriod(System.currentTimeMillis(), purgingPeriod);
     return myImplementation.purge(timeToPurgeBefore);
   }
@@ -518,8 +513,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized boolean fileIsDeleted(VirtualFile file) {
-    if (myTracker == null) return false;
-    return myTracker.fileIsDeleted(file);
+    return myTracker != null && myTracker.fileIsDeleted(file);
   }
 
   private synchronized boolean fileOrParentIsDeleted(VirtualFile file) {
@@ -589,12 +583,11 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public static boolean isAction(LvcsLabel label1, LvcsLabel label2) {
-    if (label1.getType() != LvcsLabel.TYPE_BEFORE_ACTION) return false;
-    if (label2.getType() != LvcsLabel.TYPE_AFTER_ACTION) return false;
-    return label1.getVersionId() == label2.getVersionId();
+    return label1.getType() == LvcsLabel.TYPE_BEFORE_ACTION && label2.getType() == LvcsLabel.TYPE_AFTER_ACTION &&
+           label1.getVersionId() == label2.getVersionId();
   }
 
-  private VirtualFileManagerEx getVirtualFileManager() {
+  private static VirtualFileManagerEx getVirtualFileManager() {
     return (VirtualFileManagerEx)VirtualFileManagerEx.getInstance();
   }
 
@@ -749,6 +742,10 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   public synchronized void checkConsistency(final boolean shouldntContainScheduledForRemoval) {
     myImplementation.checkConsistency(shouldntContainScheduledForRemoval);
+  }
+
+  private static boolean isValidFileType(final FileType type) {
+    return type != StdFileTypes.IDEA_WORKSPACE && type != StdFileTypes.IDEA_PROJECT && type != StdFileTypes.IDEA_MODULE && !type.isBinary();
   }
 
   private File findProjectVcsLocation(VirtualFile projectFile) {
