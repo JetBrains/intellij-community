@@ -38,9 +38,9 @@ public class ClassReferencesSubclassInspection extends BaseInspection {
     @NotNull
     public String buildErrorString(Object... infos){
         final PsiNamedElement element = (PsiNamedElement)infos[0];
-        final PsiElement parentElement = element.getParent();
         final String containingClassName = element.getName();
-        if (parentElement instanceof PsiAnonymousClass) {
+        final Boolean isAnonymous = (Boolean)infos[1];
+        if (isAnonymous.booleanValue()) {
             return InspectionGadgetsBundle.message(
                     "class.references.subclass.problem.descriptor.anonymous",
                     containingClassName);
@@ -103,11 +103,11 @@ public class ClassReferencesSubclassInspection extends BaseInspection {
             final PsiJavaCodeReferenceElement classReference =
                     expression.getClassReference();
             if (classReference != null) {
-                registerError(classReference, parentClass);
+                registerError(classReference, parentClass, Boolean.FALSE);
             } else {
                 final PsiAnonymousClass anonymousClass =
                         expression.getAnonymousClass();
-                registerClassError(anonymousClass, parentClass);
+                registerClassError(anonymousClass, parentClass, Boolean.TRUE);
             }
         }
 
@@ -126,7 +126,7 @@ public class ClassReferencesSubclassInspection extends BaseInspection {
             if(!isSubclass(classType, parentClass)){
                 return;
             }
-            registerError(typeElement, parentClass);
+            registerError(typeElement, parentClass, Boolean.FALSE);
         }
 
         private static boolean isSubclass(@NotNull PsiClassType childClass,
