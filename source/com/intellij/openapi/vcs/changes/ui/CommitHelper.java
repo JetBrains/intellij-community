@@ -4,22 +4,22 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.localVcs.LvcsAction;
-import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.localVcs.LocalVcs;
+import com.intellij.openapi.localVcs.LvcsAction;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class CommitHelper {
   private final Project myProject;
@@ -139,7 +139,7 @@ public class CommitHelper {
   private void commitCompleted(final List<VcsException> allExceptions,
                                final ChangeList changeList,
                                final List<Change> failedChanges,
-                               VcsConfiguration config,
+                               final VcsConfiguration config,
                                final List<CheckinHandler> checkinHandlers,
                                String commitMessage) {
     final List<VcsException> errors = collectErrors(allExceptions);
@@ -158,14 +158,12 @@ public class CommitHelper {
         if (includedChanges.containsAll(list.getChanges()) && !localList.isDefault()) {
           changeListManager.removeChangeList(localList);
         }
-        else if (!includedChanges.containsAll(list.getChanges()) && localList.isDefault() && myAllOfDefaultChangeListChangesIncluded) {
+        else if (config.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT && !includedChanges.containsAll(list.getChanges()) && localList.isDefault() && myAllOfDefaultChangeListChangesIncluded) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              final int rc = Messages.showYesNoDialog(myProject,
-                                                      VcsBundle.message("changes.commit.partial.offer.to.move.text"),
-                                                      VcsBundle.message("changes.commit.partial.offer.to.move.title"),
-                                                      Messages.getQuestionIcon());
-              if (rc == 0) {
+              ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(config);
+              dialog.show();
+              if (dialog.isOK()) {
                 final Collection<Change> changes = changeListManager.getDefaultChangelist().getChanges();
                 MoveChangesToAnotherListAction.askAndMove(myProject, changes.toArray(new Change[changes.size()]));
               }

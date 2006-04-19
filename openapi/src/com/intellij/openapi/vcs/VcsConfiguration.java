@@ -33,6 +33,8 @@ import java.util.List;
 
 public final class VcsConfiguration implements JDOMExternalizable, ProjectComponent {
   @NonNls private static final String VALUE_ATTR = "value";
+
+  public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = true;
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = true;
 
   public enum StandardOption {

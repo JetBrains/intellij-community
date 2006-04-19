@@ -42,6 +42,7 @@ public class VcsGeneralConfigurationPanel {
   Map<VcsShowOptionsSettingImpl, JCheckBox> myPromptOptions = new LinkedHashMap<VcsShowOptionsSettingImpl, JCheckBox>();
   private JPanel myRemoveConfirmationPanel;
   private JPanel myAddConfirmationPanel;
+  private JCheckBox myCbOfferToMoveChanges;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -93,6 +94,7 @@ public class VcsGeneralConfigurationPanel {
     settings.PUT_FOCUS_INTO_COMMENT = myPutFocusIntoComment.isSelected();
     settings.SAVE_LAST_COMMIT_MESSAGE = myReuseLastComment.isSelected();
     settings.FORCE_NON_EMPTY_COMMENT = myForceNonEmptyComment.isSelected();
+    settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = myCbOfferToMoveChanges.isSelected();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
@@ -139,6 +141,9 @@ public class VcsGeneralConfigurationPanel {
     if (settings.FORCE_NON_EMPTY_COMMENT != myForceNonEmptyComment.isSelected()){
       return true;
     }
+    if (settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT != myCbOfferToMoveChanges.isSelected()){
+      return true;
+    }
 
     if (getReadOnlyStatusHandler().SHOW_DIALOG != myShowReadOnlyStatusDialog.isSelected()) {
       return true;
@@ -159,6 +164,7 @@ public class VcsGeneralConfigurationPanel {
     myPutFocusIntoComment.setSelected(settings.PUT_FOCUS_INTO_COMMENT);
     myReuseLastComment.setSelected(settings.SAVE_LAST_COMMIT_MESSAGE);
     myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
+    myCbOfferToMoveChanges.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
     myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().SHOW_DIALOG);
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
