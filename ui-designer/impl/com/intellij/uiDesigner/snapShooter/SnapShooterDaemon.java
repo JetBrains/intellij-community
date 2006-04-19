@@ -124,7 +124,11 @@ public class SnapShooterDaemon implements Runnable {
     if (component instanceof Container) {
       LayoutManager layoutManager = ((Container) component).getLayout();
       if (layoutManager != null) {
-        return layoutManager.getClass().getName();
+        Class layoutManagerClass = layoutManager.getClass();
+        while(!layoutManagerClass.getSuperclass().equals(Object.class)) {
+          layoutManagerClass = layoutManagerClass.getSuperclass();
+        }
+        return layoutManagerClass.getName();
       }
     }
     return "";

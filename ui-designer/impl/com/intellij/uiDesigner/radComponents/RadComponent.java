@@ -667,7 +667,6 @@ public abstract class RadComponent implements IComponent {
         RadContainer container = new RadContainer(componentClass, id, context.getPalette());
         final RadLayoutManager manager = RadLayoutManager.createFromLayout(component.getLayout());
         if (manager == null) {
-          context.notifyUnknownLayoutManager(component);
           return null;
         }
         container.setLayoutManager(manager);

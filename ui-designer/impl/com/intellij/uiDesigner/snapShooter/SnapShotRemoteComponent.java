@@ -41,6 +41,10 @@ public class SnapShotRemoteComponent {
     return myText;
   }
 
+  public String getLayoutManager() {
+    return myLayoutManager;
+  }
+
   public SnapShotRemoteComponent[] getChildren() {
     return myChildren;
   }

@@ -29,6 +29,7 @@ import java.util.Arrays;
  */
 public abstract class RadLayoutManager {
   @NonNls private static Map<String, Class<? extends RadLayoutManager>> ourLayoutManagerRegistry = new HashMap<String, Class<? extends RadLayoutManager>>();
+  @NonNls private static Map<Class, Class<? extends RadLayoutManager>> ourLayoutManagerClassRegistry = new HashMap<Class, Class<? extends RadLayoutManager>>();
 
   static {
     ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_INTELLIJ, RadGridLayoutManager.class);
@@ -37,6 +38,13 @@ public abstract class RadLayoutManager {
     ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_FLOW, RadFlowLayoutManager.class);
     ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_XY, RadXYLayoutManager.class);
     ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_CARD, RadCardLayoutManager.class);
+
+    ourLayoutManagerClassRegistry.put(BorderLayout.class, RadBorderLayoutManager.class);
+    ourLayoutManagerClassRegistry.put(GridBagLayout.class, RadGridBagLayoutManager.class);
+    ourLayoutManagerClassRegistry.put(FlowLayout.class, RadFlowLayoutManager.class);
+    ourLayoutManagerClassRegistry.put(GridLayout.class, RadGridLayoutManager.class);
+    ourLayoutManagerClassRegistry.put(BoxLayout.class, RadBoxLayoutManager.class);
+    ourLayoutManagerClassRegistry.put(CardLayout.class, RadCardLayoutManager.class);
   }
 
   public static String[] getLayoutManagerNames() {
@@ -54,25 +62,26 @@ public abstract class RadLayoutManager {
   }
 
   public static RadLayoutManager createFromLayout(LayoutManager layout) {
-    if (layout instanceof BorderLayout) {
-      return new RadBorderLayoutManager();
-    }
-    if (layout instanceof GridBagLayout) {
-      return new RadGridBagLayoutManager();
-    }
-    if (layout instanceof FlowLayout) {
-      return new RadFlowLayoutManager();
-    }
-    if (layout instanceof GridLayout) {
-      return new RadSwingGridLayoutManager();
-    }
-    if (layout instanceof BoxLayout) {
-      return new RadBoxLayoutManager();
-    }
-    if (layout instanceof CardLayout) {
-      return new RadCardLayoutManager();
+    for(Map.Entry<Class, Class<? extends RadLayoutManager>> e: ourLayoutManagerClassRegistry.entrySet()) {
+      if (e.getKey().isInstance(layout)) {
+        try {
+          return e.getValue().newInstance();
+        }
+        catch (Exception ex) {
+          throw new RuntimeException(ex);
+        }
+      }
     }
     return null;
+  }
+
+  public static boolean isKnownLayoutClass(String className) {
+    for(Class c: ourLayoutManagerClassRegistry.keySet()) {
+      if (c.getName().equals(className)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

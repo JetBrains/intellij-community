@@ -28,6 +28,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadLayoutManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +43,8 @@ import javax.swing.tree.TreePath;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author yole
@@ -178,9 +183,9 @@ public class CreateSnapShotAction extends AnAction {
     try {
       client.resumeSwing();
     }
-    catch (IOException e1) {
-      Messages.showMessageDialog(project, "Swing resume failed",
-                                 UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
+    catch (IOException ex) {
+      Messages.showErrorDialog(project, UIDesignerBundle.message("snapshot.connection.broken"),
+                               UIDesignerBundle.message("snapshot.title"));
     }
 
     client.dispose();
@@ -231,11 +236,13 @@ public class CreateSnapShotAction extends AnAction {
     private JTree myComponentTree;
     private JTextField myFormNameTextField;
     private final Project myProject;
+    private final SnapShotClient myClient;
     private final PsiDirectory myDirectory;
 
     public MyDialog(Project project, final SnapShotClient client, final PsiDirectory dir) {
       super(project, true);
       myProject = project;
+      myClient = client;
       myDirectory = dir;
       init();
       setTitle(UIDesignerBundle.message("snapshot.title"));
@@ -307,7 +314,46 @@ public class CreateSnapShotAction extends AnAction {
           JOptionPane.showMessageDialog(myRootPanel, UIDesignerBundle.message("error.form.already.exists", getFormName()));
           return;
         }
+        if (!checkUnknownLayoutManagers()) return;
         close(OK_EXIT_CODE);
+      }
+    }
+
+    private boolean checkUnknownLayoutManagers() {
+      Set<String> layoutManagerClasses = new TreeSet<String>();
+      SnapShotRemoteComponent rc = (SnapShotRemoteComponent) myComponentTree.getSelectionPath().getLastPathComponent();
+      assert rc != null;
+      try {
+        collectUnknownLayoutManagerClasses(rc, layoutManagerClasses);
+      }
+      catch (IOException e) {
+        Messages.showErrorDialog(myRootPanel, UIDesignerBundle.message("snapshot.connection.broken"), UIDesignerBundle.message("snapshot.title"));
+        return false;
+      }
+      if (layoutManagerClasses.size() > 0) {
+        StringBuilder builder = new StringBuilder("Unknown layout manager classes found.\n");
+        for(String layoutManagerClass: layoutManagerClasses) {
+          builder.append(layoutManagerClass).append("\n");
+        }
+        builder.append("Components using these layout managers will be not included in the snapshot. Continue?");
+        return Messages.showYesNoDialog(myProject, builder.toString(),
+                                        UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon()) == 0;
+      }
+      return true;
+    }
+
+    private void collectUnknownLayoutManagerClasses(final SnapShotRemoteComponent rc, final Set<String> layoutManagerClasses) throws IOException {
+      Class radClass = InsertComponentProcessor.getRadComponentClass(rc.getClassName());
+      if (RadContainer.class.equals(radClass) && rc.getLayoutManager().length() > 0 &&
+          !RadLayoutManager.isKnownLayoutClass(rc.getLayoutManager())) {
+        layoutManagerClasses.add(rc.getLayoutManager());
+      }
+
+      if (rc.getChildren() == null) {
+        rc.setChildren(myClient.listChildren(rc.getId()));
+      }
+      for(SnapShotRemoteComponent child: rc.getChildren()) {
+        collectUnknownLayoutManagerClasses(child, layoutManagerClasses);
       }
     }
 

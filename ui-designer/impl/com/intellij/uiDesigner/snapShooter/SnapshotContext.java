@@ -4,17 +4,13 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
-import com.intellij.CommonBundle;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 
 import javax.swing.*;
-import java.awt.Container;
 import java.util.*;
 
 /**
@@ -62,25 +58,6 @@ public class SnapshotContext {
           radButtonGroup.add(c);
         }
       }
-    }
-  }
-
-  public void notifyUnknownLayoutManager(Container container) {
-    int choice = JOptionPane.showOptionDialog(
-      null,
-      UIDesignerBundle.message("snapshot.unknown.layout.manager", container.getLayout().getClass().getName()),
-      UIDesignerBundle.message("snapshot.title"),
-      JOptionPane.DEFAULT_OPTION,
-      JOptionPane.QUESTION_MESSAGE,
-      Messages.getQuestionIcon(),
-      new String[] {
-        UIDesignerBundle.message("snapshot.button.ignore"),
-        CommonBundle.getCancelButtonText()
-      },
-      UIDesignerBundle.message("snapshot.button.ignore")
-    );
-    if (choice != 0) {
-      throw new CancelSnapshotException();
     }
   }
 }
