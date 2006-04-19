@@ -45,7 +45,6 @@ public class ChangelistMoveOfferDialog extends OptionsDialog {
     return true;
   }
 
-  
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     final JLabel label = new JLabel(VcsBundle.message("changes.commit.partial.offer.to.move.text"));
