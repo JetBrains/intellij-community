@@ -18,55 +18,30 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.ui.UserActivityListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import com.intellij.util.Alarm;
 
 /**
  * User: Sergey.Vasiliev
  */
 public class CommitablePanelUserActivityListener implements UserActivityListener {
-  private boolean myResetting;
-
-  CommittablePanel myPanel;
-
-  private Alarm myAlarm;
+  private final Committable myPanel;
+  private final Alarm myAlarm = new Alarm();
 
   public CommitablePanelUserActivityListener() {
+    this(null);
   }
 
-  public CommitablePanelUserActivityListener(final CommittablePanel panel) {
+  public CommitablePanelUserActivityListener(final Committable panel) {
     myPanel = panel;
-    myAlarm = new Alarm();
- }
+  }
 
   final public void stateChanged() {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        doActivity();
+        applyChanges();
       }
     }, 239);
-
-  }
-
-  protected void doActivity() {
-    if (!myResetting) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-
-          myResetting = true;
-          try {
-            applyChanges();
-          }
-          finally {
-            myResetting = false;
-          }
-          doAfterApply();
-        }
-      });
-    }
   }
 
   protected void applyChanges() {
@@ -75,6 +50,4 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
     }
   }
 
-  protected void doAfterApply() {
-  }
 }

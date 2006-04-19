@@ -39,10 +39,11 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   private final FileEditorManagerAdapter myFileEditorManagerAdapter;
 
   private boolean myShowing;              
+  private boolean myCommitting;
   private final Set<Document> myCurrentDocuments = new HashSet<Document>();
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
     public void documentChanged(DocumentEvent e) {
-      if (myShowing) {
+      if (myShowing && !myCommitting) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             commitAllDocuments();
@@ -123,6 +124,16 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     stopListeningDocuments();
     myCurrentDocuments.remove(document);
     startListeningDocuments();
+  }
+
+  protected final void doCommit() {
+    myCommitting = true;
+    try {
+      commit();
+    }
+    finally {
+      myCommitting = false;
+    }
   }
 
   protected DomElement getSelectedDomElementFromTextEditor(final TextEditor textEditor) {

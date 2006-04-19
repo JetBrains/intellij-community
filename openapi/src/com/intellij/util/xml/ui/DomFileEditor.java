@@ -34,7 +34,11 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
     myComponent = component;
     myName = name;
     myUserActivityWatcher = DomUIFactory.getDomUIFactory().createEditorAwareUserActivityWatcher();
-    myUserActivityListener = new CommitablePanelUserActivityListener(myComponent);
+    myUserActivityListener = new CommitablePanelUserActivityListener() {
+      protected void applyChanges() {
+        doCommit();
+      }
+    };
     myUserActivityWatcher.addUserActivityListener(myUserActivityListener);
     myUserActivityWatcher.register(getComponent());
     new MnemonicHelper().register(getComponent());
