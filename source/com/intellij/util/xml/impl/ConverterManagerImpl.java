@@ -3,24 +3,22 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.xml.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
-import com.intellij.openapi.util.Pair;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author peter
  */
-public class ConverterManagerImpl implements ConverterManager {
-  private final Map<Pair<Type,Method>, Converter> myConvertersByMethod = new HashMap<Pair<Type, Method>, Converter>();
-  private final Map<Class,Converter> myConvertersByClass = new HashMap<Class, Converter>();
+public class ConverterManagerImpl {
+  private final Map<Class<? extends Converter>,Converter> myConverterInstances = new HashMap<Class<? extends Converter>, Converter>();
+  private final Map<Class,Class<? extends Converter>> myConverterClasses = new HashMap<Class, Class<? extends Converter>>();
 
   public ConverterManagerImpl() {
     registerConverter(int.class, Converter.INTEGER_CONVERTER);
@@ -32,64 +30,55 @@ public class ConverterManagerImpl implements ConverterManager {
     registerConverter(PsiType.class, Converter.PSI_TYPE_CONVERTER);
   }
 
-  final Converter getConverter(Method method, final boolean getter, Type classType, Converter genericConverter) throws IllegalAccessException, InstantiationException {
-    final Pair<Type, Method> pair = new Pair<Type, Method>(classType, method);
-    Converter converter = myConvertersByMethod.get(pair);
+  @NotNull
+  final Converter getConverter(Method method, Class aClass, Converter genericConverter) throws IllegalAccessException, InstantiationException {
+    final Resolve resolveAnnotation = DomUtil.findAnnotationDFS(method, Resolve.class);
+    if (resolveAnnotation != null) {
+      return new DomResolveConverter(resolveAnnotation.value());
+    }
+
+    final Convert convertAnnotation = DomUtil.findAnnotationDFS(method, Convert.class);
+    if (convertAnnotation != null) {
+      return getConverterInstance(convertAnnotation.value());
+    }
+
+    final Converter converter = getConverter(aClass);
     if (converter != null) {
       return converter;
     }
 
-    final Convert convert = DomUtil.findAnnotationDFS(method, Convert.class);
-    if (convert != null) {
-      converter = getConverter(convert.value());
-    }
-    else {
-      converter = _getConverter(method, getter, classType, genericConverter);
-    }
-    myConvertersByMethod.put(pair, converter);
-    return converter;
+    assert genericConverter != null: "No converter specified: String<->" + aClass.getName();
+    return genericConverter;
   }
 
-  private Converter _getConverter(final Method method, final boolean getter, final Type classType, Converter genericConverter) {
-    final Converter converter;
-    Class<?> aClass = DomUtil.getClassFromGenericType(getter ? method.getGenericReturnType() : method.getGenericParameterTypes()[0], classType);
-    if (aClass == null) {
-      aClass = getter ? method.getReturnType() : method.getParameterTypes()[0];
-    } else if (genericConverter != null) {
-      return genericConverter;
+  @NotNull
+  public final Converter getConverterInstance(final Class<? extends Converter> converterClass) throws InstantiationException, IllegalAccessException {
+    Converter converter = myConverterInstances.get(converterClass);
+    if (converter == null) {
+      converter = converterClass.newInstance();
+      myConverterInstances.put(converterClass, converter);
     }
-    converter = getDefaultConverter(aClass);
-    assert converter != null: "No converter specified: String<->" + aClass.getName();
     return converter;
   }
 
   @Nullable
-  private Converter getDefaultConverter(final Class aClass) {
-    Converter converter = myConvertersByClass.get(aClass);
-    if (converter == null) {
-      if (Enum.class.isAssignableFrom(aClass)) {
-        converter = new EnumConverter(aClass);
-        registerConverter(aClass, converter);
-      } else if (DomElement.class.isAssignableFrom(aClass)) {
-        converter = new DomResolveConverter(aClass);
-        registerConverter(aClass, converter);
-      }
+  public final Converter getConverter(final Class<?> aClass) throws InstantiationException, IllegalAccessException {
+    final Class<? extends Converter> converterClass = myConverterClasses.get(aClass);
+    if (converterClass != null) {
+      return getConverterInstance(converterClass);
     }
-    return converter;
+    if (Enum.class.isAssignableFrom(aClass)) {
+      return new EnumConverter(aClass);
+    }
+    if (DomElement.class.isAssignableFrom(aClass)) {
+      return new DomResolveConverter(aClass);
+    }
+    return null;
   }
 
-  @NotNull
-  public final Converter getConverter(final Class converterClass) throws InstantiationException, IllegalAccessException {
-    Converter converter = getDefaultConverter(converterClass);
-    if (converter == null) {
-      converter = (Converter) converterClass.newInstance();
-      registerConverter(converterClass, converter);
-    }
-    return converter;
-  }
-
-  public final void registerConverter(final Class converterClass, final Converter converter) {
-    myConvertersByClass.put(converterClass, converter);
+  public final void registerConverter(final Class aClass, final Converter converter) {
+    myConverterClasses.put(aClass, converter.getClass());
+    myConverterInstances.put(converter.getClass(), converter);
   }
 
 

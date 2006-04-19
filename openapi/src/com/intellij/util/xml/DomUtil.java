@@ -3,21 +3,20 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -116,6 +115,8 @@ public class DomUtil {
           return getRawType(((ParameterizedType)classType).getActualTypeArguments()[index]);
         }
       }
+    } else {
+      return getRawType(genericType);
     }
     return null;
   }

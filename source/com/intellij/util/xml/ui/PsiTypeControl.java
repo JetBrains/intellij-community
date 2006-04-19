@@ -31,7 +31,7 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
     if (boundedComponent == null) {
       boundedComponent = new PsiTypePanel();
     }
-    return PsiClassControl2.initReferenceEditorWithBrowseButton(boundedComponent,
+    return PsiClassControl.initReferenceEditorWithBrowseButton(boundedComponent,
                                                                 new ReferenceEditorWithBrowseButton(null, project, new Function<String, Document>() {
                                                                   public Document fun(final String s) {
                                                                     return ReferenceEditorWithBrowseButton.createTypeDocument(s, PsiManager.getInstance(project));

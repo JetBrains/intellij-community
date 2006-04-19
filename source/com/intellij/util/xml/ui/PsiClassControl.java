@@ -22,13 +22,13 @@ import java.awt.event.ActionListener;
 /**
  * @author peter
  */
-public class PsiClassControl2 extends EditorTextFieldControl<PsiClassPanel> {
+public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
 
-  public PsiClassControl2(final DomWrapper<String> domWrapper) {
+  public PsiClassControl(final DomWrapper<String> domWrapper) {
     super(domWrapper);
   }
 
-  public PsiClassControl2(final DomWrapper<String> domWrapper, final boolean commitOnEveryChange) {
+  public PsiClassControl(final DomWrapper<String> domWrapper, final boolean commitOnEveryChange) {
     super(domWrapper, commitOnEveryChange);
   }
 

@@ -143,7 +143,7 @@ public class GenericDomValueReference<T> extends GenericReference {
   public Object[] getVariants() {
     try {
       final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(myGenericValue);
-      final Converter converter = handler.getConverter(DomUIFactory.GET_VALUE_METHOD, true);
+      final Converter converter = handler.getScalarConverter(DomUIFactory.GET_VALUE_METHOD, true);
       if (converter instanceof ResolvingConverter) {
         final ConvertContextImpl convertContext = new ConvertContextImpl(handler, DomUIFactory.GET_VALUE_METHOD);
         final Collection variants = ((ResolvingConverter)converter).getVariants(convertContext);

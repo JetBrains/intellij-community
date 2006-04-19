@@ -68,7 +68,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   public BaseControl createPsiClassControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
-    return new PsiClassControl2(wrapper, commitOnEveryChange);
+    return new PsiClassControl(wrapper, commitOnEveryChange);
   }
 
   public BaseControl createPsiTypeControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {

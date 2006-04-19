@@ -320,8 +320,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @NotNull
-  protected final Converter getConverter(final Method method, final boolean getter) throws IllegalAccessException, InstantiationException {
-    return myManager.getConverterManager().getConverter(method, getter, myType, myGenericConverter);
+  protected final Converter getScalarConverter(final Method method, final boolean getter) throws IllegalAccessException, InstantiationException {
+    final Type type = getter ? method.getGenericReturnType() : method.getGenericParameterTypes()[0];
+    final Class aClass = DomUtil.getClassFromGenericType(type, myType);
+    assert aClass != null : type + " " + myType;
+    return myManager.getConverterManager().getConverter(method, aClass, myGenericConverter);
   }
 
   public final DomElement getProxy() {
@@ -385,11 +388,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   protected final Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
     if (DomImplUtil.isTagValueGetter(method)) {
-      return createGetValueInvocation(getConverter(method, true), method);
+      return createGetValueInvocation(getScalarConverter(method, true), method);
     }
 
     if (DomImplUtil.isTagValueSetter(method)) {
-      return createSetValueInvocation(getConverter(method, false), method);
+      return createSetValueInvocation(getScalarConverter(method, false), method);
     }
 
     return myGenericInfoImpl.createInvocation(method);
@@ -426,7 +429,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
     catch (InvocationTargetException ex) {
       throw ex.getTargetException();
-    } finally {
+    }
+    finally {
       ModelMerger.getInvocationStack().pop();
     }
   }
@@ -531,25 +535,17 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   private Converter getConverterForChild(final Method method) {
-    try {
-      final Resolve resolveAnnotation = DomUtil.findAnnotationDFS(method, Resolve.class);
-      if (resolveAnnotation != null) {
-        return new DomResolveConverter(resolveAnnotation.value());
+    final Class genericValueType = DomUtil.getGenericValueType(method.getGenericReturnType());
+    if (genericValueType != null) {
+      try {
+        return myManager.getConverterManager().getConverter(method, genericValueType, null);
       }
-
-      final Convert convertAnnotation = DomUtil.findAnnotationDFS(method, Convert.class);
-      if (convertAnnotation != null) {
-        return myManager.getConverterManager().getConverter(convertAnnotation.value());
+      catch (InstantiationException e) {
+        LOG.error(e);
       }
-
-      final Class aClass = DomUtil.getGenericValueType(method.getGenericReturnType());
-      return aClass == null ? null : myManager.getConverterManager().getConverter(aClass);
-    }
-    catch (InstantiationException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
+      catch (IllegalAccessException e) {
+        LOG.error(e);
+      }
     }
     return null;
   }
