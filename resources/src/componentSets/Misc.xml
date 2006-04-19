@@ -69,9 +69,6 @@
       <interface-class>com.intellij.ide.ui.search.SearchableOptionsRegistrar</interface-class>
       <implementation-class>com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.coverage.CoverageDataManager</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
@@ -120,6 +117,9 @@
       <implementation-class>com.intellij.ant.impl.AntWorkspaceConfiguration</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.coverage.CoverageDataManager</implementation-class>
     </component>
 
   <!--  <component>

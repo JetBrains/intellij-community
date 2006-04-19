@@ -24,8 +24,6 @@ import com.intellij.util.containers.LongArrayList;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.jetbrains.annotations.NonNls;
-
 public class Alarm {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
 
@@ -42,20 +40,10 @@ public class Alarm {
     ourThreadUseSwing.start();
   }
 
-  public static class ThreadToUse {
-    public static final ThreadToUse SWING_THREAD = new ThreadToUse("SWING_THREAD");
-    public static final ThreadToUse SHARED_THREAD = new ThreadToUse("SHARED_THREAD");
-    public static final ThreadToUse OWN_THREAD = new ThreadToUse("OWN_THREAD");
-
-    private final String myName;
-
-    private ThreadToUse(@NonNls String name) {
-      myName = name;
-    }
-
-    public String toString() {
-      return myName;
-    }
+  public enum ThreadToUse {
+    SWING_THREAD,
+    SHARED_THREAD,
+    OWN_THREAD
   }
 
   /**

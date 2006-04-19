@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.coverage.CoverageDataManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,15 +51,23 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
   }
 
   public void updateImpl(PresentationData data) {
-    final PsiClass value = getValue();
-    if (value != null) {
-      data.setPresentableText(value.getName());
+    final PsiClass aClass = getValue();
+    if (aClass != null) {
+      data.setPresentableText(aClass.getName());
+      final String qName = aClass.getQualifiedName();
+      if (qName != null) {
+        final CoverageDataManager coverageManager = CoverageDataManager.getInstance(aClass.getProject());
+        final String coverageString = coverageManager.getClassCoverageInormationString(qName);
+        if (coverageString != null) {
+          data.setLocationString(coverageString);
+        }
+      }
     }
   }
 
   public boolean isTopLevel() {
-    if (getValue() == null) return false;
-    return getValue().getParent() instanceof PsiFile;
+    final PsiClass aClass = getValue();
+    return aClass != null && aClass.getParent() instanceof PsiFile;
   }
 
 

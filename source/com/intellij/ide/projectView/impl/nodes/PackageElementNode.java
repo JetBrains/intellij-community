@@ -46,6 +46,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
+import com.intellij.coverage.CoverageDataManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -127,6 +128,12 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
   private void updateValidData(final PresentationData presentation) {
     final PsiPackage aPackage = getValue().getPackage();
+    final String qName = aPackage.getQualifiedName();
+    final CoverageDataManager coverageManager = CoverageDataManager.getInstance(aPackage.getProject());
+    final String coverageString = coverageManager.getPackageCoverageInormationString(qName);
+    if (coverageString != null) {
+      presentation.setLocationString(coverageString);
+    }
 
     if (!getSettings().isFlattenPackages()) {
       if (getSettings().isHideEmptyMiddlePackages()) {
@@ -144,7 +151,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     }
     else {
       if (!(getParentValue() instanceof PackageElement)) {
-        presentation.setPresentableText(aPackage.getQualifiedName());
+        presentation.setPresentableText(qName);
       }
       else {
         final PsiPackage parentPackageInTree = ((PackageElement)getParentValue()).getPackage();
@@ -166,12 +173,8 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
   private boolean showFwName(final PsiPackage aPackage) {
     final boolean showFqName;
-    if (!getSettings().isFlattenPackages()) {
-      showFqName = false;
-    }
-    else {
-      showFqName = aPackage.getQualifiedName().length() > 0;
-    }
+    showFqName = getSettings().isFlattenPackages() &&
+                 aPackage.getQualifiedName().length() > 0;
     return showFqName;
   }
 
