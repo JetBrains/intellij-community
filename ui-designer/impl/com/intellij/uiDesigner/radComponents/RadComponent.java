@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.EventProcessor;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
@@ -651,31 +652,36 @@ public abstract class RadComponent implements IComponent {
   public static RadComponent createSnapshotComponent(final SnapshotContext context, final JComponent component) {
     String id = context.newId();
     RadComponent result;
-    if (component instanceof JScrollPane) {
-      result = new RadScrollPane(id, context.getPalette());
+
+    Class componentClass = component.getClass();
+    if (componentClass.isAnonymousClass()) {
+      componentClass = componentClass.getSuperclass();
     }
-    else if (component instanceof JTabbedPane) {
-      result = new RadTabbedPane(id, context.getPalette());
-    }
-    else if (component instanceof JSplitPane) {
-      result = new RadSplitPane(id, context.getPalette());
+    if (component instanceof JPanel) {
+      RadContainer container = new RadContainer(componentClass, id, context.getPalette());
+      final RadLayoutManager manager = RadLayoutManager.createFromLayout(component.getLayout());
+      if (manager == null) {
+        return null;
+      }
+      container.setLayoutManager(manager);
+      result = container;
     }
     else {
-      Class componentClass = component.getClass();
-
-      if (component instanceof JPanel) {
-        RadContainer container = new RadContainer(componentClass, id, context.getPalette());
-        final RadLayoutManager manager = RadLayoutManager.createFromLayout(component.getLayout());
-        if (manager == null) {
-          return null;
-        }
-        container.setLayoutManager(manager);
-        result = container;
-      }
-      else {
+      final Class<? extends RadComponent> radClass = InsertComponentProcessor.getRadComponentClass(componentClass.getName());
+      if (radClass == null) {
         result = new RadAtomicComponent(componentClass, id, context.getPalette());
       }
+      else {
+        try {
+          result = radClass.getConstructor(String.class, Palette.class).newInstance(id, context.getPalette());
+        }
+        catch(Exception ex) {
+          throw new RuntimeException(ex);
+        }
+      }
     }
+
+    System.out.println("Created snapshot component " + result + " from component " + component);
     context.registerComponent(component, result);
     result.importSnapshotComponent(context, component);
 

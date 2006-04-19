@@ -50,7 +50,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   private ComponentItem myComponentToInsert;
   private DropLocation myLastLocation;
 
-  private static Map<String, Class> myComponentClassMap = new HashMap<String, Class>();
+  private static Map<String, Class<? extends RadComponent>> myComponentClassMap = new HashMap<String, Class<? extends RadComponent>>();
   static {
     myComponentClassMap.put(JScrollPane.class.getName(), RadScrollPane.class);
     myComponentClassMap.put(JPanel.class.getName(), RadContainer.class);
@@ -380,7 +380,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     return result;
   }
 
-  public static Class getRadComponentClass(final String className) {
+  public static Class<? extends RadComponent> getRadComponentClass(final String className) {
     return myComponentClassMap.get(className);
   }
 

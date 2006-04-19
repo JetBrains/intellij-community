@@ -42,7 +42,7 @@ public abstract class RadLayoutManager {
     ourLayoutManagerClassRegistry.put(BorderLayout.class, RadBorderLayoutManager.class);
     ourLayoutManagerClassRegistry.put(GridBagLayout.class, RadGridBagLayoutManager.class);
     ourLayoutManagerClassRegistry.put(FlowLayout.class, RadFlowLayoutManager.class);
-    ourLayoutManagerClassRegistry.put(GridLayout.class, RadGridLayoutManager.class);
+    ourLayoutManagerClassRegistry.put(GridLayout.class, RadSwingGridLayoutManager.class);
     ourLayoutManagerClassRegistry.put(BoxLayout.class, RadBoxLayoutManager.class);
     ourLayoutManagerClassRegistry.put(CardLayout.class, RadCardLayoutManager.class);
   }
@@ -135,6 +135,7 @@ public abstract class RadLayoutManager {
                                    final JComponent child,
                                    final RadContainer container,
                                    final RadComponent component) {
+    throw new UnsupportedOperationException("Layout manager " + this + " does not support adding snapshot components");
   }
 
   public void createSnapshotLayout(final SnapshotContext context,
