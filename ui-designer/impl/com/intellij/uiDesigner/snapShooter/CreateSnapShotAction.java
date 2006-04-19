@@ -27,7 +27,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadLayoutManager;
@@ -252,6 +256,20 @@ public class CreateSnapShotAction extends AnAction {
           updateOKAction();
         }
       });
+      myComponentTree.setCellRenderer(new ColoredTreeCellRenderer() {
+        public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+          SnapShotRemoteComponent rc = (SnapShotRemoteComponent) value;
+          append(rc.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          final Palette palette = Palette.getInstance(myProject);
+          final ComponentItem item = palette.getItem(rc.getClassName());
+          if (item != null) {
+            setIcon(item.getSmallIcon());
+          }
+          else {
+            setIcon(palette.getPanelItem().getSmallIcon());
+          }
+        }
+      });
       myFormNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         protected void textChanged(DocumentEvent e) {
           updateOKAction();
@@ -331,11 +349,11 @@ public class CreateSnapShotAction extends AnAction {
         return false;
       }
       if (layoutManagerClasses.size() > 0) {
-        StringBuilder builder = new StringBuilder("Unknown layout manager classes found.\n");
+        StringBuilder builder = new StringBuilder(UIDesignerBundle.message("snapshot.unknown.layout.prefix"));
         for(String layoutManagerClass: layoutManagerClasses) {
           builder.append(layoutManagerClass).append("\n");
         }
-        builder.append("Components using these layout managers will be not included in the snapshot. Continue?");
+        builder.append(UIDesignerBundle.message("snapshot.unknown.layout.prompt"));
         return Messages.showYesNoDialog(myProject, builder.toString(),
                                         UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon()) == 0;
       }
