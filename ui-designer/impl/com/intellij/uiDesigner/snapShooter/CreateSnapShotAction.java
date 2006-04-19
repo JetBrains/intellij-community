@@ -45,6 +45,7 @@ import java.util.List;
  * @author yole
  */
 public class CreateSnapShotAction extends AnAction {
+  @NonNls private static final String FORM_EXTENSION = ".form";
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
@@ -90,7 +91,7 @@ public class CreateSnapShotAction extends AnAction {
     }
 
     if (!connected) {
-      int rc = Messages.showYesNoDialog(project, "The application from which snapshots will be taken is not currently running. Would you like to run it?",
+      int rc = Messages.showYesNoDialog(project, UIDesignerBundle.message("snapshot.run.prompt"),
                                         UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon());
       if (rc == 1) return;
       final JavaProgramRunner runner = ExecutionRegistry.getInstance().getDefaultRunner();
@@ -100,13 +101,13 @@ public class CreateSnapShotAction extends AnAction {
         public void run() {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              Messages.showMessageDialog(project, "Please prepare the running application for taking a form snapshot",
+              Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.prepare.notice"),
                                          UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
               try {
                 client.connect(appConfig.getLastSnapShooterPort());
               }
               catch(IOException ex) {
-                Messages.showMessageDialog(project, "Failed to establish form snapshot connection to running application",
+                Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.connection.error"),
                                            UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
                 return;
               }
@@ -120,7 +121,7 @@ public class CreateSnapShotAction extends AnAction {
         RunStrategy.getInstance().execute(snapshotConfiguration, runner, e.getDataContext());
       }
       catch (ExecutionException ex) {
-        Messages.showMessageDialog(project, "Failed to prepare run profile: " + ex.getMessage(),
+        Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.run.error", ex.getMessage()),
                                    UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
       }
     }
@@ -129,12 +130,12 @@ public class CreateSnapShotAction extends AnAction {
     }
   }
 
-  private void runSnapShooterSession(final SnapShotClient client, final Project project, final PsiDirectory dir, final IdeView view) {
+  private static void runSnapShooterSession(final SnapShotClient client, final Project project, final PsiDirectory dir, final IdeView view) {
     try {
       client.suspendSwing();
     }
     catch (IOException e1) {
-      Messages.showMessageDialog(project, "Failed to establish form snapshot connection to running application",
+      Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.connection.error"),
                                  UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
       return;
     }
@@ -159,7 +160,7 @@ public class CreateSnapShotAction extends AnAction {
             CommandProcessor.getInstance().executeCommand(project, new Runnable() {
               public void run() {
                 try {
-                  PsiFile formFile = dir.getManager().getElementFactory().createFileFromText(dlg.getFormName() + ".form", snapshot1);
+                  PsiFile formFile = dir.getManager().getElementFactory().createFileFromText(dlg.getFormName() + FORM_EXTENSION, snapshot1);
                   formFile = (PsiFile)dir.add(formFile);
                   view.selectElement(formFile);
                 }
@@ -178,7 +179,8 @@ public class CreateSnapShotAction extends AnAction {
       client.resumeSwing();
     }
     catch (IOException e1) {
-      Messages.showMessageDialog(project, "Swing resume failed", "SnapShooter", Messages.getInformationIcon());
+      Messages.showMessageDialog(project, "Swing resume failed",
+                                 UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
     }
 
     client.dispose();
@@ -188,7 +190,7 @@ public class CreateSnapShotAction extends AnAction {
                                                                                    final List<RunnerAndConfigurationSettingsImpl> configurations) {
     final RunnerAndConfigurationSettingsImpl snapshotConfiguration;
     if (configurations.size() == 0) {
-      Messages.showMessageDialog(project, "No Application run configurations defined. Please define a run configuration to use for taking snapshots",
+      Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.no.configuration.error"),
                                  UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
       return null;
     }
@@ -196,8 +198,7 @@ public class CreateSnapShotAction extends AnAction {
     if (configurations.size() == 1) {
       final int rc = Messages.showYesNoDialog(
         project,
-        "Taking form snapshots is not currently enabled. Enable taking form snapshots in configuration '" +
-        configurations.get(0).getConfiguration().getName() + "'?",
+        UIDesignerBundle.message("snapshot.confirm.configuration.prompt", configurations.get(0).getConfiguration().getName()),
         UIDesignerBundle.message("snapshot.title"),
         Messages.getQuestionIcon());
       if (rc == 1) {
@@ -212,7 +213,7 @@ public class CreateSnapShotAction extends AnAction {
       }
       int rc = Messages.showChooseDialog(
         project,
-        "Taking form snapshots is not currently enabled. Please choose the run configuration to use for taking form snapshots:",
+        UIDesignerBundle.message("snapshot.choose.configuration.prompt"),
         UIDesignerBundle.message("snapshot.title"),
         Messages.getQuestionIcon(),
         names,
@@ -300,7 +301,7 @@ public class CreateSnapShotAction extends AnAction {
     protected void doOKAction() {
       if (getOKAction().isEnabled()) {
         try {
-          myDirectory.checkCreateFile(getFormName() + ".form");
+          myDirectory.checkCreateFile(getFormName() + FORM_EXTENSION);
         }
         catch (IncorrectOperationException e) {
           JOptionPane.showMessageDialog(myRootPanel, UIDesignerBundle.message("error.form.already.exists", getFormName()));
