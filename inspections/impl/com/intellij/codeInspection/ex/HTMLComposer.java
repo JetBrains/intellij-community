@@ -21,7 +21,7 @@ import java.util.Iterator;
  * @author max
  */
 public abstract class HTMLComposer {
-  private HTMLExporter myExporter;
+  protected HTMLExporter myExporter;
   private int[] myListStack;
   private int myListStackTop;
   @NonNls protected static final String BR = "<br>";
@@ -196,7 +196,7 @@ public abstract class HTMLComposer {
       }
 
       public void visitFile(RefFile file) {
-        final PsiFile psiFile = (PsiFile)file.getElement();
+        final PsiFile psiFile = file.getElement();
         buf.append(B_OPENING);
         buf.append(psiFile.getName());
         buf.append(B_CLOSING);
@@ -250,16 +250,18 @@ public abstract class HTMLComposer {
     appendElementReference(buf, refElement, true);
   }
 
-  public void appendElementReference(final StringBuffer buf, RefElement refElement, String linkText, @NonNls String frameName) {
-    buf.append(A_HREF_OPENING);
-
+  public void appendElementReference(final StringBuffer buf, RefElement refElement, String linkText, @NonNls String frameName) {    
     if (myExporter == null) {
-      buf.append(((RefElementImpl) refElement).getURL());
+      appendElementReference(buf, ((RefElementImpl) refElement).getURL().toString(), linkText, frameName);
     }
     else {
-      buf.append(myExporter.getURL(refElement));
+      appendElementReference(buf, myExporter.getURL(refElement), linkText, frameName);
     }
+  }
 
+  public void appendElementReference(final StringBuffer buf, String url, String linkText, @NonNls String frameName) {
+    buf.append(A_HREF_OPENING);
+    buf.append(url);
     if (frameName != null) {
       @NonNls final String target = "\" target=\"";
       buf.append(target);
@@ -297,7 +299,7 @@ public abstract class HTMLComposer {
     buf.append(CODE_OPENING);
     if (refElement instanceof RefField) {
       RefField field = (RefField)refElement;
-      PsiField psiField = (PsiField)field.getElement();
+      PsiField psiField = field.getElement();
       buf.append(psiField.getType().getPresentableText());
       buf.append(NBSP);
     }

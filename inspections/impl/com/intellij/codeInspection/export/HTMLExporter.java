@@ -61,7 +61,7 @@ public class HTMLExporter {
     buf.append(InspectionsBundle.message("inspection.export.inspections.link.text"));
     buf.append("</a>  ");
     if (element instanceof RefElement) {
-      myComposer.appendElementReference(buf, (RefElement)element, InspectionsBundle.message("inspection.export.open.source.link.text"), "_blank");
+      myComposer.appendElementReference(buf, getURL(element), InspectionsBundle.message("inspection.export.open.source.link.text"), "_blank");
     }
     buf.append("<hr>");
   }

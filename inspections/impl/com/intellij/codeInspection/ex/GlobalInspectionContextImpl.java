@@ -7,10 +7,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
@@ -310,16 +307,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final Element root = new Element(InspectionsBundle.message("inspection.problems"));
     final Document doc = new Document(root);
 
-
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         performInspectionsWithProgress(scope, runWithEditorSettings, manager);
-
-        InspectionTool[] tools =
-          InspectionProjectProfileManager.getInstance(getProject()).getProfileWrapper(getCurrentProfile().getName()).getInspectionTools();
-        for (InspectionTool tool : tools) {
+        InspectionProfileEntry[] tools = getCurrentProfile().getInspectionTools();
+        for (InspectionProfileEntry tool : tools) {
           if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
-            tool.exportResults(root);
+            ((InspectionTool)tool).exportResults(root);
           }
         }
       }
@@ -813,13 +807,18 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     if (runWithEditorSettings) {
       final Set<String> profiles = scope.getActiveInspectionProfiles();
       for (String profile : profiles) {
-        final InspectionProfileWrapper inspectionProfile = profileManager.getProfileWrapper(profile);
+        InspectionProfileWrapper inspectionProfile = profileManager.getProfileWrapper(profile);
+        if (inspectionProfile == null){
+          inspectionProfile = new InspectionProfileWrapper((InspectionProfile)profileManager.getProfile(profile));
+          inspectionProfile.init(getProject()); //offline inspections only
+        }
         processProfileTools(inspectionProfile, tools, localTools);
       }
     }
     else {
       InspectionProfileWrapper profile = new InspectionProfileWrapper(getCurrentProfile());
       processProfileTools(profile, tools, localTools);
+      profile.init(getProject());  //offline inspections only
     }
 
     BUILD_GRAPH.setTotalAmount(scope.getFileCount());

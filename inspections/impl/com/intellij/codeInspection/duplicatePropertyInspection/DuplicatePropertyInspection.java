@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.DescriptorComposer;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.HTMLComposer;
 import com.intellij.codeInspection.ex.JobDescriptor;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -73,7 +74,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
 
   public HTMLComposer getComposer() {
     return new DescriptorComposer(this) {
-      protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf) {
+      protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf, final RefEntity refElement) {
         @NonNls String descriptionTemplate = description.getDescriptionTemplate();
         descriptionTemplate = descriptionTemplate.replaceAll("#end", " ");
         buf.append(descriptionTemplate);

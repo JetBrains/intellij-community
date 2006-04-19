@@ -17,6 +17,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -73,7 +74,7 @@ public class InspectionApplication {
         InspectionMain.printHelp();
       }
 
-      final Profile inspectionProfile = com.intellij.profile.codeInspection.InspectionProfileManager.getInstance().getProfile(myProfileName);
+      final Profile inspectionProfile = InspectionProfileManager.getInstance().loadProfile(myProfileName);
       if (inspectionProfile == null) {
         logError(InspectionsBundle.message("inspection.application.file.cannot.be.found", myProfileName));
         InspectionMain.printHelp();

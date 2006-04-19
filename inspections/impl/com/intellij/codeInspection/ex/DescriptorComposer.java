@@ -38,7 +38,7 @@ public class DescriptorComposer extends HTMLComposer {
         final CommonProblemDescriptor description = descriptions[i];
 
         startListItem(buf);
-        composeDescription(description, i, buf);
+        composeDescription(description, i, buf, refEntity);
         doneListItem(buf);
       }
 
@@ -70,7 +70,7 @@ public class DescriptorComposer extends HTMLComposer {
     buf.append("<br>");
     appendAfterHeaderIndention(buf);
 
-    composeDescription(descriptor, problemIdx, buf);
+    composeDescription(descriptor, problemIdx, buf, refElement);
     final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null) {
       //noinspection HardCodedStringLiteral
@@ -97,7 +97,7 @@ public class DescriptorComposer extends HTMLComposer {
     }
   }
 
-  protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf) {
+  protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf, final RefEntity refElement) {
     PsiElement expression = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement() : null;
     StringBuffer anchor = new StringBuffer();
     if (expression != null) {
@@ -106,8 +106,12 @@ public class DescriptorComposer extends HTMLComposer {
       //noinspection HardCodedStringLiteral
       anchor.append("<a HREF=\"");
       try {
-        //noinspection HardCodedStringLiteral
-        anchor.append(new URL(vFile.getUrl() + "#descr:" + i));
+        if (myExporter == null){
+          //noinspection HardCodedStringLiteral
+          anchor.append(new URL(vFile.getUrl() + "#descr:" + i));
+        } else {
+          anchor.append(myExporter.getURL(refElement));
+        }
       }
       catch (MalformedURLException e) {
         LOG.error(e);
@@ -136,17 +140,19 @@ public class DescriptorComposer extends HTMLComposer {
         VirtualFile vFile = expression.getContainingFile().getVirtualFile();
         Document doc = FileDocumentManager.getInstance().getDocument(vFile);
         lineAnchor.append(InspectionsBundle.message("inspection.export.results.at.line") + " ");
-        //noinspection HardCodedStringLiteral
-        lineAnchor.append("<a HREF=\"");
-        try {
-          int offset = doc.getLineStartOffset(lineNumber - 1);
-          offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
-          lineAnchor.append(new URL(vFile.getUrl() + "#" + offset));
+        if (myExporter == null) {
+          //noinspection HardCodedStringLiteral
+          lineAnchor.append("<a HREF=\"");
+          try {
+            int offset = doc.getLineStartOffset(lineNumber - 1);
+            offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
+            lineAnchor.append(new URL(vFile.getUrl() + "#" + offset));
+          }
+          catch (MalformedURLException e) {
+            LOG.error(e);
+          }
+          lineAnchor.append("\">");
         }
-        catch (MalformedURLException e) {
-          LOG.error(e);
-        }
-        lineAnchor.append("\">");
         lineAnchor.append(Integer.toString(lineNumber));
         //noinspection HardCodedStringLiteral
         lineAnchor.append("</a>");
