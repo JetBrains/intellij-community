@@ -1,6 +1,9 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.junit.ModuleBasedConfiguration;
@@ -49,6 +52,7 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
   public boolean ENABLE_SWING_INSPECTOR;
 
   private int myLastSnapShooterPort;
+  private Runnable mySnapShooterNotifyRunnable;
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
     super(name, new RunConfigurationModule(project, true), applicationConfigurationType.getConfigurationFactories()[0]);
@@ -177,6 +181,10 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
     return myLastSnapShooterPort;
   }
 
+  public void setSnapShooterNotifyRunnable(final Runnable snapShooterNotifyRunnable) {
+    mySnapShooterNotifyRunnable = snapShooterNotifyRunnable;
+  }
+
   private class MyJavaCommandLineState extends JavaCommandLineState {
     public MyJavaCommandLineState(final RunnerSettings runnerSettings, final ConfigurationPerRunnerSettings configurationSettings) {
       super(runnerSettings, configurationSettings);
@@ -222,6 +230,21 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
         params.setMainClass(MAIN_CLASS_NAME);
       }
       return params;
+    }
+
+    @Override
+    protected OSProcessHandler startProcess() throws ExecutionException {
+      final OSProcessHandler handler = super.startProcess();
+      final Runnable notifyRunnable = mySnapShooterNotifyRunnable;
+      if (notifyRunnable != null) {
+        handler.addProcessListener(new ProcessAdapter() {
+          public void startNotified(final ProcessEvent event) {
+            notifyRunnable.run();
+          }
+        });
+      }
+      mySnapShooterNotifyRunnable = null;
+      return handler;
     }
   }
 }

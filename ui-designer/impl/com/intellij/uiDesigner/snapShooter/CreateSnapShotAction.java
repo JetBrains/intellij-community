@@ -4,6 +4,14 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionRegistry;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.application.ApplicationConfigurationType;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.runners.JavaProgramRunner;
+import com.intellij.execution.runners.RunStrategy;
 import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -21,9 +29,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.RunConfiguration;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +38,8 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -49,40 +56,86 @@ public class CreateSnapShotAction extends AnAction {
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
 
-    SnapShotClient client = new SnapShotClient();
-    boolean found = false;
+    final SnapShotClient client = new SnapShotClient();
+    List<RunnerAndConfigurationSettingsImpl> appConfigurations = new ArrayList<RunnerAndConfigurationSettingsImpl>();
+    RunnerAndConfigurationSettingsImpl snapshotConfiguration = null;
     boolean connected = false;
-    for(RunConfiguration config: RunManager.getInstance(project).getAllConfigurations()) {
-      if (config instanceof ApplicationConfiguration) {
-        ApplicationConfiguration appConfig = (ApplicationConfiguration) config;
-        if (appConfig.ENABLE_SWING_INSPECTOR && appConfig.getLastSnapShooterPort() > 0) {
-          found = true;
-          try {
-            client.connect(appConfig.getLastSnapShooterPort());
-            connected = true;
-          }
-          catch(IOException ex) {
-            connected = false;
+
+    ApplicationConfigurationType cfgType = ApplicationConfigurationType.getInstance();
+    RunnerAndConfigurationSettingsImpl[] racsi = RunManagerEx.getInstanceEx(project).getConfigurationSettings(cfgType);
+
+    for(RunnerAndConfigurationSettingsImpl config: racsi) {
+      if (config.getConfiguration() instanceof ApplicationConfiguration) {
+        ApplicationConfiguration appConfig = (ApplicationConfiguration) config.getConfiguration();
+        appConfigurations.add(config);
+        if (appConfig.ENABLE_SWING_INSPECTOR) {
+          snapshotConfiguration = config;
+          if (appConfig.getLastSnapShooterPort() > 0) {
+            try {
+              client.connect(appConfig.getLastSnapShooterPort());
+              connected = true;
+            }
+            catch(IOException ex) {
+              connected = false;
+            }
           }
         }
         if (connected) break;
       }
     }
 
-    if (!found) {
-      Messages.showMessageDialog(project, "Taking form snapshots is not enabled in any configuration", "SnapShooter", Messages.getInformationIcon());
-      return;
-    }
-    if (!connected) {
-      Messages.showMessageDialog(project, "Could not find a running instance with listening SnapShooter", "SnapShooter", Messages.getInformationIcon());
-      return;
+    if (snapshotConfiguration == null) {
+      snapshotConfiguration = promptForSnapshotConfiguration(project, appConfigurations);
+      if (snapshotConfiguration == null) return;
     }
 
+    if (!connected) {
+      int rc = Messages.showYesNoDialog(project, "The application from which snapshots will be taken is not currently running. Would you like to run it?",
+                                        UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon());
+      if (rc == 1) return;
+      final JavaProgramRunner runner = ExecutionRegistry.getInstance().getDefaultRunner();
+
+      final ApplicationConfiguration appConfig = (ApplicationConfiguration) snapshotConfiguration.getConfiguration();
+      appConfig.setSnapShooterNotifyRunnable(new Runnable() {
+        public void run() {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              Messages.showMessageDialog(project, "Please prepare the running application for taking a form snapshot",
+                                         UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
+              try {
+                client.connect(appConfig.getLastSnapShooterPort());
+              }
+              catch(IOException ex) {
+                Messages.showMessageDialog(project, "Failed to establish form snapshot connection to running application",
+                                           UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
+                return;
+              }
+              runSnapShooterSession(client, project, dir, view);
+            }
+          });
+        }
+      });
+
+      try {
+        RunStrategy.getInstance().execute(snapshotConfiguration, runner, e.getDataContext());
+      }
+      catch (ExecutionException ex) {
+        Messages.showMessageDialog(project, "Failed to prepare run profile: " + ex.getMessage(),
+                                   UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
+      }
+    }
+    else {
+      runSnapShooterSession(client, project, dir, view);
+    }
+  }
+
+  private void runSnapShooterSession(final SnapShotClient client, final Project project, final PsiDirectory dir, final IdeView view) {
     try {
       client.suspendSwing();
     }
     catch (IOException e1) {
-      Messages.showMessageDialog(project, "SnapShooter connection failed", "SnapShooter", Messages.getInformationIcon());
+      Messages.showMessageDialog(project, "Failed to establish form snapshot connection to running application",
+                                 UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
       return;
     }
 
@@ -129,6 +182,47 @@ public class CreateSnapShotAction extends AnAction {
     }
 
     client.dispose();
+  }
+
+  private static RunnerAndConfigurationSettingsImpl promptForSnapshotConfiguration(final Project project,
+                                                                                   final List<RunnerAndConfigurationSettingsImpl> configurations) {
+    final RunnerAndConfigurationSettingsImpl snapshotConfiguration;
+    if (configurations.size() == 0) {
+      Messages.showMessageDialog(project, "No Application run configurations defined. Please define a run configuration to use for taking snapshots",
+                                 UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
+      return null;
+    }
+
+    if (configurations.size() == 1) {
+      final int rc = Messages.showYesNoDialog(
+        project,
+        "Taking form snapshots is not currently enabled. Enable taking form snapshots in configuration '" +
+        configurations.get(0).getConfiguration().getName() + "'?",
+        UIDesignerBundle.message("snapshot.title"),
+        Messages.getQuestionIcon());
+      if (rc == 1) {
+        return null;
+      }
+      snapshotConfiguration = configurations.get(0);
+    }
+    else {
+      String[] names = new String[configurations.size()];
+      for(int i=0; i<configurations.size(); i++) {
+        names [i] = configurations.get(i).getConfiguration().getName();
+      }
+      int rc = Messages.showChooseDialog(
+        project,
+        "Taking form snapshots is not currently enabled. Please choose the run configuration to use for taking form snapshots:",
+        UIDesignerBundle.message("snapshot.title"),
+        Messages.getQuestionIcon(),
+        names,
+        names [0]
+      );
+      if (rc < 0) return null;
+      snapshotConfiguration = configurations.get(rc);
+    }
+    ((ApplicationConfiguration) snapshotConfiguration.getConfiguration()).ENABLE_SWING_INSPECTOR = true;
+    return snapshotConfiguration;
   }
 
   private static class MyDialog extends DialogWrapper {

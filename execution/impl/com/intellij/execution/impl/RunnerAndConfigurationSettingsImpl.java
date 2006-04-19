@@ -173,9 +173,6 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     }
     return settings;
   }
-  public ConfigurationPerRunnerSettings getConfigurationSettingsWr(JavaProgramRunner runner) {
-    return getConfigurationSettings(runner);
-  }
 
   public ConfigurationPerRunnerSettings getConfigurationSettings(JavaProgramRunner runner) {
     ConfigurationPerRunnerSettings settings = myConfigurationPerRunnerSettings.get(runner);
@@ -254,7 +251,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     }
 
     public ConfigurationPerRunnerSettings getConfigurationSettings() {
-      return getConfigurationSettingsWr(myRunner);
+      return RunnerAndConfigurationSettingsImpl.this.getConfigurationSettings(myRunner);
     }
   }
 }

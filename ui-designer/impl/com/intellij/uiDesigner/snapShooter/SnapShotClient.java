@@ -68,7 +68,7 @@ public class SnapShotClient {
       if (line == null) {
         throw new IOException("SnapShooter disconnected");
       }
-      if (line.equals(".")) {
+      if (line.trim().equals(".")) {
         break;
       }
       result.add(new SnapShotRemoteComponent(line));
