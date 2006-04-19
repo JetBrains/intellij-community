@@ -50,11 +50,11 @@ public abstract class DomUIFactory implements ApplicationComponent {
   }
 
   public static DomUIControl createSmallDescriptionControl(DomElement parent, final boolean commitOnEveryChange) {
-    return new BigStringControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
+    return createLargeDescriptionControl(parent, commitOnEveryChange);
   }
 
   public static DomUIControl createLargeDescriptionControl(DomElement parent, final boolean commitOnEveryChange) {
-    return new StringControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
+    return getDomUIFactory().createTextControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
   }
 
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element, boolean commitOnEveryChange) {
@@ -100,7 +100,13 @@ public abstract class DomUIFactory implements ApplicationComponent {
 
   public abstract BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
-  public abstract BaseControl createBigTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
+  public static BaseControl createTextControl(GenericDomValue value, final boolean commitOnEveryChange) {
+    return getDomUIFactory().createTextControl(new DomStringWrapper(value), commitOnEveryChange);
+  }
+
+  public static BaseControl createTextControl(DomWrapper<String> wrapper) {
+    return getDomUIFactory().createTextControl(wrapper, false);
+  }
 
   public static DomUIFactory getDomUIFactory() {
     return ApplicationManager.getApplication().getComponent(DomUIFactory.class);

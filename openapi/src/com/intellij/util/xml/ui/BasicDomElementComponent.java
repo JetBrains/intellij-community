@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
@@ -14,7 +13,6 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -54,18 +52,7 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
                 return domElement.isValid() ? (GenericDomValue)description.getValues(domElement).get(0) : null;
               }
             });
-            boolean commitOnEveryChange = commitOnEveryChange(element);
-            DomUIControl control;
-            if (boundComponent instanceof BigStringComponent) {
-              control = new BigStringControl(new DomFixedWrapper(element), commitOnEveryChange);
-            } else if (boundComponent instanceof TextFieldWithBrowseButton) {
-              control = new PsiClassControl(new DomStringWrapper(element), commitOnEveryChange);
-            } else if (boundComponent instanceof JTextComponent) {
-              control = new StringControl(new DomStringWrapper(element), commitOnEveryChange);
-            } else {
-              control = DomUIFactory.createControl(element, commitOnEveryChange);
-            }
-            doBind(control, boundComponent);
+            doBind(DomUIFactory.createControl(element, commitOnEveryChange(element)), boundComponent);
           }
           else {
             //todo not bound

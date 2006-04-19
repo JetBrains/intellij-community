@@ -135,7 +135,13 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
   }
 
   private static boolean valuesAreEqual(final Object valueInXml, final Object valueInControl) {
-    return "".equals(valueInControl) && null == valueInXml || Comparing.equal(valueInXml, valueInControl);
+    return "".equals(valueInControl) && null == valueInXml ||
+           equalModuloTrim(valueInXml, valueInControl) ||
+           Comparing.equal(valueInXml, valueInControl);
+  }
+
+  private static boolean equalModuloTrim(final Object valueInXml, final Object valueInControl) {
+    return valueInXml instanceof String && valueInControl instanceof String && ((String)valueInXml).trim().equals(((String)valueInControl).trim());
   }
 
   public final void reset() {

@@ -161,8 +161,8 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     boolean isFocused = isFocusOwner();
     Editor editor = myEditor;
     myEditor = createEditor();
-    add(myEditor.getComponent(), BorderLayout.CENTER);
     releaseEditor(editor);
+    add(myEditor.getComponent(), BorderLayout.CENTER);
 
     validate();
     if (isFocused) {
@@ -354,10 +354,10 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
       return;
     }
     Editor editor = myEditor;
+    releaseEditor(editor);
     myEditor = createEditor();
     add(myEditor.getComponent(), BorderLayout.CENTER);
     revalidate();
-    releaseEditor(editor);
   }
 
   private Color getBackgroundColor(boolean enabled){

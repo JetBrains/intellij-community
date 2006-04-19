@@ -79,10 +79,6 @@ public class DomUIFactoryImpl extends DomUIFactory {
     return new TextControl(wrapper, commitOnEveryChange);
   }
 
-  public BaseControl createBigTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
-    return new BigTextControl(wrapper, commitOnEveryChange);
-  }
-
   private static <T extends JComponent> T removeBorder(final T component) {
     component.setBorder(new EmptyBorder(0, 0, 0, 0));
     return component;

@@ -74,7 +74,10 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
         else if (PerspectiveFileEditor.this.equals(event.getNewEditor())) {
           selectNotify();
           if (event.getOldEditor() instanceof TextEditor) {
-            setSelectedDomElement(getSelectedDomElementFromTextEditor((TextEditor)event.getOldEditor()));
+            final DomElement element = getSelectedDomElementFromTextEditor((TextEditor)event.getOldEditor());
+            if (element != null) {
+              setSelectedDomElement(element);
+            }
           } else if (event.getOldEditor() instanceof PerspectiveFileEditor) {
             setSelectedDomElement(((PerspectiveFileEditor)event.getOldEditor()).getSelectedDomElement());
           }

@@ -19,5 +19,5 @@ package com.intellij.util.xml.ui;
 /**
  * @author peter
  */
-public class BigTextPanel extends EditorContainerPanel{
+public class BigTextPanel extends TextPanel {
 }

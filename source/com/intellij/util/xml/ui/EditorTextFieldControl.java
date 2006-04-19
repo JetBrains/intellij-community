@@ -94,6 +94,9 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
         }
       }
     });
+    if (myCommitOnEveryChange) {
+      editorTextField.getDocument().addDocumentListener(myListener);
+    }
     return boundedComponent;
   }
 

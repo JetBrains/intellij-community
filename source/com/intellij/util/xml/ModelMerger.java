@@ -212,7 +212,10 @@ public class ModelMerger {
             return Arrays.hashCode(myImplementations);
           }
           if ("equals".equals(methodName)) {
-            return args[0] != null && ((MergedObject)args[0]).getImplementations().equals(Arrays.asList(myImplementations));
+            final Object arg = args[0];
+            return arg != null && arg instanceof MergedObject &&
+                   ((MergedObject)arg).getImplementations().equals(Arrays.asList(myImplementations));
+
           }
           return null;
         }
