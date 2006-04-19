@@ -16,18 +16,31 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author peter
  */
 public class DomResolveConverter<T extends DomElement> implements ResolvingConverter<T>{
+  private static final FactoryMap<Class<? extends DomElement>,DomResolveConverter> ourCache = new FactoryMap<Class<? extends DomElement>, DomResolveConverter>() {
+    @NotNull
+    protected DomResolveConverter create(final Class<? extends DomElement> key) {
+      return new DomResolveConverter(key);
+    }
+  };
   private final Class<T> myClass;
 
   public DomResolveConverter(final Class<T> aClass) {
     myClass = aClass;
+  }
+
+  public static <T extends DomElement> DomResolveConverter<T> createConverter(Class<T> aClass) {
+    return ourCache.get(aClass);
   }
 
   public final T fromString(final String s, final ConvertContext context) {
