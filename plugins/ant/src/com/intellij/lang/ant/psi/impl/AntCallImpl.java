@@ -4,7 +4,7 @@ import com.intellij.lang.ant.psi.AntCall;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
-import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
+import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -19,7 +19,7 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
   private AntTarget[] myDependsTargets = null;
   private AntProperty[] myParams = null;
 
-  public AntCallImpl(final AntElement parent, final XmlElement sourceElement, final AntTaskDefinition definition) {
+  public AntCallImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
   }
 

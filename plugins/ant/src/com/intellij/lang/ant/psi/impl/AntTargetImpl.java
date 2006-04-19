@@ -15,13 +15,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AntTargetImpl extends AntElementImpl implements AntTarget {
+public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget {
 
   private AntTarget[] myDependsTargets;
   private AntCall[] myCalls;
 
   public AntTargetImpl(AntElement parent, final XmlTag tag) {
     super(parent, tag);
+    myDefinition = getAntProject().getTargetDefinition();
   }
 
   @NonNls
@@ -49,11 +50,6 @@ public class AntTargetImpl extends AntElementImpl implements AntTarget {
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
-  }
-
-  @NotNull
-  public XmlTag getSourceElement() {
-    return (XmlTag)super.getSourceElement();
   }
 
   @Nullable

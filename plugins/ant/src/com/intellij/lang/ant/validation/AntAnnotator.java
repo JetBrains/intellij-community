@@ -4,10 +4,10 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntTask;
+import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.impl.reference.AntGenericReference;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
-import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
+import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -19,21 +19,22 @@ public class AntAnnotator implements Annotator {
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {
     AntElement element = (AntElement)psiElement;
-    if (element instanceof AntTask) {
-      final AntTask task = (AntTask)element;
-      AntTaskDefinition def = task.getTaskDefinition();
+    if (element instanceof AntStructuredElement) {
+      final AntStructuredElement se = (AntStructuredElement)element;
+      AntTypeDefinition def = se.getTypeDefinition();
+      final String name = se.getName();
       if (def == null) {
-        holder.createErrorAnnotation(task, AntBundle.getMessage("undefined.task", task.getName()));
+        holder.createErrorAnnotation(se, AntBundle.getMessage("undefined.element", name));
       }
       else {
-        checkValidAttributes(task, def, holder);
-        final AntElement parent = task.getAntParent();
-        if (parent instanceof AntTask) {
-          final AntTask parentTask = (AntTask)parent;
-          final AntTaskDefinition parentDef = parentTask.getTaskDefinition();
-          if (parentDef != null && parentDef.getNestedClassName(def.getTaskId()) == null) {
-            final TextRange textRange = new TextRange(0, task.getName().length()).shiftRight(task.getSourceElement().getTextOffset());
-            holder.createErrorAnnotation(textRange, AntBundle.getMessage("nested.element.is.not.allowed.for.the.task"));
+        checkValidAttributes(se, def, holder);
+        final AntElement parent = se.getAntParent();
+        if (parent instanceof AntStructuredElement) {
+          final AntStructuredElement pe = (AntStructuredElement)parent;
+          final AntTypeDefinition parentDef = pe.getTypeDefinition();
+          if (parentDef != null && parentDef.getNestedClassName(def.getTypeId()) == null) {
+            final TextRange textRange = new TextRange(0, name.length()).shiftRight(se.getSourceElement().getTextOffset());
+            holder.createErrorAnnotation(textRange, AntBundle.getMessage("nested.element.is.not.allowed.here"));
           }
         }
       }
@@ -41,12 +42,12 @@ public class AntAnnotator implements Annotator {
     checkReferences(element, holder);
   }
 
-  private static void checkValidAttributes(AntTask task, AntTaskDefinition def, AnnotationHolder holder) {
-    final XmlTag sourceElement = task.getSourceElement();
+  private static void checkValidAttributes(AntStructuredElement se, AntTypeDefinition def, AnnotationHolder holder) {
+    final XmlTag sourceElement = se.getSourceElement();
     for (XmlAttribute attr : sourceElement.getAttributes()) {
       final AntAttributeType type = def.getAttributeType(attr.getName());
       if (type == null) {
-        holder.createErrorAnnotation(task, AntBundle.getMessage("attribute.is.not.allowed.for.the.task"));
+        holder.createErrorAnnotation(se, AntBundle.getMessage("attribute.is.not.allowed.for.the.task"));
       }
       else {
         final String value = attr.getValue();

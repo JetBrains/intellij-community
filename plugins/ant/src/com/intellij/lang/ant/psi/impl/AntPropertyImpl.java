@@ -2,7 +2,7 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
-import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
+import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +19,7 @@ import java.io.File;
 
 public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
-  public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTaskDefinition definition) {
+  public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
   }
 

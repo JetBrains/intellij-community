@@ -52,12 +52,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     try {
       builder.append("AntElement");
       final XmlElement sourceElement = getSourceElement();
-      if (sourceElement instanceof XmlTag) {
-        XmlTag tag = (XmlTag)sourceElement;
-        builder.append("[");
-        builder.append(tag.getName());
-        builder.append("]");
-      }
+      builder.append("[");
+      builder.append(sourceElement.toString());
+      builder.append("]");
       return builder.toString();
     }
     finally {
@@ -100,19 +97,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   @NotNull
   public AntElement[] getChildren() {
     if (myChildren != null) return myChildren;
-    final XmlElement element = getSourceElement();
-    if (!(element instanceof XmlTag)) {
-      myChildren = getChildrenInner();
-    }
-    else {
-      final XmlTag[] tags = ((XmlTag)element).getSubTags();
-      final List<AntElement> children = new ArrayList<AntElement>();
-      for (final XmlTag tag : tags) {
-        children.add(AntElementFactory.createAntElement(this, tag));
-      }
-      myChildren = children.toArray(new AntElement[children.size()]);
-    }
-    return myChildren;
+    return myChildren = getChildrenInner();
   }
 
   @Nullable
@@ -214,7 +199,6 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return myReferences = result.toArray(new PsiReference[result.size()]);
   }
 
-  @SuppressWarnings({"MethodMayBeStatic"})
   protected AntElement[] getChildrenInner() {
     return AntElement.EMPTY_ARRAY;
   }

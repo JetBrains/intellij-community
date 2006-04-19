@@ -4,9 +4,9 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
-import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
-import com.intellij.lang.ant.psi.introspection.impl.AntTaskDefinitionImpl;
-import com.intellij.openapi.util.Pair;
+import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.lang.ant.psi.introspection.AntTypeId;
+import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -16,6 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Target;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,17 +24,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
-public class AntProjectImpl extends AntElementImpl implements AntProject {
+public class AntProjectImpl extends AntStructuredElementImpl implements AntProject {
   final static AntTarget[] EMPTY_TARGETS = new AntTarget[0];
   private AntTarget[] myTargets;
   /**
    * Map of class names to task definitions.
    */
-  private Map<String, AntTaskDefinition> myTaskDefinitions;
-  private AntTaskDefinition[] myTaskDefinitionArray;
+  private Map<String, AntTypeDefinition> myTypeDefinitions;
+  private AntTypeDefinition[] myTypeDefinitionArrays;
+  private AntTypeDefinition myTargetDefinition;
+  private final Project myProject;
 
   public AntProjectImpl(final AntFileImpl parent, final XmlTag tag) {
     super(parent, tag);
+    myProject = new Project();
+    myProject.init();
+    myDefinition = createProjectDefinition();
   }
 
   @NonNls
@@ -54,14 +60,8 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     }
   }
 
-
   public void clearCaches() {
     myTargets = null;
-  }
-
-  @NotNull
-  public XmlTag getSourceElement() {
-    return (XmlTag)super.getSourceElement();
   }
 
   @Nullable
@@ -120,21 +120,18 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
   }
 
   @NotNull
-  public AntTaskDefinition[] getBaseTaskDefinitions() {
-    if (myTaskDefinitionArray != null) return myTaskDefinitionArray;
-    getBaseTaskDefinition(null);
-    return myTaskDefinitionArray = myTaskDefinitions.values().toArray(new AntTaskDefinition[myTaskDefinitions.size()]);
+  public AntTypeDefinition[] getBaseTypeDefinitions() {
+    if (myTypeDefinitionArrays != null) return myTypeDefinitionArrays;
+    getBaseTypeDefinition(null);
+    return myTypeDefinitionArrays = myTypeDefinitions.values().toArray(new AntTypeDefinition[myTypeDefinitions.size()]);
   }
 
   @Nullable
-  public AntTaskDefinition getBaseTaskDefinition(final String taskClassName) {
-    if (myTaskDefinitions != null) return myTaskDefinitions.get(taskClassName);
-    myTaskDefinitions = new HashMap<String, AntTaskDefinition>();
-    Project project = new Project();
-    project.init();
-    final Hashtable ht = project.getTaskDefinitions();
+  public AntTypeDefinition getBaseTypeDefinition(final String taskClassName) {
+    if (myTypeDefinitions != null) return myTypeDefinitions.get(taskClassName);
+    myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
+    final Hashtable ht = myProject.getTaskDefinitions();
     if (ht == null) return null;
-
     // first pass creates taskdefinitons without nested elements
     final Enumeration tasks = ht.keys();
     while (tasks.hasMoreElements()) {
@@ -157,24 +154,60 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
           attributes.put(attr, AntAttributeType.STRING);
         }
       }
-      HashMap<Pair<String, String>, String> nestedDefinitions = new HashMap<Pair<String, String>, String>();
+      final HashMap<AntTypeId, String> nestedDefinitions = new HashMap<AntTypeId, String>();
       final Enumeration nestedEnum = helper.getNestedElements();
       while (nestedEnum.hasMoreElements()) {
         final String nestedElement = (String)nestedEnum.nextElement();
         final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
-        nestedDefinitions.put(new Pair<String, String>(nestedElement, ""), className);
+        nestedDefinitions.put(new AntTypeId(nestedElement), className);
       }
-      AntTaskDefinition def = new AntTaskDefinitionImpl(new Pair<String, String>(taskName, getSourceElement().getNamespace()),
-                                                        taskClass.getName(), attributes, nestedDefinitions);
-      myTaskDefinitions.put(def.getClassName(), def);
+      AntTypeDefinition def = new AntTypeDefinitionImpl(new AntTypeId(taskName, getSourceElement().getNamespace()), taskClass.getName(),
+                                                        true, attributes, nestedDefinitions);
+      myTypeDefinitions.put(def.getClassName(), def);
     }
-
-    return myTaskDefinitions.get(taskClassName);
+    return myTypeDefinitions.get(taskClassName);
   }
 
-  public void registerCustomTask(final AntTaskDefinition definition) {
-    myTaskDefinitionArray = null;
-    myTaskDefinitions.put(definition.getClassName(), definition);
+  @NotNull
+  public AntTypeDefinition getTargetDefinition() {
+    getBaseTypeDefinition(null);
+    if (myTargetDefinition == null) {
+      @NonNls final HashMap<String, AntAttributeType> targetAttrs = new HashMap<String, AntAttributeType>();
+      targetAttrs.put("name", AntAttributeType.STRING);
+      targetAttrs.put("depends", AntAttributeType.STRING);
+      targetAttrs.put("if", AntAttributeType.STRING);
+      targetAttrs.put("unless", AntAttributeType.STRING);
+      targetAttrs.put("description", AntAttributeType.STRING);
+      final HashMap<AntTypeId, String> targetElements = new HashMap<AntTypeId, String>();
+      for (AntTypeDefinition def : getBaseTypeDefinitions()) {
+        targetElements.put(def.getTypeId(), def.getClassName());
+      }
+      myTargetDefinition = new AntTypeDefinitionImpl(new AntTypeId("target"), Target.class.getName(), false, targetAttrs, targetElements);
+      registerCustomType(myTargetDefinition);
+    }
+    return myTargetDefinition;
+  }
+
+  public void registerCustomType(final AntTypeDefinition definition) {
+    myTypeDefinitionArrays = null;
+    myTypeDefinitions.put(definition.getClassName(), definition);
+  }
+
+  private AntTypeDefinitionImpl createProjectDefinition() {
+    getBaseTypeDefinition(null);
+    @NonNls final HashMap<String, AntAttributeType> projectAttrs = new HashMap<String, AntAttributeType>();
+    projectAttrs.put("name", AntAttributeType.STRING);
+    projectAttrs.put("default", AntAttributeType.STRING);
+    projectAttrs.put("basedir", AntAttributeType.STRING);
+    final HashMap<AntTypeId, String> projectElements = new HashMap<AntTypeId, String>();
+    for (AntTypeDefinition def : getBaseTypeDefinitions()) {
+      if (def.isTask()) {
+        projectElements.put(def.getTypeId(), def.getClassName());
+      }
+    }
+    final AntTypeDefinition def = getTargetDefinition();
+    projectElements.put(def.getTypeId(), def.getClassName());
+    return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs, projectElements);
   }
 
   private static IntrospectionHelper getHelperExceptionSafe(Class c) {

@@ -1,13 +1,16 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntTask;
-import com.intellij.lang.ant.psi.introspection.AntTaskDefinition;
-import com.intellij.openapi.util.Pair;
+import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
+import org.apache.tools.ant.Target;
 import org.apache.tools.ant.taskdefs.CallTarget;
 import org.apache.tools.ant.taskdefs.Property;
+import org.apache.tools.ant.taskdefs.Taskdef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -15,7 +18,7 @@ import java.util.Map;
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
 public class AntElementFactory {
 
-  private static Map<String, AntTaskCreator> antTaskTypeToKnownAntTaskCreatorMap = null;
+  private static Map<String, AntElementCreator> ourAntTypeToKnownAntElementCreatorMap = null;
 
   private AntElementFactory() {
   }
@@ -23,56 +26,65 @@ public class AntElementFactory {
   @NotNull
   public static AntElement createAntElement(final AntElement parent, final XmlTag tag) {
     instantiate();
-    String className = null;
-    final Pair<String, String> taskId = new Pair<String, String>(tag.getName(), tag.getNamespace());
-    if (parent instanceof AntTask) {
-      final AntTaskDefinition def = ((AntTask)parent).getTaskDefinition();
-      if (def != null) {
-        className = def.getNestedClassName(taskId);
+    AntTypeDefinition typeDef = null;
+    final AntTypeId id = new AntTypeId(tag.getName(), tag.getNamespace());
+    final AntProject project = parent.getAntProject();
+    if (parent instanceof AntStructuredElement) {
+      final AntTypeDefinition parentDef = ((AntStructuredElement)parent).getTypeDefinition();
+      if (parentDef != null) {
+        final String className = parentDef.getNestedClassName(id);
+        if (className != null) {
+          typeDef = project.getBaseTypeDefinition(className);
+        }
       }
     }
-    else {
-      for (AntTaskDefinition def : parent.getAntProject().getBaseTaskDefinitions()) {
-        if (taskId.equals(def.getTaskId())) {
-          className = def.getClassName();
+    if (typeDef == null) {
+      for (AntTypeDefinition def : project.getBaseTypeDefinitions()) {
+        if (id.equals(def.getTypeId())) {
+          typeDef = def;
           break;
         }
       }
     }
-    return createAntTask(tag, parent, className);
-  }
-
-  @NotNull
-  public static AntElement createAntTask(final XmlTag tag, final AntElement parent, final String className) {
-    instantiate();
-    final String elementName = tag.getName();
-    if ("target".equals(elementName)) {
-      return new AntTargetImpl(parent, tag);
+    if (typeDef != null) {
+      AntElementCreator antElementCreator = ourAntTypeToKnownAntElementCreatorMap.get(typeDef.getClassName());
+      if (antElementCreator != null) {
+        return antElementCreator.create(parent, tag);
+      }
+      if (typeDef.isTask()) {
+        return new AntTaskImpl(parent, tag, typeDef);
+      }
     }
-    AntTaskCreator antTaskCreator = antTaskTypeToKnownAntTaskCreatorMap.get(className);
-    if (antTaskCreator != null) {
-      return antTaskCreator.create(parent, tag);
-    }
-    return new AntTaskImpl(parent, tag, parent.getAntProject().getBaseTaskDefinition(className));
+    return new AntStructuredElementImpl(parent, tag, typeDef);
   }
 
   private static void instantiate() {
-    if (antTaskTypeToKnownAntTaskCreatorMap == null) {
-      antTaskTypeToKnownAntTaskCreatorMap = new HashMap<String, AntTaskCreator>();
-      antTaskTypeToKnownAntTaskCreatorMap.put(Property.class.getName(), new AntTaskCreator() {
+    if (ourAntTypeToKnownAntElementCreatorMap == null) {
+      ourAntTypeToKnownAntElementCreatorMap = new HashMap<String, AntElementCreator>();
+      ourAntTypeToKnownAntElementCreatorMap.put(Target.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntPropertyImpl(parent, tag, parent.getAntProject().getBaseTaskDefinition(Property.class.getName()));
+          return new AntTargetImpl(parent, tag);
         }
       });
-      antTaskTypeToKnownAntTaskCreatorMap.put(CallTarget.class.getName(), new AntTaskCreator() {
+      ourAntTypeToKnownAntElementCreatorMap.put(Property.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntCallImpl(parent, tag, parent.getAntProject().getBaseTaskDefinition(CallTarget.class.getName()));
+          return new AntPropertyImpl(parent, tag, parent.getAntProject().getBaseTypeDefinition(Property.class.getName()));
+        }
+      });
+      ourAntTypeToKnownAntElementCreatorMap.put(CallTarget.class.getName(), new AntElementCreator() {
+        public AntElement create(final AntElement parent, final XmlTag tag) {
+          return new AntCallImpl(parent, tag, parent.getAntProject().getBaseTypeDefinition(CallTarget.class.getName()));
+        }
+      });
+      ourAntTypeToKnownAntElementCreatorMap.put(Taskdef.class.getName(), new AntElementCreator() {
+        public AntElement create(final AntElement parent, final XmlTag tag) {
+          return new AntTaskDefImpl(parent, tag, parent.getAntProject().getBaseTypeDefinition(CallTarget.class.getName()));
         }
       });
     }
   }
 
-  private static interface AntTaskCreator {
+  private static interface AntElementCreator {
     AntElement create(final AntElement parent, final XmlTag tag);
   }
 }
