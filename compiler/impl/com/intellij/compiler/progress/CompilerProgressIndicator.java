@@ -227,7 +227,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   public void sendToBackground() {
     myIsBackgroundMode = true;
     openMessageView();
-    myProblemsToolWindow.showToolWindow(true);
+    myProblemsToolWindow.show(true);
 
     myProblemsToolWindow.setProgressText(myDialog.getStatusText());
     myProblemsToolWindow.setProgressStatistics(myDialog.getStatistics());
@@ -246,7 +246,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     // the work with ToolWindowManager should be done in the Swing thread
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        myProblemsToolWindow.showToolWindow(CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND);
+        myProblemsToolWindow.show(CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND);
         updateProgressText();
       }
     }, getMyModalityState());
@@ -258,7 +258,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   }
 
   public void showCompilerContent() {
-    myProblemsToolWindow.showToolWindow(false);
+    myProblemsToolWindow.show(false);
   }
 
   private void closeUI() {
@@ -280,11 +280,11 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
             addMessage(
               new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
                                       CompilerBundle.message("statistics.warnings.count", myWarningCount), null, -1, -1, null));
-            myProblemsToolWindow.showToolWindow(true);
+            myProblemsToolWindow.show(true);
             myProblemsToolWindow.selectFirstMessage();
           }
           else {
-            //removeAllContents(myProject, null);
+            myProblemsToolWindow.hide();
           }
         }
       }

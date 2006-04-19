@@ -157,6 +157,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private void reportToProblemsToolWindow(final Collection<HighlightInfo> infos) {
+    if (!myFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
     ProblemsToolWindow problemsToolWindow = ProblemsToolWindow.getInstance(myProject);
     VirtualFile file = myFile.getVirtualFile();
     String groupName = file.getPresentableUrl();
@@ -164,7 +165,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     for (HighlightInfo info : infos) {
       HighlightSeverity severity = info.getSeverity();
-      if (severity != HighlightSeverity.WARNING && severity != HighlightSeverity.ERROR) {
+      if (/*severity != HighlightSeverity.WARNING && */severity != HighlightSeverity.ERROR) {
         continue;
       }
       OpenFileDescriptor navigatable = new OpenFileDescriptor(myProject, file, info.fixStartOffset);
@@ -174,7 +175,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       problemsToolWindow.addMessage(getKind(info),new String[]{info.description}, groupName, navigatable,  "", prefix, file);
     }
   }
-
+   
   private static int getKind(final HighlightInfo info) {
     HighlightSeverity severity = info.getSeverity();
     if (severity == HighlightSeverity.INFORMATION) return MessageCategory.INFORMATION;
