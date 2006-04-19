@@ -8,6 +8,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.JavaMethodSignature;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.openapi.progress.ProcessCanceledException;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -39,6 +40,9 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   public GenericAttributeValue getDomAttributeValue(DomElement parent) {
     try {
       return (GenericAttributeValue)DomManagerImpl.getDomInvocationHandler(parent).doInvoke(myGetterMethod);
+    }
+    catch (ProcessCanceledException e) {
+      throw e; 
     }
     catch (Throwable e) {
       throw new RuntimeException(e);
