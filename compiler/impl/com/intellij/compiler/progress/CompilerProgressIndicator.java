@@ -5,6 +5,7 @@
  */
 package com.intellij.compiler.progress;
 
+import com.intellij.codeInsight.problems.ProblemsToolWindow;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
@@ -27,7 +28,6 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.codeInsight.problems.ProblemsToolWindow;
 
 import javax.swing.*;
 import java.awt.*;
@@ -309,6 +309,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     }
   }
 
+  
   private void closeProgressDialog() {
     synchronized (myMessageViewLock) {
       if (myDialog != null) {
