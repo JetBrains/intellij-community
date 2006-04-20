@@ -21,11 +21,10 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-
-import org.jetbrains.annotations.Nullable;
+import java.util.Collection;
 
 /**
  * @author max
@@ -40,27 +39,27 @@ public abstract class HighlightManager {
                                          int endOffset,
                                          TextAttributes attributes,
                                          boolean hideByTextChange,
-                                         ArrayList<RangeHighlighter> highlighters);
+                                         Collection<RangeHighlighter> outHighlighters);
 
   public abstract boolean removeSegmentHighlighter(Editor editor, RangeHighlighter highlighter);
 
   public abstract void addOccurrenceHighlights(Editor editor, PsiReference[] occurrences,
                                                TextAttributes attributes, boolean hideByTextChange,
-                                               ArrayList<RangeHighlighter> highlightersVector);
+                                               Collection<RangeHighlighter> outHighlighters);
 
   public abstract void addOccurrenceHighlight(Editor editor,
                                               int start,
                                               int end,
                                               TextAttributes attributes,
                                               int flags,
-                                              ArrayList<RangeHighlighter> highlightersVector,
+                                              Collection<RangeHighlighter> outHighlighters,
                                               @Nullable Color scrollmarkColor);
 
   public abstract void addOccurrenceHighlights(Editor editor, PsiElement[] elements,
                                                TextAttributes attributes, boolean hideByTextChange,
-                                               ArrayList<RangeHighlighter> highlightersVector);
+                                               Collection<RangeHighlighter> outHighlighters);
 
   public abstract void addElementsOccurrenceHighlights(Editor editor, PsiElement[] elements,
                                                        TextAttributes attributes, boolean hideByTextChange,
-                                                       ArrayList<RangeHighlighter> highlightersVector);
+                                                       Collection<RangeHighlighter> outHighlighters);
 }
