@@ -5,15 +5,14 @@ package com.intellij.uiDesigner.binding;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.Processor;
-import com.intellij.util.QueryExecutor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.Processor;
+import com.intellij.util.QueryExecutor;
 
 /**
  * @author max
@@ -21,7 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class FormReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
-    final VirtualFile virtualFile = refElement.getContainingFile().getVirtualFile();
+    final PsiFile psiFile = refElement.getContainingFile();
+    if (psiFile == null) return true;
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return true;
     Module module = ProjectRootManager.getInstance(refElement.getProject()).getFileIndex().getModuleForFile(virtualFile);
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(module);
