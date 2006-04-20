@@ -85,6 +85,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         return xmlAspect.equals(aspect);
       }
     };
+    myPomModel.addModelListener(myXmlListener);
     ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(XmlTag.class, new GenericValueReferenceProvider());
   }
 
@@ -268,7 +269,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public final void projectOpened() {
-    myPomModel.addModelListener(myXmlListener);
   }
 
   public final void projectClosed() {
