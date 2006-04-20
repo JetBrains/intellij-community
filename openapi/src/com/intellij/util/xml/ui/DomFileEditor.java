@@ -47,6 +47,7 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
 
   public void dispose() {
     myUserActivityWatcher.removeUserActivityListener(myUserActivityListener);
+    myComponent.dispose();
     super.dispose();
   }
 

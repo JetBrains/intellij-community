@@ -127,17 +127,12 @@ public class EditorFactoryImpl extends EditorFactory {
       //Thread.dumpStack();
     }
 
-    try {
-      throw new RuntimeException("Editor created");
-    }
-    catch (RuntimeException e) {
-      final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-      final PrintWriter printWriter = new PrintWriter(buffer);
-      e.printStackTrace(printWriter);
-      printWriter.flush();
-      editor.putUserData(EDITOR_CREATOR, buffer.toString());
-    }
 
+    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    final PrintWriter printWriter = new PrintWriter(buffer);
+    new RuntimeException("Editor created").printStackTrace(printWriter);
+    printWriter.flush();
+    editor.putUserData(EDITOR_CREATOR, buffer.toString());
 
     return editor;
   }
