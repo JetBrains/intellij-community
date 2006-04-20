@@ -39,7 +39,7 @@ public abstract class HighlightManager {
                                          int endOffset,
                                          TextAttributes attributes,
                                          boolean hideByTextChange,
-                                         Collection<RangeHighlighter> outHighlighters);
+                                         @Nullable Collection<RangeHighlighter> outHighlighters);
 
   public abstract boolean removeSegmentHighlighter(Editor editor, RangeHighlighter highlighter);
 
@@ -52,14 +52,14 @@ public abstract class HighlightManager {
                                               int end,
                                               TextAttributes attributes,
                                               int flags,
-                                              Collection<RangeHighlighter> outHighlighters,
+                                              @Nullable Collection<RangeHighlighter> outHighlighters,
                                               @Nullable Color scrollmarkColor);
 
   public abstract void addOccurrenceHighlights(Editor editor, PsiElement[] elements,
                                                TextAttributes attributes, boolean hideByTextChange,
-                                               Collection<RangeHighlighter> outHighlighters);
+                                               @Nullable Collection<RangeHighlighter> outHighlighters);
 
   public abstract void addElementsOccurrenceHighlights(Editor editor, PsiElement[] elements,
                                                        TextAttributes attributes, boolean hideByTextChange,
-                                                       Collection<RangeHighlighter> outHighlighters);
+                                                       @Nullable Collection<RangeHighlighter> outHighlighters);
 }
