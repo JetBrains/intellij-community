@@ -6,6 +6,8 @@ package com.intellij.uiDesigner.snapShooter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URLClassLoader;
+import java.net.URL;
 
 /**
  * @author yole
@@ -15,21 +17,31 @@ public class SnapShooter {
   }
 
   public static void main(String[] args) throws Throwable {
-    System.out.println("Initializing SnapShooter");
+    int origClassPathSize = Integer.parseInt(args [0]);
+    int port = Integer.parseInt(args [1]);
 
-    int port = Integer.parseInt(args [0]);
+    ClassLoader loader = SnapShooter.class.getClassLoader();
+    if (loader instanceof URLClassLoader) {
+      URLClassLoader ucl = (URLClassLoader) loader;
+
+      URL[] oldURLs = ucl.getURLs();
+      URL[] newURLs = new URL[origClassPathSize];
+      System.arraycopy(oldURLs, 0, newURLs, 0, origClassPathSize);
+      loader = new URLClassLoader(newURLs, null);
+      Thread.currentThread().setContextClassLoader(loader);
+    }
 
     final Thread thread = new Thread(new SnapShooterDaemon(port));
     thread.setDaemon(true);
     thread.start();
 
-    String mainClass = args[1];
-    String[] parms = new String[args.length - 2];
-    for (int j = 2; j < args.length; j++) {
-      parms[j - 2] = args[j];
+    String mainClass = args[2];
+    String[] parms = new String[args.length - 3];
+    for (int j = 3; j < args.length; j++) {
+      parms[j - 3] = args[j];
     }
     //noinspection HardCodedStringLiteral
-    Method m = Class.forName(mainClass).getMethod("main", parms.getClass());
+    Method m = loader.loadClass(mainClass).getMethod("main", parms.getClass());
     try {
       ensureAccess(m);
       m.invoke(null, (Object) parms);
