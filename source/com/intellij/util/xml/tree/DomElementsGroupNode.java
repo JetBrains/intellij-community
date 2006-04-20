@@ -15,75 +15,88 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DomElementsGroupNode extends AbstractDomElementNode {
-  private DomElement myParentElement;
-  private String myChildrenTagName;
-  private DomCollectionChildDescription myChildDescription;
+    private DomElement myParentElement;
+    private String myChildrenTagName;
+    private DomCollectionChildDescription myChildDescription;
 
-  public DomElementsGroupNode(final DomElement modelElement, DomCollectionChildDescription description) {
-    myParentElement = modelElement;
-    myChildDescription = description;
-    myChildrenTagName = description.getXmlElementName();
-  }
-
-  public SimpleNode[] getChildren() {
-    if (!myParentElement.isValid()) return NO_CHILDREN;
-
-    final List<? extends DomElement> domChildren = myChildDescription.getValues(myParentElement);
-    final List<SimpleNode> simpleNodes = new ArrayList<SimpleNode>();
-    for (DomElement domChild : domChildren) {
-      if (shouldBeShowed(domChild.getDomElementType())) {
-        simpleNodes.add(new BaseDomElementNode(domChild, this));
-      }
-    }
-    return simpleNodes.toArray(new SimpleNode[simpleNodes.size()]);
-  }
-
-  public Object[] getEqualityObjects() {
-    return new Object[]{myParentElement, myChildrenTagName};
-  }
-
-  protected boolean doUpdate() {
-    setUniformIcon(getNodeIcon());
-
-    clearColoredText();
-
-    final boolean showErrors = !isExpanded() && hasErrors();
-
-    addColoredFragment(getNodeName(),
-                       new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, showErrors? SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor() : SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor()));
-
-    final int childrenCount = getChildren().length;
-    addColoredFragment(" (" + childrenCount + ')', showErrors ? J2EEBundle.message("dom.elements.tree.childs.contain.errors") : null, new SimpleTextAttributes(Font.ITALIC, Color.gray));
-
-    return true;
-  }
-
-  private boolean hasErrors() {
-    for (DomElement domElement : myChildDescription.getValues(myParentElement)) {
-        if (DomElementAnnotationsManager.getInstance().getProblems(domElement, true).size() > 0) return true;
+    public DomElementsGroupNode(final DomElement modelElement, DomCollectionChildDescription description) {
+        myParentElement = modelElement;
+        myChildDescription = description;
+        myChildrenTagName = description.getXmlElementName();
     }
 
-    return false;
-  }
+    public SimpleNode[] getChildren() {
+        if (!myParentElement.isValid()) return NO_CHILDREN;
 
-  public String getNodeName() {
-    return myChildDescription.getCommonPresentableName(myParentElement);
-  }
+        final List<? extends DomElement> domChildren = myChildDescription.getValues(myParentElement);
+        final List<SimpleNode> simpleNodes = new ArrayList<SimpleNode>(domChildren.size());
+        for (DomElement domChild : domChildren) {
+            if (shouldBeShowed(domChild.getDomElementType())) {
+                simpleNodes.add(new BaseDomElementNode(domChild, this));
+            }
+        }
+        return simpleNodes.toArray(new SimpleNode[simpleNodes.size()]);
+    }
 
-  public String getTagName() {
-    return myChildrenTagName;
-  }
+    public Object[] getEqualityObjects() {
+        return new Object[]{myParentElement, myChildrenTagName};
+    }
 
-  public DomElement getDomElement() {
-    return myParentElement;
-  }
+    protected boolean doUpdate() {
+        setUniformIcon(getNodeIcon());
+
+        clearColoredText();
+
+        final int childrenCount = myChildDescription.getValues(myParentElement).size();
+
+        final boolean showErrors = !isExpanded() && hasErrors();
+
+        if (childrenCount > 0) {
+            addColoredFragment(getNodeName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, showErrors
+                                                                                                        ? SimpleTextAttributes
+              .ERROR_ATTRIBUTES.getFgColor()
+                                                                                                        : SimpleTextAttributes
+                                                                                                          .REGULAR_ATTRIBUTES
+                                                                                                          .getFgColor()));
+
+            addColoredFragment(" (" + childrenCount + ')',
+                               showErrors ? J2EEBundle.message("dom.elements.tree.childs.contain.errors") : null,
+                               new SimpleTextAttributes(Font.ITALIC, Color.gray));
+        } else {
+            addColoredFragment(getNodeName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD,
+                                                                       SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor()));
+
+        }
+
+        return true;
+    }
+
+    private boolean hasErrors() {
+        for (DomElement domElement : myChildDescription.getValues(myParentElement)) {
+            if (DomElementAnnotationsManager.getInstance().getProblems(domElement, true).size() > 0) return true;
+        }
+
+        return false;
+    }
+
+    public String getNodeName() {
+        return myChildDescription.getCommonPresentableName(myParentElement);
+    }
+
+    public String getTagName() {
+        return myChildrenTagName;
+    }
+
+    public DomElement getDomElement() {
+        return myParentElement;
+    }
 
 
-  public DomCollectionChildDescription getChildDescription() {
-    return myChildDescription;
-  }
+    public DomCollectionChildDescription getChildDescription() {
+        return myChildDescription;
+    }
 
-  public Icon getNodeIcon() {
-    return ElementPresentationManager.getIcon(DomUtil.getRawType(myChildDescription.getType()));
-  }
+    public Icon getNodeIcon() {
+        return ElementPresentationManager.getIcon(DomUtil.getRawType(myChildDescription.getType()));
+    }
 }
