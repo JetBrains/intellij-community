@@ -266,13 +266,13 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public final void disposeComponent() {
+    myPomModel.removeModelListener(myXmlListener);
   }
 
   public final void projectOpened() {
   }
 
   public final void projectClosed() {
-    myPomModel.removeModelListener(myXmlListener);
   }
 
   public <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
