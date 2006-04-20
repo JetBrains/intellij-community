@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.rename.RenameProcessor;
 
 /**
@@ -24,6 +25,18 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
         assertNotNull(field);
 
         new RenameProcessor(myProject, field, "OtherName", true, true).run();
+      }
+    });
+  }
+
+  public void testRenamePackage() throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+        PsiPackage aPackage = myPsiManager.findPackage("gov");
+        assertNotNull(aPackage);
+
+
+        new RenameProcessor(myProject, aPackage, "org", true, true).run();
       }
     });
   }
