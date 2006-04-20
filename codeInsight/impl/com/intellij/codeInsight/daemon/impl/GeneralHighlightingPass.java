@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.problems.ProblemsToolWindow;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.problems.ProblemsToolWindow;
 import com.intellij.javaee.ejb.role.EjbImplMethodRole;
 import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.intellij.javaee.ejb.role.EjbRolesUtil;
@@ -134,6 +134,9 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         if(!HighlightUtil.isRootHighlighted(psiRoot)) continue;
         //long time = System.currentTimeMillis();
         List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+        if (elements.isEmpty()) {
+          elements = Collections.singletonList(psiRoot);
+        }
         //LOG.debug("Elements collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
         //time = System.currentTimeMillis();
 

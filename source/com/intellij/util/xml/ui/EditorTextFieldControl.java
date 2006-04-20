@@ -3,29 +3,29 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.ui.EditorTextField;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.application.Result;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
-import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.ui.EditorTextField;
 import com.intellij.util.xml.DomElement;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 
 import javax.swing.*;
-import java.util.List;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author peter
@@ -136,7 +136,9 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
 
         //todo!!! tooltip text isn't shown
         errorProblems.addAll(warningProblems);
-        textField.setToolTipText(TooltipUtils.getTooltipText(errorProblems));
+        final String tooltipText = TooltipUtils.getTooltipText(errorProblems);
+
+
 
         final Editor editor = textField.getEditor();
         if (editor != null && isCommitted()) {
