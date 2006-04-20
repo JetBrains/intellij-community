@@ -25,6 +25,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return true;
     Module module = ProjectRootManager.getInstance(refElement.getProject()).getFileIndex().getModuleForFile(virtualFile);
+    if (module == null) return true;
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(module);
     if (refElement instanceof PsiPackage) {
       //no need to do anything
