@@ -131,9 +131,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     final String qName = aPackage.getQualifiedName();
     final CoverageDataManager coverageManager = CoverageDataManager.getInstance(aPackage.getProject());
     final String coverageString = coverageManager.getPackageCoverageInormationString(qName);
-    if (coverageString != null) {
-      presentation.setLocationString(coverageString);
-    }
+    presentation.setLocationString(coverageString);
 
     if (!getSettings().isFlattenPackages()) {
       if (getSettings().isHideEmptyMiddlePackages()) {
