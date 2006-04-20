@@ -96,7 +96,10 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
           Element realmElement = (Element) realms.next();
           String realmName = realmElement.getAttributeValue("name");
           StringBuffer sb = new StringBuffer(realmName);
-          realmName = new String(SVNBase64.base64ToByteArray(sb, null));
+
+          byte[] buffer = new byte[sb.length()];
+          int length = SVNBase64.base64ToByteArray(sb, buffer);
+          realmName = new String(buffer, 0, length);
           Map infoMap = new HashMap();
           List attrsList = realmElement.getAttributes();
           for (Iterator attrs = attrsList.iterator(); attrs.hasNext();) {
@@ -194,7 +197,9 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
           String value = (String) source.get(key);
           if (key != null && value != null) {
             StringBuffer sb = new StringBuffer(value);
-            dst.put(key, new String(SVNBase64.base64ToByteArray(sb, null)));
+            byte[] buffer = new byte[sb.length()];
+            int length = SVNBase64.base64ToByteArray(sb, buffer);
+            dst.put(key, new String(buffer, 0, length));
           }
       }
       return dst;

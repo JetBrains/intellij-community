@@ -338,7 +338,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
       url = SVNPathUtil.append(url, COPY_OF_PREFIX + SVNPathUtil.tail(url1));
       RepositoryBrowserCommitDialog dialog = new RepositoryBrowserCommitDialog(myProject,
                                                                                RepositoryBrowserCommitDialog.COPY, url1, url,
-                                                                               !"/".equals(entry.getPath()));
+                                                                               !"/".equals(entry.getRelativePath()));
       dialog.show();
       if (dialog.isOK()) {
         url = dialog.getURL2();

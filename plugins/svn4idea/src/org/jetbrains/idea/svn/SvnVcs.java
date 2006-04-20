@@ -63,6 +63,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.util.SVNLogInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -107,6 +108,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
     DAVRepositoryFactory.setup();
     SVNRepositoryFactoryImpl.setup();
+    FSRepositoryFactory.setup();
   }
 
   private static Boolean booleanProperty(final String systemParameterName) {
@@ -234,7 +236,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   public void projectClosed() {
     VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
-    new DefaultSVNRepositoryPool(null).shutdownConnections(true);
+    new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
   }
 
   public void projectOpened() {
