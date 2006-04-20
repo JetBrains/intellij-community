@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -98,7 +99,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
     }
   }
 
-  @Override public void importSnapshotValue(final JComponent component, final RadComponent radComponent) {
+  @Override public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
     try {
       if (component.getParent() != null) {
         Font componentFont = (Font) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);

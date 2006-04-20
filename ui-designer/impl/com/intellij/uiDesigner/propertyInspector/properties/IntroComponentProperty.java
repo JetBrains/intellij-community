@@ -4,6 +4,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.reflect.Method;
+import java.awt.Component;
 
 /**
  * The value of the property is the string ID of the referenced component.
@@ -81,7 +83,16 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
     markTopmostModified(component, false);
   }
 
-  @Override public void importSnapshotValue(final JComponent component, final RadComponent radComponent) {
-    // do nothing for now
+  @Override public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
+    Component value;
+    try {
+      value = (Component) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
+    }
+    catch (Exception e) {
+      return;
+    }
+    if (value != null && value instanceof JComponent) {
+      context.registerComponentProperty(component, getName(), (JComponent) value);
+    }
   }
 }

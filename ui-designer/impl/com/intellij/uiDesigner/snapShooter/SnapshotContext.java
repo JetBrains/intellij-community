@@ -5,6 +5,8 @@
 package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -21,6 +23,20 @@ public class SnapshotContext {
   private RadRootContainer myRootContainer;
   private Set<ButtonGroup> myButtonGroups = new HashSet<ButtonGroup>();
   private Map<JComponent, RadComponent> myImportMap = new HashMap<JComponent, RadComponent>();
+
+  private static class ComponentProperty {
+    public JComponent owner;
+    public String name;
+    public JComponent value;
+
+    public ComponentProperty(final JComponent owner, final String name, final JComponent value) {
+      this.owner = owner;
+      this.name = name;
+      this.value = value;
+    }
+  }
+
+  private List<ComponentProperty> myComponentProperties = new ArrayList<ComponentProperty>();
 
   public SnapshotContext() {
     myPalette = new Palette(null);
@@ -47,7 +63,7 @@ public class SnapshotContext {
     myButtonGroups.add(group);
   }
 
-  public void processButtonGroups() {
+  public void postProcess() {
     for(ButtonGroup group: myButtonGroups) {
       RadButtonGroup radButtonGroup = myRootContainer.createGroup(myRootContainer.suggestGroupName());
       Enumeration<AbstractButton> elements = group.getElements();
@@ -59,5 +75,25 @@ public class SnapshotContext {
         }
       }
     }
+    for(ComponentProperty prop: myComponentProperties) {
+      RadComponent radOwner = myImportMap.get(prop.owner);
+      RadComponent radValue = myImportMap.get(prop.value);
+      if (radOwner != null && radValue != null) {
+        final IntrospectedProperty property = radOwner.getPalette().getIntrospectedProperty(radOwner, prop.name);
+        assert property != null;
+        //noinspection unchecked
+        IntroComponentProperty icp = (IntroComponentProperty) property;
+        try {
+          icp.setValue(radOwner, radValue.getId());
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
+
+  public void registerComponentProperty(final JComponent component, final String name, final JComponent value) {
+    myComponentProperties.add(new ComponentProperty(component, name, value));
   }
 }

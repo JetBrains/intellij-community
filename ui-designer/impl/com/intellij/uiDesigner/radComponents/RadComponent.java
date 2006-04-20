@@ -681,14 +681,13 @@ public abstract class RadComponent implements IComponent {
       }
     }
 
-    System.out.println("Created snapshot component " + result + " from component " + component);
     context.registerComponent(component, result);
     result.importSnapshotComponent(context, component);
 
     final IntrospectedProperty[] properties = context.getPalette().getIntrospectedProperties(component.getClass(),
                                                                                              result.getDelegee().getClass());
     for(IntrospectedProperty prop: properties) {
-      prop.importSnapshotValue(component, result);
+      prop.importSnapshotValue(context, component, result);
     }
 
     if (component instanceof AbstractButton) {

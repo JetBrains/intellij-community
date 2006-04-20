@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -78,7 +79,7 @@ public class IntroColorProperty extends IntrospectedProperty<ColorDescriptor> {
   }
 
   @Override
-  public void importSnapshotValue(final JComponent component, final RadComponent radComponent) {
+  public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
     try {
       if (component.getParent() != null) {
         Color componentColor = (Color) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);

@@ -6,6 +6,7 @@ import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -233,7 +234,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
                                  UIFormXmlConstants.ATTRIBUTE_KEY);
   }
 
-  @Override public void importSnapshotValue(final JComponent component, final RadComponent radComponent) {
+  @Override public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
     try {
       Object value = myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
       if (value != null) {

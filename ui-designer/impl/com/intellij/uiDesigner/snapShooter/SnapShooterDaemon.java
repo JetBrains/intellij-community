@@ -267,7 +267,7 @@ public class SnapShooterDaemon implements Runnable {
       if (radComponent != null) {
         radComponent.setBounds(new Rectangle(new Point(10, 10), component.getPreferredSize()));
         context.getRootContainer().addComponent(radComponent);
-        context.processButtonGroups();
+        context.postProcess();
       }
       return context.getRootContainer();
     }

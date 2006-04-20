@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -110,7 +111,7 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
     return (V) myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY);
   }
 
-  public void importSnapshotValue(final JComponent component, final RadComponent radComponent) {
+  public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
     try {
       //noinspection unchecked
       V value = (V) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
