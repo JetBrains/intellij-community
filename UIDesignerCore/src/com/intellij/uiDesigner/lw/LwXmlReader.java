@@ -16,9 +16,16 @@
 package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
+import org.jdom.Attribute;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 
+import java.awt.Font;
+import java.awt.Color;
+
 public final class LwXmlReader {
+  private LwXmlReader() {
+  }
+
   /**
    * @return can be <code>null</code>.
    */
@@ -116,5 +123,35 @@ public final class LwXmlReader {
     }
 
     return null;
+  }
+
+  public static FontDescriptor getFontDescriptor(final Element element) {
+    String fontName = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_NAME);
+    if (fontName != null) {
+      int fontSize = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_SIZE);
+      int fontStyle = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_STYLE);
+      return new FontDescriptor(new Font(fontName, fontStyle, fontSize));
+    }
+    return FontDescriptor.fromSwingFont(LwXmlReader.getRequiredString(element, UIFormXmlConstants.ATTRIBUTE_SWING_FONT));
+  }
+
+  public static ColorDescriptor getColorDescriptor(final Element element) throws Exception {
+    Attribute attr = element.getAttribute(UIFormXmlConstants.ATTRIBUTE_COLOR);
+    if (attr != null) {
+      return new ColorDescriptor(new Color(attr.getIntValue()));
+    }
+    String swingColor = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_SWING_COLOR);
+    if (swingColor != null) {
+      return ColorDescriptor.fromSwingColor(swingColor);
+    }
+    String systemColor = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_SYSTEM_COLOR);
+    if (systemColor != null) {
+      return ColorDescriptor.fromSystemColor(systemColor);
+    }
+    String awtColor = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_AWT_COLOR);
+    if (awtColor != null) {
+      return ColorDescriptor.fromAWTColor(awtColor);
+    }
+    return new ColorDescriptor(null);
   }
 }

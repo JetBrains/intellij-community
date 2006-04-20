@@ -28,8 +28,10 @@ import javax.swing.border.Border;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Font;
 import java.io.*;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,7 +58,13 @@ public class AsmCodeGenerator {
   public static final String SETUP_METHOD_NAME = "$$$setupUI$$$";
   public static final String GET_ROOT_COMPONENT_METHOD_NAME = "$$$getRootComponent$$$";
   public static final String CREATE_COMPONENTS_METHOD_NAME = "createUIComponents";
+
   private static final Type ourButtonGroupType = Type.getType(ButtonGroup.class);
+  private static final Type ourBorderFactoryType = Type.getType(BorderFactory.class);
+  private static final Type ourBorderType = Type.getType(Border.class);
+  private static final Method ourCreateTitledBorderMethod = Method.getMethod(
+    "javax.swing.border.TitledBorder createTitledBorder(javax.swing.border.Border,java.lang.String,int,int,java.awt.Font,java.awt.Color)");
+
   private NestedFormLoader myFormLoader;
   private final boolean myIgnoreCustomCreation;
 
@@ -343,7 +351,7 @@ public class AsmCodeGenerator {
         boolean creatable = true;
         try {
           final Constructor constructor = componentClass.getConstructor(new Class[0]);
-          if (!constructor.isAccessible()) {
+          if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
             creatable = false;
           }
         }
@@ -661,30 +669,42 @@ public class AsmCodeGenerator {
           if (borderType.equals(BorderType.LINE)) {
             Type colorType = Type.getType(Color.class);
             generator.getStatic(colorType, "black", colorType);
-            generator.invokeStatic(Type.getType(BorderFactory.class),
-                                   new Method(borderFactoryMethodName, Type.getType(Border.class),
+            generator.invokeStatic(ourBorderFactoryType,
+                                   new Method(borderFactoryMethodName, ourBorderType,
                                               new Type[] { Type.getType(Color.class) } ));
           }
           else {
-            generator.invokeStatic(Type.getType(BorderFactory.class),
-                                   new Method(borderFactoryMethodName, Type.getType(Border.class), new Type[0]));
+            generator.invokeStatic(ourBorderFactoryType,
+                                   new Method(borderFactoryMethodName, ourBorderType, new Type[0]));
           }
-          AsmCodeGenerator.pushPropValue(generator, "java.lang.String", borderTitle);
-          // use BorderFactory.createTitledBorder(Border, String)
-          generator.invokeStatic(Type.getType(BorderFactory.class),
-                                 Method.getMethod("javax.swing.border.TitledBorder createTitledBorder(javax.swing.border.Border,java.lang.String)"));
         }
         else {
-          // use BorderFactory.createTitledBorder(String)
-          AsmCodeGenerator.pushPropValue(generator, "java.lang.String", borderTitle);
-          // use BorderFactory.createTitledBorder(Border, String)
-          generator.invokeStatic(Type.getType(BorderFactory.class),
-                                 Method.getMethod("javax.swing.border.TitledBorder createTitledBorder(java.lang.String)"));
+          generator.push((String) null);
         }
+        pushBorderProperties(container, generator, borderTitle);
+        generator.invokeStatic(ourBorderFactoryType, ourCreateTitledBorderMethod);
 
         // set border
         generator.invokeVirtual(Type.getType(JComponent.class),
                                 Method.getMethod("void setBorder(javax.swing.border.Border)"));
+      }
+    }
+
+    private void pushBorderProperties(final LwContainer container, final GeneratorAdapter generator, final StringDescriptor borderTitle) {
+      pushPropValue(generator, "java.lang.String", borderTitle);
+      generator.push(container.getBorderTitleJustification());
+      generator.push(container.getBorderTitlePosition());
+      if (container.getBorderTitleFont() == null) {
+        generator.push((String) null);
+      }
+      else {
+        pushPropValue(generator, Font.class.getName(), container.getBorderTitleFont());
+      }
+      if (container.getBorderTitleColor() == null) {
+        generator.push((String) null);
+      }
+      else {
+        pushPropValue(generator, Color.class.getName(), container.getBorderTitleColor());
       }
     }
   }

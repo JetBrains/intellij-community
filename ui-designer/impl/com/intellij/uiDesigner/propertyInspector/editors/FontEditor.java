@@ -43,7 +43,7 @@ public class FontEditor extends PropertyEditor<FontDescriptor> {
 
   public JComponent getComponent(RadComponent component, FontDescriptor value, boolean inplace) {
     myProject = component.getModule().getProject();
-    myValue = value;
+    myValue = value != null ? value : new FontDescriptor(component.getDelegee().getFont());
     myTextField.setText(IntroFontProperty.descriptorToString(myValue));
     return myTextField;
   }

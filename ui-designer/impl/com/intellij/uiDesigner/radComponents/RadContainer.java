@@ -14,10 +14,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.DropLocation;
-import com.intellij.uiDesigner.lw.ComponentVisitor;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.lw.IContainer;
-import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -61,6 +58,10 @@ public class RadContainer extends RadComponent implements IContainer {
    * this member is <code>null</code>.
    */
   @Nullable private StringDescriptor myBorderTitle;
+  private int myBorderTitleJustification;
+  private int myBorderTitlePosition;
+  private FontDescriptor myBorderTitleFont;
+  private ColorDescriptor myBorderTitleColor;
 
   protected RadLayoutManager myLayoutManager;
 
@@ -390,6 +391,50 @@ public class RadContainer extends RadComponent implements IContainer {
     updateBorder();
   }
 
+  public int getBorderTitleJustification() {
+    return myBorderTitleJustification;
+  }
+
+  public void setBorderTitleJustification(final int borderTitleJustification) {
+    if (myBorderTitleJustification != borderTitleJustification) {
+      myBorderTitleJustification = borderTitleJustification;
+      updateBorder();
+    }
+  }
+
+  public int getBorderTitlePosition() {
+    return myBorderTitlePosition;
+  }
+
+  public void setBorderTitlePosition(final int borderTitlePosition) {
+    if (myBorderTitlePosition != borderTitlePosition) {
+      myBorderTitlePosition = borderTitlePosition;
+      updateBorder();
+    }
+  }
+
+  public FontDescriptor getBorderTitleFont() {
+    return myBorderTitleFont;
+  }
+
+  public void setBorderTitleFont(final FontDescriptor borderTitleFont) {
+    if (!Comparing.equal(myBorderTitleFont, borderTitleFont)) {
+      myBorderTitleFont = borderTitleFont;
+      updateBorder();
+    }
+  }
+
+  public ColorDescriptor getBorderTitleColor() {
+    return myBorderTitleColor;
+  }
+
+  public void setBorderTitleColor(final ColorDescriptor borderTitleColor) {
+    if (!Comparing.equal(myBorderTitleColor, borderTitleColor)) {
+      myBorderTitleColor = borderTitleColor;
+      updateBorder();
+    }
+  }
+
   /**
    * Updates delegee's border
    */
@@ -398,7 +443,10 @@ public class RadContainer extends RadComponent implements IContainer {
     if (myBorderTitle != null) {
       title = ReferenceUtil.resolve(this, myBorderTitle);
     }
-    getDelegee().setBorder(myBorderType.createBorder(title));
+    Font font = (myBorderTitleFont != null) ? myBorderTitleFont.getResolvedFont() : null;
+    Color color = (myBorderTitleColor != null) ? myBorderTitleColor.getResolvedColor() : null;
+    getDelegee().setBorder(myBorderType.createBorder(title, myBorderTitleJustification, myBorderTitlePosition,
+                                                     font, color));
   }
 
   public RadLayoutManager getLayoutManager() {
@@ -430,14 +478,30 @@ public class RadContainer extends RadComponent implements IContainer {
    * Serializes container's border
    */
   protected final void writeBorder(final XmlWriter writer){
-    writer.startElement("border");
+    writer.startElement(UIFormXmlConstants.ELEMENT_BORDER);
     try{
-      writer.addAttribute("type", getBorderType().getId());
+      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_TYPE, getBorderType().getId());
       if (getBorderTitle() != null) {
         final StringDescriptor descriptor = getBorderTitle();
         writer.writeStringDescriptor(descriptor, UIFormXmlConstants.ATTRIBUTE_TITLE,
                                      UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE,
                                      UIFormXmlConstants.ATTRIBUTE_TITLE_KEY);
+      }
+      if (myBorderTitleJustification != 0) {
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_JUSTIFICATION, myBorderTitleJustification);
+      }
+      if (myBorderTitlePosition != 0) {
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_POSITION, myBorderTitlePosition);
+      }
+      if (myBorderTitleFont != null) {
+        writer.startElement(UIFormXmlConstants.ELEMENT_FONT);
+        writer.writeFontDescriptor(myBorderTitleFont);
+        writer.endElement();
+      }
+      if (myBorderTitleColor != null) {
+        writer.startElement(UIFormXmlConstants.ELEMENT_COLOR);
+        writer.writeColorDescriptor(myBorderTitleColor);
+        writer.endElement();
       }
     }finally{
       writer.endElement(); // border
@@ -542,6 +606,10 @@ public class RadContainer extends RadComponent implements IContainer {
       if (border instanceof TitledBorder) {
         TitledBorder titledBorder = (TitledBorder) border;
         setBorderTitle(StringDescriptor.create(titledBorder.getTitle()));
+        setBorderTitleJustification(titledBorder.getTitleJustification());
+        setBorderTitlePosition(titledBorder.getTitlePosition());
+        setBorderTitleFont(new FontDescriptor(titledBorder.getTitleFont()));
+        setBorderTitleColor(new ColorDescriptor(titledBorder.getTitleColor()));
         border = titledBorder.getBorder();
       }
 

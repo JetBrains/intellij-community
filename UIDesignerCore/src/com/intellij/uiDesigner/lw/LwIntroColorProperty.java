@@ -15,11 +15,9 @@
  */
 package com.intellij.uiDesigner.lw;
 
-import com.intellij.uiDesigner.UIFormXmlConstants;
-import org.jdom.Attribute;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author yole
@@ -30,22 +28,6 @@ public class LwIntroColorProperty extends LwIntrospectedProperty {
   }
 
   public Object read(Element element) throws Exception {
-    Attribute attr = element.getAttribute(UIFormXmlConstants.ATTRIBUTE_COLOR);
-    if (attr != null) {
-      return new ColorDescriptor(new Color(attr.getIntValue()));
-    }
-    String swingColor = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_SWING_COLOR);
-    if (swingColor != null) {
-      return ColorDescriptor.fromSwingColor(swingColor);
-    }
-    String systemColor = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_SYSTEM_COLOR);
-    if (systemColor != null) {
-      return ColorDescriptor.fromSystemColor(systemColor);
-    }
-    String awtColor = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_AWT_COLOR);
-    if (awtColor != null) {
-      return ColorDescriptor.fromAWTColor(awtColor);
-    }
-    return new ColorDescriptor(null);
+    return LwXmlReader.getColorDescriptor(element);
   }
 }

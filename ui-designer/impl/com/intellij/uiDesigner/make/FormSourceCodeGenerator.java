@@ -36,6 +36,8 @@ public final class FormSourceCodeGenerator {
   private static Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
   private static Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<String, LayoutSourceGenerator>();
   @NonNls private static TIntObjectHashMap<String> ourFontStyleMap = new TIntObjectHashMap<String>();
+  @NonNls private static TIntObjectHashMap<String> ourTitleJustificationMap = new TIntObjectHashMap<String>();
+  @NonNls private static TIntObjectHashMap<String> ourTitlePositionMap = new TIntObjectHashMap<String>();
 
   static {
     ourComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutSourceGenerator());
@@ -47,6 +49,21 @@ public final class FormSourceCodeGenerator {
     ourFontStyleMap.put(Font.BOLD, "java.awt.Font.BOLD");
     ourFontStyleMap.put(Font.ITALIC, "java.awt.Font.ITALIC");
     ourFontStyleMap.put(Font.BOLD | Font.ITALIC, "java.awt.Font.BOLD | java.awt.Font.ITALIC");
+
+    ourTitlePositionMap.put(0, "javax.swing.border.TitledBorder.DEFAULT_POSITION");
+    ourTitlePositionMap.put(1, "javax.swing.border.TitledBorder.ABOVE_TOP");
+    ourTitlePositionMap.put(2, "javax.swing.border.TitledBorder.TOP");
+    ourTitlePositionMap.put(3, "javax.swing.border.TitledBorder.BELOW_TOP");
+    ourTitlePositionMap.put(4, "javax.swing.border.TitledBorder.ABOVE_BOTTOM");
+    ourTitlePositionMap.put(5, "javax.swing.border.TitledBorder.BOTTOM");
+    ourTitlePositionMap.put(6, "javax.swing.border.TitledBorder.BELOW_BOTTOM");
+
+    ourTitleJustificationMap.put(0, "javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION");
+    ourTitleJustificationMap.put(1, "javax.swing.border.TitledBorder.LEFT");
+    ourTitleJustificationMap.put(2, "javax.swing.border.TitledBorder.CENTER");
+    ourTitleJustificationMap.put(3, "javax.swing.border.TitledBorder.RIGHT");
+    ourTitleJustificationMap.put(4, "javax.swing.border.TitledBorder.LEADING");
+    ourTitleJustificationMap.put(5, "javax.swing.border.TitledBorder.TRAILING");
   }
 
   public FormSourceCodeGenerator(@NotNull final Project project){
@@ -468,39 +485,65 @@ public final class FormSourceCodeGenerator {
     if (component instanceof LwContainer) {
       final LwContainer container = (LwContainer)component;
 
-      // border
-
-      final BorderType borderType = container.getBorderType();
-      final StringDescriptor borderTitle = container.getBorderTitle();
-      final String borderFactoryMethodName = borderType.getBorderFactoryMethodName();
-
-      final boolean borderNone = borderType.equals(BorderType.NONE);
-      if (!borderNone || borderTitle != null) {
-        startMethodCall(variable, "setBorder");
-
-
-        startStaticMethodCall(BorderFactory.class, "createTitledBorder");
-
-        if (!borderNone) {
-          startStaticMethodCall(BorderFactory.class, borderFactoryMethodName);
-          if (borderType.equals(BorderType.LINE)) {
-            pushVar("Color.black");
-          }
-          endMethod();
-        }
-
-        push(borderTitle);
-
-        endMethod(); // createTitledBorder
-
-        endMethod(); // setBorder
-      }
+      generateBorder(container, variable);
 
       for (int i = 0; i < container.getComponentCount(); i++) {
         generateSetupCodeForComponent((LwComponent)container.getComponent(i), component2TempVariable, class2variableIndex, id2component,
                                       module, aClass);
       }
     }
+  }
+
+  private void generateBorder(final LwContainer container, final String variable) {
+    final BorderType borderType = container.getBorderType();
+    final StringDescriptor borderTitle = container.getBorderTitle();
+    final String borderFactoryMethodName = borderType.getBorderFactoryMethodName();
+
+    final boolean borderNone = borderType.equals(BorderType.NONE);
+    if (!borderNone || borderTitle != null) {
+      startMethodCall(variable, "setBorder");
+
+
+      startStaticMethodCall(BorderFactory.class, "createTitledBorder");
+
+      if (!borderNone) {
+        startStaticMethodCall(BorderFactory.class, borderFactoryMethodName);
+        if (borderType.equals(BorderType.LINE)) {
+          pushVar("Color.black");
+        }
+        endMethod();
+      }
+      else if (isCustomBorder(container)) {
+        push((String) null);
+      }
+
+      push(borderTitle);
+
+      if (isCustomBorder(container)) {
+        push(container.getBorderTitleJustification(), ourTitleJustificationMap);
+        push(container.getBorderTitlePosition(), ourTitlePositionMap);
+        if (container.getBorderTitleFont() != null || container.getBorderTitleColor() != null) {
+          if (container.getBorderTitleFont() == null) {
+            push((String) null);
+          }
+          else {
+            pushFont(container.getBorderTitleFont());
+          }
+          if (container.getBorderTitleColor() != null) {
+            pushColor(container.getBorderTitleColor());
+          }
+        }
+      }
+
+      endMethod(); // createTitledBorder
+
+      endMethod(); // setBorder
+    }
+  }
+
+  private static boolean isCustomBorder(final LwContainer container) {
+    return container.getBorderTitleJustification() != 0 || container.getBorderTitlePosition() != 0 ||
+           container.getBorderTitleColor() != null || container.getBorderTitleFont() != null;
   }
 
   private void generateClientProperties(final LwComponent component, final String variable) throws CodeGenerationException {

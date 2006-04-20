@@ -49,6 +49,9 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_VGAP = "vgap";
   public static final String ATTRIBUTE_BORDER_CONSTRAINT = "border-constraint";
   public static final String ATTRIBUTE_FLOW_ALIGN = "flow-align";
+  public static final String ATTRIBUTE_TITLE_JUSTIFICATION = "title-justification";
+  public static final String ATTRIBUTE_TITLE_POSITION = "title-position";
+  public static final String ATTRIBUTE_TYPE = "type";
 
   public static final String ELEMENT_BUTTON_GROUPS = "buttonGroups";
   public static final String ELEMENT_GROUP = "group";
@@ -57,6 +60,9 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_TOOLBAR = "toolbar";
   public static final String ELEMENT_CARD = "card";
   public static final String ELEMENT_CLIENT_PROPERTIES = "clientProperties";
+  public static final String ELEMENT_BORDER = "border";
+  public static final String ELEMENT_FONT = "font";
+  public static final String ELEMENT_COLOR = "color";
 
   public static final String LAYOUT_INTELLIJ = "GridLayoutManager";
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";

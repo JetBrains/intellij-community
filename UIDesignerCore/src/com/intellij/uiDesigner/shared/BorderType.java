@@ -20,6 +20,7 @@ import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.Color;
+import java.awt.Font;
 
 /**
  * @author Vladimir Kondratyev
@@ -51,9 +52,13 @@ public final class BorderType {
     return myName;
   }
 
-  public Border createBorder(final String title){
+  public Border createBorder(final String title,
+                             final int titleJustification,
+                             final int titlePosition,
+                             final Font titleFont,
+                             final Color titleColor){
     if (title != null) {
-      return BorderFactory.createTitledBorder(myBorder, title);
+      return BorderFactory.createTitledBorder(myBorder, title, titleJustification, titlePosition, titleFont, titleColor);
     }
     else {
       return myBorder;

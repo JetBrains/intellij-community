@@ -47,6 +47,10 @@ public class LwContainer extends LwComponent implements IContainer{
    * this member is <code>null</code>.
    */
   private StringDescriptor myBorderTitle;
+  private int myBorderTitleJustification;
+  private int myBorderTitlePosition;
+  private FontDescriptor myBorderTitleFont;
+  private ColorDescriptor myBorderTitleColor;
   private LayoutManager myLayout;
   private String myLayoutManager;
   protected LayoutSerializer myLayoutSerializer;
@@ -170,6 +174,22 @@ public class LwContainer extends LwComponent implements IContainer{
     myBorderTitle=title;
   }
 
+  public int getBorderTitleJustification() {
+    return myBorderTitleJustification;
+  }
+
+  public int getBorderTitlePosition() {
+    return myBorderTitlePosition;
+  }
+
+  public FontDescriptor getBorderTitleFont() {
+    return myBorderTitleFont;
+  }
+
+  public ColorDescriptor getBorderTitleColor() {
+    return myBorderTitleColor;
+  }
+
   /**
    * TODO[anton,vova] looks like it is better to pass contraints tag
    * 
@@ -185,9 +205,9 @@ public class LwContainer extends LwComponent implements IContainer{
   /**
    * 'border' is required subtag
    */
-  protected final void readBorder(final Element element){
-    final Element borderElement = LwXmlReader.getRequiredChild(element, "border");
-    setBorderType(BorderType.valueOf(LwXmlReader.getRequiredString(borderElement, "type")));
+  protected final void readBorder(final Element element) {
+    final Element borderElement = LwXmlReader.getRequiredChild(element, UIFormXmlConstants.ELEMENT_BORDER);
+    setBorderType(BorderType.valueOf(LwXmlReader.getRequiredString(borderElement, UIFormXmlConstants.ATTRIBUTE_TYPE)));
 
     StringDescriptor descriptor = LwXmlReader.getStringDescriptor(borderElement,
                                                                   UIFormXmlConstants.ATTRIBUTE_TITLE,
@@ -195,6 +215,22 @@ public class LwContainer extends LwComponent implements IContainer{
                                                                   UIFormXmlConstants.ATTRIBUTE_TITLE_KEY);
     if (descriptor != null) {
       setBorderTitle(descriptor);
+    }
+
+    myBorderTitleJustification = LwXmlReader.getOptionalInt(borderElement, UIFormXmlConstants.ATTRIBUTE_TITLE_JUSTIFICATION, 0);
+    myBorderTitlePosition = LwXmlReader.getOptionalInt(borderElement, UIFormXmlConstants.ATTRIBUTE_TITLE_POSITION, 0);
+    Element fontElement = LwXmlReader.getChild(borderElement, UIFormXmlConstants.ELEMENT_FONT);
+    if (fontElement != null) {
+      myBorderTitleFont = LwXmlReader.getFontDescriptor(fontElement);
+    }
+    Element colorElement = LwXmlReader.getChild(borderElement, UIFormXmlConstants.ELEMENT_COLOR);
+    if (colorElement != null) {
+      try {
+        myBorderTitleColor = LwXmlReader.getColorDescriptor(colorElement);
+      }
+      catch (Exception e) {
+        myBorderTitleColor = null;
+      }
     }
   }
 

@@ -189,9 +189,7 @@ public final class XmlReader {
       //noinspection ConstantConditions
       final LwContainer lwContainer = (LwContainer)lwComponent;
 
-      // border
-      container.setBorderType(lwContainer.getBorderType());
-      container.setBorderTitle(lwContainer.getBorderTitle());
+      copyBorder(container, lwContainer);
 
       // add children
       for (int i=0; i < lwContainer.getComponentCount(); i++){
@@ -211,6 +209,15 @@ public final class XmlReader {
 
     component.doneLoadingFromLw();
     return component;
+  }
+
+  private static void copyBorder(final RadContainer container, final LwContainer lwContainer) {
+    container.setBorderType(lwContainer.getBorderType());
+    container.setBorderTitle(lwContainer.getBorderTitle());
+    container.setBorderTitleJustification(lwContainer.getBorderTitleJustification());
+    container.setBorderTitlePosition(lwContainer.getBorderTitlePosition());
+    container.setBorderTitleFont(lwContainer.getBorderTitleFont());
+    container.setBorderTitleColor(lwContainer.getBorderTitleColor());
   }
 
   private static RadErrorComponent createErrorComponent(final Module module, final String id, final LwComponent lwComponent, final ClassLoader loader) {

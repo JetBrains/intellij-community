@@ -1,17 +1,16 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.FontRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.FontEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +23,7 @@ import java.lang.reflect.Method;
  * @author yole
  */
 public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
-  private MyFontRenderer myFontRenderer = new MyFontRenderer();
+  private FontRenderer myFontRenderer = new FontRenderer();
   private FontEditor myFontEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroFontProperty_";
 
@@ -33,15 +32,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   }
 
   public void write(@NotNull FontDescriptor value, XmlWriter writer) {
-    Font font = value.getFont();
-    if (font != null) {
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_NAME, font.getName());
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SIZE, font.getSize());
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_STYLE, font.getStyle());
-    }
-    else if (value.getSwingFont() != null) {
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SWING_FONT, value.getSwingFont());
-    }
+    writer.writeFontDescriptor(value);
   }
 
   @NotNull public PropertyRenderer<FontDescriptor> getRenderer() {
@@ -71,6 +62,9 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   }
 
   public static String descriptorToString(final FontDescriptor value) {
+    if (value == null) {
+      return "";
+    }
     Font font = value.getFont();
     if (font != null) {
       return fontToString(font);
@@ -91,12 +85,6 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
       result.append(" ").append(UIDesignerBundle.message("font.chooser.italic"));
     }
     return result.toString();
-  }
-
-  private static class MyFontRenderer extends LabelPropertyRenderer<FontDescriptor> {
-    protected void customize(FontDescriptor value) {
-      setText(descriptorToString(value));
-    }
   }
 
   @Override public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {

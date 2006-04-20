@@ -15,10 +15,9 @@
  */
 package com.intellij.uiDesigner.lw;
 
-import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Font;
 
 /**
  * @author yole
@@ -29,12 +28,6 @@ public class LwIntroFontProperty extends LwIntrospectedProperty {
   }
 
   public Object read(Element element) throws Exception {
-    String fontName = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_NAME);
-    if (fontName != null) {
-      int fontSize = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_SIZE);
-      int fontStyle = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_STYLE);
-      return new FontDescriptor(new Font(fontName, fontStyle, fontSize));
-    }
-    return FontDescriptor.fromSwingFont(LwXmlReader.getRequiredString(element, UIFormXmlConstants.ATTRIBUTE_SWING_FONT));
+    return LwXmlReader.getFontDescriptor(element);
   }
 }

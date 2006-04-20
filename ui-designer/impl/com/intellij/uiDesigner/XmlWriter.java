@@ -2,12 +2,16 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.lw.ColorDescriptor;
+import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.Dimension;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.Stack;
 
 /**
@@ -154,6 +158,34 @@ public final class XmlWriter{
     else{ // via resource bundle
       addAttribute(bundleAttr, descriptor.getBundleName());
       addAttribute(keyAttr, descriptor.getKey());
+    }
+  }
+
+  public void writeColorDescriptor(final ColorDescriptor value) {
+    Color color = value.getColor();
+    if (color != null) {
+      addAttribute(UIFormXmlConstants.ATTRIBUTE_COLOR, color.getRGB());
+    }
+    else if (value.getSwingColor() != null) {
+      addAttribute(UIFormXmlConstants.ATTRIBUTE_SWING_COLOR, value.getSwingColor());
+    }
+    else if (value.getSystemColor() != null) {
+      addAttribute(UIFormXmlConstants.ATTRIBUTE_SYSTEM_COLOR, value.getSystemColor());
+    }
+    else if (value.getAWTColor() != null) {
+      addAttribute(UIFormXmlConstants.ATTRIBUTE_AWT_COLOR, value.getAWTColor());
+    }
+  }
+
+  public void writeFontDescriptor(final FontDescriptor value) {
+    Font font = value.getFont();
+    if (font != null) {
+      addAttribute(UIFormXmlConstants.ATTRIBUTE_NAME, font.getName());
+      addAttribute(UIFormXmlConstants.ATTRIBUTE_SIZE, font.getSize());
+      addAttribute(UIFormXmlConstants.ATTRIBUTE_STYLE, font.getStyle());
+    }
+    else if (value.getSwingFont() != null) {
+      addAttribute(UIFormXmlConstants.ATTRIBUTE_SWING_FONT, value.getSwingFont());
     }
   }
 }

@@ -2,23 +2,24 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.propertyInspector.properties.IntroFontProperty;
-import com.intellij.uiDesigner.lw.FontDescriptor;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.lw.FontDescriptor;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroFontProperty;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
-import java.awt.*;
+import java.awt.Font;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Enumeration;
 
 /**
  * @author yole
@@ -106,7 +107,7 @@ public class FontEditorDialog extends DialogWrapper {
     return myValue;
   }
 
-  public void setValue(final FontDescriptor value) {
+  public void setValue(@NotNull final FontDescriptor value) {
     myValue = value;
     final Font font = myValue.getFont();
     if (font != null) {

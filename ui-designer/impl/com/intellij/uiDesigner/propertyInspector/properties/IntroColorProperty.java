@@ -1,9 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -11,6 +9,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.ColorEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.ColorRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,19 +42,7 @@ public class IntroColorProperty extends IntrospectedProperty<ColorDescriptor> {
   }
 
   public void write(@NotNull ColorDescriptor value, XmlWriter writer) {
-    Color color = value.getColor();
-    if (color != null) {
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_COLOR, color.getRGB());
-    }
-    else if (value.getSwingColor() != null) {
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SWING_COLOR, value.getSwingColor());
-    }
-    else if (value.getSystemColor() != null) {
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SYSTEM_COLOR, value.getSystemColor());
-    }
-    else if (value.getAWTColor() != null) {
-      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_AWT_COLOR, value.getAWTColor());
-    }
+    writer.writeColorDescriptor(value);
   }
 
   @Override public ColorDescriptor getValue(final RadComponent component) {
