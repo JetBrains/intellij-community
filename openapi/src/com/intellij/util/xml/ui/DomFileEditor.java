@@ -105,6 +105,19 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
                                                           final DomElement element,
                                                           final CaptionComponent captionComponent,
                                                           final CommittablePanel committablePanel) {
+
+    final XmlFile file = element.getRoot().getFile();
+    return new DomFileEditor(file.getProject(), file.getVirtualFile(), name,
+                             createComponentWithCaption(committablePanel, captionComponent, element)) {
+      public JComponent getPreferredFocusedComponent() {
+        return null;
+      }
+    };
+  }
+
+  public static BasicDomElementComponent createComponentWithCaption(final CommittablePanel committablePanel,
+                                                                     final CaptionComponent captionComponent,
+                                                                     final DomElement element) {
     final JComponent component1 = committablePanel.getComponent();
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(captionComponent, BorderLayout.NORTH);
@@ -118,12 +131,6 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
 
     component.addComponent(committablePanel);
     component.addComponent(captionComponent);
-
-    final XmlFile file = element.getRoot().getFile();
-    return new DomFileEditor(file.getProject(), file.getVirtualFile(), name, component) {
-      public JComponent getPreferredFocusedComponent() {
-        return null;
-      }
-    };
+    return component;
   }
 }
