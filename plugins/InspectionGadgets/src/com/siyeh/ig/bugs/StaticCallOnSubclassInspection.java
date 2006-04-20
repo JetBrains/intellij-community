@@ -48,7 +48,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
         final PsiClass referencedClass = (PsiClass)infos[1];
         return InspectionGadgetsBundle.message(
                 "static.method.via.subclass.problem.descriptor",
-                declaringClass.getText(), referencedClass.getText());
+                declaringClass.getQualifiedName(), referencedClass.getQualifiedName());
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
