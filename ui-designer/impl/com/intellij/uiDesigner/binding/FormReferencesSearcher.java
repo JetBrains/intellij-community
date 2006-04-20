@@ -11,30 +11,37 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author max
  */
 public class FormReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
-    final SearchScope scope = p.getScope();
-    if (scope instanceof GlobalSearchScope) {
-      final PsiElement refElement = p.getElementToSearch();
-      if (refElement instanceof PsiPackage) {
-        if (!UIFormUtil.processReferencesInUIForms(consumer, (PsiPackage)refElement, (GlobalSearchScope)scope)) return false;
-      }
-      else if (refElement instanceof PsiClass) {
-        if (!UIFormUtil.processReferencesInUIForms(consumer, (PsiClass)refElement, (GlobalSearchScope)scope)) return false;
-      }
-      else if (refElement instanceof PsiField) {
-        if (!UIFormUtil.processReferencesInUIForms(consumer, (PsiField)refElement, (GlobalSearchScope)scope)) return false;
-      }
-      else if (refElement instanceof Property) {
-        if (!UIFormUtil.processReferencesInUIForms(consumer, (Property)refElement, (GlobalSearchScope)scope)) return false;
-      }
-      else if (refElement instanceof PropertiesFile) {
-        if (!UIFormUtil.processReferencesInUIForms(consumer, (PropertiesFile)refElement, (GlobalSearchScope)scope)) return false;
-      }
+    final PsiElement refElement = p.getElementToSearch();
+    final VirtualFile virtualFile = refElement.getContainingFile().getVirtualFile();
+    if (virtualFile == null) return true;
+    Module module = ProjectRootManager.getInstance(refElement.getProject()).getFileIndex().getModuleForFile(virtualFile);
+    final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(module);
+    if (refElement instanceof PsiPackage) {
+      //no need to do anything
+      //if (!UIFormUtil.processReferencesInUIForms(consumer, (PsiPackage)refElement, scope)) return false;
+    }
+    else if (refElement instanceof PsiClass) {
+      if (!UIFormUtil.processReferencesInUIForms(consumer, (PsiClass)refElement, scope)) return false;
+    }
+    else if (refElement instanceof PsiField) {
+      if (!UIFormUtil.processReferencesInUIForms(consumer, (PsiField)refElement, scope)) return false;
+    }
+    else if (refElement instanceof Property) {
+      //no need to do anything
+      //if (!UIFormUtil.processReferencesInUIForms(consumer, (Property)refElement, scope)) return false;
+    }
+    else if (refElement instanceof PropertiesFile) {
+      //no need to do anything
+      //if (!UIFormUtil.processReferencesInUIForms(consumer, (PropertiesFile)refElement, scope)) return false;
     }
 
     return true;
