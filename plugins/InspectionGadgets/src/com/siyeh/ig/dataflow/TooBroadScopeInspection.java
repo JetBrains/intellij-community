@@ -33,6 +33,8 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -210,7 +212,6 @@ public class TooBroadScopeInspection extends StatementInspection
             // remove final when PsiDeclarationFactory adds one by mistake
             newModifierList.setModifierProperty(PsiModifier.FINAL,
                     variable.hasModifierProperty(PsiModifier.FINAL));
-
             final PsiAnnotation[] annotations = modifierList.getAnnotations();
             for (PsiAnnotation annotation : annotations)
             {
@@ -241,6 +242,15 @@ public class TooBroadScopeInspection extends StatementInspection
             final StatusBar statusBar = windowManager.getStatusBar(project);
             statusBar.setInfo(InspectionGadgetsBundle.message(
                     "too.broad.scope.status.bar.remove.highlighting.message"));
+            final FindManager findmanager = FindManager.getInstance(project);
+            FindModel findmodel = findmanager.getFindNextModel();
+            if(findmodel == null)
+            {
+                findmodel = findmanager.getFindInFileModel();
+            }
+            findmodel.setSearchHighlighters(true);
+            findmanager.setFindWasPerformed();
+            findmanager.setFindNextModel(findmodel);
         }
 
         private static PsiDeclarationStatement moveDeclarationToLocation(
@@ -259,7 +269,6 @@ public class TooBroadScopeInspection extends StatementInspection
                 statementParent = statement.getParent();
             }
             assert statementParent != null;
-
             final PsiExpression initializer = variable.getInitializer();
             if (initializer == null &&
                 statement instanceof PsiExpressionStatement)
@@ -277,13 +286,11 @@ public class TooBroadScopeInspection extends StatementInspection
                     if (location.equals(lExpression))
                     {
                         PsiDeclarationStatement newDeclaration=
-                                createNewDeclaration(
-                                        variable,
+                                createNewDeclaration(variable,
                                         assignmentExpression.getRExpression());
-                        newDeclaration =
-                                (PsiDeclarationStatement)statementParent
-                                .addBefore(newDeclaration,
-                                           statement);
+                        newDeclaration = (PsiDeclarationStatement)
+                                statementParent.addBefore(newDeclaration,
+                                        statement);
                         final PsiElement parent =
                                 assignmentExpression.getParent();
                         assert parent != null;
