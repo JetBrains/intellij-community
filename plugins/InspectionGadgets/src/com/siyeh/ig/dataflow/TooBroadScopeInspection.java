@@ -203,7 +203,7 @@ public class TooBroadScopeInspection extends StatementInspection
             final PsiDeclarationStatement newDeclaration =
                     factory.createVariableDeclarationStatement(
                             variable.getName(), variable.getType(),
-                            initializer, false);
+                            initializer);
             final PsiLocalVariable newVariable =
                     (PsiLocalVariable)newDeclaration.getDeclaredElements()[0];
             final PsiModifierList newModifierList =

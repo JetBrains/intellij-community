@@ -147,8 +147,8 @@ public class MoveDeclarationIntention extends Intention {
     final PsiElementFactory factory = manager.getElementFactory();
     final PsiDeclarationStatement newDeclaration =
       factory.createVariableDeclarationStatement(
-        variable.getName(), variable.getType(), initializer,
-        true);
+        variable.getName(), variable.getType(), initializer
+      );
     if (variable.hasModifierProperty(PsiModifier.FINAL)) {
       final PsiLocalVariable newVariable =
         (PsiLocalVariable)newDeclaration.getDeclaredElements()[0];
