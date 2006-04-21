@@ -3,24 +3,23 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Function;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author peter
@@ -73,9 +72,8 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
             }
           };
           DialogBuilder builder = new DialogBuilder(project);
-          JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
           builder.setDimensionServiceKey("TextControl");
-          builder.setCenterPanel(scrollPane);
+          builder.setCenterPanel(textArea);
           builder.setPreferedFocusComponent(textArea);
           builder.setTitle(UIBundle.message("big.text.control.window.title"));
           builder.addCloseButton();
@@ -90,6 +88,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
   }
 
   private static EditorEx makeBigEditor(final EditorEx editor) {
+    editor.setVerticalScrollbarVisible(true);
     editor.setOneLineMode(false);
     editor.getComponent().setPreferredSize(new JTextArea(10, 50).getPreferredSize());
     return editor;
