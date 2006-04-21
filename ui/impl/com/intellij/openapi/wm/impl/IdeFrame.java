@@ -167,7 +167,9 @@ public class IdeFrame extends JFrame implements DataProvider {
     if (myProject != null) {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable(){
         public void run() {
-          myRootPane.installNavigationBar(project);
+          if (myRootPane != null) {
+            myRootPane.installNavigationBar(project);
+          }
         }
       });
     } else {
