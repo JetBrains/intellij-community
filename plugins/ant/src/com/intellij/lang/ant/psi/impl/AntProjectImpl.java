@@ -33,12 +33,9 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private Map<String, AntTypeDefinition> myTypeDefinitions;
   private AntTypeDefinition[] myTypeDefinitionArrays;
   private AntTypeDefinition myTargetDefinition;
-  private final Project myProject;
 
   public AntProjectImpl(final AntFileImpl parent, final XmlTag tag) {
     super(parent, tag);
-    myProject = new Project();
-    myProject.init();
     myDefinition = createProjectDefinition();
   }
 
@@ -130,40 +127,19 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   public AntTypeDefinition getBaseTypeDefinition(final String taskClassName) {
     if (myTypeDefinitions != null) return myTypeDefinitions.get(taskClassName);
     myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
-    final Hashtable ht = myProject.getTaskDefinitions();
+    Project project = new Project();
+    project.init();
+    final Hashtable ht = project.getTaskDefinitions();
     if (ht == null) return null;
     // first pass creates taskdefinitons without nested elements
     final Enumeration tasks = ht.keys();
     while (tasks.hasMoreElements()) {
       final String taskName = (String)tasks.nextElement();
       final Class taskClass = (Class)ht.get(taskName);
-      final IntrospectionHelper helper = getHelperExceptionSafe(taskClass);
-      if (helper == null) continue;
-      final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
-      final Enumeration attrEnum = helper.getAttributes();
-      while (attrEnum.hasMoreElements()) {
-        String attr = (String)attrEnum.nextElement();
-        final Class attrClass = helper.getAttributeType(attr);
-        if (int.class.equals(attrClass)) {
-          attributes.put(attr, AntAttributeType.INTEGER);
-        }
-        else if (boolean.class.equals(attrClass)) {
-          attributes.put(attr, AntAttributeType.BOOLEAN);
-        }
-        else {
-          attributes.put(attr, AntAttributeType.STRING);
-        }
+      AntTypeDefinition def = createTypeDefinition(new AntTypeId(taskName, getSourceElement().getNamespace()), taskClass);
+      if (def != null) {
+        myTypeDefinitions.put(def.getClassName(), def);
       }
-      final HashMap<AntTypeId, String> nestedDefinitions = new HashMap<AntTypeId, String>();
-      final Enumeration nestedEnum = helper.getNestedElements();
-      while (nestedEnum.hasMoreElements()) {
-        final String nestedElement = (String)nestedEnum.nextElement();
-        final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
-        nestedDefinitions.put(new AntTypeId(nestedElement), className);
-      }
-      AntTypeDefinition def = new AntTypeDefinitionImpl(new AntTypeId(taskName, getSourceElement().getNamespace()), taskClass.getName(),
-                                                        true, attributes, nestedDefinitions);
-      myTypeDefinitions.put(def.getClassName(), def);
     }
     return myTypeDefinitions.get(taskClassName);
   }
@@ -208,6 +184,34 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     final AntTypeDefinition def = getTargetDefinition();
     projectElements.put(def.getTypeId(), def.getClassName());
     return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs, projectElements);
+  }
+
+  static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class taskClass) {
+    final IntrospectionHelper helper = getHelperExceptionSafe(taskClass);
+    if (helper == null) return null;
+    final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
+    final Enumeration attrEnum = helper.getAttributes();
+    while (attrEnum.hasMoreElements()) {
+      String attr = (String)attrEnum.nextElement();
+      final Class attrClass = helper.getAttributeType(attr);
+      if (int.class.equals(attrClass)) {
+        attributes.put(attr, AntAttributeType.INTEGER);
+      }
+      else if (boolean.class.equals(attrClass)) {
+        attributes.put(attr, AntAttributeType.BOOLEAN);
+      }
+      else {
+        attributes.put(attr, AntAttributeType.STRING);
+      }
+    }
+    final HashMap<AntTypeId, String> nestedDefinitions = new HashMap<AntTypeId, String>();
+    final Enumeration nestedEnum = helper.getNestedElements();
+    while (nestedEnum.hasMoreElements()) {
+      final String nestedElement = (String)nestedEnum.nextElement();
+      final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
+      nestedDefinitions.put(new AntTypeId(nestedElement), className);
+    }
+    return new AntTypeDefinitionImpl(id, taskClass.getName(), true, attributes, nestedDefinitions);
   }
 
   private static IntrospectionHelper getHelperExceptionSafe(Class c) {

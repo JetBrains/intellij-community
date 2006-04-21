@@ -11,6 +11,7 @@ import org.apache.tools.ant.Target;
 import org.apache.tools.ant.taskdefs.CallTarget;
 import org.apache.tools.ant.taskdefs.Property;
 import org.apache.tools.ant.taskdefs.Taskdef;
+import org.apache.tools.ant.taskdefs.Typedef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -78,7 +79,12 @@ public class AntElementFactory {
       });
       ourAntTypeToKnownAntElementCreatorMap.put(Taskdef.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntTaskDefImpl(parent, tag, parent.getAntProject().getBaseTypeDefinition(CallTarget.class.getName()));
+          return new AntTypeDefImpl(parent, tag, parent.getAntProject().getBaseTypeDefinition(Taskdef.class.getName()));
+        }
+      });
+      ourAntTypeToKnownAntElementCreatorMap.put(Typedef.class.getName(), new AntElementCreator() {
+        public AntElement create(final AntElement parent, final XmlTag tag) {
+          return new AntTypeDefImpl(parent, tag, parent.getAntProject().getBaseTypeDefinition(Typedef.class.getName()));
         }
       });
     }

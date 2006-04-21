@@ -34,7 +34,7 @@ public class AntAnnotator implements Annotator {
           final AntTypeDefinition parentDef = pe.getTypeDefinition();
           if (parentDef != null && parentDef.getNestedClassName(def.getTypeId()) == null) {
             final TextRange textRange = new TextRange(0, name.length()).shiftRight(se.getSourceElement().getTextOffset());
-            holder.createErrorAnnotation(textRange, AntBundle.getMessage("nested.element.is.not.allowed.here"));
+            holder.createErrorAnnotation(textRange, AntBundle.getMessage("nested.element.is.not.allowed.here", name));
           }
         }
       }
@@ -45,9 +45,10 @@ public class AntAnnotator implements Annotator {
   private static void checkValidAttributes(AntStructuredElement se, AntTypeDefinition def, AnnotationHolder holder) {
     final XmlTag sourceElement = se.getSourceElement();
     for (XmlAttribute attr : sourceElement.getAttributes()) {
-      final AntAttributeType type = def.getAttributeType(attr.getName());
+      final String name = attr.getName();
+      final AntAttributeType type = def.getAttributeType(name);
       if (type == null) {
-        holder.createErrorAnnotation(se, AntBundle.getMessage("attribute.is.not.allowed.for.the.task"));
+        holder.createErrorAnnotation(se, AntBundle.getMessage("attribute.is.not.allowed.here", name));
       }
       else {
         final String value = attr.getValue();
@@ -56,7 +57,7 @@ public class AntAnnotator implements Annotator {
             Integer.parseInt(value);
           }
           catch (NumberFormatException e) {
-            holder.createErrorAnnotation(attr, AntBundle.getMessage("integer.attribute.has.invalid.value"));
+            holder.createErrorAnnotation(attr, AntBundle.getMessage("integer.attribute.has.invalid.value", name));
           }
         }
       }
