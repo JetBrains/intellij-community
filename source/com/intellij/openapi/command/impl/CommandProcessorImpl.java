@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -263,6 +264,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "CommandProcessor";
   }

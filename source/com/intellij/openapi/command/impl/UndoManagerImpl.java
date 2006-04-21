@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -102,6 +103,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "UndoManager";
   }
@@ -185,7 +187,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
-  
+
   public void dropHistory() {
     // Run dummy command in order to drop all mergers...
     CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(),
@@ -506,7 +508,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return null;
   }
 
-  private DocumentReference findInvalidatedReferenceByUrl(Collection<DocumentReference> collection, String url) {
+  private static DocumentReference findInvalidatedReferenceByUrl(Collection<DocumentReference> collection, String url) {
     for (final DocumentReference documentReference : collection) {
       if (documentReference.equalsByUrl(url)) return documentReference;
     }
