@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.io.File;
 
 public class CompilerConfiguration implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
@@ -98,6 +99,14 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
       LOG.error(e);
     }
     return Collections.emptyList();
+  }
+
+  public static String getTestsExternalCompilerHome() {
+    String compilerHome = System.getProperty(TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME, null);
+    if (compilerHome == null) {
+      compilerHome = new File(System.getProperty("java.home")).getParentFile().getAbsolutePath();
+    }
+    return compilerHome;
   }
 
   private static Pattern compilePattern(@NonNls String s) throws MalformedPatternException {
@@ -225,7 +234,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   public static boolean isPatternNegated(String wildcardPattern) {
     return wildcardPattern.length() > 1 && wildcardPattern.charAt(0) == '!';
   }
-  
+
   public boolean isResourceFile(String name) {
     for (int i = 0; i < myWildcardCompiledPatterns.size(); i++) {
       Pattern pattern = myWildcardCompiledPatterns.get(i);

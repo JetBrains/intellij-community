@@ -178,44 +178,38 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
                                        final VirtualFile fileInExplodedPath,
                                        final boolean jarEnabled,
                                        final VirtualFile jarFile,
-                                       Map<String, VirtualFile> explodedFilesMap) {
+                                       String relativePathToModuleOutputRoot) {
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     VirtualFile virtualFile = localFileSystem.findFileByPath(FileUtil.toSystemIndependentName(getFile().getPath()));
     if (virtualFile == null) return;
 
-    addFileItemsRecursively(virtualFile, getOutputRelativePath(), fileInExplodedPath, explodedFilesMap, items, targetModule, isExplodedEnabled, jarEnabled, jarFile);
+    final String outputRelativePath = MakeUtil.trimForwardSlashes(MakeUtil.appendToPath(relativePathToModuleOutputRoot, getOutputRelativePath()));
+    addFileItemsRecursively(virtualFile, outputRelativePath, fileInExplodedPath, items, targetModule, isExplodedEnabled, jarEnabled, jarFile);
   }
 
   private void addFileItemsRecursively(@NotNull final VirtualFile virtualFile,
                                        final String outputRelativePath,
                                        final VirtualFile fileInExplodedPath,
-                                       Map<String, VirtualFile> explodedFilesMap,
                                        final Map<VirtualFile, InstructionProcessingItem> items,
                                        final Module targetModule,
                                        final boolean isExplodedEnabled,
                                        final boolean jarEnabled,
-                                       final VirtualFile jarFile
-  ) {
+                                       final VirtualFile jarFile) {
     if (myFileFilter != null && !myFileFilter.accept(new File(virtualFile.getPath()))) return;
     if (virtualFile.isDirectory()) {
       VirtualFile[] children = virtualFile.getChildren();
       VirtualFile[] explodedChildren = fileInExplodedPath == null ? null : fileInExplodedPath.getChildren();
       if (explodedChildren == null) explodedChildren = VirtualFile.EMPTY_ARRAY;
-      if (explodedFilesMap == null) {
-        explodedFilesMap = new THashMap<String, VirtualFile>();
-      }
+      Map<String, VirtualFile> explodedFilesMap = new THashMap<String, VirtualFile>();
       for (VirtualFile file : explodedChildren) {
-        String childRelativePath = MakeUtil.appendToPath(outputRelativePath, file.getName());
-        explodedFilesMap.put(childRelativePath, file);
+        explodedFilesMap.put(file.getName(), file);
       }
 
       for (final VirtualFile child : children) {
-        String childRelativePath = MakeUtil.appendToPath(outputRelativePath, child.getName());
-        VirtualFile childFileInExploded = fileInExplodedPath == null ? null : explodedFilesMap.get(childRelativePath);
+        VirtualFile childFileInExploded = fileInExplodedPath == null ? null : explodedFilesMap.get(child.getName());
         addFileItemsRecursively(child,
-                                childRelativePath,
+                                MakeUtil.appendToPath(outputRelativePath, child.getName()),
                                 childFileInExploded,
-                                explodedFilesMap,
                                 items,
                                 targetModule,
                                 isExplodedEnabled,
