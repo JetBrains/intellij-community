@@ -695,7 +695,21 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       }
     }
     else{
+      final ASTNode treePrev = child.getTreePrev();
+      final ASTNode treeNext = child.getTreeNext();
       XmlTagImpl.super.deleteChildInternal(child);
+      if(treePrev != null && treeNext != null &&
+         treePrev.getElementType() == XmlElementType.XML_TEXT && treeNext.getElementType() == XmlElementType.XML_TEXT){
+        final XmlText prevText = (XmlText)treePrev.getPsi();
+        final XmlText nextText = (XmlText)treeNext.getPsi();
+        try {
+          prevText.setValue(prevText.getValue() + nextText.getValue());
+          nextText.delete();
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
     }
   }
 
