@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
@@ -52,6 +53,7 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
         "]]>".toCharArray(),
         0, 3, -1,
         dummyParent.getCharTable()));
+    dummyParent.acceptTree(new GeneratedMarkerVisitor());
     return dummyParent;
   }
 }

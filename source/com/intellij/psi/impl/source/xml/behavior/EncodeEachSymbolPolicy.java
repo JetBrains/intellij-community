@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
@@ -33,7 +34,7 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
       TreeUtil.addChildren(dummyParent, (TreeElement)super.encodeXmlTextContents(plainSection, text, charTableByTree));
     }
 
-
+    dummyParent.acceptTree(new GeneratedMarkerVisitor());
     return dummyParent.getFirstChildNode();
   }
 

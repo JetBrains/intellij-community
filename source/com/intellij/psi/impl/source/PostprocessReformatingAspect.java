@@ -140,9 +140,14 @@ public class PostprocessReformatingAspect implements PomModelAspect {
 
   public void doPostponedFormatting(){
     final FileViewProvider[] viewProviders = myReformatElements.keySet().toArray(new FileViewProvider[myReformatElements.size()]);
-    for (int i = 0; i < viewProviders.length; i++) {
-      final FileViewProvider viewProvider = viewProviders[i];
-      doPostponedFormatting(viewProvider);
+    try{
+      for (int i = 0; i < viewProviders.length; i++) {
+        final FileViewProvider viewProvider = viewProviders[i];
+        doPostponedFormatting(viewProvider);
+      }
+    }
+    finally{
+      myReformatElements.clear();
     }
   }
 
