@@ -10,7 +10,6 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +28,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
         if (!myParentElement.isValid()) return NO_CHILDREN;
 
         final List<? extends DomElement> domChildren = myChildDescription.getValues(myParentElement);
-        final List<SimpleNode> simpleNodes = new ArrayList<SimpleNode>(domChildren.size());
+        final List<SimpleNode> simpleNodes = new ArrayList<SimpleNode>();
         for (DomElement domChild : domChildren) {
             if (shouldBeShowed(domChild.getDomElementType())) {
                 simpleNodes.add(new BaseDomElementNode(domChild, this));
@@ -47,25 +46,20 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
 
         clearColoredText();
 
-        final int childrenCount = myChildDescription.getValues(myParentElement).size();
-
         final boolean showErrors = !isExpanded() && hasErrors();
+        final int childrenCount = getChildren().length;
 
         if (childrenCount > 0) {
-            addColoredFragment(getNodeName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, showErrors
-                                                                                                        ? SimpleTextAttributes
-              .ERROR_ATTRIBUTES.getFgColor()
-                                                                                                        : SimpleTextAttributes
-                                                                                                          .REGULAR_ATTRIBUTES
-                                                                                                          .getFgColor()));
+            addColoredFragment(getNodeName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, showErrors ? SimpleTextAttributes
+              .ERROR_ATTRIBUTES.getFgColor() : SimpleTextAttributes
+              .REGULAR_ATTRIBUTES
+              .getFgColor()));
 
             addColoredFragment(" (" + childrenCount + ')',
                                showErrors ? J2EEBundle.message("dom.elements.tree.childs.contain.errors") : null,
-                               new SimpleTextAttributes(Font.ITALIC, Color.gray));
+                               SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
         } else {
-            addColoredFragment(getNodeName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD,
-                                                                       SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor()));
-
+            addColoredFragment(getNodeName(), SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
         }
 
         return true;

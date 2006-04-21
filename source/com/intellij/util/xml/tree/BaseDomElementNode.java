@@ -14,114 +14,138 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
 import java.util.*;
+import java.util.List;
+import java.lang.reflect.Type;
 
 
 public class BaseDomElementNode extends AbstractDomElementNode {
-  public static final Key<Comparator> COMPARATOR_KEY = Key.create("COMPARATOR_KEY");
-  public static final Key<Boolean> SHOW_PROPERTIES_KEY = Key.create("SHOW_PROPERTIES_KEY");
+    public static final Key<Comparator> COMPARATOR_KEY = Key.create("COMPARATOR_KEY");
+    public static final Key<List<Class>> CONSOLIDATED_NODES_KEY = Key.create("CONSOLIDATED_NODES_KEY");
+    public static final Key<List<Class>> FOLDER_NODES_KEY = Key.create("FOLDER_NODES_KEY");
 
-  private final DomElement myDomElement;
-  private final String myTagName;
+    private final DomElement myDomElement;
+    private final String myTagName;
+    private final boolean folder;
 
+    public BaseDomElementNode(final DomElement modelElement) {
+        this(modelElement, null);
+    }
 
-  public BaseDomElementNode(final DomElement modelElement) {
-    this(modelElement, null);
-  }
+    public BaseDomElementNode(final DomElement modelElement, SimpleNode parent) {
+        super(parent);
 
-  public BaseDomElementNode(final DomElement modelElement, SimpleNode parent) {
-    super(parent);
+        myDomElement = modelElement;
+        myTagName = modelElement.getXmlElementName();
+        folder = isMarkedType(modelElement.getDomElementType(), FOLDER_NODES_KEY);
+    }
 
-    myDomElement = modelElement;
-    myTagName = modelElement.getXmlElementName();
-  }
+    public SimpleNode[] getChildren() {
+        return doGetChildren(myDomElement);
+    }
 
-  public SimpleNode[] getChildren() {
-    return doGetChildren(myDomElement);
-  }
+    protected final SimpleNode[] doGetChildren(final DomElement element) {
+        if (!element.isValid()) return NO_CHILDREN;
 
-  protected final SimpleNode[] doGetChildren(final DomElement element) {
-    if (!element.isValid()) return NO_CHILDREN;
-
-    List<SimpleNode> children = new ArrayList<SimpleNode>();
-
-    for (DomFixedChildDescription description : element.getGenericInfo().getFixedChildrenDescriptions()) {
-      final List<? extends DomElement> values = description.getValues(element);
-      if (shouldBeShowed(description.getType())) {
-        if (DomUtil.isGenericValueType(description.getType())) {
-          for (DomElement domElement : values) {
-            children.add(new GenericValueNode((GenericDomValue)domElement, this));
-          }
-        } else {
-          for (DomElement domElement : values) {
-            children.add(new BaseDomElementNode(domElement, this));
-          }
+        List<SimpleNode> children = new ArrayList<SimpleNode>();
+        List<DomFixedChildDescription> descriptions = element.getGenericInfo().getFixedChildrenDescriptions();
+        for (DomFixedChildDescription description : descriptions) {
+            final List<? extends DomElement> values = description.getValues(element);
+            if (shouldBeShowed(description.getType())) {
+                if (DomUtil.isGenericValueType(description.getType())) {
+                    for (DomElement domElement : values) {
+                        children.add(new GenericValueNode((GenericDomValue)domElement, this));
+                    }
+                } else {
+                    for (DomElement domElement : values) {
+                        children.add(new BaseDomElementNode(domElement, this));
+                    }
+                }
+            }
         }
-      }
+
+        final List<DomCollectionChildDescription> collectionChildrenDescriptions =
+          element.getGenericInfo().getCollectionChildrenDescriptions();
+        for (DomCollectionChildDescription description : collectionChildrenDescriptions) {
+            if (shouldBeShowed(description.getType())) {
+                DomElementsGroupNode groupNode = new DomElementsGroupNode(element, description);
+                if (isMarkedType(description.getType(), CONSOLIDATED_NODES_KEY)) {
+                    Collections.addAll(children, groupNode.getChildren());
+                } else {
+                    children.add(groupNode);
+                }
+            }
+        }
+
+        AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[children.size()]);
+
+        final Comparator<AbstractDomElementNode> comparator = myDomElement.getRoot().getUserData(COMPARATOR_KEY);
+        if (comparator != null) {
+            Arrays.sort(childrenNodes, comparator);
+        }
+
+        return childrenNodes;
     }
 
-    final List<DomCollectionChildDescription> collectionChildrenDescriptions = element.getGenericInfo().getCollectionChildrenDescriptions();
-    for (DomCollectionChildDescription description : collectionChildrenDescriptions) {
-      if (shouldBeShowed(description.getType())) {
-        children.add(new DomElementsGroupNode(element, description));
-      }
+    public Object[] getEqualityObjects() {
+        return new Object[]{myDomElement};
     }
 
-    AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[children.size()]);
+    protected boolean doUpdate() {
+        if (!myDomElement.isValid()) return true;
 
-    final Comparator<AbstractDomElementNode> comparator = myDomElement.getRoot().getUserData(COMPARATOR_KEY);
-    if (comparator != null) {
-      Arrays.sort(childrenNodes, comparator);
+        setUniformIcon(getNodeIcon());
+        clearColoredText();
+
+        final List<DomElementProblemDescriptor> problems = DomElementAnnotationsManager.getInstance()
+          .getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
+
+        if (problems.size() > 0) {
+            addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems),
+                               SimpleTextAttributes.ERROR_ATTRIBUTES); //new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.BLACK, Color.RED)
+        } else if (myDomElement.getXmlTag() == null) {
+            addColoredFragment(getNodeName(), folder ? SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        } else if (folder) {
+            addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            final int childrenCount = getChildren().length;
+            addColoredFragment(" (" + childrenCount + ')',
+                               SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+        } else {
+            addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+
+        return true;
     }
 
-    return childrenNodes;
-  }
-
-  protected boolean showGenericValues() {
-    final Boolean showProperties = myDomElement.getRoot().getUserData(SHOW_PROPERTIES_KEY);
-    return showProperties != null && showProperties;
-  }
-
-  public Object[] getEqualityObjects() {
-    return new Object[]{myDomElement};
-  }
-
-  protected boolean doUpdate() {
-    if (!myDomElement.isValid()) return true;
-
-    setUniformIcon(getNodeIcon());
-    clearColoredText();
-    boolean isExpanded = isExpanded();
-
-    final List<DomElementProblemDescriptor> problems = DomElementAnnotationsManager.getInstance().getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
-    if (problems.size() > 0) {
-      addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems), SimpleTextAttributes.ERROR_ATTRIBUTES); //new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.BLACK, Color.RED)
-    } else  if (myDomElement.getXmlTag() != null) {
-      addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    } else {
-      addColoredFragment(getNodeName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    protected boolean isMarkedType(Type type, Key<List<Class>> key) {
+        if (type == null) {
+            return false;
+        }
+        final List<Class> classes = getDomElement().getRoot().getUserData(key);
+        if (classes != null) {
+            Class clazz = DomUtil.getRawType(type);
+            return classes.contains(clazz);
+        }
+        return false;
     }
 
-    return true;
-  }
+    protected boolean highlightIfChildrenHasProblems() {
+        return true;
+    }
 
-  protected boolean highlightIfChildrenHasProblems() {
-    return true;
-  }
+    public String getNodeName() {
+        final String name = myDomElement.getPresentation().getElementName();
+        return name != null ? name : getPropertyName();
+    }
 
-  public String getNodeName() {
-    final String name = myDomElement.getPresentation().getElementName();
-    return name != null ? name : getPropertyName();
-  }
+    public String getTagName() {
+        return myTagName;
+    }
 
-  public String getTagName() {
-    return myTagName;
-  }
+    public DomElement getDomElement() {
+        return myDomElement;
+    }
 
-  public DomElement getDomElement() {
-    return myDomElement;
-  }
-
-  public boolean isAutoExpandNode() {
-    return getParent() == null;
-  }
+    public boolean isAutoExpandNode() {
+        return getParent() == null;
+    }
 }
