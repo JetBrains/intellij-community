@@ -223,6 +223,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   // serialize all updates to avoid mixing them
   public void startUpdatingProblemsInScope(final CompileScope compileScope) {
+    if (1==1) return; //todo removed for now
     myUpdateProblemsAlarm.addRequest(new Runnable() {
       public void run() {
         myCompileScope = compileScope;
@@ -241,6 +242,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   public void finishUpdatingProblems() {
+    if (1==1) return; //todo removed for now
     myUpdateProblemsAlarm.addRequest(new Runnable() {
       public void run() {
         // remove not added problems
