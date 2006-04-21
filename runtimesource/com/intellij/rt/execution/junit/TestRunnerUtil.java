@@ -3,15 +3,15 @@ package com.intellij.rt.execution.junit;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import junit.textui.TestRunner;
 import junit.runner.BaseTestRunner;
+import junit.textui.TestRunner;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
 import java.util.Vector;
@@ -102,20 +102,26 @@ public class TestRunnerUtil {
         try {
           Method suiteMethod = testClass.getMethod(BaseTestRunner.SUITE_METHODNAME, new Class[0]);
           if (!Modifier.isStatic(suiteMethod.getModifiers())) {
-            runFailed(ourBundle.getString("junit.suite.must.be.static"));
+            String message = MessageFormat.format(ourBundle.getString("junit.suite.must.be.static"), new Object[]{testClass.getName()});
+            System.err.println(message);
+            //runFailed(message);
             return null;
           }
           try {
             test = (Test)suiteMethod.invoke(null, new Class[0]); // static method
           }
-          catch (InvocationTargetException e) {
-            runner.runFailed(MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"),
-                                                  new Object[]{e.getTargetException().toString()}));
-            return null;
+          catch (final InvocationTargetException e) {
+            final String message = MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"), new Object[]{testClass + " " + e.getTargetException().toString()});
+            //System.err.println(message);
+            //runner.runFailed(message);
+            runner.clearStatus();
+            return new FailedTestCase(testClass, BaseTestRunner.SUITE_METHODNAME, message, e);
           }
           catch (IllegalAccessException e) {
-            runner.runFailed(MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"), new Object[]{e.toString()}));
-            return null;
+            String message = MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"), new Object[]{testClass + " " + e.toString()});
+            //System.err.println(message);
+            //runner.runFailed(message);
+            return new FailedTestCase(testClass, BaseTestRunner.SUITE_METHODNAME, message, e);
           }
         }
         catch (Exception e) {
@@ -174,13 +180,13 @@ public class TestRunnerUtil {
         return null;
       }
       catch (Exception e1) {
-        runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[] {e1.toString()}));
-        return null;
+        String message = MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[]{e1.toString()});
+        return new FailedTestCase(testClass, methodName, message, e1);
       }
     }
     catch (Exception e) {
-      runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[] {e.toString()}));
-      return null;
+      String message = MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[]{e.toString()});
+      return new FailedTestCase(testClass, methodName, message, e);
     }
   }
 
@@ -190,8 +196,27 @@ public class TestRunnerUtil {
   }
 
   public static String testsFoundInPackageMesage(int testCount, String name) {
-    String message = MessageFormat.format(ourBundle.getString("tests.found.in.package"), new Object[]{Integer.valueOf(testCount), name});
+    return MessageFormat.format(ourBundle.getString("tests.found.in.package"), new Object[]{new Integer(testCount), name});
+  }
 
-    return message;
+  public static class FailedTestCase extends TestCase {
+    private final String myMethodName;
+    private final String myMessage;
+    private final Throwable myThrowable;
+
+    public FailedTestCase(final Class testClass, final String methodName, final String message, final Throwable e) {
+      super(testClass.getName());
+      myMethodName = methodName;
+      myMessage = message;
+      myThrowable = e;
+    }
+
+    public String getMethodName() {
+      return myMethodName;
+    }
+
+    protected void runTest() throws Throwable {
+      throw new RuntimeException(myMessage, myThrowable);
+    }
   }
 }

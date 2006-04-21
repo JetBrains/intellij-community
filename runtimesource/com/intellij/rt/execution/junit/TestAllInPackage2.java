@@ -11,14 +11,13 @@ public class TestAllInPackage2 extends TestSuite {
     for (int i = 0; i < classMethodNames.length; i++) {
       String classMethodName = classMethodNames[i];
       Test suite = TestRunnerUtil.createClassOrMethodSuite(runner, classMethodName);
-      if (suite == null) {
-        return;
+      if (suite != null) {
+        if (suite instanceof TestSuite && ((TestSuite)suite).getName() == null) {
+          attachSuiteInfo(suite, classMethodName);
+        }
+        addTest(suite);
+        testClassCount++;
       }
-      if (suite instanceof TestSuite && ((TestSuite)suite).getName() == null) {
-        attachSuiteInfo(suite, classMethodName);
-      }
-      addTest(suite);
-      testClassCount++;
     }
     String message = TestRunnerUtil.testsFoundInPackageMesage(testClassCount, name);
     System.out.println(message);

@@ -2,6 +2,7 @@ package com.intellij.rt.execution.junit.segments;
 
 import com.intellij.rt.execution.junit.TestAllInPackage2;
 import com.intellij.rt.execution.junit.JUnit4API;
+import com.intellij.rt.execution.junit.TestRunnerUtil;
 import junit.extensions.TestDecorator;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -58,6 +59,9 @@ public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFac
   private void addStringRepresentation(Test test, Packet packet) {
     if (JUnit4API != null && JUnit4API.isJUnit4TestMethodAdapter(test)) {
       addTestMethod(packet, ((TestCase)test).getName(), JUnit4API.getJUnit4MethodAdapterClassName(test));
+    }
+    else if (test instanceof TestRunnerUtil.FailedTestCase) {
+      addTestMethod(packet, ((TestRunnerUtil.FailedTestCase)test).getMethodName(), ((TestCase)test).getName());
     }
     else if (test instanceof TestCase) {
       addTestMethod(packet, ((TestCase)test).getName(), test.getClass().getName());
