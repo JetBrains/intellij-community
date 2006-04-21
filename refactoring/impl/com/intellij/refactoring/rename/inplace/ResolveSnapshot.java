@@ -63,7 +63,7 @@ public class ResolveSnapshot {
           if (refereeClass == referentClass ||
               refereeClass.getName() != null) {  //otherwise cannot qualify anonymous referee class
             @NonNls String qualifer = refereeClass == referentClass ? "this" :
-                refereeClass.getName() + "this.";
+                refereeClass.getName() + ".this";
             String qualifiedRefText = qualifer + "." + ref.getText();
             PsiElementFactory elementFactory = PsiManager.getInstance(referentClass.getProject()).getElementFactory();
             try {
