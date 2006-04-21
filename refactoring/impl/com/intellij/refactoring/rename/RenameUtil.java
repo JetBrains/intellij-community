@@ -498,8 +498,9 @@ public class RenameUtil {
     catch (final IncorrectOperationException e) {
       // may happen if the file or package cannot be renamed. e.g. locked by another application
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error(e);
-        return;
+        throw new RuntimeException(e);
+        //LOG.error(e);
+        //return;
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
