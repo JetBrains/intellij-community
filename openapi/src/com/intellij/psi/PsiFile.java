@@ -75,6 +75,7 @@ public interface PsiFile extends PsiFileSystemItem {
    *
    * @return the array of PSI roots, or a single-element array containing <code>this</code>
    * if the file has only a single language.
+   * @deprecated
    */
   @NotNull PsiFile[] getPsiRoots();
 
