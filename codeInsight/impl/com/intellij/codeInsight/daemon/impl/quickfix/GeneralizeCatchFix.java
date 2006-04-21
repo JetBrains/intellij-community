@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class GeneralizeCatchFix implements IntentionAction {
 //  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix");
@@ -22,23 +23,24 @@ public class GeneralizeCatchFix implements IntentionAction {
     myUnhandledException = unhandledException;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("generalize.catch.text",
                                   HighlightUtil.formatType(myCatchParameter.getType()),
                                   HighlightUtil.formatType(myUnhandledException));
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("generalize.catch.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    PsiElement element1 = myElement.getContainingFile();
     if (!(myElement != null
-        && myElement.isValid()
-        && myUnhandledException != null
-        && myUnhandledException.isValid()
-        && element1.getManager().isInProject(element1))) return false;
+          && myElement.isValid()
+          && myUnhandledException != null
+          && myUnhandledException.isValid()
+          && myElement.getManager().isInProject(myElement))) return false;
     // final enclosing try
     PsiElement element = myElement;
     while (element != null) {
@@ -56,7 +58,6 @@ public class GeneralizeCatchFix implements IntentionAction {
     PsiParameter[] catchBlockParameters = myTryStatement.getCatchBlockParameters();
     for (PsiParameter catchBlockParameter : catchBlockParameters) {
       PsiType type = catchBlockParameter.getType();
-      if (type == null) continue;
       if (myUnhandledException.isAssignableFrom(type)) {
         myCatchParameter = catchBlockParameter;
         break;
