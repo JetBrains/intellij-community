@@ -93,7 +93,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
     result.append("public " + className + "(){\n");
     result.append("setContentPane(contentPane);\n");
     result.append("setModal(true);\n");
-    result.append("getMainComponent().setDefaultButton(buttonOK);\n");
+    result.append("getRootPane().setDefaultButton(buttonOK);\n");
 
     if (generateOK) {
       result.append("\n");
