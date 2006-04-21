@@ -4,9 +4,6 @@ import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.DomElement;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.jsf.model.FacesIcon;
-
-import javax.swing.*;
 
 public class GenericValueNode extends AbstractDomElementNode {
   protected GenericDomValue myModelElement;
