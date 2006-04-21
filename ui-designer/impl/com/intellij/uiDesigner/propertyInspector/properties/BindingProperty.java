@@ -83,7 +83,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
       if (component.isCustomCreateRequired()) {
         throw new Exception(UIDesignerBundle.message("error.custom.create.binding.required"));
       }
-      checkRemoveUnusedField(component, component.getBinding());
+      checkRemoveUnusedField(component, component.getBinding(), FormEditingUtil.getNextSaveUndoGroupId(myProject));
       component.setBinding(null);
       component.setCustomCreate(false);
       return;
@@ -122,7 +122,8 @@ public final class BindingProperty extends Property<RadComponent, String> {
 
     if(oldBinding == null) {
       if (aClass.findFieldByName(value, true) == null) {
-        CreateFieldFix.runImpl(myProject, root, aClass, component.getComponentClassName(), value, false);
+        CreateFieldFix.runImpl(myProject, root, aClass, component.getComponentClassName(), value, false,
+                               FormEditingUtil.getNextSaveUndoGroupId(myProject));
       }
       return;
     }
@@ -133,7 +134,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     }
 
     if(aClass.findFieldByName(value, true) != null) {
-      checkRemoveUnusedField(component, oldBinding);
+      checkRemoveUnusedField(component, oldBinding, FormEditingUtil.getNextSaveUndoGroupId(myProject));
       return;
     }
 
@@ -201,7 +202,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     return null;
   }
 
-  public static void checkRemoveUnusedField(final RadComponent component, final String fieldName) {
+  public static void checkRemoveUnusedField(final RadComponent component, final String fieldName, final Object undoGroupId) {
     final PsiField oldBindingField = findBoundField(component, fieldName);
     if (oldBindingField == null) {
       return;
@@ -228,7 +229,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
                   }
                 }
               },
-              UIDesignerBundle.message("command.delete.unused.field"), null
+              UIDesignerBundle.message("command.delete.unused.field"), undoGroupId
             );
           }
         }

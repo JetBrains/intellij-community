@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
@@ -91,7 +92,7 @@ public final class FormEditingUtil {
       FormEditingUtil.iterate(component, new ComponentVisitor() {
         public boolean visit(final IComponent c) {
           RadComponent rc = (RadComponent) c;
-          BindingProperty.checkRemoveUnusedField(rc, rc.getBinding());
+          BindingProperty.checkRemoveUnusedField(rc, rc.getBinding(), null);
           deletedComponentIds.add(rc.getId());
           return true;
         }
@@ -663,6 +664,11 @@ public final class FormEditingUtil {
       throw new RuntimeException(e);
     }
     return aClass.findMethodBySignature(method, true);
+  }
+
+  public static Object getNextSaveUndoGroupId(final Project project) {
+    final GuiEditor guiEditor = UIDesignerToolWindowManager.getInstance(project).getActiveFormEditor();
+    return guiEditor == null ? null : guiEditor.getNextSaveGroupId();
   }
 
   public static interface StringDescriptorVisitor<T extends IComponent> {

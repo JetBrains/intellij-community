@@ -16,6 +16,7 @@ import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -42,16 +43,15 @@ public final class CreateFieldFix extends QuickFix{
 
   /**
    * @param showErrors if <code>true</code> the error messages will be shown to the
-   * user. Otherwise method works silently.
+   * @param undoGroupId the group used to undo the action together with some other action.
    */
-  public static void runImpl(
-    @NotNull final Project project,
-    @NotNull final RadContainer rootContainer,
-    @NotNull final PsiClass boundClass,
-    @NotNull final String fieldClassName,
-    @NotNull final String fieldName,
-    final boolean showErrors
-  ){
+  public static void runImpl(@NotNull final Project project,
+                             @NotNull final RadContainer rootContainer,
+                             @NotNull final PsiClass boundClass,
+                             @NotNull final String fieldClassName,
+                             @NotNull final String fieldName,
+                             final boolean showErrors,
+                             @Nullable final Object undoGroupId) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -96,7 +96,7 @@ public final class CreateFieldFix extends QuickFix{
               }
             },
             UIDesignerBundle.message("command.create.field"),
-            null
+            undoGroupId
           );
         }
       }
@@ -145,6 +145,6 @@ public final class CreateFieldFix extends QuickFix{
   }
 
   public void run() {
-    runImpl(myEditor.getProject(), myEditor.getRootContainer(), myClass, myFieldClassName, myFieldName, true);
+    runImpl(myEditor.getProject(), myEditor.getRootContainer(), myClass, myFieldClassName, myFieldName, true, null);
   }
 }

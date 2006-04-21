@@ -171,6 +171,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private MyPaletteKeyListener myPaletteKeyListener;
   private MyPaletteDragListener myPaletteDragListener;
   private ComponentPtr mySelectionAnchor;
+  /**
+   * Undo group ID for undoing actions that need to be undone together with the form modification.
+   */
+  private Object myNextSaveGroupId = new Object();
 
   /**
    * @param file file to be edited
@@ -369,6 +373,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
     saveToFile();
   }
 
+  public Object getNextSaveGroupId() {
+    return myNextSaveGroupId;
+  }
+
   private static void refreshImpl(final RadComponent component) {
     if (component.getParent() != null) {
       final Dimension size = component.getSize();
@@ -539,7 +547,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
           }
         });
       }
-    }, "UI Designer Save", null);
+    }, "UI Designer Save", myNextSaveGroupId);
+    myNextSaveGroupId = new Object();
 
     fireHierarchyChanged();
   }

@@ -67,7 +67,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
    * @param component component which property should be set
    * @param value new propertie's value
    *
-   * @exception java.lang.Exception if passed <code>value</code> cannot
+   * @exception Exception if passed <code>value</code> cannot
    * be applied to the <code>component</code>. Note, the exception's
    * message will be shown to the user.
    */

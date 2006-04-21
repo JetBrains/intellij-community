@@ -189,8 +189,8 @@ public final class InsertComponentProcessor extends EventProcessor {
                                      aClass,
                                      insertedComponent.getComponentClassName(),
                                      binding,
-                                     false // silently skip all errors (if any)
-              );
+                                     false, // silently skip all errors (if any)
+                                     null);
             }
           }
         );
