@@ -241,14 +241,19 @@ public class CharArrayUtil {
     int lastTextFound = 0;
     for(int i = charsSequence.length() - 1; i >= 0; i--){
       final char charAt = charsSequence.charAt(i);
-      final boolean isPlainWhitespace = Character.isWhitespace(charAt) && charAt != '\n';
-      if(whitespaceEnd >= 0){
-        if(isPlainWhitespace) continue;
-        if(charAt == '\n') result.add(new TextRange(i, whitespaceEnd + 1).shiftRight(shift));
+      final boolean isWhitespace = Character.isWhitespace(charAt);
+      if(charAt == '\n'){
+        result.add(new TextRange(i, (whitespaceEnd >= 0 ? whitespaceEnd : i) + 1).shiftRight(shift));
+        whitespaceEnd = -1;
+      }
+      else if(whitespaceEnd >= 0 ){
+        if(isWhitespace){
+          continue;
+        }
         else lastTextFound = result.size();
         whitespaceEnd = -1;
       }
-      else if(isPlainWhitespace){
+      else if(isWhitespace){
         whitespaceEnd = i;
       }
     }
@@ -256,5 +261,14 @@ public class CharArrayUtil {
     if(lastTextFound < result.size())
       result = result.subList(0, lastTextFound);
     return result.toArray(new TextRange[result.size()]);
+  }
+
+  public static boolean containLineBreaks(CharSequence seq) {
+    if (seq == null) return false;
+    for (int i = 0; i < seq.length(); i++) {
+      final char c = seq.charAt(i);
+      if (c == '\n' || c == '\r') return true;
+    }
+    return false;
   }
 }

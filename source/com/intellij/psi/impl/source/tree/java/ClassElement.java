@@ -80,7 +80,7 @@ public class ClassElement extends RepositoryTreeElement {
       next = child.getTreeNext();
       if (child.getElementType() == ElementType.METHOD && ((PsiMethod)SourceTreeToPsiMap.treeElementToPsi(child)).isConstructor()) {
         ASTNode oldIdentifier = ((CompositeElement)child).findChildByRole(ChildRole.NAME);
-        ASTNode newIdentifier = (ASTNode)findChildByRole(ChildRole.NAME).clone();
+        ASTNode newIdentifier = findChildByRole(ChildRole.NAME).copyElement();
         newIdentifier.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(this));
         child.replaceChild(oldIdentifier, newIdentifier);
       }

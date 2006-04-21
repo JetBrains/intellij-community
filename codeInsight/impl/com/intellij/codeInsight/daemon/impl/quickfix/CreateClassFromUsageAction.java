@@ -16,10 +16,10 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
     "#com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromUsageAction");
 
   private final boolean myCreateInterface;
-  private final PsiJavaCodeReferenceElement myRefElement;
+  private final SmartPsiElementPointer myRefElement;
 
   public CreateClassFromUsageAction(PsiJavaCodeReferenceElement refElement, boolean createInterface) {
-    myRefElement = refElement;
+    myRefElement = SmartPointerManager.getInstance(refElement.getProject()).createLazyPointer(refElement);
     myCreateInterface = createInterface;
   }
 
@@ -33,29 +33,31 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    if (CreateFromUsageUtils.isValidReference(myRefElement, true)) {
+    if (CreateFromUsageUtils.isValidReference(getRefElement(), true)) {
       return;
     }
-    String superClassName = null;
-    if (myRefElement.getParent().getParent() instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)myRefElement.getParent().getParent();
-      if (method.getThrowsList() == myRefElement.getParent()) {
+    final String superClassName;
+    if (getRefElement().getParent().getParent()instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)getRefElement().getParent().getParent();
+      if (method.getThrowsList() == getRefElement().getParent()) {
         superClassName = "java.lang.Exception";
       }
+      else superClassName = null;
     }
-    final PsiClass aClass = CreateFromUsageUtils.createClass(myRefElement, myCreateInterface, superClassName);
+    else superClassName = null;
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
+          final PsiClass aClass = CreateFromUsageUtils.createClass(getRefElement(), myCreateInterface, superClassName);
           if (aClass == null) return;
           try {
-            myRefElement.bindToElement(aClass);
+            getRefElement().bindToElement(aClass);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
           }
 
-          OpenFileDescriptor descriptor = new OpenFileDescriptor(myRefElement.getProject(), aClass.getContainingFile().getVirtualFile(),
+          OpenFileDescriptor descriptor = new OpenFileDescriptor(getRefElement().getProject(), aClass.getContainingFile().getVirtualFile(),
                                                                  aClass.getTextOffset());
           FileEditorManager.getInstance(aClass.getProject()).openTextEditor(descriptor, true);
         }
@@ -68,43 +70,43 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   protected PsiElement getElement() {
-    if (!myRefElement.isValid() || !myRefElement.getManager().isInProject(myRefElement)) return null;
-    if (!CreateFromUsageUtils.isValidReference(myRefElement, true) &&
-        myRefElement.getReferenceNameElement() != null && checkClassName(myRefElement.getReferenceName())) {
-      PsiElement parent = myRefElement.getParent();
+    if (!getRefElement().isValid() || !getRefElement().getManager().isInProject(getRefElement())) return null;
+    if (!CreateFromUsageUtils.isValidReference(getRefElement(), true) &&
+        getRefElement().getReferenceNameElement() != null && checkClassName(getRefElement().getReferenceName())) {
+      PsiElement parent = getRefElement().getParent();
 
       if (parent instanceof PsiTypeElement) {
-        if (parent.getParent() instanceof PsiReferenceParameterList) return myRefElement;
+        if (parent.getParent() instanceof PsiReferenceParameterList) return getRefElement();
 
         while (parent.getParent() instanceof PsiTypeElement) parent = parent.getParent();
         if (parent.getParent() instanceof PsiVariable || parent.getParent() instanceof PsiMethod ||
             parent.getParent() instanceof PsiClassObjectAccessExpression ||
             parent.getParent() instanceof PsiTypeCastExpression ||
             (parent.getParent() instanceof PsiInstanceOfExpression && ((PsiInstanceOfExpression)parent.getParent()).getCheckType() == parent)) {
-          return myRefElement;
+          return getRefElement();
         }
       }
       else if (parent instanceof PsiReferenceList) {
         if (parent.getParent() instanceof PsiClass) {
           PsiClass psiClass = (PsiClass)parent.getParent();
           if (psiClass.getExtendsList() == parent) {
-            if (!myCreateInterface && !psiClass.isInterface()) return myRefElement;
-            if (myCreateInterface && psiClass.isInterface()) return myRefElement;
+            if (!myCreateInterface && !psiClass.isInterface()) return getRefElement();
+            if (myCreateInterface && psiClass.isInterface()) return getRefElement();
           }
-          if (psiClass.getImplementsList() == parent && myCreateInterface) return myRefElement;
+          if (psiClass.getImplementsList() == parent && myCreateInterface) return getRefElement();
         }
         else if (parent.getParent() instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)parent.getParent();
-          if (method.getThrowsList() == parent && !myCreateInterface) return myRefElement;
+          if (method.getThrowsList() == parent && !myCreateInterface) return getRefElement();
         }
       }
-      else if (parent instanceof PsiAnonymousClass && ((PsiAnonymousClass)parent).getBaseClassReference() == myRefElement) {
-        return myRefElement;
+      else if (parent instanceof PsiAnonymousClass && ((PsiAnonymousClass)parent).getBaseClassReference() == getRefElement()) {
+        return getRefElement();
       }
     }
 
-    if (myRefElement instanceof PsiReferenceExpression) {
-      PsiReferenceExpression referenceExpression = (PsiReferenceExpression)myRefElement;
+    if (getRefElement()instanceof PsiReferenceExpression) {
+      PsiReferenceExpression referenceExpression = (PsiReferenceExpression)getRefElement();
 
       PsiElement parent = referenceExpression.getParent();
 
@@ -128,11 +130,11 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   protected boolean isAvailableImpl(int offset) {
-    PsiElement nameElement = myRefElement.getReferenceNameElement();
+    PsiElement nameElement = getRefElement().getReferenceNameElement();
     if (nameElement == null) return false;
-    PsiElement parent = myRefElement.getParent();
+    PsiElement parent = getRefElement().getParent();
     if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) return false;
-    if (shouldShowTag(offset, nameElement, myRefElement)) {
+    if (shouldShowTag(offset, nameElement, getRefElement())) {
       setText(getText(nameElement.getText()));
       return true;
     }
@@ -146,5 +148,9 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
 
   public boolean startInWriteAction() {
     return false;
+  }
+
+  public PsiJavaCodeReferenceElement getRefElement() {
+    return (PsiJavaCodeReferenceElement)myRefElement.getElement();
   }
 }

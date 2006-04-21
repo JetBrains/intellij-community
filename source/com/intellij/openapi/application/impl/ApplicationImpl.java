@@ -1,6 +1,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.PostprocessReformatingAspect;import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.HashMap;
@@ -677,10 +679,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         myWriteActionsStack.push(action);
       }
       action.run();
-      writeActionPostprocessing();
     }
     finally {
       synchronized (myWriteActionsStack) {
+        if(myWriteActionsStack.size() == 1) writeActionPostprocessing();
         myWriteActionsStack.pop();
       }
       fireWriteActionFinished(action);

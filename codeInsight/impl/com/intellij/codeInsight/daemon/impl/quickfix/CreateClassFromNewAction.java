@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -21,18 +20,22 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromNewAction");
-  private final PsiNewExpression myNewExpression;
+  private final SmartPsiElementPointer myNewExpression;
 
   public CreateClassFromNewAction(PsiNewExpression newExpression) {
-    myNewExpression = newExpression;
+    myNewExpression = SmartPointerManager.getInstance(newExpression.getProject()).createSmartPsiElementPointer(newExpression);
+  }
+
+  private PsiNewExpression getNewExpression() {
+    return (PsiNewExpression)myNewExpression.getElement();
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    PsiManager psiManager = myNewExpression.getManager();
+    PsiManager psiManager = getNewExpression().getManager();
     final Project project = psiManager.getProject();
     final PsiElementFactory elementFactory = psiManager.getElementFactory();
 
-    final PsiClass psiClass = CreateFromUsageUtils.createClass(getReferenceElement(myNewExpression), false, null);
+    final PsiClass psiClass = CreateFromUsageUtils.createClass(getReferenceElement(getNewExpression()), false, null);
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
@@ -40,20 +43,20 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
             PsiClass aClass = psiClass;
             if (aClass == null) return;
 
-            setupInheritance(myNewExpression, aClass);
-            setupGenericParameters(myNewExpression, aClass);
+            setupInheritance(getNewExpression(), aClass);
+            setupGenericParameters(getNewExpression(), aClass);
 
-            PsiExpressionList argList = myNewExpression.getArgumentList();
+            PsiExpressionList argList = getNewExpression().getArgumentList();
             if (argList != null && argList.getExpressions().length > 0) {
               PsiMethod constructor = elementFactory.createConstructor();
               constructor = (PsiMethod) aClass.add(constructor);
 
               TemplateBuilder templateBuilder = new TemplateBuilder(aClass);
-              CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(myNewExpression));
+              CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(getNewExpression()));
 
               setupSuperCall(aClass, constructor, templateBuilder);
 
-              getReferenceElement(myNewExpression).bindToElement(aClass);
+              getReferenceElement(getNewExpression()).bindToElement(aClass);
               aClass = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(aClass);
               Template template = templateBuilder.buildTemplate();
 
@@ -123,7 +126,7 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
   private void setupInheritance(PsiNewExpression element, PsiClass targetClass) throws IncorrectOperationException {
     if ((element.getParent() instanceof PsiReferenceExpression)) return;
 
-    ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(myNewExpression.getProject()).getExpectedTypes(element, false);
+    ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(getNewExpression().getProject()).getExpectedTypes(element, false);
 
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       PsiType type = expectedType.getType();
@@ -163,10 +166,10 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
   }
 
   protected PsiElement getElement() {
-    if (!myNewExpression.isValid() || !myNewExpression.getManager().isInProject(myNewExpression)) return null;
-    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(myNewExpression);
+    if (!getNewExpression().isValid() || !getNewExpression().getManager().isInProject(getNewExpression())) return null;
+    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(getNewExpression());
     if (referenceElement == null) return null;
-    if (referenceElement.getReferenceNameElement() instanceof PsiIdentifier) return myNewExpression;
+    if (referenceElement.getReferenceNameElement() instanceof PsiIdentifier) return getNewExpression();
 
     return null;
   }
@@ -179,14 +182,14 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
   }
 
   protected boolean isAvailableImpl(int offset) {
-    PsiElement nameElement = getNameElement(myNewExpression);
+    PsiElement nameElement = getNameElement(getNewExpression());
 
-    PsiFile targetFile = getTargetFile(myNewExpression);
+    PsiFile targetFile = getTargetFile(getNewExpression());
     if (targetFile != null && !targetFile.getManager().isInProject(targetFile)) {
       return false;
     }
 
-    if (shouldShowTag(offset, nameElement, myNewExpression)) {
+    if (shouldShowTag(offset, nameElement, getNewExpression())) {
       setText(QuickFixBundle.message("create.class.from.new.text", nameElement.getText()));
       return true;
     }

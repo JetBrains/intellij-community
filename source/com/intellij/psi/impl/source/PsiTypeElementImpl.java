@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
@@ -38,19 +39,24 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public PsiType getType() {
     if (myCachedType != null) return myCachedType;
 
-    if (getFirstChildNode().getTreeNext() == null && PRIMITIVE_TYPE_BIT_SET.contains(getFirstChildNode().getElementType())) {
-      myCachedType = getManager().getElementFactory().createPrimitiveType(getFirstChildNode().getText());
-    }
-    else if (getFirstChildNode().getElementType() == ElementType.TYPE) {
-      PsiType componentType = ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode())).getType();
-      myCachedType = getLastChildNode().getElementType() == ElementType.ELLIPSIS ? new PsiEllipsisType(componentType) : componentType.createArrayType();
-    }
-    else if (getFirstChildNode().getElementType() == ElementType.JAVA_CODE_REFERENCE) {
-      myCachedType = new PsiClassReferenceType(getReferenceElement());
-    }
-    else if (getFirstChildNode().getElementType() == ElementType.QUEST) {
-      PsiType temp = createWildcardType();
-      myCachedType = temp;
+    TreeElement element = getFirstChildNode();
+    while(element != null){
+      if (element.getTreeNext() == null && PRIMITIVE_TYPE_BIT_SET.contains(element.getElementType())) {
+        myCachedType = getManager().getElementFactory().createPrimitiveType(element.getText());
+      }
+      else if (element.getElementType() == ElementType.TYPE) {
+        PsiType componentType = ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(element)).getType();
+        myCachedType = getLastChildNode().getElementType() == ElementType.ELLIPSIS ? new PsiEllipsisType(componentType) : componentType.createArrayType();
+      }
+      else if (element.getElementType() == ElementType.JAVA_CODE_REFERENCE) {
+        myCachedType = new PsiClassReferenceType(getReferenceElement());
+      }
+      else if (element.getElementType() == ElementType.QUEST) {
+        PsiType temp = createWildcardType();
+        myCachedType = temp;
+      }
+      if(element.getTextLength() != 0) break;
+      element = element.getTreeNext();
     }
 
     return myCachedType;

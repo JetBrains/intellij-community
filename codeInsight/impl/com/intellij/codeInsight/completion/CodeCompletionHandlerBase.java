@@ -334,16 +334,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected static PsiElement insertDummyIdentifier(final CompletionContext context){
     final PsiFile fileCopy = createCopy(context);
-    try {
-      context.project.getComponent(BlockSupport.class).reparseRange(
-          fileCopy, context.startOffset,
-          context.startOffset,
-          CompletionUtil.DUMMY_IDENTIFIER
-      );
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    fileCopy.getViewProvider().getDocument().insertString(context.startOffset, CompletionUtil.DUMMY_IDENTIFIER);
+    PsiDocumentManager.getInstance(fileCopy.getProject()).commitDocument(fileCopy.getViewProvider().getDocument());
     context.offset = context.startOffset;
     return fileCopy.findElementAt(context.startOffset);
   }

@@ -26,7 +26,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
     myConstructorCall = constructorCall;
   }
 
-  protected void invokeImpl(final PsiClass targetClass) {
+  protected void invokeImpl(PsiClass targetClass) {
     PsiManager psiManager = myConstructorCall.getManager();
     final Project project = psiManager.getProject();
     PsiElementFactory elementFactory = psiManager.getElementFactory();
@@ -41,7 +41,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
 
       constructor = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(constructor);
       Template template = templateBuilder.buildTemplate();
-
+      targetClass = PsiTreeUtil.getParentOfType(constructor, PsiClass.class);
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
       TextRange textRange = constructor.getTextRange();
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());

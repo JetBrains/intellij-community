@@ -18,9 +18,10 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.TextAttributes;import com.intellij.util.text.CharArrayUtil;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
@@ -378,7 +379,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
       int newOffset = myOffset;
       VisualPosition oldPosition = getVisualPosition();
 
-      if (myOffset > oldEndOffset || myOffset >= oldEndOffset && e.getOldLength() > 0) {
+      if (myOffset > oldEndOffset || myOffset == oldEndOffset && needToShiftWhitespaces(e)) {
         newOffset += e.getNewLength() - e.getOldLength();
       }
       else if (myOffset >= startOffset && myOffset <= oldEndOffset) {
@@ -399,6 +400,15 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
     myVisualLineEnd =
     myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+  }
+
+  private boolean needToShiftWhitespaces(final DocumentEvent e) {
+    if(!CharArrayUtil.containsOnlyWhiteSpaces(e.getNewFragment()) || CharArrayUtil.containLineBreaks(e.getNewFragment()))
+      return e.getOldLength() > 0;
+    if(e.getOffset() == 0) return false;
+    final char charBefore = myEditor.getDocument().getCharsSequence().charAt(e.getOffset() - 1);
+    //final char charAfter = myEditor.getDocument().getCharsSequence().charAt(e.getOffset() + e.getNewLength());
+    return Character.isWhitespace(charBefore)/* || !Character.isWhitespace(charAfter)*/;
   }
 
   public void beforeDocumentChange(DocumentEvent e) {

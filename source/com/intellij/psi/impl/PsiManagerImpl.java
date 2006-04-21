@@ -293,19 +293,22 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     }
     finally {
       ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
+      component.setDisabled(oldValue);
     }
-    component.setDisabled(oldValue);
   }
 
   public <T> T performActionWithFormatterDisabled(Computable<T> r) {
     T result;
-
+    final PostprocessReformatingAspect component = getProject().getComponent(PostprocessReformatingAspect.class);
+    final boolean oldValue = component.isDisabled();
+    component.setDisabled(true);
     ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
     try {
       result = r.compute();
     }
     finally {
       ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
+      component.setDisabled(oldValue);
     }
 
     return result;

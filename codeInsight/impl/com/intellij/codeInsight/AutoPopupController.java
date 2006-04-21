@@ -84,15 +84,19 @@ public class AutoPopupController implements ProjectComponent {
       final Runnable request = new Runnable(){
         public void run(){
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          CommandProcessor.getInstance().executeCommand(
-              myProject, new Runnable() {
-              public void run(){
-                new DotAutoLookupHandler().invoke(myProject, editor, file);
-              }
-            },
-            "",
-            null
-          );
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              CommandProcessor.getInstance().executeCommand(
+                  myProject, new Runnable() {
+                  public void run(){
+                    new DotAutoLookupHandler().invoke(myProject, editor, file);
+                  }
+                },
+                "",
+                null
+              );
+            }
+          });
         }
       };
       // invoke later prevents cancelling request by keyPressed from the same action

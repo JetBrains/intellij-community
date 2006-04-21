@@ -4,6 +4,8 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -35,6 +37,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.ant.AntPropertyDeclaration;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -250,6 +253,16 @@ public class XmlUtil {
     if (element == null) return true;
     PsiFile baseFile = element.isValid() ? element.getContainingFile() : null;
     return new XmlElementProcessor(processor, baseFile).processXmlElements(element, deepFlag, wideFlag);
+  }
+
+  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexerInXml(final ASTNode left, final ASTNode right, final Lexer lexer, int state) {
+    if(left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || right.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)
+      return ParserDefinition.SpaceRequirements.MUST_NOT;
+    if(left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER && right.getElementType() == XmlTokenType.XML_NAME)
+      return ParserDefinition.SpaceRequirements.MUST;
+    if(left.getElementType() == XmlTokenType.XML_NAME && right.getElementType() == XmlTokenType.XML_NAME)
+      return ParserDefinition.SpaceRequirements.MUST;
+    return ParserDefinition.SpaceRequirements.MAY;
   }
 
   public static boolean tagFromTemplateFramework(@NotNull final XmlTag tag) {

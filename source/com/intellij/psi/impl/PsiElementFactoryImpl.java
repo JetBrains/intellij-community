@@ -3,7 +3,6 @@ package com.intellij.psi.impl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -155,7 +154,9 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   @NotNull
   public PsiTypeElement createTypeElement(PsiType psiType) {
-    return new LightTypeElement(myManager, psiType);
+    final LightTypeElement element = new LightTypeElement(myManager, psiType);
+    CodeEditUtil.setNodeGenerated(element.getNode(), true);
+    return element;
   }
 
   @NotNull
@@ -174,7 +175,8 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     if (type == PsiType.NULL) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
-    ASTNode typeCopy = ChangeUtil.copyToElement(createTypeElement(type));
+    TreeElement typeCopy = ChangeUtil.copyToElement(createTypeElement(type));
+    typeCopy.acceptTree(new GeneratedMarkerVisitor());
     @NonNls String text = "class _Dummy_ {private int " + name + ";}";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiClass aClass = aFile.getClasses()[0];
@@ -293,7 +295,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     final SingleRootFileViewProvider singleRootFileViewProvider =
       new SingleRootFileViewProvider(myManager, virtualFile, physical);
     final PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
-    if(markAsCopy) plainTextFile.getNode().putCopyableUserData(CodeEditUtil.GENERATED_FLAG, true);
+    if(markAsCopy) CodeEditUtil.setNodeGenerated(plainTextFile.getNode(), true);
     return plainTextFile;
   }
 
@@ -643,7 +645,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   @NotNull
-  public PsiDeclarationStatement createVariableDeclarationStatement(String name, PsiType type, PsiExpression initializer, boolean reformat)
+  public PsiDeclarationStatement createVariableDeclarationStatement(String name, PsiType type, PsiExpression initializer)
     throws IncorrectOperationException {
     if (!myManager.getNameHelper().isIdentifier(name)) {
       throw new IncorrectOperationException("\"" + name + "\" is not an identifier.");
@@ -666,20 +668,9 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     if (initializer != null) {
       variable.getInitializer().replace(initializer);
     }
-
-    if (reformat) {
-      statement = (PsiDeclarationStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
-    }
+    ((TreeElement)statement.getNode()).acceptTree(new GeneratedMarkerVisitor());
     return statement;
 
-  }
-
-  @NotNull
-  public PsiDeclarationStatement createVariableDeclarationStatement(String name,
-                                                                    PsiType type,
-                                                                    PsiExpression initializer)
-    throws IncorrectOperationException {
-    return createVariableDeclarationStatement(name, type, initializer, true);
   }
 
   @NotNull
@@ -966,10 +957,4 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiTypeParameter)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
-  public static class GeneratedMarkerVisitor extends RecursiveTreeElementVisitor {
-    protected boolean visitNode(TreeElement element){
-      element.putCopyableUserData(CodeEditUtil.GENERATED_FLAG, true);
-      return true;
-    }
-  }
 }

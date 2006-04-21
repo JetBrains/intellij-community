@@ -73,11 +73,13 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return Collections.singleton(getBaseLanguage());
   }
 
-  public final synchronized PsiFile getPsi(Language target) {
-    if (!isPhysical()) {
-      ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
+  public final PsiFile getPsi(Language target) {
+    synchronized(PsiLock.LOCK){
+      if (!isPhysical()) {
+        ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
+      }
+      return getPsiInner(target);
     }
-    return getPsiInner(target);
   }
 
   protected PsiFile getPsiInner(final Language target) {
@@ -98,7 +100,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   public void contentsSynchronized() {
     unsetPsiContent();
     final PostprocessReformatingAspect component = myManager.getProject().getComponent(PostprocessReformatingAspect.class);
-    component.setDisabled(myPostProcessReformafingStatus);
+    if(component.isDisabled()) component.setDisabled(myPostProcessReformafingStatus);
   }
 
   private void unsetPsiContent() {
@@ -141,8 +143,10 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
 
-  public synchronized PsiFile getCachedPsi(Language target) {
-    return myPsiFile;
+  public  PsiFile getCachedPsi(Language target) {
+    synchronized(PsiLock.LOCK){
+      return myPsiFile;
+    }
   }
 
   protected PsiFile createFile() {
@@ -226,8 +230,10 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   @NotNull
-  public synchronized CharSequence getContents() {
-    return getContent().getText();
+  public CharSequence getContents() {
+    synchronized(PsiLock.LOCK){
+      return getContent().getText();
+    }
   }
 
   @NotNull
@@ -325,9 +331,11 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return null;
   }
 
-  public synchronized void forceCachedPsi(final PsiFile psiCodeFragment) {
-    myPsiFile = psiCodeFragment;
-    ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
+  public void forceCachedPsi(final PsiFile psiCodeFragment) {
+    synchronized(PsiLock.LOCK){
+      myPsiFile = psiCodeFragment;
+      ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
+    }
   }
 
   private Content getContent() {

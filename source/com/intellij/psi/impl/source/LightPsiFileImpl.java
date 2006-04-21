@@ -24,7 +24,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class LightPsiFileImpl extends ElementBase implements PsiFileEx {
+public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFileEx {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.LightPsiFileImpl");
   private PsiFile myOriginalFile = null;
@@ -225,10 +225,6 @@ public abstract class LightPsiFileImpl extends ElementBase implements PsiFileEx 
 
   public PsiElement getContext() {
     return ResolveUtil.getContext(this);
-  }
-
-  public GlobalSearchScope getResolveScope() {
-    return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }
 
   @NotNull

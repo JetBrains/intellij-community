@@ -343,7 +343,7 @@ public class CreateFromUsageUtils {
 
       public void visitReferenceExpression(PsiReferenceExpression expr) {
         if (expression instanceof PsiReferenceExpression) {
-          if (!isValidReference(expr, !includeInvalidResolved) && expr.textMatches(expression)) {
+          if (expr.textMatches(expression)) {
             result.add(expr);
           }
         }
@@ -353,8 +353,7 @@ public class CreateFromUsageUtils {
       public void visitMethodCallExpression(PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
-          if (!isValidMethodReference(methodExpression, expr) &&
-              methodExpression.textMatches(((PsiMethodCallExpression) expression).getMethodExpression())) {
+          if (methodExpression.textMatches(((PsiMethodCallExpression) expression).getMethodExpression())) {
             result.add(expr.getMethodExpression());
           }
         }

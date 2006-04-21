@@ -83,7 +83,7 @@ public class CodeFormatterFacade implements Constants {
 
     documentManager.commitDocument(document);
 
-    
+
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     final FormattingModelBuilder builder = file.getViewProvider().getBaseLanguage().getFormattingModelBuilder();
     final FormattingModelBuilder elementBuilder = psi.getLanguage().getFormattingModelBuilder();
@@ -180,8 +180,29 @@ public class CodeFormatterFacade implements Constants {
     }
   }
 
-  public void processTextWithoutHeadWhitespace(final PsiFile psiFile, final int startOffset, final int endOffset) {
-    processText(psiFile, startOffset, endOffset, false);
+  public void processTextWithoutHeadWhitespace(final PsiFile file, final int startOffset, final int endOffset) {
+    final FileType fileType = myHelper.getFileType();
+
+    final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
+
+    if (builder != null) {
+      if (file.getTextLength() > 0) {
+        try {
+          TextRange range = formatComments(file.getNode(), startOffset, endOffset);
+          FormattingModel originalModel = builder.createModel(file, mySettings);
+          Project project = file.getProject();
+          final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
+            PsiDocumentManager.getInstance(project).getDocument(file),
+            project, mySettings, fileType, file);
+
+          FormatterEx.getInstanceEx().format(model, mySettings,
+                                             mySettings.getIndentOptions(fileType), range, false);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    }
   }
 }
 

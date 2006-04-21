@@ -84,6 +84,10 @@ public class PlainTextLanguage extends Language {
         public PsiFile createFile(FileViewProvider viewProvider) {
           return new PsiPlainTextFileImpl(viewProvider);
         }
+
+        public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+          return SpaceRequirements.MAY;
+        }
       };
     }
     return myParserDefinition;

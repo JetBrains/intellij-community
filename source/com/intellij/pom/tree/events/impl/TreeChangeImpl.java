@@ -276,65 +276,59 @@ public class TreeChangeImpl implements TreeChange {
     return oldLength;
   }
 
+  private static int getNewLength(ChangeInfo change, ASTNode node){
+    if(change.getChangeType() == ChangeInfo.REMOVED) return 0;
+    return node.getTextLength();
+  }
+
   private int getNodeOffset(ASTNode child){
     LOG.assertTrue(child.getTreeParent() == myParent);
-    ASTNode current = myParent.getFirstChildNode();
-    final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
-    Pair<ASTNode, Integer> currentChange = iterator.hasNext() ? iterator.next() : null;
-    int currentOldOffset = 0;
-    do{
-      boolean counted = false;
-      // child.getTreeNext() != currentChange.getFirst()
-      while(currentChange != null && (currentOldOffset == currentChange.getSecond().intValue() && !isAfter(currentChange.getFirst(), child))){
-        if(current == currentChange.getFirst()){
-          counted = true;
-          current = current.getTreeNext();
-        }
-        final ChangeInfo changeInfo = myChanges.get(currentChange.getFirst());
-        currentOldOffset += changeInfo.getOldLength();
-        currentChange = iterator.hasNext() ? iterator.next() : null;
-      }
-      if(current == child) break;
-      if(current == null) break;
-      if(!counted){
-        currentOldOffset += current.getTextLength();
+    int oldOffsetInParent = 0;
+
+    {
+      // calculate not changed elements
+      ASTNode current = child.getTreeParent().getFirstChildNode();
+      while(current != child) {
+        if(!myChanges.containsKey(current))
+          oldOffsetInParent += current.getTextLength();
         current = current.getTreeNext();
       }
     }
-    while(true);
-    return currentOldOffset;
+
+    final ASTNode lastChangedElementBeforeChild;
+    {
+      // find last changed element before child
+      ASTNode current = myParent.getFirstChildNode();
+      ASTNode lastChanged = null;
+      while(current != child) {
+        if(myChanges.containsKey(child)) lastChanged = current;
+        current = current.getTreeNext();
+      }
+      lastChangedElementBeforeChild = lastChanged;
+    }
+
+    for (Pair<ASTNode, Integer> offset : myOffsets) {
+      if(offset.getSecond() > oldOffsetInParent) break;
+
+      final ASTNode changedNode = offset.getFirst();
+      if(changedNode == lastChangedElementBeforeChild) break;
+      final ChangeInfo change = getChangeByChild(changedNode);
+      oldOffsetInParent += change.getOldLength();
+    }
+
+    return oldOffsetInParent;
   }
 
   private int getOldOffset(int offset){
-    ASTNode current = myParent.getFirstChildNode();
-    final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
-    Pair<ASTNode, Integer> currentChange = iterator.hasNext() ? iterator.next() : null;
-    int currentOffset = 0;
-    int currentOldOffset = 0;
-    do{
-      boolean counted = false;
-      while(currentChange != null && currentOldOffset == currentChange.getSecond().intValue()){
-        if(current == currentChange.getFirst()){
-          final int textLength = current.getTextLength();
-          counted = true;
-          current = current.getTreeNext();
-          currentOffset += textLength;
-        }
-        final ChangeInfo changeInfo = myChanges.get(currentChange.getFirst());
-        currentOldOffset += changeInfo.getOldLength();
-        currentChange = iterator.hasNext() ? iterator.next() : null;
-      }
-      if(currentOffset == offset) break;
-      if(current == null) break;
-      if(!counted){
-        final int textLength = current.getTextLength();
-        currentOldOffset += textLength;
-        current = current.getTreeNext();
-        currentOffset += textLength;
-      }
+    for (Pair<ASTNode, Integer> pair : myOffsets) {
+      if(pair.getSecond() > offset) break;
+
+      final ASTNode changedNode = pair.getFirst();
+      final ChangeInfo change = getChangeByChild(changedNode);
+      offset += change.getOldLength() - getNewLength(change, changedNode);
     }
-    while(currentOffset <= offset);
-    return currentOldOffset;
+
+    return offset;
   }
 
   private int getNewOffset(ASTNode node){

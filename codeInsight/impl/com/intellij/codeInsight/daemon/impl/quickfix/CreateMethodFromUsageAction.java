@@ -23,7 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageAction");
 
-  private final PsiMethodCallExpression myMethodCall;
+  private PsiMethodCallExpression myMethodCall;
 
   public CreateMethodFromUsageAction(PsiMethodCallExpression methodCall) {
     myMethodCall = methodCall;
@@ -70,8 +70,6 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
     try {
       PsiElementFactory factory = psiManager.getElementFactory();
 
-      ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myMethodCall, true);
-
       PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
 
       if (targetClass.equals(parentClass)) {
@@ -98,13 +96,22 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
         method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
       }
 
-      PsiSubstitutor substitutor = getTargetSubstitutor(myMethodCall);
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      final Document document = documentManager.getDocument(targetFile);
+      final PsiFile psiFile = myMethodCall.getContainingFile();
 
+      RangeMarker rangeMarker = document.createRangeMarker(myMethodCall.getTextRange());
       method = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(method);
+      myMethodCall = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), PsiMethodCallExpression.class);
       TemplateBuilder builder = new TemplateBuilder(method);
-      CreateFromUsageUtils.setupMethodParameters(method, builder, myMethodCall.getArgumentList(), substitutor);
 
-      PsiElement context = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class, PsiMethod.class);
+      targetClass = (PsiClass)method.getParent();
+      parentClass = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
+      final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myMethodCall, true);
+      final PsiSubstitutor substitutor = getTargetSubstitutor(myMethodCall);
+      final PsiElement context = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class, PsiMethod.class);
+
+      CreateFromUsageUtils.setupMethodParameters(method, builder, myMethodCall.getArgumentList(), substitutor);
       new GuessTypeParameters(factory).setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
       PsiCodeBlock body = method.getBody();
       assert body != null;
@@ -115,12 +122,8 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
         builder.setEndVariableAfter(method);
       }
 
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      final Document document = documentManager.getDocument(targetFile);
-      final RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
-      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-      documentManager.commitDocument(document);
-
+      rangeMarker = document.createRangeMarker(method.getTextRange());
+      method = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(method);
       final Editor newEditor = positionCursor(project, targetFile, method);
       Template template = builder.buildTemplate();
       newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());

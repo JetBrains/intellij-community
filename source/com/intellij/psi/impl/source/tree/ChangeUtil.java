@@ -17,12 +17,15 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.light.LightTypeElement;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
-import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.*;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
@@ -412,35 +415,45 @@ public class ChangeUtil implements Constants {
     CompositeElement treeParent = original.getTreeParent();
     new DummyHolder(manager, element, treeParent == null ? null : treeParent.getPsi(), table).getTreeElement();
     encodeInformation(element, original);
-    Helper.unindentSubtree(element, original, table);
+    //Helper.unindentSubtree(element, original, table);
     TreeUtil.clearCaches(element);
+    saveIndentationToCopy(original, element);
     return element;
+  }
+
+  private static void saveIndentationToCopy(final TreeElement original, final TreeElement element) {
+    if(original == null || element == null || CodeEditUtil.isNodeGenerated(original)) return;
+    final int indentation = CodeEditUtil.getOldIndentation(original);
+    if(indentation < 0) CodeEditUtil.saveWhitespacesInfo(original);
+    CodeEditUtil.setOldIndentation(element, CodeEditUtil.getOldIndentation(original));
+    if(indentation < 0) CodeEditUtil.setOldIndentation(original, -1);
   }
 
   public static TreeElement copyToElement(PsiElement original) {
     final DummyHolder holder = new DummyHolder(original.getManager(), null);
     holder.setLanguage(original.getLanguage());
     final FileElement holderElement = holder.getTreeElement();
-    final TreeElement treeElement = _copyToElement(original, holderElement.getCharTable());
+    final TreeElement treeElement = _copyToElement(original, holderElement.getCharTable(), original.getManager());
     //  TreeElement treePrev = treeElement.getTreePrev(); // This is hack to support bug used in formater
     TreeUtil.addChildren(holderElement, treeElement);
     TreeUtil.clearCaches(holderElement);
     //  treeElement.setTreePrev(treePrev);
+    saveIndentationToCopy((TreeElement)original.getNode(), treeElement);
     return treeElement;
   }
 
-  private static TreeElement _copyToElement(PsiElement original, CharTable table) {
+  private static TreeElement _copyToElement(PsiElement original, CharTable table, final PsiManager manager) {
     LOG.assertTrue(original.isValid());
     if (SourceTreeToPsiMap.hasTreeElement(original)) {
       return copyElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(original), table);
     }
     else if (original instanceof PsiIdentifier) {
       final String text = original.getText();
-      return Factory.createLeafElement(IDENTIFIER, text.toCharArray(), 0, text.length(), -1, table);
+      return createLeafFromText(text, table, manager, original, IDENTIFIER);
     }
     else if (original instanceof PsiKeyword) {
       final String text = original.getText();
-      return Factory.createLeafElement(((PsiKeyword)original).getTokenType(), text.toCharArray(), 0, text.length(), -1, table);
+      return createLeafFromText(text, table, manager, original, ((PsiKeyword)original).getTokenType());
     }
     else if (original instanceof PsiReferenceExpression) {
       TreeElement element = createReferenceExpression(original.getManager(), original.getText(), table);
@@ -452,6 +465,7 @@ public class ChangeUtil implements Constants {
     }
     else if (original instanceof PsiJavaCodeReferenceElement) {
       PsiElement refElement = ((PsiJavaCodeReferenceElement)original).resolve();
+      final boolean generated = refElement != null && CodeEditUtil.isNodeGenerated(refElement.getNode());
       if (refElement instanceof PsiClass) {
         if (refElement instanceof PsiAnonymousClass) {
           PsiJavaCodeReferenceElement ref = ((PsiAnonymousClass)refElement).getBaseClassReference();
@@ -480,49 +494,49 @@ public class ChangeUtil implements Constants {
         }
 
         String text = isFQ ? ((PsiClass)refElement).getQualifiedName() : original.getText();
-        TreeElement element = createReference(original.getManager(), text, table);
+        TreeElement element = createReference(original.getManager(), text, table, generated);
         element.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)refElement);
         return element;
       }
-      else if (refElement instanceof PsiPackage) {
-        return createReference(original.getManager(), original.getText(), table);
-      }
       else {
-        return createReference(original.getManager(), original.getText(), table);
+        return createReference(original.getManager(), original.getText(), table, generated);
       }
     }
     else if (original instanceof PsiCompiledElement) {
       PsiElement sourceVersion = original.getNavigationElement();
       if (sourceVersion != original) {
-        return _copyToElement(sourceVersion, table);
+        return _copyToElement(sourceVersion, table,manager);
       }
       ASTNode mirror = SourceTreeToPsiMap.psiElementToTree(((PsiCompiledElement)original).getMirror());
-      return _copyToElement(SourceTreeToPsiMap.treeElementToPsi(mirror), table);
+      return _copyToElement(SourceTreeToPsiMap.treeElementToPsi(mirror), table,manager);
     }
     else if (original instanceof PsiTypeElement) {
+      final boolean generated = CodeEditUtil.isNodeGenerated(original.getNode());
       PsiTypeElement typeElement = (PsiTypeElement)original;
       PsiType type = typeElement.getType();
       if (type instanceof PsiEllipsisType) {
         TreeElement componentTypeCopy = _copyToElement(
           new LightTypeElement(original.getManager(), ((PsiEllipsisType)type).getComponentType()),
-          table
-        );
+          table,
+        manager);
         if (componentTypeCopy == null) return null;
         CompositeElement element = Factory.createCompositeElement(TYPE);
+        CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, componentTypeCopy);
-        TreeUtil.addChildren(element, Factory.createLeafElement(ELLIPSIS, new char[]{'.', '.', '.'}, 0, 3, -1, table));
+        TreeUtil.addChildren(element, createLeafFromText("...", table, manager, original,ELLIPSIS));
         return element;
       }
       else if (type instanceof PsiArrayType) {
         TreeElement componentTypeCopy = _copyToElement(
           new LightTypeElement(original.getManager(), ((PsiArrayType)type).getComponentType()),
-          table
-        );
+          table,
+        manager);
         if (componentTypeCopy == null) return null;
         CompositeElement element = Factory.createCompositeElement(TYPE);
+        CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, componentTypeCopy);
-        TreeUtil.addChildren(element, Factory.createLeafElement(LBRACKET, new char[]{'['}, 0, 1, -1, table));
-        TreeUtil.addChildren(element, Factory.createLeafElement(RBRACKET, new char[]{']'}, 0, 1, -1, table));
+        TreeUtil.addChildren(element, createLeafFromText("[", table, manager, original, LBRACKET));
+        TreeUtil.addChildren(element, createLeafFromText("]", table, manager, original, LBRACKET));
         return element;
       }
       else if (type instanceof PsiPrimitiveType) {
@@ -531,13 +545,17 @@ public class ChangeUtil implements Constants {
         Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
         lexer.start(text.toCharArray());
         TreeElement keyword = ParseUtil.createTokenElement(lexer, table);
+        CodeEditUtil.setNodeGenerated(keyword, generated);
         CompositeElement element = Factory.createCompositeElement(TYPE);
+        CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, keyword);
         return element;
       }
       else if (type instanceof PsiWildcardType) {
         char[] buffer = original.getText().toCharArray();
-        return DeclarationParsing.parseTypeText(original.getManager(), buffer, 0, buffer.length, table);
+        final CompositeElement element = DeclarationParsing.parseTypeText(original.getManager(), buffer, 0, buffer.length, table);
+        if(generated) element.getTreeParent().acceptTree(new GeneratedMarkerVisitor());
+        return element;
       }
       else {
         PsiClassType classType = (PsiClassType)type;
@@ -546,15 +564,17 @@ public class ChangeUtil implements Constants {
           ref = ((PsiClassReferenceType)type).getReference();
         }
         else {
-          final CompositeElement reference = createReference(original.getManager(), classType.getPresentableText(), table);
+          final CompositeElement reference = createReference(original.getManager(), classType.getPresentableText(), table, generated);
           final CompositeElement immediateTypeElement = Factory.createCompositeElement(TYPE);
+          CodeEditUtil.setNodeGenerated(immediateTypeElement, generated);
           TreeUtil.addChildren(immediateTypeElement, reference);
           encodeInfoInTypeElement(immediateTypeElement, classType);
           return immediateTypeElement;
         }
 
         CompositeElement element = Factory.createCompositeElement(TYPE);
-        TreeUtil.addChildren(element, _copyToElement(ref, table));
+        CodeEditUtil.setNodeGenerated(element, generated);
+        TreeUtil.addChildren(element, _copyToElement(ref, table,manager));
         return element;
       }
     }
@@ -564,8 +584,18 @@ public class ChangeUtil implements Constants {
     }
   }
 
-  private static CompositeElement createReference(PsiManager manager, String text, CharTable table) {
-    return Parsing.parseJavaCodeReferenceText(manager, text.toCharArray(), table);
+  private static LeafElement createLeafFromText(final String text,
+                                                final CharTable table,
+                                                final PsiManager manager,
+                                                final PsiElement original,
+                                                final IElementType type) {
+    return Factory.createSingleLeafElement(type, text.toCharArray(), 0, text.length(), table, manager, CodeEditUtil.isNodeGenerated(original.getNode()));
+  }
+
+  private static CompositeElement createReference(PsiManager manager, String text, CharTable table, boolean generatedFlag) {
+    final CompositeElement element = Parsing.parseJavaCodeReferenceText(manager, text.toCharArray(), table);
+    if(generatedFlag) element.acceptTree(new GeneratedMarkerVisitor());
+    return element;
   }
 
   private static TreeElement createReferenceExpression(PsiManager manager, String text, CharTable table) {

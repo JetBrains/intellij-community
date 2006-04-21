@@ -320,8 +320,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
         anchorBefore = null;
       }
     }
-    TreeElement firstAdded = CodeEditUtil.addChildren(this, first, last, anchorBefore);
-    return SharedPsiElementImplUtil.findFirstChildAfterAddition(firstAdded, first);
+    return (TreeElement)CodeEditUtil.addChildren(this, first, last, anchorBefore);
   }
 
   public void deleteChildInternal(ASTNode child) {

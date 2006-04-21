@@ -41,20 +41,14 @@ public class DeleteCatchFix implements IntentionAction {
       PsiElement tryParent = tryStatement.getParent();
       if (tryStatement.getCatchBlocks().length == 1 && tryStatement.getFinallyBlock() == null) {
         PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-        PsiElement reformatRangeStart = tryStatement.getPrevSibling();
-        PsiElement reformatRangeEnd = tryStatement.getNextSibling();
-        if (reformatRangeEnd instanceof PsiWhiteSpace) {
-          reformatRangeEnd = reformatRangeEnd.getNextSibling();
-        }
-        if(reformatRangeEnd == null) reformatRangeEnd = tryParent;
         PsiElement firstElement = tryBlock.getFirstBodyElement();
         PsiElement lastAddedStatement = null;
         if (firstElement != null) {
           PsiElement endElement = tryBlock.getLastBodyElement();
 
-          reformatRangeStart = tryParent.addRangeBefore(firstElement, endElement, tryStatement).getPrevSibling();
+          tryParent.addRangeBefore(firstElement, endElement, tryStatement);
           lastAddedStatement = tryStatement.getPrevSibling();
-          while (lastAddedStatement instanceof PsiWhiteSpace) {
+          while (lastAddedStatement != null && (lastAddedStatement instanceof PsiWhiteSpace || lastAddedStatement.getTextLength() == 0)) {
             lastAddedStatement = lastAddedStatement.getPrevSibling();
           }          
         }
@@ -63,8 +57,6 @@ public class DeleteCatchFix implements IntentionAction {
           editor.getCaretModel().moveToOffset(lastAddedStatement.getTextRange().getEndOffset());
         }
 
-        CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
-        styleManager.reformatRange(tryParent, reformatRangeStart.getTextRange().getEndOffset(), reformatRangeEnd.getTextRange().getStartOffset());
         return;
       }
 

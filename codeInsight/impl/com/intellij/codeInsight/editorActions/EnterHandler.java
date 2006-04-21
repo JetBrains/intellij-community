@@ -227,7 +227,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       final Project project = editor.getProject();
       if (project != null) {
         final PostprocessReformatingAspect component = project.getComponent(PostprocessReformatingAspect.class);
-        component.setDisabled(postprocessReformatingStatus);
+        if(component.isDisabled()) component.setDisabled(postprocessReformatingStatus);
       }
     }
   }

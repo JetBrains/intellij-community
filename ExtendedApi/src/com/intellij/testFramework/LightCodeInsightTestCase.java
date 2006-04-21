@@ -20,6 +20,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -196,6 +197,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
    * @throws Exception
    */
   protected void checkResultByFile(String message, final String filePath, final boolean ignoreTrailingSpaces) throws Exception {
+    getProject().getComponent(PostprocessReformatingAspect.class).doPostponedFormatting();
     if (ignoreTrailingSpaces) {
       ((DocumentEx) myEditor.getDocument()).stripTrailingSpaces(false);
     }

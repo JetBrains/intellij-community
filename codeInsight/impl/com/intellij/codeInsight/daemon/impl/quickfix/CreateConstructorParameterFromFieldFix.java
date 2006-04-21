@@ -7,20 +7,23 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry;
 import org.jetbrains.annotations.NotNull;
 
 public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorParameterFromFieldFix");
 
-  private final PsiField myField;
+  private SmartPsiElementPointer myField;
 
   public CreateConstructorParameterFromFieldFix(@NotNull PsiField field) {
-    myField = field;
+    myField = SmartPointerManager.getInstance(field.getProject()).createSmartPsiElementPointer(field);
   }
 
   public String getText() {
@@ -32,32 +35,35 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return myField.isValid()
-      && myField.getManager().isInProject(myField)
-      && myField.getContainingClass() != null
+    final PsiField fieldElement = (PsiField)myField.getElement();
+    return myField.getElement() != null
+           && fieldElement.getManager().isInProject(fieldElement)
+           && fieldElement.getContainingClass() != null
       ;
   }
 
   public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
-    final PsiClass aClass = myField.getContainingClass();
+    PsiClass aClass = getField().getContainingClass();
     PsiMethod[] constructors = aClass.getConstructors();
+    final RangeMarker rangeMarker = aClass.getContainingFile().getViewProvider().getDocument().createRangeMarker(aClass.getTextRange());
     if (constructors.length == 0) {
+      final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(aClass);
       ApplicationManager.getApplication().runWriteAction(new Runnable(){
         public void run() {
-          new AddDefaultConstructorFix(aClass).invoke(project, editor, file);
+          defaultConstructorFix.invoke(project, editor, file);
         }
       });
+      aClass = getField().getContainingClass();
       constructors = aClass.getConstructors();
     }
-
-    for (PsiMethod constructor : constructors) {
-      addParameterToConstructor(project, file, editor, constructor);
+    for (int i = 0; i < constructors.length; i++){
+      addParameterToConstructor(project, file, editor, getField().getContainingClass().getConstructors()[i]);
     }
   }
 
-  private void addParameterToConstructor(final Project project, final PsiFile file, final Editor editor, final PsiMethod constructor)
+  private void addParameterToConstructor(final Project project, final PsiFile file, final Editor editor, PsiMethod constructor)
     throws IncorrectOperationException {
     PsiParameter[] parameters = constructor.getParameterList().getParameters();
     PsiExpression[] expressions = new PsiExpression[parameters.length+1];
@@ -67,10 +73,13 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       String value = PsiTypesUtil.getDefaultValueOfType(parameter.getType());
       expressions[i] = factory.createExpressionFromText(value, parameter);
     }
-    expressions[parameters.length] = factory.createExpressionFromText(/*"this."+*/myField.getName(), constructor);
+    expressions[parameters.length] = factory.createExpressionFromText(/*"this."+*/getField().getName(), constructor);
+    final SmartPointerManager manager = SmartPointerManager.getInstance(getField().getProject());
+    final SmartPsiElementPointer constructorPointer = manager.createSmartPsiElementPointer(constructor);
 
     IntentionAction addParamFix = new ChangeMethodSignatureFromUsageFix(constructor, expressions, PsiSubstitutor.EMPTY, constructor);
     addParamFix.invoke(project, editor, file);
+    constructor = (PsiMethod)constructorPointer.getElement();
     parameters = constructor.getParameterList().getParameters();
     final PsiParameter parameter = parameters[parameters.length-1];
     // do not introduce assignment in chanined constructor
@@ -78,7 +87,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable(){
       public void run() {
         try {
-          AssignFieldFromParameterAction.addFieldAssignmentStatement(project, myField, parameter, editor);
+          AssignFieldFromParameterAction.addFieldAssignmentStatement(project, getField(), parameter, editor);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -87,6 +96,9 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     });
   }
 
+  private PsiField getField() {
+    return (PsiField)myField.getElement();
+  }
 
   public boolean startInWriteAction() {
     return false;

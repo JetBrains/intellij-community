@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -221,6 +222,7 @@ public class FormatterUtil {
       }
       else{
         xmlText = (XmlText)Factory.createCompositeElement(XmlElementType.XML_TEXT, charTable, treeParent.getPsi().getManager());
+        CodeEditUtil.setNodeGenerated(xmlText.getNode(), true);
         treeParent.addChild(xmlText.getNode(), treePrev);
         before = true;
       }

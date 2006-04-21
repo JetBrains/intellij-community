@@ -208,10 +208,11 @@ public class XmlCompletionData extends CompletionData {
       Project project = context.project;
       Editor editor = context.editor;
       // Need to insert " " to prevent creating tags like <tagThis is my text
-      editor.getDocument().insertString(editor.getCaretModel().getOffset(), " ");
+      final int offset = editor.getCaretModel().getOffset();
+      editor.getDocument().insertString(offset, " ");
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       PsiElement current = context.file.findElementAt(context.startOffset);
-      editor.getDocument().deleteString(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset() + 1);
+      editor.getDocument().deleteString(offset, offset + 1);
       final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
       if (tag == null) return;

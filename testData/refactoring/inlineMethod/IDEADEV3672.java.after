@@ -6,5 +6,6 @@ class Tester1 {
             }
         };
     }
+
     void other() { }
 }

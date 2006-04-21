@@ -56,6 +56,10 @@ public class PropertiesParserDefinition implements ParserDefinition {
     return new PropertiesFileImpl(viewProvider);
   }
 
+  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    return SpaceRequirements.MAY;
+  }
+
   @NotNull
   public PsiElement createElement(ASTNode node) {
     final IElementType type = node.getElementType();

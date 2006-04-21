@@ -4,10 +4,12 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -64,9 +66,20 @@ public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromU
       PsiMethod constructor = elementFactory.createConstructor();
       constructor = (PsiMethod) targetClass.add(constructor);
 
-      TemplateBuilder templateBuilder = new TemplateBuilder(constructor);
+      final TemplateBuilder templateBuilder = new TemplateBuilder(constructor);
       CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, myMethodCall.getArgumentList(), getTargetSubstitutor(myMethodCall));
+
+      final PsiFile psiFile = myMethodCall.getContainingFile();
+
       templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
+      final RangeMarker rangeMarker = psiFile.getViewProvider().getDocument().createRangeMarker(myMethodCall.getTextRange());
+
+      constructor = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(constructor);
+
+      targetClass = constructor.getContainingClass();
+      myMethodCall =
+        CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), myMethodCall.getClass());
+
 
       Template template = templateBuilder.buildTemplate();
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);

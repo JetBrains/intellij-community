@@ -8,7 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.impl.source.codeStyle.Helper;import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -34,12 +34,18 @@ public class SharedImplUtil {
 
   public static PsiElement getNextSibling(ASTNode thisElement) {
     final TreeElement treeNext = (TreeElement)thisElement.getTreeNext();
-    return treeNext != null ? SourceTreeToPsiMap.treeElementToPsi(treeNext.getTransformedFirstOrSelf()) : null;
+    final PsiElement psiElement = treeNext != null ? SourceTreeToPsiMap.treeElementToPsi(treeNext.getTransformedFirstOrSelf()) : null;
+    if (psiElement != null && psiElement.getNode() != null && psiElement.getNode().getElementType() == ElementType.REFORMAT_MARKER)
+      return getNextSibling(psiElement.getNode());
+    return psiElement;
   }
 
   public static PsiElement getPrevSibling(ASTNode thisElement) {
     final TreeElement treePrev = (TreeElement)thisElement.getTreePrev();
-    return treePrev != null ? SourceTreeToPsiMap.treeElementToPsi(treePrev.getTransformedLastOrSelf()) : null;
+    final PsiElement psiElement = treePrev != null ? SourceTreeToPsiMap.treeElementToPsi(treePrev.getTransformedLastOrSelf()) : null;
+    if (psiElement != null && psiElement.getNode() != null && psiElement.getNode().getElementType() == ElementType.REFORMAT_MARKER)
+      return getPrevSibling(psiElement.getNode());
+    return psiElement;
   }
 
   public static PsiFile getContainingFile(ASTNode thisElement) {
@@ -102,8 +108,10 @@ public class SharedImplUtil {
         parent = elementCopy.getTreeParent();
       }
       else {
+        if(elementCopy.getElementType() == ElementType.WHITE_SPACE)
+          CodeEditUtil.setNodeGenerated(elementCopy, true);
         parent.addChild(elementCopy, null);
-        helper.normalizeIndent(elementCopy);
+        //helper.normalizeIndent(elementCopy);
       }
     }
     if (copyFirst == null) return null;

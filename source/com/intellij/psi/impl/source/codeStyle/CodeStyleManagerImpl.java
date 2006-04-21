@@ -21,6 +21,7 @@ import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
@@ -352,37 +353,50 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException {
+    boolean postprocessReformatingStatus = false;
+    final Project project = file.getProject();
+    try{
+      {
+        final PostprocessReformatingAspect component = project.getComponent(PostprocessReformatingAspect.class);
+        postprocessReformatingStatus = component.isDisabled();
+        component.setDisabled(true);
+      }
 
-    final JspFile jspFile = PsiUtil.getJspFile(file);
+      final JspFile jspFile = PsiUtil.getJspFile(file);
 
-    if (jspFile != null) {
-      file = jspFile;
-    }
+      if (jspFile != null) {
+        file = jspFile;
+      }
 
-    final PsiElement element = file.findElementAt(offset);
-    if (element == null && offset != file.getTextLength()) {
-      return offset;
-    }
-    if (element != null && !(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
-      return CharArrayUtil.shiftForward(file.textToCharArray(), offset, " \t");
-    }
-    final Language fileLanguage = file.getLanguage();
-    final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
-    FormattingModelBuilder elementBuilder = builder;
-    if (element != null) {
-      final Language elementLanguage = element.getLanguage();
-      elementBuilder = elementLanguage.getFormattingModelBuilder();
-    }
-    if (builder != null && elementBuilder != null) {
-      final CodeStyleSettings settings = getSettings();
-      final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
-      final TextRange significantRange = getSignificantRange(file, offset);
-      final FormattingModel model = builder.createModel(file, settings);
+      final PsiElement element = file.findElementAt(offset);
+      if (element == null && offset != file.getTextLength()) {
+        return offset;
+      }
+      if (element != null && !(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
+        return CharArrayUtil.shiftForward(file.textToCharArray(), offset, " \t");
+      }
+      final Language fileLanguage = file.getLanguage();
+      final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
+      FormattingModelBuilder elementBuilder = builder;
+      if (element != null) {
+        final Language elementLanguage = element.getLanguage();
+        elementBuilder = elementLanguage.getFormattingModelBuilder();
+      }
+      if (builder != null && elementBuilder != null) {
+        final CodeStyleSettings settings = getSettings();
+        final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
+        final TextRange significantRange = getSignificantRange(file, offset);
+        final FormattingModel model = builder.createModel(file, settings);
 
-      return FormatterEx.getInstanceEx().adjustLineIndent(model, settings, indentOptions, offset, significantRange);
+        return FormatterEx.getInstanceEx().adjustLineIndent(model, settings, indentOptions, offset, significantRange);
+      }
+      else {
+        return offset;
+      }
     }
-    else {
-      return offset;
+    finally{
+      final PostprocessReformatingAspect component = project.getComponent(PostprocessReformatingAspect.class);
+      if(component.isDisabled()) component.setDisabled(postprocessReformatingStatus);
     }
   }
 

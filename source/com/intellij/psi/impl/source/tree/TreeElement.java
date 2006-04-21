@@ -8,6 +8,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NonNls;
@@ -174,5 +175,9 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   }
 
   public abstract void acceptTree(TreeElementVisitor visitor);
+
+  public boolean isGenerated() {
+    return CodeEditUtil.isNodeGenerated(this);
+  }
 }
 

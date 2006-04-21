@@ -53,8 +53,7 @@ public class MoveCatchUpFix implements IntentionAction {
     if (!CodeInsightUtil.prepareFileForWrite(myCatchSection.getContainingFile())) return;
     try {
       PsiTryStatement statement = myCatchSection.getTryStatement();
-      PsiElement newCatchSection = statement.addBefore(myCatchSection, myMoveBeforeSection);
-      PsiManager.getInstance(project).getCodeStyleManager().reformat(newCatchSection);
+      statement.addBefore(myCatchSection, myMoveBeforeSection);
       myCatchSection.delete();
     }
     catch (IncorrectOperationException e) {

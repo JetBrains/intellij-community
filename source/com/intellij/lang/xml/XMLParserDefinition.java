@@ -15,6 +15,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -56,6 +57,11 @@ public class XMLParserDefinition implements ParserDefinition {
 
   public PsiFile createFile(FileViewProvider viewProvider) {
     return new XmlFileImpl(viewProvider);
+  }
+
+  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    final Lexer lexer = createLexer(left.getPsi().getProject());
+    return XmlUtil.canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
   }
 
 }

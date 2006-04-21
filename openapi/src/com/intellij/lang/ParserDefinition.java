@@ -96,4 +96,12 @@ public interface ParserDefinition {
    */
   PsiFile createFile(FileViewProvider viewProvider);
 
+  SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right);
+
+  enum SpaceRequirements {
+    MAY,
+    MUST,
+    MUST_NOT,
+    MUST_LINE_BREAK,
+  }
 }

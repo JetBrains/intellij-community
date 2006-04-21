@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestData;
 
@@ -297,8 +298,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected void checkResultByFile(String filePath, boolean stripTrailingSpaces) throws Exception {
+    getProject().getComponent(PostprocessReformatingAspect.class).doPostponedFormatting();
     if (stripTrailingSpaces) {
-      ((DocumentEx) myEditor.getDocument()).stripTrailingSpaces(false);
+      ((DocumentEx)myEditor.getDocument()).stripTrailingSpaces(false);
     }
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -332,7 +334,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     String newFileText1 = newFileText;
     if (stripTrailingSpaces) {
       Document document1 = EditorFactory.getInstance().createDocument(newFileText);
-      ((DocumentEx) document1).stripTrailingSpaces(false);
+      ((DocumentEx)document1).stripTrailingSpaces(false);
       newFileText1 = document1.getText();
     }
 
@@ -356,25 +358,17 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       int selEndLine = StringUtil.offsetToLineNumber(newFileText, selEndMarker.getEndOffset());
       int selEndCol = selEndMarker.getEndOffset() - StringUtil.lineColToOffset(newFileText, selEndLine, 0);
 
-      assertEquals(
-          "selectionStartLine",
-          selStartLine + 1,
-          StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
+      assertEquals("selectionStartLine", selStartLine + 1,
+                   StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
 
-      assertEquals(
-          "selectionStartCol",
-          selStartCol + 1,
-          myEditor.getSelectionModel().getSelectionStart() - StringUtil.lineColToOffset(newFileText, selStartLine, 0) + 1);
+      assertEquals("selectionStartCol", selStartCol + 1,
+                   myEditor.getSelectionModel().getSelectionStart() - StringUtil.lineColToOffset(newFileText, selStartLine, 0) + 1);
 
-      assertEquals(
-          "selectionEndLine",
-          selEndLine + 1,
-          StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
+      assertEquals("selectionEndLine", selEndLine + 1,
+                   StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
 
-      assertEquals(
-          "selectionEndCol",
-          selEndCol + 1,
-          myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
+      assertEquals("selectionEndCol", selEndCol + 1,
+                   myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
     }
     else {
       assertTrue("has no selection", !myEditor.getSelectionModel().hasSelection());

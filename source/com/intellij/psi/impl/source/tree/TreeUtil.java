@@ -72,26 +72,26 @@ public class TreeUtil {
   public static ASTNode skipElements(ASTNode element, TokenSet types) {
     while(true){
       if (element == null) return null;
-      if (!types.contains(element.getElementType())) break;
+      if (element.getElementType() != ElementType.REFORMAT_MARKER && !types.contains(element.getElementType())) break;
       element = element.getTreeNext();
     }
     return element;
   }
 
   public static ASTNode skipElementsBack(ASTNode element, TokenSet types) {
-    if (!types.contains(element.getElementType())) return element;
+    if (element.getElementType() != ElementType.REFORMAT_MARKER && !types.contains(element.getElementType())) return element;
 
     ASTNode parent = element.getTreeParent();
     ASTNode prev = element;
     while (element instanceof CompositeElement) {
-      if (!types.contains(prev.getElementType())) return prev;
+      if (prev.getElementType() != ElementType.REFORMAT_MARKER && !types.contains(prev.getElementType())) return prev;
       prev = prev.getTreePrev();
     }
     if (prev == null) return null;
     ASTNode firstChildNode = parent.getFirstChildNode();
     ASTNode lastRelevant = null;
     while(firstChildNode != prev){
-      if (!types.contains(firstChildNode.getElementType())) lastRelevant = firstChildNode;
+      if (firstChildNode.getElementType() != ElementType.REFORMAT_MARKER && !types.contains(firstChildNode.getElementType())) lastRelevant = firstChildNode;
       firstChildNode = firstChildNode.getTreeNext();
     }
     return lastRelevant;
@@ -405,5 +405,14 @@ public class TreeUtil {
       return false;
     }
     else return false;
+  }
+  public static int getOffsetInParent(final ASTNode child) {
+    int childOffsetInParent = 0;
+    ASTNode current = child.getTreeParent().getFirstChildNode();
+    while(current != child) {
+      childOffsetInParent += current.getTextLength();
+      current = current.getTreeNext();
+    }
+    return childOffsetInParent;
   }
 }

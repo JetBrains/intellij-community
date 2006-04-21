@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.pom.java.LanguageLevel;
+import com.sun.java_cup.internal.lexer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -69,4 +70,14 @@ public class JavaParserDefinition implements ParserDefinition {
     }
   }
 
+  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    final PsiFile containingFile = left.getTreeParent().getPsi().getContainingFile();
+    final Lexer lexer;
+    if(containingFile instanceof PsiJavaFile)
+      lexer = new JavaLexer(((PsiJavaFile)containingFile).getLanguageLevel());
+    else lexer = new JavaLexer(LanguageLevel.HIGHEST);
+    final SpaceRequirements spaceRequirements = LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer, 0);
+    if(left.getElementType() == JavaTokenType.C_STYLE_COMMENT) return SpaceRequirements.MUST_LINE_BREAK;
+    return spaceRequirements;
+  }
 }

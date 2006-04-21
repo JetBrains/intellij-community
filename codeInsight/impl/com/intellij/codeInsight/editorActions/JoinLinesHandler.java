@@ -333,7 +333,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     try {
       PsiDeclarationStatement newDecl = factory.createVariableDeclarationStatement(
           var.getName(), var.getType(),
-          initializerExpression, false
+          initializerExpression
       );
       PsiVariable newVar = (PsiVariable)newDecl.getDeclaredElements()[0];
       if (var.getModifierList().getText().length() > 0) {

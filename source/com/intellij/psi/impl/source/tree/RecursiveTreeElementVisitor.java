@@ -8,12 +8,13 @@ public abstract class RecursiveTreeElementVisitor extends TreeElementVisitor{
   }
 
   public void visitComposite(CompositeElement composite) {
-    if(!visitNode(composite)) return;
     ChameleonTransforming.transformChildren(composite);
+    if(!visitNode(composite)) return;
     TreeElement child = composite.getFirstChildNode();
     while(child != null) {
+      final TreeElement treeNext = child.getTreeNext();
       child.acceptTree(this);
-      child = child.getTreeNext();
+      child = treeNext;
     }
   }
 

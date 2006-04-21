@@ -53,4 +53,8 @@ public class AntParserDefinition implements ParserDefinition {
   public PsiFile createFile(FileViewProvider viewProvider) {
     return new AntFileImpl(viewProvider);
   }
+
+  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    return SpaceRequirements.MAY;
+  }
 }

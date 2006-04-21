@@ -52,18 +52,23 @@ public class Factory implements Constants {
     final FileElement holderElement = dummyHolder.getTreeElement();
     newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, -1, holderElement.getCharTable());
     TreeUtil.addChildren(holderElement, newElement);
-    newElement.putCopyableUserData(CodeEditUtil.GENERATED_FLAG, true);
+    CodeEditUtil.setNodeGenerated(newElement, true);
     return newElement;
   }
 
-  public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager) {
+  public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, boolean generatedFlag) {
     final LeafElement newElement;
     final FileElement holderElement = new DummyHolder(manager, table, type.getLanguage()).getTreeElement();
     newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, -1, holderElement.getCharTable());
     TreeUtil.addChildren(holderElement, newElement);
-    newElement.putCopyableUserData(CodeEditUtil.GENERATED_FLAG, true);
+    if(generatedFlag) CodeEditUtil.setNodeGenerated(newElement, true);
     return newElement;
   }
+
+  public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager) {
+    return createSingleLeafElement(type, buffer, startOffset, endOffset, table, manager, true);
+  }
+
 
   public static LeafElement createLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     LeafElement element = null;
@@ -495,5 +500,8 @@ public class Factory implements Constants {
     final CompositeElement composite = createCompositeElement(type);
     TreeUtil.addChildren(treeElement, composite);
     return composite;
+  }
+
+  public static void createSingleLeafElement() {
   }
 }
