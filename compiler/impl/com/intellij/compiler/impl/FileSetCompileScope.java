@@ -92,7 +92,7 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
     myUrls = null;
   }
 
-  private void addRecursively(final Collection<VirtualFile> container, final VirtualFile fromDirectory, FileType fileType) {
+  private static void addRecursively(final Collection<VirtualFile> container, final VirtualFile fromDirectory, FileType fileType) {
     VirtualFile[] children = fromDirectory.getChildren();
     if (children.length > 0) {
       final FileTypeManager typeManager = FileTypeManager.getInstance();

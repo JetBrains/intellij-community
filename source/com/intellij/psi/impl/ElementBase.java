@@ -22,6 +22,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
+import com.intellij.codeInsight.problems.WolfTheProblemSolver;
 import gnu.trove.TIntObjectHashMap;
 
 import javax.swing.*;
@@ -132,6 +133,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
         flags |= FLAGS_JUNIT_TEST;
       }
     }
+    if (vFile != null && (element instanceof PsiClass || element instanceof PsiFile)) {
+      if (WolfTheProblemSolver.getInstance(element.getProject()).isProblemFile(vFile)) {
+        flags |= FLAGS_PROBLEMS;
+      }
+    }
     return flags;
   }
 
@@ -155,6 +161,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   public static final int FLAGS_LOCKED = 0x800;
   public static final int FLAGS_EXCLUDED = 0x1000;
   public static final int FLAGS_JUNIT_TEST = 0x2000;
+  public static final int FLAGS_PROBLEMS = 0x4000;
 
   private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<CachedValue<Integer>>("CLASS_KIND_KEY");
 

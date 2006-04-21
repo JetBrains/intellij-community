@@ -5,7 +5,6 @@
  */
 package com.intellij.compiler.progress;
 
-import com.intellij.codeInsight.problems.ProblemsToolWindow;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
@@ -22,12 +21,17 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.codeInsight.problems.WolfTheProblemSolver;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,20 +42,23 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
   private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
   private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
+  private static final Key<Key> CONTENT_ID_KEY = Key.create("CONTENT_ID");
+  private final Key myContentId = Key.create("compile_content");
   private CompilerProgressDialog myDialog;
+  private NewErrorTreeViewPanel myErrorTreeView;
+  private final Object myMessageViewLock = new Object();
   private final Project myProject;
+  private final String myContentName;
   private boolean myIsBackgroundMode;
   private int myErrorCount = 0;
   private int myWarningCount = 0;
   private String myStatisticsText = "";
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private final ProblemsToolWindow myProblemsToolWindow;
-  private final Object myMessageViewLock = new Object();
 
   public CompilerProgressIndicator(Project project, boolean compileInBackground, String contentName) {
     myProject = project;
     myIsBackgroundMode = compileInBackground;
-    myProblemsToolWindow = ProblemsToolWindow.getInstance(myProject);
+    myContentName = contentName;
   }
 
   public void cancel() {
@@ -77,9 +84,9 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   }
 
   public void addMessage(final CompilerMessage message) {
+    openMessageView();
     if (CompilerMessageCategory.ERROR.equals(message.getCategory())) {
       myErrorCount += 1;
-      openMessageView();                                      
     }
     if (CompilerMessageCategory.WARNING.equals(message.getCategory())) {
       myWarningCount += 1;
@@ -88,30 +95,32 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
       doAddMessage(message);
     }
     else {
+      final Window window = getWindow();
+      final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MMODAL;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           doAddMessage(message);
         }
-      }, getMyModalityState());
+      }, modalityState);
     }
   }
 
   private void doAddMessage(final CompilerMessage message) {
-    if (IS_UNIT_TEST_MODE || isCanceled()) {
-      return;
-    }
-
-    final Navigatable navigatable = message.getNavigatable();
-    final VirtualFile file = message.getVirtualFile();
-    final int type = translateCategory(message.getCategory());
-    final String[] text = convertMessage(message);
-    ProblemsToolWindow problemsToolWindow = myProblemsToolWindow;
-    if (navigatable == null) {
-      problemsToolWindow.addMessage(type, text, file, -1, -1, null);
-    }
-    else {
-      final String groupName = file == null ? message.getCategory().getPresentableText() : file.getPresentableUrl();
-      problemsToolWindow.addMessage(type, text, groupName, navigatable, message.getExportTextPrefix(), message.getRenderTextPrefix(), file);
+    synchronized (myMessageViewLock) {
+      if (myErrorTreeView != null) {
+        final Navigatable navigatable = message.getNavigatable();
+        final VirtualFile file = message.getVirtualFile();
+        final int type = translateCategory(message.getCategory());
+        final String[] text = convertMessage(message);
+        if (navigatable != null) {
+          final String groupName = file != null? file.getPresentableUrl() : message.getCategory().getPresentableText();
+          myErrorTreeView.addMessage(type, text, groupName, navigatable, message.getExportTextPrefix(), message.getRenderTextPrefix(), null);
+        }
+        else {
+          myErrorTreeView.addMessage(type, text, file, -1, -1, null);
+        }
+        WolfTheProblemSolver.getInstance(myProject).addProblemFromCompiler(message);
+      }
     }
   }
 
@@ -128,7 +137,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     return lines.toArray(new String[lines.size()]);
   }
 
-  private static int translateCategory(CompilerMessageCategory category) {
+  public static int translateCategory(CompilerMessageCategory category) {
     if (CompilerMessageCategory.ERROR.equals(category)) {
       return MessageCategory.ERROR;
     }
@@ -150,18 +159,6 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     if (IS_UNIT_TEST_MODE) {
       return;
     }
-    CompilerErrorTreeView errorTreeView = new CompilerErrorTreeView(myProject);
-    errorTreeView.setProcessController(new NewErrorTreeViewPanel.ProcessController() {
-      public void stopProcess() {
-        cancel();
-      }
-
-      public boolean isProcessStopped() {
-        return !isRunning();
-      }
-    });
-    myProblemsToolWindow.initErrorTreeView(errorTreeView, new CloseListener());
-
     if (myIsBackgroundMode) {
       openMessageView();
     }
@@ -171,7 +168,10 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
           if (isRunning()) {
             synchronized (myMessageViewLock) {
               // clear messages from the previous compilation
-              myProblemsToolWindow.clearAllContents();
+              if (myErrorTreeView == null) {
+                // if message view != null, the contents has already been cleared
+                removeAllContents(myProject, null);
+              }
             }
             final CompilerProgressDialog dialog = openProgressDialog();
             dialog.show();
@@ -210,8 +210,10 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
 
         synchronized (myMessageViewLock) {
           if (myIsBackgroundMode) {
-            myProblemsToolWindow.setProgressText(s);
-            myProblemsToolWindow.setProgressStatistics(myStatisticsText);
+            if (myErrorTreeView != null) {
+              myErrorTreeView.setProgressText(s);
+              myErrorTreeView.setProgressStatistics(myStatisticsText);
+            }
           }
           else {
             if (myDialog != null) {
@@ -227,11 +229,13 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   public void sendToBackground() {
     myIsBackgroundMode = true;
     openMessageView();
-    myProblemsToolWindow.show(true);
-
-    myProblemsToolWindow.setProgressText(myDialog.getStatusText());
-    myProblemsToolWindow.setProgressStatistics(myDialog.getStatistics());
-
+    activateMessageView();
+    synchronized (myMessageViewLock) {
+      if (myErrorTreeView != null) { // when cancelled, openMessageView() may not create the view
+        myErrorTreeView.setProgressText(myDialog.getStatusText());
+        myErrorTreeView.setProgressStatistics(myDialog.getStatistics());
+      }
+    }
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         closeProgressDialog();
@@ -239,56 +243,127 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     });
   }
 
+  // error tree view handling:
+
   private void openMessageView() {
-    if (IS_UNIT_TEST_MODE || isCanceled()) {
+    if (IS_UNIT_TEST_MODE) {
       return;
     }
+    if (isCanceled()) {
+      return;
+    }
+    synchronized (myMessageViewLock) {
+      if (myErrorTreeView != null) {
+        return;
+      }
+      myErrorTreeView = new CompilerErrorTreeView(myProject);
+      myErrorTreeView.setProcessController(new NewErrorTreeViewPanel.ProcessController() {
+        public void stopProcess() {
+          cancel();
+        }
+
+        public boolean isProcessStopped() {
+          return !isRunning();
+        }
+      });
+    }
+    final Window window = getWindow();
+    final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MMODAL;
     // the work with ToolWindowManager should be done in the Swing thread
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        myProblemsToolWindow.show(CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND);
+        final MessageView messageView = myProject.getComponent(MessageView.class);
+        final JComponent component;
+        synchronized (myMessageViewLock) {
+          component = myErrorTreeView.getComponent();
+        }
+        final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, myContentName, true);
+        content.putUserData(CONTENT_ID_KEY, myContentId);
+        messageView.addContent(content);
+        new CloseListener(content, messageView);
+        removeAllContents(myProject, content);
+        messageView.setSelectedContent(content);
+        ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+        if (toolWindow != null) {
+          if (CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND) {
+            toolWindow.activate(null);
+          }
+          else {
+            toolWindow.show(null);
+          }
+        }
         updateProgressText();
       }
-    }, getMyModalityState());
-  }
-
-  private ModalityState getMyModalityState() {
-    final Window window = getWindow();
-    return window == null ? ModalityState.NON_MMODAL : ModalityState.stateForComponent(window);
+    }, modalityState);
   }
 
   public void showCompilerContent() {
-    myProblemsToolWindow.show(false);
+    synchronized (myMessageViewLock) {
+      if (myErrorTreeView != null) {
+        final MessageView messageView = myProject.getComponent(MessageView.class);
+        Content[] contents = messageView.getContents();
+        for (Content content : contents) {
+          if (content.getUserData(CONTENT_ID_KEY) != null) {
+            messageView.setSelectedContent(content);
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  public static void removeAllContents(Project project, Content notRemove) {
+    MessageView messageView = project.getComponent(MessageView.class);
+    Content[] contents = messageView.getContents();
+    for (Content content : contents) {
+      if (content.isPinned()) continue;
+      if (content == notRemove) continue;
+      if (content.getUserData(CONTENT_ID_KEY) != null) { // the content was added by me
+        messageView.removeContent(content);
+      }
+    }
+  }
+
+  private void activateMessageView() {
+    synchronized (myMessageViewLock) {
+      if (myErrorTreeView != null) {
+        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
+      }
+    }
   }
 
   private void closeUI() {
     if (IS_UNIT_TEST_MODE) {
       return;
     }
+    Window window = getWindow();
+    ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MMODAL;
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
       public void run() {
         closeProgressDialog();
         final boolean closeViewOnSuccess = CompilerWorkspaceConfiguration.getInstance(myProject).CLOSE_MESSAGE_VIEW_IF_SUCCESS;
         synchronized (myMessageViewLock) {
-          final boolean hasMessagesToRead = myErrorCount > 0 || myWarningCount > 0;
-          final boolean shouldRetainView = hasMessagesToRead || !closeViewOnSuccess;
-          if (shouldRetainView) {
-            addMessage(
-              new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
-                                      CompilerBundle.message("statistics.error.count", myErrorCount), null, -1, -1, null));
-            addMessage(
-              new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
-                                      CompilerBundle.message("statistics.warnings.count", myWarningCount), null, -1, -1, null));
-            myProblemsToolWindow.show(true);
-            myProblemsToolWindow.selectFirstMessage();
-          }
-          else {
-            myProblemsToolWindow.hide();
+          if (myErrorTreeView != null) {
+            final boolean hasMessagesToRead = myErrorCount > 0 || myWarningCount > 0;
+            final boolean shouldRetainView = hasMessagesToRead || !closeViewOnSuccess;
+            if (shouldRetainView) {
+              addMessage(
+                new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
+                                        CompilerBundle.message("statistics.error.count", myErrorCount), null, -1, -1, null));
+              addMessage(
+                new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
+                                        CompilerBundle.message("statistics.warnings.count", myWarningCount), null, -1, -1, null));
+              activateMessageView();
+              myErrorTreeView.selectFirstMessage();
+            }
+            else {
+              removeAllContents(myProject, null);
+            }
           }
         }
       }
-    }, getMyModalityState());
+    }, modalityState);
   }
 
   public Window getWindow(){
@@ -309,7 +384,6 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     }
   }
 
-  
   private void closeProgressDialog() {
     synchronized (myMessageViewLock) {
       if (myDialog != null) {
@@ -320,12 +394,10 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   }
 
   private class CloseListener extends ContentManagerAdapter implements ProjectManagerListener {
+    private Content myContent;
+    private ContentManager myContentManager;
     private boolean myIsApplicationExitingOrProjectClosing = false;
     private boolean myUserAcceptedCancel = false;
-
-    public CloseListener() {
-      ProjectManagerEx.getInstanceEx().addProjectManagerListener(myProject, this);
-    }
 
     public boolean canCloseProject(final Project project) {
       if (shouldAskUser()) {
@@ -354,26 +426,44 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
       return !isRunning();
     }
 
+    public CloseListener(Content content, ContentManager contentManager) {
+      myContent = content;
+      myContentManager = contentManager;
+      contentManager.addContentManagerListener(this);
+      ProjectManagerEx.getInstanceEx().addProjectManagerListener(myProject, this);
+    }
+
     public void contentRemoved(ContentManagerEvent event) {
-      synchronized (myMessageViewLock) {
-        if (isRunning()) {
-          cancel();
+      if (event.getContent() == myContent) {
+        synchronized (myMessageViewLock) {
+          if (myErrorTreeView != null) {
+            myErrorTreeView.dispose();
+            myErrorTreeView = null;
+            if (isRunning()) {
+              cancel();
+            }
+          }
         }
+        myContentManager.removeContentManagerListener(this);
+        myContent.release();
+        myContent = null;
       }
     }
 
     public void contentRemoveQuery(ContentManagerEvent event) {
-      if (!isCanceled() && shouldAskUser()) {
-        int result = Messages.showOkCancelDialog(
-          myProject,
-          CompilerBundle.message("warning.compiler.running.on.toolwindow.close"),
-          CompilerBundle.message("compiler.running.dialog.title"),
-          Messages.getQuestionIcon()
-        );
-        if (result != 0) {
-          event.consume(); // veto closing
+      if (event.getContent() == myContent) {
+        if (!isCanceled() && shouldAskUser()) {
+          int result = Messages.showOkCancelDialog(
+            myProject,
+            CompilerBundle.message("warning.compiler.running.on.toolwindow.close"),
+            CompilerBundle.message("compiler.running.dialog.title"),
+            Messages.getQuestionIcon()
+          );
+          if (result != 0) {
+            event.consume(); // veto closing
+          }
+          myUserAcceptedCancel = true;
         }
-        myUserAcceptedCancel = true;
       }
     }
 
@@ -388,6 +478,9 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     }
 
     public void projectClosed(Project project) {
+      if (myContent != null) {
+        myContentManager.removeContent(myContent);
+      }
     }
 
     public void projectClosing(Project project) {

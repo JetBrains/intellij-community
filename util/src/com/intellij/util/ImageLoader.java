@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import sun.reflect.Reflection;
 
 import javax.swing.*;
@@ -26,8 +27,6 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.Map;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ImageLoader implements Serializable {
   private final static Component ourComponent = new Component() {};

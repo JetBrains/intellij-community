@@ -166,7 +166,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * Updates tab icon for the specified <code>file</code>. The <code>file</code>
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
-  private void updateFileIcon(final VirtualFile file) {
+  public void updateFileIcon(final VirtualFile file) {
     mySplitters.updateFileIcon(file);
   }
 

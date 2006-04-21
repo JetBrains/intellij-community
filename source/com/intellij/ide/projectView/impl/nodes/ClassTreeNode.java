@@ -24,8 +24,8 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
     PsiClass parent = getValue();
     final ArrayList<AbstractTreeNode> treeNodes = new ArrayList<AbstractTreeNode>();
 
-    ArrayList<PsiElement> result = new ArrayList<PsiElement>();
     if (getSettings().isShowMembers()) {
+      ArrayList<PsiElement> result = new ArrayList<PsiElement>();
       PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
       for (PsiElement psiElement : result) {
         psiElement.accept(new PsiElementVisitor() {
@@ -66,8 +66,7 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
   }
 
   public boolean isTopLevel() {
-    final PsiClass aClass = getValue();
-    return aClass != null && aClass.getParent() instanceof PsiFile;
+    return getValue() != null && getValue().getParent()instanceof PsiFile;
   }
 
 

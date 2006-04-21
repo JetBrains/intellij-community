@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import com.intellij.ide.IconProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -25,10 +27,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ide.IconProvider;
 
 import javax.swing.*;
 
@@ -37,16 +37,44 @@ public class IconUtil {
   private static IconProvider[] ourIconProviders = null;
 
   public static Icon getIcon(VirtualFile file, int flags, Project project) {
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+    Icon icon = getBaseIcon(file, flags, project);
 
+    Icon excludedIcon = null;
+    if (project != null) {
+      final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      if (projectFileIndex.isInSource(file) && CompilerManager.getInstance(project).isExcludedFromCompilation(file)) {
+        excludedIcon = Icons.EXCLUDED_FROM_COMPILE_ICON;
+      }
+    }
+
+    Icon lockedIcon = null;
+    if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !file.isWritable()) {
+      lockedIcon = Icons.LOCKED_ICON;
+    }
+
+    if (excludedIcon != null || lockedIcon != null) {
+      LayeredIcon layeredIcon = new LayeredIcon(1 + (lockedIcon != null ? 1 : 0) + (excludedIcon != null ? 1 : 0));
+      int layer = 0;
+      layeredIcon.setIcon(icon, layer++);
+      if (lockedIcon != null) {
+        layeredIcon.setIcon(lockedIcon, layer++);
+      }
+      if (excludedIcon != null) {
+        layeredIcon.setIcon(excludedIcon, layer);
+      }
+      icon = layeredIcon;
+    }
+    return icon;
+  }
+
+  public static Icon getBaseIcon(final VirtualFile file, final int flags, final Project project) {
     Icon providersIcon = getProvidersIcon(file, flags, project);
     Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
 
-    Icon excludedIcon = null;
-    Icon lockedIcon = null;
     if (project != null) {
       final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       final boolean isUnderSource = projectFileIndex.isJavaSourceFile(file);
+      FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
       if (fileType == StdFileTypes.JAVA) {
         if (!isUnderSource) {
           icon = Icons.JAVA_OUTSIDE_SOURCE_ICON;
@@ -67,28 +95,7 @@ public class IconUtil {
         }
       }
 
-      if (projectFileIndex.isInSource(file) && CompilerManager.getInstance(project).isExcludedFromCompilation(file)) {
-        excludedIcon = Icons.EXCLUDED_FROM_COMPILE_ICON;
-      }
     }
-
-    if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !file.isWritable()) {
-      lockedIcon = Icons.LOCKED_ICON;
-    }
-
-    if (excludedIcon != null || lockedIcon != null) {
-      LayeredIcon layeredIcon = new LayeredIcon(1 + (lockedIcon != null ? 1 : 0) + (excludedIcon != null ? 1 : 0));
-      int layer = 0;
-      layeredIcon.setIcon(icon, layer++);
-      if (lockedIcon != null) {
-        layeredIcon.setIcon(lockedIcon, layer++);
-      }
-      if (excludedIcon != null) {
-        layeredIcon.setIcon(excludedIcon, layer);
-      }
-      icon = layeredIcon;
-    }
-
     return icon;
   }
 
@@ -108,7 +115,7 @@ public class IconUtil {
     return null;
   }
 
-  private static IconProvider[] getIconProviders() {
+  public static IconProvider[] getIconProviders() {
     if (ourIconProviders == null) {
       ourIconProviders = ApplicationManager.getApplication().getComponents(IconProvider.class);
     }

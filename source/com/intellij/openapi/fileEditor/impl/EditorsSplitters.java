@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ArrayListSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -274,8 +275,7 @@ public final class EditorsSplitters extends JPanel {
     return editors.toArray(new FileEditor[editors.size()]);
   }
 
-  protected void updateFileIcon(final VirtualFile file) {
-    LOG.assertTrue(file != null);
+  protected void updateFileIcon(@NotNull final VirtualFile file) {
     updateFileIconLater(file);
   }
 

@@ -18,9 +18,8 @@ import com.intellij.util.IconUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 /**
  * Author: msk
@@ -501,20 +500,24 @@ public class EditorWindow {
   /**
    * @return icon which represents file's type and modification status
    */
-  protected Icon getFileIcon(final VirtualFile file) {
+  private Icon getFileIcon(final VirtualFile file) {
     LOG.assertTrue(file != null);
 
-    final ArrayList<Icon> icons = new ArrayList<Icon>(6);
-    icons.add(IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, getManager().myProject));
+    Icon icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, getManager().myProject);
+    List<Icon> icons = Collections.singletonList(icon);
 
     // Pinned
     final EditorComposite composite = findFileComposite(file);
     if (composite != null && composite.isPinned()) {
+      icons = new ArrayList<Icon>(6);
+      icons.add(icon);
       icons.add(IconLoader.getIcon("/nodes/tabPin.png"));
     }
 
     // Modified
     if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK) {
+      if (icons.size()==1) icons = new ArrayList<Icon>(6);
+      icons.add(icon);
       if (composite != null && composite.isModified()) {
         icons.add(MODIFIED_ICON);
       }
@@ -523,6 +526,7 @@ public class EditorWindow {
       }
     }
 
+    if (icons.size() == 1) return icons.get(0);
     final LayeredIcon result = new LayeredIcon(icons.size());
     for (int i = icons.size() - 1; i >= 0; i--) {
       result.setIcon(icons.get(i), i);

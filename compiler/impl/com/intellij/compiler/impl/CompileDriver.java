@@ -6,6 +6,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.problems.WolfTheProblemSolver;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.*;
 import com.intellij.compiler.make.CacheCorruptedException;
@@ -402,6 +403,7 @@ public class CompileDriver {
   private ExitStatus doCompile(CompileContextImpl context, boolean isRebuild, final boolean forceCompile, final boolean trackDependencies,
                                final Set<File> outputDirectories) {
     try {
+      WolfTheProblemSolver.getInstance(myProject).startUpdatingProblemsInScope(context.getCompileScope());
       if (isRebuild) {
         deleteAll(context, outputDirectories);
         if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
@@ -479,6 +481,9 @@ public class CompileDriver {
     }
     catch (ProcessCanceledException e) {
       return ExitStatus.CANCELLED;
+    }
+    finally{
+      WolfTheProblemSolver.getInstance(myProject).finishUpdatingProblems();
     }
   }
 

@@ -120,11 +120,5 @@
       <implementation-class>com.intellij.codeInsight.problems.WolfTheProblemSolver</implementation-class>
       <skipForDummyProject/>
     </component>
-    <component>
-      <interface-class>com.intellij.codeInsight.problems.ProblemsToolWindow</interface-class>
-      <implementation-class>com.intellij.codeInsight.problems.ProblemsToolWindowImpl</implementation-class>
-      <headless-implementation-class>com.intellij.codeInsight.problems.MockProblemsToolWindow</headless-implementation-class>
-      <skipForDummyProject/>
-    </component>
   </project-components>
 </components>

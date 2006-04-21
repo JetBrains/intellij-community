@@ -5,7 +5,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.problems.ProblemsToolWindow;
+import com.intellij.codeInsight.problems.Problem;
+import com.intellij.codeInsight.problems.WolfTheProblemSolver;
 import com.intellij.javaee.ejb.role.EjbImplMethodRole;
 import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.intellij.javaee.ejb.role.EjbRolesUtil;
@@ -17,8 +18,6 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -30,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
-import com.intellij.util.ui.MessageCategory;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -156,37 +154,25 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       }
     }
     myHighlights = result;
-    reportToProblemsToolWindow(result);
+    reportFoundProblems(result);
   }
 
-  private void reportToProblemsToolWindow(final Collection<HighlightInfo> infos) {
+  private void reportFoundProblems(final Collection<HighlightInfo> infos) {
     if (!myFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
-    ProblemsToolWindow problemsToolWindow = ProblemsToolWindow.getInstance(myProject);
+    if (!PsiManager.getInstance(myProject).isInProject(myFile)) return; // do not report problems in libraries
+    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
     VirtualFile file = myFile.getVirtualFile();
-    String groupName = file.getPresentableUrl();
-    problemsToolWindow.clearGroupChildren(file);
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    for (HighlightInfo info : infos) {
-      HighlightSeverity severity = info.getSeverity();
-      if (/*severity != HighlightSeverity.WARNING && */severity != HighlightSeverity.ERROR) {
-        continue;
+    wolf.startUpdatingProblemsInScope(file);
+    try {
+      for (HighlightInfo info : infos) {
+        Problem problem = new Problem(file, info);
+        wolf.addProblem(problem);
       }
-      OpenFileDescriptor navigatable = new OpenFileDescriptor(myProject, file, info.fixStartOffset);
-      int line = document.getLineNumber(info.fixStartOffset);
-      int column = info.fixStartOffset - document.getLineStartOffset(line);
-      String prefix = "("+line + ", " + column + ")";
-      problemsToolWindow.addMessage(getKind(info),new String[]{info.description}, groupName, navigatable,  "", prefix, file);
+    }
+    finally {
+      wolf.finishUpdatingProblems();
     }
   }
-   
-  private static int getKind(final HighlightInfo info) {
-    HighlightSeverity severity = info.getSeverity();
-    if (severity == HighlightSeverity.INFORMATION) return MessageCategory.INFORMATION;
-    if (severity == HighlightSeverity.WARNING) return MessageCategory.WARNING;
-    if (severity == HighlightSeverity.ERROR) return MessageCategory.ERROR;
-    return MessageCategory.STATISTICS;
-  }
-
 
   private void addHighlights(Collection<HighlightInfo> result, Collection<HighlightInfo> highlights) {
     if (myCompiled) {

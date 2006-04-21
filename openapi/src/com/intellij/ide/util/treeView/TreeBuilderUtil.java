@@ -3,12 +3,13 @@ package com.intellij.ide.util.treeView;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class TreeBuilderUtil {
-  public static void storePaths(AbstractTreeBuilder treeBuilder, DefaultMutableTreeNode root, ArrayList pathsToExpand, ArrayList selectionPaths, boolean storeElementsOnly) {
+  public static void storePaths(AbstractTreeBuilder treeBuilder, DefaultMutableTreeNode root, ArrayList<Object> pathsToExpand, ArrayList<Object> selectionPaths, boolean storeElementsOnly) {
     JTree tree = treeBuilder.getTree();
     TreePath path = new TreePath(root.getPath());
     if (tree.isPathSelected(path)){
@@ -20,43 +21,42 @@ public class TreeBuilderUtil {
     }
   }
 
-  private static void _storePaths(JTree tree, DefaultMutableTreeNode root, ArrayList pathsToExpand, ArrayList selectionPaths, boolean storeElementsOnly) {
+  private static void _storePaths(JTree tree, DefaultMutableTreeNode root, ArrayList<Object> pathsToExpand, ArrayList<Object> selectionPaths, boolean storeElementsOnly) {
     ArrayList childNodes = TreeUtil.childrenToArray(root);
-    for(Iterator iterator = childNodes.iterator(); iterator.hasNext();){
-      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)iterator.next();
+    for (final Object childNode1 : childNodes) {
+      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNode1;
       TreePath path = new TreePath(childNode.getPath());
-      if (tree.isPathSelected(path)){
+      if (tree.isPathSelected(path)) {
         selectionPaths.add(storeElementsOnly ? ((NodeDescriptor)childNode.getUserObject()).getElement() : path);
       }
-      if (tree.isExpanded(path) || childNode.getChildCount() == 0){
-        pathsToExpand.add(storeElementsOnly && childNode.getUserObject() instanceof NodeDescriptor ? ((NodeDescriptor)childNode.getUserObject()).getElement() : path);
+      if (tree.isExpanded(path) || childNode.getChildCount() == 0) {
+        pathsToExpand.add(storeElementsOnly && childNode.getUserObject()instanceof NodeDescriptor
+                          ? ((NodeDescriptor)childNode.getUserObject()).getElement()
+                          : path);
         _storePaths(tree, childNode, pathsToExpand, selectionPaths, storeElementsOnly);
       }
     }
   }
 
-  public static void restorePaths(AbstractTreeBuilder treeBuilder, ArrayList pathsToExpand, ArrayList selectionPaths, boolean elementsOnly) {
+  public static void restorePaths(AbstractTreeBuilder treeBuilder, ArrayList<Object> pathsToExpand, ArrayList<Object> selectionPaths, boolean elementsOnly) {
     JTree tree = treeBuilder.getTree();
     if (!elementsOnly){
-      for(int i = 0; i < pathsToExpand.size(); i++){
-        TreePath path = (TreePath)pathsToExpand.get(i);
-        tree.expandPath(path);
+      for (Object path : pathsToExpand) {
+        tree.expandPath((TreePath)path);
       }
-      tree.addSelectionPaths((TreePath[])selectionPaths.toArray(new TreePath[selectionPaths.size()]));
+      tree.addSelectionPaths(selectionPaths.toArray(new TreePath[selectionPaths.size()]));
     }
     else{
-      for(int i = 0; i < pathsToExpand.size(); i++){
-        Object element = pathsToExpand.get(i);
+      for (Object element : pathsToExpand) {
         treeBuilder.buildNodeForElement(element);
         DefaultMutableTreeNode node = treeBuilder.getNodeForElement(element);
-        if (node != null){
+        if (node != null) {
           tree.expandPath(new TreePath(node.getPath()));
         }
       }
-      for(int i = 0; i < selectionPaths.size(); i++){
-        Object element = selectionPaths.get(i);
+      for (Object element : selectionPaths) {
         DefaultMutableTreeNode node = treeBuilder.getNodeForElement(element);
-        if (node != null){
+        if (node != null) {
           DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
           tree.addSelectionPath(new TreePath(treeModel.getPathToRoot(node)));
         }
@@ -69,8 +69,7 @@ public class TreeBuilderUtil {
     if (selectionPaths == null || selectionPaths.length == 0) return false;
 
     TreePath path = new TreePath(node.getPath());
-    for(int i = 0; i < selectionPaths.length; i++){
-      TreePath selectionPath = selectionPaths[i];
+    for (TreePath selectionPath : selectionPaths) {
       if (path.isDescendant(selectionPath)) return true;
     }
 

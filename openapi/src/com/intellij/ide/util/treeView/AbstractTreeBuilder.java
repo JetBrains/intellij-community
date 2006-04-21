@@ -692,6 +692,10 @@ public abstract class AbstractTreeBuilder {
     node.removeAllChildren();
   }
 
+  public void addSubtreeToUpdate(final DefaultMutableTreeNode root) {
+    myUpdater.addSubtreeToUpdate(root);
+  }
+
   private class MyExpansionListener implements TreeExpansionListener {
     public void treeExpanded(TreeExpansionEvent event) {
       TreePath path = event.getPath();
@@ -884,5 +888,4 @@ public abstract class AbstractTreeBuilder {
       super(text);
     }
   }
-
 }

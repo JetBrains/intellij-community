@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
@@ -19,6 +20,9 @@ import com.intellij.javaee.model.common.ejb.CmpField;
 import com.intellij.javaee.model.common.ejb.CmrField;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.image.PixelGrabber;
+import java.awt.image.BufferedImage;
 
 public class IconUtilEx {
   public static Icon getEmptyIcon(boolean showVisibility) {
@@ -127,5 +131,60 @@ public class IconUtilEx {
     layeredIcon.setIcon(backgroundIcon, 0);
     layeredIcon.setIcon(foregroundIcon, 1);
     return layeredIcon;
+  }                                 
+
+  public static Icon redden(Icon icon) {
+    if (icon instanceof ImageIcon) {
+      Image image = ((ImageIcon)icon).getImage();
+
+      PixelGrabber grabber = new PixelGrabber(image, 0, 0, -1, -1, true);
+      try {
+        grabber.grabPixels();
+      }
+      catch (InterruptedException e) {
+        //
+      }
+      int[] pixels = (int[])grabber.getPixels();
+      System.arraycopy(pixels, 0, pixels=new int[pixels.length],0,pixels.length);
+      for (int i = 0; i < pixels.length; i++) {
+        int pixel = pixels[i];
+        int alpha = (pixel >> 24) & 0xff;
+        if (alpha == 0) continue;
+        int red = (pixel >> 16) & 0xFF;
+        red = 0xff;
+        int green = (pixel >> 8) & 0xFF;
+        int blue = (pixel >> 0) & 0xFF;
+        int value;
+        value = ((alpha & 0xFF) << 24) | ((red & 0xFF) << 16) | ((green & 0xFF) << 8) | ((blue & 0xFF) << 0);
+        //float[] hsb = Color.RGBtoHSB(red, green, blue, null);
+        //value = ((alpha & 0xFF) << 24) | Color.HSBtoRGB(hsb[0], Math.min(1,hsb[1]*1.4f), hsb[2]);
+        pixels[i] = value;
+      }
+
+      final BufferedImage buffered = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      buffered.setRGB(0,0,icon.getIconWidth(),icon.getIconHeight(), pixels, 0,icon.getIconWidth());
+      image = buffered;
+      //image = buffered.getScaledInstance(icon.getIconWidth(), icon.getIconHeight(), Image.SCALE_SMOOTH);
+
+      icon = IconLoader.getIcon(image);
+      return icon;
+    }
+    else if (icon instanceof RowIcon) {
+      RowIcon rowIcon = new RowIcon(((RowIcon)icon).getIconCount());
+      for (int i = 0; i < ((RowIcon)icon).getIconCount(); i++) {
+        Icon subIcon = ((RowIcon)icon).getIcon(i);
+        Icon reddened = redden(subIcon);
+        rowIcon.setIcon(reddened, i);
+      }
+      return rowIcon;
+    }
+    else if (icon instanceof LayeredIcon){
+      Icon firstIcon = ((LayeredIcon)icon).getIcons()[0];
+      Icon reddened = redden(firstIcon);
+      return ((LayeredIcon)icon).replaceFirstIcon(reddened);
+    }
+    else {
+      return null;
+    }
   }
 }
