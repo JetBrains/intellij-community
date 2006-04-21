@@ -1353,6 +1353,8 @@
       <action id="GuiDesigner.Duplicate" class="com.intellij.uiDesigner.actions.DuplicateComponentsAction"
         use-shortcut-of="EditorDuplicate"/>
       <action id="GuiDesigner.Morph" class="com.intellij.uiDesigner.actions.MorphAction"/>
+      <action id="GuiDesigner.CreateListener" class="com.intellij.uiDesigner.actions.CreateListenerAction"
+        use-shortcut-of="OverrideMethods"/>
       <action id="GuiDesigner.GoToListener" class="com.intellij.uiDesigner.actions.NavigateToListenerAction"
         use-shortcut-of="GotoImplementation"/>
       <separator/>
