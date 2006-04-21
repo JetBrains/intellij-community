@@ -353,8 +353,10 @@ public class ReplacerImpl {
       } else {
         final PsiElement nextSibling = el.getNextSibling();
         el.delete();
-        if (nextSibling instanceof PsiWhiteSpace) {
-          nextSibling.delete();
+        if(nextSibling.isValid()){
+          if (nextSibling instanceof PsiWhiteSpace) {
+            nextSibling.delete();
+          }
         }
       }
 

@@ -265,15 +265,15 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String str26 = "  LaterInvocator.invokeLater('Params{1,10});";
     String str27 = "  com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater($Params$);";
     String expectedResult10 = "  com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(new Runnable() {\n" +
-                              "        public void run() {\n" +
-                              "          LOG.info(\"refreshFilesAsync, modalityState=\" + ModalityState.current());\n" +
-                              "          myHandler.getFiles().refreshFilesAsync(new Runnable() {\n" +
-                              "            public void run() {\n" +
-                              "              semaphore.up();\n" +
-                              "            }\n" +
-                              "          });\n" +
-                              "        }\n" +
-                              "      });";
+                              "          public void run() {\n" +
+                              "            LOG.info(\"refreshFilesAsync, modalityState=\" + ModalityState.current());\n" +
+                              "            myHandler.getFiles().refreshFilesAsync(new Runnable() {\n" +
+                              "              public void run() {\n" +
+                              "                semaphore.up();\n" +
+                              "              }\n" +
+                              "            });\n" +
+                              "          }\n" +
+                              "        });";
 
     actualResult = replacer.testReplace(str25,str26,str27,options);
     assertEquals("Anonymous in parameter",expectedResult10,actualResult);
@@ -529,7 +529,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s1 = "class A { void b(int c, int d, int e) {} }";
     String s2 = "int d";
     String s3 = "int d2";
-    String expectedResult = "class A { void b(int c, int d2, int e) {} }";
+    String expectedResult = "class A { void b(int c, int d2 , int e) {} }";
 
     actualResult = replacer.testReplace(s1,s2,s3,options);
 
@@ -558,8 +558,12 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "while(true) System.out.println(\"1111\");";
     String s5 = "System.out.println('Test);";
     String s6 = "/* System.out.println($Test$); */";
-    String expectedResult2 = "if (true) /* System.out.println(\"1111\"); */; else /* System.out.println(\"2222\"); */;\n" +
-                             "while(true) /* System.out.println(\"1111\"); */;";
+    String expectedResult2 = "if (true) /* System.out.println(\"1111\"); */" +
+                             ";" +
+                             "else /* System.out.println(\"2222\"); */" +
+                             ";\n" +
+                             "while(true) /* System.out.println(\"1111\"); */" +
+                             ";";
     actualResult = replacer.testReplace(s4,s5,s6,options);
 
     assertEquals(
@@ -1091,7 +1095,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s21 = "class $A$ { private Log log = LogFactory.createLog(); $Other$ }";
 
     actualResult = replacer.testReplace(s19,s20,s21,options);
-    String expectedResult8 = "public class A extends Object implements Cloneable { private Log log = LogFactory.createLog();  }\n";
+    String expectedResult8 = "public class A extends Object implements Cloneable{ private Log log = LogFactory.createLog();  }\n";
     assertEquals("Extends / implements list for class",expectedResult8,actualResult);
 
     String s22 = "public class A<T> { int Afield; }\n";
@@ -1528,7 +1532,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     options.setToShortenFQN(true);
 
     String actualResult = replacer.testReplace(s1, s2, s3, options);
-    assertEquals("Replace in anonymous class parameter",expectedResult,actualResult);
+    assertEquals("Replace in anonymous class parameter", expectedResult, actualResult);
     options.setToShortenFQN(false);
     options.setToReformatAccordingToStyle(false);
   }
