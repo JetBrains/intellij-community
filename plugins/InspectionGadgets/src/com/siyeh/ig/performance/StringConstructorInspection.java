@@ -23,11 +23,24 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
+
+import javax.swing.JComponent;
 
 public class StringConstructorInspection extends ExpressionInspection {
+
+    /** @noinspection PublicField*/
+    public boolean ignoreSubstringArguments = false;
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "string.constructor.display.name");
+    }
 
     public String getID() {
         return "RedundantStringConstructorCall";
@@ -41,6 +54,13 @@ public class StringConstructorInspection extends ExpressionInspection {
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.constructor.problem.descriptor");
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "string.constructor.substring.parameter.option"), this,
+                "ignoreSubstringArguments");
     }
 
     public boolean isEnabledByDefault() {
@@ -94,7 +114,7 @@ public class StringConstructorInspection extends ExpressionInspection {
         }
     }
 
-    private static class StringConstructorVisitor
+    private class StringConstructorVisitor
             extends BaseInspectionVisitor {
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
@@ -103,18 +123,38 @@ public class StringConstructorInspection extends ExpressionInspection {
             if (!TypeUtils.isJavaLangString(type)) {
                 return;
             }
-            final PsiExpressionList argList = expression.getArgumentList();
-            if (argList == null) {
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            if (argumentList == null) {
                 return;
             }
-            final PsiExpression[] args = argList.getExpressions();
-            if (args.length > 1) {
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length > 1) {
                 return;
             }
-            if (args.length == 1) {
-                final PsiType parameterType = args[0].getType();
+            if (arguments.length == 1) {
+                final PsiExpression argument = arguments[0];
+                final PsiType parameterType = argument.getType();
                 if (!TypeUtils.isJavaLangString(parameterType)) {
                     return;
+                }
+                if (ignoreSubstringArguments) {
+                    if (argument instanceof PsiMethodCallExpression) {
+                        final PsiMethodCallExpression methodCallExpression =
+                                (PsiMethodCallExpression)argument;
+                        final PsiReferenceExpression methodExpression =
+                                methodCallExpression.getMethodExpression();
+                        final PsiElement element = methodExpression.resolve();
+                        if (element instanceof PsiMethod) {
+                            final PsiMethod method = (PsiMethod)element;
+                            final PsiClass aClass = method.getContainingClass();
+                            final String className = aClass.getQualifiedName();
+                            @NonNls final String methodName = method.getName();
+                            if ("java.lang.String".equals(className) &&
+                                    methodName.equals("substring")) {
+                                return;
+                            }
+                        }
+                    }
                 }
             }
             registerError(expression);

@@ -1,8 +1,17 @@
 <html>
 <body><table> <tr> <td valign="top" height="150">
 <font face="verdana" size="-1">
-This inspection reports any attempt to instantiate a new String object by copying an existing string.
-Constructing new String objects in this way is rarely necessary, and may cause performance problems
-if done often enough.
+This inspection reports any attempt to instantiate a new
+<b><font color="#000080">String</font></b> object by copying an existing string.
+Constructing new <b><font color="#000080">String</font></b> objects in this way
+is rarely necessary, and may cause performance problems if done often enough.
+<p>
+Use the check box below to ignore <b><font color="#000080">String</font></b>
+constructor calls which have a <b><font color="#000080">String.substring()</font></b>
+call as parameter. A call to <b><font color="#000080">substring()</font></b>
+reuses the character array of the original string, which can cause a large
+amount of garbage to stay in memory if the substring is small in relation to the
+original <b><font color="#000080">String</font></b>. 
+</p>
 </font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
 </html>
