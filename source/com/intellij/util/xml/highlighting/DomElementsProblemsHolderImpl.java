@@ -9,6 +9,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NotNull;
@@ -99,11 +100,12 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
 
   private static Collection<DomElementProblemDescriptor> getResolveProblems(final DomElement domElement) {
     Collection<DomElementProblemDescriptor> problems = new ArrayList<DomElementProblemDescriptor>();
-    if (domElement.getXmlTag() != null) {
-      for (PsiReference reference : domElement.getXmlTag().getReferences()) {
+    final XmlElement xmlElement = domElement.getXmlElement();
+    if (xmlElement != null) {
+      for (PsiReference reference : xmlElement.getReferences()) {
         if (XmlHighlightVisitor.hasBadResolve(reference)) {
-          problems.add(
-            new DomElementProblemDescriptorImpl(domElement, XmlHighlightVisitor.getErrorDescription(reference), HighlightSeverity.ERROR));
+          final String description = XmlHighlightVisitor.getErrorDescription(reference);
+          problems.add(new DomElementProblemDescriptorImpl(domElement, description, HighlightSeverity.ERROR));
         }
       }
     }

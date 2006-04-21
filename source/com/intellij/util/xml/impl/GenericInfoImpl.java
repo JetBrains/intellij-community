@@ -642,6 +642,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   @Nullable
   public DomAttributeChildDescription getAttributeChildDescription(String attributeName) {
     final Method getter = findGetterMethod(myAttributeChildrenMethods, attributeName);
+    if (getter == null) return null;
     return new AttributeChildDescriptionImpl(attributeName, getter, isRequired(getter));
   }
 

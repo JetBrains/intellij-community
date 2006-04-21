@@ -38,7 +38,7 @@ public class GenericDomValueReference<T> extends GenericReference {
     myValueElement = xmlValue instanceof GenericAttributeValue
                      ? ((GenericAttributeValue)xmlValue).getXmlAttributeValue()
                      : tag.getValue().getTextElements()[0];
-    myContextElement = (XmlElement)myValueElement.getParent();
+    myContextElement = xmlValue instanceof GenericAttributeValue ? myValueElement : tag;
     final TextRange range = getTextRange(myValueElement.getText());
     myTextRange = range.shiftRight(myValueElement.getTextRange().getStartOffset() - myContextElement.getTextRange().getStartOffset());
   }

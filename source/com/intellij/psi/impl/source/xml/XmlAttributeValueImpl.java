@@ -31,6 +31,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
 
   @NotNull
   public PsiReference[] getReferences() {
+
     return ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
   }
 
