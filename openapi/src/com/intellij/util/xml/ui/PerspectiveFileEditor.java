@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -34,6 +35,7 @@ import java.util.HashSet;
  * User: Sergey.Vasiliev
  */
 abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Project myProject;
   private final VirtualFile myFile;
   private final FileEditorManagerAdapter myFileEditorManagerAdapter;
@@ -66,6 +68,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
     myFileEditorManagerAdapter = new FileEditorManagerAdapter() {
       public void selectionChanged(FileEditorManagerEvent event) {
+        checkIsValid();
         if (PerspectiveFileEditor.this.equals(event.getOldEditor())) {
           deselectNotify();
           if (event.getNewEditor() instanceof TextEditor) {
@@ -198,7 +201,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     return FileDocumentManager.getInstance().isFileModified(getVirtualFile());
   }
 
-  public final boolean isValid() {
+  public boolean isValid() {
     return getVirtualFile().isValid();
   }
 
@@ -219,12 +222,6 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     for (final Document document : myCurrentDocuments) {
       manager.commitDocument(document);
     }
-  }
-
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-  }
-
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
   }
 
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
@@ -253,5 +250,21 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   public void setState(FileEditorState state) {
+  }
+
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    myPropertyChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    myPropertyChangeSupport.removePropertyChangeListener(listener);
+  }
+
+  protected final boolean checkIsValid() {
+    if (!isValid()) {
+      myPropertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, Boolean.TRUE, Boolean.FALSE);
+      return false;
+    }
+    return true;
   }
 }

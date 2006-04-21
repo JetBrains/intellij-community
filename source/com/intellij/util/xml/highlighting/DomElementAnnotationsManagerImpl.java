@@ -8,12 +8,15 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.reflect.*;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -79,8 +82,11 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
         final DomElementsProblemsHolder holder = new DomElementsProblemsHolderImpl();
         final DomElement rootElement = fileElement.getRootElement();
         final Class<?> type = DomUtil.getRawType(rootElement.getDomElementType());
-        for (DomElementsAnnotator annotator : getOrCreateAnnotators(type)) {
-          annotator.annotate(rootElement, holder);
+        final List<DomElementsAnnotator> list = myClass2Annotator.get(type);
+        if (list != null) {
+          for (DomElementsAnnotator annotator : list) {
+            annotator.annotate(rootElement, holder);
+          }
         }
         return new Result<DomElementsProblemsHolder>(holder, fileElement.getFile());
       }
@@ -89,15 +95,17 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
 
   public void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class aClass) {
-    final List<DomElementsAnnotator> annotators = getOrCreateAnnotators(aClass);
-
-    annotators.add(annotator);
-
-    myClass2Annotator.put(aClass, annotators);
+    getOrCreateAnnotators(aClass).add(annotator);
   }
 
   private List<DomElementsAnnotator> getOrCreateAnnotators(final Class aClass) {
-    return myClass2Annotator.get(aClass) == null ? new ArrayList<DomElementsAnnotator>() : myClass2Annotator.get(aClass);
+    List<DomElementsAnnotator> annotators = myClass2Annotator.get(aClass);
+    if (annotators == null) {
+      annotators = new ArrayList<DomElementsAnnotator>();
+      annotators.add(new MyDomElementsAnnotator());
+      myClass2Annotator.put(aClass, annotators);
+    }
+    return annotators;
   }
 
   @NonNls
@@ -111,5 +119,46 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   public void disposeComponent() {
 
+  }
+
+  private static class MyDomElementsAnnotator implements DomElementsAnnotator {
+    public void annotate(DomElement element, final DomElementsProblemsHolder annotator) {
+      element.accept(new DomElementVisitor() {
+        public void visitDomElement(DomElement element) {
+          final DomGenericInfo info = element.getGenericInfo();
+          final List<DomChildrenDescription> list = info.getChildrenDescriptions();
+          for (final DomChildrenDescription description : list) {
+            final List<? extends DomElement> values = description.getValues(element);
+            if (description instanceof DomAttributeChildDescription) {
+              if (((DomAttributeChildDescription)description).isRequired()) {
+                final DomElement child = values.get(0);
+                if (child.getXmlElement() == null) {
+                  annotator.createProblem(child, IdeBundle.message("attribute.0.should.be.defined", child.getXmlElementName()));
+                }
+              }
+            }
+            else if (description instanceof DomFixedChildDescription) {
+              final DomFixedChildDescription childDescription = (DomFixedChildDescription)description;
+              for (int i = 0; i < values.size(); i++) {
+                if (childDescription.isRequired(i)) {
+                  final DomElement child = values.get(i);
+                  if (child.getXmlElement() == null) {
+                    annotator.createProblem(child, IdeBundle.message("child.tag.0.should.be.defined", child.getXmlElementName()));
+                  }
+                }
+              }
+            }
+            else if (values.isEmpty()) {
+              final DomCollectionChildDescription childDescription = (DomCollectionChildDescription)description;
+              if (childDescription.isRequiredNotEmpty()) {
+                annotator.createProblem(element, childDescription, IdeBundle.message("child.tag.0.should.be.defined", description.getXmlElementName()));
+              }
+            }
+          }
+          element.acceptChildren(this);
+        }
+
+      });
+    }
   }
 }

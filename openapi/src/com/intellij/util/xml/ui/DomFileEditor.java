@@ -5,29 +5,29 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
-import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.CaptionComponent;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomEventListener;
+import com.intellij.util.xml.events.DomEvent;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 
 /**
  * @author peter
  */
 public abstract class DomFileEditor<T extends BasicDomElementComponent> extends PerspectiveFileEditor{
-  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final String myName;
   private final T myComponent;
   private final UserActivityWatcher myUserActivityWatcher;
   private final UserActivityListener myUserActivityListener;
+  private DomEventListener myDomListener;
 
   protected DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
     super(project, file);
@@ -43,9 +43,16 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
     myUserActivityWatcher.register(getComponent());
     new MnemonicHelper().register(getComponent());
     addWatchedElement(component.getDomElement());
+    myDomListener = new DomEventListener() {
+      public void eventOccured(DomEvent event) {
+        checkIsValid();
+      }
+    };
+    DomManager.getDomManager(project).addDomEventListener(myDomListener);
   }
 
   public void dispose() {
+    DomManager.getDomManager(getProject()).removeDomEventListener(myDomListener);
     myUserActivityWatcher.removeUserActivityListener(myUserActivityListener);
     myComponent.dispose();
     super.dispose();
@@ -80,20 +87,8 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
     }
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    myPropertyChangeSupport.addPropertyChangeListener(listener);
-  }
-
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    myPropertyChangeSupport.removePropertyChangeListener(listener);
-  }
-
-  protected final boolean checkIsValid() {
-    if (!myComponent.getDomElement().isValid()) {
-      myPropertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, Boolean.TRUE, Boolean.FALSE);
-      return false;
-    }
-    return true;
+  public boolean isValid() {
+    return super.isValid() && myComponent.getDomElement().isValid();
   }
 
   public void reset() {
