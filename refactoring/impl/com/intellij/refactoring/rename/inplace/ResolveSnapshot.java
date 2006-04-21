@@ -52,7 +52,7 @@ public class ResolveSnapshot {
     }
   }
 
-  private void qualify(PsiElement referent, PsiElement referee, String hidingLocalName) {
+  private static void qualify(PsiElement referent, PsiElement referee, String hidingLocalName) {
     if (referent instanceof PsiReferenceExpression && referee instanceof PsiField) {
       PsiReferenceExpression ref = ((PsiReferenceExpression) referent);
       if (!ref.isQualified() && hidingLocalName.equals(ref.getReferenceName())) {
