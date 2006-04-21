@@ -5,7 +5,6 @@ import com.intellij.execution.junit2.configuration.ClassBrowser;
 import com.intellij.execution.junit2.configuration.CommonJavaParameters;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
 import com.intellij.execution.ui.AlternativeJREPanel;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -14,7 +13,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -41,9 +40,6 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
     myLogsPanel.setLayout(new BorderLayout());
     myLogsPanel.add(myLogConfigurations.getLoggerComponent(), BorderLayout.CENTER);
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) {
-      myShowSwingInspectorCheckbox.setVisible(false);
-    }
   }
 
   public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {
