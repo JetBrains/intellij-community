@@ -28,6 +28,7 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
   public void annotate(PsiFile file, AnnotationHolder holder) {
     myHolder = holder;
     final XmlDocument document = ((XmlFile)file).getDocument();
+    if (document == null) return;
     XmlTag rootTag = document.getRootTag();
     XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
 

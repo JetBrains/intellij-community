@@ -20,6 +20,8 @@ import com.intellij.psi.PsiFile;
 
 import java.util.Map;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Mike
  */
@@ -27,5 +29,6 @@ public interface XmlFile extends PsiFile, XmlElement {
   Key<Map<String,String>> ANT_FILE_PROPERTIES = Key.create("ANT_FILE_PROPERTIES");
   Key ANT_BUILD_FILE = Key.create("ANT_BUILD_FILE");
 
+  @Nullable
   XmlDocument getDocument();
 }
