@@ -603,7 +603,8 @@ public class VirtualFileImpl extends VirtualFile {
   void addChild(VirtualFileImpl child) {
     final String path = child.getPath();
     if (ourFileSystem.myUnaccountedFiles.containsKey(path)) {
-      LOG.assertTrue(ourFileSystem.myUnaccountedFiles.put(path, child) == null);
+      final VirtualFileImpl prev = ourFileSystem.myUnaccountedFiles.put(path, child);
+      LOG.assertTrue(prev == null || !prev.isValid());
       return;
     }
 
