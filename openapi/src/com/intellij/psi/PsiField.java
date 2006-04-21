@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.pom.java.PomField;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -44,4 +45,6 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner {
    * @since 5.0.2
    */
   void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException;
+
+  @NotNull PsiIdentifier getNameIdentifier();
 }

@@ -50,4 +50,6 @@ public interface PsiTypeParameter extends PsiClass {
    * @return the type parameter position.
    */
   int getIndex();
+
+  @NotNull PsiIdentifier getNameIdentifier();
 }

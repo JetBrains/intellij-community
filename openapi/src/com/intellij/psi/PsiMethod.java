@@ -97,7 +97,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
    *
    * @return the name identifier instance.
    */
-  PsiIdentifier getNameIdentifier();
+  @Nullable PsiIdentifier getNameIdentifier();
 
   /**
    * Searches the superclasses and base interfaces of the containing class to find
