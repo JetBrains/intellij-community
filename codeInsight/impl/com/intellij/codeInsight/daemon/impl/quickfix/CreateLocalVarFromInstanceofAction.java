@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -41,7 +42,6 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       PsiTypeElement checkType = instanceOfExpression.getCheckType();
       if (checkType == null) return false;
       PsiType type = checkType.getType();
-      if (type == null) return false;
       String castTo = type.getPresentableText();
       setText(QuickFixBundle.message("create.local.from.instanceof.usage.text", castTo, instanceOfExpression.getOperand().getText()));
 
@@ -87,7 +87,6 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
         PsiTypeElement castTypeElement = ((PsiTypeCastExpression)initializer).getCastType();
         if (castTypeElement == null) continue;
         PsiType castType = castTypeElement.getType();
-        if (castType == null) continue;
         if (castType.equals(type)) return true;
       }
     }
@@ -134,6 +133,8 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   }
 
   public void invoke(final Project project, final Editor editor, final PsiFile file) {
+    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
 
     try {
@@ -322,6 +323,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   protected void invokeImpl(PsiClass targetClass) {
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.local.from.instanceof.usage.family");
   }
