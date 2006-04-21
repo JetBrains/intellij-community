@@ -558,11 +558,11 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "while(true) System.out.println(\"1111\");";
     String s5 = "System.out.println('Test);";
     String s6 = "/* System.out.println($Test$); */";
-    String expectedResult2 = "if (true) /* System.out.println(\"1111\"); */" +
-                             ";" +
-                             "else /* System.out.println(\"2222\"); */" +
+    String expectedResult2 = "if (true) /* System.out.println(\"1111\"); */\n" +
                              ";\n" +
-                             "while(true) /* System.out.println(\"1111\"); */" +
+                             "else /* System.out.println(\"2222\"); */\n" +
+                             ";\n" +
+                             "while(true) /* System.out.println(\"1111\"); */\n" +
                              ";";
     actualResult = replacer.testReplace(s4,s5,s6,options);
 
@@ -1081,13 +1081,13 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s18_2 = "class $A$ { $Other$ }";
 
     actualResult = replacer.testReplace(s16,s17,s18,options);
-    String expectedResult6 = "public class A { private Log log = LogFactory.createLog();  }\n" +
-                             "final class B { private Log log = LogFactory.createLog();  }";
+    String expectedResult6 = "public  class A { private Log log = LogFactory.createLog();  }\n" +
+                             "final  class B { private Log log = LogFactory.createLog();  }";
     assertEquals("Modifier list for class",expectedResult6,actualResult);
 
     actualResult = replacer.testReplace(actualResult,s17_2,s18_2,options);
-    String expectedResult7 = "public class A {  }\n" +
-                             "final class B {  }";
+    String expectedResult7 = "public  class A {  }\n" +
+                             "final  class B {  }";
     assertEquals("Removing field",expectedResult7,actualResult);
 
     String s19 = "public class A extends Object implements Cloneable {}\n";
@@ -1283,7 +1283,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "    void f(){}\n" +
                 "}";
 
-    String expectedResult = "public class X {\n" +
+    String expectedResult = "public  class X {\n" +
                             "    /**\n" +
                             "     * ppp\n" +
                             "     */\n" +
@@ -1332,11 +1332,11 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "   void f($t$ $p$){$s$;}\n" +
                 "}";
 
-    String expectedResult = "public class X {\n" +
+    String expectedResult = "public  class X {\n" +
                             "   /**\n" +
                             "    * ppp\n" +
                             "    */\n" +
-                            "   private void f(int i){//s\n" +
+                            "   private  void f(int i){//s\n" +
                             "}\n" +
                             "}";
 
@@ -1348,11 +1348,11 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
 
-    String expectedResult2 = "public class X {\n" +
+    String expectedResult2 = "public  class X {\n" +
                             "   /**\n" +
                             "    * ppp\n" +
                             "    */\n" +
-                            "   private void f(int i){int a = 1;\n" +
+                            "   private  void f(int i){int a = 1;\n" +
                             "       //s\n" +
                             "}\n" +
                             "}";
@@ -1400,7 +1400,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult = "/**\n" +
                             "* by: cdr\n" +
                             "*/\n" +
-                            "public class CC {\n" +
+                            "public  class CC {\n" +
                             "  /** My Comment */ int a = 3; // aaa\n" +
                             "// bbb\n" +
                             "   long c = 2;\n" +
@@ -1466,7 +1466,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult15 = "class A {\n" +
                               "  \n" +
                               "  /* special comment*/\n" +
-                              "  private List<String> a = buildaMap();\n" +
+                              "  private  List<String> a = buildaMap();\n" +
                               "  private static List<String> buildaMap() {\n" +
                               "    List<String> a = new ArrayList();\n" +
                               "    int a = 1;\n" +
