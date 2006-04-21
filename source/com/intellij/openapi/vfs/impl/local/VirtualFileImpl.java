@@ -601,13 +601,7 @@ public class VirtualFileImpl extends VirtualFile {
 
 
   void addChild(VirtualFileImpl child) {
-    final String path = child.getPath();
-    if (ourFileSystem.myUnaccountedFiles.containsKey(path)) {
-      final VirtualFileImpl prev = ourFileSystem.myUnaccountedFiles.put(path, child);
-      LOG.assertTrue(prev == null || !prev.isValid());
-      return;
-    }
-
+    ourFileSystem.myUnaccountedFiles.remove(child.getPath());
     getChildren(); // to initialize myChildren
 
     synchronized (ourFileSystem.LOCK) {
