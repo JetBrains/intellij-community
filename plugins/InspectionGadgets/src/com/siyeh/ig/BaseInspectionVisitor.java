@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -44,13 +45,13 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
         final PsiElement nameToken = methodExpression.getReferenceNameElement();
-        registerError(nameToken, infos);
+        registerError(nameToken != null ? nameToken : expression, infos);
     }
 
     protected void registerStatementError(PsiStatement statement,
                                           Object... infos){
         final PsiElement statementToken = statement.getFirstChild();
-        registerError(statementToken, infos);
+        registerError(statementToken != null ? statementToken : statement, infos);
     }
 
     protected void registerClassError(PsiClass aClass, Object... infos){
@@ -61,19 +62,17 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         } else {
             nameIdentifier = aClass.getNameIdentifier();
         }
-        registerError(nameIdentifier, infos);
+        registerError(nameIdentifier != null ? nameIdentifier : aClass.getContainingFile(), infos);
     }
 
     protected void registerMethodError(PsiMethod method, Object... infos){
         final PsiElement nameIdentifier = method.getNameIdentifier();
-        if (nameIdentifier != null) {
-          registerError(nameIdentifier, infos);
-        }
+        registerError(nameIdentifier != null ? nameIdentifier : method.getContainingFile(), infos);
     }
 
     protected void registerVariableError(PsiVariable variable, Object... infos){
         final PsiElement nameIdentifier = variable.getNameIdentifier();
-        registerError(nameIdentifier, infos);
+        registerError(nameIdentifier != null ? nameIdentifier : variable.getContainingFile(), infos);
     }
 
     protected void registerTypeParameterError(PsiTypeParameter param,
@@ -103,7 +102,7 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         }
     }
 
-    protected void registerError(PsiElement location, Object... infos){
+    protected void registerError(@NotNull PsiElement location, Object... infos){
         final LocalQuickFix[] fixes = createFixes(location);
         final String description = inspection.buildErrorString(infos);
         holder.registerProblem(location, description, fixes);
