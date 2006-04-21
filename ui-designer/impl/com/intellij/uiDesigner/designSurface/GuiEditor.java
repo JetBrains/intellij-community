@@ -539,7 +539,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
           }
         });
       }
-    }, null, null);
+    }, "UI Designer Save", null);
 
     fireHierarchyChanged();
   }

@@ -108,14 +108,19 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   }
 
   @Nullable
-  public GuiEditor getActiveFormEditor() {
+  public UIFormEditor getActiveFormFileEditor() {
     GuiEditor activeFormEditor = null;
     FileEditor[] fileEditors = myFileEditorManager.getSelectedEditors();
     if (fileEditors.length > 0 && fileEditors [0] instanceof UIFormEditor) {
-      UIFormEditor formEditor = (UIFormEditor) fileEditors [0];
-      activeFormEditor = formEditor.getEditor();
+      return (UIFormEditor) fileEditors [0];
     }
-    return activeFormEditor;
+    return null;
+  }
+
+  @Nullable
+  public GuiEditor getActiveFormEditor() {
+    UIFormEditor formEditor = getActiveFormFileEditor();
+    return formEditor == null ? null : formEditor.getEditor();
   }
 
   public static UIDesignerToolWindowManager getInstance(Project project) {
