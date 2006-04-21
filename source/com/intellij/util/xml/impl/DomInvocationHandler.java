@@ -10,16 +10,15 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,8 +187,17 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     finally {
       myManager.setChanging(changing);
       myManager.fireEvent(new ElementDefinedEvent(getProxy()));
+      addRequiredChildren();
     }
     return myXmlTag;
+  }
+
+  public XmlElement getXmlElement() {
+    return getXmlTag();
+  }
+
+  public XmlElement ensureXmlElementExists() {
+    return ensureTagExists();
   }
 
   protected final XmlTag createEmptyTag() throws IncorrectOperationException {
@@ -258,11 +266,27 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myManager.fireEvent(new ElementUndefinedEvent(getProxy()));
   }
 
-  protected final void fireDefinedEvent() {
-    myManager.fireEvent(new ElementDefinedEvent(getProxy()));
-  }
-
   protected abstract XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException, IllegalAccessException, InstantiationException;
+
+  protected final void addRequiredChildren() {
+    for (final DomChildrenDescription description : myGenericInfoImpl.getChildrenDescriptions()) {
+      if (description instanceof DomAttributeChildDescription) {
+        if (((DomAttributeChildDescription)description).isRequired()) {
+          description.getValues(getProxy()).get(0).ensureXmlElementExists();
+        }
+      }
+      if (description instanceof DomFixedChildDescription) {
+        final DomFixedChildDescription childDescription = (DomFixedChildDescription)description;
+        final List<? extends DomElement> values = description.getValues(getProxy());
+        for (int i = 0; i < values.size(); i++) {
+          DomElement element = values.get(i);
+          if (childDescription.isRequired(i)) {
+            element.ensureTagExists();
+          }
+        }
+      }
+    }
+  }
 
   public final String getXmlElementName() {
     return myTagName;
@@ -628,6 +652,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private DomElement addCollectionElement(final Type type, final XmlTag tag) {
     final DomElement element = createCollectionElement(type, tag);
     myManager.fireEvent(new CollectionElementAddedEvent(element, tag.getName()));
+    DomManagerImpl.getDomInvocationHandler(element).addRequiredChildren();
     return element;
   }
 

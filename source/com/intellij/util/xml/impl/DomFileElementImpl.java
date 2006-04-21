@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
@@ -206,7 +207,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return "File " + myFile.toString();
   }
 
-  public XmlTag getXmlTag() {
+  public final XmlTag getXmlTag() {
     return null;
   }
 
@@ -219,8 +220,16 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return null;
   }
 
-  public XmlTag ensureTagExists() {
+  public final XmlTag ensureTagExists() {
     return null;
+  }
+
+  public final XmlElement getXmlElement() {
+    return getXmlTag();
+  }
+
+  public final XmlElement ensureXmlElementExists() {
+    return ensureTagExists();
   }
 
   public void undefine() {

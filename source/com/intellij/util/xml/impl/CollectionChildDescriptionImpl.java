@@ -20,8 +20,10 @@ import java.util.List;
  */
 public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription {
   private final Method myGetterMethod, myAdderMethod, myIndexedAdderMethod;
-  private final Method myClassAdderMethod, myIndexedClassAdderMethod, myInvertedIndexedClassAdderMethod;
-  private final int myStartIndex;
+  private final Method myClassAdderMethod;
+  private final Method myIndexedClassAdderMethod;
+  private final Method myInvertedIndexedClassAdderMethod;
+  private final boolean myRequired;
 
   public CollectionChildDescriptionImpl(final String tagName,
                                         final Type type,
@@ -31,7 +33,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
                                         final Method indexedAdderMethod,
                                         final Method indexedClassAdderMethod,
                                         final Method invertedIndexedClassAdderMethod,
-                                        final int startIndex) {
+                                        boolean required) {
     super(tagName, type);
     myAdderMethod = adderMethod;
     myClassAdderMethod = classAdderMethod;
@@ -39,7 +41,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     myIndexedAdderMethod = indexedAdderMethod;
     myIndexedClassAdderMethod = indexedClassAdderMethod;
     myInvertedIndexedClassAdderMethod = invertedIndexedClassAdderMethod;
-    myStartIndex = startIndex;
+    myRequired = required;
   }
 
   public Method getClassAdderMethod() {
@@ -52,6 +54,10 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
   public Method getInvertedIndexedClassAdderMethod() {
     return myInvertedIndexedClassAdderMethod;
+  }
+
+  public boolean isRequiredNotEmpty() {
+    return myRequired;
   }
 
   public Method getAdderMethod() {
@@ -72,7 +78,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   public DomElement addValue(DomElement element, int index) {
-    return addChild(element, getType(), index + myStartIndex);
+    return addChild(element, getType(), index);
   }
 
   public DomElement addValue(DomElement parent, Class aClass) {
@@ -121,7 +127,6 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
     final CollectionChildDescriptionImpl that = (CollectionChildDescriptionImpl)o;
 
-    if (myStartIndex != that.myStartIndex) return false;
     if (myAdderMethod != null ? !myAdderMethod.equals(that.myAdderMethod) : that.myAdderMethod != null) return false;
     if (myClassAdderMethod != null ? !myClassAdderMethod.equals(that.myClassAdderMethod) : that.myClassAdderMethod != null) return false;
     if (myGetterMethod != null ? !myGetterMethod.equals(that.myGetterMethod) : that.myGetterMethod != null) return false;
@@ -150,7 +155,6 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     result = 29 * result + (myClassAdderMethod != null ? myClassAdderMethod.hashCode() : 0);
     result = 29 * result + (myIndexedClassAdderMethod != null ? myIndexedClassAdderMethod.hashCode() : 0);
     result = 29 * result + (myInvertedIndexedClassAdderMethod != null ? myInvertedIndexedClassAdderMethod.hashCode() : 0);
-    result = 29 * result + myStartIndex;
     return result;
   }
 

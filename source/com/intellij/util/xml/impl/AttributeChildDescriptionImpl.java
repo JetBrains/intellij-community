@@ -19,14 +19,20 @@ import java.util.List;
  */
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription {
   private final JavaMethodSignature myGetterMethod;
+  private final boolean myRequired;
 
-  protected AttributeChildDescriptionImpl(final String attributeName, final Method getter) {
+  protected AttributeChildDescriptionImpl(final String attributeName, final Method getter, boolean required) {
     super(attributeName, getter.getGenericReturnType());
     myGetterMethod = JavaMethodSignature.getSignature(getter);
+    myRequired = required;
   }
 
   public final JavaMethodSignature getGetterMethod() {
     return myGetterMethod;
+  }
+
+  public final boolean isRequired() {
+    return myRequired;
   }
 
   public List<? extends DomElement> getValues(DomElement parent) {

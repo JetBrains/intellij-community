@@ -54,8 +54,7 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
   public int hashCode() {
     int result;
     result = (myTagName != null ? myTagName.hashCode() : 0);
-    result = 29 * result + (myType != null ? myType.hashCode() : 0);
+    result = 31 * result + (myType != null ? myType.hashCode() : 0);
     return result;
   }
-
 }

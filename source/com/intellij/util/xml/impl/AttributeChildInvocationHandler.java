@@ -4,14 +4,15 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 /**
  * @author peter
@@ -36,18 +37,43 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     return tag;
   }
 
-  protected void cacheInTag(final XmlTag tag) {
+  public final XmlAttribute getXmlElement() {
+    final XmlTag tag = getXmlTag();
+    return tag == null ? null : tag.getAttribute(getXmlElementName(), null);
   }
 
-  public boolean wasDefined() {
+  public final XmlAttribute ensureXmlElementExists() {
+    XmlAttribute xmlAttribute = getXmlElement();
+    if (xmlAttribute != null) return xmlAttribute;
+
+    final DomManagerImpl manager = getManager();
+    final boolean b = manager.setChanging(true);
+    try {
+      xmlAttribute = ensureTagExists().setAttribute(getXmlElementName(), "");
+      manager.fireEvent(new ElementDefinedEvent(getProxy()));
+      return xmlAttribute;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return null;
+    }
+    finally {
+      manager.setChanging(b);
+    }
+  }
+
+  protected final void cacheInTag(final XmlTag tag) {
+  }
+
+  public final boolean wasDefined() {
     return myWasDefined;
   }
 
-  public void setDefined(final boolean wasDefined) {
+  public final void setDefined(final boolean wasDefined) {
     myWasDefined = wasDefined;
   }
 
-  protected void removeFromCache() {
+  protected final void removeFromCache() {
   }
 
   protected final Invocation createSetValueInvocation(final Converter converter, final Method method) {
@@ -58,7 +84,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     return new GetAttributeValueInvocation(converter, method);
   }
 
-  public void undefineInternal() {
+  public final void undefineInternal() {
     final XmlTag tag = getXmlTag();
     setDefined(false);
     setXmlTagToNull();
@@ -78,13 +104,8 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     return getParentHandler().getXmlTag();
   }
 
-  public XmlTag ensureTagExists() {
-    final XmlTag tag = getXmlTag();
-    getParentHandler().ensureTagExists();
-    if (tag == null) {
-      getManager().fireEvent(new ElementDefinedEvent(getProxy()));
-    }
-    return getXmlTag();
+  public final XmlTag ensureTagExists() {
+    return getParentHandler().ensureTagExists();
   }
 
 }

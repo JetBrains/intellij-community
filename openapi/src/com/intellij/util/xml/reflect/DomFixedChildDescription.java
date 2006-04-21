@@ -14,4 +14,5 @@ public interface DomFixedChildDescription extends DomChildrenDescription {
   int getCount();
   Method getGetterMethod(int index);
   void initConcreteClass(final DomElement parent, final Class<? extends DomElement> aClass);
+  boolean isRequired(int index);
 }

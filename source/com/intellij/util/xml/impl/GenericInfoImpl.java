@@ -11,6 +11,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.javaee.ReadOnlyDeploymentDescriptorModificationException;
@@ -36,6 +37,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   private final Map<JavaMethodSignature, String> myAttributeChildrenMethods = new HashMap<JavaMethodSignature, String>();
   private final Map<JavaMethodSignature, Set<String>> myCompositeChildrenMethods = new HashMap<JavaMethodSignature, Set<String>>();
   private final Map<JavaMethodSignature, Pair<String,Set<String>>> myCompositeCollectionAdditionMethods = new HashMap<JavaMethodSignature, Pair<String,Set<String>>>();
+  private final Set<JavaMethodSignature> myRequiredChildrenGetters = new HashSet<JavaMethodSignature>();
   @Nullable private Method myNameValueGetter;
   private boolean myValueElement;
   private boolean myInitialized;
@@ -155,7 +157,11 @@ public class GenericInfoImpl implements DomGenericInfo {
 
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       final Method method = iterator.next();
+
       final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
+      if (DomUtil.findAnnotationDFS(method, Required.class) != null) {
+        myRequiredChildrenGetters.add(signature);
+      }
       if (isCoreMethod(method) || DomImplUtil.isTagValueSetter(method) || isCustomMethod(signature)) {
         if (signature.findAnnotation(NameValue.class, myClass) != null) {
           myNameValueGetter = method;
@@ -607,26 +613,36 @@ public class GenericInfoImpl implements DomGenericInfo {
     return new FixedChildDescriptionImpl(tagName,
                                          getterMethods[0].getGenericReturnType(),
                                          getFixedChildrenCount(tagName),
-                                         getterMethods);
+                                         getterMethods, ContainerUtil.map2Array(getterMethods, Boolean.class, new Function<Method, Boolean>() {
+      public Boolean fun(final Method s) {
+        return isRequired(s);
+      }
+    }));
+  }
+
+  final boolean isRequired(Method method) {
+    return myRequiredChildrenGetters.contains(JavaMethodSignature.getSignature(method));
   }
 
   @Nullable
   public DomCollectionChildDescription getCollectionChildDescription(String tagName) {
     buildMethodMaps();
+    final Method getter = findGetterMethod(myCollectionChildrenGetterMethods, tagName);
     return new CollectionChildDescriptionImpl(tagName,
                                               getCollectionChildrenType(tagName),
                                               getCollectionAddMethod(tagName),
                                               getCollectionAddMethod(tagName, Class.class),
-                                              findGetterMethod(myCollectionChildrenGetterMethods, tagName),
+                                              getter,
                                               getCollectionAddMethod(tagName, int.class),
                                               getCollectionAddMethod(tagName, Class.class, int.class),
                                               getCollectionAddMethod(tagName, int.class, Class.class),
-                                              getFixedChildrenCount(tagName));
+                                              isRequired(getter));
   }
 
   @Nullable
   public DomAttributeChildDescription getAttributeChildDescription(String attributeName) {
-    return new AttributeChildDescriptionImpl(attributeName, findGetterMethod(myAttributeChildrenMethods, attributeName));
+    final Method getter = findGetterMethod(myAttributeChildrenMethods, attributeName);
+    return new AttributeChildDescriptionImpl(attributeName, getter, isRequired(getter));
   }
 
   public boolean isTagValueElement() {
@@ -638,7 +654,8 @@ public class GenericInfoImpl implements DomGenericInfo {
   public List<DomAttributeChildDescription> getAttributeChildrenDescriptions() {
     final ArrayList<DomAttributeChildDescription> result = new ArrayList<DomAttributeChildDescription>();
     for (Map.Entry<JavaMethodSignature, String> entry : myAttributeChildrenMethods.entrySet()) {
-      result.add(new AttributeChildDescriptionImpl(entry.getValue(), entry.getKey().findMethod(myClass)));
+      final Method getter = entry.getKey().findMethod(myClass);
+      result.add(new AttributeChildDescriptionImpl(entry.getValue(), getter, isRequired(getter)));
     }
     return result;
   }

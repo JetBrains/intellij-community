@@ -5,6 +5,7 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,10 @@ public interface DomElement {
   DomElement getParent();
 
   XmlTag ensureTagExists();
+
+  XmlElement getXmlElement();
+
+  XmlElement ensureXmlElementExists();
 
   void undefine();
 

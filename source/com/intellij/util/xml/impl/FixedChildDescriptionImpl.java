@@ -24,9 +24,11 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FixedChildDescriptionImpl");
   private final Method[] myGetterMethods;
   private final int myCount;
+  private final Boolean[] myRequired;
 
-  public FixedChildDescriptionImpl(final String tagName, final Type type, final int count, final Method[] getterMethods) {
+  public FixedChildDescriptionImpl(final String tagName, final Type type, final int count, final Method[] getterMethods, Boolean[] required) {
     super(tagName, type);
+    myRequired = required;
     assert getterMethods.length == count;
     myCount = count;
     myGetterMethods = getterMethods;
@@ -38,6 +40,10 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
 
   public void initConcreteClass(final DomElement parent, final Class<? extends DomElement> aClass) {
     DomManagerImpl.getDomInvocationHandler(parent).setFixedChildClass(getXmlElementName(), aClass);
+  }
+
+  public boolean isRequired(int index) {
+    return myRequired[index];
   }
 
   public int getCount() {

@@ -14,4 +14,6 @@ public interface DomAttributeChildDescription extends DomChildrenDescription{
   GenericAttributeValue getDomAttributeValue(DomElement parent);
 
   JavaMethodSignature getGetterMethod();
+
+  boolean isRequired();
 }

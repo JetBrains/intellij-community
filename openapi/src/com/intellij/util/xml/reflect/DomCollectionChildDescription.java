@@ -25,4 +25,6 @@ public interface DomCollectionChildDescription extends DomChildrenDescription {
   Method getIndexedClassAdderMethod();
 
   Method getInvertedIndexedClassAdderMethod();
+
+  boolean isRequiredNotEmpty();
 }
