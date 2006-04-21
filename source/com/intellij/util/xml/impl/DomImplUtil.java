@@ -54,7 +54,7 @@ public class DomImplUtil {
       if (cause instanceof ProcessCanceledException) {
         throw (ProcessCanceledException)cause;
       }
-      LOG.error(e);
+      LOG.error(cause);
     }
   }
 
