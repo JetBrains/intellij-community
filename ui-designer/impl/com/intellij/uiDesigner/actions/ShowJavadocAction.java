@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
@@ -18,8 +17,7 @@ import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.FocusEvent;
+import java.awt.Point;
 
 /**
  * @author Anton Katilin
@@ -51,22 +49,18 @@ public final class ShowJavadocAction extends AnAction {
 
     final JBPopup hint =
       JBPopupFactory.getInstance().createComponentPopupBuilder(tabbedPane.getComponent(), inspector)
+        .setDimensionServiceKey(JavaDocManager.JAVADOC_LOCATION_AND_SIZE)
         .setResizable(true)
+        .setMovable(true)
         .setRequestFocus(true)
+        .setTitle(UIDesignerBundle.message("property.javadoc.title", introspectedProperty.getName()))
         .createPopup();
     component1.setHint(hint);
     component2.setHint(hint);
 
     javaDocManager.fetchDocInfo(javaDocManager.getDefaultProvider(getter), component1);
-    javaDocManager.fetchDocInfo(javaDocManager.getDefaultProvider(setter), component2);
+    javaDocManager.queueFetchDocInfo(javaDocManager.getDefaultProvider(setter), component2);
 
-    final FocusWatcher focusWatcher = new FocusWatcher() {
-      protected void focusLostImpl(final FocusEvent e) {
-        hint.cancel();
-      }
-    };
-
-    focusWatcher.install(hint.getContent());
     hint.show(new RelativePoint(inspector, new Point(0,0)));
     SwingUtilities.invokeLater(
       new Runnable() {

@@ -50,7 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class JavaDocManager implements ProjectComponent {
-  @NonNls private static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
+  @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   private final Project myProject;
   private Editor myEditor = null;
   private ParameterInfoController myParameterInfoController;
@@ -494,8 +494,18 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   public void fetchDocInfo(final JavaDocProvider provider, final JavaDocInfoComponent component) {
+    doFetchDocInfo(component, provider, true);
+  }
+
+  public void queueFetchDocInfo(final JavaDocProvider provider, final JavaDocInfoComponent component) {
+    doFetchDocInfo(component, provider, false);
+  }
+
+  private void doFetchDocInfo(final JavaDocInfoComponent component, final JavaDocProvider provider, final boolean cancelRequests) {
     component.startWait();
-    myUpdateDocAlarm.cancelAllRequests();
+    if (cancelRequests) {
+      myUpdateDocAlarm.cancelAllRequests();
+    }
     myUpdateDocAlarm.addRequest(new Runnable() {
       public void run() {
         SwingUtilities.invokeLater(new Runnable() {
