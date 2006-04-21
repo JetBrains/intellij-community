@@ -71,7 +71,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
                                               ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
                                               IconLoader.getIcon("/runConfigurations/sourceAtException.png"),
                                               properties, JUnitConsoleProperties.OPEN_FAILURE_LINE));
-    myRerunFailedTestsAction = new RerunFailedTestsAction();
+    myRerunFailedTestsAction = new RerunFailedTestsAction(properties);
     actionGroup.add(myRerunFailedTestsAction);
     add(ActionManager.getInstance().
         createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).

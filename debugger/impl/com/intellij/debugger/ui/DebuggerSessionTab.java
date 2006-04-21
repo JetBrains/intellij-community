@@ -511,7 +511,9 @@ public class DebuggerSessionTab implements LogConsoleManager {
     myConfigurationSettings  = configurationPerRunnerSettings;
     myConfiguration = runProfile;
 
-    myManager.registerFileMatcher((RunConfigurationBase)myConfiguration);
+    if (myConfiguration instanceof RunConfigurationBase) {
+      myManager.registerFileMatcher((RunConfigurationBase)myConfiguration);
+    }
 
     myDebuggerSession.getContextManager().addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {
