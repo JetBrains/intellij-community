@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -26,6 +27,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
     return (PsiAnnotationMemberValue)calcTreeElement().findChildByRole(ChildRole.ANNOTATION_DEFAULT_VALUE);
   }
 
+  @NonNls
   public String toString() {
     return "PsiAnnotationMethod:" + getName();
   }
