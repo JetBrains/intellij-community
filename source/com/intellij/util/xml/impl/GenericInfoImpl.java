@@ -90,7 +90,8 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   private static boolean isCoreMethod(final Method method) {
-    return method.getDeclaringClass().isAssignableFrom(DomElement.class);
+    final Class<?> aClass = method.getDeclaringClass();
+    return aClass.isAssignableFrom(DomElement.class) || aClass.equals(GenericAttributeValue.class);
   }
 
   @Nullable
@@ -193,6 +194,7 @@ public class GenericInfoImpl implements DomGenericInfo {
         final Set<String> set = new HashSet<String>(Arrays.asList(subTagsList.value()));
         assert set.contains(tagName);
         myCompositeCollectionAdditionMethods.put(signature, Pair.create(tagName, set));
+        iterator.remove();
       }
       else if (isAddMethod(method, signature)) {
         myCollectionChildrenAdditionMethods.put(signature, extractTagName(signature, "add"));
@@ -208,7 +210,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       }
     }
 
-    if (false) {
+    if (true) {
       if (!methods.isEmpty()) {
         StringBuilder sb = new StringBuilder(myClass + " should provide the following implementations:");
         for (Method method : methods) {

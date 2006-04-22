@@ -288,6 +288,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
+  @NotNull
   public final String getXmlElementName() {
     return myTagName;
   }
