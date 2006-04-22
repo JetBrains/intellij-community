@@ -1086,8 +1086,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("Modifier list for class",expectedResult6,actualResult);
 
     actualResult = replacer.testReplace(actualResult,s17_2,s18_2,options);
-    String expectedResult7 = "public  class A {  }\n" +
-                             "final  class B {  }";
+    String expectedResult7 = "public   class A {  }\n" +
+                             "final   class B {  }";
     assertEquals("Removing field",expectedResult7,actualResult);
 
     String s19 = "public class A extends Object implements Cloneable {}\n";
@@ -1095,7 +1095,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s21 = "class $A$ { private Log log = LogFactory.createLog(); $Other$ }";
 
     actualResult = replacer.testReplace(s19,s20,s21,options);
-    String expectedResult8 = "public class A extends Object implements Cloneable{ private Log log = LogFactory.createLog();  }\n";
+    String expectedResult8 = "public  class A  extends Object implements Cloneable{ private Log log = LogFactory.createLog();  }\n";
     assertEquals("Extends / implements list for class",expectedResult8,actualResult);
 
     String s22 = "public class A<T> { int Afield; }\n";
@@ -1103,7 +1103,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s24 = "class $A$ { private Log log = LogFactory.createLog(); $Other$ }";
 
     actualResult = replacer.testReplace(s22,s23,s24,options);
-    String expectedResult9 = "public class A<T> { private Log log = LogFactory.createLog(); int Afield; }\n";
+    String expectedResult9 = "public  class A<T> { private Log log = LogFactory.createLog(); int Afield; }\n";
     assertEquals("Type parameters for the class",expectedResult9,actualResult);
 
     String s25 = "class A {\n" +
@@ -1114,7 +1114,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s27 = "Object a;";
     String expectedResult10 = "class A {\n" +
                               "  // comment before\n" +
-                              "  protected Object a; //  comment after\n" +
+                              "  protected  Object a; //  comment after\n" +
                               "}";
 
     actualResult = replacer.testReplace(s25,s26,s27,options);
