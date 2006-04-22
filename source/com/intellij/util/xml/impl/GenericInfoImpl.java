@@ -210,7 +210,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       }
     }
 
-    if (true) {
+    if (false) {
       if (!methods.isEmpty()) {
         StringBuilder sb = new StringBuilder(myClass + " should provide the following implementations:");
         for (Method method : methods) {
