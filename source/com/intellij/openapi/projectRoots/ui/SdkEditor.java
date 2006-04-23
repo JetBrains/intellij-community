@@ -27,7 +27,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /*
  * @author: MYakovlev
@@ -147,10 +150,9 @@ public class SdkEditor implements Configurable{
   }
 
   public boolean isModified(){
-    boolean isModified = false;
     final String initialName = (mySdk == null) ? "" : mySdk.getName();
     final String initialHome = (mySdk == null) ? "" : mySdk.getHomePath();
-    isModified = isModified || !Comparing.equal(getNameValue(), initialName);
+    boolean isModified = !Comparing.equal(getNameValue(), initialName);
     isModified = isModified || !Comparing.equal(getHomeValue().replace(File.separatorChar, '/'), initialHome);
     isModified = isModified || myClassPathEditor.isModified();
     isModified = isModified || mySourcePathEditor.isModified();
@@ -228,8 +230,7 @@ public class SdkEditor implements Configurable{
 
   public void disposeUIResources(){
     myMainPanel = null;
-    for (Iterator it = myAdditionalDataConfigurables.keySet().iterator(); it.hasNext();) {
-      final SdkType sdkType = (SdkType)it.next();
+    for (final SdkType sdkType : myAdditionalDataConfigurables.keySet()) {
       final AdditionalDataConfigurable configurable = myAdditionalDataConfigurables.get(sdkType);
       configurable.disposeUIResources();
     }
@@ -312,7 +313,7 @@ public class SdkEditor implements Configurable{
     return LocalFileSystem.getInstance().findFileByPath(homepath);
   }
 
-  private class MyPathsEditor extends PathEditor {
+  private static class MyPathsEditor extends PathEditor {
     private final String myDisplayName;
     private final ProjectRootType myRootType;
     private final FileChooserDescriptor myDescriptor;
@@ -381,12 +382,14 @@ public class SdkEditor implements Configurable{
   }
 
   private String suggestSdkName(final String homePath) {
-    final String suggestedName = mySdk.getSdkType().suggestSdkName(getNameValue(), homePath);
+    final String currentName = getNameValue();
+    final String suggestedName = mySdk.getSdkType().suggestSdkName(currentName , homePath);
+    if (Comparing.equal(currentName, suggestedName)) return currentName;
     String newSdkName = suggestedName;
     final Set<String> allNames = new HashSet<String>();
     Sdk[] sdks = mySdkModel.getSdks();
-    for (int idx = 0; idx < sdks.length; idx++) {
-      allNames.add(sdks[idx].getName());
+    for (Sdk sdk : sdks) {
+      allNames.add(sdk.getName());
     }
     int i = 0;
     while(allNames.contains(newSdkName)){
