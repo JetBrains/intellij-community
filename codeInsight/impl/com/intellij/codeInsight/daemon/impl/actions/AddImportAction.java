@@ -41,12 +41,14 @@ public class AddImportAction implements QuestionAction {
   public boolean execute() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    if (!myReference.isWritable()){
-      return false;
-    }
     if (!myReference.isValid()){
       return false;
     }
+
+    if (!myReference.isWritable()){
+      return false;
+    }
+    
     for (PsiClass myTargetClass : myTargetClasses) {
       if (!myTargetClass.isValid()) {
         return  false;
