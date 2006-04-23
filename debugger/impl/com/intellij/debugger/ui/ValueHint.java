@@ -363,7 +363,7 @@ public class ValueHint {
 
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
 
-        if(psiFile == null) return;
+        if(psiFile == null || !psiFile.isValid()) return;
 
         int selectionStart = myEditor.getSelectionModel().getSelectionStart();
         int selectionEnd   = myEditor.getSelectionModel().getSelectionEnd();
