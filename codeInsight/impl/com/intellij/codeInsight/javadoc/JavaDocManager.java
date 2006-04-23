@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -98,6 +99,7 @@ public class JavaDocManager implements ProjectComponent {
     registerDocumentationProvider(StdFileTypes.XML, new XmlDocumentationProvider());
   }
 
+  @NotNull
   public String getComponentName() {
     return "JavaDocManager";
   }
@@ -149,7 +151,7 @@ public class JavaDocManager implements ProjectComponent {
     if (oldHint != null) {
       JavaDocInfoComponent oldComponent = (JavaDocInfoComponent)oldHint.getComponent();
       PsiElement element1 = oldComponent.getElement();
-      if (element.equals(element1)) {
+      if (Comparing.equal(element, element1)) {
         return oldHint;
       }
       oldHint.cancel();
@@ -243,7 +245,7 @@ public class JavaDocManager implements ProjectComponent {
     if (oldHint != null) {
       JavaDocInfoComponent component = (JavaDocInfoComponent)oldHint.getComponent();
       PsiElement element1 = component.getElement();
-      if (element != null && element.equals(element1)) {
+      if (element != null && Comparing.equal(element, element1)) {
         if (requestFocus) {
           component.getComponent().requestFocus();
         }

@@ -200,7 +200,7 @@ public class JavaDocInfoComponent extends JPanel {
     }
 
     public PsiElement getElement() {
-        return myElement.getElement();
+        return myElement != null ? myElement.getElement() : null;
     }
 
     public void setText(String text) {
@@ -379,7 +379,7 @@ public class JavaDocInfoComponent extends JPanel {
         public void update(AnActionEvent e) {
             Presentation presentation = e.getPresentation();
             presentation.setEnabled(myElement != null);
-            if (myElement instanceof PsiVariable && !(myElement instanceof PsiField)) {
+            if (getElement() instanceof PsiVariable && !(getElement() instanceof PsiField)) {
                 presentation.setEnabled(false);
             }
         }
