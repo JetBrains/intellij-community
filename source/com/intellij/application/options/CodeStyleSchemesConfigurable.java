@@ -193,8 +193,11 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
     if (myPanel.getRootPane() != null) {
       myPanel.getRootPane().setGlassPane(myGlassPanel);
       if (myOption != null){
-        getActivePanel().showOption(this, myOption, myGlassPanel).run();
-        myOption = null;
+        final CodeStyleSettingsPanel activePanel = getActivePanel();
+        if (activePanel != null && activePanel.isInitialized()){
+          activePanel.showOption(this, myOption, myGlassPanel).run();
+          myOption = null;
+        }
       }
     }
     if (getSelectedScheme() != CodeStyleSchemes.getInstance().getCurrentScheme()) return true;
