@@ -15,14 +15,19 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author dyoma
@@ -34,6 +39,7 @@ public abstract class RunConfigurationBase implements RunConfiguration {
 
   private ArrayList<LogFileOptions> myLogFiles = new ArrayList<LogFileOptions>();
   @NonNls private static final String LOG_FILE = "log_file";
+  private THashMap<Object, AdditionalTabComponent> myAdditionalTabs = null;
 
   protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
     myProject = project;
@@ -98,6 +104,42 @@ public abstract class RunConfigurationBase implements RunConfiguration {
 
   public boolean noLogFilesExist() {
     return myLogFiles.isEmpty();
+  }
+
+  public AdditionalTabComponent getAdditionalTabComponent(Object key){
+    return myAdditionalTabs != null ? myAdditionalTabs.get(key) : null;
+  }
+
+  //invoke before run/debug tabs are shown.
+  //Should be overriden to add additional tabs for run/debug toolwindow
+  public void createAdditionalTabComponents() {
+  }
+
+  public void addAdditionalTab(Object key, AdditionalTabComponent component){
+    synchronized(this){
+      if (myAdditionalTabs == null){
+        if (component == null) return;
+        myAdditionalTabs = new THashMap<Object, AdditionalTabComponent>();
+      }
+      if (component != null){
+        //noinspection unchecked
+        myAdditionalTabs.put(key, component);
+      }
+      else{
+        myAdditionalTabs.remove(key);
+        if (myAdditionalTabs.size() == 0){
+          myAdditionalTabs = null;
+        }
+      }
+    }
+  }
+
+  public void clearAdditionalTabs() {
+    myAdditionalTabs = null;
+  }
+
+  @NotNull public Set getAdditionalTabKeys(){
+    return myAdditionalTabs != null ? myAdditionalTabs.keySet() : Collections.EMPTY_SET;
   }
 
   public void readExternal(Element element) throws InvalidDataException {

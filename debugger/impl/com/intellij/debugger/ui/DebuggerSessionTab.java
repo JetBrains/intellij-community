@@ -15,6 +15,7 @@ import com.intellij.debugger.ui.impl.FramePanel;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.diagnostic.logging.LogConsole;
 import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
@@ -101,8 +102,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
   private static final Key LOG_CONTENTS = Key.create("LogContent");
 
-  private Map<String, LogConsole> myLogTabs = new HashMap<String, LogConsole>();
-  private Map<String, Content>  myLogContent = new HashMap<String, Content>();
+  private Map<Object, Content>  myAdditionalContent = new HashMap<Object, Content>();
   private final LogFilesManager myManager;
 
   public DebuggerSessionTab(Project project) {
@@ -252,18 +252,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     }
 
     if (myConfiguration instanceof RunConfigurationBase && !(myConfiguration instanceof JUnitConfiguration)){
-      clearLogContents();
-      RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
-      final ArrayList<LogFileOptions> logFiles = base.getLogFiles();
-
-      for (LogFileOptions logFile : logFiles) {
-        if (logFile.isEnabled()) {
-          final Set<String> paths = logFile.getPaths();
-          for (String path : paths) {
-            addLogConsole(path, logFile.isSkipContent(), myProject, logFile.getName());
-          }
-        }
-      }
+      initAdditionalTabs();
     }
 
     if(myToolBarPanel != null) {
@@ -281,31 +270,50 @@ public class DebuggerSessionTab implements LogConsoleManager {
     return myRunContentDescriptor;
   }
 
-  public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name) {
-      final LogConsole log = new LogConsole(project, new File(path), skipContent){
-        public boolean isActive() {
-          final Content selectedContent = myViewsContentManager.getSelectedContent();
-          if (selectedContent == null){
-            stopRunning();
-            return false;
-          }
-          return selectedContent.getComponent() == this;
+  private void initAdditionalTabs() {
+    clearLogContents();
+    RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
+    final ArrayList<LogFileOptions> logFiles = base.getLogFiles();
+    for (LogFileOptions logFile : logFiles) {
+      if (logFile.isEnabled()) {
+        final Set<String> paths = logFile.getPaths();
+        for (String path : paths) {
+          addLogConsole(path, logFile.isSkipContent(), myProject, logFile.getName(), (RunConfigurationBase)myConfiguration);
         }
-      };
-      myLogTabs.put(path, log);
-      log.attachStopLogConsoleTrackingListener(myRunContentDescriptor.getProcessHandler());
-      Content logContent = PeerFactory.getInstance().getContentFactory().createContent(log.getComponent(),
-                                                                                       DebuggerBundle.message(
-        "debugger.session.tab.log.content.name", name), false);
+      }
+    }
+    base.createAdditionalTabComponents();
+    for (Object key : base.getAdditionalTabKeys()) {
+      final AdditionalTabComponent tabComponent = base.getAdditionalTabComponent(key);
+      Content logContent = PeerFactory.getInstance().getContentFactory().createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), false);
       logContent.putUserData(CONTENT_KIND, LOG_CONTENTS);
-      myLogContent.put(path, logContent);
+      myAdditionalContent.put(key, logContent);
       myViewsContentManager.addContent(logContent);
+    }
+  }
+
+  public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name, final RunConfigurationBase configuration) {
+    final LogConsole log = new LogConsole(project, new File(path), skipContent, name){
+      public boolean isActive() {
+        final Content selectedContent = myViewsContentManager.getSelectedContent();
+        if (selectedContent == null){
+          stopRunning();
+          return false;
+        }
+        return selectedContent.getComponent() == this;
+      }
+    };
+    log.attachStopLogConsoleTrackingListener(myRunContentDescriptor.getProcessHandler());
+
+    configuration.addAdditionalTab(path, log);
   }
 
   public void removeLogConsole(final String path) {
-    final LogConsole logConsole = myLogTabs.get(path);
-    myViewsContentManager.removeContent(myLogContent.get(path));
-    logConsole.dispose();
+    myViewsContentManager.removeContent(myAdditionalContent.get(path));
+    if (myConfiguration instanceof RunConfigurationBase){
+      final AdditionalTabComponent logConsole = ((RunConfigurationBase)myConfiguration).getAdditionalTabComponent(path);
+      logConsole.dispose();
+    }
   }
 
   private void clearLogContents() {
@@ -407,14 +415,17 @@ public class DebuggerSessionTab implements LogConsoleManager {
     myFramePanel.dispose();
     myWatchPanel.dispose();
     myViewsContentManager.removeAllContents();
-    myLogContent.clear();
+    myAdditionalContent.clear();
+    if (myConfiguration instanceof RunConfigurationBase){
+      final RunConfigurationBase configurationBase = ((RunConfigurationBase)myConfiguration);
+      for (final Object key : configurationBase.getAdditionalTabKeys()) {
+        configurationBase.getAdditionalTabComponent(key).dispose();
+      }
 
-    for (final String path : myLogTabs.keySet()) {
-      myLogTabs.get(path).dispose();
+      myManager.unregisterFileMatcher();
+
+      configurationBase.clearAdditionalTabs();
     }
-
-    myManager.unregisterFileMatcher();
-    myLogTabs.clear();
     myConsole = null;
   }
 

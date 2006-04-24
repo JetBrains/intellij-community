@@ -4,6 +4,7 @@
  */
 package com.intellij.execution.runners;
 
+import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.diagnostic.logging.LogConsole;
 import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
@@ -25,8 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -46,7 +45,6 @@ public class RunContentBuilder implements LogConsoleManager {
   private RunnerSettings myRunnerSettings;
   private ConfigurationPerRunnerSettings myConfigurationSettings;
 
-  private Map<String, LogConsole> myLogIndexMap = new HashMap<String, LogConsole>();
   private final LogFilesManager myManager;
 
   public RunContentBuilder(final Project project, final JavaProgramRunner runner) {
@@ -100,20 +98,7 @@ public class RunContentBuilder implements LogConsoleManager {
             myComponent = console.getComponent();
           } else {
             if (myRunProfile instanceof RunConfigurationBase){
-              RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
-              final ArrayList<LogFileOptions> logFiles = base.getLogFiles();
-              if (!logFiles.isEmpty()){
-                myComponent = new JTabbedPane();
-                ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.console.tab"), console.getComponent());
-                for (LogFileOptions logFile : logFiles) {
-                  if (logFile.isEnabled()) {
-                    final Set<String> paths = logFile.getPaths();
-                    for (String path : paths) {
-                      addLogConsole(path, logFile.isSkipContent(), myProject, logFile.getName());
-                    }
-                  }
-                }
-              }
+              initAdditionalTabs(console);
             }
             if (myComponent == null){
               myComponent = console.getComponent();
@@ -132,22 +117,45 @@ public class RunContentBuilder implements LogConsoleManager {
     return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposable[myDisposeables.size()]));
   }
 
-  public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name) {
-    final LogConsole log = new LogConsole(project, new File(path), skipContent){
+  private void initAdditionalTabs(final ExecutionConsole console) {
+    RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
+    final ArrayList<LogFileOptions> logFiles = base.getLogFiles();
+    for (LogFileOptions logFile : logFiles) {
+      if (logFile.isEnabled()) {
+        final Set<String> paths = logFile.getPaths();
+        for (String path : paths) {
+          addLogConsole(path, logFile.isSkipContent(), myProject, logFile.getName(), (RunConfigurationBase)myRunProfile);
+        }
+      }
+    }
+    base.createAdditionalTabComponents();
+    if (base.getAdditionalTabKeys().size() > 0) {
+      myComponent = new JTabbedPane();
+      ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.console.tab"), console.getComponent());
+    }
+    for (Object key : base.getAdditionalTabKeys()) {
+      final AdditionalTabComponent tabComponent = base.getAdditionalTabComponent(key);
+      myDisposeables.add(tabComponent);
+      ((JTabbedPane)myComponent).addTab(tabComponent.getTabTitle(), tabComponent.getComponent());
+    }
+  }
+
+  public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name, final RunConfigurationBase configuration) {
+    final LogConsole log = new LogConsole(project, new File(path), skipContent, name){
       public boolean isActive() {
         return ((JTabbedPane)myComponent).getSelectedComponent() == this;
       }
     };
-    myDisposeables.add(log);
     log.attachStopLogConsoleTrackingListener(myExecutionResult.getProcessHandler());
-    ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.log.tab", name), log);
-    myLogIndexMap.put(path, log);
+    configuration.addAdditionalTab(path, log);
   }
 
   public void removeLogConsole(final String path) {
-    final LogConsole logConsole = myLogIndexMap.remove(path);
-    logConsole.dispose();
-    myComponent.remove(logConsole);
+    if (myRunProfile instanceof RunConfigurationBase){
+      final AdditionalTabComponent logConsole = ((RunConfigurationBase)myRunProfile).getAdditionalTabComponent(path);
+      logConsole.dispose();
+      myComponent.remove(logConsole);
+    }
   }
 
   private JComponent createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
@@ -207,7 +215,9 @@ public class RunContentBuilder implements LogConsoleManager {
       for (final Disposable disposable : myAdditionalDisposables) {
         disposable.dispose();
       }
-      myLogIndexMap.clear();
+      if (myRunProfile instanceof RunConfigurationBase){
+        ((RunConfigurationBase)myRunProfile).clearAdditionalTabs();
+      }
       myManager.unregisterFileMatcher();
       super.dispose();
     }

@@ -19,6 +19,7 @@ import java.util.Set;
 public class LogFilesManager {
 
   private Map<LogFileOptions, Set<String>> myLogFileManagerMap = new HashMap<LogFileOptions, Set<String>>();
+  private Map<LogFileOptions, RunConfigurationBase> myLogFileToConfiguration = new HashMap<LogFileOptions, RunConfigurationBase>();
   private Runnable myUpdateRequest;
   private LogConsoleManager myManager;
   private Alarm myUpdateAlarm = new Alarm();
@@ -33,7 +34,7 @@ public class LogFilesManager {
           Set<String> newFiles = logFile.getPaths();
           for (String file : newFiles) {
             if (!oldFiles.contains(file)){
-              myManager.addLogConsole(file, logFile.isSkipContent(), project, logFile.getName());
+              myManager.addLogConsole(file, logFile.isSkipContent(), project, logFile.getName(), myLogFileToConfiguration.get(logFile));
             }
           }
           for (String oldFile : oldFiles) {
@@ -54,6 +55,7 @@ public class LogFilesManager {
     for (LogFileOptions logFile : logFiles) {
       if (logFile.isEnabled()) {
         myLogFileManagerMap.put(logFile, logFile.getPaths());
+        myLogFileToConfiguration.put(logFile, runConfiguration);
       }
     }
     SwingUtilities.invokeLater(new Runnable() {

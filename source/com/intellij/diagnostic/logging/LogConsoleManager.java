@@ -1,5 +1,6 @@
 package com.intellij.diagnostic.logging;
 
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -7,6 +8,6 @@ import com.intellij.openapi.project.Project;
  * Date: 01-Feb-2006
  */
 public interface LogConsoleManager {
-  void addLogConsole(final String path, final boolean skipContent, final Project project, final String name);
+  void addLogConsole(final String path, final boolean skipContent, final Project project, final String name, RunConfigurationBase configurationBase);
   void removeLogConsole(final String path);
 }

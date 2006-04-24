@@ -10,7 +10,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -19,6 +18,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.FilterComponent;
@@ -27,12 +27,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.util.ArrayList;
 
 /**
  * User: anna
  * Date: Apr 19, 2005
  */
-public abstract class LogConsole extends JPanel implements Disposable{
+public abstract class LogConsole extends AdditionalTabComponent {
   private final ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
@@ -46,29 +47,68 @@ public abstract class LogConsole extends JPanel implements Disposable{
 
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
     public void filter() {
-      LogConsolePreferences.getInstance().updateCustomFilter(getFilter());
-      filterConsoleOutput();
+      final LogConsolePreferences preferences = LogConsolePreferences.getInstanceEx(myProject);
+      preferences.updateCustomFilter(getFilter());
+      filterConsoleOutput(new Condition<String>() {
+        public boolean value(final String line) {
+          return preferences.isApplicable(line, myPrevType);
+        }
+      });
     }
   };
 
-  private static final long PROCESS_IDLE_TIMEOUT = 200;
-  public LogConsole(Project project, File file, boolean skipContents) {
+  private static final long PROCESS_IDLE_TIMEOUT = 1000;
+  private String myTitle = null;
+  private Project myProject;
+
+  public LogConsole(Project project, File file, boolean skipContents, String title) {
     super(new BorderLayout());
     mySkipContents = skipContents;
+    myTitle = title;
+    myProject = project;
     myReaderThread = new ReaderThread(file);
     TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(project);
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
-    add(myConsole.getComponent(), BorderLayout.CENTER);
-    add(createToolbar(), BorderLayout.NORTH);
     myReaderThread.start();
   }
 
   private JComponent createToolbar(){
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new FilterAction(LogConsolePreferences.INFO, IconLoader.getIcon("/ant/filterInfo.png")));
-    group.add(new FilterAction(LogConsolePreferences.WARNING, IconLoader.getIcon("/ant/filterWarning.png")));
-    group.add(new FilterAction(LogConsolePreferences.ERROR, IconLoader.getIcon("/ant/filterError.png")));
+    final LogConsolePreferences registrar = myProject.getComponent(LogConsolePreferences.class);
+    final ArrayList<LogFilter> filters = new ArrayList<LogFilter>();
+    filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.INFO), IconLoader.getIcon("/ant/filterInfo.png")){
+      public boolean isAcceptable(String line) {
+        return registrar.isApplicable(line, myPrevType);
+      }
+    });
+    filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.WARNING), IconLoader.getIcon("/ant/filterWarning.png")){
+      public boolean isAcceptable(String line) {
+        return registrar.isApplicable(line, myPrevType);
+      }
+    });
+    filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.ERROR), IconLoader.getIcon("/ant/filterError.png")){
+      public boolean isAcceptable(String line) {
+        return registrar.isApplicable(line, myPrevType);
+      }
+    });
+    filters.addAll(registrar.getRegisteredLogFilters());
+    for (final LogFilter filter : filters) {
+      group.add(new ToggleAction(filter.getName(), filter.getName(), filter.getIcon()){
+        public boolean isSelected(AnActionEvent e) {
+          return registrar.isFilterSelected(filter);
+        }
+
+        public void setSelected(AnActionEvent e, boolean state) {
+          registrar.setFilterSelected(filter, state);
+          filterConsoleOutput(new Condition<String>() {
+            public boolean value(final String line) {
+              return filter.isAcceptable(line);
+            }
+          });
+        }
+      });
+    }
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
@@ -77,25 +117,35 @@ public abstract class LogConsole extends JPanel implements Disposable{
     return panel;
   }
 
+
+  public JComponent getComponent() {
+    removeAll();
+    add(myConsole.getComponent(), BorderLayout.CENTER);
+    add(createToolbar(), BorderLayout.NORTH);
+    return this;
+  }
+
   public abstract boolean isActive();
+
+  public String getTabTitle() {
+    return myTitle;
+  }
 
   public void dispose() {
     myConsole.dispose();
     myReaderThread.stopRunning(false);
+    myFilter.dispose();
   }
 
   public void stopRunning(){
     myReaderThread.stopRunning(true);
   }
 
-  public JComponent getComponent() {
-    return this;
-  }
-
   private void addMessage(final String text){
     final String key = LogConsolePreferences.getType(text);
-    if (LogConsolePreferences.getInstance().isApplicable(text, myPrevType)){
-      myProcessHandler.notifyTextAvailable(text + "\n", key != null ? LogConsolePreferences.getProcessOutputTypes(key) :
+    if (LogConsolePreferences.getInstanceEx(myProject).isApplicable(text, myPrevType)){
+      myProcessHandler.notifyTextAvailable(text + "\n", key != null ?
+                                                        LogConsolePreferences.getProcessOutputTypes(key) :
                                                         (myPrevType == LogConsolePreferences.ERROR ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT));
     }
     if (key != null) {
@@ -137,17 +187,16 @@ public abstract class LogConsole extends JPanel implements Disposable{
     return myOriginalDocument;
   }
 
-  private void filterConsoleOutput() {
+  private void filterConsoleOutput(Condition<String> isApplicable) {
     myOriginalDocument = getOriginalDocument();
     if (myOriginalDocument != null){
       myConsole.clear();
-      LogConsolePreferences preferences = LogConsolePreferences.getInstance();
       final int lineCount = myOriginalDocument.getLineCount();
       for (int line = 0; line < lineCount; line++) {
         final String text =
           myOriginalDocument.getCharsSequence().subSequence(myOriginalDocument.getLineStartOffset(line), myOriginalDocument.getLineEndOffset(line)).toString();
         final String contentType = LogConsolePreferences.getType(text);
-        if (preferences.isApplicable(text, myPrevType)){
+        if (isApplicable.value(text)){
           myConsole.print(text + "\n", contentType != null ? LogConsolePreferences.getContentType(contentType) :
                                        (myPrevType == LogConsolePreferences.ERROR ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT));
         }
@@ -206,10 +255,12 @@ public abstract class LogConsole extends JPanel implements Disposable{
       if (myFileStream == null) return;
       while (myRunning){
         try {
-          long endTime = System.currentTimeMillis() + PROCESS_IDLE_TIMEOUT;
+          long endTime = System.currentTimeMillis() + PROCESS_IDLE_TIMEOUT/1000;
           while (System.currentTimeMillis() < endTime){
             if (myRunning && myFileStream != null && myFileStream.ready()){
               addMessage(myFileStream.readLine());
+            } else {
+              break;
             }
           }
           synchronized (this) {
@@ -248,23 +299,4 @@ public abstract class LogConsole extends JPanel implements Disposable{
       }
     }
   }
-
-  private class FilterAction extends ToggleAction {
-    private String myFilter;
-
-    protected FilterAction(final String filter, Icon icon) {
-      super(DiagnosticBundle.message("log.console.filter.by.type", filter), DiagnosticBundle.message("log.console.filter.by.type", filter), icon);
-      myFilter = filter;
-    }
-
-    public boolean isSelected(AnActionEvent e) {
-      return LogConsolePreferences.getInstance().isFilter(myFilter);
-    }
-
-    public void setSelected(AnActionEvent e, boolean state) {
-      LogConsolePreferences.getInstance().setFilter(myFilter, state);
-      filterConsoleOutput();
-    }
-  }
-
 }
