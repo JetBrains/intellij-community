@@ -440,7 +440,7 @@ import java.util.Map;
    * @throws IncorrectOperationException
    */
   protected static PsiFile createFile(String fileName, String text) throws IncorrectOperationException {
-    return getPsiManager().getElementFactory().createFileFromText(fileName, text);
+    return createPseudoPhysicalFile(fileName, text);
   }
 
   protected static PsiFile createPseudoPhysicalFile(String fileName, String text) throws IncorrectOperationException {
