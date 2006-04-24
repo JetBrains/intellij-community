@@ -529,7 +529,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s1 = "class A { void b(int c, int d, int e) {} }";
     String s2 = "int d";
     String s3 = "int d2";
-    String expectedResult = "class A { void b(int c, int d2 , int e) {} }";
+    String expectedResult = "class A { void b(int c, int d2, int e) {} }";
 
     actualResult = replacer.testReplace(s1,s2,s3,options);
 
@@ -558,13 +558,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "while(true) System.out.println(\"1111\");";
     String s5 = "System.out.println('Test);";
     String s6 = "/* System.out.println($Test$); */";
-    String expectedResult2 = "if (true) /* System.out.println(\"1111\"); */\n" +
-                             ";\n" +
-                             "else /* System.out.println(\"2222\"); */\n" +
-                             ";\n" +
-                             "while(true) /* System.out.println(\"1111\"); */\n" +
-                             ";";
     actualResult = replacer.testReplace(s4,s5,s6,options);
+    String expectedResult2 = "if (true) /* System.out.println(\"1111\"); */; else /* System.out.println(\"2222\"); */;\n" +
+                             "while(true) /* System.out.println(\"1111\"); */;";
 
     assertEquals(
       "replace with comment",
@@ -1095,7 +1091,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s21 = "class $A$ { private Log log = LogFactory.createLog(); $Other$ }";
 
     actualResult = replacer.testReplace(s19,s20,s21,options);
-    String expectedResult8 = "public  class A  extends Object implements Cloneable{ private Log log = LogFactory.createLog();  }\n";
+    String expectedResult8 = "public  class A extends Object implements Cloneable { private Log log = LogFactory.createLog();  }\n";
     assertEquals("Extends / implements list for class",expectedResult8,actualResult);
 
     String s22 = "public class A<T> { int Afield; }\n";
