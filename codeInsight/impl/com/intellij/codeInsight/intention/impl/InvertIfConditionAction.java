@@ -254,10 +254,9 @@ public class InvertIfConditionAction extends BaseIntentionAction {
 
 
         PsiBlockStatement codeBlock = (PsiBlockStatement) factory.createStatementFromText("{}", null);
-        codeBlock = (PsiBlockStatement) ifStatement.getThenBranch().replace(codeBlock);
         codeBlock.getCodeBlock().addRange(first, last);
-
         first.getParent().deleteChildRange(first, last);
+        codeBlock = (PsiBlockStatement) ifStatement.getThenBranch().replace(codeBlock);
       }
       CodeStyleManager.getInstance(project).reformat(ifStatement);
       return;
