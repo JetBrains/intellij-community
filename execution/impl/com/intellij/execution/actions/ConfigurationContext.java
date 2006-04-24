@@ -1,8 +1,10 @@
 package com.intellij.execution.actions;
 
-import com.intellij.execution.*;
+import com.intellij.execution.LocatableConfigurationType;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -51,7 +53,7 @@ public class ConfigurationContext {
     LOG.assertTrue(myConfiguration == null);
     final Location location = getLocation();
     myConfiguration = location != null ?
-        new PreferedProducerFind().createConfiguration(location, this) :
+        PreferedProducerFind.createConfiguration(location, this) :
         null;
   }
 
@@ -64,9 +66,8 @@ public class ConfigurationContext {
     if (!(type instanceof LocatableConfigurationType)) return null;
     final LocatableConfigurationType factoryLocatable = (LocatableConfigurationType)type;
     final RunnerAndConfigurationSettingsImpl[] configurations = getRunManager().getConfigurationSettings(type);
-    for (int i = 0; i < configurations.length; i++) {
-      final RunnerAndConfigurationSettingsImpl existingConfiguration = configurations[i];
-      if (factoryLocatable.isConfigurationByElement(existingConfiguration.getConfiguration(), getProject(), myLocation.getPsiElement())){
+    for (final RunnerAndConfigurationSettingsImpl existingConfiguration : configurations) {
+      if (factoryLocatable.isConfigurationByElement(existingConfiguration.getConfiguration(), getProject(), myLocation.getPsiElement())) {
         return existingConfiguration;
       }
     }

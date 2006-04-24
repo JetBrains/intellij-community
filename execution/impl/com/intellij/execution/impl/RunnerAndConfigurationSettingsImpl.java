@@ -77,8 +77,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     return new Factory<RunnerAndConfigurationSettingsImpl>() {
       public RunnerAndConfigurationSettingsImpl create() {
         RunConfiguration configuration = myConfiguration.getFactory().createConfiguration(ExecutionBundle.message("default.run.configuration.name"), myConfiguration);
-        RunnerAndConfigurationSettingsImpl copy = new RunnerAndConfigurationSettingsImpl(myManager, configuration, false);
-        return copy;
+        return new RunnerAndConfigurationSettingsImpl(myManager, configuration, false);
       }
     };
   }

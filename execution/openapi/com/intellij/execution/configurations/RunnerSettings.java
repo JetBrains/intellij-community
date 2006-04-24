@@ -20,16 +20,16 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-public final class RunnerSettings<RSettings extends JDOMExternalizable> implements JDOMExternalizable {
-  private final RSettings myData;
+public final class RunnerSettings<T extends JDOMExternalizable> implements JDOMExternalizable {
+  private final T myData;
   private final RunProfile myConfig;
 
-  public RunnerSettings(RSettings data, RunProfile config) {
+  public RunnerSettings(T data, RunProfile config) {
     myData = data;
     myConfig = config;
   }
 
-  public RSettings getData() {
+  public T getData() {
     return myData;
   }
 

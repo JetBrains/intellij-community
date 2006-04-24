@@ -90,31 +90,30 @@ public class RunContentBuilder implements LogConsoleManager {
     final JPanel panel = new JPanel(new BorderLayout(2, 0));
     panel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-    if(!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (myComponent == null) {
-        final ExecutionConsole console = myExecutionResult.getExecutionConsole();
-        if (console != null) {
-          if (myRunProfile instanceof JUnitConfiguration){
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposable[myDisposeables.size()]));
+    }
+    if (myComponent == null) {
+      final ExecutionConsole console = myExecutionResult.getExecutionConsole();
+      if (console != null) {
+        if (myRunProfile instanceof JUnitConfiguration){
+          myComponent = console.getComponent();
+        } else {
+          if (myRunProfile instanceof RunConfigurationBase){
+            initAdditionalTabs(console);
+          }
+          if (myComponent == null){
             myComponent = console.getComponent();
-          } else {
-            if (myRunProfile instanceof RunConfigurationBase){
-              initAdditionalTabs(console);
-            }
-            if (myComponent == null){
-              myComponent = console.getComponent();
-            }
           }
         }
       }
-      MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposable[myDisposeables.size()]));
-      if (myComponent != null) {
-        panel.add(myComponent, BorderLayout.CENTER);
-      }
-      panel.add(createActionToolbar(contentDescriptor, panel), BorderLayout.WEST);
-      return contentDescriptor;
     }
-
-    return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposable[myDisposeables.size()]));
+    MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposable[myDisposeables.size()]));
+    if (myComponent != null) {
+      panel.add(myComponent, BorderLayout.CENTER);
+    }
+    panel.add(createActionToolbar(contentDescriptor, panel), BorderLayout.WEST);
+    return contentDescriptor;
   }
 
   private void initAdditionalTabs(final ExecutionConsole console) {
@@ -159,9 +158,9 @@ public class RunContentBuilder implements LogConsoleManager {
   }
 
   private JComponent createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
-    final DefaultActionGroup actionGroup = new DefaultActionGroup();
     final RestartAction action = new RestartAction(myRunner, myRunProfile, getProcessHandler(), myRerunIcon, contentDescriptor, myRunnerSettings, myConfigurationSettings);
     action.registerShortcut(component);
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(action);
 
     final AnAction[] profileActions = myExecutionResult.getActions();

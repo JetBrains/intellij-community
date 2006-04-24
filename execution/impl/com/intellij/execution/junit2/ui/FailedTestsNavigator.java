@@ -10,7 +10,7 @@ import com.intellij.pom.Navigatable;
 
 import java.util.List;
 
-public class FailedTestsNavigator implements OccurenceNavigator, TestProxyClient {
+public class FailedTestsNavigator implements OccurenceNavigator {
   private JUnitRunningModel myModel;
   private static final String NEXT_NAME = ExecutionBundle.message("next.faled.test.action.name");
   private static final String PREVIOUS_NAME = ExecutionBundle.message("prev.faled.test.action.name");

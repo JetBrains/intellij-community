@@ -2,6 +2,8 @@ package com.intellij.execution.junit2.ui.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
+import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.FailedTestsNavigator;
 import com.intellij.execution.junit2.ui.TestsUIUtil;
@@ -28,14 +30,15 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ToolbarPanel extends JPanel implements OccurenceNavigator {
-  //private final DefaultActionGroup myActions = new DefaultActionGroup(null, false);
   private final TestTreeExpander myTreeExpander = new TestTreeExpander();
   private final FailedTestsNavigator myOccurenceNavigator = new FailedTestsNavigator();
   private final ScrollToTestSourceAction myScrollToSource;
   @NonNls protected static final String TEST_SUITE_CLASS_NAME = "junit.framework.TestSuite";
   private final RerunFailedTestsAction myRerunFailedTestsAction;
 
-  public ToolbarPanel(final JUnitConsoleProperties properties) {
+  public ToolbarPanel(final JUnitConsoleProperties properties,
+                      final RunnerSettings runnerSettings,
+                      final ConfigurationPerRunnerSettings configurationSettings) {
     super (new BorderLayout());
     add(new JLabel(IconLoader.getIcon("/general/inactiveSeparator.png")), BorderLayout.WEST);
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
@@ -71,7 +74,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
                                               ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
                                               IconLoader.getIcon("/runConfigurations/sourceAtException.png"),
                                               properties, JUnitConsoleProperties.OPEN_FAILURE_LINE));
-    myRerunFailedTestsAction = new RerunFailedTestsAction(properties);
+    myRerunFailedTestsAction = new RerunFailedTestsAction(properties, runnerSettings, configurationSettings);
     actionGroup.add(myRerunFailedTestsAction);
     add(ActionManager.getInstance().
         createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).

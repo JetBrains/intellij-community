@@ -22,7 +22,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-public class TestTreeView extends Tree implements DataProvider, TestProxyClient {
+public class TestTreeView extends Tree implements DataProvider {
   private JUnitRunningModel myModel;
 
   public void attachToModel(final JUnitRunningModel model) {
@@ -50,7 +50,7 @@ public class TestTreeView extends Tree implements DataProvider, TestProxyClient 
   public Object getData(final String dataId) {
     final TreePath selectionPath = getSelectionPath();
     if (selectionPath == null) return null;
-    final TestProxy testProxy = TEST_PROXY.from(selectionPath.getLastPathComponent());
+    final TestProxy testProxy = TestProxyClient.from(selectionPath.getLastPathComponent());
     if (testProxy == null) return null;
     return TestsUIUtil.getData(testProxy, dataId, myModel);
   }
@@ -59,7 +59,7 @@ public class TestTreeView extends Tree implements DataProvider, TestProxyClient 
     EditSourceOnDoubleClickHandler.install(this);
     new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
       public String convert(final TreePath path) {
-        final TestProxy testProxy = TestProxyClient.TEST_PROXY.from(path.getLastPathComponent());
+        final TestProxy testProxy = TestProxyClient.from(path.getLastPathComponent());
         if (testProxy == null) return null;
         return testProxy.getInfo().getName();
       }
@@ -73,7 +73,7 @@ public class TestTreeView extends Tree implements DataProvider, TestProxyClient 
   public String convertValueToText(final Object value, final boolean selected,
                                    final boolean expanded, final boolean leaf, final int row,
                                    final boolean hasFocus) {
-    return Formatters.printTest(TEST_PROXY.from(value));
+    return Formatters.printTest(TestProxyClient.from(value));
   }
 
   public static void installTestTreePopupHandler(final JComponent component) {

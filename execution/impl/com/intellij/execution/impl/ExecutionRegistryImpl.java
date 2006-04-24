@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -64,6 +65,7 @@ public class ExecutionRegistryImpl extends ExecutionRegistry {
     registerRunner(myDebuggerRunner);
   }
 
+  @NotNull
   public String getComponentName() {
     return "ExecutionRegistryImpl";
   }
@@ -158,8 +160,7 @@ public class ExecutionRegistryImpl extends ExecutionRegistry {
 
   public JavaProgramRunner findRunnerById(String id) {
     JavaProgramRunner[] registeredRunners = getRegisteredRunners();
-    for (int i = 0; i < registeredRunners.length; i++) {
-      JavaProgramRunner registeredRunner = registeredRunners[i];
+    for (JavaProgramRunner registeredRunner : registeredRunners) {
       if (Comparing.equal(id, registeredRunner.getInfo().getId())) {
         return registeredRunner;
       }
@@ -180,7 +181,7 @@ public class ExecutionRegistryImpl extends ExecutionRegistry {
     }
 
     public AnAction[] createActions(ExecutionResult executionResult) {
-      return new AnAction[0];
+      return AnAction.EMPTY_ARRAY;
     }
 
     public RunnerInfo getInfo() {

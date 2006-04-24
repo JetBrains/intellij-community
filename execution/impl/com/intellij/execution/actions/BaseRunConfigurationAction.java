@@ -7,13 +7,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
 
 abstract class BaseRunConfigurationAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.BaseRunConfigurationAction");
-
   protected BaseRunConfigurationAction(final String text, final String description, final Icon icon) {
     super(text, description, icon);
   }

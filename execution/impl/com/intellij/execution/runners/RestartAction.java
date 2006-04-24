@@ -73,7 +73,7 @@ public class RestartAction extends AnAction {
     if (myProcessHandler != null && !isRunning) {
       myProcessHandler = null; // already terminated
     }
-    presentation.setEnabled(!isRunning && RunStrategy.getInstance().canExecute(myProfile, myRunner));
+    presentation.setEnabled(!isRunning && RunStrategy.canExecute(myProfile, myRunner));
   }
 
   public void registerShortcut(final JComponent component) {
