@@ -130,7 +130,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     final PsiPackage aPackage = getValue().getPackage();
     final String qName = aPackage.getQualifiedName();
     final CoverageDataManager coverageManager = CoverageDataManager.getInstance(aPackage.getProject());
-    final String coverageString = coverageManager.getPackageCoverageInormationString(qName);
+    final String coverageString = coverageManager.getPackageCoverageInformationString(qName);
     presentation.setLocationString(coverageString);
 
     if (!getSettings().isFlattenPackages()) {

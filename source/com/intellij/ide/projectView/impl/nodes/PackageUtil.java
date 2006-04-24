@@ -46,6 +46,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
+import com.intellij.coverage.CoverageDataManager;
 
 import javax.swing.*;
 import java.util.*;
@@ -243,10 +244,11 @@ public class PackageUtil {
                                             final Object parentValue,
                                             final AbstractTreeNode node) {
     final VirtualFile directoryFile = psiDirectory.getVirtualFile();
-    boolean withComment = isModuleContentRoot(directoryFile, project) || isLibraryRoot(directoryFile, project);
     updateDefault(data, psiDirectory, settings, parentValue, node);
-    if (withComment) {
+    if (isModuleContentRoot(directoryFile, project) || isLibraryRoot(directoryFile, project)) {
       data.setLocationString(directoryFile.getPresentableUrl());
+    } else {
+      data.setLocationString(CoverageDataManager.getInstance(project).getDirCoverageInformationString(psiDirectory));
     }
   }
 
