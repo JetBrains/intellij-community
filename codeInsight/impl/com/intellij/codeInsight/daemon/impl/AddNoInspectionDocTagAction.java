@@ -94,12 +94,8 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     if (docComment == null) {
       String commentText = "/** @" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myID + "*/";
       docComment = manager.getElementFactory().createDocCommentFromText(commentText, null);
-      manager.getCodeStyleManager().reformat(docComment);
       PsiElement firstChild = container.getFirstChild();
       container.addBefore(docComment, firstChild);
-      manager.getCodeStyleManager().reformatRange(container,
-                                                  container.getTextRange().getStartOffset(),
-                                                  firstChild.getTextRange().getStartOffset());
       return;
     }
 

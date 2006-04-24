@@ -388,12 +388,13 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
 
       newOffset = Math.min(newOffset, myEditor.getDocument().getTextLength());
 
-      if (newOffset != myOffset) {
+      //TODO:ask max about this code
+      // if (newOffset != myOffset) {
         moveToOffset(newOffset);
-      }
-      else {
-        moveToVisualPosition(oldPosition);
-      }
+      //}
+      //else {
+      //  moveToVisualPosition(oldPosition);
+      //}
     }
 
     myVisualLineStart =
