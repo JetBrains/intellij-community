@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
- */                     
+ */
 
 package com.intellij.uiDesigner.snapShooter;
 
@@ -8,7 +8,6 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NonNls;
-import sun.awt.AppContext;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -17,7 +16,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.lang.ref.WeakReference;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -191,23 +189,13 @@ public class SnapShooterDaemon implements Runnable {
 
   private static List<Component> getRootWindows() {
     List<Component> result = new ArrayList<Component>();
-    AppContext appContext = AppContext.getAppContext();
-    //noinspection UseOfObsoleteCollectionType
-    Vector frameList = (Vector)appContext.get(Frame.class);
-    if (frameList != null) {
-      for (Object frameObj : frameList) {
-        WeakReference frameRef = (WeakReference)frameObj;
-        Frame frame = (Frame) frameRef.get();
-        result.add(frame);
-        for(Window window: frame.getOwnedWindows()) {
-          if (window.isVisible()) {
-            result.add(window);
-          }
+    for(Frame frame: Frame.getFrames()) {
+      result.add(frame);
+      for(Window window: frame.getOwnedWindows()) {
+        if (window.isVisible()) {
+          result.add(window);
         }
       }
-    }
-    else {
-      System.out.println("Cannot load frame list from AppContext");
     }
     return result;
   }
