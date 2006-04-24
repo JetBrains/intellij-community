@@ -2,6 +2,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.MethodImplementor;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -35,6 +36,9 @@ import java.util.*;
 
 public class OverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.OverrideImplementUtil");
+
+  private OverrideImplementUtil() {
+  }
 
   @NotNull
   public static CandidateInfo[] getMethodsToOverrideImplement(PsiClass aClass, boolean toImplement) {
@@ -215,6 +219,12 @@ public class OverrideImplementUtil {
           PsiAnnotation annotation = method.getManager().getElementFactory().createAnnotationFromText("@java.lang.Override", null);
           modifierList.addAfter(annotation, null);
         }
+      }
+      if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(aClass)) <= 0 &&
+          method.getModifierList().findAnnotation(AnnotationUtil.NOT_NULL) != null &&
+          result.getModifierList().findAnnotation(AnnotationUtil.NOT_NULL) == null) {
+        PsiAnnotation annotation = method.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NOT_NULL, null);
+        result.getModifierList().addAfter(annotation, null);
       }
 
       final PsiCodeBlock body = method.getManager().getElementFactory().createCodeBlockFromText("{}", null);
