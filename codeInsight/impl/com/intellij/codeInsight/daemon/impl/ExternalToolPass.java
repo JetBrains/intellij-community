@@ -1,17 +1,22 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
@@ -38,10 +43,12 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    final PsiFile[] psiRoots = myFile.getPsiRoots();
-    for (PsiFile psiRoot : psiRoots) {
+    final FileViewProvider viewProvider = myFile.getViewProvider();
+    final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+    for (Language language : relevantLanguages) {
+      PsiFile psiRoot = viewProvider.getPsi(language);
       if (!HighlightUtil.isRootInspected(psiRoot)) continue;
-      final List<ExternalAnnotator> externalAnnotators = psiRoot.getLanguage().getExternalAnnotators();
+      final List<ExternalAnnotator> externalAnnotators = language.getExternalAnnotators();
 
       if (externalAnnotators.size() > 0) {
         final HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject, myStartOffset, myEndOffset);

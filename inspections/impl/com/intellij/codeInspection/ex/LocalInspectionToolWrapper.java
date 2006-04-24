@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -54,9 +55,10 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
       @Override
       public void visitJspFile(JspFile file) {
-        final PsiElement[] roots = file.getPsiRoots();
-        for (PsiElement root : roots) {
-          visitElement(root);
+        final FileViewProvider viewProvider = file.getViewProvider();
+        final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+        for (Language language : relevantLanguages) {
+          visitElement(viewProvider.getPsi(language));
         }
       }
 

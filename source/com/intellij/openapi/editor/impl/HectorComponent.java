@@ -2,6 +2,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
@@ -16,9 +17,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.DialogUtil;
@@ -29,9 +30,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.*;
 
 /**
  * User: anna
@@ -43,7 +42,7 @@ public class HectorComponent extends JPanel {
   private WeakReference<JBPopup> myHectorRef;
   private JCheckBox myImportPopupCheckBox = new JCheckBox(EditorBundle.message("hector.import.popup.checkbox"));
   private ArrayList<UnnamedConfigurable> myAdditionalPanels;
-  private JSlider[] mySliders;
+  private Map<Language, JSlider> mySliders;
   private PsiFile myFile;
 
   private boolean myImportPopupOn;
@@ -54,7 +53,7 @@ public class HectorComponent extends JPanel {
     super(new GridBagLayout());
     setBorder(BorderFactory.createEtchedBorder());
     myFile = file;
-    mySliders = new JSlider[PsiUtil.isInJspFile(file) ? file.getPsiRoots().length - 1 : 1];
+    mySliders = new HashMap<Language, JSlider>();
 
     final Project project = myFile.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -62,8 +61,9 @@ public class HectorComponent extends JPanel {
     LOG.assertTrue(virtualFile != null);
     final boolean notInLibrary = (!fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile)) ||
                                  fileIndex.isInContent(virtualFile);
-    for (int i = 0; i < mySliders.length; i++) {
-
+    final FileViewProvider viewProvider = myFile.getViewProvider();
+    final Set<Language> languages = viewProvider.getRelevantLanguages();
+    for (Language language : languages) {
       final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
       sliderLabels.put(1, new JLabel(EditorBundle.message("hector.none.slider.label")));
       sliderLabels.put(2, new JLabel(EditorBundle.message("hector.syntax.slider.label")));
@@ -86,9 +86,9 @@ public class HectorComponent extends JPanel {
           }
         }
       });
-      final PsiFile psiRoot = myFile.getPsiRoots()[i];
+      final PsiFile psiRoot = viewProvider.getPsi(language);
       slider.setValue(getValue(HighlightUtil.isRootHighlighted(psiRoot), HighlightUtil.isRootInspected(psiRoot)));
-      mySliders[i] = slider;
+      mySliders.put(language, slider);
     }
 
     final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
@@ -109,7 +109,7 @@ public class HectorComponent extends JPanel {
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle));
-    final boolean addLabel = mySliders.length > 1;
+    final boolean addLabel = mySliders.size() > 1;
     if (addLabel) {
       layoutVertical(panel);
     }
@@ -146,7 +146,7 @@ public class HectorComponent extends JPanel {
   }
 
   private void layoutHorizontal(final JPanel panel) {
-    for (JSlider slider : mySliders) {
+    for (JSlider slider : mySliders.values()) {
       slider.setOrientation(JSlider.HORIZONTAL);
       slider.setPreferredSize(new Dimension(200, 40));
       panel.add(slider, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
@@ -155,12 +155,13 @@ public class HectorComponent extends JPanel {
   }
 
   private void layoutVertical(final JPanel panel) {
-    for (int i = 0; i < mySliders.length; i++) {
+    for (Language language : mySliders.keySet()) {
+      JSlider slider = mySliders.get(language);
       JPanel borderPanel = new JPanel(new BorderLayout());
-      mySliders[i].setPreferredSize(new Dimension(80, 100));
-      borderPanel.add(new JLabel(myFile.getPsiRoots()[i].getLanguage().getID()), BorderLayout.NORTH);
-      borderPanel.add(mySliders[i], BorderLayout.CENTER);
-      panel.add(borderPanel, new GridBagConstraints(i, 1, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL,
+      slider.setPreferredSize(new Dimension(80, 100));
+      borderPanel.add(new JLabel(language.getID()), BorderLayout.NORTH);
+      borderPanel.add(slider, BorderLayout.CENTER);
+      panel.add(borderPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL,
                                                     new Insets(0, 0, 0, 0), 0, 0));
     }
   }
@@ -211,9 +212,11 @@ public class HectorComponent extends JPanel {
   }
 
   private void forceDaemonRestart() {
-    for (int i = 0; i < mySliders.length; i++) {
-      PsiElement root = myFile.getPsiRoots()[i];
-      int value = mySliders[i].getValue();
+    final FileViewProvider viewProvider = myFile.getViewProvider();
+    for (Language language : mySliders.keySet()) {
+      JSlider slider = mySliders.get(language);
+      PsiElement root = viewProvider.getPsi(language);
+      int value = slider.getValue();
       if (value == 1) {
         HighlightUtil.forceRootHighlighting(root, false);
       }
@@ -233,9 +236,11 @@ public class HectorComponent extends JPanel {
     if (myImportPopupOn != DaemonCodeAnalyzer.getInstance(myFile.getProject()).isImportHintsEnabled(myFile)) {
       return true;
     }
-    for (int i = 0; i < mySliders.length; i++) {
-      final PsiFile root = myFile.getPsiRoots()[i];
-      if (getValue(HighlightUtil.isRootHighlighted(root), HighlightUtil.isRootInspected(root)) != mySliders[i].getValue()) {
+    final FileViewProvider viewProvider = myFile.getViewProvider();
+    for (Language language : mySliders.keySet()) {
+      JSlider slider = mySliders.get(language);
+      final PsiFile root = viewProvider.getPsi(language);
+      if (getValue(HighlightUtil.isRootHighlighted(root), HighlightUtil.isRootInspected(root)) != slider.getValue()) {
         return true;
       }
     }

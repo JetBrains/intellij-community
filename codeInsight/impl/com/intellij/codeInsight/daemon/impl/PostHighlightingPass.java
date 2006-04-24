@@ -1,26 +1,31 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.DisableInspectionToolAction;
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -57,10 +62,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final String SYMBOL_IS_NOT_USED = JavaErrorMessages.message("symbol.is.never.used");
@@ -141,10 +143,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       return;
     }
 
-    PsiElement[] psiRoots = myFile.getPsiRoots();
     List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
-
-    for (final PsiElement psiRoot : psiRoots) {
+    final FileViewProvider viewProvider = myFile.getViewProvider();
+    final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+    for (Language language : relevantLanguages) {
+      PsiElement psiRoot = viewProvider.getPsi(language);
       if(!HighlightUtil.isRootHighlighted(psiRoot)) continue;
       List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       collectHighlights(elements, highlights);

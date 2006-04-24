@@ -122,5 +122,9 @@
       <headless-implementation-class>com.intellij.codeInsight.problems.MockWolfTheProblemSolver</headless-implementation-class>
       <skipForDummyProject/>
     </component>
+    <component>
+      <interface-class>com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar</interface-class>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl</implementation-class>
+    </component>
   </project-components>
 </components>

@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -11,6 +13,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -65,8 +68,13 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   public void doCollectInformation(ProgressIndicator progress) {
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
 
-    PsiElement[] psiRoots = myFile.getPsiRoots();
-    for (final PsiElement psiRoot : psiRoots) {
+    myDescriptors = new ArrayList<ProblemDescriptor>();
+    myLevels = new ArrayList<HighlightInfoType>();
+    myTools = new ArrayList<LocalInspectionTool>();
+    final FileViewProvider fileViewProvider = myFile.getViewProvider();
+    final Set<Language> relevantLanguages = fileViewProvider.getRelevantLanguages();
+    for (Language language : relevantLanguages) {
+      final PsiFile psiRoot = fileViewProvider.getPsi(language);
       if(!HighlightUtil.isRootInspected(psiRoot)) continue;
       inspectRoot(psiRoot, iManager);
     }
@@ -97,11 +105,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       }
     });
 
-    workSet.add(myFile);
-
-    myDescriptors = new ArrayList<ProblemDescriptor>();
-    myLevels = new ArrayList<HighlightInfoType>();
-    myTools = new ArrayList<LocalInspectionTool>();
+    workSet.add(psiRoot);
 
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
     final LocalInspectionTool[] tools = profile.getHighlightingLocalInspectionTools();
@@ -112,7 +116,6 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final PsiElementVisitor visitor = tool.buildVisitor(holder, true);
       if (visitor != null) visitors.add(new Pair<LocalInspectionTool, PsiElementVisitor>(tool, visitor));
     }
-
 
     PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
       public void run() {

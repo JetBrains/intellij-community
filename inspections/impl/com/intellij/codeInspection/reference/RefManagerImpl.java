@@ -10,6 +10,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class RefManagerImpl extends RefManager {
 
@@ -248,9 +250,10 @@ public class RefManagerImpl extends RefManager {
       if (virtualFile != null) {
         myContext.incrementJobDoneAmount(GlobalInspectionContextImpl.BUILD_GRAPH, virtualFile.getPresentableUrl());
       }
-      final PsiElement[] roots = file.getPsiRoots();
-      for (PsiElement root : roots) {
-        visitElement(root);
+      final FileViewProvider viewProvider = file.getViewProvider();
+      final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+      for (Language language : relevantLanguages) {
+        visitElement(viewProvider.getPsi(language));
       }
     }
 

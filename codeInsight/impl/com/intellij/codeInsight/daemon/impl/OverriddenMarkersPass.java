@@ -1,9 +1,12 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -52,8 +55,10 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    PsiElement[] psiRoots = myFile.getPsiRoots();
-    for (final PsiElement psiRoot : psiRoots) {
+    final FileViewProvider viewProvider = myFile.getViewProvider();
+    final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+    for (Language language : relevantLanguages) {
+      PsiElement psiRoot = viewProvider.getPsi(language);
       if (!HighlightUtil.isRootHighlighted(psiRoot)) continue;
       List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       myMarkers = collectLineMarkers(elements);

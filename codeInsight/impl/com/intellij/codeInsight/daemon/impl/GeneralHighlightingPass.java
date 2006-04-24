@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -10,6 +12,7 @@ import com.intellij.codeInsight.problems.WolfTheProblemSolver;
 import com.intellij.javaee.ejb.role.EjbImplMethodRole;
 import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.intellij.javaee.ejb.role.EjbRolesUtil;
+import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -106,8 +109,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    PsiElement[] psiRoots = myFile.getPsiRoots();
-
     if (myUpdateAll) {
       DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
       RefCountHolder refCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(myDocument, myFile);
@@ -128,7 +129,10 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     }
     Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
     try {
-      for (final PsiElement psiRoot : psiRoots) {
+      final FileViewProvider viewProvider = myFile.getViewProvider();
+      final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+      for (Language language : relevantLanguages) {
+        PsiElement psiRoot = viewProvider.getPsi(language);
         if(!HighlightUtil.isRootHighlighted(psiRoot)) continue;
         //long time = System.currentTimeMillis();
         List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);

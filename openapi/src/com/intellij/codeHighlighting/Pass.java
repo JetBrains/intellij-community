@@ -1,5 +1,5 @@
 
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeHighlighting;
 
 /** @fabrique */
 public interface Pass {

@@ -29,9 +29,8 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeHighlighting;
 
-import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 
@@ -57,8 +56,5 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public abstract void doCollectInformation(ProgressIndicator progress);
   public abstract void doApplyInformationToEditor();
 
-  /**
-   * @see Pass
-   */
   public abstract int getPassId();
 }
