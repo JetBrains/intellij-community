@@ -63,6 +63,7 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_BORDER = "border";
   public static final String ELEMENT_FONT = "font";
   public static final String ELEMENT_COLOR = "color";
+  public static final String ELEMENT_ITEM = "item";
 
   public static final String LAYOUT_INTELLIJ = "GridLayoutManager";
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";

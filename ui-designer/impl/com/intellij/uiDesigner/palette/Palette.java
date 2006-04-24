@@ -661,6 +661,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
         else if (Icon.class.equals(propertyType)) {
           property = new IntroIconProperty(name, readMethod, writeMethod, storeAsClient);
         }
+        else if (ListModel.class.isAssignableFrom(propertyType)) {
+          property = new IntroListModelProperty(name, readMethod, writeMethod, storeAsClient);
+        }
         else {
           // other types are not supported (yet?)
           continue;

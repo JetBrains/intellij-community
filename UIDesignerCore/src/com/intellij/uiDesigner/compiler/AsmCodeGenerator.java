@@ -25,10 +25,7 @@ import org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Font;
+import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
@@ -80,13 +77,15 @@ public class AsmCodeGenerator {
     myComponentLayoutCodeGenerators.put(LwScrollPane.class, new ScrollPaneLayoutCodeGenerator());
     myComponentLayoutCodeGenerators.put(LwToolBar.class, new ToolBarLayoutCodeGenerator());
 
-    myPropertyCodeGenerators.put("java.lang.String", new StringPropertyCodeGenerator());
-    myPropertyCodeGenerators.put("java.awt.Dimension", new DimensionPropertyCodeGenerator());
-    myPropertyCodeGenerators.put("java.awt.Insets", new InsetsPropertyCodeGenerator());
-    myPropertyCodeGenerators.put("java.awt.Rectangle", new RectanglePropertyCodeGenerator());
-    myPropertyCodeGenerators.put("java.awt.Color", new ColorPropertyCodeGenerator());
-    myPropertyCodeGenerators.put("java.awt.Font", new FontPropertyCodeGenerator());
-    myPropertyCodeGenerators.put("javax.swing.Icon", new IconPropertyCodeGenerator());
+    myPropertyCodeGenerators.put(String.class.getName(), new StringPropertyCodeGenerator());
+    myPropertyCodeGenerators.put(Dimension.class.getName(), new DimensionPropertyCodeGenerator());
+    myPropertyCodeGenerators.put(Insets.class.getName(), new InsetsPropertyCodeGenerator());
+    myPropertyCodeGenerators.put(Rectangle.class.getName(), new RectanglePropertyCodeGenerator());
+    myPropertyCodeGenerators.put(Color.class.getName(), new ColorPropertyCodeGenerator());
+    myPropertyCodeGenerators.put(Font.class.getName(), new FontPropertyCodeGenerator());
+    myPropertyCodeGenerators.put(Icon.class.getName(), new IconPropertyCodeGenerator());
+    myPropertyCodeGenerators.put(ListModel.class.getName(), new ListModelPropertyCodeGenerator(DefaultListModel.class));
+    myPropertyCodeGenerators.put(ComboBoxModel.class.getName(), new ListModelPropertyCodeGenerator(DefaultComboBoxModel.class));
   }
 
   public AsmCodeGenerator(LwRootContainer rootContainer,

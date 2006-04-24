@@ -385,6 +385,10 @@ public final class FormSourceCodeGenerator {
           value = descriptor.getValue();
         }
       }
+      else if (property instanceof LwIntroListModelProperty) {
+        generateListModelProperty(property, class2variableIndex, aClass, value, variable);
+        continue;
+      }
 
       SupportCode.TextWithMnemonic textWithMnemonic = null;
       if (isTextWithMnemonicProperty) {
@@ -492,6 +496,33 @@ public final class FormSourceCodeGenerator {
                                       module, aClass);
       }
     }
+  }
+
+  private void generateListModelProperty(final LwIntrospectedProperty property, final TObjectIntHashMap<String> class2variableIndex,
+                                         final PsiClass aClass, final Object value, final String variable) {
+    String valueClassName;
+    if (property.getPropertyClassName().equals(ComboBoxModel.class.getName())) {
+      valueClassName = DefaultComboBoxModel.class.getName();
+    }
+    else {
+      valueClassName = DefaultListModel.class.getName();
+    }
+    String modelVarName = generateUniqueVariableName(valueClassName, class2variableIndex, aClass);
+    myBuffer.append("final ");
+    myBuffer.append(valueClassName);
+    myBuffer.append(" ");
+    myBuffer.append(modelVarName);
+    myBuffer.append("= new ").append(valueClassName).append("();");
+    String[] items = (String[]) value;
+    for(String item: items) {
+      startMethodCall(modelVarName, "addElement");
+      push(item);
+      endMethod();
+    }
+
+    startMethodCall(variable, property.getWriteMethodName());
+    pushVar(modelVarName);
+    endMethod();
   }
 
   private void generateBorder(final LwContainer container, final String variable) {
@@ -760,6 +791,14 @@ public final class FormSourceCodeGenerator {
 
     @NonNls final String className = component instanceof LwNestedForm ? "nestedForm" : component.getComponentClassName();
 
+    String result = generateUniqueVariableName(className, class2variableIndex, aClass);
+    component2variable.put(component, result);
+
+    return result;
+  }
+
+  private static String generateUniqueVariableName(final String className, final TObjectIntHashMap<String> class2variableIndex,
+                                                   final PsiClass aClass) {
     final String shortName;
     if (className.startsWith("javax.swing.J")) {
       shortName = className.substring("javax.swing.J".length());
@@ -782,8 +821,6 @@ public final class FormSourceCodeGenerator {
 
       result = Character.toLowerCase(shortName.charAt(0)) + shortName.substring(1) + newIndex;
     } while(aClass.findFieldByName(result, true) != null);
-    component2variable.put(component, result);
-
     return result;
   }
 
