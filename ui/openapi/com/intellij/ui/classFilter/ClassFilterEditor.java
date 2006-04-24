@@ -26,6 +26,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ClassFilterEditor extends JPanel {
   protected JTable myTable = null;
   protected FilterTableModel myTableModel = null;
@@ -42,7 +44,7 @@ public class ClassFilterEditor extends JPanel {
   public ClassFilterEditor(Project project, TreeClassChooser.ClassFilter classFilter) {
     super(new GridBagLayout());
     myAddClassButton = new JButton(UIBundle.message("button.add.class"));
-    myAddPatternButton = new JButton(UIBundle.message("button.add.pattern"));
+    myAddPatternButton = new JButton(getAddPatternButtonText());
     myRemoveButton = new JButton(UIBundle.message("button.remove"));
     myTable = new Table();
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
@@ -112,6 +114,10 @@ public class ClassFilterEditor extends JPanel {
 
     myRemoveButton.addActionListener(new RemoveAction());
     myRemoveButton.setEnabled(false);
+  }
+
+  protected String getAddPatternButtonText() {
+    return UIBundle.message("button.add.pattern");
   }
 
   public void setFilters(ClassFilter[] filters) {
@@ -237,7 +243,7 @@ public class ClassFilterEditor extends JPanel {
 
   private class FilterCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value,
-      boolean isSelected, boolean hasFocus, int row, int column) {
+                                                   boolean isSelected, boolean hasFocus, int row, int column) {
       Color color = UIUtil.getTableFocusCellBackground();
       UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, table.getSelectionBackground());
       Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -259,13 +265,14 @@ public class ClassFilterEditor extends JPanel {
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value,
-      boolean isSelected, boolean hasFocus, int row, int column) {
+                                                   boolean isSelected, boolean hasFocus, int row, int column) {
       Component component = myDelegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       component.setEnabled(ClassFilterEditor.this.isEnabled());
       return component;
     }
   }
 
+  @NotNull
   protected ClassFilter createFilter(String pattern){
     return new ClassFilter(pattern);
   }
