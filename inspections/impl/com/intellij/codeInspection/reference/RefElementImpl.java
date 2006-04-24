@@ -256,6 +256,9 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   @NotNull
   public Collection<RefClass> getOutTypeReferences() {
+    if (myOutTypeReferences == null){
+      myOutTypeReferences = new HashSet<RefClass>();
+    }
     return myOutTypeReferences;
   }
 
