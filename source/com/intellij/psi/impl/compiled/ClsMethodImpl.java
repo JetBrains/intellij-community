@@ -391,7 +391,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   @NotNull private ClsAnnotationImpl[][] readParameterAnnotations(BytePointer pointer, ClsParameterImpl[] parameters) throws ClsFormatException {
     pointer.offset += 4;
     int numParameters = ClsUtil.readU1(pointer);
-    ClsAnnotationImpl[][] result = new ClsAnnotationImpl[numParameters][];
+    ClsAnnotationImpl[][] result = new ClsAnnotationImpl[parameters.length][];
     for (int i = 0; i < Math.min(numParameters, parameters.length); i++) {
       result[i] = myParent.getClassFileData().readAnnotations(parameters[i], pointer);
     }
