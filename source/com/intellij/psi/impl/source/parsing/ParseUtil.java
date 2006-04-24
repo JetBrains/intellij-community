@@ -17,6 +17,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -295,7 +296,7 @@ public class ParseUtil implements Constants {
   private static void initStrongWhitespaceHolder(CommonParentState commonParent, ASTNode start, boolean slopeSide) {
     if(start instanceof CompositeElement
        && (isStrongWhitespaceHolder(start.getElementType())
-       || slopeSide && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null)){
+           || slopeSide && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null)){
       commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
       commonParent.isStrongElementOnRisingSlope = slopeSide;
     }
@@ -317,20 +318,20 @@ public class ParseUtil implements Constants {
     }
   }
 
-  public static LeafElement prevLeaf(TreeElement start, CommonParentState commonParent) {
+  public static LeafElement prevLeaf(TreeElement start, @Nullable CommonParentState commonParent) {
     LeafElement prev = null;
     if(commonParent != null){
       if (commonParent.strongWhiteSpaceHolder != null && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) {
         commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
       }
-      commonParent.startLeafBranchStart = start;
+      commonParent.nextLeafBranchStart = start;
     }
     ASTNode prevTree = start;
     while (prev == null && (prevTree = prevTree.getTreePrev()) != null) {
       prev = TreeUtil.findLastLeaf(prevTree);
     }
     if(prev != null){
-      if(commonParent != null) commonParent.nextLeafBranchStart = prevTree;
+      if(commonParent != null) commonParent.startLeafBranchStart = (TreeElement)prevTree;
       return prev;
     }
     final CompositeElement parent = start.getTreeParent();
@@ -442,9 +443,9 @@ public class ParseUtil implements Constants {
   }
 
   private static final TokenSet BIND_PRECEDING_COMMENT_BIT_SET = TokenSet.create(FIELD,
-          METHOD,
-          CLASS,
-          CLASS_INITIALIZER);
+                                                                                 METHOD,
+                                                                                 CLASS,
+                                                                                 CLASS_INITIALIZER);
 
   private static final TokenSet PRECEDING_COMMENT_OR_SPACE_BIT_SET = TokenSet.create(C_STYLE_COMMENT, END_OF_LINE_COMMENT, WHITE_SPACE);
 

@@ -2,8 +2,9 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -39,7 +40,7 @@ public class ClassElement extends RepositoryTreeElement {
         if (before == null) {
           if (first == last) {
             PsiElement firstPsi = SourceTreeToPsiMap.treeElementToPsi(first);
-            PsiElement psiElement = firstPsi instanceof PsiMember ? CodeEditUtil.getDefaultAnchor(psiClass, (PsiMember)firstPsi) : null;
+            PsiElement psiElement = firstPsi instanceof PsiMember ? getDefaultAnchor(psiClass, (PsiMember)firstPsi) : null;
             anchor = psiElement != null ? SourceTreeToPsiMap.psiElementToTree(psiElement) : null;
           }
           else {
@@ -313,6 +314,48 @@ public class ClassElement extends RepositoryTreeElement {
     }
     else {
       return ChildRole.NONE;
+    }
+  }
+
+  public static PsiElement getDefaultAnchor(PsiClass aClass, PsiMember member) {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(aClass.getProject());
+
+    int order = getMemberOrderWeight(member, settings);
+    if (order < 0) return null;
+
+    PsiElement lastMember = null;
+    for (PsiElement child = aClass.getFirstChild(); child != null; child = child.getNextSibling()) {
+      int order1 = getMemberOrderWeight(child, settings);
+      if (order1 < 0) continue;
+      if (order1 > order) {
+        if (lastMember != null) {
+          PsiElement nextSibling = lastMember.getNextSibling();
+          while (nextSibling instanceof PsiJavaToken && (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
+            nextSibling = nextSibling.getNextSibling();
+          }
+          return nextSibling == null ? aClass.getLBrace().getNextSibling() : nextSibling;
+        }
+        else {
+          return aClass.getLBrace().getNextSibling();
+        }
+      }
+      lastMember = child;
+    }
+    return aClass.getRBrace();
+  }
+
+  private static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
+    if (member instanceof PsiField) {
+      return member instanceof PsiEnumConstant ? 1 : settings.FIELDS_ORDER_WEIGHT + 1;
+    }
+    else if (member instanceof PsiMethod) {
+      return ((PsiMethod)member).isConstructor() ? settings.CONSTRUCTORS_ORDER_WEIGHT + 1 : settings.METHODS_ORDER_WEIGHT + 1;
+    }
+    else if (member instanceof PsiClass) {
+      return settings.INNER_CLASSES_ORDER_WEIGHT + 1;
+    }
+    else {
+      return -1;
     }
   }
 }

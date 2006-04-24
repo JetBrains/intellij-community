@@ -29,6 +29,7 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 public class SingleRootFileViewProvider implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
@@ -92,15 +95,10 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   boolean myPostProcessReformafingStatus = false;
 
   public void beforeContentsSynchronized() {
-    final PostprocessReformatingAspect component = myManager.getProject().getComponent(PostprocessReformatingAspect.class);
-    myPostProcessReformafingStatus = component.isDisabled();
-    component.setDisabled(true);
   }
 
   public void contentsSynchronized() {
     unsetPsiContent();
-    final PostprocessReformatingAspect component = myManager.getProject().getComponent(PostprocessReformatingAspect.class);
-    if(component.isDisabled()) component.setDisabled(myPostProcessReformafingStatus);
   }
 
   private void unsetPsiContent() {
@@ -147,6 +145,11 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     synchronized(PsiLock.LOCK){
       return myPsiFile;
     }
+  }
+
+  public FileElement[] getKnownTreeRoots(){
+    if(myPsiFile == null || ((PsiFileImpl)myPsiFile).getTreeElement() == null) return new FileElement[0];
+    return new FileElement[]{(FileElement)myPsiFile.getNode()};
   }
 
   protected PsiFile createFile() {
@@ -212,8 +215,8 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   private static boolean isTooLarge(final VirtualFile vFile) {
-    if (FileManagerImpl.MAX_INTELLISENSE_FILESIZE == -1) return false;
-    return vFile.getLength() > FileManagerImpl.MAX_INTELLISENSE_FILESIZE;
+    return FileManagerImpl.MAX_INTELLISENSE_FILESIZE != -1 &&
+           vFile.getLength() > FileManagerImpl.MAX_INTELLISENSE_FILESIZE;
   }
 
   protected PsiFile createFile(Language lang){

@@ -23,10 +23,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -34,25 +31,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class PostprocessReformatingAspect implements PomModelAspect {
-  private static final Comparator<RangeMarker> ourRangesComparator = new Comparator<RangeMarker>() {
-    public int compare(final RangeMarker o1, final RangeMarker o2) {
-      if (o1.equals(o2)) return 0;
-      final int diff = o2.getEndOffset() - o1.getEndOffset();
-      if (diff == 0){
-        if(o1.getStartOffset() == o2.getStartOffset()) return 0;
-        if(o1.getStartOffset() == o1.getEndOffset()) return -1; // empty ranges first
-        if(o2.getStartOffset() == o2.getEndOffset()) return 1; // empty ranges first
-        return o1.getStartOffset() - o2.getStartOffset();
-      }
-      return diff;
-    }
-  };
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PostprocessReformatingAspect");
   private final PsiManager myPsiManager;
   private final TreeAspect myTreeAspect;
   private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<FileViewProvider, List<ASTNode>>();
   private boolean myDisabled;
+  private Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
 
   public PostprocessReformatingAspect(PsiManager psiManager, TreeAspect treeAspect) {
     myPsiManager = psiManager;
@@ -61,30 +45,18 @@ public class PostprocessReformatingAspect implements PomModelAspect {
   }
 
   public void update(PomModelEvent event) {
+    if(myDisabled) return;
     final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
     if(changeSet == null) return;
     final PsiElement psiElement = changeSet.getRootElement().getPsi();
     if(psiElement == null) return;
     final FileViewProvider viewProvider = psiElement.getContainingFile().getViewProvider();
     if(!viewProvider.isEventSystemEnabled()) return;
+    myUpdatedProviders.add(viewProvider);
     for (final ASTNode node : changeSet.getChangedElements()) {
       final TreeChange treeChange = changeSet.getChangesByElement(node);
       for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
         final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
-        if(myDisabled) {
-          if(childChange.getChangeType() == ChangeInfo.ADD &&
-             affectedChild.getElementType() == ElementType.REFORMAT_MARKER) {
-            final ASTNode next = TreeUtil.nextLeaf(affectedChild);
-            final ASTNode prev = TreeUtil.prevLeaf(affectedChild);
-            final ParserDefinition.SpaceRequirements spaceRequirements = getSpaceRequirements(prev, next);
-            if(spaceRequirements == ParserDefinition.SpaceRequirements.MUST ||
-               spaceRequirements == ParserDefinition.SpaceRequirements.MUST_LINE_BREAK){
-              postponeFormatting(viewProvider, affectedChild);
-            }
-            else affectedChild.getTreeParent().removeChild(affectedChild);
-          }
-          continue;
-        }
         switch(childChange.getChangeType()){
           case ChangeInfo.ADD:
             postponeFormatting(viewProvider, affectedChild);
@@ -92,24 +64,9 @@ public class PostprocessReformatingAspect implements PomModelAspect {
           case ChangeInfo.REPLACE:
             postponeFormatting(viewProvider, affectedChild);
             break;
-          // TODO[ik]: do we really need to process Removed elements or ChangeUtil must replace/insert surrounding
-          // whitespace?
-          //case ChangeInfo.REMOVED:
-          //  postponeFormatting(viewProvider, affectedChild);
-          //  break;
         }
       }
     }
-  }
-
-  private ParserDefinition.SpaceRequirements getSpaceRequirements(final ASTNode prev, final ASTNode next) {
-    if(prev == null || next == null) return ParserDefinition.SpaceRequirements.MAY;
-    final Language language = prev.getElementType().getLanguage();
-    final ParserDefinition parserDefinition = language.getParserDefinition();
-    final ParserDefinition.SpaceRequirements spaceRequirements = parserDefinition != null && language == next.getElementType().getLanguage() ?
-                                                                 parserDefinition.spaceExistanceTypeBetweenTokens(prev, next) :
-                                                                 ParserDefinition.SpaceRequirements.MAY;
-    return spaceRequirements;
   }
 
   public void setDisabled(boolean disabled) {
@@ -139,14 +96,14 @@ public class PostprocessReformatingAspect implements PomModelAspect {
   }
 
   public void doPostponedFormatting(){
-    final FileViewProvider[] viewProviders = myReformatElements.keySet().toArray(new FileViewProvider[myReformatElements.size()]);
+    if(myDisabled) return;
     try{
-      for (int i = 0; i < viewProviders.length; i++) {
-        final FileViewProvider viewProvider = viewProviders[i];
+      for (final FileViewProvider viewProvider : myUpdatedProviders) {
         doPostponedFormatting(viewProvider);
       }
     }
     finally{
+      myUpdatedProviders.clear();
       myReformatElements.clear();
     }
   }
@@ -164,49 +121,63 @@ public class PostprocessReformatingAspect implements PomModelAspect {
 
   public void doPostponedFormattingInner(final FileViewProvider key) {
     final List<ASTNode> astNodes = myReformatElements.remove(key);
-    if (astNodes == null) return;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
     final Document document = key.getDocument();
     // Sort ranges by end offsets so that we won't need any offset adjustment after reformat or reindent
     if (document == null || documentManager.isUncommited(document)) return;
 
-    // we replace all reformat markers by single whitespaces which will be reformated later. We need to do this replacement because absence
-    // of these whitespaces in text may cause syntax changes in text.
-    // at this point we'll get only those markers which are relevant for formater disabled/enabled state (see update function)
-    insertWhitespacesAtMarkersPositions(astNodes, key);
+    final TreeMap<RangeMarker, PostponedAction> rangesToProcess = new TreeMap<RangeMarker, PostponedAction>(new Comparator<RangeMarker>() {
+      public int compare(final RangeMarker o1, final RangeMarker o2) {
+        if (o1.equals(o2)) return 0;
+        final int diff = o2.getEndOffset() - o1.getEndOffset();
+        if (diff == 0){
+          if(o1.getStartOffset() == o2.getStartOffset()) return 0;
+          if(o1.getStartOffset() == o1.getEndOffset()) return -1; // empty ranges first
+          if(o2.getStartOffset() == o2.getEndOffset()) return 1; // empty ranges first
+          return o1.getStartOffset() - o2.getStartOffset();
+        }
+        return diff;
+      }
+    });
+
+    // process all roots in viewProvider to find marked for reformat before elements and create appropriate ragge markers
+    handleReformatMarkers(key, rangesToProcess);
 
     // then we create ranges by changed nodes. One per node. There ranges can instersect. Ranges are sorted by end offset.
-    final TreeMap<RangeMarker, PostponedAction> rangesToProcess = createActionsMap(astNodes, document);
+    if (astNodes != null) createActionsMap(astNodes, key, rangesToProcess);
 
-    // now we have to normalize actions so that they not intersect and ordered in most appropriate way
-    // (free reformating -> reindent -> formating under reindent)
-    final List<Pair<RangeMarker, ? extends PostponedAction>> normalizedActions = normalizeAndReorderPostponedActions(rangesToProcess, document);
+    while(!rangesToProcess.isEmpty()){
+      // now we have to normalize actions so that they not intersect and ordered in most appropriate way
+      // (free reformating -> reindent -> formating under reindent)
+      final List<Pair<RangeMarker, ? extends PostponedAction>> normalizedActions = normalizeAndReorderPostponedActions(rangesToProcess, document);
 
-    // only in following loop real changes in document are made
-    for (final Pair<RangeMarker, ? extends PostponedAction> normalizedAction : normalizedActions) {
-      normalizedAction.getSecond().processRange(normalizedAction.getFirst(), key);
+      // only in following loop real changes in document are made
+      for (final Pair<RangeMarker, ? extends PostponedAction> normalizedAction : normalizedActions) {
+        normalizedAction.getSecond().processRange(normalizedAction.getFirst(), key);
+      }
     }
   }
 
   private List<Pair<RangeMarker, ? extends PostponedAction>> normalizeAndReorderPostponedActions(final TreeMap<RangeMarker, PostponedAction> rangesToProcess, Document document) {
     final List<Pair<RangeMarker, ReformatAction>> freeFormatingActions = new ArrayList<Pair<RangeMarker, ReformatAction>>();
     final List<Pair<RangeMarker, ReindentAction>> indentActions = new ArrayList<Pair<RangeMarker, ReindentAction>>();
-    final List<Pair<RangeMarker, ReformatAction>> formatingAfterIndentActions = new ArrayList<Pair<RangeMarker, ReformatAction>>();
 
     RangeMarker accumulatedRange = null;
     PostponedAction accumulatedRangeAction = null;
-    Iterator<RangeMarker> rangesIterator = rangesToProcess.keySet().iterator();
-    while (rangesIterator.hasNext()) {
-      final RangeMarker textRange = rangesIterator.next();
-      final PostponedAction action = rangesToProcess.get(textRange);
+    Iterator<Map.Entry<RangeMarker, PostponedAction>> iterator = rangesToProcess.entrySet().iterator();
+    while (iterator.hasNext()) {
+      final Map.Entry<RangeMarker, PostponedAction> entry = iterator.next();
+      final RangeMarker textRange = entry.getKey();
+      final PostponedAction action = entry.getValue();
       if (accumulatedRange == null) {
         accumulatedRange = textRange;
         accumulatedRangeAction = action;
+        iterator.remove();
       }
       else if (accumulatedRange.getStartOffset() > textRange.getEndOffset() ||
-               (accumulatedRange.getStartOffset() == textRange.getEndOffset() && accumulatedRangeAction instanceof ReindentAction) ||
-               (accumulatedRange.getStartOffset() == accumulatedRange.getEndOffset() && accumulatedRangeAction instanceof ReformatWithHeadingWhitespaceAction)) {
-        // does not instersect
+               (accumulatedRange.getStartOffset() == textRange.getEndOffset() &&
+                !canStickActionsTogether(accumulatedRangeAction, accumulatedRange, action, textRange))) {
+        // action can be pushed
         if (accumulatedRangeAction instanceof ReindentAction)
           indentActions.add(new Pair<RangeMarker, ReindentAction>(accumulatedRange, (ReindentAction)accumulatedRangeAction));
         else
@@ -214,33 +185,38 @@ public class PostprocessReformatingAspect implements PomModelAspect {
 
         accumulatedRange = textRange;
         accumulatedRangeAction = action;
+        iterator.remove();
       }
       else if (accumulatedRangeAction instanceof ReformatAction && action instanceof ReindentAction) {
-        // split accumulated range into two
+        // split accumulated reformat range into two
         if (accumulatedRange.getStartOffset() < textRange.getStartOffset()) {
           final RangeMarker endOfRange = document.createRangeMarker(accumulatedRange.getStartOffset(), textRange.getStartOffset());
           // add heading reformat part
           rangesToProcess.put(endOfRange, accumulatedRangeAction);
           // and manage heading whitespace because formatter does not edit it in previous action
-          rangesIterator = rangesToProcess.keySet().iterator();
-          while(rangesIterator.next() != textRange);
+          iterator = rangesToProcess.entrySet().iterator();
+          //noinspection StatementWithEmptyBody
+          while(iterator.next().getKey() != textRange);
         }
         final RangeMarker rangeToProcess = document.createRangeMarker(textRange.getEndOffset(), accumulatedRange.getEndOffset());
         freeFormatingActions.add(new Pair<RangeMarker, ReformatAction>(rangeToProcess, new ReformatWithHeadingWhitespaceAction()));
         accumulatedRange = textRange;
         accumulatedRangeAction = action;
+        iterator.remove();
       }
       else {
-        accumulatedRange = document.createRangeMarker(Math.min(accumulatedRange.getStartOffset(), textRange.getStartOffset()),
-                                                      Math.max(accumulatedRange.getEndOffset(), textRange.getEndOffset()));
-        if (accumulatedRangeAction instanceof ReindentAction && action instanceof ReformatAction) {
-          formatingAfterIndentActions.add(new Pair<RangeMarker, ReformatAction>(
-            document.createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset()), (ReformatAction)action));
+        if (!(accumulatedRangeAction instanceof ReindentAction)) {
+          iterator.remove();
+          if(accumulatedRangeAction instanceof ReformatAction && action instanceof ReformatWithHeadingWhitespaceAction &&
+             accumulatedRange.getStartOffset() == textRange.getStartOffset() ||
+             accumulatedRangeAction instanceof ReformatWithHeadingWhitespaceAction && action instanceof ReformatAction &&
+             accumulatedRange.getStartOffset() < textRange.getStartOffset()){
+            accumulatedRangeAction = action;
+          }
+          accumulatedRange = document.createRangeMarker(Math.min(accumulatedRange.getStartOffset(), textRange.getStartOffset()),
+                                                        Math.max(accumulatedRange.getEndOffset(), textRange.getEndOffset()));
         }
-        else if(accumulatedRangeAction instanceof ReformatAction && action instanceof ReformatWithHeadingWhitespaceAction ||
-                accumulatedRangeAction instanceof ReformatWithHeadingWhitespaceAction && action instanceof ReformatAction){
-          accumulatedRangeAction = action;
-        }
+        else if(action instanceof ReindentAction) iterator.remove(); // TODO[ik]: need to be fixed to correctly process indent inside indent
       }
     }
     if (accumulatedRange != null){
@@ -254,29 +230,35 @@ public class PostprocessReformatingAspect implements PomModelAspect {
       new ArrayList<Pair<RangeMarker, ? extends PostponedAction>>(rangesToProcess.size());
     Collections.reverse(freeFormatingActions);
     Collections.reverse(indentActions);
-    Collections.reverse(formatingAfterIndentActions);
     result.addAll(freeFormatingActions);
     result.addAll(indentActions);
-    result.addAll(formatingAfterIndentActions);
     return result;
   }
 
-  private TreeMap<RangeMarker, PostponedAction> createActionsMap(final List<ASTNode> astNodes, final Document document) {
-    final TreeMap<RangeMarker, PostponedAction> rangesToProcess = new TreeMap<RangeMarker, PostponedAction>(ourRangesComparator);
+  private boolean canStickActionsTogether(final PostponedAction currentAction,
+                                          final RangeMarker currentRange,
+                                          final PostponedAction nextAction,
+                                          final RangeMarker nextRange) {
+    // empty reformat markers can't sticked together with any action
+    if(nextAction instanceof ReformatWithHeadingWhitespaceAction && nextRange.getStartOffset() == nextRange.getEndOffset()) return false;
+    if(currentAction instanceof ReformatWithHeadingWhitespaceAction && currentRange.getStartOffset() == currentRange.getEndOffset()) return false;
+    // reindent actions can't be sticked at all
+    return !(currentAction instanceof ReindentAction);
+  }
+
+  private void createActionsMap(final List<ASTNode> astNodes, final FileViewProvider provider,
+                                final TreeMap<RangeMarker, PostponedAction> rangesToProcess) {
     final Set<ASTNode> nodesToProcess = new HashSet<ASTNode>(astNodes);
+    final Document document = provider.getDocument();
     for (final ASTNode node : astNodes) {
       nodesToProcess.remove(node);
+      final FileElement fileElement = TreeUtil.getFileElement((TreeElement)node);
+      if (fileElement == null || ((PsiFile)fileElement.getPsi()).getViewProvider() != provider) continue;
       final boolean isGenerated = CodeEditUtil.isNodeGenerated(node);
       ((TreeElement)node).acceptTree(new RecursiveTreeElementVisitor() {
         boolean inGeneratedContext = !isGenerated;
         protected boolean visitNode(TreeElement current) {
           if(nodesToProcess.contains(current)) return false;
-          if(current.getElementType() == ElementType.REFORMAT_MARKER){
-            rangesToProcess.put(document.createRangeMarker(current.getTextRange()), new ReformatWithHeadingWhitespaceAction());
-            if(current.getFirstChildNode() != null) current.getTreeParent().replaceChild(current, current.getFirstChildNode());
-            else current.getTreeParent().removeChild(current);
-            return false;
-          }
           final boolean currentNodeGenerated = CodeEditUtil.isNodeGenerated(current);
           if(currentNodeGenerated && !inGeneratedContext){
             rangesToProcess.put(document.createRangeMarker(current.getTextRange()), new ReformatAction());
@@ -305,73 +287,23 @@ public class PostprocessReformatingAspect implements PomModelAspect {
         }
       });
     }
-    return rangesToProcess;
   }
 
-  private void insertWhitespacesAtMarkersPositions(final List<ASTNode> astNodes, final FileViewProvider key) {
-    for (final ASTNode node : new ArrayList<ASTNode>(astNodes)) {
-      final FileElement fileElement = TreeUtil.getFileElement((TreeElement)node);
-      if (fileElement != null && ((PsiFile)fileElement.getPsi()).getViewProvider() == key) {
-        // insert whitespaces at marker positions
-        ((TreeElement)node).acceptTree(
-          new RecursiveTreeElementVisitor(){
-            protected boolean visitNode(TreeElement element) {
-              if(element.getElementType() == ElementType.REFORMAT_MARKER){
-                final ASTNode prev = TreeUtil.prevLeaf(element); ASTNode next = TreeUtil.nextLeaf(element);
-                if((prev == null || prev.getElementType() != ElementType.WHITE_SPACE) &&
-                   (next == null || next.getElementType() != ElementType.WHITE_SPACE)){
-                  switch(getSpaceRequirements(prev, next)){
-                    case MUST_NOT:
-                      element.getTreeParent().removeChild(element);
-                      break;
-                    case MAY:
-                      return false;
-                    case MUST:{
-                      final LeafElement generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, new char[]{' '}, 0, 1, null, key.getManager());
-                      element.getTreeParent().replaceChild(element, generatedWhitespace);
-                      astNodes.add(generatedWhitespace);
-                      break;
-                    }
-                    case MUST_LINE_BREAK:{
-                      final LeafElement generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, new char[]{' '}, 0, 1, null, key.getManager());
-                      element.getTreeParent().replaceChild(element, generatedWhitespace);
-                      astNodes.add(generatedWhitespace);
-                      break;
-                    }
-                  }
-                }
-                else {
-                  element.getTreeParent().removeChild(element);
-                  boolean nextToWhitespace = false;
-                  if (prev != null && prev.getElementType() == ElementType.WHITE_SPACE) {
-                    nextToWhitespace = true;
-                    astNodes.add(prev);
-                    CodeEditUtil.setNodeGenerated(prev, true);
-                  }
-                  if (next != null && next.getElementType() == ElementType.WHITE_SPACE) {
-                    if(!nextToWhitespace){
-                      if(prev != null && ElementType.COMMENT_BIT_SET.contains(prev.getElementType()) && next.getText().indexOf('\n') < 0){
-                        final String whitespaceText = "\n" + next.getText();
-                        final LeafElement generatedWhitespace = Factory.createSingleLeafElement(
-                          ElementType.WHITE_SPACE, whitespaceText.toCharArray(), 0,
-                          whitespaceText.length(), null, key.getManager());
-                        next.getTreeParent().replaceChild(next, generatedWhitespace);
-                        next = generatedWhitespace;
-                      }
-                      astNodes.add(next);
-                      CodeEditUtil.setNodeGenerated(next, true);
-                    }
-                    else next.getTreeParent().removeChild(next);
-                  }
-                }
-                astNodes.remove(element);
-                return false;
-              }
-              return true;
+  private void handleReformatMarkers(final FileViewProvider key,
+                                                                  final TreeMap<RangeMarker, PostponedAction> rangesToProcess) {
+    final Document document = key.getDocument();
+    for (final FileElement fileElement : ((SingleRootFileViewProvider)key).getKnownTreeRoots()) {
+      fileElement.acceptTree(
+        new RecursiveTreeElementVisitor(){
+          protected boolean visitNode(TreeElement element) {
+            if(CodeEditUtil.isMarkedToReformatBefore(element)) {
+              CodeEditUtil.markToReformatBefore(element, false);
+              rangesToProcess.put(document.createRangeMarker(element.getStartOffset(), element.getStartOffset()),
+                             new ReformatWithHeadingWhitespaceAction());
             }
-          });
-      }
-      else astNodes.remove(node);
+            return true;
+          }
+        });
     }
   }
 

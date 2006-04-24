@@ -10,34 +10,35 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.CharTable;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-
-import org.jetbrains.annotations.Nullable;
 
 public class CodeEditUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
   public static final Key<IndentInfo> INDENT_INFO_KEY = new Key<IndentInfo>("IndentInfo");
   public static final Key<Boolean> GENERATED_FLAG = new Key<Boolean>("CREATED BY IDEA");
   private static final Key<Integer> INDENT_INFO = new Key<Integer>("INDENTATION");
+  private static final Key<Boolean> REFORMAT_KEY = new Key<Boolean>("REFORMAT BEFORE THIS ELEMENT");
 
   private CodeEditUtil() {
   }
@@ -119,10 +120,8 @@ public class CodeEditUtil {
   }
 
   private static boolean needToForceReformat(final CompositeElement parent, final ASTNode first, final ASTNode last) {
-    if(parent == null) return true;
-    return first.getStartOffset() != parent.getStartOffset() ||
-           parent.getText().trim().length() == getTrimmedTextLength(first, last) &&
-           needToForceReformat(parent.getTreeParent(), parent, parent);
+    return parent == null || first.getStartOffset() != parent.getStartOffset() ||
+           parent.getText().trim().length() == getTrimmedTextLength(first, last) && needToForceReformat(parent.getTreeParent(), parent, parent);
   }
 
   private static int getTrimmedTextLength(ASTNode first, final ASTNode last) {
@@ -170,26 +169,16 @@ public class CodeEditUtil {
   }
 
   private static ASTNode makePlaceHolderBetweenTokens(ASTNode left, final ASTNode right, boolean forceReformat, final boolean normalizeTailingWhitespace) {
-    if(left == null && right == null) return left;
+    if(right == null) return left;
+    markToReformatBefore(right, false);
     if(left == null){
-      final ASTNode parent = right.getTreeParent();
-      final CompositeElement element = createPlainReformatMarker(parent.getPsi().getManager());
-      parent.addChild(element, right);
-      left = element;
+      markToReformatBefore(right, true);
     }
-    else if(right == null){
-      final ASTNode parent = left.getTreeParent();
-      final PsiManager psiManager = parent.getPsi().getManager();
-      final CompositeElement element = createPlainReformatMarker(psiManager);
-      parent.addChild(element, left.getTreeNext());
-    }
-    else if(left.getElementType() == ElementType.WHITE_SPACE && left.getTreeParent().getLastChildNode() == left && normalizeTailingWhitespace){
+    else if(left.getElementType() == ElementType.WHITE_SPACE &&
+            left.getTreeParent().getLastChildNode() == left && normalizeTailingWhitespace){
       // handle tailing whitespaces if element on the left has been removed
-      final ParseUtil.CommonParentState parentState = new ParseUtil.CommonParentState();
-      ParseUtil.nextLeaf((TreeElement)left, parentState);
-      final CompositeElement element = createReformatMarker(left, right, left.getTreeParent().getPsi().getManager());
-      if(element != null) parentState.nextLeafBranchStart.getTreeParent().addChild(element, parentState.nextLeafBranchStart);
       left.getTreeParent().removeChild(left);
+      markToReformatBeforeOrInsertWhitespace(left, right, right.getTreeParent().getPsi().getManager());
       left = right;
     }
     else if(left.getElementType() == ElementType.WHITE_SPACE && right.getElementType() == ElementType.WHITE_SPACE) {
@@ -216,54 +205,53 @@ public class CodeEditUtil {
       else right.getTreeParent().removeChild(right);
     }
     else if(left.getElementType() != ElementType.WHITE_SPACE || forceReformat){
-      final ParseUtil.CommonParentState parentState = new ParseUtil.CommonParentState();
-      ParseUtil.nextLeaf((TreeElement)left, parentState);
-      final CompositeElement element = createReformatMarker(left, right, left.getTreeParent().getPsi().getManager());
-      if(element != null) parentState.nextLeafBranchStart.getTreeParent().addChild(element, parentState.nextLeafBranchStart);
+      if(right.getElementType() == ElementType.WHITE_SPACE){
+        markWhitespaceForReformat(right);
+      }
+      else if(left.getElementType() == ElementType.WHITE_SPACE){
+        markWhitespaceForReformat(left);
+      }
+      else markToReformatBeforeOrInsertWhitespace(left, right, right.getTreeParent().getPsi().getManager());
     }
     return left;
   }
 
-  private static CompositeElement createPlainReformatMarker(final PsiManager psiManager) {
-    final CompositeElement element = Factory.createCompositeElement(ElementType.REFORMAT_MARKER);
-    setNodeGenerated(element, true);
-    TreeUtil.addChildren(new DummyHolder(psiManager, null, (CharTable)null).getTreeElement(), element);
-    return element;
+  private static void markWhitespaceForReformat(final ASTNode right) {
+    final String text = right.getText();
+    final LeafElement merged = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text.toCharArray(), 0, text.length(), null,
+                                                               right.getPsi().getManager());
+    right.getTreeParent().replaceChild(right, merged);
   }
 
-  @Nullable
-  private static CompositeElement createReformatMarker(final ASTNode left, final ASTNode right, PsiManager manager) {
-    final CompositeElement element = createPlainReformatMarker(manager);
+  private static void markToReformatBeforeOrInsertWhitespace(final ASTNode left, @NotNull final ASTNode right, PsiManager manager) {
     final Language leftLang = left != null ? left.getElementType().getLanguage() : null;
-    final Language rightLang = right != null ? right.getElementType().getLanguage() : null;
-    final ParserDefinition parserDefinition = leftLang != null ? leftLang.getParserDefinition() : null;
+    final Language rightLang = right.getElementType().getLanguage();
+    final ParserDefinition parserDefinition = rightLang.getParserDefinition();
+    LeafElement generatedWhitespace = null;
     if(leftLang == rightLang && parserDefinition != null){
+      //noinspection EnumSwitchStatementWhichMissesCases
       switch(parserDefinition.spaceExistanceTypeBetweenTokens(left, right)){
-        case MUST:{
-          final LeafElement generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, new char[]{' '}, 0, 1, null, manager);
-          TreeUtil.addChildren(element, generatedWhitespace);
+        case MUST:
+          generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, new char[]{' '}, 0, 1, null, manager);
           break;
-        }
-        case MUST_LINE_BREAK:{
-          final LeafElement generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, new char[]{'\n'}, 0, 1, null, manager);
-          TreeUtil.addChildren(element, generatedWhitespace);
+        case MUST_LINE_BREAK:
+          generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, new char[]{'\n'}, 0, 1, null, manager);
           break;
-        }
+        default:
+          generatedWhitespace = null;
       }
     }
-    final ASTNode commonParent = TreeUtil.findCommonParent(left, right);
-    if(element.getTextLength() == 0 && isNodeGenerated(left) && isNodeGenerated(right)
-       && isNodeGenerated(commonParent) && checkPassGenerated(left, commonParent) && checkPassGenerated(right, commonParent))
-      return null;
-    return element;
+    if(generatedWhitespace != null){
+      final ParseUtil.CommonParentState parentState = new ParseUtil.CommonParentState();
+      ParseUtil.prevLeaf((TreeElement)right, parentState);
+      parentState.nextLeafBranchStart.getTreeParent().addChild(generatedWhitespace, parentState.nextLeafBranchStart);
+    }
+    else markToReformatBefore(right, true);
   }
 
-  private static boolean checkPassGenerated(ASTNode right, final ASTNode commonParent) {
-    while(right.getTreeParent() != null && right != commonParent) {
-      if(!isNodeGenerated(right)) return false;
-      right = right.getTreeParent();
-    }
-    return true;
+  public static void markToReformatBefore(final ASTNode right, boolean value) {
+    if (value) right.putCopyableUserData(REFORMAT_KEY, true);
+    else right.putCopyableUserData(REFORMAT_KEY, null);
   }
 
   private static int getBlankLines(final String text) {
@@ -274,8 +262,7 @@ public class CodeEditUtil {
   }
 
   private static boolean isWS(final ASTNode lastChild) {
-    if (lastChild == null) return false;
-    return lastChild.getElementType() == ElementType.WHITE_SPACE;
+    return lastChild != null && lastChild.getElementType() == ElementType.WHITE_SPACE;
   }
 
   public static boolean canStickChildrenTogether(final ASTNode child1, final ASTNode child2) {
@@ -288,20 +275,16 @@ public class CodeEditUtil {
     LOG.assertTrue(token1 != null);
     LOG.assertTrue(token2 != null);
 
-    if (token1.getElementType() instanceof IJavaElementType && token2.getElementType() instanceof IJavaElementType) {
-      return canStickJavaTokens((PsiJavaToken)SourceTreeToPsiMap.treeElementToPsi(token1),
-                                (PsiJavaToken)SourceTreeToPsiMap.treeElementToPsi(token2));
-    }
-    else {
-      return true; //?
-    }
+    return !(token1.getElementType()instanceof IJavaElementType && token2.getElementType()instanceof IJavaElementType) ||
+           canStickJavaTokens((PsiJavaToken)SourceTreeToPsiMap.treeElementToPsi(token1),
+                              (PsiJavaToken)SourceTreeToPsiMap.treeElementToPsi(token2));
 
   }
 
   private static Map<Pair<IElementType, IElementType>, Boolean> myCanStickJavaTokensMatrix =
     new HashMap<Pair<IElementType, IElementType>, Boolean>();
 
-  public static boolean canStickJavaTokens(PsiJavaToken token1, PsiJavaToken token2) {
+  private static boolean canStickJavaTokens(PsiJavaToken token1, PsiJavaToken token2) {
     IElementType type1 = token1.getTokenType();
     IElementType type2 = token2.getTokenType();
 
@@ -330,86 +313,6 @@ public class CodeEditUtil {
     return lexer.getTokenType() == null;
   }
 
-  public static ASTNode getDefaultAnchor(PsiImportList list, PsiImportStatementBase statement) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(list.getProject());
-    ImportHelper importHelper = new ImportHelper(settings);
-    return importHelper.getDefaultAnchor(list, statement);
-  }
-
-  private static final HashMap<String, Integer> ourModifierToOrderMap = new HashMap<String, Integer>();
-
-  static { //TODO : options?
-    ourModifierToOrderMap.put(PsiModifier.PUBLIC, 1);
-    ourModifierToOrderMap.put(PsiModifier.PRIVATE, 1);
-    ourModifierToOrderMap.put(PsiModifier.PROTECTED, 1);
-    ourModifierToOrderMap.put(PsiModifier.STATIC, 2);
-    ourModifierToOrderMap.put(PsiModifier.ABSTRACT, 2);
-    ourModifierToOrderMap.put(PsiModifier.FINAL, 3);
-    ourModifierToOrderMap.put(PsiModifier.SYNCHRONIZED, 4);
-    ourModifierToOrderMap.put(PsiModifier.TRANSIENT, 4);
-    ourModifierToOrderMap.put(PsiModifier.VOLATILE, 4);
-    ourModifierToOrderMap.put(PsiModifier.NATIVE, 5);
-    ourModifierToOrderMap.put(PsiModifier.STRICTFP, 6);
-  }
-
-  public static ASTNode getDefaultAnchor(PsiModifierList modifierList, PsiKeyword modifier) {
-    Integer order = ourModifierToOrderMap.get(modifier.getText());
-    if (order == null) return null;
-    for (ASTNode child = SourceTreeToPsiMap.psiElementToTree(modifierList).getFirstChildNode(); child != null; child = child.getTreeNext())
-    {
-      if (ElementType.KEYWORD_BIT_SET.contains(child.getElementType())) {
-        Integer order1 = ourModifierToOrderMap.get(child.getText());
-        if (order1 == null) continue;
-        if (order1.intValue() > order.intValue()) {
-          return child;
-        }
-      }
-    }
-    return null;
-  }
-
-  public static PsiElement getDefaultAnchor(PsiClass aClass, PsiMember member) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(aClass.getProject());
-
-    int order = getMemberOrderWeight(member, settings);
-    if (order < 0) return null;
-
-    PsiElement lastMember = null;
-    for (PsiElement child = aClass.getFirstChild(); child != null; child = child.getNextSibling()) {
-      int order1 = getMemberOrderWeight(child, settings);
-      if (order1 < 0) continue;
-      if (order1 > order) {
-        if (lastMember != null) {
-          PsiElement nextSibling = lastMember.getNextSibling();
-          while (nextSibling instanceof PsiJavaToken && (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
-            nextSibling = nextSibling.getNextSibling();
-          }
-          return nextSibling == null ? aClass.getLBrace().getNextSibling() : nextSibling;
-        }
-        else {
-          return aClass.getLBrace().getNextSibling();
-        }
-      }
-      lastMember = child;
-    }
-    return aClass.getRBrace();
-  }
-
-  private static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
-    if (member instanceof PsiField) {
-      return member instanceof PsiEnumConstant ? 1 : settings.FIELDS_ORDER_WEIGHT + 1;
-    }
-    else if (member instanceof PsiMethod) {
-      return ((PsiMethod)member).isConstructor() ? settings.CONSTRUCTORS_ORDER_WEIGHT + 1 : settings.METHODS_ORDER_WEIGHT + 1;
-    }
-    else if (member instanceof PsiClass) {
-      return settings.INNER_CLASSES_ORDER_WEIGHT + 1;
-    }
-    else {
-      return -1;
-    }
-  }
-
   public static String getStringWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, Language language) {
     final FormattingModelBuilder modelBuilder = language.getFormattingModelBuilder();
     if (modelBuilder == null) {
@@ -425,31 +328,6 @@ public class CodeEditUtil {
       final PsiFile file = (PsiFile)TreeUtil.getFileElement((TreeElement)second).getPsi();
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
       return getWhiteSpaceBeforeToken(second, language, true).generateNewWhiteSpace(settings.getIndentOptions(file.getFileType()));
-    }
-
-  }
-
-  public static IndentInfo getIndentWhiteSpaceBeforeToken(final ASTNode tokenNode, final Language language) {
-    return getWhiteSpaceBeforeToken(tokenNode,
-                                    chooseLanguage(tokenNode, language, (PsiFile)TreeUtil.getFileElement((TreeElement)tokenNode).getPsi()),
-                                    false);
-  }
-
-  private static Language chooseLanguage(final ASTNode tokenNode, final Language language, final PsiFile file) {
-    if (tokenNode == null) return language;
-    final PsiElement secondAsPsiElement = SourceTreeToPsiMap.treeElementToPsi(tokenNode);
-    if (secondAsPsiElement == null) return language;
-    if (file == null) return language;
-    final FileType fileType = file.getFileType();
-    if (!(fileType instanceof LanguageFileType)) {
-      return language;
-    }
-
-    if (((LanguageFileType)fileType).getLanguage().getFormattingModelBuilder() == null) {
-      return language;
-    }
-    else {
-      return ((LanguageFileType)fileType).getLanguage();
     }
 
   }
@@ -501,5 +379,9 @@ public class CodeEditUtil {
     if(treeElement == null) return;
     if(oldIndentation >= 0) treeElement.putCopyableUserData(INDENT_INFO, oldIndentation);
     else treeElement.putCopyableUserData(INDENT_INFO, null);
+  }
+
+  public static boolean isMarkedToReformatBefore(final TreeElement element) {
+    return element.getCopyableUserData(REFORMAT_KEY) != null;
   }
 }

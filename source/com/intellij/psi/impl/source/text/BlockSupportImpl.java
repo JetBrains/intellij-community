@@ -77,10 +77,13 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
   }
 
 
-  public void reparseRange(PsiFile file, int startOffset, int endOffset, int lengthShift, char[] newFileText){
+  public void reparseRange(final PsiFile file, final int startOffset, final int endOffset, final int lengthShift, final char[] newFileText){
     // adjust editor offsets to damage area markers
-    if(startOffset > 0) startOffset--;
-    reparseRangeInternal(file, startOffset, endOffset, lengthShift, newFileText);
+    file.getManager().performActionWithFormatterDisabled(new Runnable() {
+      public void run() {
+        reparseRangeInternal(file, startOffset > 0 ? startOffset - 1 : 0, endOffset, lengthShift, newFileText);
+      }
+    });
   }
 
   private static void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, char[] newFileText){
