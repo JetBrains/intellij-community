@@ -102,13 +102,18 @@ public class RadFlowLayoutManager extends RadLayoutManager {
 
     public MyAlignProperty() {
       super(null, "Alignment");
-      myPairs = new IntEnumEditor.Pair[] {
-        new IntEnumEditor.Pair(FlowLayout.CENTER, UIDesignerBundle.message("property.center")),
-        new IntEnumEditor.Pair(FlowLayout.LEFT, UIDesignerBundle.message("property.left")),
-        new IntEnumEditor.Pair(FlowLayout.RIGHT, UIDesignerBundle.message("property.right")),
-        new IntEnumEditor.Pair(FlowLayout.LEADING, UIDesignerBundle.message("property.leading")),
-        new IntEnumEditor.Pair(FlowLayout.TRAILING, UIDesignerBundle.message("property.trailing"))
-      };
+    }
+
+    private void initPairs() {
+      if (myPairs == null) {
+        myPairs = new IntEnumEditor.Pair[] {
+          new IntEnumEditor.Pair(FlowLayout.CENTER, UIDesignerBundle.message("property.center")),
+          new IntEnumEditor.Pair(FlowLayout.LEFT, UIDesignerBundle.message("property.left")),
+          new IntEnumEditor.Pair(FlowLayout.RIGHT, UIDesignerBundle.message("property.right")),
+          new IntEnumEditor.Pair(FlowLayout.LEADING, UIDesignerBundle.message("property.leading")),
+          new IntEnumEditor.Pair(FlowLayout.TRAILING, UIDesignerBundle.message("property.trailing"))
+        };
+      }
     }
 
     public Integer getValue(final RadContainer component) {
@@ -123,6 +128,7 @@ public class RadFlowLayoutManager extends RadLayoutManager {
 
     @NotNull public PropertyRenderer<Integer> getRenderer() {
       if (myRenderer == null) {
+        initPairs();
         myRenderer = new IntEnumRenderer(myPairs);
       }
       return myRenderer;
@@ -130,6 +136,7 @@ public class RadFlowLayoutManager extends RadLayoutManager {
 
     @NotNull public PropertyEditor<Integer> getEditor() {
       if (myEditor == null) {
+        initPairs();
         myEditor = new IntEnumEditor(myPairs);
       }
       return myEditor;
