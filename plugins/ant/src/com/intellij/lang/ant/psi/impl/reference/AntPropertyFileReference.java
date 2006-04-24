@@ -7,7 +7,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.util.IncorrectOperationException;
@@ -44,14 +43,6 @@ public class AntPropertyFileReference extends AntGenericReference {
     throw new IncorrectOperationException("Can bind only to properties files.");
   }
 
-  public PsiElement getContext() {
-    return null;
-  }
-
-  public PsiReference getContextReference() {
-    return null;
-  }
-
   public static ReferenceType getReferenceType() {
     return ourRefType;
   }
@@ -62,10 +53,6 @@ public class AntPropertyFileReference extends AntGenericReference {
 
   public ReferenceType getSoftenType() {
     return getReferenceType();
-  }
-
-  public boolean needToCheckAccessibility() {
-    return false;
   }
 
   public PsiElement resolve() {

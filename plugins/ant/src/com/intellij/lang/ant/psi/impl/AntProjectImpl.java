@@ -58,6 +58,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   public void clearCaches() {
+    super.clearCaches();
     myTargets = null;
   }
 

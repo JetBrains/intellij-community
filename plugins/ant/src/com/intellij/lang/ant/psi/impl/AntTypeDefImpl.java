@@ -18,6 +18,8 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public AntTypeDefImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
+    final String classname = getClassName();
+    if (classname == null) return;
     final String classpath = getClassPath();
     ClassLoader loader = null;
     if (classpath != null) {
@@ -29,16 +31,16 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       }
     }
     else {
-      myNewDefinition = getAntProject().getBaseTypeDefinition(getClassName());
+      myNewDefinition = getAntProject().getBaseTypeDefinition(classname);
       if (myNewDefinition != null) return;
     }
     Class clazz;
     try {
       if (loader == null) {
-        clazz = Class.forName(getClassName());
+        clazz = Class.forName(classname);
       }
       else {
-        clazz = loader.loadClass(getClassName());
+        clazz = loader.loadClass(classname);
       }
     }
     catch (ClassNotFoundException e) {

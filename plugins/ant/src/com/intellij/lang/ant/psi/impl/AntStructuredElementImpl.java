@@ -14,11 +14,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AntStructuredElementImpl extends AntElementImpl implements AntStructuredElement {
   protected AntTypeDefinition myDefinition;
   protected boolean myDefinitionCloned = false;
+  private Map<String, AntStructuredElement> myReferencedElements = null;
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(parent, sourceElement);
@@ -85,5 +88,44 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       myDefinition.registerNestedType(def.getTypeId(), def.getClassName());
       getAntProject().registerCustomType(def);
     }
+  }
+
+  public void registerRefId(final String id, AntStructuredElement element) {
+    if (myReferencedElements == null) {
+      myReferencedElements = new HashMap<String, AntStructuredElement>();
+    }
+    myReferencedElements.put(id, element);
+  }
+
+  public AntStructuredElement getElementByRefId(final String refid) {
+    AntElement parent = this;
+    while (true) {
+      parent = parent.getAntParent();
+      if (parent == null) {
+        return null;
+      }
+      if (parent instanceof AntStructuredElement) {
+        AntStructuredElementImpl se = (AntStructuredElementImpl)parent;
+        if (se.myReferencedElements != null) {
+          final AntStructuredElement refse = se.myReferencedElements.get(refid);
+          if (refse != null) {
+            return refse;
+          }
+        }
+      }
+    }
+  }
+
+  @NotNull
+  public String[] getRefIds() {
+    if (myReferencedElements == null) {
+      return new String[0];
+    }
+    return myReferencedElements.keySet().toArray(new String[myReferencedElements.size()]);
+  }
+
+  public void clearCaches() {
+    super.clearCaches();
+    myReferencedElements = null;
   }
 }

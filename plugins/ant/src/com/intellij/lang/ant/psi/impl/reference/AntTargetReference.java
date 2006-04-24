@@ -8,7 +8,6 @@ import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
@@ -63,14 +62,6 @@ public class AntTargetReference extends AntGenericReference {
     throw new IncorrectOperationException("Can bind only to ant targets.");
   }
 
-  public PsiElement getContext() {
-    return null;
-  }
-
-  public PsiReference getContextReference() {
-    return null;
-  }
-
   public static ReferenceType getReferenceType() {
     return ourRefType;
   }
@@ -81,10 +72,6 @@ public class AntTargetReference extends AntGenericReference {
 
   public ReferenceType getSoftenType() {
     return getReferenceType();
-  }
-
-  public boolean needToCheckAccessibility() {
-    return false;
   }
 
   public String getUnresolvedMessagePattern() {

@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBase {
@@ -15,7 +14,7 @@ public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBa
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     final AntTarget target = (AntTarget)element;
-    final XmlAttribute attr = ((XmlTag)target.getSourceElement()).getAttribute("depends", null);
+    final XmlAttribute attr = target.getSourceElement().getAttribute("depends", null);
     if (attr == null) {
       return PsiReference.EMPTY_ARRAY;
     }

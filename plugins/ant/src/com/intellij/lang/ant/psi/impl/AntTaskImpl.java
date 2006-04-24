@@ -1,16 +1,23 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
 
   public AntTaskImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
+    final String id = getId();
+    if (id != null && parent instanceof AntStructuredElement) {
+      AntStructuredElement se = (AntStructuredElement)parent;
+      se.registerRefId(id, this);
+    }
   }
 
   public String toString() {
@@ -24,5 +31,10 @@ public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
+  }
+
+  @Nullable
+  public String getId() {
+    return getSourceElement().getAttributeValue("id");
   }
 }

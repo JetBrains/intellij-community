@@ -64,6 +64,7 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
   }
 
   public void clearCaches() {
+    super.clearCaches();
     myDependsTargets = null;
   }
 
