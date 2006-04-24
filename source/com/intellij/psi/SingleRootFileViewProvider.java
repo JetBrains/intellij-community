@@ -252,7 +252,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
 
   public Document getDocument() {
     Document document = myDocument != null ? myDocument.get() : null;
-    if(document == null) {
+    if(document == null && isEventSystemEnabled()) {
       document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
       myDocument = new WeakReference<Document>(document);
     }
