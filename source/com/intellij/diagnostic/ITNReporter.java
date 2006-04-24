@@ -44,7 +44,7 @@ public class ITNReporter extends ErrorReportSubmitter {
   /**
      * @noinspection ThrowablePrintStackTrace
      */
-  private SubmittedReportInfo sendError(IdeaLoggingEvent event, Component parentComponent) {
+  private static SubmittedReportInfo sendError(IdeaLoggingEvent event, Component parentComponent) {
     NotifierBean notifierBean = new NotifierBean();
     ErrorBean errorBean = new ErrorBean();
     errorBean.autoInit();
@@ -101,24 +101,9 @@ public class ITNReporter extends ErrorReportSubmitter {
           wasException = true;
           submissionStatus = SubmittedReportInfo.SubmissionStatus.NEW_ISSUE;
 
-          if (anonymousLogin) {
-            Messages.showInfoMessage(parentComponent,
-                                     DiagnosticBundle.message("error.report.confirmation"),
-                                     ReportMessages.ERROR_REPORT);
-          }
-          else {
-            if (Messages.showYesNoDialog(parentComponent,
-                                         DiagnosticBundle.message("error.report.open.request.prompt", threadId),
-                                         ReportMessages.ERROR_REPORT, Messages.getQuestionIcon()) == 0) {
-              try {
-                BrowserUtil.launchBrowser(URL_HEADER + threadId);
-              }
-              catch (IllegalThreadStateException e) {
-                // it's OK
-                // browser is not exited
-              }
-            }
-          }
+          Messages.showInfoMessage(parentComponent,
+                                   DiagnosticBundle.message("error.report.confirmation"),
+                                   ReportMessages.ERROR_REPORT);
           break;
         }
         else {
