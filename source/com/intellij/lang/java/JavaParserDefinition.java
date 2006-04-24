@@ -77,7 +77,7 @@ public class JavaParserDefinition implements ParserDefinition {
       lexer = new JavaLexer(((PsiJavaFile)containingFile).getLanguageLevel());
     else lexer = new JavaLexer(LanguageLevel.HIGHEST);
     final SpaceRequirements spaceRequirements = LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer, 0);
-    if(left.getElementType() == JavaTokenType.C_STYLE_COMMENT) return SpaceRequirements.MUST_LINE_BREAK;
+    if(left.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) return SpaceRequirements.MUST_LINE_BREAK;
     return spaceRequirements;
   }
 }

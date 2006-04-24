@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -203,6 +204,7 @@ public class SharedImplUtil {
         TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.LBRACKET, new char[]{'['}, 0, 1, -1, treeCharTable));
         TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.RBRACKET, new char[]{']'}, 0, 1, -1, treeCharTable));
         newType = newType1;
+        newType.acceptTree(new GeneratedMarkerVisitor());
       }
       newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
       variableElement.replaceChild(type, newType);
