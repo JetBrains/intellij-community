@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
- */
+ */                     
 
 package com.intellij.uiDesigner.snapShooter;
 
@@ -198,16 +198,16 @@ public class SnapShooterDaemon implements Runnable {
       for (Object frameObj : frameList) {
         WeakReference frameRef = (WeakReference)frameObj;
         Frame frame = (Frame) frameRef.get();
-        if (frame instanceof JFrame) {
-          JFrame jFrame = (JFrame) frame;
-          result.add(jFrame);
-          for(Window window: jFrame.getOwnedWindows()) {
-            if (window.isVisible()) {
-              result.add(window);
-            }
+        result.add(frame);
+        for(Window window: frame.getOwnedWindows()) {
+          if (window.isVisible()) {
+            result.add(window);
           }
         }
       }
+    }
+    else {
+      System.out.println("Cannot load frame list from AppContext");
     }
     return result;
   }
@@ -272,6 +272,7 @@ public class SnapShooterDaemon implements Runnable {
       return context.getRootContainer();
     }
 
+    @NonNls
     private String doListCommand(final String command) {
       int id = Integer.parseInt(command.substring(1));
       String[] children = getChildren(id);
