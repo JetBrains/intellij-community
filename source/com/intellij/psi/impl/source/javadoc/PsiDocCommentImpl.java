@@ -154,7 +154,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
         }
         needToAddNewline = true;
       }
-      if (!(anchor.getElementType() == DOC_TAG)) {
+      if (anchor.getElementType() != DOC_TAG) {
         final CharTable charTable = SharedImplUtil.findCharTableByTree(this);
         final TreeElement newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{'\n'}, 0, 1, charTable, getManager());
         final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1, charTable, getManager());
@@ -170,8 +170,8 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
         needToAddNewline = true;
       }
     }
-
-    TreeElement firstAdded = super.addInternal(first, last, anchor, before);
+    if(before) anchor.getTreeParent().addChildren(first, last.getTreeNext(), anchor);
+    else anchor.getTreeParent().addChildren(first, last.getTreeNext(), anchor.getTreeNext());
 
     if (needToAddNewline) {
       if (first.getTreePrev() != null && first.getTreePrev().getElementType() == DOC_TAG) {
@@ -184,7 +184,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
         removeEndingAsterisksFromTag((CompositeElement)first);
       }
     }
-    return firstAdded;
+    return first;
   }
 
   private static void removeEndingAsterisksFromTag(CompositeElement tag) {
