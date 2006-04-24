@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
@@ -51,20 +52,18 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
     return vcs.fileExistsInVcs(path) && isVisible(context);
   }
 
-  protected FilePath[] getSelectedFiles(VcsContext context) {
+  protected static FilePath[] getSelectedFiles(VcsContext context) {
     ArrayList<FilePath> result = new ArrayList<FilePath>();
     VirtualFile[] virtualFileArray = context.getSelectedFiles();
     if (virtualFileArray != null) {
-      for (int i = 0; i < virtualFileArray.length; i++) {
-        VirtualFile virtualFile = virtualFileArray[i];
+      for (VirtualFile virtualFile : virtualFileArray) {
         result.add(new FilePathImpl(virtualFile));
       }
     }
 
     File[] fileArray = context.getSelectedIOFiles();
     if (fileArray != null) {
-      for (int i = 0; i < fileArray.length; i++) {
-        File file = fileArray[i];
+      for (File file : fileArray) {
         VirtualFile parent = LocalFileSystem.getInstance().findFileByIoFile(file.getParentFile());
         if (parent != null) {
           result.add(new FilePathImpl(parent, file.getName()));
@@ -105,5 +104,9 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
   protected void reportError(Exception exception) {
     exception.printStackTrace();
     Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
+  }
+
+  protected boolean forceSyncUpdate(final AnActionEvent e) {
+    return true;
   }
 }

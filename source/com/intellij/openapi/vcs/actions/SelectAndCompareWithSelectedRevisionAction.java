@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -39,5 +40,9 @@ public class SelectAndCompareWithSelectedRevisionAction extends AbstractVcsActio
 
   protected void update(VcsContext vcsContext, Presentation presentation) {
     AbstractShowDiffAction.updateDiffAction(presentation, vcsContext);
+  }
+
+  protected boolean forceSyncUpdate(final AnActionEvent e) {
+    return true;
   }
 }
