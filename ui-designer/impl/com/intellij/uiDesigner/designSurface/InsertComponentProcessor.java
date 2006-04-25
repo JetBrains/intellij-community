@@ -6,12 +6,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.CodeGenerationException;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -33,6 +38,7 @@ import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -242,6 +248,10 @@ public final class InsertComponentProcessor extends EventProcessor {
       return;
     }
 
+    if (!checkAddDependencyOnInsert(item)) {
+      return;
+    }
+
     if (!myEditor.ensureEditable()) {
       return;
     }
@@ -291,6 +301,83 @@ public final class InsertComponentProcessor extends EventProcessor {
       );
     }
     myComponentToInsert = null;
+  }
+
+  private boolean checkAddDependencyOnInsert(final ComponentItem item) {
+    PsiManager manager = PsiManager.getInstance(myEditor.getProject());
+    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myEditor.getProject());
+    final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myEditor.getModule());
+    final PsiClass componentClass = manager.findClass(item.getClassName(), projectScope);
+    if (componentClass != null && manager.findClass(item.getClassName(), moduleScope) == null) {
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myEditor.getProject()).getFileIndex();
+      List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(componentClass.getContainingFile().getVirtualFile());
+      if (entries.size() > 0) {
+        if (entries.get(0) instanceof ModuleSourceOrderEntry) {
+          if (!checkAddModuleDependency(item, (ModuleSourceOrderEntry) entries.get(0))) return false;
+        }
+        else if (entries.get(0) instanceof LibraryOrderEntry) {
+          if (!checkAddLibraryDependency(item, (LibraryOrderEntry) entries.get(0))) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private boolean checkAddModuleDependency(final ComponentItem item, final ModuleSourceOrderEntry moduleSourceOrderEntry) {
+    final Module ownerModule = moduleSourceOrderEntry.getOwnerModule();
+    int rc = Messages.showYesNoCancelDialog(
+      myEditor,
+      UIDesignerBundle.message("add.module.dependency.prompt", item.getClassName(), ownerModule.getName(), myEditor.getModule().getName()),
+      UIDesignerBundle.message("add.module.dependency.title"),
+      Messages.getQuestionIcon());
+    if (rc == 2) return false;
+    if (rc == 0) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          final ModifiableRootModel model = ModuleRootManager.getInstance(myEditor.getModule()).getModifiableModel();
+          model.addModuleOrderEntry(ownerModule);
+          model.commit();
+        }
+      });
+    }
+    return true;
+  }
+
+  private boolean checkAddLibraryDependency(final ComponentItem item, final LibraryOrderEntry libraryOrderEntry) {
+    int rc = Messages.showYesNoCancelDialog(
+      myEditor,
+      UIDesignerBundle.message("add.library.dependency.prompt", item.getClassName(), libraryOrderEntry.getPresentableName(), myEditor.getModule().getName()),
+      UIDesignerBundle.message("add.library.dependency.title"),
+      Messages.getQuestionIcon());
+    if (rc == 2) return false;
+    if (rc == 0) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          final ModifiableRootModel model = ModuleRootManager.getInstance(myEditor.getModule()).getModifiableModel();
+          if (libraryOrderEntry.isModuleLevel()) {
+            copyModuleLevelLibrary(libraryOrderEntry.getLibrary(), model);
+          }
+          else {
+            model.addLibraryEntry(libraryOrderEntry.getLibrary());
+          }
+          model.commit();
+        }
+      });
+    }
+    return true;
+  }
+
+  private static void copyModuleLevelLibrary(final Library fromLibrary, final ModifiableRootModel toModel) {
+    final LibraryTable.ModifiableModel libraryTableModel = toModel.getModuleLibraryTable().getModifiableModel();
+    Library library = libraryTableModel.createLibrary(null);
+    final Library.ModifiableModel libraryModel = library.getModifiableModel();
+    for(OrderRootType rootType: OrderRootType.ALL_TYPES) {
+      for(String url: fromLibrary.getUrls(rootType)) {
+        libraryModel.addRoot(url, rootType);
+      }
+    }
+    libraryModel.commit();
+    libraryTableModel.commit();
   }
 
   private boolean validateNestedFormInsert(final ComponentItem item) {
