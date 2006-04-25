@@ -50,7 +50,7 @@ public class RefusedBequestInspection extends MethodInspection{
         //noinspection HardCodedStringLiteral
         return new SingleCheckboxOptionsPanel(
                 "<html>" + InspectionGadgetsBundle.message(
-                        "reqused.bequest.ignore.empty.super.methods.text") +
+                        "reqused.bequest.ignore.empty.super.methods.option") +
                         "</html>", this, "ignoreEmptySuperMethods");
     }
 
@@ -80,10 +80,10 @@ public class RefusedBequestInspection extends MethodInspection{
             if("java.lang.Object".equals(className)){
                 return;
             }
-            if (ignoreEmptySuperMethods) {
+            if (ignoreEmptySuperMethods){
                 final PsiMethod navigationElement = (PsiMethod)
                         leastConcreteSuperMethod.getNavigationElement();
-                if (MethodUtils.isEmpty(navigationElement)) {
+                if (MethodUtils.isEmpty(navigationElement)){
                     return;
                 }
             }
@@ -94,7 +94,7 @@ public class RefusedBequestInspection extends MethodInspection{
         }
 
         @Nullable
-        private PsiMethod getLeastConcreteSuperMethod(PsiMethod method) {
+        private PsiMethod getLeastConcreteSuperMethod(PsiMethod method){
             PsiMethod leastConcreteSuperMethod = null;
             final PsiMethod[] superMethods = method.findSuperMethods(true);
             for(final PsiMethod superMethod : superMethods){

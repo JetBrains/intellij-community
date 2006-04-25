@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
@@ -28,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ZeroLengthArrayInitializationInspection extends BaseInspection {
 
-    public String getID(){
+    public String getID() {
         return "ZeroLengthArrayAllocation";
     }
 
@@ -44,7 +43,7 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "array.allocation.zero.length.problem.description");
+                "array.allocation.zero.length.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -73,7 +72,7 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
                 if (initializers.length != 0) {
                     return;
                 }
-            } else  {
+            } else {
                 if (dimensions.length != 1) {
                     return;
                 }

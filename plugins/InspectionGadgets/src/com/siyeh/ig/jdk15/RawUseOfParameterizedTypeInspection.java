@@ -23,7 +23,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +31,17 @@ import javax.swing.JComponent;
 
 public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
-  /** @noinspection PublicField*/
-  public boolean ignoreObjectConstruction = true;
+    /** @noinspection PublicField*/
+    public boolean ignoreObjectConstruction = true;
+
+    /** @noinspection PublicField*/
+    public boolean ignoreTypeCasts = false;
+
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "raw.use.of.parameterized.type.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
@@ -46,10 +55,17 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
     @Nullable
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-          InspectionGadgetsBundle.message(
-                  "raw.use.of.parameterized.type.ignore.new.objects"), this,
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(
+                InspectionGadgetsBundle.message(
+                        "raw.use.of.parameterized.type.ignore.new.objects.option"),
                 "ignoreObjectConstruction");
+        optionsPanel.addCheckbox(
+                InspectionGadgetsBundle.message(
+                        "raw.use.of.parameterized.type.ignore.type.casts.option"),
+                "ignoreTypeCasts");
+        return optionsPanel;
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -60,21 +76,21 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             extends BaseInspectionVisitor {
 
         public void visitNewExpression(
-                @NotNull PsiNewExpression newExpression) {
-            if (!hasNeededLanguageLevel(newExpression)) {
+                @NotNull PsiNewExpression expression) {
+            if (!hasNeededLanguageLevel(expression)) {
                 return;
             }
-            super.visitNewExpression(newExpression);
+            super.visitNewExpression(expression);
             if (ignoreObjectConstruction) {
                 return;
             }
-            if (newExpression.getArrayInitializer() != null ||
-                newExpression.getArrayDimensions().length > 0) {
+            if (expression.getArrayInitializer() != null ||
+                expression.getArrayDimensions().length > 0) {
                 // array creation cannot be generic
                 return;
             }
             final PsiJavaCodeReferenceElement classReference =
-                    newExpression.getClassReference();
+                    expression.getClassReference();
             if (classReference == null) {
                 return;
             }
@@ -104,6 +120,9 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
                     parent instanceof PsiReferenceParameterList) {
                 return;
             }
+            if (ignoreTypeCasts && parent instanceof PsiTypeCastExpression) {
+                return;
+            }
             if (PsiTreeUtil.getParentOfType(typeElement, PsiComment.class)
                     != null) {
                 return;
@@ -113,18 +132,21 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
                 return;
             }
             final PsiClassType classType = (PsiClassType) type;
-            if(classType.hasParameters()) {
+            if (classType.hasParameters()) {
                 return;
             }
             final PsiClass aClass = classType.resolve();
-            if(aClass == null) {
+            if (aClass == null) {
                 return;
             }
-            if(!aClass.hasTypeParameters()) {
+            if (!aClass.hasTypeParameters()) {
                 return;
             }
             final PsiElement typeNameElement =
                     typeElement.getInnermostComponentReferenceElement();
+            if (typeNameElement == null) {
+                return;
+            }
             registerError(typeNameElement);
         }
 

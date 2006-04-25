@@ -34,7 +34,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -42,6 +44,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class QuestionableNameInspection extends ClassInspection{
+
     /** @noinspection PublicField*/
     @NonNls public String nameCheckString = "foo,bar,baz";
 
@@ -90,7 +93,8 @@ public class QuestionableNameInspection extends ClassInspection{
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("questionable.name.display.name");
+        return InspectionGadgetsBundle.message(
+                "questionable.name.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -121,6 +125,7 @@ public class QuestionableNameInspection extends ClassInspection{
     }
 
     private class QuestionableNameVisitor extends BaseInspectionVisitor{
+
         public void visitVariable(@NotNull PsiVariable variable){
             final String name = variable.getName();
             synchronized(lock) {
@@ -150,6 +155,7 @@ public class QuestionableNameInspection extends ClassInspection{
     }
 
     private class Form{
+
         JPanel contentPanel;
         JButton addButton;
         JButton deleteButton;
@@ -173,7 +179,6 @@ public class QuestionableNameInspection extends ClassInspection{
                         nameList.add("");
                     }
                     model.fireTableStructureChanged();
-
                     EventQueue.invokeLater(new Runnable() {
 
                         public void run() {
@@ -187,9 +192,8 @@ public class QuestionableNameInspection extends ClassInspection{
                                     editor.getTableCellEditorComponent(table,
                                             null, true, listSize, 0);
                             component.requestFocus();
-                }
+                        }
                     });
-
                 }
             });
             deleteButton.addActionListener(new ActionListener(){
@@ -237,7 +241,7 @@ public class QuestionableNameInspection extends ClassInspection{
 
         public String getColumnName(int columnIndex){
             return InspectionGadgetsBundle.message(
-                    "questionable.name.coulumn.title");
+                    "questionable.name.column.title");
         }
 
         public Class getColumnClass(int columnIndex){

@@ -16,22 +16,19 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiReferenceProcessor;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.util.Query;
 import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ClassUtils;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
@@ -71,7 +68,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
-                        "method.only.used.from.inner.class.ignore.option.name"),
+                        "method.only.used.from.inner.class.ignore.option"),
                 this, "ignoreMethodsAccessedFromAnonymousClass");
     }
 

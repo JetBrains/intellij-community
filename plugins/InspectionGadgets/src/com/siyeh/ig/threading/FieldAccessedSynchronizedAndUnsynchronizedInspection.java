@@ -54,7 +54,7 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
           InspectionGadgetsBundle.message(
-                  "field.accessed.synchronized.and.unsynchronized.options.panel.text"),
+                  "field.accessed.synchronized.and.unsynchronized.option"),
                 this, "countGettersAndSetters");
     }
 
