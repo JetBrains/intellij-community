@@ -1,6 +1,7 @@
 package com.intellij.compiler;
 
 import com.intellij.javaee.JavaeeModuleProperties;
+import com.intellij.javaee.module.ModuleLink;
 import com.intellij.javaee.model.JavaeeApplicationModel;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,8 +58,7 @@ public final class ModuleCompilerUtil {
     });
 
     for (Module module : modules) {
-      VirtualFile moduleFile = module.getModuleFile();
-      if (moduleFile != null && Comparing.equal(moduleFile.getName(), id)) return module;
+      if (Comparing.equal(ModuleLink.getId(module), id)) return module;
     }
     return null;
   }

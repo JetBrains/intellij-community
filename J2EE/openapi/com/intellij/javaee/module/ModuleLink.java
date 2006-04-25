@@ -16,6 +16,7 @@
 package com.intellij.javaee.module;
 
 import com.intellij.openapi.module.Module;
+import com.sun.org.apache.xml.internal.utils.XMLChar;
 
 import java.io.File;
 
@@ -38,6 +39,15 @@ public abstract class ModuleLink extends ContainerElement {
   public abstract String getName();
 
   public static String getId(Module module) {
-    return module == null ? "" : new File(module.getModuleFilePath()).getName();
+    final String baseName = module == null ? "" : new File(module.getModuleFilePath()).getName();
+    final StringBuilder builder = new StringBuilder(baseName.length());
+    for (int i = 0; i < baseName.length(); i++) {
+      char c = baseName.charAt(i);
+      if (i == 0 && !XMLChar.isNameStart(c) || !XMLChar.isName(c)) {
+        c = '_';
+      }
+      builder.append(c);
+    }
+    return builder.toString();
   }
 }
