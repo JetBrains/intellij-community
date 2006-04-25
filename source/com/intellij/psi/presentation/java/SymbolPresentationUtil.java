@@ -85,7 +85,10 @@ public class SymbolPresentationUtil {
       }
     }
 
-    if (result == null && element instanceof NavigationItem){
+    if (result == null &&
+        element instanceof NavigationItem &&
+        !(element instanceof PsiMember) // to prevent recursion
+       ){
       final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
       if (presentation != null){
         result = presentation.getLocationString();
