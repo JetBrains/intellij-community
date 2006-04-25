@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -72,10 +73,12 @@ public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
     TemplateBuilder builder = new TemplateBuilder (method);
     builder.replaceElement(param.getTypeElement(), new TypeExpression(project, expectedTypes));
     builder.setEndVariableAfter(method.getParameterList());
-    Template template = builder.buildTemplate();
 
-    Editor editor = positionCursor(project, method.getContainingFile(), method);
+    method = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(method);
+    Template template = builder.buildTemplate();
     TextRange range = method.getTextRange();
+    final PsiFile psiFile = method.getContainingFile();
+    Editor editor = positionCursor(project, psiFile, method);
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     TemplateManager.getInstance(project).startTemplate(editor, template);
   }
