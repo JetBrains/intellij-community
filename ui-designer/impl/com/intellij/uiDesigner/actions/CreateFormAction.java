@@ -89,7 +89,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
     }
 
     if (newClass != null) {
-      return new PsiElement[] { newClass, createdFile };
+      return new PsiElement[] { newClass.getContainingFile(), createdFile };
     }
     return new PsiElement[] { createdFile };
   }
