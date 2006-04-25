@@ -47,7 +47,7 @@ class CreateAssertPredicate implements PsiElementPredicate{
         }
         final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
                 expression, PsiMethod.class);
-        if (AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test",
+        if (containingMethod != null && AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test",
                                        true)) {
             return true;
         }
