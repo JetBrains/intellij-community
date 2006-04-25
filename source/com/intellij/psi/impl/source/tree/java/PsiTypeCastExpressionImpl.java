@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiTypeCastExpressionImpl extends CompositePsiElement implements PsiTypeCastExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTypeCastExpressionImpl");
@@ -21,8 +22,10 @@ public class PsiTypeCastExpressionImpl extends CompositePsiElement implements Ps
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.OPERAND);
   }
 
-  public PsiType getType() {
-    return getCastType().getType();
+  @Nullable public PsiType getType() {
+    final PsiTypeElement castType = getCastType();
+    if (castType == null) return null;
+    return castType.getType();
   }
 
   public ASTNode findChildByRole(int role) {
