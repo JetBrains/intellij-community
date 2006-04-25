@@ -59,7 +59,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-		        throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final PsiElement castTypeElement = descriptor.getPsiElement();
             final PsiTypeCastExpression expression =
                     (PsiTypeCastExpression) castTypeElement.getParent();
@@ -120,10 +120,10 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                 //then it's redundant, and caught by the built-in exception
                 return;
             }
-            if(isTypeParameter(expectedType)) {
+            if (isTypeParameter(expectedType)) {
                 return;
             }
-            if(expectedType instanceof PsiArrayType) {
+            if (expectedType instanceof PsiArrayType) {
                 final PsiArrayType arrayType = (PsiArrayType) expectedType;
                 final PsiType componentType = arrayType.getDeepComponentType();
                 if(isTypeParameter(componentType)) {
@@ -138,7 +138,18 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                     PsiPrimitiveType.getUnboxedType(expectedType) != null) {
                 return;
             }
+            if (expectedType instanceof PsiClassType) {
+                final PsiClassType expectedClassType =
+                        (PsiClassType)expectedType;
+                final PsiClassType rawType = expectedClassType.rawType();
+                if (type.equals(rawType)) {
+                    return;
+                }
+            }
             final PsiTypeElement castTypeElement = expression.getCastType();
+            if (castTypeElement == null) {
+                return;
+            }
             registerError(castTypeElement, expectedType);
         }
 
@@ -146,7 +157,8 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             if(!(type instanceof PsiClassType)){
                 return false;
             }
-            final PsiClass aClass = ((PsiClassType) type).resolve();
+            final PsiClassType classType = (PsiClassType)type;
+            final PsiClass aClass = classType.resolve();
             if(aClass == null){
                 return false;
             }
