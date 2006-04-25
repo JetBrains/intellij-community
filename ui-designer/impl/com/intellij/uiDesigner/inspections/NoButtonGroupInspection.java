@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.actions.GroupButtonsAction;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -43,18 +45,27 @@ public class NoButtonGroupInspection extends BaseFormInspection {
         for(int i=0; i<parent.getComponentCount(); i++) {
           IComponent child = parent.getComponent(i);
           if (child != component &&
-              FormInspectionUtil.isComponentClass(module, child, JRadioButton.class) &&
-              root.getButtonGroupName(child) == null) {
+              FormInspectionUtil.isComponentClass(module, child, JRadioButton.class)) {
             final GridConstraints c1 = component.getConstraints();
             final GridConstraints c2 = child.getConstraints();
             if ((c1.getRow() == c2.getRow() && Math.abs(c1.getColumn() - c2.getColumn()) == 1) ||
                 (c1.getColumn() == c2.getColumn() && Math.abs(c1.getRow() - c2.getRow()) == 1)) {
-              quickFixProvider = new EditorQuickFixProvider() {
-                                   public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                                     return new MyQuickFix(editor, component, c1.getColumn() == c2.getColumn());
-                                   }
-                                 };
-              break;
+              final String groupName = root.getButtonGroupName(child);
+              if (groupName == null) {
+                quickFixProvider = new EditorQuickFixProvider() {
+                   public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+                     return new CreateGroupQuickFix(editor, component, c1.getColumn() == c2.getColumn());
+                   }
+                 };
+                break;
+              }
+              else {
+                quickFixProvider = new EditorQuickFixProvider() {
+                  public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+                    return new AddToGroupQuickFix(editor, component, groupName);
+                  }
+                };
+              }
             }
           }
         }
@@ -63,12 +74,12 @@ public class NoButtonGroupInspection extends BaseFormInspection {
     }
   }
 
-  private static class MyQuickFix extends QuickFix {
+  private static class CreateGroupQuickFix extends QuickFix {
     private RadComponent myComponent;
     private boolean myVerticalGroup;
 
-    public MyQuickFix(final GuiEditor editor, final RadComponent component, boolean verticalGroup) {
-      super(editor, UIDesignerBundle.message("inspection.no.button.group.quickfix"));
+    public CreateGroupQuickFix(final GuiEditor editor, final RadComponent component, boolean verticalGroup) {
+      super(editor, UIDesignerBundle.message("inspection.no.button.group.quickfix.create"));
       myVerticalGroup = verticalGroup;
       myComponent = component;
     }
@@ -114,6 +125,29 @@ public class NoButtonGroupInspection extends BaseFormInspection {
 
       LOG.assertTrue(buttonsToGroup.size() > 1);
       GroupButtonsAction.groupButtons(myEditor, buttonsToGroup);
+    }
+  }
+
+  private static class AddToGroupQuickFix extends QuickFix {
+    private final RadComponent myComponent;
+    private final String myGroupName;
+
+    public AddToGroupQuickFix(final GuiEditor editor, final RadComponent component, final String groupName) {
+      super(editor, UIDesignerBundle.message("inspection.no.button.group.quickfix.add", groupName));
+      myComponent = component;
+      myGroupName = groupName;
+    }
+
+    public void run() {
+      RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(myComponent);
+      if (root == null) return;
+      for(RadButtonGroup group: root.getAllGroups()) {
+        if (group.getName().equals(myGroupName)) {
+          root.setGroupForComponent(myComponent, group);
+          break;
+        }
+      }
+      myEditor.refreshAndSave(true);
     }
   }
 }
