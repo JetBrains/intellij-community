@@ -154,7 +154,6 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
       case ChildRole.QUALIFIER:
         TreeElement firstChild = getFirstChildNode();
         if (firstChild != null && firstChild.getElementType() != NEW_KEYWORD) {
-          while(firstChild != null && firstChild.getElementType() == ElementType.REFORMAT_MARKER) firstChild = firstChild.getTreeNext();
           return firstChild.getElementType() != NEW_KEYWORD ? firstChild : null;
         }
         else return null;

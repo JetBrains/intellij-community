@@ -35,18 +35,12 @@ public class SharedImplUtil {
 
   public static PsiElement getNextSibling(ASTNode thisElement) {
     final TreeElement treeNext = (TreeElement)thisElement.getTreeNext();
-    final PsiElement psiElement = treeNext != null ? SourceTreeToPsiMap.treeElementToPsi(treeNext.getTransformedFirstOrSelf()) : null;
-    if (psiElement != null && psiElement.getNode() != null && psiElement.getNode().getElementType() == ElementType.REFORMAT_MARKER)
-      return getNextSibling(psiElement.getNode());
-    return psiElement;
+    return treeNext != null ? SourceTreeToPsiMap.treeElementToPsi(treeNext.getTransformedFirstOrSelf()) : null;
   }
 
   public static PsiElement getPrevSibling(ASTNode thisElement) {
     final TreeElement treePrev = (TreeElement)thisElement.getTreePrev();
-    final PsiElement psiElement = treePrev != null ? SourceTreeToPsiMap.treeElementToPsi(treePrev.getTransformedLastOrSelf()) : null;
-    if (psiElement != null && psiElement.getNode() != null && psiElement.getNode().getElementType() == ElementType.REFORMAT_MARKER)
-      return getPrevSibling(psiElement.getNode());
-    return psiElement;
+    return treePrev != null ? SourceTreeToPsiMap.treeElementToPsi(treePrev.getTransformedLastOrSelf()) : null;
   }
 
   public static PsiFile getContainingFile(ASTNode thisElement) {

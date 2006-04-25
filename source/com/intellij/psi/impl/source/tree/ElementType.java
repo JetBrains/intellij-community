@@ -81,5 +81,4 @@ public interface ElementType extends
                                                    INTERFACE_KEYWORD, ENUM_KEYWORD);
   TokenSet MEMBER_BIT_SET = TokenSet.create(CLASS, FIELD, CLASS_INITIALIZER,
                                             METHOD);
-  IElementType REFORMAT_MARKER = new IElementType("REFORMAT MARKER", Language.ANY);
 }
