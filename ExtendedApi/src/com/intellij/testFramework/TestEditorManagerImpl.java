@@ -37,7 +37,7 @@ import java.util.Map;
 
   private Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<VirtualFile,Editor>();
   private VirtualFile myActiveFile = null;
-  private static final MockVirtualFile MOCK_VIRTUAL_FILE = new MockVirtualFile("Dummy.java");
+  private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
 
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(VirtualFile file, boolean focusEditor) {
     Editor editor = openTextEditor(new OpenFileDescriptor(myProject, file), focusEditor);
@@ -150,7 +150,7 @@ import java.util.Map;
   }
 
   public VirtualFile getFile(FileEditor editor) {
-    return MOCK_VIRTUAL_FILE;
+    return LIGHT_VIRTUAL_FILE;
   }
 
   public boolean hasSplitters() {

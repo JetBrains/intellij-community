@@ -35,7 +35,7 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -403,7 +403,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   private synchronized void commitUnsavedDocument(Document unsavedDocument) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(unsavedDocument);
-    if (file == null || !file.isValid() || file instanceof MockVirtualFile) return;
+    if (file == null || !file.isValid() || file instanceof LightVirtualFile) return;
     if (isUnderVcs(file)) {
       LvcsFile lvcsFile = findFile(file.getPath(), true);
       if (lvcsFile == null) return;

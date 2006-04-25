@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.testFramework.MockVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**

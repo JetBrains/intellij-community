@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
-import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.xml.util.XmlUtil;
@@ -213,8 +213,8 @@ public final class LoadTextUtil {
 
   public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile) {
     CharBuffer charBuffer;
-    if (virtualFile instanceof MockVirtualFile) {
-      CharSequence content = ((MockVirtualFile)virtualFile).getContent();
+    if (virtualFile instanceof LightVirtualFile) {
+      CharSequence content = ((LightVirtualFile)virtualFile).getContent();
       charBuffer = CharBuffer.allocate(content.length());
       charBuffer.append(content);
       charBuffer.flip();

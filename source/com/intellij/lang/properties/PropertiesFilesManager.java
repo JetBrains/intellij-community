@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.vfs.*;
-import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import gnu.trove.THashSet;
 
 import java.util.ArrayList;
@@ -121,7 +121,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
         Editor[] editors = EditorFactory.getInstance().getAllEditors();
         for (Editor editor : editors) {
           VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-          if (virtualFile == null || virtualFile instanceof MockVirtualFile) continue;
+          if (virtualFile == null || virtualFile instanceof LightVirtualFile) continue;
 
           FileType fileType = myFileTypeManager.getFileTypeByFile(virtualFile);
           if (fileType == StdFileTypes.PROPERTIES) {

@@ -14,7 +14,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
-import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.lexer.Lexer;
 
@@ -25,7 +25,7 @@ public class DummyHolderViewProvider implements FileViewProvider{
   private DummyHolder myHolder;
   private PsiManager myManager;
   private final long myModificationStamp;
-  final MockVirtualFile myMockVirtualFile = new MockVirtualFile(myHolder != null ? myHolder.getName() : "DummyHolder", ""){
+  final LightVirtualFile myLightVirtualFile = new LightVirtualFile(myHolder != null ? myHolder.getName() : "DummyHolder", ""){
     public CharSequence getContent() {
       return DummyHolderViewProvider.this.getContents();
     }
@@ -52,7 +52,7 @@ public class DummyHolderViewProvider implements FileViewProvider{
 
   @NotNull
   public VirtualFile getVirtualFile() {
-    return myMockVirtualFile;
+    return myLightVirtualFile;
   }
 
   public Language getBaseLanguage() {

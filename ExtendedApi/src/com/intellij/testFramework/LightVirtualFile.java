@@ -5,7 +5,6 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.util.LocalTimeCounter;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public class MockVirtualFile extends VirtualFile {
+public class LightVirtualFile extends VirtualFile {
   private FileType myFileType;
   protected CharSequence myContent = "";
   protected String myName = "";
@@ -30,30 +29,30 @@ public class MockVirtualFile extends VirtualFile {
   private VirtualFileListener myListener = null;
   @NonNls private static final Charset CHARSET = Charset.forName("UTF-8");
 
-  public MockVirtualFile() {
+  public LightVirtualFile() {
   }
 
-  public MockVirtualFile(String name) {
+  public LightVirtualFile(String name) {
     myName = name;
   }
 
-  public MockVirtualFile(String name, CharSequence content) {
+  public LightVirtualFile(String name, CharSequence content) {
     myName = name;
     myContent = content;
   }
 
-  public MockVirtualFile(final String name, final FileType fileType, final CharSequence text) {
+  public LightVirtualFile(final String name, final FileType fileType, final CharSequence text) {
     this(name, fileType, text, LocalTimeCounter.currentTime());
   }
 
-  public MockVirtualFile(final String name, final FileType fileType, final CharSequence text, final long modificationStamp) {
+  public LightVirtualFile(final String name, final FileType fileType, final CharSequence text, final long modificationStamp) {
     myName = name;
     myFileType = fileType;
     myContent = text;
     myModStamp = modificationStamp;
   }
 
-  public MockVirtualFile(final String name, final Language language, final String text) {
+  public LightVirtualFile(final String name, final Language language, final String text) {
     myName = name;
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (final FileType fileType : fileTypes) {

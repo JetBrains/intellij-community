@@ -22,7 +22,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.lang.annotation.Annotator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
                              CharSequence text) {
     super(CODE_FRAGMENT, contentElementType,
           new SingleRootFileViewProvider(PsiManager.getInstance(project),
-                                         new MockVirtualFile(
+                                         new LightVirtualFile(
                                            name,
                                            FileTypeManager.getInstance().getFileTypeByFileName(name),
                                            text), isPhysical));
@@ -65,7 +65,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
     clone.myPseudoImports = new LinkedHashMap<String, String>(myPseudoImports);
     final SingleRootFileViewProvider dummyHolderViewProvider = new SingleRootFileViewProvider(
       getManager(),
-      new MockVirtualFile(getName(), getLanguage(), getText()), false);
+      new LightVirtualFile(getName(), getLanguage(), getText()), false);
     dummyHolderViewProvider.forceCachedPsi(clone);
     clone.myViewProvider = dummyHolderViewProvider;
     return clone;

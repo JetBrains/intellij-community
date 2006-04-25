@@ -31,7 +31,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -279,7 +279,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   @NotNull
   public PsiFile createFileFromText(String name, FileType fileType, CharSequence text,
                                     long modificationStamp, final boolean physical, boolean markAsCopy) {
-    final MockVirtualFile virtualFile = new MockVirtualFile(name, fileType, text, modificationStamp);
+    final LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
 
     if(fileType instanceof LanguageFileType){
       final Language language = ((LanguageFileType)fileType).getLanguage();

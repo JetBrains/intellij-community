@@ -30,15 +30,13 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
 
 public class SingleRootFileViewProvider implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
@@ -133,7 +131,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public boolean isPhysical() {
-    return !(getVirtualFile() instanceof MockVirtualFile) && !(getVirtualFile().getFileSystem() instanceof DummyFileSystem) && isEventSystemEnabled();
+    return !(getVirtualFile() instanceof LightVirtualFile) && !(getVirtualFile().getFileSystem() instanceof DummyFileSystem) && isEventSystemEnabled();
   }
 
   public long getModificationStamp() {
@@ -265,7 +263,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   public FileViewProvider clone(){
     final SingleRootFileViewProvider clone =
       new SingleRootFileViewProvider(getManager(),
-                                     new MockVirtualFile(getVirtualFile().getName(),
+                                     new LightVirtualFile(getVirtualFile().getName(),
                                                          getRealFileType(),
                                                          getContents(),
                                                          getModificationStamp()),

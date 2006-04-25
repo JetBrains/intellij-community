@@ -21,7 +21,7 @@ import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 
@@ -64,7 +64,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   }
 
   protected CompositeLanguageFileViewProvider cloneInner() {
-    final CompositeLanguageFileViewProvider viewProvider = new CompositeLanguageFileViewProvider(getManager(), new MockVirtualFile(
+    final CompositeLanguageFileViewProvider viewProvider = new CompositeLanguageFileViewProvider(getManager(), new LightVirtualFile(
       getVirtualFile().getName(), getVirtualFile().getFileType(), getContents(), getModificationStamp()), false);
     return viewProvider;
   }

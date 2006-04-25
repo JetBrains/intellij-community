@@ -53,7 +53,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -269,7 +269,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public boolean isInProject(PsiElement element) {
     PsiFile file = element.getContainingFile();
-    if (file instanceof PsiFileImpl && file.isPhysical() && file.getViewProvider().getVirtualFile() instanceof MockVirtualFile) return true;
+    if (file instanceof PsiFileImpl && file.isPhysical() && file.getViewProvider().getVirtualFile() instanceof LightVirtualFile) return true;
 
     if (element instanceof PsiPackage) {
       PsiDirectory[] dirs = ((PsiPackage) element).getDirectories();

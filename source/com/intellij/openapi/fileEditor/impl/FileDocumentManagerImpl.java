@@ -39,7 +39,7 @@ import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.psi.PsiExternalChangeAction;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerConfiguration;
-import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.PendingEventDispatcher;
 
@@ -205,7 +205,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       Writer writer = null;
       VirtualFile file = getFile(document);
 
-      if (file == null || !file.isValid() || file instanceof MockVirtualFile){
+      if (file == null || !file.isValid() || file instanceof LightVirtualFile){
         myUnsavedDocuments.remove(document);
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
         return;
@@ -263,7 +263,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private boolean needsRefresh(final VirtualFile file) {
     return file instanceof VirtualFileImpl && file.getTimeStamp() != ((VirtualFileImpl)file).getActualTimeStamp() ||
-      file instanceof MockVirtualFile && file.getTimeStamp() != ((MockVirtualFile)file).getActualTimeStamp();
+      file instanceof LightVirtualFile && file.getTimeStamp() != ((LightVirtualFile)file).getActualTimeStamp();
   }
 
   public static String getLineSeparator(Document document, VirtualFile file) {

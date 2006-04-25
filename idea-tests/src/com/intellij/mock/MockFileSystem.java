@@ -3,7 +3,7 @@ package com.intellij.mock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,7 +60,7 @@ public class MockFileSystem extends VirtualFileSystem {
     return findFileByPath(path);
   }
 
-  public class MyVirtualFile extends MockVirtualFile {
+  public class MyVirtualFile extends LightVirtualFile {
     private final HashMap<String, MyVirtualFile> myChildren = new HashMap<String,MyVirtualFile>();
     private final MyVirtualFile myParent;
 
