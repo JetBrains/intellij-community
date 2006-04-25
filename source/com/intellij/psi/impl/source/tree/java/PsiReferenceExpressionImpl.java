@@ -36,6 +36,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiReferenceExpressionImpl extends CompositePsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
@@ -80,6 +81,28 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     }
 
     throw new IncorrectOperationException();
+  }
+
+  public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {
+    final PsiExpression oldQualifier = getQualifierExpression();
+    if (newQualifier == null) {
+      if (oldQualifier != null) {
+        deleteChildInternal(oldQualifier.getNode());
+      }
+    } else {
+      if (oldQualifier != null) {
+        oldQualifier.replace(newQualifier);
+      } else {
+        final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+        TreeElement dot = (TreeElement)findChildByRole(ChildRole.DOT);
+        if (dot == null) {
+          dot = Factory.createSingleLeafElement(DOT, new char[]{'.'}, 0, 1, treeCharTab, getManager());
+          dot = addInternal(dot, dot, getFirstChildNode(), Boolean.TRUE);
+        }
+        final ASTNode newQualifierNode = newQualifier.getNode();
+        addInternal((TreeElement)newQualifierNode, newQualifierNode, dot, Boolean.TRUE);
+      }
+    }
   }
 
   public PsiElement getQualifier() {

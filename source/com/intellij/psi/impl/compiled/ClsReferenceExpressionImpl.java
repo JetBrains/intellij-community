@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsReferenceExpressionImpl");
@@ -44,6 +45,10 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
 
   public PsiElement bindToElementViaStaticImport(PsiClass aClass) throws IncorrectOperationException {
     throw new IncorrectOperationException();
+  }
+
+  public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {
+    throw new IncorrectOperationException("This method should not be called for compiled elements");
   }
 
   public PsiElement getReferenceNameElement() {

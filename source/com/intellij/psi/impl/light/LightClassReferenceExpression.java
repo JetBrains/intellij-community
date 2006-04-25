@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class LightClassReferenceExpression extends LightClassReference implements PsiReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.light.LightClassReferenceExpression");
@@ -20,6 +21,10 @@ public class LightClassReferenceExpression extends LightClassReference implement
 
   public PsiElement bindToElementViaStaticImport(PsiClass aClass) throws IncorrectOperationException {
     throw new IncorrectOperationException();
+  }
+
+  public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {
+    throw new IncorrectOperationException("This method should not be called for light elements");
   }
 
   // very special method

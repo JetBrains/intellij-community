@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 public class LightPackageReferenceExpression extends LightPackageReference implements PsiReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.light.LightPackageReferenceExpression");
@@ -18,6 +19,10 @@ public class LightPackageReferenceExpression extends LightPackageReference imple
 
   public PsiElement bindToElementViaStaticImport(PsiClass aClass) throws IncorrectOperationException {
     throw new IncorrectOperationException();
+  }
+
+  public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {
+    throw new IncorrectOperationException("This method should not be called for light elements");
   }
 
   // very special method

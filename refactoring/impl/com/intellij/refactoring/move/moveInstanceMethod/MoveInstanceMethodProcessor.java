@@ -338,9 +338,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                   if (classReferencedByThis != null &&
                       !PsiTreeUtil.isAncestor(myMethod, classReferencedByThis, false)) {
                     final String paramName = getParameterNameToCreate(classReferencedByThis);
-                    PsiReferenceExpression qualified = (PsiReferenceExpression)factory.createExpressionFromText(paramName + ".f", null);
-                    qualified.getReferenceNameElement().replace(expression.getReferenceNameElement());
-                    expression.replace(qualified);
+                    PsiReferenceExpression newQualifier = (PsiReferenceExpression)factory.createExpressionFromText(paramName, null);
+                    expression.setQualifierExpression(newQualifier);
                     return;
                   }
                 }

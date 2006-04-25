@@ -41,4 +41,6 @@ public interface PsiReferenceExpression extends PsiExpression, PsiJavaCodeRefere
    * @throws IncorrectOperationException if the modification failed for some reason.
    */
   PsiElement bindToElementViaStaticImport(PsiClass qualifierClass) throws IncorrectOperationException ;
+
+  void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException;
 }
