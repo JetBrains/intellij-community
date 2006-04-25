@@ -229,7 +229,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
              offset = LowLevelSearchUtil.searchWord(text, offset + searcher.getPattern().length(), text.length, searcher)
           ) {
           PsiElement element = file.findElementAt(offset);
-          if (element.getParent() instanceof Property) {
+          if (element != null && element.getParent() instanceof Property) {
             final Property property = ((Property)element.getParent());
             if (Comparing.equal(property.getValue(), value) && element.getStartOffsetInParent() != 0) {
               if (duplicatesCount == 0){
