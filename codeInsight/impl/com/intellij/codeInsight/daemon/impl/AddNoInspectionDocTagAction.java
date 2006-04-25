@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -23,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -47,6 +47,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     myContext = context;
   }
 
+  @NotNull
   public String getText() {
     PsiDocCommentOwner container = getContainer();
 
@@ -70,6 +71,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     return (PsiDocCommentOwner)container;
   }
 
+  @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("suppress.inspection.family");
   }
@@ -86,8 +88,9 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer();
+    assert container != null;
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
-      .ensureFilesWritable(new VirtualFile[]{container.getContainingFile().getVirtualFile()});
+      .ensureFilesWritable(container.getContainingFile().getVirtualFile());
     if (status.hasReadonlyFiles()) return;
     PsiDocComment docComment = container.getDocComment();
     PsiManager manager = myContext.getManager();
