@@ -77,11 +77,11 @@ public class RadBorderLayoutManager extends RadLayoutManager {
   }
 
 
-  @Override public void changeContainerLayout(RadContainer container, LayoutManager oldLayout) throws IncorrectOperationException {
+  @Override public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
     if (container.getComponentCount() != 0) {
       throw new IncorrectOperationException("Only empty containers can be changed to BorderLayout");
     }
-    super.changeContainerLayout(container, oldLayout);
+    super.changeContainerLayout(container);
   }
 
   @Override public Property[] getContainerProperties(final Project project) {

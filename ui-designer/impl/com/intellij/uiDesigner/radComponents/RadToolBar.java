@@ -55,7 +55,7 @@ public class RadToolBar extends RadContainer {
     }
 
     @Override
-    public boolean canAddWithoutConstraints() {
+    public boolean isIndexed() {
       return true;
     }
   }

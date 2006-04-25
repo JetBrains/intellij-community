@@ -33,14 +33,27 @@ public class RadGridLayoutManager extends RadLayoutManager {
     return new GridLayoutManager(1, 1);
   }
 
-  @Override public void changeContainerLayout(RadContainer container, LayoutManager oldLayout) throws IncorrectOperationException {
-    if (oldLayout instanceof GridLayoutManager) {
-      GridLayoutManager oldGridLayout = (GridLayoutManager) oldLayout;
+  @Override public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
+    if (container.getLayout() instanceof GridLayoutManager) {
+      GridLayoutManager oldGridLayout = (GridLayoutManager) container.getLayout();
       container.setLayoutManager(this, new GridLayoutManager(oldGridLayout.getRowCount(), oldGridLayout.getColumnCount()));
     }
-    else if (oldLayout instanceof GridBagLayout) {
+    else if (container.getLayout() instanceof GridBagLayout) {
       container.setLayoutManager(this,
-                                 RadGridBagLayoutManager.gridFromGridBag(container, container.getDelegee(), oldLayout));
+                                 RadGridBagLayoutManager.gridFromGridBag(container, container.getDelegee(), container.getLayout()));
+    }
+    else if (container.getLayoutManager().isIndexed()) {
+      int col = 0;
+      for(RadComponent c: container.getComponents()) {
+        c.getConstraints().setRow(0);
+        c.getConstraints().setColumn(col++);
+        c.getConstraints().setRowSpan(1);
+        c.getConstraints().setColSpan(1);
+      }
+      container.setLayoutManager(this, new GridLayoutManager(1, container.getComponentCount()));
+    }
+    else {
+      throw new IncorrectOperationException("Cannot change from " + container.getLayout() + " to grid layout");
     }
   }
 

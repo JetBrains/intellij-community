@@ -96,7 +96,7 @@ public abstract class RadLayoutManager {
     return null;
   }
 
-  public void changeContainerLayout(RadContainer container, LayoutManager oldLayout) throws IncorrectOperationException {
+  public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
     container.setLayoutManager(this);
   }
 
@@ -144,7 +144,7 @@ public abstract class RadLayoutManager {
                                    final LayoutManager layout) {
   }
 
-  public boolean canAddWithoutConstraints() {
+  public boolean isIndexed() {
     return false;
   }
 }

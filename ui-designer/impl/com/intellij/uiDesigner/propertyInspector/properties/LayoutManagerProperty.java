@@ -56,7 +56,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
     }
 
     RadLayoutManager newLayoutManager = RadLayoutManager.createLayoutManager(value);
-    newLayoutManager.changeContainerLayout(component, component.getLayout());
+    newLayoutManager.changeContainerLayout(component);
   }
 
   @NotNull public PropertyRenderer<String> getRenderer() {

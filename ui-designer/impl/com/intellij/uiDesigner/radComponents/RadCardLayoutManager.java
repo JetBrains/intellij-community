@@ -70,11 +70,11 @@ public class RadCardLayoutManager extends RadLayoutManager {
     container.getDelegee().add(component.getDelegee(), component.getCustomLayoutConstraints());
   }
 
-  @Override public void changeContainerLayout(RadContainer container, LayoutManager oldLayout) throws IncorrectOperationException {
+  @Override public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
     if (container.getComponentCount() != 0) {
       throw new IncorrectOperationException("Only empty containers can be changed to CardLayout");
     }
-    super.changeContainerLayout(container, oldLayout);
+    super.changeContainerLayout(container);
   }
 
   @Override @NotNull

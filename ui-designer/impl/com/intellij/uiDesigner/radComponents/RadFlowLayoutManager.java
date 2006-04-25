@@ -17,7 +17,6 @@ import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -53,13 +52,6 @@ public class RadFlowLayoutManager extends RadLayoutManager {
     container.getDelegee().add(component.getDelegee(), index);
   }
 
-  @Override public void changeContainerLayout(RadContainer container, LayoutManager oldLayout) throws IncorrectOperationException {
-    if (container.getComponentCount() != 0) {
-      throw new IncorrectOperationException("Only empty containers can be changed to FlowLayout");
-    }
-    super.changeContainerLayout(container, oldLayout);
-  }
-
   @NotNull @Override
   public DropLocation getDropLocation(RadContainer container, final Point location) {
     FlowLayout flowLayout = (FlowLayout) container.getLayout();
@@ -91,7 +83,7 @@ public class RadFlowLayoutManager extends RadLayoutManager {
   }
 
   @Override
-  public boolean canAddWithoutConstraints() {
+  public boolean isIndexed() {
     return true;
   }
 

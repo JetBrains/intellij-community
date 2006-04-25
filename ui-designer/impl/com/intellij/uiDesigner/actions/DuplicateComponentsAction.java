@@ -96,7 +96,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     final RadContainer parent = FormEditingUtil.getSelectionParent(selection);
-    e.getPresentation().setEnabled(parent != null && (parent.isGrid() || parent.getLayoutManager().canAddWithoutConstraints()));
+    e.getPresentation().setEnabled(parent != null && (parent.isGrid() || parent.getLayoutManager().isIndexed()));
     // The action is enabled in any of the following cases:
     // 1) a single component is selected;
     // 2) all selected components have rowspan=1
