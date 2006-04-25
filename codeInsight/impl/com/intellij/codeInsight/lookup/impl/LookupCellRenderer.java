@@ -98,6 +98,8 @@ class LookupCellRenderer implements ListCellRenderer {
     FONT_WIDTH = label.getPreferredSize().width;
 
     final LookupItem[] items = lookup.getItems();
+    if (items.length > 0) lookup.getList().setPrototypeCellValue(items[0]);
+    
     for (LookupItem item : items) {
       if (!(item.getObject() instanceof Template)) {
         myHasNonTemplates = true;
