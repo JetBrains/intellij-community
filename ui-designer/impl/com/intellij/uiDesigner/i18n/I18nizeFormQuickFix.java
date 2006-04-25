@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
@@ -18,6 +19,7 @@ import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 
 import java.util.Collection;
 
@@ -74,6 +76,11 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
         });
       }
     }, CodeInsightBundle.message("quickfix.i18n.command.name"),project);
+
+    // saving files is necessary to ensure correct reload of properties files by UI Designer
+    for(PropertiesFile file: propertiesFiles) {
+      FileDocumentManager.getInstance().saveDocument(PsiDocumentManager.getInstance(project).getDocument(file));
+    }
 
     if (aPropertiesFile != null) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
