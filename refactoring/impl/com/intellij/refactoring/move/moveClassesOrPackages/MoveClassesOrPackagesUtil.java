@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.MoveDestination;
@@ -247,8 +248,11 @@ public class MoveClassesOrPackagesUtil {
     if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1) {
       correctSelfReferences(aClass, newDirectory.getPackage());
       final PsiClass created = newDirectory.createClass(aClass.getName());
-      if (aClass.getDocComment() == null && created.getDocComment() != null) {
-        aClass.addAfter(created.getDocComment(), null);
+      if (aClass.getDocComment() == null) {
+        final PsiDocComment createdDocComment = created.getDocComment();
+        if (createdDocComment != null) {
+          aClass.addAfter(createdDocComment, null);
+        }
       }
       newClass = (PsiClass)created.replace(aClass);
       aClass.delete();
