@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
@@ -109,7 +110,7 @@ public class AnnotationUtil {
     return null;
   }
 
-  public static boolean isAnnotated(PsiModifierListOwner listOwner, String annotationFQN, boolean checkHierarchy) {
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, String annotationFQN, boolean checkHierarchy) {
     if (listOwner instanceof PsiParameter) {
       // this is more efficient than getting the modifier list
       PsiAnnotation[] paramAnnotations = ((PsiParameter)listOwner).getAnnotations();
