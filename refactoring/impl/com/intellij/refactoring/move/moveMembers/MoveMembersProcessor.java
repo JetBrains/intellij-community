@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -170,7 +169,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           }
           else { // no qualifier
             if (usage.qualifierClass != null) {
-              addQualifier(refExpr, usage.qualifierClass);
+              changeQualifier(refExpr, usage.qualifierClass);
             }
           }
         }
@@ -249,35 +248,13 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
 
-  private void removeQualifier(PsiReferenceExpression refExpr) throws IncorrectOperationException{
-    PsiIdentifier identifier = (PsiIdentifier)refExpr.getReferenceNameElement();
-    PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-    PsiExpression expr = factory.createExpressionFromText(identifier.getText(), null);
-    refExpr.replace(expr);
-  }
-
-  private PsiReferenceExpression addQualifier(PsiReferenceExpression refExpr, PsiClass aClass) throws IncorrectOperationException{
-    PsiIdentifier identifier = (PsiIdentifier)refExpr.getReferenceNameElement();
-    PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-    PsiReferenceExpression expr = (PsiReferenceExpression)factory.createExpressionFromText("q."+identifier.getText(), null);
-    expr = (PsiReferenceExpression)CodeStyleManager.getInstance(myProject).reformat(expr);
-
-    PsiReferenceExpression qualifier = factory.createReferenceExpression(aClass);
-    PsiExpression qualifierExpression = expr.getQualifierExpression();
-    assert qualifierExpression != null;
-    qualifierExpression.replace(qualifier);
-
-    if (refExpr.getParent() != null) {
-      return (PsiReferenceExpression) refExpr.replace(expr);
-    } else {
-      return expr;
-    }
+  private static void removeQualifier(PsiReferenceExpression refExpr) throws IncorrectOperationException{
+    refExpr.setQualifierExpression(null);
   }
 
   private void changeQualifier(PsiReferenceExpression refExpr, PsiClass aClass) throws IncorrectOperationException{
     PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-    PsiReferenceExpression qualifier = factory.createReferenceExpression(aClass);
-    refExpr.getQualifierExpression().replace(qualifier);
+    refExpr.setQualifierExpression(factory.createReferenceExpression(aClass));
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
@@ -355,7 +332,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private String[] analyzeMoveConflicts(final Set<PsiMember> membersToMove, final PsiClass targetClass, final String newVisibility) {
+  private static String[] analyzeMoveConflicts(final Set<PsiMember> membersToMove, final PsiClass targetClass, final String newVisibility) {
     final LinkedHashSet<String> conflicts = new LinkedHashSet<String>();
     for (final PsiMember member : membersToMove) {
       if (member instanceof PsiMethod) {
