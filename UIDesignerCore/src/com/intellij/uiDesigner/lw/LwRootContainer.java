@@ -109,4 +109,14 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     }
     return null;
   }
+
+  public String[] getButtonGroupComponentIds(String groupName) {
+    for(int i=0; i<myButtonGroups.size(); i++) {
+      LwButtonGroup group = (LwButtonGroup) myButtonGroups.get(i);
+      if (group.getName().equals(groupName)) {
+        return group.getComponentIds();
+      }
+    }
+    throw new IllegalArgumentException("Cannot find group " + groupName);
+  }
 }

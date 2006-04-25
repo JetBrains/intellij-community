@@ -51,7 +51,7 @@ public final class ComponentPtr{
   public void validate(){
     // Try to find component with myId starting from root container
     final RadContainer container=myEditor.getRootContainer();
-    myComponent=FormEditingUtil.findComponent(container,myId);
+    myComponent= (RadComponent)FormEditingUtil.findComponent(container,myId);
   }
 
   public boolean equals(final Object obj){

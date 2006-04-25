@@ -114,7 +114,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     FormEditingUtil.clearSelection(myEditor.getRootContainer());
     final String[] ids = ((MyEditorState)state).getSelectedComponentIds();
     for (final String id : ids) {
-      final RadComponent component = FormEditingUtil.findComponent(myEditor.getRootContainer(), id);
+      final RadComponent component = (RadComponent)FormEditingUtil.findComponent(myEditor.getRootContainer(), id);
       if (component != null) {
         component.setSelected(true);
       }
@@ -129,7 +129,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   }
 
   public void selectComponentById(@NotNull final String id) {
-    final RadComponent component = FormEditingUtil.findComponent(myEditor.getRootContainer(), id);
+    final RadComponent component = (RadComponent)FormEditingUtil.findComponent(myEditor.getRootContainer(), id);
     if (component != null) {
       FormEditingUtil.selectSingleComponent(getEditor(), component);
     }

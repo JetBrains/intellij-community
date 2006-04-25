@@ -23,7 +23,7 @@ public class ComponentRenderer extends ColoredListCellRenderer implements Proper
     clear();
     setBackground(selected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
     if (value != null && value.length() > 0) {
-      RadComponent target = FormEditingUtil.findComponent(rootContainer, value);
+      RadComponent target = (RadComponent)FormEditingUtil.findComponent(rootContainer, value);
       if (target != null) {
         renderComponent(target, selected);
       }

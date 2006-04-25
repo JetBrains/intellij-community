@@ -3,12 +3,13 @@ package com.intellij.uiDesigner.inspections;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.codeInspection.InspectionToolProvider;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class FormInspectionProvider implements ApplicationComponent, InspectionToolProvider {
-  @NonNls public String getComponentName() {
+  @NotNull @NonNls public String getComponentName() {
     return "FormInspectionProvider";
   }
 
@@ -24,6 +25,7 @@ public class FormInspectionProvider implements ApplicationComponent, InspectionT
       MissingMnemonicInspection.class,
       NoLabelForInspection.class,
       NoButtonGroupInspection.class,
+      OneButtonGroupInspection.class,
       NoScrollPaneInspection.class,
       BoundFieldAssignmentInspection.class
     };

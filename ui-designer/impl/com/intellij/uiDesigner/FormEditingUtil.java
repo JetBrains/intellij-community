@@ -728,17 +728,17 @@ public final class FormEditingUtil {
    * @return the found component.
    */
   @Nullable
-  public static RadComponent findComponent(@NotNull final RadComponent component, @NotNull final String id) {
+  public static IComponent findComponent(@NotNull final IComponent component, @NotNull final String id) {
     if (id.equals(component.getId())) {
       return component;
     }
-    if (!(component instanceof RadContainer)) {
+    if (!(component instanceof IContainer)) {
       return null;
     }
 
-    final RadContainer uiContainer = (RadContainer)component;
+    final IContainer uiContainer = (IContainer)component;
     for (int i=0; i < uiContainer.getComponentCount(); i++){
-      final RadComponent found = findComponent(uiContainer.getComponent(i), id);
+      final IComponent found = findComponent(uiContainer.getComponent(i), id);
       if (found != null){
         return found;
       }

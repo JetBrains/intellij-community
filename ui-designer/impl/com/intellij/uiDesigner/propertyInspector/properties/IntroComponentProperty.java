@@ -69,7 +69,7 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
       if (text != null && value != null) {
         RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
         if (root != null) {
-          RadComponent valueComponent = FormEditingUtil.findComponent(root, value);
+          RadComponent valueComponent = (RadComponent)FormEditingUtil.findComponent(root, value);
           if (valueComponent != null) {
             BindingProperty.checkCreateBindingFromText(valueComponent, text);
           }

@@ -163,7 +163,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   public List<RadComponent> getGroupContents(final RadButtonGroup group) {
     ArrayList<RadComponent> result = new ArrayList<RadComponent>();
     for(String id: group.getComponentIds()) {
-      RadComponent component = FormEditingUtil.findComponent(this, id);
+      RadComponent component = (RadComponent) FormEditingUtil.findComponent(this, id);
       if (component != null) {
         result.add(component);
       }
@@ -178,6 +178,15 @@ public final class RadRootContainer extends RadContainer implements IRootContain
       }
     }
     return null;
+  }
+
+  public String[] getButtonGroupComponentIds(String groupName) {
+    for(RadButtonGroup group: myButtonGroups) {
+      if (group.getName().equals(groupName)) {
+        return group.getComponentIds();
+      }
+    }
+    throw new IllegalArgumentException("Cannot find group " + groupName);
   }
 
   public Locale getStringDescriptorLocale() {
