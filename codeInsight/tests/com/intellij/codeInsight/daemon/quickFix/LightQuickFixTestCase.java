@@ -10,7 +10,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 
@@ -29,24 +33,35 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   protected void doTestFor(final String testName) throws Exception {
-    final String relativePath = getBasePath() + "/before" + testName;
-    final String testFullPath = getTestDataPath().replace(File.separatorChar, '/') + relativePath;
-    final File ioFile = new File(testFullPath);
-    String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile)), "\n");
-    configureFromFileText(ioFile.getName(), contents);
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            final String relativePath = getBasePath() + "/before" + testName;
+            final String testFullPath = getTestDataPath().replace(File.separatorChar, '/') + relativePath;
+            final File ioFile = new File(testFullPath);
+            try {
+              String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile)), "\n");
+              configureFromFileText(ioFile.getName(), contents);
+              final Pair<String, Boolean> pair = parseActionHint(getFile());
+              final String text = pair.getFirst();
+              final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
 
-    final Pair<String, Boolean> pair = parseActionHint(getFile());
-    final String text = pair.getFirst();
-    final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
+              beforeActionStarted(testName, contents);
 
-    beforeActionStarted(testName, contents);
-
-    try {
-      doAction(text, actionShouldBeAvailable, testFullPath, testName);
-    }
-    finally {
-      afterActionCompleted(testName, contents);
-    }
+              try {
+                doAction(text, actionShouldBeAvailable, testFullPath, testName);
+              }
+              finally {
+                afterActionCompleted(testName, contents);
+              }
+            }
+            catch (Exception e) {
+            }
+          }
+        });
+      }
+    }, "", "");
   }
 
   protected void afterActionCompleted(final String testName, final String contents) {

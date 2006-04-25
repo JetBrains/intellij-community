@@ -272,6 +272,8 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
       newFileText1 = document1.getText();
     }
 
+    PostprocessReformatingAspect.getInstance(getProject()).doPostponedFormatting();
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     String text = myFile.getText();
     assertEquals(getMessage("Text mismatch", message), newFileText1, text);
 
