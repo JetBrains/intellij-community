@@ -38,6 +38,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
       final IRootContainer root = FormEditingUtil.getRoot(component);
       if (root == null) return;
       if (root.getButtonGroupName(component) == null) {
+        EditorQuickFixProvider quickFixProvider = null;
         IContainer parent = component.getParentContainer();
         for(int i=0; i<parent.getComponentCount(); i++) {
           IComponent child = parent.getComponent(i);
@@ -48,16 +49,16 @@ public class NoButtonGroupInspection extends BaseFormInspection {
             final GridConstraints c2 = child.getConstraints();
             if ((c1.getRow() == c2.getRow() && Math.abs(c1.getColumn() - c2.getColumn()) == 1) ||
                 (c1.getColumn() == c2.getColumn() && Math.abs(c1.getRow() - c2.getRow()) == 1)) {
-              collector.addError(getID(), null, UIDesignerBundle.message("inspection.no.button.group.error"),
-                                 new EditorQuickFixProvider() {
+              quickFixProvider = new EditorQuickFixProvider() {
                                    public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
                                      return new MyQuickFix(editor, component, c1.getColumn() == c2.getColumn());
                                    }
-                                 });
+                                 };
               break;
             }
           }
         }
+        collector.addError(getID(), null, UIDesignerBundle.message("inspection.no.button.group.error"), quickFixProvider);
       }
     }
   }
