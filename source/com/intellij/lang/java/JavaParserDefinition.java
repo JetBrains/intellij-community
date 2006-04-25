@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.pom.java.LanguageLevel;
@@ -76,6 +77,7 @@ public class JavaParserDefinition implements ParserDefinition {
     if(containingFile instanceof PsiJavaFile)
       lexer = new JavaLexer(((PsiJavaFile)containingFile).getLanguageLevel());
     else lexer = new JavaLexer(LanguageLevel.HIGHEST);
+    if(right.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) return SpaceRequirements.MUST_NOT;
     final SpaceRequirements spaceRequirements = LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer, 0);
     if(left.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) return SpaceRequirements.MUST_LINE_BREAK;
     return spaceRequirements;
