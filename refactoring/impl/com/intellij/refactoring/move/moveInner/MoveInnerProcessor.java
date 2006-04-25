@@ -16,9 +16,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 
 public class MoveInnerProcessor extends BaseRefactoringProcessor {
@@ -80,13 +80,10 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    PsiManager manager = PsiManager.getInstance(myProject);
-    PsiSearchHelper helper = manager.getSearchHelper();
-
     LOG.assertTrue(myTargetContainer != null);
 
-    PsiReference[] innerClassRefs = helper.findReferences(myInnerClass, GlobalSearchScope.projectScope(myProject), false);
-    ArrayList<UsageInfo> usageInfos = new ArrayList<UsageInfo>(innerClassRefs.length);
+    Collection<PsiReference> innerClassRefs = ReferencesSearch.search(myInnerClass).findAll();
+    ArrayList<UsageInfo> usageInfos = new ArrayList<UsageInfo>(innerClassRefs.size());
     for (PsiReference innerClassRef : innerClassRefs) {
       PsiElement ref = innerClassRef.getElement();
       if (!PsiTreeUtil.isAncestor(myInnerClass, ref, true)) { // do not show self-references
@@ -181,9 +178,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       newClass.setName(newClassName);
 
       // replace references in a new class to old inner class with references to itself
-      PsiReference[] refs = manager.getSearchHelper().findReferences(myInnerClass, new LocalSearchScope(newClass),
-                                                                     true);
-      for (PsiReference ref : refs) {
+      for (PsiReference ref : ReferencesSearch.search(myInnerClass, new LocalSearchScope(newClass), true).findAll()) {
         PsiElement element = ref.getElement();
         if (element.getParent() instanceof PsiJavaCodeReferenceElement) {
           PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)element.getParent();
