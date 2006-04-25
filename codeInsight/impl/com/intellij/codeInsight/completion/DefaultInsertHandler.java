@@ -196,7 +196,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       }
 
       if(!"@".equals(elementAt.getText()) &&
-         PsiTreeUtil.getParentOfType(elementAt,PsiImportStatement.class) == null
+         PsiTreeUtil.getParentOfType(elementAt,PsiImportStatement.class,PsiExpressionStatement.class) == null
         ) {
         document.insertString(expectedDogOffset, "@");
       }
