@@ -26,6 +26,17 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class ColumnInfo <Item, Aspect> {
+
+  public final static class StringColumn extends ColumnInfo<String, String> {
+      public StringColumn(final String name) {
+          super(name);
+      }
+
+      public String valueOf(final String item) {
+          return item;
+      }
+  }
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.ColumnInfo");
   private String myName;
   public static ColumnInfo[] EMPTY_ARRAY = new ColumnInfo[0];
