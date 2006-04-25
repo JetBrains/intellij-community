@@ -59,10 +59,20 @@ public class PostprocessReformatingAspect implements PomModelAspect {
         final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
         switch(childChange.getChangeType()){
           case ChangeInfo.ADD:
-            postponeFormatting(viewProvider, affectedChild);
-            break;
           case ChangeInfo.REPLACE:
             postponeFormatting(viewProvider, affectedChild);
+            break;
+          case ChangeInfo.CONTENTS_CHANGED:
+            if(!CodeEditUtil.isNodeGenerated(affectedChild))
+              ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementVisitor(){
+                protected boolean visitNode(TreeElement element) {
+                  if(CodeEditUtil.isNodeGenerated(element)){
+                    postponeFormatting(viewProvider, element);
+                    return false;
+                  }
+                  return true;
+                }
+              });
             break;
         }
       }
@@ -74,18 +84,7 @@ public class PostprocessReformatingAspect implements PomModelAspect {
   }
 
   private void postponeFormatting(final FileViewProvider viewProvider, final ASTNode child) {
-    if(CodeEditUtil.isNodeGenerated(child)){
-      // for generated elements we have to find out if there are copied elements inside and add them for reindent
-      ((TreeElement)child).acceptTree(new RecursiveTreeElementVisitor(){
-        protected boolean visitNode(TreeElement element) {
-          final boolean generatedFlag = CodeEditUtil.isNodeGenerated(element);
-          if(!generatedFlag && element.getElementType() != ElementType.WHITE_SPACE)
-            postponeFormatting(viewProvider, element);
-          return generatedFlag;
-        }
-      });
-    }
-    else if (child.getElementType() != ElementType.WHITE_SPACE) {
+    if (!CodeEditUtil.isNodeGenerated(child) && child.getElementType() != ElementType.WHITE_SPACE) {
       final int oldIndent = CodeEditUtil.getOldIndentation(child);
       LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined");
     }
