@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -35,6 +36,7 @@ public class JavaWithIfSurrounder extends JavaStatementsSurrounder{
     thenBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
+    ifStatement = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(ifStatement);
     TextRange range = ifStatement.getCondition().getTextRange();
     TextRange textRange = new TextRange(range.getStartOffset(), range.getStartOffset());
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
