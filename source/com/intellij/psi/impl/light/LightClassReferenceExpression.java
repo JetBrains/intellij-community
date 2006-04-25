@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.light;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -9,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LightClassReferenceExpression extends LightClassReference implements PsiReferenceExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.light.LightClassReferenceExpression");
 
   public LightClassReferenceExpression(PsiManager manager, String text, PsiClass refClass) {
     super(manager, text, refClass);
@@ -25,11 +23,6 @@ public class LightClassReferenceExpression extends LightClassReference implement
 
   public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {
     throw new IncorrectOperationException("This method should not be called for light elements");
-  }
-
-  // very special method
-  public void setCachedResolveResult(PsiElement result, Boolean problemWithAccess, Boolean problemWithStatic) {
-    LOG.assertTrue(false);
   }
 
   public PsiType getType(){
