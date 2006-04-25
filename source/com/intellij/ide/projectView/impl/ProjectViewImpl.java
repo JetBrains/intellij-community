@@ -34,8 +34,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -460,7 +460,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     final String id = ids.first;
     String subId = ids.second;
     if (ids.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return;
-    AbstractProjectViewPane newPane = getProjectViewPaneById(id);
+    final AbstractProjectViewPane newPane = getProjectViewPaneById(id);
     newPane.setSubId(subId);
     String[] subIds = newPane.getSubIds();
 
@@ -469,6 +469,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       SwingUtilities.invokeLater(new Runnable(){
         public void run() {
           changeView(id, firstNonTrivialSubId);
+          newPane.setSubId(firstNonTrivialSubId);
         }
       });
     }
