@@ -63,6 +63,8 @@ public class RefactoringUtil {
   public static final int EXPR_COPY_UNSAFE = 1;
   public static final int EXPR_COPY_PROHIBITED = 2;
 
+  private RefactoringUtil() {}
+
   public static void showInfoDialog(String info, Project project) {
     RefactoringSettings settings = RefactoringSettings.getInstance();
     if (settings.IS_SHOW_ACTION_INFO) {
@@ -75,7 +77,6 @@ public class RefactoringUtil {
   public static boolean isSourceRoot(final PsiDirectory directory) {
     if (directory.getManager() == null) return false;
     final Project project = directory.getProject();
-    if (project == null) return false;
     final VirtualFile virtualFile = directory.getVirtualFile();
     final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(virtualFile);
     return Comparing.equal(virtualFile, sourceRootForFile);
@@ -124,9 +125,7 @@ public class RefactoringUtil {
     else {
       final PsiReferenceExpression ref = (PsiReferenceExpression)factory.createExpressionFromText("this." + fieldName, null);
       if (newField.hasModifierProperty(PsiModifier.STATIC)) {
-          final PsiReferenceExpression referenceExpression =
-          factory.createReferenceExpression(destinationClass);
-        ref.getQualifierExpression().replace(referenceExpression);
+        ref.setQualifierExpression(factory.createReferenceExpression(destinationClass));
       }
       return occurrence.replace(ref);
     }
@@ -145,8 +144,8 @@ public class RefactoringUtil {
       PsiResolveHelper helper = manager.getResolveHelper();
       PsiVariable refVar = helper.resolveReferencedVariable(name, place);
       if (refVar != null && !manager.areElementsEquivalent(refVar, fieldToReplace)) continue;
-      class Cancel extends RuntimeException {
-      }
+      class CancelException extends RuntimeException {}
+
       try {
         place.accept(new PsiRecursiveElementVisitor() {
           public void visitClass(PsiClass aClass) {
@@ -155,12 +154,12 @@ public class RefactoringUtil {
 
           public void visitVariable(PsiVariable variable) {
             if (name.equals(variable.getName())) {
-              throw new Cancel();
+              throw new CancelException();
             }
           }
         });
       }
-      catch (Cancel e) {
+      catch (CancelException e) {
         continue;
       }
 
@@ -536,7 +535,7 @@ public class RefactoringUtil {
                                              PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
     PsiManager manager = initializer.getManager();
 
-    PsiClass variableParent = RefactoringUtil.getThisClass(initializer);
+    PsiClass thisClass = RefactoringUtil.getThisClass(initializer);
     PsiClass refParent = RefactoringUtil.getThisClass(ref);
     initializer = convertInitializerToNormalExpression(initializer, variable.getType());
 
@@ -564,9 +563,8 @@ public class RefactoringUtil {
 
     ChangeContextUtil.clearContextInfo(initializer);
 
-    PsiClass thisClass = variableParent;
     PsiThisExpression thisAccessExpr = null;
-    if (Comparing.equal(variableParent, refParent)) {
+    if (Comparing.equal(thisClass, refParent)) {
       thisAccessExpr = createThisExpression(manager, null);
     }
     else {
@@ -670,13 +668,8 @@ public class RefactoringUtil {
   public static boolean isAssignmentLHS(PsiElement element) {
     PsiElement parent = element.getParent();
 
-    if (parent instanceof PsiAssignmentExpression
-        && element.equals(((PsiAssignmentExpression)parent).getLExpression())) {
-      return true;
-    }
-    else {
-      return isPlusPlusOrMinusMinus(parent);
-    }
+    return parent instanceof PsiAssignmentExpression && element.equals(((PsiAssignmentExpression)parent).getLExpression()) ||
+           isPlusPlusOrMinusMinus(parent);
   }
 
   public static boolean isPlusPlusOrMinusMinus(PsiElement element) {
@@ -1176,12 +1169,7 @@ public class RefactoringUtil {
     }
 
     if (t1 instanceof PsiPrimitiveType) {
-      if (t2 instanceof PsiPrimitiveType) {
-        return t1.equals(t2);
-      }
-      else {
-        return false;
-      }
+      return t2 instanceof PsiPrimitiveType && t1.equals(t2);
     }
 
     return manager.areElementsEquivalent(PsiUtil.resolveClassInType(t1), PsiUtil.resolveClassInType(t2));
@@ -1205,8 +1193,7 @@ public class RefactoringUtil {
   }
 
   public static boolean isModifiedInScope(PsiVariable variable, PsiElement scope) {
-    final PsiReference[] references = variable.getManager().getSearchHelper().findReferences(variable, new LocalSearchScope(scope), false);
-    for (PsiReference reference : references) {
+    for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(scope), false).findAll()) {
       if (isAssignmentLHS(reference.getElement())) return true;
     }
     return false;
