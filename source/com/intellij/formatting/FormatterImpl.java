@@ -11,6 +11,7 @@ import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class FormatterImpl extends FormatterEx
   implements ApplicationComponent,
@@ -222,7 +223,7 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
-  private int adjustLineIndent(
+  private static int adjustLineIndent(
     final int offset,
     final FormattingDocumentModel documentModel,
     final FormatProcessor processor,
@@ -264,9 +265,9 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
-  private boolean hasContentAfterLineBreak(final FormattingDocumentModel documentModel, final int offset, final WhiteSpace whiteSpace) {
+  private static boolean hasContentAfterLineBreak(final FormattingDocumentModel documentModel, final int offset, final WhiteSpace whiteSpace) {
     return documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getTextRange().getEndOffset()) &&
-      documentModel.getTextLength() != offset;
+           documentModel.getTextLength() != offset;
   }
 
   public String getLineIndent(final FormattingModel model,
@@ -310,10 +311,10 @@ public class FormatterImpl extends FormatterEx
     return documentModel.getText(new TextRange(0, documentModel.getTextLength()));
   }
 
-  private int getLineStartOffset(final int offset,
-                                 final WhiteSpace whiteSpace,
-                                 final CharSequence text,
-                                 final FormattingDocumentModel documentModel) {
+  private static int getLineStartOffset(final int offset,
+                                        final WhiteSpace whiteSpace,
+                                        final CharSequence text,
+                                        final FormattingDocumentModel documentModel) {
     int lineStartOffset = offset;
 
     lineStartOffset = CharArrayUtil.shiftBackwardUntil(text, lineStartOffset, " \t\n");
@@ -411,7 +412,7 @@ public class FormatterImpl extends FormatterEx
     }
 
   }
-  
+
   public void saveIndents(final FormattingModel model, final TextRange affectedRange,
                           IndentInfoStorage storage,
                           final CodeStyleSettings settings,
@@ -457,6 +458,7 @@ public class FormatterImpl extends FormatterEx
     return result;
   }
 
+  @NotNull
   public String getComponentName() {
     return "FormatterEx";
   }
