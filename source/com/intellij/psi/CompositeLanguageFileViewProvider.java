@@ -137,6 +137,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     final List<FileElement> knownRoots = new ArrayList<FileElement>();
     knownRoots.addAll(Arrays.asList(super.getKnownTreeRoots()));
     for (PsiFile psiFile : myRoots.values()) {
+      if (psiFile == null) continue;
       final FileElement fileElement = ((PsiFileImpl)psiFile).getTreeElement();
       if(fileElement == null) continue;
       knownRoots.add(fileElement);
