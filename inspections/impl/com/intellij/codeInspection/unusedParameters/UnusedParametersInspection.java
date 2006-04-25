@@ -25,10 +25,10 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class UnusedParametersInspection extends FilteringInspectionTool {
   private UnusedParametersFilter myFilter;
@@ -58,14 +58,14 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
                     PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
                     if (!refMethod.isStatic() && !refMethod.isConstructor() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
                       PsiMethod[] derived = helper.findOverridingMethods(psiMethod, GlobalSearchScope.projectScope(getContext().getProject()), true);
-                      ArrayList unusedParameters = filter.getUnusedParameters(refMethod);
-                      for (Iterator paramIterator = unusedParameters.iterator(); paramIterator.hasNext();) {
-                        final RefParameter refParameter = (RefParameter) paramIterator.next();
+                      final ArrayList<RefParameter> unusedParameters = UnusedParametersFilter.getUnusedParameters(refMethod);
+                      for (final RefParameter refParameter : unusedParameters) {
                         int idx = refParameter.getIndex();
 
                         if (refMethod.isAbstract() && derived.length == 0) {
                           refParameter.parameterReferenced(false);
-                        } else {
+                        }
+                        else {
                           final boolean[] found = new boolean[]{false};
                           for (int i = 0; i < derived.length && !found[0]; i++) {
                             if (!getRefManager().getScope().contains(derived[i])) {
@@ -109,16 +109,16 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefElement && filter.accepts((RefElement)refEntity)) {
-          ArrayList unusedParameters = filter.getUnusedParameters((RefMethod)refEntity);
-          for (int i = 0; i < unusedParameters.size(); i++) {
+          ArrayList<RefParameter> unusedParameters = UnusedParametersFilter.getUnusedParameters((RefMethod)refEntity);
+          for (RefParameter unusedParameter : unusedParameters) {
             Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
             Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
             problemClassElement.addContent(InspectionsBundle.message("inspection.unused.parameter.export.results"));
             element.addContent(problemClassElement);
 
-            RefParameter refParameter = (RefParameter) unusedParameters.get(i);
             Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
-            descriptionElement.addContent(InspectionsBundle.message("inspection.unused.parameter.export.results.description", refParameter.getName()));
+            descriptionElement
+              .addContent(InspectionsBundle.message("inspection.unused.parameter.export.results.description", unusedParameter.getName()));
             element.addContent(descriptionElement);
           }
         }
@@ -130,6 +130,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     return myQuickFixActions;
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
     return new JobDescriptor[] {GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
@@ -140,21 +141,22 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     }
 
     protected boolean applyFix(RefElement[] refElements) {
-      for (int i = 0; i < refElements.length; i++) {
-        RefMethod refMethod = (RefMethod) refElements[i];
-        PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
+      for (RefElement refElement : refElements) {
+        if (refElement instanceof RefMethod) {
+          RefMethod refMethod = (RefMethod)refElement;
+          PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
 
-        if (psiMethod == null) continue;
+          if (psiMethod == null) continue;
 
-        ArrayList<PsiElement> psiParameters = new ArrayList<PsiElement>();
-        UnusedParametersFilter filter = getFilter();
-        for (final RefParameter refParameter : filter.getUnusedParameters(refMethod)) {
-          psiParameters.add(refParameter.getElement());
+          ArrayList<PsiElement> psiParameters = new ArrayList<PsiElement>();
+          for (final RefParameter refParameter : UnusedParametersFilter.getUnusedParameters(refMethod)) {
+            psiParameters.add(refParameter.getElement());
+          }
+
+          removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
+
+          getFilter().ignore(refMethod);
         }
-
-        removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
-
-        filter.ignore(refMethod);
       }
 
       return true;
