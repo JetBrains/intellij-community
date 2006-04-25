@@ -38,6 +38,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     for(RadComponent c: selection) {
       final int row = c.getConstraints().getRow();
       int rowSpan = c.getConstraints().getRowSpan();
+      int insertIndex = parent.indexOfComponent(c);
 
       if (parent.isGrid()) {
         if (!insertedRows.contains(row) && !isSpaceBelowEmpty(c)) {
@@ -55,7 +56,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
           copy.getConstraints().setRow(row+rowSpan);
           copy.getConstraints().setRowSpan(rowSpan);
         }
-        parent.addComponent(copy);
+        parent.addComponent(copy, insertIndex+1);
         copyBinding(c, copy);
         duplicates.add(copy);
       }
