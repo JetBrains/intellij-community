@@ -443,6 +443,11 @@ import java.util.Map;
     return createPseudoPhysicalFile(fileName, text);
   }
 
+  protected static PsiFile createLightFile(String fileName, String text) throws IncorrectOperationException {
+    return getPsiManager().getElementFactory().createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName),
+                                                                  text, LocalTimeCounter.currentTime(), false);
+  }
+
   protected static PsiFile createPseudoPhysicalFile(String fileName, String text) throws IncorrectOperationException {
     return getPsiManager().getElementFactory().createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName),
                                                                   text, LocalTimeCounter.currentTime(), true);
