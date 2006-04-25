@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -44,6 +45,7 @@ public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagActio
     return container;
   }
 
+  @NotNull
   public String getText() {
     return InspectionsBundle.message("suppress.all.for.class");
   }
