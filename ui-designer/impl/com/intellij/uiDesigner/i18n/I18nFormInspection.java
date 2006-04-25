@@ -24,6 +24,7 @@ import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -54,7 +55,8 @@ public class I18nFormInspection extends StringDescriptorInspection {
         case PROPERTY:
           provider = new EditorQuickFixProvider() {
             public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-              return new I18nizeFormPropertyQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component,
+              return new I18nizeFormPropertyQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.property", prop.getName()),
+                                                     component,
                                                      (IntrospectedProperty)prop);
             }
           };
@@ -63,7 +65,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
         case BORDER:
           provider = new EditorQuickFixProvider() {
             public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-              return new I18nizeFormBorderQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"),
+              return new I18nizeFormBorderQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.border.title"),
                                                    (RadContainer)component);
             }
           };
@@ -72,7 +74,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
         case TAB:
           provider = new EditorQuickFixProvider() {
             public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-              return new I18nizeTabTitleQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component);
+              return new I18nizeTabTitleQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.tab.title"), component);
             }
           };
       }
@@ -84,7 +86,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
     }
   }
 
-  private boolean isHardCodedStringDescriptor(final StringDescriptor descriptor) {
+  private static boolean isHardCodedStringDescriptor(final StringDescriptor descriptor) {
     if (descriptor.isNoI18n()) {
       return false;
     }
