@@ -435,6 +435,9 @@ public final class FormSourceCodeGenerator {
       else if (propertyClass.equals(Icon.class.getName())) {
         pushIcon((IconDescriptor) value);
       }
+      else if (property instanceof LwIntroEnumProperty) {
+        pushVar(propertyClass.replace('$', '.') + "." + value.toString());
+      }
       else {
         throw new RuntimeException("unexpected property class: " + propertyClass);
       }

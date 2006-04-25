@@ -9,6 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uiDesigner.lw.*;
+import com.intellij.refactoring.util.RefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,19 +21,19 @@ import java.util.HashMap;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class PsiPropertiesProvider implements PropertiesProvider{
+public final class PsiPropertiesProvider implements PropertiesProvider {
   private final Module myModule;
-  private final HashMap myCache;
+  private final HashMap<String, HashMap> myCache;
 
-  public PsiPropertiesProvider(@NotNull final Module module){
+  public PsiPropertiesProvider(@NotNull final Module module) {
     myModule = module;
-    myCache = new HashMap();
+    myCache = new HashMap<String, HashMap>();
   }
 
   @Nullable
-  public HashMap getLwProperties(final String className){
+  public HashMap getLwProperties(final String className) {
     if (myCache.containsKey(className)) {
-      return (HashMap)myCache.get(className);
+      return myCache.get(className);
     }
 
     final PsiManager psiManager = PsiManager.getInstance(myModule.getProject());
@@ -106,17 +107,30 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
       }
       else {
         PsiClass propClass = psiManager.findClass(propertyClassName, scope);
-        PsiClass componentClass = psiManager.findClass(Component.class.getName(), scope);
-        PsiClass listModelClass = psiManager.findClass(ListModel.class.getName(), scope);
-        if (componentClass != null && propClass != null && InheritanceUtil.isInheritorOrSelf(propClass, componentClass, true)) {
-          property = new LwIntroComponentProperty(name);
-        }
-        else if (componentClass != null && listModelClass != null && InheritanceUtil.isInheritorOrSelf(propClass, listModelClass, true)) {
-          property = new LwIntroListModelProperty(name, propertyClassName);
+        if (propClass == null) continue;
+        if (propClass.isEnum()) {
+          final String enumClassName = RefactoringUtil.getInnerClassNameForClassLoader(propClass);
+          final ClassLoader loader = LoaderFactory.getInstance(myModule.getProject()).getLoader(myModule);
+          try {
+            property = new LwIntroEnumProperty(name, loader.loadClass(enumClassName));
+          }
+          catch (ClassNotFoundException e) {
+            continue;
+          }
         }
         else {
-          // type is not supported
-          continue;
+          PsiClass componentClass = psiManager.findClass(Component.class.getName(), scope);
+          PsiClass listModelClass = psiManager.findClass(ListModel.class.getName(), scope);
+          if (componentClass != null && InheritanceUtil.isInheritorOrSelf(propClass, componentClass, true)) {
+            property = new LwIntroComponentProperty(name);
+          }
+          else if (componentClass != null && listModelClass != null && InheritanceUtil.isInheritorOrSelf(propClass, listModelClass, true)) {
+            property = new LwIntroListModelProperty(name, propertyClassName);
+          }
+          else {
+            // type is not supported
+            continue;
+          }
         }
       }
 

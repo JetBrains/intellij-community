@@ -86,6 +86,7 @@ public class AsmCodeGenerator {
     myPropertyCodeGenerators.put(Icon.class.getName(), new IconPropertyCodeGenerator());
     myPropertyCodeGenerators.put(ListModel.class.getName(), new ListModelPropertyCodeGenerator(DefaultListModel.class));
     myPropertyCodeGenerators.put(ComboBoxModel.class.getName(), new ListModelPropertyCodeGenerator(DefaultComboBoxModel.class));
+    myPropertyCodeGenerators.put("java.lang.Enum", new EnumPropertyCodeGenerator());
   }
 
   public AsmCodeGenerator(LwRootContainer rootContainer,
@@ -449,7 +450,7 @@ public class AsmCodeGenerator {
         if (property instanceof LwIntroComponentProperty) {
           continue;
         }
-        final String propertyClass = property.getPropertyClassName();
+        final String propertyClass = property.getCodeGenPropertyClassName();
         if (myIgnoreCustomCreation) {
           try {
             componentClass.getMethod(property.getWriteMethodName(), new Class[] { Class.forName(propertyClass) } );
@@ -459,7 +460,6 @@ public class AsmCodeGenerator {
           }
         }
         final PropertyCodeGenerator propGen = (PropertyCodeGenerator) myPropertyCodeGenerators.get(propertyClass);
-
 
         if (propGen != null && propGen.generateCustomSetValue(lwComponent, componentClass, property,
                                                               generator, componentLocal)) {

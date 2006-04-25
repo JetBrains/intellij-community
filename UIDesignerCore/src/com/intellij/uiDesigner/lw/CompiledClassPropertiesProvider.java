@@ -138,6 +138,9 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
     else if (ListModel.class.isAssignableFrom(propertyType)) {
       property = new LwIntroListModelProperty(name, propertyType.getName());
     }
+    else if (propertyType.getSuperclass() != null && "java.lang.Enum".equals(propertyType.getSuperclass().getName())) {
+      property = new LwIntroEnumProperty(name, propertyType);
+    }
     else {
       // type is not supported
       property = null;

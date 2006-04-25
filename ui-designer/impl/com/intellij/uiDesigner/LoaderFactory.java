@@ -58,6 +58,7 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "GUI Designer component loader factory";
   }
@@ -81,7 +82,11 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
     if (module == null) {
       return getClass().getClassLoader();
     }
-    
+
+    return getLoader(module);
+  }
+
+  public ClassLoader getLoader(final Module module) {
     final ClassLoader cachedLoader = myModule2ClassLoader.get(module);
     if (cachedLoader != null) {
       return cachedLoader;
@@ -93,7 +98,7 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
 
     myModule2ClassLoader.put(module, classLoader);
 
-    return classLoader;      
+    return classLoader;
   }
 
   @NotNull public ClassLoader getProjectClassLoader() {

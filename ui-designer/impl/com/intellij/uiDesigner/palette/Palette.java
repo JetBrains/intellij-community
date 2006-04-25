@@ -664,6 +664,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
         else if (ListModel.class.isAssignableFrom(propertyType)) {
           property = new IntroListModelProperty(name, readMethod, writeMethod, storeAsClient);
         }
+        else if (Enum.class.isAssignableFrom(propertyType)) {
+          property = new IntroEnumProperty(name, readMethod, writeMethod, storeAsClient, propertyType);
+        }
         else {
           // other types are not supported (yet?)
           continue;

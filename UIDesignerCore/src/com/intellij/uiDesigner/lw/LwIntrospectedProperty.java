@@ -69,4 +69,8 @@ public abstract class LwIntrospectedProperty implements IProperty {
   public Object getPropertyValue(final IComponent component) {
     return ((LwComponent) component).getPropertyValue(this);
   }
+
+  public String getCodeGenPropertyClassName() {
+    return getPropertyClassName();
+  }
 }
