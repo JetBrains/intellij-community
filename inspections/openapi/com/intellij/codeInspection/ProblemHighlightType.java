@@ -22,22 +22,10 @@
  */
 package com.intellij.codeInspection;
 
-import org.jetbrains.annotations.NonNls;
-
-public class ProblemHighlightType {
-  public static final ProblemHighlightType GENERIC_ERROR_OR_WARNING = new ProblemHighlightType("GENERIC_ERROR_OR_WARNING");
-  public static final ProblemHighlightType LIKE_DEPRECATED = new ProblemHighlightType("LIKE_DEPRECATED");
-  public static final ProblemHighlightType LIKE_UNKNOWN_SYMBOL = new ProblemHighlightType("LIKE_UNKNOWN_SYMBOL");
-  public static final ProblemHighlightType LIKE_UNUSED_SYMBOL = new ProblemHighlightType("LIKE_UNUSED_SYMBOL");
-  public static final ProblemHighlightType J2EE_PROBLEM = new ProblemHighlightType("J2EE_PROBLEM");
-
-  private final String myName; // for debug only
-
-  private ProblemHighlightType(@NonNls String name) {
-    myName = name;
-  }
-
-  public String toString() {
-    return myName;
-  }
+public enum ProblemHighlightType {
+  GENERIC_ERROR_OR_WARNING,
+  LIKE_DEPRECATED,
+  LIKE_UNKNOWN_SYMBOL,
+  LIKE_UNUSED_SYMBOL,
+  J2EE_PROBLEM
 }
