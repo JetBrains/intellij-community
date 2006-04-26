@@ -5,7 +5,6 @@
  */
 package com.intellij.compiler.progress;
 
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
@@ -29,6 +28,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.MessageCategory;
@@ -92,7 +92,11 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     if (CompilerMessageCategory.WARNING.equals(message.getCategory())) {
       myWarningCount += 1;
     }
-    myUpdate.addProblem(message);
+
+    if (myUpdate != null) { // TODO[cdr]: Review.
+      myUpdate.addProblem(message);
+    }
+
     if (ApplicationManager.getApplication().isDispatchThread()) {
       doAddMessage(message);
     }
