@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,17 +37,20 @@ public class AntPropertyValueReferenceProvider extends GenericReferenceProvider 
 
   private void getAttributeReferences(final AntElement element, final XmlAttribute attr, final List<PsiReference> refs) {
     final String value = attr.getValue();
-    final int offsetInPosition = attr.getValueElement().getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1;
-    int startIndex;
-    int endIndex = -1;
-    while ((startIndex = value.indexOf("${", endIndex + 1)) > endIndex) {
-      startIndex += 2;
-      endIndex = value.indexOf('}', startIndex);
-      if (endIndex < 0) break;
-      if (endIndex > startIndex) {
-        final String propName = value.substring(startIndex, endIndex);
-        refs.add(new AntPropertyReference(this, element, propName,
-                                          new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
+    final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
+    if (xmlAttributeValue != null) {
+      final int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1;
+      int startIndex;
+      int endIndex = -1;
+      while ((startIndex = value.indexOf("${", endIndex + 1)) > endIndex) {
+        startIndex += 2;
+        endIndex = value.indexOf('}', startIndex);
+        if (endIndex < 0) break;
+        if (endIndex > startIndex) {
+          final String propName = value.substring(startIndex, endIndex);
+          refs.add(new AntPropertyReference(this, element, propName,
+                                            new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
+        }
       }
     }
   }
