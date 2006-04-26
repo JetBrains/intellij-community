@@ -452,7 +452,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
     }
     myUpdateProgress.cancel();
-    ((WolfTheProblemSolverImpl)WolfTheProblemSolver.getInstance(myProject)).daemonStopped(toRestartAlarm);
+    WolfTheProblemSolver instance = WolfTheProblemSolver.getInstance(myProject);
+    if (instance instanceof WolfTheProblemSolverImpl) {
+      ((WolfTheProblemSolverImpl)instance).daemonStopped(toRestartAlarm);
+    }
   }
 
   @Nullable
