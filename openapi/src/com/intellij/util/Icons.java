@@ -48,6 +48,8 @@ public abstract class Icons {
   public static final Icon LIBRARY_ICON = IconLoader.getIcon("/nodes/ppLib.png");
   public static final Icon WEB_ICON = IconLoader.getIcon("/nodes/ppWeb.png");
   public static final Icon JAR_ICON = IconLoader.getIcon("/nodes/ppJar.png");
+  public static final Icon WEB_FOLDER_OPEN = IconLoader.getIcon("/nodes/webFolderOpen.png");
+  public static final Icon WEB_FOLDER_CLOSED = IconLoader.getIcon("/nodes/webFolderClosed.png");
   public static final Icon FILE_ICON = IconLoader.getIcon("/nodes/ppFile.png");
   public static final Icon EJB_CLASS_ICON = IconLoader.getIcon("/nodes/ejbClass.png");
   public static final Icon EJB_INTERCEPTOR_CLASS_ICON = IconLoader.getIcon("/nodes/ejbInterceptor.png");  

@@ -47,6 +47,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
 import com.intellij.coverage.CoverageDataManager;
+import com.intellij.javaee.web.WebUtil;
 
 import javax.swing.*;
 import java.util.*;
@@ -63,11 +64,9 @@ public class PackageUtil {
     final GlobalSearchScope scopeToShow = getScopeToShow(project, module, searchInLibraries);
     final PsiDirectory[] dirs = aPackage.getDirectories(scopeToShow);
     final Set<PsiPackage> subpackages = new HashSet<PsiPackage>();
-    for (int idx = 0; idx < dirs.length; idx++) {
-      PsiDirectory dir = dirs[idx];
+    for (PsiDirectory dir : dirs) {
       final PsiDirectory[] subdirectories = dir.getSubdirectories();
-      for (int i = 0; i < subdirectories.length; i++) {
-        PsiDirectory subdirectory = subdirectories[i];
+      for (PsiDirectory subdirectory : subdirectories) {
         final PsiPackage psiPackage = subdirectory.getPackage();
         if (psiPackage != null) {
           final String name = psiPackage.getName();
@@ -95,8 +94,8 @@ public class PackageUtil {
     }
     if (settings.isFlattenPackages() || shouldSkipPackage) {
       final PsiPackage[] subpackages = PackageUtil.getSubpackages(aPackage, module, project, inLibrary);
-      for (int idx = 0; idx < subpackages.length; idx++) {
-        addPackageAsChild(children, subpackages[idx], module, settings, inLibrary);
+      for (PsiPackage subpackage : subpackages) {
+        addPackageAsChild(children, subpackage, module, settings, inLibrary);
       }
     }
   }
@@ -108,8 +107,7 @@ public class PackageUtil {
     final Project project = aPackage.getManager().getProject();
     final GlobalSearchScope scopeToShow = getScopeToShow(project, module, inLibrary);
     final PsiDirectory[] dirs = aPackage.getDirectories(scopeToShow);
-    for (int idx = 0; idx < dirs.length; idx++) {
-      final PsiDirectory dir = dirs[idx];
+    for (final PsiDirectory dir : dirs) {
       if (!TreeViewUtil.isEmptyMiddlePackage(dir, strictlyEmpty)) {
         return false;
       }
@@ -139,7 +137,7 @@ public class PackageUtil {
 
   public static boolean isPackageDefault(PsiPackage directoryPackage) {
     final String qName = directoryPackage.getQualifiedName();
-    return qName == null || qName.length() == 0;
+    return qName.length() == 0;
   }
 
   public static Collection<AbstractTreeNode> createPackageViewChildrenOnFiles(final List<VirtualFile> sourceRoots,
@@ -152,18 +150,17 @@ public class PackageUtil {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     final Set<PsiPackage> topLevelPackages = new HashSet<PsiPackage>();
 
-    for (Iterator<VirtualFile> it = sourceRoots.iterator(); it.hasNext();) {
-      final VirtualFile root = it.next();
+    for (final VirtualFile root : sourceRoots) {
       final PsiDirectory directory = psiManager.findDirectory(root);
       if (directory == null) {
-      continue;
+        continue;
       }
       final PsiPackage directoryPackage = directory.getPackage();
       if (directoryPackage == null || isPackageDefault(directoryPackage)) {
         // add subpackages
         final PsiDirectory[] subdirectories = directory.getSubdirectories();
-        for (int i = 0; i < subdirectories.length; i++) {
-          final PsiPackage aPackage = subdirectories[i].getPackage();
+        for (PsiDirectory subdirectory : subdirectories) {
+          final PsiPackage aPackage = subdirectory.getPackage();
           if (aPackage != null && !isPackageDefault(aPackage)) {
             topLevelPackages.add(aPackage);
           }
@@ -176,8 +173,8 @@ public class PackageUtil {
       }
     }
 
-    for (Iterator<PsiPackage> it = topLevelPackages.iterator(); it.hasNext();) {
-      addPackageAsChild(children, it.next(), module, settings, inLibrary);
+    for (final PsiPackage topLevelPackage : topLevelPackages) {
+      addPackageAsChild(children, topLevelPackage, module, settings, inLibrary);
     }
 
     return children;
@@ -187,12 +184,10 @@ public class PackageUtil {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     if (isLibraryElement) {
       OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
-      for (int i = 0; i < orderEntries.length; i++) {
-        OrderEntry orderEntry = orderEntries[i];
+      for (OrderEntry orderEntry : orderEntries) {
         if (NamedLibraryElementNode.orderEntryContainsFile(orderEntry, file)) {
-          return orderEntry instanceof ModuleJdkOrderEntry
-                 || orderEntry instanceof JdkOrderEntry
-                 || orderEntry instanceof LibraryOrderEntry;
+          return orderEntry instanceof ModuleJdkOrderEntry || orderEntry instanceof JdkOrderEntry ||
+                 orderEntry instanceof LibraryOrderEntry;
         }
       }
       return false;
@@ -204,8 +199,7 @@ public class PackageUtil {
 
   public static boolean projectContainsFile(final Project project, VirtualFile file, ViewSettings settings, boolean isLibraryElement) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (int i = 0; i < modules.length; i++) {
-      Module module = modules[i];
+    for (Module module : modules) {
       if (moduleContainsFile(module, file, settings, isLibraryElement)) return true;
     }
     return false;
@@ -313,10 +307,18 @@ public class PackageUtil {
       data.setOpenIcon(addReadMark(Icons.PACKAGE_OPEN_ICON, isWritable));
       data.setClosedIcon(addReadMark(Icons.PACKAGE_ICON, isWritable));
     }
+    else if (isWebRoot(psiDirectory)) {
+      data.setOpenIcon(addReadMark(Icons.WEB_FOLDER_OPEN, isWritable));
+      data.setClosedIcon(addReadMark(Icons.WEB_FOLDER_CLOSED, isWritable));
+    }
     else {
       data.setOpenIcon(addReadMark(TREE_OPEN_ICON, isWritable));
       data.setClosedIcon(addReadMark(TREE_CLOSED_ICON, isWritable));
     }
+  }
+
+  private static boolean isWebRoot(final PsiDirectory psiDirectory) {
+    return WebUtil.isWebRoot(psiDirectory.getVirtualFile(), psiDirectory.getProject());
   }
 
   public static boolean isModuleContentRoot(VirtualFile directoryFile, Project project) {
@@ -461,14 +463,13 @@ public class PackageUtil {
                                         ViewSettings viewSettings) {
     final Project project = dir.getManager().getProject();
     PsiDirectory[] subdirs = dir.getSubdirectories();
-    for (int i = 0; i < subdirs.length; i++) {
-      PsiDirectory subdir = subdirs[i];
+    for (PsiDirectory subdir : subdirs) {
       if (subdir.getPackage() == null) {
-      continue;
+        continue;
       }
       if (moduleFileIndex != null) {
         if (!moduleFileIndex.isInContent(subdir.getVirtualFile())) {
-        continue;
+          continue;
         }
       }
       if (viewSettings.isHideEmptyMiddlePackages()) {
@@ -517,15 +518,14 @@ public class PackageUtil {
       myProject = project;
     }
 
-    private Module[] getModules(final Project project) {
+    private static Module[] getModules(final Project project) {
       return ModuleManager.getInstance(project).getModules();
     }
 
     public boolean contains(VirtualFile file) {
       final Module[] modules = getModules(myProject);
-      for (int i = 0; i < modules.length; i++) {
-        Module module1 = modules[i];
-        final OrderEntry orderEntryForFile = ModuleRootManager.getInstance(module1).getFileIndex().getOrderEntryForFile(file);
+      for (Module module : modules) {
+        final OrderEntry orderEntryForFile = ModuleRootManager.getInstance(module).getFileIndex().getOrderEntryForFile(file);
         if (orderEntryForFile instanceof JdkOrderEntry || orderEntryForFile instanceof LibraryOrderEntry) return true;
       }
       return false;
@@ -533,9 +533,8 @@ public class PackageUtil {
 
     public int compare(VirtualFile file1, VirtualFile file2) {
       final Module[] modules = getModules(myProject);
-      for (int i = 0; i < modules.length; i++) {
-        Module module1 = modules[i];
-        final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module1).getFileIndex();
+      for (Module module : modules) {
+        final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
         final OrderEntry orderEntry1 = fileIndex.getOrderEntryForFile(file1);
         if (orderEntry1 != null) {
           final OrderEntry orderEntry2 = fileIndex.getOrderEntryForFile(file2);
