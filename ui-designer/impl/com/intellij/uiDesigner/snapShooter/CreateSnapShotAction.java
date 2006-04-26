@@ -56,6 +56,13 @@ import java.util.TreeSet;
 public class CreateSnapShotAction extends AnAction {
   @NonNls private static final String FORM_EXTENSION = ".form";
 
+  @Override
+  public void update(AnActionEvent e) {
+    final Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+    final IdeView view = (IdeView)e.getDataContext().getData(DataConstants.IDE_VIEW);
+    e.getPresentation().setVisible(project != null && view != null);
+  }
+
   public void actionPerformed(AnActionEvent e) {
     final Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
     final IdeView view = (IdeView)e.getDataContext().getData(DataConstants.IDE_VIEW);
