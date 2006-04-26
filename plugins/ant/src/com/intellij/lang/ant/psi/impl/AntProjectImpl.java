@@ -125,24 +125,16 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   @Nullable
-  public AntTypeDefinition getBaseTypeDefinition(final String taskClassName) {
-    if (myTypeDefinitions != null) return myTypeDefinitions.get(taskClassName);
+  public AntTypeDefinition getBaseTypeDefinition(final String className) {
+    if (myTypeDefinitions != null) return myTypeDefinitions.get(className);
     myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
     Project project = new Project();
     project.init();
-    final Hashtable ht = project.getTaskDefinitions();
-    if (ht == null) return null;
-    // first pass creates taskdefinitons without nested elements
-    final Enumeration tasks = ht.keys();
-    while (tasks.hasMoreElements()) {
-      final String taskName = (String)tasks.nextElement();
-      final Class taskClass = (Class)ht.get(taskName);
-      AntTypeDefinition def = createTypeDefinition(new AntTypeId(taskName, getSourceElement().getNamespace()), taskClass);
-      if (def != null) {
-        myTypeDefinitions.put(def.getClassName(), def);
-      }
-    }
-    return myTypeDefinitions.get(taskClassName);
+    // first, create task definitons without nested elements
+    updateTypeDefinitions(project.getTaskDefinitions(), true);
+    // second, create definitions for data types
+    updateTypeDefinitions(project.getDataTypeDefinitions(), false);
+    return myTypeDefinitions.get(className);
   }
 
   @NotNull
@@ -170,6 +162,19 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     myTypeDefinitions.put(definition.getClassName(), definition);
   }
 
+  private void updateTypeDefinitions(final Hashtable ht, final boolean isTask) {
+    if (ht == null) return;
+    final Enumeration types = ht.keys();
+    while (types.hasMoreElements()) {
+      final String typeName = (String)types.nextElement();
+      final Class typeClass = (Class)ht.get(typeName);
+      AntTypeDefinition def = createTypeDefinition(new AntTypeId(typeName, getSourceElement().getNamespace()), typeClass, isTask);
+      if (def != null) {
+        myTypeDefinitions.put(def.getClassName(), def);
+      }
+    }
+  }
+
   private AntTypeDefinitionImpl createProjectDefinition() {
     getBaseTypeDefinition(null);
     @NonNls final HashMap<String, AntAttributeType> projectAttrs = new HashMap<String, AntAttributeType>();
@@ -187,7 +192,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs, projectElements);
   }
 
-  static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class taskClass) {
+  static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class taskClass, final boolean isTask) {
     final IntrospectionHelper helper = getHelperExceptionSafe(taskClass);
     if (helper == null) return null;
     final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
@@ -212,7 +217,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
       nestedDefinitions.put(new AntTypeId(nestedElement), className);
     }
-    return new AntTypeDefinitionImpl(id, taskClass.getName(), true, attributes, nestedDefinitions);
+    return new AntTypeDefinitionImpl(id, taskClass.getName(), isTask, attributes, nestedDefinitions);
   }
 
   private static IntrospectionHelper getHelperExceptionSafe(Class c) {

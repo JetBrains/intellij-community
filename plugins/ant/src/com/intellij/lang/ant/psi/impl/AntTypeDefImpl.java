@@ -6,6 +6,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.XmlElement;
+import org.apache.tools.ant.Task;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -49,8 +50,13 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     final String name = getDefinedName();
     final String uri = getUri();
     AntTypeId id = (uri == null) ? new AntTypeId(name) : new AntTypeId(name, uri);
-    myNewDefinition = (clazz == null) ? null : AntProjectImpl.createTypeDefinition(id, clazz);
-    getAntProject().registerCustomType(myNewDefinition);
+    if (clazz == null) {
+      myNewDefinition = null;
+    }
+    else {
+      myNewDefinition = AntProjectImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
+      getAntProject().registerCustomType(myNewDefinition);
+    }
   }
 
   public String getDefinedName() {
