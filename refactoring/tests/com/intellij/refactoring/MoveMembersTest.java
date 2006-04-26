@@ -5,12 +5,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
+import com.intellij.idea.Bombed;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.Calendar;
 
 public class MoveMembersTest extends MultiFileTestCase {
-
+  @Bombed(user = "lesya", day = 4, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
   public void testJavadocRefs() throws Exception {
     doTest("Class1", "Class2", new int[]{0});
   }
