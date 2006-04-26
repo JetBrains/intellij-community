@@ -32,6 +32,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -92,7 +93,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   public void disposeComponent() {
     if (myDummyProject != null) {
-      myDummyProject.dispose();
+      Disposer.dispose(myDummyProject);
     }
   }
 

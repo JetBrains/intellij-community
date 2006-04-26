@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 /**
  * Project interface class.
  */
-public interface Project extends ComponentManager, AreaInstance {
+public interface Project extends ComponentManager, AreaInstance, Disposable {
   VirtualFile getProjectFile();
   String getName();
   /**

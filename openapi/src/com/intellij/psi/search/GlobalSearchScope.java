@@ -98,7 +98,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     return module.getModuleWithLibrariesScope();
   }
 
-  public static GlobalSearchScope moduleWithDependenciesScope(Module module) {
+  public static GlobalSearchScope moduleWithDependenciesScope(@NotNull Module module) {
     return module.getModuleWithDependenciesScope();
   }
 

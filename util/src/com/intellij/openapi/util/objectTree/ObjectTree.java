@@ -90,6 +90,9 @@ public final class ObjectTree {
     if (node != null) {
       node.execute(disposeTree, action);
     }
+    else {
+      action.execute(object);
+    }
   }
 
   public final void executeChildAndReplace(Object toExecute, Object toReplace, boolean disposeTree, ObjectTreeAction action) {

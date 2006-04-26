@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ModuleManager#getModules()
  * @see ModuleComponent 
  */
-public interface Module extends ComponentManager, AreaInstance {
+public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
    * The empty array of modules which cab be reused to avoid unnecessary allocations.
    */

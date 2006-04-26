@@ -10,7 +10,9 @@ package com.intellij.psi.impl;
 
 import com.intellij.javaee.JavaeeModuleProperties;
 import com.intellij.javaee.VerificationException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDirectory;
@@ -68,7 +70,21 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
   private T getUpToDateOrNull() {
     T value = myValue == null ? null : myValue.get();
-    return myComputed && isUpToDate() ? value : null;
+    if (myComputed) {
+      if (isUpToDate()) {
+        return value;
+      }
+      else {
+        if (value instanceof Disposable) {
+          Disposable disposable = (Disposable)value;
+          Disposer.dispose(disposable);
+        }
+        return null;
+      }
+    }
+    else {
+      return null;
+    }
   }
 
   public boolean hasUpToDateValue() {

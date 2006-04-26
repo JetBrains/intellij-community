@@ -124,7 +124,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public void disposeComponent() {
     if (myDefaultProject != null) {
-      myDefaultProject.dispose();
+      Disposer.dispose(myDefaultProject);
       myDefaultProject = null;
     }
   }

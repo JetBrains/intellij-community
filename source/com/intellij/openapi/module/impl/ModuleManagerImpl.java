@@ -14,6 +14,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -738,12 +739,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       for (Module thisModule1 : thisModules) {
         ModuleImpl thisModule = (ModuleImpl)thisModule1;
         if (!list.contains(thisModule)) {
-          thisModule.dispose();
+          Disposer.dispose(thisModule);
         }
       }
       for (Module moduleToDispose : myModulesToDispose) {
         if (!list.contains(moduleToDispose)) {
-          ((ModuleImpl)moduleToDispose).dispose();
+          Disposer.dispose(moduleToDispose);
         }
       }
       clearRenamingStuff();
@@ -762,7 +763,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       final Collection collection = myPath2ModelMap.values();
       for (final Object aCollection : collection) {
         ModuleImpl module = (ModuleImpl)aCollection;
-        module.dispose();
+        Disposer.dispose(module);
       }
       myPath2ModelMap.clear();
     }
@@ -806,7 +807,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       neverAddedModules.removeAll(myModuleModel.myPath2ModelMap.values());
       for (final Module neverAddedModule : neverAddedModules) {
         ModuleImpl module = (ModuleImpl)neverAddedModule;
-        module.dispose();
+        Disposer.dispose(module);
       }
 
       myModuleModel = moduleModel;
@@ -818,7 +819,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       for (Module module : removedModules) {
         fireModuleRemoved(module);
         cleanCachedStuff();
-        ((ModuleImpl)module).dispose();
+        Disposer.dispose(module);
         cleanCachedStuff();
       }
 

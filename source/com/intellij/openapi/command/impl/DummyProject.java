@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
-import org.picocontainer.PicoContainer;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.PicoContainer;
 
 /**
  * @author max
@@ -101,5 +101,8 @@ public class DummyProject extends UserDataHolderBase implements Project {
 
   public GlobalSearchScope getProjectScope() {
     return null;
+  }
+
+  public void dispose() {
   }
 }
