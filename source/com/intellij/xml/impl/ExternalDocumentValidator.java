@@ -295,21 +295,19 @@ public class ExternalDocumentValidator {
     }
   }
 
-  public static void doValidation(final PsiElement context, final Validator.ValidationHost host) {
+  public static synchronized void doValidation(final PsiElement context, final Validator.ValidationHost host) {
     final PsiFile containingFile = context.getContainingFile();
     if (containingFile == null || containingFile.getFileType() != StdFileTypes.XML) return;
     final Project project = context.getProject();
 
-    synchronized(project) {
-      SoftReference<ExternalDocumentValidator> validatorReference = project.getUserData(validatorInstanceKey);
-      ExternalDocumentValidator validator = validatorReference != null? validatorReference.get() : null;
+    SoftReference<ExternalDocumentValidator> validatorReference = project.getUserData(validatorInstanceKey);
+    ExternalDocumentValidator validator = validatorReference != null? validatorReference.get() : null;
 
-      if(validator == null) {
-        validator = new ExternalDocumentValidator();
-        project.putUserData(validatorInstanceKey,new SoftReference<ExternalDocumentValidator>(validator));
-      }
-
-      validator.runJaxpValidation((XmlElement)context,host);
+    if(validator == null) {
+      validator = new ExternalDocumentValidator();
+      project.putUserData(validatorInstanceKey,new SoftReference<ExternalDocumentValidator>(validator));
     }
+
+    validator.runJaxpValidation((XmlElement)context,host);
   }
 }
