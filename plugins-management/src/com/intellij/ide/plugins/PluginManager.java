@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.PluginsFacade;
@@ -302,9 +301,7 @@ public class PluginManager {
 
     loadDescriptorsFromProperty(result);
 
-    if (Boolean.valueOf(System.getProperty(IdeaApplication.IDEA_IS_INTERNAL_PROPERTY)).booleanValue()) {
-      loadDescriptorsFromClassPath(result);
-    }
+    loadDescriptorsFromClassPath(result);
 
     String errorMessage = filterBadPlugins(result);
 
@@ -339,10 +336,7 @@ public class PluginManager {
   private static void loadDescriptorsFromClassPath(final List<IdeaPluginDescriptorImpl> result) {
     try {
       final String homePath = PathManager.getHomePath();
-      final ClassLoader classLoader = PluginManager.class.getClassLoader();
-      final Class<? extends ClassLoader> aClass = classLoader.getClass();
-      if (!aClass.getName().equals(IdeaClassLoader.class.getName())) return;
-      final ArrayList<URL> urls = (ArrayList<URL>)aClass.getDeclaredMethod("getUrls").invoke(classLoader);
+      final Collection<URL> urls = getClassLoaderUrls();
       for (URL url : urls) {
         final String protocol = url.getProtocol();
         if ("file".equals(protocol)) {
@@ -360,6 +354,28 @@ public class PluginManager {
       System.err.println("Error loading plugins from classpath:");
       e.printStackTrace();
     }
+  }
+
+  private static Collection<URL> getClassLoaderUrls() {
+    final ClassLoader classLoader = PluginManager.class.getClassLoader();
+    final Class<? extends ClassLoader> aClass = classLoader.getClass();
+    if (aClass.getName().equals(IdeaClassLoader.class.getName())) {
+      try {
+        final ArrayList<URL> urls = (ArrayList<URL>)aClass.getDeclaredMethod("getUrls").invoke(classLoader);
+        return urls;
+      }
+      catch (IllegalAccessException e) {
+      }
+      catch (InvocationTargetException e) {
+      }
+      catch (NoSuchMethodException e) {
+      }
+    }
+    if (classLoader instanceof URLClassLoader) {
+      return Arrays.asList(((URLClassLoader)classLoader).getURLs());
+    }
+
+    return Collections.emptyList();
   }
 
   private static String filterBadPlugins(List<IdeaPluginDescriptorImpl> result) {
@@ -621,7 +637,7 @@ public class PluginManager {
     if (pluginDescriptor.getUseIdeaClassLoader()) {
       try {
         final ClassLoader loader = PluginManager.class.getClassLoader();
-        final Method addUrlMethod = loader.getClass().getDeclaredMethod("addURL", URL.class);
+        final Method addUrlMethod = getAddUrlMethod(loader);
 
 
         for (File aClassPath : classPath) {
@@ -664,6 +680,16 @@ public class PluginManager {
       e.printStackTrace();
     }
     return null;
+  }
+
+  private static Method getAddUrlMethod(final ClassLoader loader) throws NoSuchMethodException {
+    if (loader instanceof URLClassLoader) {
+      final Method addUrlMethod = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+      addUrlMethod.setAccessible(true);
+      return addUrlMethod;
+    }
+    
+    return loader.getClass().getDeclaredMethod("addURL", URL.class);
   }
 
 
