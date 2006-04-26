@@ -219,12 +219,19 @@ public class CompletionVariant {
         ret.setAttribute(key, myItemProperties.get(key));
       }
     }
-    final Pattern pattern = CompletionUtil.createCampelHumpsMatcher(prefix);
-    PatternMatcher matcher = new Perl5Matcher();
+
     final String lookupString = ret.getLookupString();
-    if(CompletionUtil.checkName(lookupString, prefix, caseInsensitive) || matcher.matches(lookupString, pattern)){
+    if(CompletionUtil.checkName(lookupString, prefix, caseInsensitive)){
       set.add(ret);
       return ret;
+    } else {
+      final Pattern pattern = CompletionUtil.createCampelHumpsMatcher(prefix);
+      PatternMatcher matcher = new Perl5Matcher();
+
+      if (matcher.matches(lookupString, pattern)) {
+        set.add(ret);
+        return ret;
+      }
     }
     return null;
   }
