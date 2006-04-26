@@ -304,8 +304,7 @@ public final class EditorsSplitters extends JPanel {
     }, 200, ModalityState.stateForComponent(this));
   }
 
-  public void updateFileColor(final VirtualFile file) {
-    LOG.assertTrue(file != null);
+  public void updateFileColor(@NotNull final VirtualFile file) {
     final EditorWindow[] windows = findWindows(file);
     if (windows != null) {
       for (final EditorWindow window : windows) {

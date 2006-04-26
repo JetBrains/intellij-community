@@ -188,8 +188,8 @@ public abstract class AbstractTreeBuilder {
 
   public final void setNodeDescriptorComparator(Comparator<NodeDescriptor> nodeDescriptorComparator) {
     myNodeDescriptorComparator = nodeDescriptorComparator;
-    ArrayList pathsToExpand = new ArrayList();
-    ArrayList selectionPaths = new ArrayList();
+    List<Object> pathsToExpand = new ArrayList<Object>();
+    List<Object> selectionPaths = new ArrayList<Object>();
     TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, selectionPaths, false);
     resortChildren(myRootNode);
     myTreeModel.nodeStructureChanged(myRootNode);
@@ -415,6 +415,16 @@ public abstract class AbstractTreeBuilder {
   }
 
   private void updateInBackground(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
+    String text = IdeBundle.message("progress.searching");
+    for (int i = 0; i < node.getChildCount(); i++) {
+      TreeNode child = node.getChildAt(i);
+      if (child instanceof LoadingNode && text.equals(((LoadingNode)child).getUserObject())) {
+        return;
+      }
+    }
+    LoadingNode loadingNode = new LoadingNode(text);
+    myTreeModel.insertNodeInto(loadingNode, node, node.getChildCount()); // 2 loading nodes - only one will be removed
+
     Runnable updateRunnable = new Runnable() {
       public void run() {
         descriptor.update();
@@ -424,7 +434,6 @@ public abstract class AbstractTreeBuilder {
         myTreeStructure.getChildElements(element); // load children
       }
     };
-
     Runnable postRunnable = new Runnable() {
       public void run() {
         descriptor.update();
@@ -447,19 +456,7 @@ public abstract class AbstractTreeBuilder {
         }
       }
     };
-
-    String text = IdeBundle.message("progress.searching");
-    for (int i = 0; i < node.getChildCount(); i++) {
-      TreeNode child = node.getChildAt(i);
-      if (child instanceof LoadingNode && text.equals(((LoadingNode)child).getUserObject())) {
-        return;
-      }
-    }
-    LoadingNode loadingNode = new LoadingNode(text);
-    myTreeModel.insertNodeInto(loadingNode, node, node.getChildCount()); // 2 loading nodes - only one will be removed
-
     addTaskToWorker(updateRunnable, true, postRunnable);
-
   }
 
   private void processChildNode(final DefaultMutableTreeNode childNode, final NodeDescriptor childDescr, final DefaultMutableTreeNode node,
@@ -634,8 +631,8 @@ public abstract class AbstractTreeBuilder {
       }
 
       if (oldIndex != newIndex) {
-        ArrayList pathsToExpand = new ArrayList();
-        ArrayList selectionPaths = new ArrayList();
+        List<Object> pathsToExpand = new ArrayList<Object>();
+        List<Object> selectionPaths = new ArrayList<Object>();
         TreeBuilderUtil.storePaths(this, node, pathsToExpand, selectionPaths, false);
         myTreeModel.removeNodeFromParent(node);
         myTreeModel.insertNodeInto(node, parentNode, newIndex);

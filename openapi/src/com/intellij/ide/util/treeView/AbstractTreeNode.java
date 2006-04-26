@@ -53,13 +53,10 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     Icon closedIcon = presentation.getIcon(false);
     String name = presentation.getPresentableText();
     String locationString = presentation.getLocationString();
-    Color color = getFileStatus().getColor();
     TextAttributesKey attributesKey = presentation.getTextAttributesKey();
-    if (valueIsCut()) {
-      color = CopyPasteManager.CUT_COLOR;
-    }
+    Color color = computeColor();
 
-     boolean updated = !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, myLocationString, myColor, myAttributesKey},
+    boolean updated = !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, myLocationString, myColor, myAttributesKey},
                                         new Object[]{openIcon, closedIcon, name, locationString, color, attributesKey});
 
     myOpenIcon = openIcon;
@@ -70,6 +67,15 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     myAttributesKey = attributesKey;
 
     return updated;
+  }
+
+  protected Color computeColor() {
+    Color color = getFileStatus().getColor();
+
+    if (valueIsCut()) {
+      color = CopyPasteManager.CUT_COLOR;
+    }
+    return color;
   }
 
   protected boolean valueIsCut() {

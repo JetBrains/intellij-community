@@ -5,6 +5,7 @@
  */
 package com.intellij.compiler.progress;
 
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
@@ -31,7 +32,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.codeInsight.problems.WolfTheProblemSolver;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,6 +54,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   private int myWarningCount = 0;
   private String myStatisticsText = "";
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private WolfTheProblemSolver.ProblemUpdateTransaction myUpdate;
 
   public CompilerProgressIndicator(Project project, boolean compileInBackground, String contentName) {
     myProject = project;
@@ -91,6 +92,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     if (CompilerMessageCategory.WARNING.equals(message.getCategory())) {
       myWarningCount += 1;
     }
+    myUpdate.addProblem(message);
     if (ApplicationManager.getApplication().isDispatchThread()) {
       doAddMessage(message);
     }
@@ -119,7 +121,6 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
         else {
           myErrorTreeView.addMessage(type, text, file, -1, -1, null);
         }
-        WolfTheProblemSolver.getInstance(myProject).addProblemFromCompiler(message);
       }
     }
   }
@@ -489,4 +490,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     }
   }
 
+  public void setUpdate(final WolfTheProblemSolver.ProblemUpdateTransaction update) {
+    myUpdate = update;
+  }
 }

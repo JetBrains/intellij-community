@@ -1,20 +1,19 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   private static final Icon OPEN_ICON = IconLoader.getIcon("/nodes/moduleGroupOpen.png");
@@ -34,9 +33,8 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   public Collection<AbstractTreeNode> getChildren() {
     final Collection<ModuleGroup> childGroups = getValue().childGroups(getProject());
     final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    for (Iterator iterator = childGroups.iterator(); iterator.hasNext();) {
-      ModuleGroup moduleGroup = (ModuleGroup)iterator.next();
-      result.add(createModuleGroupNode(moduleGroup));
+    for (final ModuleGroup childGroup : childGroups) {
+      result.add(createModuleGroupNode(childGroup));
     }
     Module[] modules = getValue().modulesInGroup(getProject(), false);
     final List<AbstractTreeNode> childModules = ProjectViewNode.wrap(Arrays.asList(modules), getProject(), getModuleNodeClass(), getSettings());
@@ -62,4 +60,4 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   public String getToolTip() {
     return IdeBundle.message("tooltip.module.group");
   }
-}
+  }

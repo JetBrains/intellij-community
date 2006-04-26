@@ -55,10 +55,11 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
 
   public FileStatus getFileStatus() {
     VirtualFile file = getVirtualFileForValue();
-    if (file != null) {
-      return FileStatusManager.getInstance(getProject()).getStatus(file);
-    } else {
+    if (file == null) {
       return FileStatus.NOT_CHANGED;
+    }
+    else {
+      return FileStatusManager.getInstance(getProject()).getStatus(file);
     }
   }
 
@@ -108,7 +109,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
   }
 
   public boolean contains(VirtualFile file) {
-    if (getValue() == null) return false;
+    if (getValue() == null || !getValue().isValid()) return false;
     PsiFile containingFile = getValue().getContainingFile();
     if (containingFile == null) {
       return false;
@@ -131,4 +132,4 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
     return getValue() instanceof NavigationItem && ((NavigationItem)getValue()).canNavigateToSource();
   }
 
-}
+  }

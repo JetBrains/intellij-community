@@ -7,9 +7,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
+import java.util.List;
 
 public class TreeBuilderUtil {
-  public static void storePaths(AbstractTreeBuilder treeBuilder, DefaultMutableTreeNode root, ArrayList<Object> pathsToExpand, ArrayList<Object> selectionPaths, boolean storeElementsOnly) {
+  public static void storePaths(AbstractTreeBuilder treeBuilder, DefaultMutableTreeNode root, List<Object> pathsToExpand, List<Object> selectionPaths, boolean storeElementsOnly) {
     JTree tree = treeBuilder.getTree();
     TreePath path = new TreePath(root.getPath());
     if (tree.isPathSelected(path)){
@@ -21,7 +22,7 @@ public class TreeBuilderUtil {
     }
   }
 
-  private static void _storePaths(JTree tree, DefaultMutableTreeNode root, ArrayList<Object> pathsToExpand, ArrayList<Object> selectionPaths, boolean storeElementsOnly) {
+  private static void _storePaths(JTree tree, DefaultMutableTreeNode root, List<Object> pathsToExpand, List<Object> selectionPaths, boolean storeElementsOnly) {
     ArrayList childNodes = TreeUtil.childrenToArray(root);
     for (final Object childNode1 : childNodes) {
       DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNode1;
@@ -38,7 +39,7 @@ public class TreeBuilderUtil {
     }
   }
 
-  public static void restorePaths(AbstractTreeBuilder treeBuilder, ArrayList<Object> pathsToExpand, ArrayList<Object> selectionPaths, boolean elementsOnly) {
+  public static void restorePaths(AbstractTreeBuilder treeBuilder, List<Object> pathsToExpand, List<Object> selectionPaths, boolean elementsOnly) {
     JTree tree = treeBuilder.getTree();
     if (!elementsOnly){
       for (Object path : pathsToExpand) {

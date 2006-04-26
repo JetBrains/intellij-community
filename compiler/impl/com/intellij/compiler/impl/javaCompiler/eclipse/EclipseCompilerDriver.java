@@ -181,7 +181,7 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
                 true,
                 outputDir,
                 relativePath,
-                classFile.getBytes());
+                classFile);
       }
       catch (IOException e) {
         LOG.error(e);

@@ -9,7 +9,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
-import com.intellij.codeInsight.problems.WolfTheProblemSolver;
+import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
@@ -451,7 +452,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
     }
     myUpdateProgress.cancel();
-    WolfTheProblemSolver.getInstance(myProject).daemonStopped(toRestartAlarm);
+    ((WolfTheProblemSolverImpl)WolfTheProblemSolver.getInstance(myProject)).daemonStopped(toRestartAlarm);
   }
 
   @Nullable

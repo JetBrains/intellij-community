@@ -40,18 +40,18 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.problems.WolfTheProblemSolver;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 
 public class NavigationItemListCellRenderer extends JPanel implements ListCellRenderer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.NavigationItemListCellRenderer");
-
   public NavigationItemListCellRenderer() {
     super(new BorderLayout());
   }
@@ -83,7 +83,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
     return this;
   }
 
-  private class LeftRenderer extends ColoredListCellRenderer {
+  private static class LeftRenderer extends ColoredListCellRenderer {
     protected void customizeCellRenderer(
       JList list,
       Object value,
@@ -98,9 +98,15 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
           element.toString() + ", class " + element.getClass().getName();
         String name = presentation.getPresentableText();
         Color color = list.getForeground();
-        FileStatus status = element.getFileStatus();
-        if (status != FileStatus.NOT_CHANGED) {
-          color = status.getColor();
+        if (element instanceof PsiElement && WolfTheProblemSolver.getInstance(((PsiElement)element).getProject()).isProblemFile(
+          PsiUtil.getVirtualFile((PsiElement)element))) {
+          color = WolfTheProblemSolver.PROBLEM_COLOR;
+        }
+        else {
+          FileStatus status = element.getFileStatus();
+          if (status != FileStatus.NOT_CHANGED) {
+            color = status.getColor();
+          }
         }
 
         final SimpleTextAttributes simpleTextAttributes = NodeRenderer.getSimpleTextAttributes(presentation);
@@ -124,7 +130,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
     }
   }
 
-  public Comparator getComparator() {
+  public static Comparator getComparator() {
     return new Comparator() {
       public int compare(Object o1, Object o2) {
         return getText(o1).compareTo(getText(o2));

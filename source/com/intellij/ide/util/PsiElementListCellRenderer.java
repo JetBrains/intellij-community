@@ -11,6 +11,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.problems.WolfTheProblemSolver;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,8 +44,13 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         if (psiFile != null) {
           VirtualFile vFile = psiFile.getVirtualFile();
           if (vFile != null) {
-            FileStatus status = FileStatusManager.getInstance(psiFile.getProject()).getStatus(vFile);
-            color = status.getColor();
+            if (WolfTheProblemSolver.getInstance(psiFile.getProject()).isProblemFile(vFile)) {
+              color = WolfTheProblemSolver.PROBLEM_COLOR;
+            }
+            else {
+              FileStatus status = FileStatusManager.getInstance(psiFile.getProject()).getStatus(vFile);
+              color = status.getColor();
+            }
           }
         }
         append(name, new SimpleTextAttributes(Font.PLAIN, color));

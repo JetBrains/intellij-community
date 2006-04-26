@@ -7,8 +7,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.problems.Problem;
-import com.intellij.codeInsight.problems.WolfTheProblemSolver;
+import com.intellij.codeInsight.problems.ProblemImpl;
+import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.problems.Problem;
 import com.intellij.javaee.ejb.role.EjbImplMethodRole;
 import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.intellij.javaee.ejb.role.EjbRolesUtil;
@@ -166,15 +167,17 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     if (!PsiManager.getInstance(myProject).isInProject(myFile)) return; // do not report problems in libraries
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
     VirtualFile file = myFile.getVirtualFile();
-    wolf.startUpdatingProblemsInScope(file);
+    WolfTheProblemSolver.ProblemUpdateTransaction update = wolf.startUpdatingProblemsInScope(file);
     try {
       for (HighlightInfo info : infos) {
-        Problem problem = new Problem(file, info);
-        wolf.addProblem(problem);
+        if (info.getSeverity() == HighlightSeverity.ERROR) {
+          Problem problem = new ProblemImpl(file, info);
+          update.addProblem(problem);
+        }
       }
     }
     finally {
-      wolf.finishUpdatingProblems();
+      update.commit();
     }
   }
 

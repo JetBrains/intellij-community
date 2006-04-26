@@ -43,8 +43,7 @@ public class ModuleGroup {
   public Module[] modulesInGroup(Project project, boolean recursively) {
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
     List<Module> result = new ArrayList<Module>();
-    for (int i = 0; i < allModules.length; i++) {
-      final Module module = allModules[i];
+    for (final Module module : allModules) {
       String[] group = ModuleManager.getInstance(project).getModuleGroupPath(module);
       if (group == null) continue;
       if (Arrays.equals(myGroupPath, group) || (recursively && isChild(myGroupPath, group))) {
@@ -58,8 +57,7 @@ public class ModuleGroup {
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
 
     Set<ModuleGroup> result = new THashSet<ModuleGroup>();
-    for (int i = 0; i < allModules.length; i++) {
-      Module module = allModules[i];
+    for (Module module : allModules) {
       String[] group = ModuleManager.getInstance(project).getModuleGroupPath(module);
       if (group == null) continue;
       final String[] directChild = directChild(myGroupPath, group);

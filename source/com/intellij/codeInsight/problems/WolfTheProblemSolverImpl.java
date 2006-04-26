@@ -4,11 +4,11 @@ import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.compiler.impl.FileSetCompileScope;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
@@ -21,34 +21,34 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
-import com.intellij.lang.annotation.HighlightSeverity;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author cdr
  */
 public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.problems.WolfTheProblemSolver");
-
-  private Map<VirtualFile, Collection<Problem>> myProblems = new THashMap<VirtualFile, Collection<Problem>>();
+  private Map<VirtualFile, Collection<ProblemImpl>> myProblems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
   private final Alarm myHighlightingAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
-  private final Alarm myUpdateProblemsAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
   private final Runnable myRehighlightRequest = new Runnable() {
     public void run() {
       ApplicationManager.getApplication().runReadAction(new Runnable(){
         public void run() {
-          //startCheckingIfVincentSolvedProblemsYet();
+          startCheckingIfVincentSolvedProblemsYet();
         }
       });
     }
@@ -56,10 +56,85 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final Project myProject;
   private ProjectFileIndex myProjectFileIndex;
   private final ProgressIndicator myProgress;
+  private final List<ProblemListener> myProblemListeners = new CopyOnWriteArrayList<ProblemListener>();
+  private final ProblemListener fireProblemListeners = new ProblemListener() {
+    public void problemsChanged(Collection<VirtualFile> added, Collection<VirtualFile> removed) {
+      for (ProblemListener problemListener : myProblemListeners) {
+        problemListener.problemsChanged(added, removed);
+      }
+    }
+  };
+
   private boolean myDaemonStopped;
   private long myPsiModificationCount;
-  private CompileScope myCompileScope;
-  private Map<VirtualFile, Collection<Problem>> myBackedProblems;
+  private class UpdateImpl implements ProblemUpdateTransaction {
+    private Map<VirtualFile, Collection<ProblemImpl>> backedProblems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
+    private Map<VirtualFile, Collection<ProblemImpl>> problems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
+    private CompileScope scope;
+
+    public UpdateImpl(final Map<VirtualFile, Collection<ProblemImpl>> problems, CompileScope compileScope) {
+      scope = compileScope;
+      backedProblems.putAll(problems);
+    }
+
+    public synchronized void addProblem(Problem problem) {
+      VirtualFile virtualFile = problem.getVirtualFile();
+      Collection<ProblemImpl> storedProblems = problems.get(virtualFile);
+      if (storedProblems == null) {
+        storedProblems = new SmartList<ProblemImpl>();
+        problems.put(virtualFile, storedProblems);
+      }
+      storedProblems.add((ProblemImpl)problem);
+    }
+
+    public void addProblem(final CompilerMessage message) {
+      if (message.getCategory() != CompilerMessageCategory.ERROR) return;
+      ApplicationManager.getApplication().runReadAction(new Runnable(){
+        public void run() {
+          ProblemImpl problem = convertToProblem(message);
+          if (problem != null) {
+            addProblem(problem);
+          }
+        }
+      });
+    }
+
+    public void commit() {
+      //todo report added/removed problems here
+      Set<VirtualFile> added = new THashSet<VirtualFile>();
+      added.addAll(problems.keySet());
+      added.removeAll(backedProblems.keySet());
+
+      Set<VirtualFile> removed = new THashSet<VirtualFile>();
+      removed.addAll(backedProblems.keySet());
+      removed.removeAll(problems.keySet());
+
+      synchronized(myProblems) {
+        for (VirtualFile addedFile : added) {
+          Collection<ProblemImpl> addedProblems = problems.get(addedFile);
+          Collection<ProblemImpl> existingProblems = myProblems.get(addedFile);
+          if (existingProblems == null) {
+            myProblems.put(addedFile, addedProblems);
+          }
+          else {
+            existingProblems.addAll(existingProblems);
+          }
+        }
+        for (VirtualFile removedFile : removed) {
+          if (scope.belongs(removedFile.getUrl())) {
+            myProblems.remove(removedFile);
+          }
+        }
+      }
+      problems = null;
+      scope = null;
+      
+      if (!added.isEmpty() || !removed.isEmpty()) {
+        fireProblemListeners.problemsChanged(added, removed);
+      }
+    }
+
+  }
 
   public WolfTheProblemSolverImpl(Project project) {
     myProject = project;
@@ -125,11 +200,13 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     ProgressManager.getInstance().runProcess(new Runnable(){
       public void run() {
         try {
+          WindowManager.getInstance().getStatusBar(myProject).setInfo("Checking '"+file.getPresentableUrl()+"'");
           //ProblemsToolWindow.getInstance(myProject).setProgressText("Checking '"+file.getPresentableUrl()+"'");
           GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true);
           pass.doCollectInformation(myProgress);
         }
         finally {
+          WindowManager.getInstance().getStatusBar(myProject).setInfo("");
           //ProblemsToolWindow.getInstance(myProject).setProgressText("");
         }
       }
@@ -149,29 +226,27 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return false;
   }
 
-  public void addProblem(final Problem problem) {
-    if (problem.highlightInfo.getSeverity() != HighlightSeverity.ERROR) return;
-    myUpdateProblemsAlarm.addRequest(new Runnable() {
-      public void run() {
-        if (problem.virtualFile != null) {
-          synchronized (myProblems) {
-            Collection<Problem> problems = myProblems.get(problem.virtualFile);
-            if (problems == null) {
-              problems = new SmartList<Problem>();
-              myProblems.put(problem.virtualFile, problems);
-            }
-            problems.add(problem);
-          }
-        }
-      }
-    }, 0);
-  }
-
   public void daemonStopped(final boolean toRestartAlarm) {
     myDaemonStopped = true;
     if (toRestartAlarm) {
       restartHighlighting();
     }
+  }
+
+  public boolean hasProblemFilesUnder(ProjectViewNode scope) {
+    Set<VirtualFile> problemFiles = myProblems.keySet();
+    for (VirtualFile problemFile : problemFiles) {
+      if (scope.contains(problemFile)) return true;
+    }
+    return false;
+  }
+
+  public void addProblemListener(ProblemListener listener) {
+    myProblemListeners.add(listener);
+  }
+
+  public void removeProblemListener(ProblemListener listener) {
+    myProblemListeners.remove(listener);
   }
 
   private void restartHighlighting() {
@@ -181,13 +256,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   public boolean isProblemFile(VirtualFile virtualFile) {
     synchronized (myProblems) {
-      Set<VirtualFile> actualProblems = myBackedProblems == null ? myProblems.keySet() : myBackedProblems.keySet();
-      return actualProblems.contains(virtualFile);
+      return myProblems.containsKey(virtualFile);
     }
   }
 
-  public void addProblemFromCompiler(final CompilerMessage message) {
-    if (message.getCategory() != CompilerMessageCategory.ERROR) return;
+  private static ProblemImpl convertToProblem(final CompilerMessage message) {
     VirtualFile virtualFile = message.getVirtualFile();
     if (virtualFile == null) {
       Navigatable navigatable = message.getNavigatable();
@@ -195,9 +268,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         virtualFile = ((OpenFileDescriptor)navigatable).getFile();
       }
     }
-    LOG.assertTrue(virtualFile != null);
+    if (virtualFile == null) return null;
     HighlightInfo info = HighlightInfo.createHighlightInfo(convertToHighlightInfoType(message), getTextRange(message), message.getMessage());
-    addProblem(new Problem(virtualFile, info));
+    return new ProblemImpl(virtualFile, info);
   }
 
   private static TextRange getTextRange(final CompilerMessage message) {
@@ -220,58 +293,14 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return null;
   }
 
-
-  // serialize all updates to avoid mixing them
-  public void startUpdatingProblemsInScope(final CompileScope compileScope) {
-    if (1==1) return; //todo removed for now
-    myUpdateProblemsAlarm.addRequest(new Runnable() {
-      public void run() {
-        myCompileScope = compileScope;
-
-        synchronized (myProblems) {
-          myBackedProblems = myProblems;
-          myProblems = new THashMap<VirtualFile, Collection<Problem>>();
-        }
-      }
-    }, 0);
+  public ProblemUpdateTransaction startUpdatingProblemsInScope(final CompileScope compileScope) {
+    return new UpdateImpl(myProblems, compileScope);
   }
-  public void startUpdatingProblemsInScope(final VirtualFile virtualFile) {
+
+  public ProblemUpdateTransaction startUpdatingProblemsInScope(final VirtualFile virtualFile) {
     Module module = myProjectFileIndex.getModuleForFile(virtualFile);
     CompileScope compileScope = new FileSetCompileScope(new VirtualFile[]{virtualFile}, new Module[]{module});
-    startUpdatingProblemsInScope(compileScope);
-  }
-
-  public void finishUpdatingProblems() {
-    if (1==1) return; //todo removed for now
-    myUpdateProblemsAlarm.addRequest(new Runnable() {
-      public void run() {
-        // remove not added problems
-        for (VirtualFile file : myBackedProblems.keySet()) {
-          Collection<Problem> problems = myBackedProblems.get(file);
-          for (Problem problem : problems) {
-            if (!isProblemInScope(problem, myCompileScope)) {
-              addProblem(problem);
-            }
-          }
-        }
-        //todo report added/removed problems here
-        Set<VirtualFile> added = new THashSet<VirtualFile>();
-        added.addAll(myProblems.keySet());
-        added.removeAll(myBackedProblems.keySet());
-
-        Set<VirtualFile> removed = new THashSet<VirtualFile>();
-        removed.addAll(myBackedProblems.keySet());
-        removed.removeAll(myProblems.keySet());
-        new ProblemsUpdater(myProject).updateProblems(added, removed);
-
-        myBackedProblems = null;
-        myCompileScope = null;
-      }
-    }, 0);
-  }
-
-  private static boolean isProblemInScope(final Problem problem, final CompileScope compileScope) {
-    return compileScope.belongs(problem.virtualFile.getUrl());
+    return startUpdatingProblemsInScope(compileScope);
   }
 
   public Collection<VirtualFile> getProblemFiles() {

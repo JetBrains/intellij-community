@@ -101,4 +101,4 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
     return index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file);
   }
-}
+  }

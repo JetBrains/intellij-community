@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
@@ -40,6 +41,7 @@ import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +53,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -99,6 +102,9 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * Updates icons for open files when project roots change
    */
   private final MyPsiTreeChangeListener myPsiTreeChangeListener;
+
+  private final WolfTheProblemSolver.ProblemListener myProblemListener;
+
   final EditorsSplitters mySplitters;
   private boolean myDoNotTransferFocus = false;
 
@@ -117,6 +123,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     myUISettingsListener = new MyUISettingsListener();
     myEditorManagerListener = new MyEditorManagerListener();
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
+    myProblemListener = new MyProblemListener();
   }
 
   //-------------------------------------------------------------------------------
@@ -143,8 +150,10 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * @return color of the <code>file</code> which corresponds to the
    *         file's status
    */
-  Color getFileColor(final VirtualFile file) {
-    LOG.assertTrue(file != null);
+  protected Color getFileColor(@NotNull final VirtualFile file) {
+    if (WolfTheProblemSolver.getInstance(getProject()).isProblemFile(file)) {
+      return WolfTheProblemSolver.PROBLEM_COLOR;
+    }
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
       return fileStatusManager.getStatus(file).getColor();
@@ -841,6 +850,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
     UISettings.getInstance().addUISettingsListener(myUISettingsListener);
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
+    WolfTheProblemSolver.getInstance(getProject()).addProblemListener(myProblemListener);
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
@@ -1259,5 +1269,22 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
 
   public VirtualFile[] getSiblings(VirtualFile file) {
     return getOpenFiles();
+  }
+
+  private class MyProblemListener implements WolfTheProblemSolver.ProblemListener {
+    public void problemsChanged(Collection<VirtualFile> added, Collection<VirtualFile> removed) {
+      final Set<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(added);
+      filesToRefresh.addAll(removed);
+      myQueue.queue(new Update("ProblemUpdate") {
+        public void run() {
+          for (VirtualFile virtualFile : filesToRefresh) {
+            if (isFileOpen(virtualFile)) {
+              updateFileIcon(virtualFile);
+              updateFileColor(virtualFile);
+            }
+          }
+        }
+      });
+    }
   }
 }

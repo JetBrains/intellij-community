@@ -117,7 +117,7 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.codeInsight.problems.WolfTheProblemSolver</interface-class>
+      <interface-class>com.intellij.problems.WolfTheProblemSolver</interface-class>
       <implementation-class>com.intellij.codeInsight.problems.WolfTheProblemSolverImpl</implementation-class>
       <headless-implementation-class>com.intellij.codeInsight.problems.MockWolfTheProblemSolver</headless-implementation-class>
       <skipForDummyProject/>

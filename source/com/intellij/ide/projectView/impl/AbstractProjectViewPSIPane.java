@@ -8,27 +8,26 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
-import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
+import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.ArrayUtil;
@@ -54,7 +53,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane implements ProjectComponent {
+public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
   protected JScrollPane myComponent;
 
   protected AbstractProjectViewPSIPane(Project project) {
@@ -67,7 +66,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     myTree = createTree(treeModel);
     DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
     myComponent = new JScrollPane(myTree);
-//    myComponent.setBorder(BorderFactory.createEmptyBorder());
     myTreeStructure = createStructure();
     myTreeBuilder = createBuilder(treeModel);
 
@@ -147,8 +145,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   public final void updateFromRoot(boolean restoreExpandedPaths) {
-    final ArrayList pathsToExpand = new ArrayList();
-    final ArrayList selectionPaths = new ArrayList();
+    final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
+    final ArrayList<Object> selectionPaths = new ArrayList<Object>();
     if (restoreExpandedPaths) {
       TreeBuilderUtil.storePaths(myTreeBuilder, (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
     }

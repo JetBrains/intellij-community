@@ -135,7 +135,7 @@ public class AnalysisScope {
   }
 
 
-  public AnalysisScope(Project project, Set<VirtualFile> virtualFiles) {
+  public AnalysisScope(Project project, Collection<VirtualFile> virtualFiles) {
     myProject = project;
     myElement = null;
     myModule = null;
@@ -220,7 +220,7 @@ public class AnalysisScope {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     final HashSet<Module> modules = new HashSet<Module>();
     if (myType == FILE) {
-      if (myElement instanceof PsiJavaFile && !(PsiUtil.isInJspFile(myElement))) {
+      if (myElement instanceof PsiJavaFile && !PsiUtil.isInJspFile(myElement)) {
         PsiJavaFile psiJavaFile = (PsiJavaFile)myElement;
         final PsiClass[] classes = psiJavaFile.getClasses();
         boolean onlyPackLocalClasses = true;
@@ -234,16 +234,16 @@ public class AnalysisScope {
         }
       }
       final VirtualFile vFile = ((PsiFile)myElement).getVirtualFile();
-      modules.addAll(getAllInterstingModules(fileIndex, vFile));
+      modules.addAll(getAllInterestingModules(fileIndex, vFile));
     }
     else if (myType == DIRECTORY) {
       final VirtualFile vFile = ((PsiDirectory)myElement).getVirtualFile();
-      modules.addAll(getAllInterstingModules(fileIndex, vFile));
+      modules.addAll(getAllInterestingModules(fileIndex, vFile));
     }
     else if (myType == PACKAGE) {
       final PsiDirectory[] directories = ((PsiPackage)myElement).getDirectories();
       for (PsiDirectory directory : directories) {
-        modules.addAll(getAllInterstingModules(fileIndex, directory.getVirtualFile()));
+        modules.addAll(getAllInterestingModules(fileIndex, directory.getVirtualFile()));
       }
     }
     else if (myType == MODULE) {
@@ -292,7 +292,7 @@ public class AnalysisScope {
     return result;
   }
 
-  private static HashSet<Module> getAllInterstingModules(final ProjectFileIndex fileIndex, final VirtualFile vFile) {
+  private static HashSet<Module> getAllInterestingModules(final ProjectFileIndex fileIndex, final VirtualFile vFile) {
     final HashSet<Module> modules = new HashSet<Module>();
     if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
       for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(vFile)) {

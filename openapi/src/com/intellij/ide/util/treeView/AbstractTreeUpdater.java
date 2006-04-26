@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -42,7 +43,7 @@ public class AbstractTreeUpdater {
     myUpdateQueue.dispose();
   }
 
-  public void addSubtreeToUpdate(DefaultMutableTreeNode rootNode) {
+  public void addSubtreeToUpdate(@NotNull DefaultMutableTreeNode rootNode) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("addSubtreeToUpdate:" + rootNode);
     }

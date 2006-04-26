@@ -170,10 +170,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
   private boolean showFwName(final PsiPackage aPackage) {
-    final boolean showFqName;
-    showFqName = getSettings().isFlattenPackages() &&
-                 aPackage.getQualifiedName().length() > 0;
-    return showFqName;
+    return getSettings().isFlattenPackages() && aPackage.getQualifiedName().length() > 0;
   }
 
   public String getTestPresentation() {
@@ -204,7 +201,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     if (super.canRepresent(element)) return true;
     final PackageElement value = getValue();
     if (element instanceof PackageElement) {
-      final PackageElement packageElement = ((PackageElement)element);
+      final PackageElement packageElement = (PackageElement)element;
       final PsiPackage otherPackage = packageElement.getPackage();
       final PsiPackage aPackage = value.getPackage();
       if (otherPackage != null && aPackage != null && Comparing.equal(otherPackage.getQualifiedName(), aPackage.getQualifiedName())) {
@@ -218,4 +215,4 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     }
     return false;
   }
-}
+  }

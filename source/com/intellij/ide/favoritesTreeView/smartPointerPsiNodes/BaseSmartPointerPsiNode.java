@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,28 +48,18 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
 
   public FileStatus getFileStatus() {
     VirtualFile file = getVirtualFileForValue();
-    if (file != null) {
-      return FileStatusManager.getInstance(getProject()).getStatus(file);
-    } else {
+    if (file == null) {
       return FileStatus.NOT_CHANGED;
+    }
+    else {
+      return FileStatusManager.getInstance(getProject()).getStatus(file);
     }
   }
 
   private VirtualFile getVirtualFileForValue() {
     PsiElement value = getPsiElement();
     if (value == null) return null;
-    if (value instanceof PsiDirectory) {
-      return ((PsiDirectory)value).getVirtualFile();
-    }
-    else {
-      PsiFile containingFile = value.getContainingFile();
-      if (containingFile == null) {
-        return null;
-      }
-      else {
-        return containingFile.getVirtualFile();
-      }
-    }
+    return PsiUtil.getVirtualFile(value);
   }
   // Should be called in atomic action
 
@@ -108,10 +99,10 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
 
   }
 
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     if (getPsiElement() == null) return false;
     PsiFile containingFile = getPsiElement().getContainingFile();
-    return containingFile.getVirtualFile().equals(file);
+    return file.equals(containingFile.getVirtualFile());
   }
 
   public void navigate(boolean requestFocus) {
@@ -132,4 +123,4 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
     final Type value = getValue();
     return value == null ? null : value.getElement();
   }
-}
+  }

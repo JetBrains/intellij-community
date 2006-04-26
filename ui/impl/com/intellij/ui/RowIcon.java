@@ -5,7 +5,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.util.Icons;
 import com.intellij.util.SmartList;
-import com.intellij.ide.IconUtilEx;
 
 import javax.swing.*;
 import java.awt.*;
@@ -109,18 +108,9 @@ public class RowIcon implements Icon {
         layeredIcon.setIcon(icon1, i+1);
       }
       icon = layeredIcon;
-      if ((flags & ElementBase.FLAGS_PROBLEMS) != 0) {
-        LayeredIcon newIcon = new LayeredIcon(2);
-        Icon mark = IconLoader.getIcon("/nodes/errorMark.png");
-        newIcon.setIcon(mark, 0);
-        newIcon.setIcon(IconUtilEx.redden(icon), 1, mark.getIconWidth(), 0);
-        // todo removed
-        //icon = newIcon;
-      }
     }
     RowIcon baseIcon = new RowIcon(2);
     baseIcon.setIcon(icon, 0);
     return baseIcon;
   }
-
 }

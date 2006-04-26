@@ -6,6 +6,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiDirectory;
 
 import java.util.Collection;
@@ -49,9 +54,17 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     if (value == null) {
       return false;
     }
-    else {
-      return VfsUtil.isAncestor(value.getVirtualFile(), file, false);
+
+    if (!VfsUtil.isAncestor(value.getVirtualFile(), file, false)) {
+      return false;
     }
+    final Project project = value.getManager().getProject();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final Module module = fileIndex.getModuleForFile(value.getVirtualFile());
+    if (module == null) return true;
+    final ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+    
+    return moduleFileIndex.isInContent(file);
   }
 
   public VirtualFile getVirtualFile() {
@@ -63,8 +76,9 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     if (getValue() == null) return false;
     if (element instanceof PackageElement) {
       final PackageElement packageElement = ((PackageElement)element);
-      return (Arrays.asList(packageElement.getPackage().getDirectories()).contains(getValue()));
+      return Arrays.asList(packageElement.getPackage().getDirectories()).contains(getValue());
     }
     return false;
   }
-}
+
+  }

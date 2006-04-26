@@ -19,8 +19,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.WolfTheProblemSolver;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -65,7 +68,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
    * @param file the file to check for.
    * @return true if the file is found in the subtree, false otherwise.
    */
-  public abstract boolean contains(VirtualFile file);
+  public abstract boolean contains(@NotNull VirtualFile file);
 
   /**
    * Returns the virtual file represented by this node or one of its children.
@@ -117,5 +120,13 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
       if (node.contains(file)) return true;
     }
     return false;
+  }
+
+  protected Color computeColor() {
+    boolean hasProblem = WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesUnder(this);
+    if (hasProblem) {
+      return WolfTheProblemSolver.PROBLEM_COLOR;
+    }
+    return super.computeColor();
   }
 }
