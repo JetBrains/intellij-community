@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.problems;
 
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.problems.Problem;
-import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +21,16 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   public ProblemUpdateTransaction startUpdatingProblemsInScope(CompileScope compileScope) {
-    return null;
+    return new ProblemUpdateTransaction() {
+      public void addProblem(Problem problem) {
+      }
+
+      public void addProblem(CompilerMessage message) {
+      }
+
+      public void commit() {
+      }
+    };
   }
 
   public ProblemUpdateTransaction startUpdatingProblemsInScope(VirtualFile virtualFile) {
