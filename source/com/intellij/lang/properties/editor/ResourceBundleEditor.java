@@ -482,6 +482,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return myStructureViewPanel;
   }
 
+  @NotNull
   public String getName() {
     return "Resource Bundle";
   }

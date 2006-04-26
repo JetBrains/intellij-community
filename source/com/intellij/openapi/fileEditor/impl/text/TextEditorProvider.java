@@ -216,6 +216,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
       return myEditor.getContentComponent();
     }
 
+    @NotNull
     public String getName() {
       return "Text";
     }

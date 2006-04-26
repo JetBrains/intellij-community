@@ -46,8 +46,9 @@ public interface FileEditor extends UserDataHolder {
   JComponent getComponent();
 
   /**
-   * Returns component to be focused when editor is opened. Method should never return null.
+   * Returns component to be focused when editor is opened.
    */
+  @Nullable
   JComponent getPreferredFocusedComponent();
 
   /**
@@ -56,6 +57,7 @@ public interface FileEditor extends UserDataHolder {
    * and "Text". So "GUI Designer" can be a name of one editor and "Text"
    * can be a name of other editor. The method should never return <code>null</code>.
    */
+  @NonNls @NotNull
   String getName();
 
   /**

@@ -19,6 +19,8 @@ import com.intellij.util.xml.events.DomEvent;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author peter
  */
@@ -72,6 +74,7 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
     return myComponent.getComponent();
   }
 
+  @NotNull
   public final String getName() {
     return myName;
   }
@@ -98,9 +101,9 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
   }
 
   public static DomFileEditor createDomFileEditor(final String name,
-                                                          final DomElement element,
-                                                          final CaptionComponent captionComponent,
-                                                          final CommittablePanel committablePanel) {
+                                                  final DomElement element,
+                                                  final CaptionComponent captionComponent,
+                                                  final CommittablePanel committablePanel) {
 
     final XmlFile file = element.getRoot().getFile();
     return new DomFileEditor(file.getProject(), file.getVirtualFile(), name,
@@ -112,8 +115,8 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
   }
 
   public static BasicDomElementComponent createComponentWithCaption(final CommittablePanel committablePanel,
-                                                                     final CaptionComponent captionComponent,
-                                                                     final DomElement element) {
+                                                                    final CaptionComponent captionComponent,
+                                                                    final DomElement element) {
     final JComponent component1 = committablePanel.getComponent();
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(captionComponent, BorderLayout.NORTH);

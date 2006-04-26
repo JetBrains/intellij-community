@@ -53,6 +53,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     return myEditor.getPreferredFocusedComponent();
   }
 
+  @NotNull
   public String getName(){
     return UIDesignerBundle.message("title.gui.designer");
   }

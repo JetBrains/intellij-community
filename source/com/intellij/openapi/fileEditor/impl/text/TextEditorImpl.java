@@ -61,6 +61,7 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
     return myComponent.getEditor();
   }
 
+  @NotNull
   public String getName() {
     return "Text";
   }
