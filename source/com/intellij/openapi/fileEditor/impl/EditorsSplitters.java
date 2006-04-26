@@ -30,11 +30,11 @@ import java.util.List;
  */
 public final class EditorsSplitters extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
-  protected EditorWindow myCurrentWindow;
-  protected VirtualFile myCurrentFile;
+  private EditorWindow myCurrentWindow;
+  private VirtualFile myCurrentFile;
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
-  protected int myInsideChange;
+  int myInsideChange;
   private MyFocusWatcher myFocusWatcher;
   private EditorWithProviderComposite myCurrentSelectedEditor;
   private final Alarm myIconUpdaterAlarm = new Alarm();
@@ -186,6 +186,7 @@ public final class EditorsSplitters extends JPanel {
         final EditorWindow window = new EditorWindow(this);
         try {
           window.myInsideTabChange++;
+          //noinspection unchecked
           final List<Element> children = leaf.getChildren("file");
           VirtualFile currentFile = null;
           for (final Element file : children) {
@@ -275,7 +276,7 @@ public final class EditorsSplitters extends JPanel {
     return editors.toArray(new FileEditor[editors.size()]);
   }
 
-  protected void updateFileIcon(@NotNull final VirtualFile file) {
+  void updateFileIcon(@NotNull final VirtualFile file) {
     updateFileIconLater(file);
   }
 
@@ -451,7 +452,7 @@ public final class EditorsSplitters extends JPanel {
 
   //---------------------------------------------------------
 
-  protected final Set<EditorWindow> myWindows = new ArrayListSet<EditorWindow>();
+  final Set<EditorWindow> myWindows = new ArrayListSet<EditorWindow>();
 
   public EditorWithProviderComposite[] findEditorComposites(final VirtualFile file) {
     final ArrayList<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();

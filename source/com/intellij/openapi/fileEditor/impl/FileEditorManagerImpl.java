@@ -81,7 +81,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   /**
    * Removes invalid myEditor and updates "modified" status.
    */
-  protected final MyEditorPropertyChangeListener myEditorPropertyChangeListener;
+  private final MyEditorPropertyChangeListener myEditorPropertyChangeListener;
   /**
    * Updates tabs names
    */
@@ -94,7 +94,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   /**
    * Push forward events from composite
    */
-  protected final MyEditorManagerListener myEditorManagerListener;
+  private final MyEditorManagerListener myEditorManagerListener;
   /**
    * Updates icons for open files when project roots change
    */
@@ -143,7 +143,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * @return color of the <code>file</code> which corresponds to the
    *         file's status
    */
-  protected Color getFileColor(final VirtualFile file) {
+  Color getFileColor(final VirtualFile file) {
     LOG.assertTrue(file != null);
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
@@ -157,7 +157,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * Updates tab color for the specified <code>file</code>. The <code>file</code>
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
-  protected void updateFileColor(final VirtualFile file) {
+  private void updateFileColor(final VirtualFile file) {
     mySplitters.updateFileColor(file);
   }
 
@@ -173,7 +173,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   /**
    * Updates tab title and tab tool tip for the specified <code>file</code>
    */
-  protected void updateFileName(final @Nullable VirtualFile file) {
+  void updateFileName(final @Nullable VirtualFile file) {
     // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
     // only the last event makes sense to handle
     myQueue.queue(new Update("UpdateFileName") {
@@ -301,10 +301,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   public boolean isInSplitter() {
     final EditorWindow currentWindow = mySplitters.getCurrentWindow();
-    if (currentWindow != null) {
-      return currentWindow.inSplitter();
-    }
-    return false;
+    return currentWindow != null && currentWindow.inSplitter();
   }
 
   public boolean hasOpenedFile() {
@@ -449,7 +446,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * @param entry map between FileEditorProvider and FileEditorState. If this parameter
    *              is not <code>null</code> then it's used to restore state for the newly created
    */
-  protected Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window,
+  Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window,
                                                                    final VirtualFile file,
                                                                    final boolean focusEditor,
                                                                    final HistoryEntry entry) {
@@ -619,7 +616,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       LOG.assertTrue(provider.accept(myProject, file));
       final FileEditor editor = provider.createEditor(myProject, file);
       editors[i] = editor;
-      LOG.assertTrue(editor != null);
       LOG.assertTrue(editor.isValid());
       editor.addPropertyChangeListener(myEditorPropertyChangeListener);
     }
@@ -885,6 +881,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
 // BaseCompomemnt methods
 
+  @NotNull
   public String getComponentName() {
     return "FileEditorManager";
   }
@@ -975,7 +972,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     }
   }
 
-  protected EditorComposite getLastSelected() {
+  EditorComposite getLastSelected() {
     final EditorWindow currentWindow = mySplitters.getCurrentWindow();
     if (currentWindow != null) {
       return currentWindow.getSelectedEditor();

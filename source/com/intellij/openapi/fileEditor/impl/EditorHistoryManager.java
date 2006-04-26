@@ -15,9 +15,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public final class EditorHistoryManager implements ProjectComponent, JDOMExternalizable{
@@ -61,8 +61,8 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
           if (myElement != null){
             final List children = myElement.getChildren(HistoryEntry.TAG);
             myElement = null;
-            for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-              final Element e = (Element)iterator.next();
+            //noinspection unchecked
+            for (final Element e : ((Iterable<Element>)children)) {
               try {
                 myEntriesList.add(new HistoryEntry(myProject, e));
               }
@@ -78,6 +78,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
 
   public void projectClosed(){}
 
+  @NotNull
   public String getComponentName(){
     return "editorHistoryManager";
   }
@@ -123,9 +124,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
         final FileEditorProvider provider = oldProviders [i];
         LOG.assertTrue(provider != null);
         providers[i] = provider;
-        final FileEditorState state = editors[i].getState(FileEditorStateLevel.FULL);
-        states[i] = state;
-        LOG.assertTrue(state != null);
+        states[i] = editors[i].getState(FileEditorStateLevel.FULL);
       }
       myEntriesList.add(new HistoryEntry(file, providers, states, providers[selectedProviderIndex]));
       trimToSize();
@@ -168,7 +167,6 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
 
         final FileEditorState oldState = entry.getState(provider);
         final FileEditorState newState = editor.getState(FileEditorStateLevel.FULL);
-        LOG.assertTrue(newState != null);
         if (!newState.equals(oldState)) {
           entry.putState(provider, newState);
         }
@@ -282,8 +280,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
       }
     }
 
-    for (int i=0; i < myEntriesList.size(); i++){
-      final HistoryEntry entry = myEntriesList.get(i);
+    for (final HistoryEntry entry : myEntriesList) {
       entry.writeExternal(element, myProject);
     }
   }

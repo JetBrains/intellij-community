@@ -56,7 +56,7 @@ public class EditorWindow {
     }
 
     getWindows().add(this);
-    if (myOwner.myCurrentWindow == null) {
+    if (myOwner.getCurrentWindow() == null) {
       myOwner.setCurrentWindow(this, false);
     }
   }
