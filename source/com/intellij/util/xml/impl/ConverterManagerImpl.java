@@ -55,14 +55,18 @@ class ConverterManagerImpl {
     if (convertAnnotation != null) {
       return getConverterInstance(convertAnnotation.value());
     }
-
-    final Converter converter = getConverter(aClass);
-    if (converter != null) {
-      return converter;
+    if (genericConverter != null) {
+      return genericConverter;
     }
+    final Converter converter = getConverter(aClass);
+    //if (converter != null) {
+    //  return converter;
+    //}
+    assert converter != null : "No converter specified: String<->" + aClass.getName();
+    return converter;
 
-    assert genericConverter != null: "No converter specified: String<->" + aClass.getName();
-    return genericConverter;
+    //assert genericConverter != null: "No converter specified: String<->" + aClass.getName();
+    //return genericConverter;
   }
 
   @NotNull

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
+import java.lang.reflect.Type;import java.lang.reflect.TypeVariable;
 import java.util.*;
 
 /**
@@ -349,7 +349,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     final Type type = getter ? method.getGenericReturnType() : method.getGenericParameterTypes()[0];
     final Class aClass = DomUtil.getClassFromGenericType(type, myType);
     assert aClass != null : type + " " + myType;
-    return myManager.getConverterManager().getConverter(method, aClass, myGenericConverter);
+    return myManager.getConverterManager().getConverter(method, aClass,
+                                                        type instanceof TypeVariable? myGenericConverter:null);
   }
 
   public final DomElement getProxy() {
