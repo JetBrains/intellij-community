@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -35,6 +36,7 @@ class JavaWithSynchronizedSurrounder extends JavaStatementsSurrounder{
     synchronizedBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
+    synchronizedStatement = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(synchronizedStatement);
     TextRange range = synchronizedStatement.getLockExpression().getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     return new TextRange(range.getStartOffset(), range.getStartOffset());

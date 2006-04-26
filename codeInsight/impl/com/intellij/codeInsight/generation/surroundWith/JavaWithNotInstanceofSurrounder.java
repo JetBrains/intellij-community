@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -29,6 +30,7 @@ class JavaWithNotInstanceofSurrounder extends JavaExpressionSurrounder{
     prefixExpr = (PsiPrefixExpression)expr.replace(prefixExpr);
     parenthExpr = (PsiParenthesizedExpression)prefixExpr.getOperand();
     instanceofExpr = (PsiInstanceOfExpression)parenthExpr.getExpression();
+    instanceofExpr = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(instanceofExpr);
     TextRange range = instanceofExpr.getCheckType().getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     return new TextRange(range.getStartOffset(), range.getStartOffset());
