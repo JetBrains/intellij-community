@@ -3,6 +3,7 @@ package com.intellij.lang.ant.psi.introspection.impl;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -33,11 +34,12 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   public AntTypeDefinitionImpl(final AntTypeId id,
                                final String className,
                                final boolean isTask,
-                               final Map<String, AntAttributeType> attributes,
+                               @NonNls final Map<String, AntAttributeType> attributes,
                                final Map<AntTypeId, String> nestedElements) {
     myTypeId = id;
     myClassName = className;
     myIsTask = isTask;
+    attributes.put("id", AntAttributeType.STRING);
     myAttributes = attributes;
     myNestedClassNames = nestedElements;
   }

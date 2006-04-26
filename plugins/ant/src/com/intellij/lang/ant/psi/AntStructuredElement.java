@@ -16,6 +16,9 @@ public interface AntStructuredElement extends AntElement, PsiNamedElement {
 
   void registerCustomType(final AntTypeDefinition def);
 
+  @Nullable
+  String getId();
+
   void registerRefId(final String id, AntStructuredElement element);
 
   @Nullable

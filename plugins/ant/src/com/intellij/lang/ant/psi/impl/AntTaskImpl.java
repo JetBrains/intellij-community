@@ -7,7 +7,6 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
 
@@ -31,10 +30,5 @@ public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
-  }
-
-  @Nullable
-  public String getId() {
-    return getSourceElement().getAttributeValue("id");
   }
 }

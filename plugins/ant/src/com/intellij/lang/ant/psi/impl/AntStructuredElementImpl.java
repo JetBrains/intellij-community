@@ -12,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,6 +89,11 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       myDefinition.registerNestedType(def.getTypeId(), def.getClassName());
       getAntProject().registerCustomType(def);
     }
+  }
+
+  @Nullable
+  public String getId() {
+    return getSourceElement().getAttributeValue("id");
   }
 
   public void registerRefId(final String id, AntStructuredElement element) {
