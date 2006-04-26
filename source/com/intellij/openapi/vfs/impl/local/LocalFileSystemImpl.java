@@ -172,6 +172,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     );
 
     myRootsToWatch.clear();
+    myUnaccountedFiles.clear();
     myFSRootsToPaths = null;
     myDirtyFiles.clear();
     myDeletedFiles.clear();
