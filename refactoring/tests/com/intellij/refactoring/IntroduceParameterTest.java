@@ -16,6 +16,9 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
+import com.intellij.idea.Bombed;
+
+import java.util.Calendar;
 
 public class IntroduceParameterTest extends CodeInsightTestCase {
   public void testNoUsages() throws Exception {
@@ -170,6 +173,7 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     checkResultByFile("/refactoring/introduceParameter/after25.java");
   }
 
+  @Bombed(user = "lesya", day = 4, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
   public void testParameterJavaDoc2() throws Exception {
     configureByFile("/refactoring/introduceParameter/before26.java");
     perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, true);
