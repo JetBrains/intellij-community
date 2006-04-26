@@ -9,6 +9,8 @@ import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.HierarchyChangeListener;
 import com.intellij.uiDesigner.SelectionWatcher;
+import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
@@ -211,6 +213,11 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
   }
 
   private void updateSelection() {
+    final PropertyInspector propertyInspector = UIDesignerToolWindowManager.getInstance(myEditor.getProject()).getPropertyInspector();
+    if (propertyInspector.isEditing()) {
+      propertyInspector.stopEditing();
+    }
+
     if(myInsideChange > 0){
       return;
     }

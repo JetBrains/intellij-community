@@ -4,7 +4,6 @@ import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
@@ -35,7 +34,6 @@ public final class MainProcessor extends EventProcessor{
 
   public MainProcessor(@NotNull final GuiEditor editor){
     myEditor = editor;
-    myEditor.addComponentSelectionListener(new MyComponentSelectionListener());
     myInsertComponentProcessor = new InsertComponentProcessor(myEditor);
   }
 
@@ -346,11 +344,5 @@ public final class MainProcessor extends EventProcessor{
 
   public boolean isProcessorActive() {
     return myCurrentProcessor != null;
-  }
-
-  private final class MyComponentSelectionListener implements ComponentSelectionListener{
-    public void selectedComponentChanged(final GuiEditor source) {
-      // TODO[vova] stop inplace editing
-    }
   }
 }
