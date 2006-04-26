@@ -32,8 +32,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.jsp.JspTokenType;
@@ -66,10 +66,10 @@ public class EnterHandler extends EditorWriteActionHandler {
 
   public void executeWriteAction(Editor editor, DataContext dataContext) {
     boolean postprocessReformatingStatus = false;
+    Project project = (Project)DataManager.getInstance().getDataContext(editor.getComponent()).getData(DataConstants.PROJECT);
 
     try{
       {
-        final Project project = editor.getProject();
         if(project != null){
           final PostprocessReformatingAspect component = project.getComponent(PostprocessReformatingAspect.class);
           postprocessReformatingStatus = component.isDisabled();
@@ -77,7 +77,6 @@ public class EnterHandler extends EditorWriteActionHandler {
         }
       }
       CodeInsightSettings settings = CodeInsightSettings.getInstance();
-      Project project = (Project)DataManager.getInstance().getDataContext(editor.getComponent()).getData(DataConstants.PROJECT);
       if (project == null) {
         myOriginalHandler.execute(editor, dataContext);
         return;
@@ -224,7 +223,6 @@ public class EnterHandler extends EditorWriteActionHandler {
       action.run();
     }
     finally {
-      final Project project = editor.getProject();
       if (project != null) {
         final PostprocessReformatingAspect component = project.getComponent(PostprocessReformatingAspect.class);
         if(component.isDisabled()) component.setDisabled(postprocessReformatingStatus);

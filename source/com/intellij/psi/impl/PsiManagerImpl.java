@@ -38,8 +38,8 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -286,14 +286,14 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   public void performActionWithFormatterDisabled(Runnable r) {
     final PostprocessReformatingAspect component = getProject().getComponent(PostprocessReformatingAspect.class);
     final boolean oldValue = component.isDisabled();
-    component.setDisabled(true);
-    ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
     try {
+      component.setDisabled(true);
+      ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
       r.run();
     }
     finally {
       ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
-      component.setDisabled(oldValue);
+      if(component.isDisabled()) component.setDisabled(oldValue);
     }
   }
 
@@ -301,14 +301,14 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     T result;
     final PostprocessReformatingAspect component = getProject().getComponent(PostprocessReformatingAspect.class);
     final boolean oldValue = component.isDisabled();
-    component.setDisabled(true);
-    ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
     try {
+      component.setDisabled(true);
+      ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
       result = r.compute();
     }
     finally {
       ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
-      component.setDisabled(oldValue);
+      if(component.isDisabled()) component.setDisabled(oldValue);
     }
 
     return result;
