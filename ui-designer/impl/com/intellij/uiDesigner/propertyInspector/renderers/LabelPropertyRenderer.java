@@ -15,8 +15,15 @@ import javax.swing.*;
  * @author Vladimir Kondratyev
  */
 public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer<V> {
-  public LabelPropertyRenderer(){
+  private String myStaticText;
+
+  public LabelPropertyRenderer() {
     setOpaque(true);
+  }
+
+  public LabelPropertyRenderer(String staticText) {
+    this();
+    myStaticText = staticText;
   }
 
   public final JLabel getComponent(final RadRootContainer rootContainer, final V value, final boolean selected, final boolean hasFocus){
@@ -46,6 +53,6 @@ public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer
    * set.
    */
   protected void customize(@NotNull V value) {
-    setText(value.toString());
+    setText(myStaticText != null ? myStaticText : value.toString());
   }
 }

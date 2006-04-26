@@ -760,7 +760,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private void pushIcon(final IconDescriptor iconDescriptor) {
+  public void pushIcon(final IconDescriptor iconDescriptor) {
     startConstructor(ImageIcon.class.getName());
     startMethodCall("getClass()", "getResource");
     push("/" + iconDescriptor.getIconPath());

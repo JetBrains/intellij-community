@@ -26,11 +26,11 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class LwTabbedPane extends LwContainer implements ITabbedPane {
-  public LwTabbedPane() throws Exception{
+  public LwTabbedPane() {
     super(JTabbedPane.class.getName());
   }
 
-  protected LayoutManager createInitialLayout(){
+  protected LayoutManager createInitialLayout() {
     return null;
   }
 
@@ -39,8 +39,8 @@ public final class LwTabbedPane extends LwContainer implements ITabbedPane {
   }
 
   protected void readConstraintsForChild(final Element element, final LwComponent component) {
-    final Element constraintsElement = LwXmlReader.getRequiredChild(element, "constraints");
-    final Element tabbedPaneChild = LwXmlReader.getRequiredChild(constraintsElement, "tabbedpane");
+    final Element constraintsElement = LwXmlReader.getRequiredChild(element, UIFormXmlConstants.ELEMENT_CONSTRAINTS);
+    final Element tabbedPaneChild = LwXmlReader.getRequiredChild(constraintsElement, UIFormXmlConstants.ELEMENT_TABBEDPANE);
 
     final StringDescriptor descriptor = LwXmlReader.getStringDescriptor(tabbedPaneChild,
                                                                         UIFormXmlConstants.ATTRIBUTE_TITLE,
@@ -49,14 +49,38 @@ public final class LwTabbedPane extends LwContainer implements ITabbedPane {
     if (descriptor == null) {
       throw new IllegalArgumentException("String descriptor value required");
     }
-    component.setCustomLayoutConstraints(new Constraints(descriptor));
+    final Constraints constraints = new Constraints(descriptor);
+
+    final Element tooltipElement = LwXmlReader.getChild(tabbedPaneChild, UIFormXmlConstants.ELEMENT_TOOLTIP);
+    if (tooltipElement != null) {
+      constraints.myToolTip = LwXmlReader.getStringDescriptor(tooltipElement,
+                                                              UIFormXmlConstants.ATTRIBUTE_VALUE,
+                                                              UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE,
+                                                              UIFormXmlConstants.ATTRIBUTE_KEY);
+    }
+
+    String icon = tabbedPaneChild.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_ICON);
+    if (icon != null) {
+      constraints.myIcon = new IconDescriptor(icon);
+    }
+    icon = tabbedPaneChild.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_DISABLED_ICON);
+    if (icon != null) {
+      constraints.myDisabledIcon = new IconDescriptor(icon);
+    }
+    constraints.myEnabled = LwXmlReader.getOptionalBoolean(tabbedPaneChild, UIFormXmlConstants.ATTRIBUTE_ENABLED, true);
+
+    component.setCustomLayoutConstraints(constraints);
   }
 
   public static final class Constraints {
     /**
      * never null
      */
-    public final StringDescriptor myTitle;
+    public StringDescriptor myTitle;
+    public StringDescriptor myToolTip;
+    public IconDescriptor myIcon;
+    public IconDescriptor myDisabledIcon;
+    public boolean myEnabled = true;
 
     public Constraints(final StringDescriptor title){
       if (title == null){

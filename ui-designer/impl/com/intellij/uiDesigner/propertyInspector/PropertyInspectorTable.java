@@ -576,9 +576,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       setValueAt(value, editingRow, editingColumn);
     }
     catch (final Exception exc) {
+      exc.printStackTrace();
       final Throwable cause = exc.getCause();
       if(cause != null){
-        Messages.showMessageDialog(cause.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
+        Messages.showMessageDialog(cause.getMessage(), UIDesignerBundle.message("title.invalidinvalid.input"), Messages.getErrorIcon());
       }
       else{
         Messages.showMessageDialog(exc.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());

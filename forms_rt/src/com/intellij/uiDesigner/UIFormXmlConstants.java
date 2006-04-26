@@ -52,6 +52,9 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_TITLE_JUSTIFICATION = "title-justification";
   public static final String ATTRIBUTE_TITLE_POSITION = "title-position";
   public static final String ATTRIBUTE_TYPE = "type";
+  public static final String ATTRIBUTE_ICON = "icon";
+  public static final String ATTRIBUTE_DISABLED_ICON = "disabled-icon";
+  public static final String ATTRIBUTE_ENABLED = "enabled";
 
   public static final String ELEMENT_BUTTON_GROUPS = "buttonGroups";
   public static final String ELEMENT_GROUP = "group";
@@ -64,6 +67,9 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_FONT = "font";
   public static final String ELEMENT_COLOR = "color";
   public static final String ELEMENT_ITEM = "item";
+  public static final String ELEMENT_CONSTRAINTS = "constraints";
+  public static final String ELEMENT_TABBEDPANE = "tabbedpane";
+  public static final String ELEMENT_TOOLTIP = "tooltip";
 
   public static final String LAYOUT_INTELLIJ = "GridLayoutManager";
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";

@@ -121,6 +121,10 @@ public class LwContainer extends LwComponent implements IContainer{
     return myComponents.size();
   }
 
+  public int indexOfComponent(final LwComponent lwComponent) {
+    return myComponents.indexOf(lwComponent);
+  }
+
   /**
    * @return border's type. The method never return <code>null</code>.
    *

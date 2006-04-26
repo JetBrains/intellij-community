@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIFormXmlConstants;
@@ -11,6 +12,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IconEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.IconRenderer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,13 +26,7 @@ import java.lang.reflect.Method;
 public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroIconProperty_";
 
-  private LabelPropertyRenderer<IconDescriptor> myRenderer = new LabelPropertyRenderer<IconDescriptor>() {
-    protected void customize(@NotNull IconDescriptor value) {
-      setIcon(value.getIcon());
-      setText(value.getIconPath());
-    }
-  };
-
+  private LabelPropertyRenderer<IconDescriptor> myRenderer = new IconRenderer();
   private IconEditor myEditor;
 
   public IntroIconProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
@@ -59,14 +55,17 @@ public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
   @Override protected void setValueImpl(final RadComponent component, final IconDescriptor value) throws Exception {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
     if (value != null) {
-      if (value.getIcon() == null) {
-        VirtualFile iconFile = ModuleUtil.findResourceFileInDependents(component.getModule(),
-                                                                       value.getIconPath());
-        if (iconFile != null) {
-          loadIconFromFile(iconFile, value);
-        }
-      }
+      ensureIconLoaded(component.getModule(), value);
       invokeSetter(component, value.getIcon());
+    }
+  }
+
+  public static void ensureIconLoaded(final Module module, final IconDescriptor value) {
+    if (value.getIcon() == null) {
+      VirtualFile iconFile = ModuleUtil.findResourceFileInDependents(module, value.getIconPath());
+      if (iconFile != null) {
+        loadIconFromFile(iconFile, value);
+      }
     }
   }
 
@@ -86,4 +85,5 @@ public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
     super.setValueImpl(component, null);
     markTopmostModified(component, false);
   }
+
 }

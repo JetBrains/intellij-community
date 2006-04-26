@@ -13,6 +13,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.ReadOnlyProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
@@ -25,31 +26,20 @@ import java.awt.event.ActionListener;
 /**
  * @author yole
  */
-public class ClientPropertiesProperty extends Property {
+public class ClientPropertiesProperty extends ReadOnlyProperty {
   private Project myProject;
 
   public static ClientPropertiesProperty getInstance(Project project) {
     return project.getComponent(ClientPropertiesProperty.class);
   }
 
-  private PropertyRenderer myRenderer = new LabelPropertyRenderer() {
-    @Override protected void customize(final Object value) {
-      setText(UIDesignerBundle.message("client.properties.configure"));
-    }
-  };
+  private PropertyRenderer myRenderer = new LabelPropertyRenderer(UIDesignerBundle.message("client.properties.configure"));
 
   private PropertyEditor myEditor = new MyPropertyEditor();
 
   public ClientPropertiesProperty(Project project) {
     super(null, "Client Properties");
     myProject = project;
-  }
-
-  public Object getValue(final RadComponent component) {
-    return null;
-  }
-
-  protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
   }
 
   @NotNull
