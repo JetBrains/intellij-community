@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author max
  */
 public abstract class DocumentReference {
+  public static DocumentReference[] EMPTY_ARRAY = new DocumentReference[0];
   public int hashCode() {
     VirtualFile file = getFile();
     return file != null ? file.hashCode() : getDocument().hashCode();
