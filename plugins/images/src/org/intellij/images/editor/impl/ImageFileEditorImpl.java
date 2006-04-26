@@ -76,6 +76,7 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
         return imageEditor.getContentComponent();
     }
 
+    @NotNull
     public String getName() {
         return NAME;
     }
