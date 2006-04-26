@@ -1,14 +1,18 @@
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.shared.BorderType;
-import com.intellij.ui.LightColors;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -378,5 +382,40 @@ public final class Painter {
       g2d.drawLine(minLeft-8, top, minLeft-8, bottom);
     }
     g2d.setStroke(oldStroke);
+  }
+
+  public static void paintComponentTag(final RadComponent component, final Graphics g) {
+    if (component instanceof RadContainer) return;
+    for(IProperty prop: component.getModifiedProperties()) {
+      if (prop.getName().equals(SwingProperties.TEXT)) {
+        final Object desc = prop.getPropertyValue(component);
+        if (!(desc instanceof StringDescriptor) || ((StringDescriptor) desc).getValue() == null ||
+            ((StringDescriptor) desc).getValue().length() > 0) {
+          return;
+        }
+      }
+    }
+
+    Rectangle bounds = component.getDelegee().getBounds();
+    if (bounds.width > 100 && bounds.height > 40) {
+      StringBuilder tagBuilder = new StringBuilder();
+      if (component.getBinding() != null) {
+        tagBuilder.append(component.getBinding()).append(':');
+      }
+      String className = component.getComponentClassName();
+      int pos = className.lastIndexOf('.');
+      if (pos >= 0) {
+        tagBuilder.append(className.substring(pos+1));
+      }
+      else {
+        tagBuilder.append(className);
+      }
+      final Rectangle2D stringBounds = g.getFontMetrics().getStringBounds(tagBuilder.toString(), g);
+      Graphics2D g2d = (Graphics2D) g;
+      g2d.setColor(Color.BLUE);
+      g2d.fillRect(0, 0, (int) stringBounds.getWidth(), (int) stringBounds.getHeight());
+      g2d.setColor(Color.WHITE);
+      g.drawString(tagBuilder.toString(), 0, (int) g.getFontMetrics().getAscent());
+    }
   }
 }

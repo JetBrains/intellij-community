@@ -1338,6 +1338,7 @@
       <reference ref="GuiDesigner.BreakLayout"/>
       <action id="GuiDesigner.Pack" class="com.intellij.uiDesigner.actions.PackAction"/>
       <action id="GuiDesigner.ShowGrid" class="com.intellij.uiDesigner.actions.ShowGridAction"/>
+      <action id="GuiDesigner.ShowComponentTags" class="com.intellij.uiDesigner.actions.ShowComponentTagsAction"/>
       <separator/>
       <action id="GuiDesigner.CreateComponent" class="com.intellij.uiDesigner.actions.CreateComponentAction"
         use-shortcut-of="Generate"/>

@@ -59,6 +59,9 @@ class PassiveDecorationLayer extends JComponent{
           }
           g.translate(point.x, point.y);
           try{
+            if (myEditor.isShowComponentTags()) {
+              Painter.paintComponentTag(component, g);
+            }
             Painter.paintSelectionDecoration(component, g,myEditor.getGlassLayer().isFocusOwner());
             // Over selection we have to paint dragger
             if (component.hasDragger()){

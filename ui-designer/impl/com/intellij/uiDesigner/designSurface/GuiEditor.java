@@ -163,6 +163,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private ActiveDecorationLayer myActiveDecorationLayer;
 
   private boolean myShowGrid = true;
+  private boolean myShowComponentTags = true;
   private DesignDropTargetListener myDropTargetListener;
   private JLabel myFormInvalidLabel;
   private QuickFixManagerImpl myQuickFixManager;
@@ -800,6 +801,17 @@ public final class GuiEditor extends JPanel implements DataProvider {
   public void setShowGrid(final boolean showGrid) {
     if (myShowGrid != showGrid) {
       myShowGrid = showGrid;
+      repaint();
+    }
+  }
+
+  public boolean isShowComponentTags() {
+    return myShowComponentTags;
+  }
+
+  public void setShowComponentTags(final boolean showComponentTags) {
+    if (myShowComponentTags != showComponentTags) {
+      myShowComponentTags = showComponentTags;
       repaint();
     }
   }
