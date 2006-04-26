@@ -146,8 +146,6 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
   private static final class MyComparator implements Comparator<NodeDescriptor>{
     public static final MyComparator ourComparator=new MyComparator();
 
-    private MyComparator(){}
-
     private static int indexOf(final RadContainer container, final RadComponent component){
       for(int i = container.getComponentCount() - 1; i >= 0 ; i--){
         if(component.equals(container.getComponent(i))){
@@ -167,8 +165,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
         final RadContainer container1 = component1.getParent();
         final RadContainer container2 = component2.getParent();
         if(Comparing.equal(container1, container2)){
-          final int i = indexOf(container1, component1) - indexOf(container2, component2);
-          return i;
+          return indexOf(container1, component1) - indexOf(container2, component2);
         }
         else{
           return 0;
