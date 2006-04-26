@@ -119,6 +119,14 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), true);
     final IncorrectOperationException[] exception = new IncorrectOperationException[]{null};
     result[0].accept(new PsiRecursiveElementVisitor() {
+      public void visitElement(PsiElement element) {
+        // read in all children in advance since due to Igorek's exercises element replace involves its siblings invalidation
+        PsiElement[] children = element.getChildren();
+        for (PsiElement child : children) {
+          child.accept(this);
+        }
+      }
+
       public void visitExpression(PsiExpression expression) {
         super.visitExpression(expression);
         expressionVisitor.clear();
