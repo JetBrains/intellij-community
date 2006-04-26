@@ -117,14 +117,14 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     final TabbedPaneUI ui = tabbedPane.getUI();
     LOG.assertTrue(ui != null);
     final int index = ui.tabForCoordinate(tabbedPane, x, y);
-    return index != -1 ? new MyTitleProperty(null, true, index) : null;
+    return index != -1 ? new MyTitleProperty(null, index) : null;
   }
 
   @Override @Nullable
   public Property getDefaultInplaceProperty() {
     final int index = getTabbedPane().getSelectedIndex();
     if (index >= 0) {
-      return new MyTitleProperty(null, true, index);
+      return new MyTitleProperty(null, index);
     }
     return null;
   }
@@ -160,7 +160,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     final JTabbedPane tabbedPane = getTabbedPane();
     int index = tabbedPane.indexOfComponent(delegee);
     if (index >= 0) {
-      new MyTitleProperty(null, true, index).setValue(this, title);
+      new MyTitleProperty(null, index).setValue(component, title);
     }
   }
 
@@ -289,7 +289,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     @NotNull @Override
     public Property[] getChildren(final RadComponent component) {
       return new Property[] {
-        new MyTitleProperty(this, false, myIndex),
+        new MyTitleProperty(this, myIndex),
         new MyToolTipProperty(this, myIndex),
         new MyIconProperty(this, myIndex, false),
         new MyIconProperty(this, myIndex, true),
@@ -299,28 +299,22 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   }
 
   private class MyTitleProperty extends Property<RadComponent, StringDescriptor> {
-    /**
-     * Index of tab which title should be edited
-     */
-    private final boolean myInPlace;
     protected final int myIndex;
     private final StringEditor myEditor = new StringEditor(getModule().getProject());
     private final StringRenderer myRenderer = new StringRenderer();
 
-    public MyTitleProperty(final Property parent, final boolean inPlace, final int index) {
+    public MyTitleProperty(final Property parent, final int index) {
       super(parent, "Tab Title");
-      myInPlace = inPlace;
       myIndex = index;
     }
 
     protected MyTitleProperty(final Property parent, final String name, final int index) {
       super(parent, name);
       myIndex = index;
-      myInPlace = false;
     }
 
     public StringDescriptor getValue(final RadComponent component) {
-      final RadComponent tabComponent = myInPlace ? component : getRadComponent(myIndex);
+      final RadComponent tabComponent = getRadComponent(myIndex);
       // 1. resource bundle
       final LwTabbedPane.Constraints constraints = getId2Constraints(RadTabbedPane.this).get(tabComponent.getId());
       final StringDescriptor descriptor = constraints == null ? null : getValueFromConstraints(constraints);
@@ -333,7 +327,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
 
     protected void setValueImpl(final RadComponent component, StringDescriptor value) throws Exception {
-      final RadComponent tabComponent = myInPlace ? component : getRadComponent(myIndex);
+      final RadComponent tabComponent = getRadComponent(myIndex);
       // 1. Put value into map
       if (value == null) value = StringDescriptor.create("");
       LwTabbedPane.Constraints constraints = getConstraintsForComponent(tabComponent);
