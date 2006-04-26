@@ -212,7 +212,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       if (name == null || !useFullName) {
         name = ((PsiClass)element).getName();
       }
-      return name;
+      if (name != null) return name;
     }
     if (element instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)element;
