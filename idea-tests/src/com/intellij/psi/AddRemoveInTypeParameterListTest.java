@@ -6,7 +6,7 @@ import com.intellij.util.IncorrectOperationException;
 
 public class AddRemoveInTypeParameterListTest extends LightIdeaTestCase{
   public void testAdd() throws IncorrectOperationException {
-    PsiJavaFile file = (PsiJavaFile)createFile("Test.java", "class Test extends Type {\n}");
+    PsiJavaFile file = (PsiJavaFile)createLightFile("Test.java", "class Test extends Type {\n}");
     PsiClass aClass = file.getClasses()[0];
     PsiJavaCodeReferenceElement ref = aClass.getExtendsList().getReferenceElements()[0];
     PsiReferenceParameterList list = ref.getParameterList();
@@ -33,7 +33,7 @@ public class AddRemoveInTypeParameterListTest extends LightIdeaTestCase{
   }
 
   public void testRemove() throws IncorrectOperationException {
-    PsiJavaFile file = (PsiJavaFile)createFile("Test.java", "class Test extends Type<A, B, C, D> {\n}");
+    PsiJavaFile file = (PsiJavaFile)createLightFile("Test.java", "class Test extends Type<A, B, C, D> {\n}");
     PsiClass aClass = file.getClasses()[0];
     PsiJavaCodeReferenceElement ref = aClass.getExtendsList().getReferenceElements()[0];
     PsiReferenceParameterList list = ref.getParameterList();
@@ -41,17 +41,17 @@ public class AddRemoveInTypeParameterListTest extends LightIdeaTestCase{
 
     parms[0].delete();
 
-    assertEquals("class Test extends Type<B, C, D> {\n}", file.getText());
+    assertEquals("class Test extends Type< B, C, D> {\n}", file.getText());
     PsiTestUtil.checkFileStructure(file);
 
     parms[2].delete();
 
-    assertEquals("class Test extends Type<B, D> {\n}", file.getText());
+    assertEquals("class Test extends Type< B,  D> {\n}", file.getText());
     PsiTestUtil.checkFileStructure(file);
 
     parms[3].delete();
 
-    assertEquals("class Test extends Type<B> {\n}", file.getText());
+    assertEquals("class Test extends Type< B  > {\n}", file.getText());
     PsiTestUtil.checkFileStructure(file);
 
     parms[1].delete();
