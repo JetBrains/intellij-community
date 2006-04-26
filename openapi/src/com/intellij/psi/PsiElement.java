@@ -43,6 +43,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Returns the project to which the PSI element belongs.
    *
    * @return the project instance.
+   * @throws PsiInvalidElementAccessException if this element is invalid
    */
   @NotNull
   Project getProject() throws PsiInvalidElementAccessException;
@@ -105,7 +106,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the file containing the PSI element.
-   *
+   * @throws PsiInvalidElementAccessException if this element is invalid
    * @return the file instance, or null if the PSI element is not contained in a file (for example,
    * the element represents a package or directory).
    */
