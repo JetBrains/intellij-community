@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -32,6 +33,7 @@ public class AddNoInspectionCommentAction implements IntentionAction {
     myContext = context;
   }
 
+  @NotNull
   public String getText() {
     return InspectionsBundle.message("suppress.inspection.statement");
   }
@@ -40,6 +42,7 @@ public class AddNoInspectionCommentAction implements IntentionAction {
     return PsiTreeUtil.getParentOfType(myContext, PsiStatement.class);
   }
 
+  @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("suppress.inspection.family");
   }
@@ -53,7 +56,7 @@ public class AddNoInspectionCommentAction implements IntentionAction {
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(container.getContainingFile().getVirtualFile());
     if (status.hasReadonlyFiles()) return;
-    PsiElement prev = PsiTreeUtil.skipSiblingsBackward(container, new Class[]{PsiWhiteSpace.class});
+    PsiElement prev = PsiTreeUtil.skipSiblingsBackward(container, PsiWhiteSpace.class);
     PsiElementFactory factory = myContext.getManager().getElementFactory();
     if (prev instanceof PsiComment) {
       String text = prev.getText();
