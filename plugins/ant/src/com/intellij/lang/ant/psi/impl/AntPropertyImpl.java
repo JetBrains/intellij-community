@@ -52,12 +52,13 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     return getSourceElement().getAttributeValue("name");
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(final String name) throws IncorrectOperationException {
     final XmlTag sourceElement = getSourceElement();
-    if (sourceElement.getAttributeValue("name") != null) {
-      sourceElement.setAttribute("name", name);
-      subtreeChanged();
+    if (sourceElement.getAttribute("name", null) == null) {
+      throw new IncorrectOperationException("Can't set name of an unnamed property");
     }
+    sourceElement.setAttribute("name", name);
+    subtreeChanged();
     return this;
   }
 
@@ -83,10 +84,11 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   public void setValue(final String value) throws IncorrectOperationException {
     final XmlTag sourceElement = getSourceElement();
-    if (sourceElement.getAttributeValue("name") != null) {
-      sourceElement.setAttribute("name", value);
-      subtreeChanged();
+    if (sourceElement.getAttribute("name", null) == null) {
+      throw new IncorrectOperationException("Can't set value of an unnamed property");
     }
+    sourceElement.setAttribute("value", value);
+    subtreeChanged();
   }
 
   @Nullable

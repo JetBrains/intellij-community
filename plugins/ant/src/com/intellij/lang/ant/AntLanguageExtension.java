@@ -12,12 +12,13 @@ public class AntLanguageExtension implements LanguageExtension {
 
   public boolean isRelevantForFile(final PsiFile psi) {
     if (!(psi instanceof XmlFile)) return false;
-    if (!AntFileType.DEFAULT_EXTENSION.equals(psi.getViewProvider().getVirtualFile().getExtension())) return false;
     final XmlFile xmlFile = (XmlFile)psi;
-    final XmlTag tag = xmlFile.getDocument().getRootTag();
-    if (tag == null) return false;
-    if ("project".equals(tag.getName()) && tag.getContext()instanceof XmlDocument) {
-      return true;
+    final XmlDocument document = xmlFile.getDocument();
+    if (document != null) {
+      final XmlTag tag = document.getRootTag();
+      if (tag != null && "project".equals(tag.getName()) && tag.getContext()instanceof XmlDocument) {
+        return true;
+      }
     }
     return false;
   }

@@ -38,7 +38,7 @@ public class AntPropertyReference extends AntGenericReference {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       return handleElementRename(psiNamedElement.getName());
     }
-    throw new IncorrectOperationException("Can bind only to ant targets.");
+    throw new IncorrectOperationException("Can bind only to ant properties.");
   }
 
   public static ReferenceType getReferenceType() {
