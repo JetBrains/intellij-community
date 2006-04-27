@@ -6,13 +6,14 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
-import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.CutCopyPasteSupport;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,11 +41,11 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
       int rowSpan = c.getConstraints().getRowSpan();
       int insertIndex = parent.indexOfComponent(c);
 
-      if (parent.isGrid()) {
+      if (parent.getLayoutManager().isGrid()) {
         if (!insertedRows.contains(row) && !isSpaceBelowEmpty(c)) {
           insertedRows.add(row);
-          for(int i=0; i<rowSpan; i++) {
-            GridChangeUtil.insertRowAfter(parent, row+rowSpan-1);
+          for (int i = 0; i < rowSpan; i++) {
+            GridChangeUtil.insertRowAfter(parent, row + rowSpan - 1);
           }
         }
       }
@@ -52,8 +53,8 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
       List<RadComponent> copyList = CutCopyPasteSupport.copyComponents(editor, Collections.singletonList(c));
       if (copyList != null) {
         RadComponent copy = copyList.get(0);
-        if (parent.isGrid()) {
-          copy.getConstraints().setRow(row+rowSpan);
+        if (parent.getLayoutManager().isGrid()) {
+          copy.getConstraints().setRow(row + rowSpan);
           copy.getConstraints().setRowSpan(rowSpan);
         }
         parent.addComponent(copy, insertIndex+1);
@@ -78,11 +79,10 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
   }
 
   private static boolean isSpaceBelowEmpty(final RadComponent component) {
-    GridLayoutManager layout = (GridLayoutManager) component.getParent().getLayout();
     final GridConstraints constraints = component.getConstraints();
     int startRow = constraints.getRow() + constraints.getRowSpan();
     int endRow = constraints.getRow() + constraints.getRowSpan()*2;
-    if (endRow > layout.getRowCount()) {
+    if (endRow > component.getParent().getGridRowCount()) {
       return false;
     }
     for(int row=startRow; row < endRow; row++) {
@@ -97,12 +97,12 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     final RadContainer parent = FormEditingUtil.getSelectionParent(selection);
-    e.getPresentation().setEnabled(parent != null && (parent.isGrid() || parent.getLayoutManager().isIndexed()));
+    e.getPresentation().setEnabled(parent != null && (parent.getLayoutManager().isGrid() || parent.getLayoutManager().isIndexed()));
     // The action is enabled in any of the following cases:
     // 1) a single component is selected;
     // 2) all selected components have rowspan=1
     // 3) all selected components have the same row and rowspan
-    if (selection.size() > 1 && parent != null && parent.isGrid()) {
+    if (selection.size() > 1 && parent != null && parent.getLayoutManager().isGrid()) {
       int aRow = selection.get(0).getConstraints().getRow();
       int aRowSpan = selection.get(0).getConstraints().getRowSpan();
       for(int i=1; i<selection.size(); i++) {

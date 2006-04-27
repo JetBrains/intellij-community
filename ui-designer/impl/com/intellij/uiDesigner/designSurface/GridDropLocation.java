@@ -2,13 +2,14 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Rectangle;
+import java.awt.LayoutManager;
 
 /**
  * @author yole
@@ -54,8 +55,6 @@ public class GridDropLocation implements DropLocation {
       return false;
     }
 
-    final GridLayoutManager gridLayout = (GridLayoutManager)myContainer.getLayout();
-
     // If target point doesn't belong to any cell and column then do not allow drop.
     if (myRow == -1 || myColumn == -1) {
       LOG.debug("RadContainer.canDrop=false because no cell at mouse position");
@@ -72,8 +71,8 @@ public class GridDropLocation implements DropLocation {
 
       if (myRow + relativeRow < 0 ||
           myColumn + relativeCol < 0 ||
-          myRow + relativeRow + rowSpan > gridLayout.getRowCount() ||
-          myColumn + relativeCol + colSpan > gridLayout.getColumnCount()) {
+          myRow + relativeRow + rowSpan > myContainer.getGridRowCount() ||
+          myColumn + relativeCol + colSpan > myContainer.getGridColumnCount()) {
         LOG.debug("RadContainer.canDrop=false because range is outside grid: row=" + (myRow +relativeRow) +
                   ", col=" + (myColumn +relativeCol) + ", colSpan=" + colSpan + ", rowSpan=" + rowSpan);
         return false;
@@ -93,7 +92,7 @@ public class GridDropLocation implements DropLocation {
 
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
     Rectangle feedbackRect = null;
-    if (getContainer().isGrid()) {
+    if (getContainer().getLayoutManager().isGrid()) {
       feedbackRect = getGridFeedbackRect(dragObject);
     }
     if (feedbackRect != null) {
@@ -123,30 +122,21 @@ public class GridDropLocation implements DropLocation {
       lastCol = Math.max(lastCol, getColumn() + relCol + dragObject.getColSpan(i) - 1);
     }
 
-    final GridLayoutManager layoutManager = (GridLayoutManager) getContainer().getLayout();
-
     if (firstRow < 0 || firstCol < 0 ||
-        lastRow >= layoutManager.getRowCount() || lastCol >= layoutManager.getColumnCount()) {
+        lastRow >= getContainer().getGridRowCount() || lastCol >= getContainer().getGridColumnCount()) {
       LOG.debug("no feedback rect because insert range is outside grid: firstRow=" + firstRow +
                 ", firstCol=" + firstCol + ", lastRow=" + lastRow + ", lastCol=" + lastCol);
       return null;
     }
 
-    int[] xs = layoutManager.getXs();
-    int[] widths = layoutManager.getWidths();
-    int[] ys = layoutManager.getYs();
-    int[] heights = layoutManager.getHeights();
-    return new Rectangle(xs [firstCol],
-                         ys [firstRow],
-                         xs [lastCol] + widths [lastCol] - xs [firstCol],
-                         ys [lastRow] + heights [lastRow] - ys [firstRow]);
+    return getContainer().getLayoutManager().getGridCellRangeRect(getContainer(), firstRow, firstCol, lastRow, lastCol);
   }
 
   public void processDrop(final GuiEditor editor,
                           final RadComponent[] components,
                           final GridConstraints[] constraintsToAdjust,
                           final ComponentDragObject dragObject) {
-    myContainer.dropIntoGrid(components, myRow, myColumn, dragObject);
+    dropIntoGrid(myContainer, components, myRow, myColumn, dragObject);
   }
 
   @Nullable
@@ -162,5 +152,49 @@ public class GridDropLocation implements DropLocation {
 
   @NonNls @Override public String toString() {
     return "GridDropLocation(row=" + myRow + ",col=" + myColumn + ")";
+  }
+
+  protected static void dropIntoGrid(final RadContainer container, final RadComponent[] components, int row, int column, final ComponentDragObject dragObject) {
+    assert components.length > 0;
+
+    for(int i=0; i<components.length; i++) {
+      RadComponent c = components [i];
+      if (c instanceof RadContainer) {
+        final LayoutManager layout = ((RadContainer)c).getLayout();
+        if (layout instanceof XYLayoutManager) {
+          ((XYLayoutManager)layout).setPreferredSize(c.getSize());
+        }
+      }
+
+      int relativeCol = dragObject.getRelativeCol(i);
+      int relativeRow = dragObject.getRelativeRow(i);
+      LOG.debug("dropIntoGrid: relativeRow=" + relativeRow + ", relativeCol=" + relativeCol);
+      int colSpan = dragObject.getColSpan(i);
+      int rowSpan = dragObject.getRowSpan(i);
+
+      assert row + relativeRow >= 0;
+      assert column + relativeCol >= 0;
+      assert relativeRow + rowSpan <= container.getGridRowCount();
+      assert relativeCol + colSpan <= container.getGridColumnCount();
+
+      RadComponent old = container.findComponentInRect(row + relativeRow, column + relativeCol, rowSpan, colSpan);
+      if (old != null) {
+        LOG.assertTrue(false,
+                       "Drop rectangle not empty: (" + (row + relativeRow) + ", " + (column + relativeCol)
+                       + ", " + rowSpan + ", " + colSpan + "), component ID=" + old.getId());
+      }
+
+      final GridConstraints constraints = c.getConstraints();
+      constraints.setRow(row + relativeRow);
+      constraints.setColumn(column + relativeCol);
+      constraints.setRowSpan(rowSpan);
+      constraints.setColSpan(colSpan);
+      container.addComponent(c);
+
+      // Fill DropInfo
+      c.revalidate();
+    }
+
+    container.revalidate();
   }
 }

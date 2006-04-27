@@ -7,7 +7,6 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 
@@ -49,9 +48,8 @@ public class CachedGridImage {
       cols [i] = c.getColumn();
       colSpans [i] = c.getColSpan();
     }
-    GridLayoutManager layout = (GridLayoutManager) container.getLayout();
-    int[] horzGridLines = layout.getHorizontalGridLines();
-    int[] vertGridLines = layout.getVerticalGridLines();
+    int[] horzGridLines = container.getLayoutManager().getHorizontalGridLines(container);
+    int[] vertGridLines = container.getLayoutManager().getVerticalGridLines(container);
     if (!arraysEqual(horzGridLines, myHorzGridLines) ||
         !arraysEqual(vertGridLines, myVertGridLines) ||
         !arraysEqual(rows, myRows) ||

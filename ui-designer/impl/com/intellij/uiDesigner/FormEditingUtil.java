@@ -7,16 +7,15 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.DraggedComponentList;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -99,7 +98,7 @@ public final class FormEditingUtil {
       });
 
 
-      GridConstraints delConstraints = parent.isGrid() ? component.getConstraints() : null;
+      GridConstraints delConstraints = parent.getLayoutManager().isGrid() ? component.getConstraints() : null;
 
       int index = parent.indexOfComponent(component);
       parent.removeComponent(component);
@@ -154,14 +153,13 @@ public final class FormEditingUtil {
   }
 
   public static void deleteEmptyGridCells(final RadContainer parent, final GridConstraints delConstraints) {
-    GridLayoutManager layout = (GridLayoutManager) parent.getLayout();
     for(int row=delConstraints.getRow() + delConstraints.getRowSpan()-1; row >= delConstraints.getRow(); row--) {
-      if (row < layout.getRowCount() && GridChangeUtil.isRowEmpty(parent, row)) {
+      if (row < parent.getGridRowCount() && GridChangeUtil.isRowEmpty(parent, row)) {
         GridChangeUtil.deleteRow(parent, row);
       }
     }
     for(int col=delConstraints.getColumn() + delConstraints.getColSpan()-1; col >= delConstraints.getColumn(); col--) {
-      if (col < layout.getColumnCount() && GridChangeUtil.isColumnEmpty(parent, col)) {
+      if (col < parent.getGridColumnCount() && GridChangeUtil.isColumnEmpty(parent, col)) {
         GridChangeUtil.deleteColumn(parent, col);
       }
     }

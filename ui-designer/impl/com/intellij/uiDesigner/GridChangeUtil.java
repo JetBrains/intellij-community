@@ -135,11 +135,10 @@ public final class GridChangeUtil {
     check(grid, isRow, cellIndex);
 
     // Do not allow to delete the single row/column
-    final GridLayoutManager layout = (GridLayoutManager)grid.getLayout();
-    if(isRow && layout.getRowCount() < 2){
+    if(isRow && grid.getGridRowCount() < 2){
       return false;
     }
-    else if(!isRow && layout.getColumnCount() < 2){
+    else if(!isRow && grid.getGridColumnCount() < 2){
       return false;
     }
 
@@ -205,13 +204,11 @@ public final class GridChangeUtil {
    * check whether passed container is grid and cellIndex is in proper range
    */
   private static void check(@NotNull RadContainer grid, final boolean isRow, final int cellIndex){
-    if (!grid.isGrid()){
+    if (!grid.getLayoutManager().isGrid()){
       throw new IllegalArgumentException("container must be grid");
     }
 
-    final GridLayoutManager layout = (GridLayoutManager)grid.getLayout();
-
-    final int cellCount = isRow ? layout.getRowCount() : layout.getColumnCount();
+    final int cellCount = isRow ? grid.getGridRowCount() : grid.getGridColumnCount();
     if (cellIndex < 0 || cellIndex >= cellCount) {
       throw new IllegalArgumentException("invalid index: " + cellIndex);
     }

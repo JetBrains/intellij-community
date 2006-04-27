@@ -7,29 +7,26 @@ import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
-import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.core.AbstractLayout;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
-import javax.swing.border.EtchedBorder;
 import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -169,10 +166,6 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
-  public final boolean isGrid(){
-    return getLayout() instanceof GridLayoutManager;
-  }
-
   public final boolean isXY(){
     return getLayout() instanceof XYLayoutManager;
   }
@@ -283,67 +276,24 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
   @Nullable
-  public RadComponent getComponentAtGrid(final int row, final int column) {
-    // If the target cell is not empty does not allow drop.
-    for(int i=0; i<getComponentCount(); i++){
-      final RadComponent component = getComponent(i);
-      if (component.isDragging()) {
-        continue;
-      }
-      final GridConstraints constraints=component.getConstraints();
-      if(
-        constraints.getRow() <= row && row < constraints.getRow()+constraints.getRowSpan() &&
-        constraints.getColumn() <= column && column < constraints.getColumn()+constraints.getColSpan()
-      ){
-        return component;
-      }
-    }
-    return null;
+  public RadComponent getComponentAtGrid(int row, int col) {
+    return getLayoutManager().getComponentAtGrid(this, row, col);
   }
 
-  public final void dropIntoGrid(final RadComponent[] components, int row, int column, final ComponentDragObject dragObject) {
-    final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
-    assert components.length > 0;
+  public int getGridRowCount() {
+    return myLayoutManager.getGridRowCount(this);
+  }
 
-    for(int i=0; i<components.length; i++) {
-      RadComponent c = components [i];
-      if (c instanceof RadContainer) {
-        final LayoutManager layout = ((RadContainer)c).getLayout();
-        if (layout instanceof XYLayoutManager) {
-          ((XYLayoutManager)layout).setPreferredSize(c.getSize());
-        }
-      }
+  public int getGridColumnCount() {
+    return myLayoutManager.getGridColumnCount(this);
+  }
 
-      int relativeCol = dragObject.getRelativeCol(i);
-      int relativeRow = dragObject.getRelativeRow(i);
-      LOG.debug("dropIntoGrid: relativeRow=" + relativeRow + ", relativeCol=" + relativeCol);
-      int colSpan = dragObject.getColSpan(i);
-      int rowSpan = dragObject.getRowSpan(i);
+  public int getGridRowAt(int y) {
+    return myLayoutManager.getGridRowAt(this, y);
+  }
 
-      assert row + relativeRow >= 0;
-      assert column + relativeCol >= 0;
-      assert relativeRow + rowSpan <= gridLayout.getRowCount();
-      assert relativeCol + colSpan <= gridLayout.getColumnCount();
-
-      RadComponent old = findComponentInRect(row + relativeRow, column + relativeCol, rowSpan, colSpan);
-      if (old != null) {
-        LOG.assertTrue(false,
-                       "Drop rectangle not empty: (" + (row + relativeRow) + ", " + (column + relativeCol)
-                       + ", " + rowSpan + ", " + colSpan + "), component ID=" + old.getId());
-      }
-
-      final GridConstraints constraints = c.getConstraints();
-      constraints.setRow(row + relativeRow);
-      constraints.setColumn(column + relativeCol);
-      constraints.setRowSpan(rowSpan);
-      constraints.setColSpan(colSpan);
-      addComponent(c);
-
-      // Fill DropInfo
-      c.revalidate();
-    }
-
-    revalidate();
+  public int getGridColumnAt(int x) {
+    return myLayoutManager.getGridColumnAt(this, x);
   }
 
   /**

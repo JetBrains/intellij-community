@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -153,11 +152,10 @@ abstract class AbstractMoveSelectionAction extends AnAction{
 
   private boolean moveSelectionByGrid(final RadComponent selectedComponent) {
     final RadContainer parent = selectedComponent.getParent();
-    if (parent == null || !parent.isGrid()) {
+    if (parent == null || !parent.getLayoutManager().isGrid()) {
       return false;
     }
 
-    final GridLayoutManager grid = (GridLayoutManager) parent.getLayout();
     int row = selectedComponent.getConstraints().getRow();
     int column = selectedComponent.getConstraints().getColumn();
 
@@ -165,7 +163,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
     do {
       row += getRowMoveDelta();
       column += getColumnMoveDelta();
-      if (row < 0 || row >= grid.getRowCount() || column < 0 || column >= grid.getColumnCount()) {
+      if (row < 0 || row >= parent.getGridRowCount() || column < 0 || column >= parent.getGridColumnCount()) {
         if (myMoveToLast) {
           break;
         }

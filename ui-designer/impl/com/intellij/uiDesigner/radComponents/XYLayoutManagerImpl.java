@@ -44,7 +44,7 @@ public final class XYLayoutManagerImpl extends XYLayoutManager {
 
     // the following code prevents XYs placed in Grid from being shrunk
     final RadComponent radParent = component.getParent();
-    if (radParent instanceof RadContainer && (((RadContainer)radParent).isGrid())) {
+    if (radParent instanceof RadContainer && (((RadContainer)radParent).getLayoutManager().isGrid())) {
       return new Dimension(
         Math.max(myPreferredSize.width, MIN_SIZE.width),
         Math.max(myPreferredSize.height, MIN_SIZE.height)

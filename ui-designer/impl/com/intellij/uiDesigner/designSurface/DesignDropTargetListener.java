@@ -275,8 +275,8 @@ class DesignDropTargetListener implements DropTargetListener {
     }
 
     for (int i = 0; i < originalConstraints.length; i++) {
-      if (originalParents[i].isGrid()) {
-        FormEditingUtil.deleteEmptyGridCells(originalParents[i], originalConstraints [i]);
+      if (originalParents[i].getLayoutManager().isGrid()) {
+        FormEditingUtil.deleteEmptyGridCells(originalParents[i], originalConstraints[i]);
       }
     }
     return true;

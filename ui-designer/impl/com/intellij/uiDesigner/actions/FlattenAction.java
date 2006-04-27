@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
@@ -30,7 +29,7 @@ public class FlattenAction extends AbstractGuiEditorAction {
     for(RadComponent c: selection) {
       RadContainer container = (RadContainer) c;
       final RadContainer parent = container.getParent();
-      if (container.isGrid()) {
+      if (container.getLayoutManager().isGrid()) {
         flattenGrid(container);
       }
       else {
@@ -43,12 +42,11 @@ public class FlattenAction extends AbstractGuiEditorAction {
   private static void flattenGrid(final RadContainer container) {
     RadContainer parent = container.getParent();
     GridConstraints containerConstraints = (GridConstraints) container.getConstraints().clone();
-    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
     // ensure there will be enough rows and columns to fit the container contents
-    for(int i=containerConstraints.getRowSpan(); i<grid.getRowCount(); i++) {
+    for(int i=containerConstraints.getRowSpan(); i<container.getGridRowCount(); i++) {
       GridChangeUtil.splitRow(parent, containerConstraints.getRow());
     }
-    for(int i=containerConstraints.getColSpan(); i<grid.getColumnCount(); i++) {
+    for(int i=containerConstraints.getColSpan(); i<container.getGridColumnCount(); i++) {
       GridChangeUtil.splitColumn(parent, containerConstraints.getColumn());
     }
 
@@ -99,7 +97,7 @@ public class FlattenAction extends AbstractGuiEditorAction {
       return false;
     }
     RadContainer container = (RadContainer) c;
-    if (container.isGrid() && container.getParent().isGrid()) {
+    if (container.getLayoutManager().isGrid() && container.getParent().getLayoutManager().isGrid()) {
       return true;
     }
     if (container.getComponentCount() <= 1) {

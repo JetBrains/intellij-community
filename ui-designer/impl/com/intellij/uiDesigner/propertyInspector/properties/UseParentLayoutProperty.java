@@ -55,7 +55,7 @@ public class UseParentLayoutProperty extends Property<RadComponent, Boolean> {
   }
 
   @Override public boolean appliesTo(RadComponent component) {
-    return component instanceof RadContainer && ((RadContainer) component).isGrid() && component.getParent().isGrid();
+    return component instanceof RadContainer && ((RadContainer)component).getLayoutManager().isGrid() && component.getParent().getLayoutManager().isGrid();
   }
 
   @Override public boolean isModified(final RadComponent component) {

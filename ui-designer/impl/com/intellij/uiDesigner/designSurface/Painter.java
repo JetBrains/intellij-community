@@ -182,7 +182,7 @@ public final class Painter {
       return;
     }
     final RadContainer container = (RadContainer)component;
-    if(!container.isGrid()){
+    if(!container.getLayoutManager().isGrid()){
       return;
     }
 

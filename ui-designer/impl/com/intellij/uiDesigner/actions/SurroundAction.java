@@ -58,14 +58,14 @@ public class SurroundAction extends AbstractGuiEditorAction {
           }
 
           Rectangle rc = new Rectangle(0, 0, 1, 1);
-          if (selectionParent.isGrid()) {
+          if (selectionParent.getLayoutManager().isGrid()) {
             rc = getSelectionBounds(selection);
           }
           for(RadComponent c: selection) {
             selectionParent.removeComponent(c);
           }
 
-          if (selectionParent.isGrid()) {
+          if (selectionParent.getLayoutManager().isGrid()) {
             final GridConstraints newConstraints = newContainer.getConstraints();
             newConstraints.setRow(rc.y);
             newConstraints.setColumn(rc.x);
@@ -96,7 +96,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
           }
 
           for(RadComponent c: selection) {
-            if (selectionParent.isGrid()) {
+            if (selectionParent.getLayoutManager().isGrid()) {
               c.getConstraints().setRow(c.getConstraints().getRow() - rc.y);
               c.getConstraints().setColumn(c.getConstraints().getColumn() - rc.x);
             }
@@ -125,7 +125,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
   protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(selectionParent != null &&
-                                   ((!selectionParent.isGrid() && selection.size() == 1) ||
+                                   ((!selectionParent.getLayoutManager().isGrid() && selection.size() == 1) ||
                                      isSelectionContiguous(selectionParent, selection)) &&
                                    canWrapSelection(selection));
   }
@@ -141,7 +141,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
 
   private static boolean isSelectionContiguous(RadContainer selectionParent,
                                                ArrayList<RadComponent> selection) {
-    assert selectionParent.isGrid();
+    assert selectionParent.getLayoutManager().isGrid();
     Rectangle rc = getSelectionBounds(selection);
     for(RadComponent c: selectionParent.getComponents()) {
       if (!selection.contains(c) &&

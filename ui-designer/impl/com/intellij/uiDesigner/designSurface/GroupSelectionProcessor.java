@@ -50,8 +50,7 @@ public final class GroupSelectionProcessor extends EventProcessor {
         RadComponent component = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
         if (component != null) {
           RadComponent anchor = myEditor.getSelectionAnchor();
-          if (anchor == null || anchor.getParent() != component.getParent() || anchor.getParent() == null ||
-            !anchor.getParent().isGrid()) {
+          if (anchor == null || anchor.getParent() != component.getParent() || anchor.getParent() == null || !anchor.getParent().getLayoutManager().isGrid()) {
             component.setSelected(!component.isSelected());
           }
           else {

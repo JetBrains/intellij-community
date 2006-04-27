@@ -5,19 +5,19 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.Processor;
 
-import java.util.List;
 import java.awt.Point;
+import java.util.List;
 
 /**
  * @author yole
@@ -51,16 +51,15 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
     if (selection.size() > 0) {
       RadComponent component = selection.get(0);
       final RadContainer container = component.getParent();
-      if (container.isGrid()) {
-        GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+      if (container.getLayoutManager().isGrid()) {
         GridConstraints c = component.getConstraints();
         // try to insert in empty cell to the right or below the component; if not found -
         // insert row below selected component
-        if (c.getColumn() + c.getColSpan() < grid.getColumnCount() &&
+        if (c.getColumn() + c.getColSpan() < container.getGridColumnCount() &&
             container.getComponentAtGrid(c.getRow(), c.getColumn() + c.getColSpan()) == null) {
           dropLocation = new GridDropLocation(container, c.getRow(), c.getColumn() + c.getColSpan());
         }
-        else if (c.getRow() + c.getRowSpan() < grid.getRowCount() &&
+        else if (c.getRow() + c.getRowSpan() < container.getGridRowCount() &&
                  container.getComponentAtGrid(c.getRow() + c.getRowSpan(), c.getColumn()) == null) {
           dropLocation = new GridDropLocation(container, c.getRow() + c.getRowSpan(), c.getColumn());
         }

@@ -51,6 +51,6 @@ public class IncreaseIndentAction extends AbstractGuiEditorAction {
   }
 
   protected boolean canAdjustIndent(final RadComponent component) {
-    return component.getParent().isGrid();
+    return component.getParent().getLayoutManager().isGrid();
   }
 }

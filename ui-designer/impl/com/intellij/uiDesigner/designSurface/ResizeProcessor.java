@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.CutCopyPasteSupport;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
@@ -46,7 +45,7 @@ public final class ResizeProcessor extends EventProcessor {
     myOriginalConstraints = component.getConstraints();
 
     final List<RadComponent> copyList = CutCopyPasteSupport.copyComponents(editor, Collections.singletonList(component));
-    if (component.getParent().isGrid() && copyList != null) {
+    if (component.getParent().getLayoutManager().isGrid() && copyList != null) {
       myComponent.setResizing(true);
       Rectangle rc = SwingUtilities.convertRectangle(component.getParent().getDelegee(),
                                                      component.getBounds(),
@@ -70,14 +69,14 @@ public final class ResizeProcessor extends EventProcessor {
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       myLastPoint = e.getPoint();
       myPressPoint = myLastPoint;
-      myBounds = myOriginalParent.isGrid() ? myResizedCopy.getBounds() : myComponent.getBounds();
+      myBounds = myOriginalParent.getLayoutManager().isGrid() ? myResizedCopy.getBounds() : myComponent.getBounds();
       myOriginalBounds = new Rectangle(myBounds);
     }
     else if(e.getID()==MouseEvent.MOUSE_DRAGGED){
       final int dx = e.getX() - myLastPoint.x;
       final int dy = e.getY() - myLastPoint.y;
 
-      if (myOriginalParent.isGrid()) {
+      if (myOriginalParent.getLayoutManager().isGrid()) {
         final Point point = SwingUtilities.convertPoint(myEditor.getDragLayer(), e.getX(), e.getY(), myOriginalParent.getDelegee());
         putGridSpanFeedback(point);
       }
@@ -112,7 +111,7 @@ public final class ResizeProcessor extends EventProcessor {
 
       final Dimension minSize = myComponent.getMinimumSize();
 
-      final Rectangle newBounds = myOriginalParent.isGrid() ? myResizedCopy.getBounds() : myComponent.getBounds();
+      final Rectangle newBounds = myOriginalParent.getLayoutManager().isGrid() ? myResizedCopy.getBounds() : myComponent.getBounds();
 
       // Component's bounds cannot be less the some minimum size
       if (myBounds.width >= minSize.width) {
@@ -148,7 +147,7 @@ public final class ResizeProcessor extends EventProcessor {
       newBounds.width = size.width;
       newBounds.height = size.height;
 
-      if (myOriginalParent.isGrid()) {
+      if (myOriginalParent.getLayoutManager().isGrid()) {
         myResizedCopy.setBounds(newBounds);
       }
       else {
@@ -169,10 +168,9 @@ public final class ResizeProcessor extends EventProcessor {
       if (myResizedCopy != null) {
         myEditor.getDragLayer().remove(myResizedCopy.getDelegee());
       }
-      if (myOriginalParent.isGrid() && myEditor.ensureEditable()) {
+      if (myOriginalParent.getLayoutManager().isGrid() && myEditor.ensureEditable()) {
         final Point point = SwingUtilities.convertPoint(myEditor.getDragLayer(), e.getX(), e.getY(), myOriginalParent.getDelegee());
-        final GridLayoutManager grid = (GridLayoutManager)myOriginalParent.getLayout();
-        Rectangle rcGrid = getGridSpanGridRect(grid, myOriginalConstraints, point, myResizeMask);
+        Rectangle rcGrid = getGridSpanGridRect(myOriginalParent, myOriginalConstraints, point, myResizeMask);
         if (rcGrid != null && isGridSpanDropAllowed(rcGrid)) {
           myOriginalConstraints.setColumn(rcGrid.x);
           myOriginalConstraints.setRow(rcGrid.y);
@@ -194,10 +192,10 @@ public final class ResizeProcessor extends EventProcessor {
   }
 
   private void putGridSpanFeedback(final Point point) {
-    final GridLayoutManager grid = (GridLayoutManager)myOriginalParent.getLayout();
-    Rectangle rcGrid = getGridSpanGridRect(grid, myOriginalConstraints, point, myResizeMask);
+    Rectangle rcGrid = getGridSpanGridRect(myOriginalParent, myOriginalConstraints, point, myResizeMask);
     if (rcGrid != null) {
-      Rectangle rc = grid.getCellRangeRect(rcGrid.y, rcGrid.x, rcGrid.y+rcGrid.height-1, rcGrid.x+rcGrid.width-1);
+      Rectangle rc = myOriginalParent.getLayoutManager().getGridCellRangeRect(myOriginalParent, rcGrid.y, rcGrid.x,
+                                                                              rcGrid.y+rcGrid.height-1, rcGrid.x+rcGrid.width-1);
       myEditor.getActiveDecorationLayer().putFeedback(myOriginalParent.getDelegee(), rc);
       setCursor(isGridSpanDropAllowed(rcGrid) ? getResizeCursor() : FormEditingUtil.getMoveNoDropCursor());
     }
@@ -208,15 +206,15 @@ public final class ResizeProcessor extends EventProcessor {
   }
 
   @Nullable
-  static Rectangle getGridSpanGridRect(final GridLayoutManager grid,
+  static Rectangle getGridSpanGridRect(final RadContainer grid,
                                        final GridConstraints originalConstraints,
                                        final Point point,
                                        final int resizeMask) {
     int rowAtMouse = (resizeMask & (Painter.NORTH_MASK | Painter.SOUTH_MASK)) != 0
-                     ? grid.getRowAt(point.y)
+                     ? grid.getGridRowAt(point.y)
                      : -1;
     int colAtMouse = (resizeMask & (Painter.WEST_MASK | Painter.EAST_MASK)) != 0
-                     ? grid.getColumnAt(point.x)
+                     ? grid.getGridColumnAt(point.x)
                      : -1;
     if (rowAtMouse != -1 || colAtMouse != -1) {
       final int origStartCol = originalConstraints.getColumn();
@@ -264,13 +262,6 @@ public final class ResizeProcessor extends EventProcessor {
   }
 
   private boolean isGridSpanDropAllowed(final Rectangle rcGrid) {
-    for(int row=rcGrid.y; row < rcGrid.y+rcGrid.height; row++) {
-      for(int col=rcGrid.x; col < rcGrid.x+rcGrid.width; col++) {
-        if (myOriginalParent.getComponentAtGrid(row, col) != null) {
-          return false;
-        }
-      }
-    }
-    return true;
+    return myOriginalParent.findComponentInRect(rcGrid.y, rcGrid.x, rcGrid.height, rcGrid.width) == null;
   }
 }

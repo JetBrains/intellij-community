@@ -4,23 +4,23 @@
 
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.NoDropLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.openapi.project.Project;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Arrays;
 
 /**
  * Design-time support for a layout manager.
@@ -146,5 +146,42 @@ public abstract class RadLayoutManager {
 
   public boolean isIndexed() {
     return false;
+  }
+
+  public boolean isGrid() {
+    return false;
+  }
+
+  @Nullable
+  public RadComponent getComponentAtGrid(RadContainer container, final int row, final int column) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
+  }
+
+  public int getGridRowCount(RadContainer container) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
+  }
+
+  public int getGridColumnCount(RadContainer container) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
+  }
+
+  public int getGridRowAt(RadContainer container, int y) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
+  }
+
+  public int getGridColumnAt(RadContainer container, int x) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
+  }
+
+  public Rectangle getGridCellRangeRect(RadContainer container, int startRow, int startCol, int endRow, int endCol) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
+  }
+
+  public int[] getHorizontalGridLines(RadContainer container) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
+  }
+
+  public int[] getVerticalGridLines(RadContainer container) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
   }
 }

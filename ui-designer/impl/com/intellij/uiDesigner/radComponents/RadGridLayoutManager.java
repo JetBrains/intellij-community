@@ -129,7 +129,7 @@ public class RadGridLayoutManager extends RadLayoutManager {
     final GridLayoutManager grid = (GridLayoutManager) container.getLayout();
 
     if (grid.getRowCount() == 1 && grid.getColumnCount() == 1 &&
-        container.getComponentAtGrid(0, 0) == null) {
+        getComponentAtGrid(container, 0, 0) == null) {
       final Rectangle rc = grid.getCellRangeRect(0, 0, 0, 0);
       if (location == null) {
         return new FirstComponentInsertLocation(container, 0, 0, rc, 0, 0);
@@ -138,7 +138,7 @@ public class RadGridLayoutManager extends RadLayoutManager {
     }
 
     if (location == null) {
-      if (container.getComponentAtGrid(0, 0) == null) {
+      if (getComponentAtGrid(container, 0, 0) == null) {
         return new GridDropLocation(container, 0, 0);
       }
       return new GridInsertLocation(container, getLastNonSpacerRow(container), 0, GridInsertMode.RowAfter);
@@ -189,7 +189,7 @@ public class RadGridLayoutManager extends RadLayoutManager {
     final int cellWidth = vertGridLines[col + 1] - vertGridLines[col];
     final int cellHeight = horzGridLines[row + 1] - horzGridLines[row];
     if (mode == GridInsertMode.InCell) {
-      RadComponent component = container.getComponentAtGrid(row, col);
+      RadComponent component = getComponentAtGrid(container, row, col);
       if (component != null) {
         Rectangle rc = component.getBounds();
         rc.translate(-xs [col], -ys [row]);
@@ -219,15 +219,71 @@ public class RadGridLayoutManager extends RadLayoutManager {
     return new GridDropLocation(container, row, col);
   }
 
-  private static int getLastNonSpacerRow(final RadContainer container) {
+  private int getLastNonSpacerRow(final RadContainer container) {
     GridLayoutManager grid = (GridLayoutManager) container.getLayout();
     int lastRow = grid.getRowCount()-1;
     for(int col=0; col<grid.getColumnCount(); col++) {
-      RadComponent c = container.getComponentAtGrid(lastRow, col);
+      RadComponent c = getComponentAtGrid(container, lastRow, col);
       if (c != null && !(c instanceof RadHSpacer) && !(c instanceof RadVSpacer)) {
         return lastRow;
       }
     }
     return lastRow-1;
+  }
+
+  @Override public boolean isGrid() {
+    return true;
+  }
+
+  @Nullable
+  public RadComponent getComponentAtGrid(RadContainer container, final int row, final int column) {
+    // If the target cell is not empty does not allow drop.
+    for(int i=0; i<container.getComponentCount(); i++){
+      final RadComponent component = container.getComponent(i);
+      if (component.isDragging()) {
+        continue;
+      }
+      final GridConstraints constraints=component.getConstraints();
+      if(
+        constraints.getRow() <= row && row < constraints.getRow()+constraints.getRowSpan() &&
+        constraints.getColumn() <= column && column < constraints.getColumn()+constraints.getColSpan()
+      ){
+        return component;
+      }
+    }
+    return null;
+  }
+
+  @Override public int getGridRowCount(RadContainer container) {
+    return ((GridLayoutManager) container.getLayout()).getRowCount();
+  }
+
+  @Override public int getGridColumnCount(RadContainer container) {
+    return ((GridLayoutManager) container.getLayout()).getColumnCount();
+  }
+
+  @Override public int getGridRowAt(RadContainer container, int y) {
+    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+    return grid.getRowAt(y);
+  }
+
+  @Override public int getGridColumnAt(RadContainer container, int x) {
+    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+    return grid.getColumnAt(x);
+  }
+
+  @Override public Rectangle getGridCellRangeRect(RadContainer container, int startRow, int startCol, int endRow, int endCol) {
+    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+    return grid.getCellRangeRect(startRow, startCol, endRow, endCol);
+  }
+
+  @Override public int[] getHorizontalGridLines(RadContainer container) {
+    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+    return grid.getHorizontalGridLines();
+  }
+
+  @Override public int[] getVerticalGridLines(RadContainer container) {
+    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+    return grid.getVerticalGridLines();
   }
 }
