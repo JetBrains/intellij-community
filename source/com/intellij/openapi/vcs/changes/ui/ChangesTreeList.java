@@ -17,13 +17,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -190,20 +189,67 @@ public class ChangesTreeList extends JPanel {
 
   public void setChangesToDisplay(final List<Change> changes) {
     final DefaultListModel listModel = (DefaultListModel)myList.getModel();
+    final List<Change> sortedChanges = new ArrayList<Change>(changes);
+    Collections.sort(sortedChanges, new Comparator<Change>() {
+      public int compare(final Change o1, final Change o2) {
+        return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
+      }
+    });
+
     listModel.removeAllElements();
-    for (Change change : changes) {
+    for (Change change : sortedChanges) {
       listModel.addElement(change);
     }
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, false);
-    myTree.setModel(builder.buildModel(changes));
+    final DefaultTreeModel model = builder.buildModel(changes);
+    myTree.setModel(model);
 
-    TreeUtil.expandAll(myTree);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        TreeUtil.expandAll(myTree);
 
-    if (changes.size() > 0) {
-      myList.setSelectedIndex(0);
-      myTree.setSelectionRow(0);
-    }
+        int listSelection = 0;
+        int count = 0;
+        for (Change change : changes) {
+          if (myIncludedChanges.contains(change)) {
+            listSelection = count;
+            break;
+          }
+          count ++;
+        }
+
+        ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
+        Enumeration enumeration = root.depthFirstEnumeration();
+
+        while (enumeration.hasMoreElements()) {
+          ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+          final NodeState state = getNodeStatus(node);
+          if (state == NodeState.CLEAR) {
+            myTree.collapsePath(new TreePath(node.getPath()));
+          }
+        }
+
+        enumeration = root.depthFirstEnumeration();
+        int scrollRow = 0;
+        while (enumeration.hasMoreElements()) {
+          ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+          final NodeState state = getNodeStatus(node);
+          if (state == NodeState.FULL && node.isLeaf()) {
+            scrollRow = myTree.getRowForPath(new TreePath(node.getPath()));
+            break;
+          }
+        }
+
+        if (changes.size() > 0) {
+          myList.setSelectedIndex(listSelection);
+          myList.ensureIndexIsVisible(listSelection);
+
+          myTree.setSelectionRow(scrollRow);
+          TreeUtil.showRowCentered(myTree, scrollRow, false);
+        }
+      }
+    });
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
@@ -323,24 +369,35 @@ public class ChangesTreeList extends JPanel {
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       ChangesBrowserNode node = (ChangesBrowserNode)value;
 
-      boolean hasIncluded = false;
-      boolean hasExcluded = false;
-
-      for (Change change : node.getAllChangesUnder()) {
-        if (myIncludedChanges.contains(change)) {
-          hasIncluded = true;
-        }
-        else {
-          hasExcluded = true;
-        }
-      }
-
-      myCheckBox.setSelected(hasIncluded);
-      myCheckBox.setEnabled(!(hasIncluded && hasExcluded));
+      NodeState state = getNodeStatus(node);
+      myCheckBox.setSelected(state != NodeState.CLEAR);
+      myCheckBox.setEnabled(state != NodeState.PARTIAL);
       revalidate();
 
       return this;
     }
+  }
+
+  private static enum NodeState {
+    FULL, CLEAR, PARTIAL
+  }
+
+  private NodeState getNodeStatus(ChangesBrowserNode node) {
+    boolean hasIncluded = false;
+    boolean hasExcluded = false;
+
+    for (Change change : node.getAllChangesUnder()) {
+      if (myIncludedChanges.contains(change)) {
+        hasIncluded = true;
+      }
+      else {
+        hasExcluded = true;
+      }
+    }
+
+    if (hasIncluded && hasExcluded) return NodeState.PARTIAL;
+    if (hasIncluded) return NodeState.FULL;
+    return NodeState.CLEAR;
   }
 
   private class MyListCellRenderer extends JPanel implements ListCellRenderer {
