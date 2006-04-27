@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -115,5 +116,14 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   public void setPropertiesFile(final String name) throws IncorrectOperationException {
     getSourceElement().setAttribute("file", name);
     subtreeChanged();
+  }
+
+  public PsiElement getNavigationElement() {
+    final XmlTag sourceElement = getSourceElement();
+    final XmlAttribute attribute = sourceElement.getAttribute("name", null);
+    if (attribute != null) {
+      return attribute.getValueElement();
+    }
+    return this;
   }
 }
