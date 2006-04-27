@@ -125,13 +125,14 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     final XmlFile containingFile = XmlUtil.getContainingFile(this);
     final XmlProlog prolog = getProlog();
     final XmlDoctype doctype = (prolog != null)?prolog.getDoctype():null;
-
-    if (XmlUtil.ANT_URI.equals(namespace)){
-      final AntDOMNSDescriptor antDOMNSDescriptor = new AntDOMNSDescriptor();
-      antDOMNSDescriptor.init(this);
-      return antDOMNSDescriptor;
-    }
-    else if(XmlUtil.HTML_URI.equals(namespace)){
+    //
+    //if (XmlUtil.ANT_URI.equals(namespace)){
+    //  final AntDOMNSDescriptor antDOMNSDescriptor = new AntDOMNSDescriptor();
+    //  antDOMNSDescriptor.init(this);
+    //  return antDOMNSDescriptor;
+    //}
+    //else
+    if(XmlUtil.HTML_URI.equals(namespace)){
       XmlNSDescriptor nsDescriptor = (doctype != null)?getNsDescriptorFormDocType(doctype, containingFile):null;
       if (nsDescriptor == null) nsDescriptor = getDefaultNSDescriptor(XmlUtil.XHTML_URI, false);
       final XmlNSDescriptor htmlDescriptor = new HtmlNSDescriptorImpl(nsDescriptor);
