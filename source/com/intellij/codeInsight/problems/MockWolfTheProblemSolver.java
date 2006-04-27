@@ -15,38 +15,27 @@ import java.util.Collection;
  * @author cdr
  */
 public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
+  public static final ProblemUpdateTransaction MOCK_UPDATE_TRANSACTION = new ProblemUpdateTransaction() {
+    public void addProblem(Problem problem) {
+    }
+
+    public void addProblem(CompilerMessage message) {
+    }
+
+    public void commit() {
+    }
+  };
 
   public boolean isProblemFile(VirtualFile virtualFile) {
     return false;
   }
 
   public ProblemUpdateTransaction startUpdatingProblemsInScope(CompileScope compileScope) {
-    return new ProblemUpdateTransaction() {
-      public void addProblem(Problem problem) {
-      }
-
-      public void addProblem(CompilerMessage message) {
-      }
-
-      public void commit() {
-      }
-    };
+    return MOCK_UPDATE_TRANSACTION;
   }
 
   public ProblemUpdateTransaction startUpdatingProblemsInScope(VirtualFile virtualFile) {
-    return new ProblemUpdateTransaction() {
-      public void addProblem(Problem problem) {
-
-      }
-
-      public void addProblem(CompilerMessage message) {
-
-      }
-
-      public void commit() {
-
-      }
-    };
+    return MOCK_UPDATE_TRANSACTION;
   }
 
   public Collection<VirtualFile> getProblemFiles() {

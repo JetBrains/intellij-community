@@ -239,11 +239,11 @@ public class CompileDriver {
                        CompilerMessage message,
                        final boolean checkCachesVersion,
                        final boolean trackDependencies) {
+    final WolfTheProblemSolver.ProblemUpdateTransaction update=WolfTheProblemSolver.getInstance(myProject).startUpdatingProblemsInScope(scope);
     final CompilerProgressIndicator indicator = new CompilerProgressIndicator(
       myProject,
       CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
-      forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make")
-    );
+      forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make"), update);
     WindowManager.getInstance().getStatusBar(myProject).setInfo("");
 
     final DependencyCache dependencyCache = new DependencyCache(myCachesDirectoryPath, myProject);
@@ -270,6 +270,7 @@ public class CompileDriver {
                 doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion, trackDependencies);
               }
               finally {
+                update.commit();
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("COMPILATION FINISHED");
                 }
@@ -402,10 +403,7 @@ public class CompileDriver {
 
   private ExitStatus doCompile(CompileContextImpl context, boolean isRebuild, final boolean forceCompile, final boolean trackDependencies,
                                final Set<File> outputDirectories) {
-    WolfTheProblemSolver.ProblemUpdateTransaction update =
-      WolfTheProblemSolver.getInstance(myProject).startUpdatingProblemsInScope(context.getCompileScope());
     try {
-      ((CompilerProgressIndicator)context.getProgressIndicator()).setUpdate(update);
       if (isRebuild) {
         deleteAll(context, outputDirectories);
         if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
@@ -483,9 +481,6 @@ public class CompileDriver {
     }
     catch (ProcessCanceledException e) {
       return ExitStatus.CANCELLED;
-    }
-    finally{
-      update.commit();
     }
   }
 
@@ -1348,11 +1343,12 @@ public class CompileDriver {
   }
 
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
+    final WolfTheProblemSolver.ProblemUpdateTransaction update=WolfTheProblemSolver.getInstance(myProject).startUpdatingProblemsInScope(scope);
+
     final CompilerProgressIndicator indicator = new CompilerProgressIndicator(
       myProject,
       CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
-      contentName
-    );
+      contentName, update);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, indicator, scope, null, this, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -1373,6 +1369,7 @@ public class CompileDriver {
                 if (onTaskFinished != null) {
                   onTaskFinished.run();
                 }
+                update.commit();
               }
             }
           }, compileContext.getProgressIndicator());

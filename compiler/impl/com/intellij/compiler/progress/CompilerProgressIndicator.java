@@ -32,6 +32,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.MessageCategory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,12 +55,16 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   private int myWarningCount = 0;
   private String myStatisticsText = "";
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private WolfTheProblemSolver.ProblemUpdateTransaction myUpdate;
+  private final WolfTheProblemSolver.ProblemUpdateTransaction myUpdate;
 
-  public CompilerProgressIndicator(Project project, boolean compileInBackground, String contentName) {
+  public CompilerProgressIndicator(@NotNull Project project,
+                                   boolean compileInBackground,
+                                   String contentName,
+                                   @NotNull WolfTheProblemSolver.ProblemUpdateTransaction update) {
     myProject = project;
     myIsBackgroundMode = compileInBackground;
     myContentName = contentName;
+    myUpdate = update;
   }
 
   public void cancel() {
@@ -93,9 +98,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
       myWarningCount += 1;
     }
 
-    if (myUpdate != null) { // TODO[cdr]: Review.
-      myUpdate.addProblem(message);
-    }
+    myUpdate.addProblem(message);
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       doAddMessage(message);
@@ -492,9 +495,5 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
       myIsApplicationExitingOrProjectClosing = true;
       ProjectManagerEx.getInstanceEx().removeProjectManagerListener(myProject, this);
     }
-  }
-
-  public void setUpdate(final WolfTheProblemSolver.ProblemUpdateTransaction update) {
-    myUpdate = update;
   }
 }
