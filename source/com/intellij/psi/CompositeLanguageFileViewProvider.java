@@ -137,9 +137,9 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     final List<FileElement> knownRoots = new ArrayList<FileElement>();
     knownRoots.addAll(Arrays.asList(super.getKnownTreeRoots()));
     for (PsiFile psiFile : myRoots.values()) {
-      if (psiFile == null) continue;
+      if (psiFile == null || !(psiFile instanceof PsiFileImpl)) continue;
       final FileElement fileElement = ((PsiFileImpl)psiFile).getTreeElement();
-      if(fileElement == null) continue;
+      if (fileElement == null) continue;
       knownRoots.add(fileElement);
     }
     return knownRoots.toArray(new FileElement[knownRoots.size()]);
@@ -149,7 +149,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     LOG.debug("JspxFile: reparseRoot " + getVirtualFile().getName());
     final PsiFile psiFileImpl = cachedRoot;
     final ASTNode oldFileTree = psiFileImpl.getNode();
-    if (oldFileTree == null || oldFileTree.getFirstChildNode() instanceof ChameleonElement) {
+    if (oldFileTree == null || oldFileTree.getFirstChildNode()instanceof ChameleonElement) {
       if (psiFileImpl instanceof PsiFileImpl) ((PsiFileImpl)psiFileImpl).setTreeElementPointer(null);
       psiFileImpl.subtreeChanged();
       return;
