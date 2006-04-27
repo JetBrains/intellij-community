@@ -1035,14 +1035,31 @@ public final class PsiUtil {
         myNextObtained = true;
         return;
       }
-      if (myCurrentOwner.hasModifierProperty(PsiModifier.STATIC) || myCurrentOwner.getContainingClass() == null) {
+      if (myCurrentOwner.hasModifierProperty(PsiModifier.STATIC)) {
         myNext = null;
         myNextObtained = true;
         return;
       }
-      myCurrentOwner = myCurrentOwner.getContainingClass();
-      obtainCurrentParams(myCurrentOwner);
-      nextElement();
+
+      final PsiClass containingClass = myCurrentOwner.getContainingClass();
+      if (containingClass == null) {
+        final PsiTypeParameterListOwner owner = PsiTreeUtil.getContextOfType(myCurrentOwner, PsiTypeParameterListOwner.class, true);
+        if (owner != null) {
+          myCurrentOwner = owner;
+          obtainCurrentParams(myCurrentOwner);
+          nextElement();
+        }
+        else {
+          myNext = null;
+          myNextObtained = true;
+          return;
+        }
+      }
+      else {
+        myCurrentOwner = containingClass;
+        obtainCurrentParams(myCurrentOwner);
+        nextElement();
+      }
     }
   }
 
