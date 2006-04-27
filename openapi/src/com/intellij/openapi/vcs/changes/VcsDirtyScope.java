@@ -133,9 +133,9 @@ public class VcsDirtyScope {
   }
 
   public boolean belongsTo(final FilePath path) {
-    if (myProject.isDisposed()) return false;
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
+        if (myProject.isDisposed()) return Boolean.FALSE;
         if (!myAffectedContentRoots.contains(getRootFor(myIndex, path))) return Boolean.FALSE;
 
         for (FilePath filePath : myDirtyDirectoriesRecursively) {
