@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.picocontainer.Disposable;
 
 import javax.swing.*;
 import java.awt.*;
