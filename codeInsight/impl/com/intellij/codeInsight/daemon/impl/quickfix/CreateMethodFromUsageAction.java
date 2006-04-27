@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -23,14 +22,14 @@ import com.intellij.util.IncorrectOperationException;
 public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageAction");
 
-  private PsiMethodCallExpression myMethodCall;
+  private SmartPsiElementPointer myMethodCall;
 
   public CreateMethodFromUsageAction(PsiMethodCallExpression methodCall) {
-    myMethodCall = methodCall;
+    myMethodCall = SmartPointerManager.getInstance(methodCall.getProject()).createSmartPsiElementPointer(methodCall);
   }
 
   protected boolean isAvailableImpl(int offset) {
-    PsiReferenceExpression ref = myMethodCall.getMethodExpression();
+    PsiReferenceExpression ref = getMethodCall().getMethodExpression();
     String name = ref.getReferenceName();
 
     if (name == null || !ref.getManager().getNameHelper().isIdentifier(name)) return false;
@@ -40,21 +39,21 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   protected PsiElement getElement() {
-    if (!myMethodCall.isValid() || !myMethodCall.getManager().isInProject(myMethodCall)) return null;
-    return myMethodCall;
+    if (!getMethodCall().isValid() || !getMethodCall().getManager().isInProject(getMethodCall())) return null;
+    return getMethodCall();
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    PsiManager psiManager = myMethodCall.getManager();
+    PsiManager psiManager = getMethodCall().getManager();
     final Project project = psiManager.getProject();
-    PsiReferenceExpression ref = myMethodCall.getMethodExpression();
+    PsiReferenceExpression ref = getMethodCall().getMethodExpression();
 
-    if (isValidElement(myMethodCall)) {
+    if (isValidElement(getMethodCall())) {
       return;
     }
 
-    PsiClass parentClass = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
-    PsiMember enclosingContext = PsiTreeUtil.getParentOfType(myMethodCall,
+    PsiClass parentClass = PsiTreeUtil.getParentOfType(getMethodCall(), PsiClass.class);
+    PsiMember enclosingContext = PsiTreeUtil.getParentOfType(getMethodCall(),
       PsiMethod.class,
       PsiField.class,
       PsiClassInitializer.class);
@@ -92,26 +91,24 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
       setupVisibility(parentClass, targetClass, method.getModifierList());
 
-      if (shouldCreateStaticMember(myMethodCall.getMethodExpression(), enclosingContext, targetClass) && !targetClass.isInterface()) {
+      if (shouldCreateStaticMember(getMethodCall().getMethodExpression(), enclosingContext, targetClass) && !targetClass.isInterface()) {
         method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
       }
 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final Document document = documentManager.getDocument(targetFile);
-      final PsiFile psiFile = myMethodCall.getContainingFile();
 
-      RangeMarker rangeMarker = document.createRangeMarker(myMethodCall.getTextRange());
+
       method = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(method);
-      myMethodCall = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), PsiMethodCallExpression.class);
       TemplateBuilder builder = new TemplateBuilder(method);
 
       targetClass = (PsiClass)method.getParent();
-      parentClass = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
-      final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myMethodCall, true);
-      final PsiSubstitutor substitutor = getTargetSubstitutor(myMethodCall);
-      final PsiElement context = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class, PsiMethod.class);
+      parentClass = PsiTreeUtil.getParentOfType(getMethodCall(), PsiClass.class);
+      final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(getMethodCall(), true);
+      final PsiSubstitutor substitutor = getTargetSubstitutor(getMethodCall());
+      final PsiElement context = PsiTreeUtil.getParentOfType(getMethodCall(), PsiClass.class, PsiMethod.class);
 
-      CreateFromUsageUtils.setupMethodParameters(method, builder, myMethodCall.getArgumentList(), substitutor);
+      CreateFromUsageUtils.setupMethodParameters(method, builder, getMethodCall().getArgumentList(), substitutor);
       new GuessTypeParameters(factory).setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
       PsiCodeBlock body = method.getBody();
       assert body != null;
@@ -122,7 +119,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
         builder.setEndVariableAfter(method);
       }
 
-      rangeMarker = document.createRangeMarker(method.getTextRange());
+      RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
       method = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(method);
       final Editor newEditor = positionCursor(project, targetFile, method);
       Template template = builder.buildTemplate();
@@ -168,5 +165,9 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
   public String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");
+  }
+
+  public PsiMethodCallExpression getMethodCall() {
+    return (PsiMethodCallExpression)myMethodCall.getElement();
   }
 }
