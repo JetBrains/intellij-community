@@ -165,7 +165,11 @@ public class JavaDocumentationProvider implements DocumentationProvider {
 
     generateModifiers(buffer, aClass);
 
-    buffer.append(LangBundle.message(aClass.isInterface() ? "java.terms.interface" : aClass instanceof PsiTypeParameter ? "java.terms.type.parameter" : "java.terms.class") + " ");
+    final String classString =
+      aClass.isInterface() ? "java.terms.interface" :
+      aClass instanceof PsiTypeParameter ? "java.terms.type.parameter" :
+      aClass.isEnum() ? "java.terms.enum" : "java.terms.class";
+    buffer.append(LangBundle.message(classString) + " ");
 
     buffer.append(JavaDocUtil.getShortestClassName(aClass, aClass));
 
@@ -201,24 +205,27 @@ public class JavaDocumentationProvider implements DocumentationProvider {
       buffer.append(">");
     }
 
-    PsiReferenceList extendsList = aClass.getExtendsList();
-    PsiClassType[] refs = extendsList == null ? PsiClassType.EMPTY_ARRAY : extendsList.getReferencedTypes();
-    if (refs.length > 0 || !aClass.isInterface() && !"java.lang.Object".equals(aClass.getQualifiedName())) {
-      buffer.append(" extends ");
-      if (refs.length == 0) {
-        buffer.append("Object");
-      } else {
-        for (int i = 0; i < refs.length; i++) {
-          generateType(buffer, refs[i], aClass);
+    PsiClassType[] refs;
+    if (!aClass.isEnum() && !aClass.isAnnotationType()) {
+      PsiReferenceList extendsList = aClass.getExtendsList();
+      refs = extendsList == null ? PsiClassType.EMPTY_ARRAY : extendsList.getReferencedTypes();
+      if (refs.length > 0 || !aClass.isInterface() && !"java.lang.Object".equals(aClass.getQualifiedName())) {
+        buffer.append(" extends ");
+        if (refs.length == 0) {
+          buffer.append("Object");
+        } else {
+          for (int i = 0; i < refs.length; i++) {
+            generateType(buffer, refs[i], aClass);
 
-          if (i < refs.length - 1) {
-            buffer.append(", ");
+            if (i < refs.length - 1) {
+              buffer.append(", ");
+            }
           }
         }
       }
     }
 
-    refs = aClass.getImplementsList().getReferencedTypes();
+    refs = aClass.getImplementsListTypes();
     if (refs.length > 0) {
       newLine(buffer);
       buffer.append("implements ");
