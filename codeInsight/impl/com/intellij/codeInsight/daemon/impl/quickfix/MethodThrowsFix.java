@@ -10,6 +10,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodThrowsFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix");
@@ -26,8 +27,8 @@ public class MethodThrowsFix implements IntentionAction {
     myShowContainingClass = showContainingClass;
   }
 
+  @NotNull
   public String getText() {
-    if (!myThrowsClassType.isValid() || !myMethod.isValid()) return null;
     String methodName = PsiFormatUtil.formatMethod(myMethod,
                                                    PsiSubstitutor.EMPTY,
                                                    PsiFormatUtil.SHOW_NAME | (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS: 0),
@@ -37,6 +38,7 @@ public class MethodThrowsFix implements IntentionAction {
                                   methodName);
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.throws.list.family");
   }
