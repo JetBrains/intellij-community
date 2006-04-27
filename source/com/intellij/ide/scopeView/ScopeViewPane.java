@@ -197,6 +197,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   public void projectClosed() {
   }
 
+  @NotNull
   @NonNls
   public String getComponentName() {
     return "ScopeViewComponent";

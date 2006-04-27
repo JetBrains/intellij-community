@@ -100,13 +100,16 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
 
     public void commit() {
-      //todo report added/removed problems here
       Set<VirtualFile> added = new THashSet<VirtualFile>();
       added.addAll(problems.keySet());
       added.removeAll(backedProblems.keySet());
 
       Set<VirtualFile> removed = new THashSet<VirtualFile>();
-      removed.addAll(backedProblems.keySet());
+      for (VirtualFile oldFile : backedProblems.keySet()) {
+        if (scope.belongs(oldFile.getUrl())) {
+          removed.add(oldFile);
+        }
+      }
       removed.removeAll(problems.keySet());
 
       synchronized(myProblems) {
@@ -117,21 +120,18 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
             myProblems.put(addedFile, addedProblems);
           }
           else {
-            existingProblems.addAll(existingProblems);
+            existingProblems.addAll(addedProblems);
           }
         }
         for (VirtualFile removedFile : removed) {
-          if (scope.belongs(removedFile.getUrl())) {
-            myProblems.remove(removedFile);
-          }
+          myProblems.remove(removedFile);
         }
       }
-      problems = null;
-      scope = null;
-      
       if (!added.isEmpty() || !removed.isEmpty()) {
         fireProblemListeners.problemsChanged(added, removed);
       }
+      problems = null;
+      scope = null;
     }
 
   }
@@ -201,13 +201,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       public void run() {
         try {
           WindowManager.getInstance().getStatusBar(myProject).setInfo("Checking '"+file.getPresentableUrl()+"'");
-          //ProblemsToolWindow.getInstance(myProject).setProgressText("Checking '"+file.getPresentableUrl()+"'");
           GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true);
           pass.doCollectInformation(myProgress);
         }
         finally {
           WindowManager.getInstance().getStatusBar(myProject).setInfo("");
-          //ProblemsToolWindow.getInstance(myProject).setProgressText("");
         }
       }
     },myProgress);
@@ -234,11 +232,13 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   public boolean hasProblemFilesUnder(ProjectViewNode scope) {
-    Set<VirtualFile> problemFiles = myProblems.keySet();
-    for (VirtualFile problemFile : problemFiles) {
-      if (scope.contains(problemFile)) return true;
+    synchronized (myProblems) {
+      Set<VirtualFile> problemFiles = myProblems.keySet();
+      for (VirtualFile problemFile : problemFiles) {
+        if (scope.contains(problemFile)) return true;
+      }
+      return false;
     }
-    return false;
   }
 
   public void addProblemListener(ProblemListener listener) {
@@ -294,16 +294,14 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   public ProblemUpdateTransaction startUpdatingProblemsInScope(final CompileScope compileScope) {
-    return new UpdateImpl(myProblems, compileScope);
+    synchronized (myProblems) {
+      return new UpdateImpl(myProblems, compileScope);
+    }
   }
 
   public ProblemUpdateTransaction startUpdatingProblemsInScope(final VirtualFile virtualFile) {
     Module module = myProjectFileIndex.getModuleForFile(virtualFile);
     CompileScope compileScope = new FileSetCompileScope(new VirtualFile[]{virtualFile}, new Module[]{module});
     return startUpdatingProblemsInScope(compileScope);
-  }
-
-  public Collection<VirtualFile> getProblemFiles() {
-    return myProblems.keySet();
   }
 }

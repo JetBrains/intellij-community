@@ -9,13 +9,13 @@ import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 /**
  * @author cdr
  */
 public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
-  public static final ProblemUpdateTransaction MOCK_UPDATE_TRANSACTION = new ProblemUpdateTransaction() {
+  private WolfTheProblemSolver myDelegate;
+
+  private final ProblemUpdateTransaction myUpdate = new ProblemUpdateTransaction() {
     public void addProblem(Problem problem) {
     }
 
@@ -27,19 +27,15 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   };
 
   public boolean isProblemFile(VirtualFile virtualFile) {
-    return false;
+    return myDelegate != null && myDelegate.isProblemFile(virtualFile);
   }
 
   public ProblemUpdateTransaction startUpdatingProblemsInScope(CompileScope compileScope) {
-    return MOCK_UPDATE_TRANSACTION;
+    return myDelegate == null ? myUpdate : myDelegate.startUpdatingProblemsInScope(compileScope);
   }
 
   public ProblemUpdateTransaction startUpdatingProblemsInScope(VirtualFile virtualFile) {
-    return MOCK_UPDATE_TRANSACTION;
-  }
-
-  public Collection<VirtualFile> getProblemFiles() {
-    return null;
+    return myDelegate == null ? myUpdate : myDelegate.startUpdatingProblemsInScope(virtualFile);
   }
 
   public boolean hasProblemFilesUnder(ProjectViewNode scope) {
@@ -74,5 +70,9 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
 
   public void disposeComponent() {
 
+  }
+
+  public void setDelegate(final WolfTheProblemSolver delegate) {
+    myDelegate = delegate;
   }
 }

@@ -19,8 +19,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.problems.WolfTheProblemSolver;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +59,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
         }
 
         public String getText() {
-          return "src:*..*";
+          return PatternPackageSet.SCOPE_SOURCE+":*..*";
         }
 
         public int getNodePriority() {
@@ -81,7 +83,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
         }
 
         public String getText() {
-          return "test:*..*";
+          return PatternPackageSet.SCOPE_TEST+":*..*";
         }
 
         public int getNodePriority() {
@@ -92,12 +94,33 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return myProjectTestScope;
   }
 
+  public NamedScope getProblemsScope() {
+    return new NamedScope(IdeBundle.message("predifined.scope.problems.name"), new PackageSet() {
+      public boolean contains(PsiFile file, NamedScopesHolder holder) {
+        return file.getProject() == myProject && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
+      }
+
+      public PackageSet createCopy() {
+        return this;
+      }
+
+      public String getText() {
+        return PatternPackageSet.SCOPE_PROBLEM + ":*..*";
+      }
+
+      public int getNodePriority() {
+        return 1;
+      }
+    });
+  }
+
   @Nullable
   public List<NamedScope> getPredefinedScopes() {
     if (myPredifinedScopes == null){
       myPredifinedScopes = new ArrayList<NamedScope>();
       myPredifinedScopes.add(getProjectScope());
       myPredifinedScopes.add(getProjectTestScope());
+      myPredifinedScopes.add(getProblemsScope());
     }
     return myPredifinedScopes;
   }
@@ -183,6 +206,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   public void disposeComponent() {}
 
+  @NotNull
   public String getComponentName() {
     return "DependencyValidationManager";
   }

@@ -48,4 +48,6 @@ public abstract class DependencyValidationManager extends NamedScopesHolder impl
   public abstract void removeAllRules();
 
   public abstract void addRule(DependencyRule rule);
+
+  public abstract NamedScope getProblemsScope();
 }

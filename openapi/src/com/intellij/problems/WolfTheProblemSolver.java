@@ -25,8 +25,6 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
 
   public abstract ProblemUpdateTransaction startUpdatingProblemsInScope(VirtualFile virtualFile);
 
-  public abstract Collection<VirtualFile> getProblemFiles();
-
   public abstract boolean hasProblemFilesUnder(ProjectViewNode scope);
 
   public interface ProblemUpdateTransaction {

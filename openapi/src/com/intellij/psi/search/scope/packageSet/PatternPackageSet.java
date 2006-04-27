@@ -28,6 +28,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Pattern;
@@ -37,6 +38,7 @@ public class PatternPackageSet implements PackageSet {
   public static final @NonNls String SCOPE_SOURCE = "src";
   public static final @NonNls String SCOPE_LIBRARY = "lib";
   public static final @NonNls String SCOPE_FILE = "file";
+  public static final @NonNls String SCOPE_PROBLEM = "problem";
   public static final String SCOPE_ANY = "";
 
   private Pattern myPattern;
@@ -75,19 +77,25 @@ public class PatternPackageSet implements PackageSet {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return false;
     boolean isSource = fileIndex.isInSourceContent(vFile);
-    if (myScope == SCOPE_ANY) return fileIndex.isInContent(vFile) && matchesModule(vFile, fileIndex);
+    if (myScope == SCOPE_ANY) {
+      return fileIndex.isInContent(vFile) && matchesModule(vFile, fileIndex);
+    }
     if (myScope == SCOPE_SOURCE) {
       return isSource && !fileIndex.isInTestSourceContent(vFile) && matchesModule(vFile, fileIndex);
     }
     if (myScope == SCOPE_LIBRARY) {
       return fileIndex.isInLibraryClasses(vFile) || fileIndex.isInLibrarySource(vFile);
     }
-
     if (myScope == SCOPE_FILE){
       return fileIndex.isInContent(vFile) && fileMatcher(vFile, fileIndex) && matchesModule(vFile, fileIndex);
     }
-
-    return isSource && fileIndex.isInTestSourceContent(vFile) && matchesModule(vFile, fileIndex);
+    if (myScope == SCOPE_TEST) {
+      return isSource && fileIndex.isInTestSourceContent(vFile) && matchesModule(vFile, fileIndex);
+    }
+    if (myScope == SCOPE_PROBLEM) {
+      return isSource && WolfTheProblemSolver.getInstance(file.getProject()).isProblemFile(vFile) && matchesModule(vFile, fileIndex);
+    }
+    throw new RuntimeException("Unknown scope: " + myScope);
   }
 
   private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex){

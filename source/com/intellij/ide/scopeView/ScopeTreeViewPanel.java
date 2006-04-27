@@ -6,13 +6,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,9 +33,11 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.*;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -48,6 +50,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,10 +60,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * User: anna
@@ -84,6 +85,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final DependencyValidationManager myDependencyValidationManager;
+  private WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
 
   public ScopeTreeViewPanel(final Project project) {
     super(new BorderLayout());
@@ -98,11 +100,13 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     myInitialized = true;
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
     ProjectRootManager.getInstance(myProject).addModuleRootListener(myModuleRootListener);
+    WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
   }
 
   public void dispose(){
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
     ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
+    WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
   }
 
   public boolean isInitialized() {
@@ -232,7 +236,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     }
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null){
-      if (dataId.equals(DataConstantsEx.PSI_ELEMENT_ARRAY)) {
+      if (dataId.equals(DataConstants.PSI_ELEMENT_ARRAY)) {
         Set<PsiElement> psiElements = new HashSet<PsiElement>();
         for (TreePath treePath : treePaths) {
           final PackageDependenciesNode node = (PackageDependenciesNode)treePath.getLastPathComponent();
@@ -247,16 +251,16 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     if (dataId.equals(DataConstants.IDE_VIEW)){
       return myIdeView;
     }
-    if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+    if (DataConstants.CUT_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }
-    if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+    if (DataConstants.COPY_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getCopyProvider();
     }
-    if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+    if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       if (getSelectedModules() != null){
         return myDeleteModuleProvider;
       }
@@ -396,17 +400,18 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
       }, ModalityState.NON_MMODAL);
     }
 
-    private void collapseExpand(DefaultMutableTreeNode node){
-      if (node == null) return;
-      TreePath path = new TreePath(node.getPath());
-      if (!myTree.isCollapsed(path)){
-        myTree.collapsePath(path);
-        myTree.expandPath(path);
-        TreeUtil.sort(node, new DependencyNodeComparator());
-      }
-    }
-
   }
+
+  private void collapseExpand(DefaultMutableTreeNode node){
+    if (node == null) return;
+    TreePath path = new TreePath(node.getPath());
+    if (!myTree.isCollapsed(path)){
+      myTree.collapsePath(path);
+      myTree.expandPath(path);
+      TreeUtil.sort(node, new DependencyNodeComparator());
+    }
+  }
+
 
   private class MyModuleRootListener implements ModuleRootListener {
     public void beforeRootsChange(ModuleRootEvent event) {
@@ -438,7 +443,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
         TreePath path = selectedPaths[0];
         final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
         if (node instanceof DirectoryNode) {
-          DirectoryNode directoryNode = ((DirectoryNode)node);
+          DirectoryNode directoryNode = (DirectoryNode)node;
           while (directoryNode.getCompactedDirNode() != null){
             directoryNode = directoryNode.getCompactedDirNode();
           }
@@ -497,5 +502,49 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
   public JTree getTree() {
     return myTree;
+  }
+
+  private class MyProblemListener implements WolfTheProblemSolver.ProblemListener {
+    public void problemsChanged(final Collection<VirtualFile> added, final Collection<VirtualFile> removed) {
+      AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
+      if (pane == null
+          || !ScopeViewPane.ID.equals(pane.getId())
+          || !DependencyValidationManager.getInstance(myProject).getProblemsScope().getName().equals(pane.getSubId())) {
+        return;
+      }
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (myProject.isDisposed()) return;
+          Set<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(added);
+          filesToRefresh.addAll(removed);
+          myTreeExpansionMonitor.freeze();
+
+          final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
+          TreeUtil.sort(treeModel, new DependencyNodeComparator());
+          treeModel.reload();
+          selectCurrentScope();
+
+          //for (VirtualFile virtualFile : filesToRefresh) {
+          //  PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
+          //  if (psiFile == null) continue;
+          //  DefaultMutableTreeNode rootToReload = added.contains(virtualFile) ?
+          //                                        myBuilder.addFileNode(psiFile) :
+          //                                        myBuilder.removeNode(psiFile, psiFile.getContainingDirectory());
+          //  if (rootToReload != null) {
+          //    TreeUtil.sort(rootToReload, new DependencyNodeComparator());
+          //    treeModel.reload(rootToReload);
+          //    collapseExpand(rootToReload);
+          //  }
+          //  else {
+          //    TreeUtil.sort(treeModel, new DependencyNodeComparator());
+          //    treeModel.reload();
+          //    selectCurrentScope();
+          //  }
+          //}
+          myTreeExpansionMonitor.restore();
+        }
+      }, ModalityState.NON_MMODAL);
+
+    }
   }
 }

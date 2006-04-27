@@ -130,6 +130,9 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       if (PatternPackageSet.SCOPE_TEST.equals(id)) {
         scope = PatternPackageSet.SCOPE_TEST;
       }
+      if (PatternPackageSet.SCOPE_PROBLEM.equals(id)) {
+        scope = PatternPackageSet.SCOPE_PROBLEM;
+      }
       if (PatternPackageSet.SCOPE_LIBRARY.equals(id)) {
         scope = PatternPackageSet.SCOPE_LIBRARY;
       }
