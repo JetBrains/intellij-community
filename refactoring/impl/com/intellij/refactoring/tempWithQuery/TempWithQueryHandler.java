@@ -138,12 +138,12 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
                     }
                   };
                   ApplicationManager.getApplication().runWriteAction(action);
+                  DuplicatesImpl.processDuplicates(processor, project, editor);
                 }
               },
           REFACTORING_NAME,
           null
       );
-      DuplicatesImpl.processDuplicates(processor, project, editor, REFACTORING_NAME);
     }
 
 

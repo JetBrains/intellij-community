@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,7 +35,7 @@ import java.util.List;
 public class MethodDuplicatesHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.method.code.duplicates.title");
 
-  public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement element = file.findElementAt(offset);
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -96,7 +97,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
     if (!dialog.isOK()) return;
     WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
-    DuplicatesImpl.invoke(project, editor, REFACTORING_NAME, new MethodDuplicatesMatchProvider(method, duplicates));
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        DuplicatesImpl.invoke(project, editor, new MethodDuplicatesMatchProvider(method, duplicates));
+      }
+    }, REFACTORING_NAME, null);
+
     WindowManager.getInstance().getStatusBar(project).setInfo("");
   }
 

@@ -97,9 +97,13 @@ public class PostprocessReformatingAspect implements PomModelAspect {
   public void doPostponedFormatting(){
     if(myDisabled) return;
     try{
-      for (final FileViewProvider viewProvider : myUpdatedProviders) {
-        doPostponedFormatting(viewProvider);
-      }
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          for (final FileViewProvider viewProvider : myUpdatedProviders) {
+            doPostponedFormatting(viewProvider);
+          }
+        }
+      });
     }
     finally{
       myUpdatedProviders.clear();
@@ -420,10 +424,10 @@ public class PostprocessReformatingAspect implements PomModelAspect {
   }
 
   public void initComponent() {
-    ((ApplicationImpl)ApplicationManager.getApplication()).addPostWriteAction(myPostprocessingApplicationAction);
+    //((ApplicationImpl)ApplicationManager.getApplication()).addPostWriteAction(myPostprocessingApplicationAction);
   }
 
   public void disposeComponent() {
-    ((ApplicationImpl)ApplicationManager.getApplication()).removePostWriteAction(myPostprocessingApplicationAction);
+    //((ApplicationImpl)ApplicationManager.getApplication()).removePostWriteAction(myPostprocessingApplicationAction);
   }
 }

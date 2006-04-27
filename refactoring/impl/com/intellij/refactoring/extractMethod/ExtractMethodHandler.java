@@ -78,7 +78,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
         CommandProcessor.getInstance().executeCommand(
             project, new Runnable() {
                   public void run() {
-                    final Runnable action = new Runnable() {
+                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
                       public void run() {
                         try {
                           processor.doRefactoring();
@@ -86,15 +86,13 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
                           LOG.error(e);
                         }
                       }
-                    };
-                    ApplicationManager.getApplication().runWriteAction(action);
+                    });
+                    DuplicatesImpl.processDuplicates(processor, project, editor);
                   }
                 },
             REFACTORING_NAME,
             null
         );
-
-        DuplicatesImpl.processDuplicates(processor, project, editor, REFACTORING_NAME);
       }
     }
     catch (PrepareFailedException e) {
