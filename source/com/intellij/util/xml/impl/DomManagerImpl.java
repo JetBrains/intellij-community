@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -56,7 +57,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
-  private final Map<Type, InvocationCache> myInvocationCaches = new HashMap<Type, InvocationCache>();
+  private final Map<Pair<Type, Type>, InvocationCache> myInvocationCaches = new HashMap<Pair<Type, Type>, InvocationCache>();
   private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private final List<Function<DomElement, Collection<PsiElement>>> myPsiElementProviders = new ArrayList<Function<DomElement, Collection<PsiElement>>>();
   private final Set<Consumer<XmlFile>> myFileLoaders = new HashSet<Consumer<XmlFile>>();
@@ -134,7 +135,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return genericInfoImpl;
   }
 
-  final InvocationCache getInvocationCache(final Type type) {
+  final InvocationCache getInvocationCache(final Pair<Type, Type> type) {
     InvocationCache invocationCache = myInvocationCaches.get(type);
     if (invocationCache == null) {
       invocationCache = new InvocationCache();
@@ -409,7 +410,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
         myCachedValue = myProvider.create();
         if (isNotValid(myCachedValue)) {
-          if (method != null && "isValid".equals(method.getName()) && DomElement.class.equals(method.getDeclaringClass())) {
+          if ("isValid".equals(method.getName())) {
             return Boolean.FALSE;
           }
           throw new AssertionError("Calling methods on invalid value");

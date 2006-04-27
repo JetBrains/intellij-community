@@ -6,6 +6,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakArrayHashMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
 import com.intellij.util.xml.impl.DomImplUtil;
@@ -32,21 +33,20 @@ public class ModelMerger {
 
   public static class ImplementationProcessor<T> implements Processor<T> {
     private final Processor<T> myProcessor;
+    private final boolean myProcessMerged;
 
-    public ImplementationProcessor(Processor<T> processor) {
+    public ImplementationProcessor(Processor<T> processor, final boolean processMerged) {
       myProcessor = processor;
+      myProcessMerged = processMerged;
     }
 
     public boolean process(final T t) {
-      if (t instanceof MergedObject) {
-        for (T impl : ((MergedObject<T>)t).getImplementations()) {
-          if (!process(impl)) return false;
-        }
+      final boolean merged = t instanceof MergedObject;
+      if ((!merged || myProcessMerged) && !myProcessor.process(t)) {
+        return false;
       }
-      else {
-        if (!myProcessor.process(t)) {
-          return false;
-        }
+      if (merged && !ContainerUtil.process(((MergedObject<T>)t).getImplementations(), this)) {
+        return false;
       }
       return true;
     }
@@ -105,14 +105,14 @@ public class ModelMerger {
         return !clazz.isAssignableFrom(t.getClass()) || super.process(t);
       }
     };
-    new ImplementationProcessor<T>(processor).process(element);
+    new ImplementationProcessor<T>(processor, true).process(element);
     return (V)processor.getFoundValue();
   }
 
   @NotNull
   public static <T> List<T> getFilteredImplementations(final T element) {
     final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(new ArrayList<T>());
-    new ImplementationProcessor<T>(processor).process(element);
+    new ImplementationProcessor<T>(processor, false).process(element);
     return (List<T>)processor.getResults();
   }
 
@@ -348,6 +348,11 @@ public class ModelMerger {
       public MergedGenericValue(final Method method, final Object[] args) {
         myMethod = method;
         myArgs = args;
+      }
+
+      public boolean equals(Object obj) {
+        return obj != null && (obj instanceof MergedObject) &&
+               ((MergedObject)obj).getImplementations().equals(getImplementations());
       }
 
       public <V extends GenericValue> V findImplementation(Class<V> clazz) {

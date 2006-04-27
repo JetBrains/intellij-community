@@ -6,16 +6,18 @@ package com.intellij.util.xml;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public interface Converter<T> {
-  T fromString(String s, final ConvertContext context);
-  String toString(T t, final ConvertContext context);
+  T fromString(@Nullable String s, final ConvertContext context);
+  @Nullable String toString(@Nullable T t, final ConvertContext context);
 
   Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
     public Integer fromString(final String s, final ConvertContext context) {
+      if (s == null) return null;
       try {
         return Integer.decode(s);
       }
@@ -25,7 +27,7 @@ public interface Converter<T> {
     }
 
     public String toString(final Integer t, final ConvertContext context) {
-      return t.toString();
+      return t == null? null: t.toString();
     }
 
   };
@@ -43,17 +45,18 @@ public interface Converter<T> {
 
   Converter<PsiClass> PSI_CLASS_CONVERTER = new Converter<PsiClass>() {
     public PsiClass fromString(final String s, final ConvertContext context) {
-      return context.findClass(s);
+      return s == null? null:context.findClass(s);
     }
 
     public String toString(final PsiClass t, final ConvertContext context) {
-      return t.getQualifiedName();
+      return t==null?null:t.getQualifiedName();
     }
 
   };
 
   Converter<PsiType> PSI_TYPE_CONVERTER = new Converter<PsiType>() {
     public PsiType fromString(final String s, final ConvertContext context) {
+      if (s == null) return null;
       try {
         return context.getFile().getManager().getElementFactory().createTypeFromText(s, null);
       }
@@ -63,7 +66,7 @@ public interface Converter<T> {
     }
 
     public String toString(final PsiType t, final ConvertContext context) {
-      return t.getCanonicalText();
+      return t == null? null:t.getCanonicalText();
     }
 
   };

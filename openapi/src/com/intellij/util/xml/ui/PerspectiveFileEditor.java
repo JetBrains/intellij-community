@@ -40,6 +40,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   private final VirtualFile myFile;
   private final FileEditorManagerAdapter myFileEditorManagerAdapter;
 
+  private boolean myIsValid;
   private boolean myShowing;              
   private boolean myCommitting;
   private final Set<Document> myCurrentDocuments = new HashSet<Document>();
@@ -66,6 +67,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
     myFile = file;
 
+    myIsValid = true;
     myFileEditorManagerAdapter = new FileEditorManagerAdapter() {
       public void selectionChanged(FileEditorManagerEvent event) {
         checkIsValid();
@@ -261,10 +263,11 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   protected final boolean checkIsValid() {
-    if (!isValid()) {
-      myPropertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, Boolean.TRUE, Boolean.FALSE);
-      return false;
+    final boolean isValid = isValid();
+    if (myIsValid != isValid) {
+      myIsValid = isValid;
+      myPropertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, myIsValid, isValid);
     }
-    return true;
+    return isValid;
   }
 }

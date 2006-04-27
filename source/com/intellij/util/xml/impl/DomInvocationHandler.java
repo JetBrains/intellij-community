@@ -93,7 +93,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   public void setType(final Type type) {
     myType = type;
     myGenericInfoImpl = myManager.getGenericInfo(type);
-    myInvocationCache = myManager.getInvocationCache(type);
+    myInvocationCache = myManager.getInvocationCache(new Pair<Type, Type>(type, myGenericConverter == null?null:myGenericConverter.getClass()));
   }
 
   final DomInvocationHandler getParentHandler() {
@@ -294,11 +294,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   protected final DomElement findCallerProxy(Method method) {
-    final DomElement element = (DomElement)ModelMerger.getInvocationStack().findDeepestInvocation(method, new Condition<DomElement>() {
-      public boolean value(final DomElement object) {
-        return object == null;
+    final DomElement element = ModelMerger.getImplementation(ModelMerger.getInvocationStack().findDeepestInvocation(method, new Condition() {
+      public boolean value(final Object object) {
+        return ModelMerger.getImplementation(object, DomElement.class) == null;
       }
-    });
+    }), DomElement.class);
     return element == null ? getProxy() : element;
   }
 
@@ -307,7 +307,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final void acceptChildren(DomElementVisitor visitor) {
-    final DomElement element = findCallerProxy(ACCEPT_CHILDREN_METHOD);
+    final DomElement element = ModelMerger.getImplementation(findCallerProxy(ACCEPT_CHILDREN_METHOD), DomElement.class);
     final List<DomChildrenDescription> list = getGenericInfo().getChildrenDescriptions();
     for (final DomChildrenDescription description : list) {
       final List<? extends DomElement> values = description.getValues(element);

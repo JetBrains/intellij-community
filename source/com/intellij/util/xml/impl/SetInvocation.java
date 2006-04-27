@@ -39,10 +39,11 @@ public abstract class SetInvocation implements Invocation {
           handler.undefineInternal();
         }
       } else {
-        if (args[0] == null) {
+        String value = myConverter.toString(args[0], new ConvertContextImpl(handler, myMethod));
+        if (value == null) {
           handler.undefineInternal();
         } else {
-          setValue(handler, myConverter.toString(args[0], new ConvertContextImpl(handler, myMethod)));
+          setValue(handler, value);
         }
       }
     }

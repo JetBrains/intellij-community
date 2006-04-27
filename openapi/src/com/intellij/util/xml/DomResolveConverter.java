@@ -44,6 +44,7 @@ public class DomResolveConverter<T extends DomElement> implements ResolvingConve
   }
 
   public final T fromString(final String s, final ConvertContext context) {
+    if (s == null) return null;
     final DomElement[] result = new DomElement[]{null};
     context.getInvocationElement().getRoot().acceptChildren(new DomElementVisitor() {
       public void visitDomElement(DomElement element) {
@@ -59,6 +60,7 @@ public class DomResolveConverter<T extends DomElement> implements ResolvingConve
   }
 
   public final String toString(final T t, final ConvertContext context) {
+    if (t == null) return null;
     return t.getGenericInfo().getElementName(t);
   }
 

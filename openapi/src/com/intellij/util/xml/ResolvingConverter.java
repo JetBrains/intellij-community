@@ -35,7 +35,7 @@ public interface ResolvingConverter<T> extends Converter<T> {
     }
 
     public String toString(final Boolean t, final ConvertContext context) {
-      return t.toString();
+      return t == null? null:t.toString();
     }
 
     public Collection<Boolean> getVariants(final ConvertContext context) {

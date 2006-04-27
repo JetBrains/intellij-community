@@ -34,11 +34,11 @@ public class EnumConverter<T extends Enum> implements ResolvingConverter<T>{
   }
 
   public final T fromString(final String s, final ConvertContext context) {
-    return (T)NamedEnumUtil.getEnumElementByValue((Class)myType, s);
+    return s==null?null:(T)NamedEnumUtil.getEnumElementByValue((Class)myType, s);
   }
 
   public final String toString(final T t, final ConvertContext context) {
-    return getStringValue(t);
+    return t == null? null:getStringValue(t);
   }
 
   public Collection<T> getVariants(final ConvertContext context) {
