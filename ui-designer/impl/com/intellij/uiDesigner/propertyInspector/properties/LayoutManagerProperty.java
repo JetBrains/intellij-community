@@ -8,6 +8,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadLayoutManager;
+import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
 
   private static class LayoutManagerEditor extends ComboBoxPropertyEditor<String> {
     public LayoutManagerEditor() {
-      myCbx.setModel(new DefaultComboBoxModel(RadLayoutManager.getLayoutManagerNames()));
+      myCbx.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
     }
 
     public JComponent getComponent(RadComponent component, String value, boolean inplace) {
@@ -55,7 +56,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
       return;
     }
 
-    RadLayoutManager newLayoutManager = RadLayoutManager.createLayoutManager(value);
+    RadLayoutManager newLayoutManager = LayoutManagerRegistry.createLayoutManager(value);
     newLayoutManager.changeContainerLayout(component);
   }
 

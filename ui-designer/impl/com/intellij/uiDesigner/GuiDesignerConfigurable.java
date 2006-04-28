@@ -14,9 +14,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
-import com.intellij.uiDesigner.radComponents.RadLayoutManager;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
+import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,7 +125,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     myGeneralUI.myChkCopyFormsRuntime.setSelected(configuration.COPY_FORMS_RUNTIME_TO_OUTPUT);
     myGeneralUI.myIridaCompatibleLayout.setSelected(configuration.IRIDA_LAYOUT_MODE);
 
-    myGeneralUI.myLayoutManagerCombo.setModel(new DefaultComboBoxModel(RadLayoutManager.getLayoutManagerNames()));
+    myGeneralUI.myLayoutManagerCombo.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
     myGeneralUI.myLayoutManagerCombo.setSelectedItem(configuration.DEFAULT_LAYOUT_MANAGER);
   }
 

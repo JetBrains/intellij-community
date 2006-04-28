@@ -659,7 +659,7 @@ public abstract class RadComponent implements IComponent {
     }
     if (component instanceof JPanel) {
       RadContainer container = new RadContainer(componentClass, id, context.getPalette());
-      final RadLayoutManager manager = RadLayoutManager.createFromLayout(component.getLayout());
+      final RadLayoutManager manager = LayoutManagerRegistry.createFromLayout(component.getLayout());
       if (manager == null) {
         return null;
       }

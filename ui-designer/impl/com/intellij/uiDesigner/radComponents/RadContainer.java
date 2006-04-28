@@ -99,7 +99,7 @@ public class RadContainer extends RadComponent implements IContainer {
     }
 
     try {
-      return RadLayoutManager.createLayoutManager(defaultLayoutManager);
+      return LayoutManagerRegistry.createLayoutManager(defaultLayoutManager);
     }
     catch (Exception e) {
       LOG.error(e);

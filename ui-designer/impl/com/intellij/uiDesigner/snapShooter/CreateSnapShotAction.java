@@ -26,15 +26,15 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
+import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadLayoutManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -370,7 +370,7 @@ public class CreateSnapShotAction extends AnAction {
     private void collectUnknownLayoutManagerClasses(final SnapShotRemoteComponent rc, final Set<String> layoutManagerClasses) throws IOException {
       Class radClass = InsertComponentProcessor.getRadComponentClass(rc.getClassName());
       if (RadContainer.class.equals(radClass) && rc.getLayoutManager().length() > 0 &&
-          !RadLayoutManager.isKnownLayoutClass(rc.getLayoutManager())) {
+          !LayoutManagerRegistry.isKnownLayoutClass(rc.getLayoutManager())) {
         layoutManagerClasses.add(rc.getLayoutManager());
       }
 
