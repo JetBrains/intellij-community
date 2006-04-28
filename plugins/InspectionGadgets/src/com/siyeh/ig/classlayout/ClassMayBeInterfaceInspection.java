@@ -28,6 +28,7 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ClassMayBeInterfaceInspection extends ClassInspection {
 
@@ -80,6 +81,8 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
             if (classKeyword == null) {
                 return;
             }
+            final PsiModifierList modifierList = aClass.getModifierList();
+            modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
             classKeyword.replace(interfaceKeyword);
         }
 
@@ -98,8 +101,7 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
                     implementsList.getReferenceElements();
             for (final PsiJavaCodeReferenceElement referenceElement :
                     referenceElements) {
-                final PsiElement elementCopy = referenceElement.copy();
-                extendsList.add(elementCopy);
+                extendsList.add(referenceElement);
                 referenceElement.delete();
             }
         }
@@ -117,29 +119,32 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
                     searchHelper.findInheritors(oldClass, searchScope, false);
             for (final PsiClass inheritor : inheritors) {
                 final PsiReferenceList extendsList = inheritor.getExtendsList();
-                removeReference(extendsList, classReference);
+                if (extendsList == null) {
+                    continue;
+                }
                 final PsiReferenceList implementsList =
                         inheritor.getImplementsList();
-                if (implementsList == null) {
-                    return;
-                }
-                implementsList.add(classReference);
+                moveReference(extendsList, implementsList, classReference);
             }
         }
 
-        private static void removeReference(
-                PsiReferenceList referenceList,
-                PsiJavaCodeReferenceElement reference)
+        private static void moveReference(
+                @NotNull PsiReferenceList source,
+                @Nullable PsiReferenceList target,
+                @NotNull PsiJavaCodeReferenceElement reference)
                 throws IncorrectOperationException {
-            final PsiJavaCodeReferenceElement[] implementsReferences =
-                    referenceList.getReferenceElements();
+            final PsiJavaCodeReferenceElement[] sourceReferences =
+                    source.getReferenceElements();
             final String fqName = reference.getQualifiedName();
-            for (final PsiJavaCodeReferenceElement implementsReference :
-                    implementsReferences) {
+            for (final PsiJavaCodeReferenceElement sourceReference :
+                    sourceReferences) {
                 final String implementsReferenceFqName =
-                        implementsReference.getQualifiedName();
+                        sourceReference.getQualifiedName();
                 if (fqName.equals(implementsReferenceFqName)) {
-                    implementsReference.delete();
+                    if (target != null) {
+                        target.add(sourceReference);
+                    }
+                    sourceReference.delete();
                 }
             }
         }
