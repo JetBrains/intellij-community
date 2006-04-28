@@ -42,7 +42,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author cdr
  */
 public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
-  private Map<VirtualFile, Collection<ProblemImpl>> myProblems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
+  private final Map<VirtualFile, Collection<ProblemImpl>> myProblems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
   private final Alarm myHighlightingAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
   private final Runnable myRehighlightRequest = new Runnable() {
     public void run() {
@@ -68,9 +68,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private boolean myDaemonStopped;
   private long myPsiModificationCount;
   private class UpdateImpl implements ProblemUpdateTransaction {
-    private Map<VirtualFile, Collection<ProblemImpl>> backedProblems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
-    private Map<VirtualFile, Collection<ProblemImpl>> problems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
-    private CompileScope scope;
+    private final Map<VirtualFile, Collection<ProblemImpl>> backedProblems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
+    private final Map<VirtualFile, Collection<ProblemImpl>> problems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
+    private final CompileScope scope;
 
     public UpdateImpl(final Map<VirtualFile, Collection<ProblemImpl>> problems, CompileScope compileScope) {
       scope = compileScope;
@@ -130,10 +130,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       if (!added.isEmpty() || !removed.isEmpty()) {
         fireProblemListeners.problemsChanged(added, removed);
       }
-      problems = null;
-      scope = null;
+      problems.clear();
     }
-
   }
 
   public WolfTheProblemSolverImpl(Project project) {
@@ -175,7 +173,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
     if (psiModificationCount == myPsiModificationCount) return; //optimization
     myPsiModificationCount = psiModificationCount;
-
+    if (myProject.isDisposed()) return;
     myDaemonStopped = false;
     List<VirtualFile> toCheck;
     synchronized(myProblems) {
