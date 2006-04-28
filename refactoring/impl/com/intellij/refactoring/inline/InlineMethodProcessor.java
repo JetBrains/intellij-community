@@ -401,8 +401,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (resolveResult.getSubstitutor() != PsiSubstitutor.EMPTY) {
       Iterator<PsiTypeParameter> oldTypeParameters = PsiUtil.typeParametersIterator(myMethod);
       Iterator<PsiTypeParameter> newTypeParameters = PsiUtil.typeParametersIterator(myMethodCopy);
-      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-      while (oldTypeParameters.hasNext()) {
+      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+      while (newTypeParameters.hasNext()) {
         final PsiTypeParameter newTypeParameter = newTypeParameters.next();
         final PsiTypeParameter oldTypeParameter = oldTypeParameters.next();
         substitutor = substitutor.put(newTypeParameter, resolveResult.getSubstitutor().substitute(oldTypeParameter));
