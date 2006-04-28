@@ -16,6 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -25,6 +26,8 @@ import java.awt.GridBagLayout;
  * @author yole
  */
 public class RadGridLayoutManager extends RadLayoutManager {
+  private GridLayoutColumnProperties myPropertiesPanel;
+
   public String getName() {
     return UIFormXmlConstants.LAYOUT_INTELLIJ;
   }
@@ -285,5 +288,14 @@ public class RadGridLayoutManager extends RadLayoutManager {
   @Override public int[] getVerticalGridLines(RadContainer container) {
     GridLayoutManager grid = (GridLayoutManager) container.getLayout();
     return grid.getVerticalGridLines();
+  }
+
+  @Override
+  public JComponent getRowColumnPropertiesPanel(GuiEditor editor, RadContainer container, boolean isRow, int[] selectedIndices) {
+    if (myPropertiesPanel == null) {
+      myPropertiesPanel = new GridLayoutColumnProperties();
+    }
+    myPropertiesPanel.showProperties(editor, container, isRow, selectedIndices);
+    return myPropertiesPanel.getRootPanel();
   }
 }

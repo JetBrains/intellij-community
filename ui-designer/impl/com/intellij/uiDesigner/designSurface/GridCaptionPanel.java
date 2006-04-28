@@ -20,15 +20,14 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.dnd.*;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 /**
@@ -44,6 +43,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   private PreferredSizeProperty myPreferredSizeProperty = new PreferredSizeProperty();
   private LineFeedbackPainter myFeedbackPainter = new LineFeedbackPainter();
   private DeleteProvider myDeleteProvider = new MyDeleteProvider();
+  private Alarm myAlarm = new Alarm();
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridCaptionPanel");
 
   public GridCaptionPanel(final GuiEditor editor, final boolean isRow) {
@@ -60,6 +60,25 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
     DnDManager.getInstance(editor.getProject()).registerSource(new MyDnDSource(), this);
     DnDManager.getInstance(editor.getProject()).registerTarget(new MyDnDTarget(), this);
+
+    addFocusListener(new FocusAdapter() {
+      public void focusGained(FocusEvent e) {
+        // ensure we don't have two repaints of properties panel - one from focus gain and another from click
+        myAlarm.addRequest(new Runnable() {
+          public void run() {
+            editor.fireSelectedComponentChanged();
+          }
+        }, 1000);
+      }
+    });
+  }
+
+  public RadContainer getSelectedContainer() {
+    return mySelectedContainer;
+  }
+
+  public boolean isRow() {
+    return myIsRow;
   }
 
   @Override public Dimension getPreferredSize() {
@@ -210,6 +229,31 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     return myIsRow ? layout.getRowAt(pnt.y) : layout.getColumnAt(pnt.x);
   }
 
+  public int[] getSelectedCells(@Nullable final Point dragOrigin) {
+    ArrayList<Integer> selection = new ArrayList<Integer>();
+    RadContainer container = getSelectedGridContainer();
+    if (container == null) {
+      return new int[0];
+    }
+    int size = myIsRow ? container.getGridRowCount() : container.getGridColumnCount();
+    for(int i=0; i<size; i++) {
+      if (mySelectionModel.isSelectedIndex(i)) {
+        selection.add(i);
+      }
+    }
+    if (selection.size() == 0 && dragOrigin != null) {
+      int cell = getCellAt(dragOrigin);
+      if (cell >= 0) {
+        return new int[] { cell };
+      }
+    }
+    int[] result = new int[selection.size()];
+    for(int i=0; i<selection.size(); i++) {
+      result [i] = selection.get(i).intValue();
+    }
+    return result;
+  }
+
   private class MyMouseListener extends MouseAdapter implements MouseMotionListener {
     private static final int MINIMUM_RESIZED_SIZE = 8;
 
@@ -243,6 +287,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         mySelectionModel.setSelectionInterval(cell, cell);
       }
       repaint();
+      myEditor.fireSelectedComponentChanged();
     }
 
     @Override public void mouseReleased(MouseEvent e) {
@@ -403,32 +448,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         }
       }
       return true;
-    }
-
-    private int[] getSelectedCells(final Point dragOrigin) {
-      ArrayList<Integer> selection = new ArrayList<Integer>();
-      RadContainer container = getSelectedGridContainer();
-      if (container == null) {
-        return new int[0];
-      }
-      GridLayoutManager layout = (GridLayoutManager) container.getLayout();
-      int[] coords = myIsRow ? layout.getYs() : layout.getXs();
-      for(int i=0; i<coords.length; i++) {
-        if (mySelectionModel.isSelectedIndex(i)) {
-          selection.add(i);
-        }
-      }
-      if (selection.size() == 0) {
-        int cell = getCellAt(dragOrigin);
-        if (cell >= 0) {
-          return new int[] { cell };
-        }
-      }
-      int[] result = new int[selection.size()];
-      for(int i=0; i<selection.size(); i++) {
-        result [i] = selection.get(i).intValue();
-      }
-      return result;
     }
 
     private boolean canDragCell(final int cell) {

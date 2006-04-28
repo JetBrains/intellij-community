@@ -2,12 +2,15 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GridCaptionPanel;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
@@ -29,6 +32,8 @@ public final class PropertyInspector extends JPanel{
   private PropertyInspector.MyComponentSelectionListener myComponentSelectionListener;
   @NonNls private static final String INSPECTOR_CARD = "inspector";
   @NonNls private static final String EMPTY_CARD = "empty";
+  @NonNls private static final String COLUMN_CARD = "column";
+  private JComponent myColumnPropertiesPanel;
 
   public PropertyInspector(Project project, @NotNull final ComponentTree componentTree) {
     super(new CardLayout());
@@ -77,7 +82,7 @@ public final class PropertyInspector extends JPanel{
   public void setEditor(final GuiEditor editor) {
     if (myEditor != editor) {
       if (myEditor != null) {
-        myEditor.removeComponentSelectionLsistener(myComponentSelectionListener);
+        myEditor.removeComponentSelectionListener(myComponentSelectionListener);
       }
       myEditor = editor;
       myInspectorTable.setEditor(myEditor);
@@ -92,16 +97,37 @@ public final class PropertyInspector extends JPanel{
     myQuickFixManager.refreshIntentionHint();
   }
 
-  public void synchWithTree(final boolean forceSynch){
-    final RadComponent[] selectedComponents = myComponentTree.getSelectedComponents();
+  public void synchWithTree(final boolean forceSynch) {
     final CardLayout cardLayout = (CardLayout)getLayout();
-    if(selectedComponents.length >= 1){
-      cardLayout.show(this, INSPECTOR_CARD);
-      myInspectorTable.synchWithTree(forceSynch);
+    if (!showSelectedColumnProperties()) {
+      final RadComponent[] selectedComponents = myComponentTree.getSelectedComponents();
+      if(selectedComponents.length >= 1){
+        cardLayout.show(this, INSPECTOR_CARD);
+        myInspectorTable.synchWithTree(forceSynch);
+      }
+      else{
+        cardLayout.show(this, EMPTY_CARD);
+      }
     }
-    else{
-      cardLayout.show(this, EMPTY_CARD);
+  }
+
+  private boolean showSelectedColumnProperties() {
+    if (myEditor == null) return false;
+    GridCaptionPanel panel = myEditor.getFocusedCaptionPanel();
+    if (panel == null) return false;
+    RadContainer container = panel.getSelectedContainer();
+    if (container == null) return false;
+    final int[] selection = panel.getSelectedCells(null);
+    final JComponent propertiesPanel = container.getLayoutManager().getRowColumnPropertiesPanel(myEditor, container, panel.isRow(), selection);
+    if (propertiesPanel == null) return false;
+    if (!Comparing.equal(propertiesPanel, myColumnPropertiesPanel)) {
+      if (myColumnPropertiesPanel != null) remove(myColumnPropertiesPanel);
+      myColumnPropertiesPanel = propertiesPanel;
+      add(myColumnPropertiesPanel, COLUMN_CARD);
     }
+    final CardLayout cardLayout = (CardLayout)getLayout();
+    cardLayout.show(this, COLUMN_CARD);
+    return true;
   }
 
   public boolean isEditing(){

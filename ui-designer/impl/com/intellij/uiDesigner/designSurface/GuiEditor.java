@@ -218,6 +218,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myGlassLayer.addFocusListener(new FocusListener() {
       public void focusGained(FocusEvent e) {
         myDecorationLayer.repaint();
+        fireSelectedComponentChanged();
       }
 
       public void focusLost(FocusEvent e) {
@@ -372,6 +373,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     refresh();
     saveToFile();
+    // TODO[yole]: install appropriate listeners so that the captions repaint themselves at correct time
+    myHorzCaptionPanel.repaint();
+    myVertCaptionPanel.repaint();
   }
 
   public Object getNextSaveGroupId() {
@@ -498,7 +502,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   /**
    * Removes specified selection listener
    */
-  public void removeComponentSelectionLsistener(final ComponentSelectionListener l) {
+  public void removeComponentSelectionListener(final ComponentSelectionListener l) {
     myListenerList.remove(ComponentSelectionListener.class, l);
   }
 
@@ -818,6 +822,17 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   public DesignDropTargetListener getDropTargetListener() {
     return myDropTargetListener;
+  }
+
+  @Nullable
+  public GridCaptionPanel getFocusedCaptionPanel() {
+    if (myHorzCaptionPanel.isFocusOwner()) {
+      return myHorzCaptionPanel;
+    }
+    else if (myVertCaptionPanel.isFocusOwner()) {
+      return myVertCaptionPanel;
+    }
+    return null;
   }
 
   private final class MyLayeredPane extends JLayeredPane {

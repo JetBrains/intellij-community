@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.NoDropLocation;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
@@ -183,5 +184,9 @@ public abstract class RadLayoutManager {
 
   public int[] getVerticalGridLines(RadContainer container) {
     throw new UnsupportedOperationException("Not a grid layout manager");
+  }
+
+  public JComponent getRowColumnPropertiesPanel(GuiEditor editor, RadContainer container, boolean isRow, int[] selectedIndices) {
+    return null;
   }
 }

@@ -2,7 +2,7 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.lw.IProperty;
-import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IComponent;import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +15,8 @@ import java.util.List;
  */
 public abstract class Property<T extends RadComponent, V> implements IProperty {
   public static final Property[] EMPTY_ARRAY=new Property[]{};
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.Property");
 
   /**
    * Parent property
@@ -75,6 +77,15 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
     setValueImpl(component, value);
     markTopmostModified(component, true);
     component.getDelegee().invalidate();
+  }
+
+  public final void setValueEx(T component, V value) {
+    try {
+      setValue(component, value);
+    }
+    catch(Exception ex) {
+      LOG.error(ex);
+    }
   }
 
   protected void markTopmostModified(final T component, final boolean modified) {
