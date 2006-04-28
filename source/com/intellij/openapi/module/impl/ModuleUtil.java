@@ -102,6 +102,12 @@ public class ModuleUtil {
   }
 
   @Nullable
+  public static Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    return fileIndex.getModuleForFile(file);
+  }
+
+  @Nullable
   public static Module findModuleForPsiElement(@NotNull PsiElement element) {
     if (!element.isValid()) return null;
     Project project = element.getProject();
