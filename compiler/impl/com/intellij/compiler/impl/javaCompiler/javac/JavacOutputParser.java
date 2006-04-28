@@ -173,6 +173,10 @@ public class JavacOutputParser extends OutputParser {
 
   private void addJavacPattern(@NonNls final String line) {
     final int dividerIndex = line.indexOf(JavacResourcesReader.CATEGORY_VALUE_DIVIDER);
+    if (dividerIndex < 0) {
+      // by reports it may happen for some IBM JDKs (empty string?)
+      return;
+    }
     final String category = line.substring(0, dividerIndex);
     final String resourceBundleValue = line.substring(dividerIndex + 1);
     if (JavacResourcesReader.MSG_PARSING_COMPLETED.equals(category) ||
