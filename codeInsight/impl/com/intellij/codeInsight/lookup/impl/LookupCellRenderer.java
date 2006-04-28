@@ -401,13 +401,18 @@ class LookupCellRenderer implements ListCellRenderer {
     if (iconAttr != null) return iconAttr;
     Icon icon = null;
     Object o = item.getObject();
-    if (o instanceof LookupValueWithPsiElement) {
-      o = ((LookupValueWithPsiElement)o).getElement();
-    }
-    if (o instanceof PsiElement) {
-      final PsiElement element = (PsiElement)o;
-      if (element.isValid()) {
-        icon = element.getIcon(ICON_FLAGS);
+
+    if (o instanceof Iconable && !(o instanceof PsiElement)) {
+      icon = ((Iconable)o).getIcon(ICON_FLAGS);
+    } else {
+      if (o instanceof LookupValueWithPsiElement) {
+        o = ((LookupValueWithPsiElement)o).getElement();
+      }
+      if (o instanceof PsiElement) {
+        final PsiElement element = (PsiElement)o;
+        if (element.isValid()) {
+          icon = element.getIcon(ICON_FLAGS);
+        }
       }
     }
     if (icon == null){
