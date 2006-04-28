@@ -105,6 +105,7 @@ public class RefCountHolder {
         PsiElement value = myLocalRefsMap.get(ref);
         iterator.remove();
         List<PsiReference> array = myLocalRefsMap.getKeysByValue(value);
+        LOG.assertTrue(array != null);
         array.remove(ref);
       }
     }
@@ -146,9 +147,8 @@ public class RefCountHolder {
         .getElement();
       if (methodCallExpression == null) return false;
       PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      if (methodExpression == null || method != methodExpression.resolve()) return false;
+      if (method != methodExpression.resolve()) return false;
       PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      if (argumentList == null) return false;
       PsiExpression[] arguments = argumentList.getExpressions();
       int argumentIndex = ArrayUtil.find(arguments, argument);
       if (paramIndex != argumentIndex) return false;
