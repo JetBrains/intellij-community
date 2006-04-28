@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -197,13 +198,18 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (psiFile == null) return;
     ProgressManager.getInstance().runProcess(new Runnable(){
       public void run() {
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
         try {
-          WindowManager.getInstance().getStatusBar(myProject).setInfo("Checking '"+file.getPresentableUrl()+"'");
+          if (statusBar != null) {
+            statusBar.setInfo("Checking '"+file.getPresentableUrl()+"'");
+          }
           GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true);
           pass.doCollectInformation(myProgress);
         }
         finally {
-          WindowManager.getInstance().getStatusBar(myProject).setInfo("");
+          if (statusBar != null) {
+            statusBar.setInfo("");
+          }
         }
       }
     },myProgress);
