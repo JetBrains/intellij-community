@@ -120,7 +120,7 @@ public class VcsHistoryDialog extends DialogWrapper {
     if (currentRevisionNumber != null) {
       myRevisions.add(new CurrentRevision(file, currentRevisionNumber));
     }
-    Collections.sort((List)myRevisions, new Comparator<VcsFileRevision>() {
+    Collections.sort(myRevisions, new Comparator<VcsFileRevision>() {
       public int compare(VcsFileRevision rev1, VcsFileRevision rev2){
         return VcsHistoryUtil.compare(rev1, rev2);
       }
@@ -181,7 +181,7 @@ public class VcsHistoryDialog extends DialogWrapper {
     super.show();
   }
 
-  private ColumnInfo[] createColumns(ColumnInfo[] additionalColumns) {
+  private static ColumnInfo[] createColumns(ColumnInfo[] additionalColumns) {
     if (additionalColumns == null) {
       return COLUMNS;
     }
@@ -189,11 +189,7 @@ public class VcsHistoryDialog extends DialogWrapper {
     ColumnInfo[] result = new ColumnInfo[additionalColumns.length + COLUMNS.length];
 
     System.arraycopy(COLUMNS, 0, result, 0, COLUMNS.length);
-
-    for (int i = 0; i < additionalColumns.length; i++) {
-      ColumnInfo additionalColumn = additionalColumns[i];
-      result[i + COLUMNS.length] = additionalColumn;
-    }
+    System.arraycopy(additionalColumns, 0, result, COLUMNS.length, additionalColumns.length);
 
     return result;
   }
