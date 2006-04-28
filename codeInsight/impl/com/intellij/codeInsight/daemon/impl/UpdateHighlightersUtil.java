@@ -30,7 +30,6 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class UpdateHighlightersUtil {
@@ -203,17 +202,6 @@ public class UpdateHighlightersUtil {
     }
   }
 
-  private static List<IntentionAction> getQuickFixes(final HighlightInfo info) {
-    if (info.quickFixActionRanges != null) {
-      List<IntentionAction> actions = new ArrayList<IntentionAction>();
-      for (Pair<Pair<Pair<IntentionAction, String>, List<IntentionAction>>, TextRange> pair : info.quickFixActionRanges) {
-        actions.add(pair.getFirst().getFirst().getFirst());
-      }
-      return actions;
-    }
-    return Collections.emptyList();
-  }
-
   public static final int NORMAL_MARKERS_GROUP = 1;
   public static final int OVERRIDEN_MARKERS_GROUP = 2;
 
@@ -232,13 +220,8 @@ public class UpdateHighlightersUtil {
       for (LineMarkerInfo info : oldMarkers) {
         RangeHighlighter highlighter = info.highlighter;
         boolean toRemove;
-        if (!highlighter.isValid()) {
-          toRemove = true;
-        }
-        else {
-          toRemove = isLineMarkerInGroup(info.type, group)
-                     && startOffset <= highlighter.getStartOffset() && highlighter.getStartOffset() <= endOffset;
-        }
+        toRemove = !highlighter.isValid() || isLineMarkerInGroup(info.type, group) && startOffset <= highlighter.getStartOffset() &&
+                                             highlighter.getStartOffset() <= endOffset;
 
         if (toRemove) {
           document.getMarkupModel(project).removeHighlighter(highlighter);
