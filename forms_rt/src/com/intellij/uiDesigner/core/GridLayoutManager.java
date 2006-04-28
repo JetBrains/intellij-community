@@ -952,10 +952,6 @@ public final class GridLayoutManager extends AbstractLayout {
     return result;
   }
 
-  public int[] getGridLines(boolean isRow) {
-    return isRow ? getHorizontalGridLines() : getVerticalGridLines();
-  }
-
   public int getHorizontalGridLineNear(int y, int epsilon) {
     return getGridLineNear(y, epsilon, getHorizontalGridLines());
   }

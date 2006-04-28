@@ -5,23 +5,21 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.designSurface.DropLocation;
-import com.intellij.uiDesigner.designSurface.NoDropLocation;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.NoDropLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Graphics2D;
 
 /**
  * Design-time support for a layout manager.
@@ -130,7 +128,39 @@ public abstract class RadLayoutManager {
     throw new UnsupportedOperationException("Not a grid layout manager");
   }
 
+  public int[] getGridCellCoords(RadContainer container, boolean isRow) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
+  }
+
+  public int[] getGridCellSizes(RadContainer container, boolean isRow) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
+  }
+
   public JComponent getRowColumnPropertiesPanel(GuiEditor editor, RadContainer container, boolean isRow, int[] selectedIndices) {
     return null;
+  }
+
+  public int getGridLineNear(RadContainer container, boolean isRow, Point pnt, int epsilon) {
+    int coord = isRow ? pnt.y : pnt.x;
+    int[] gridLines = isRow ? getHorizontalGridLines(container) : getVerticalGridLines(container);
+    for(int col = 1; col <gridLines.length; col++) {
+      if (coord < gridLines [col]) {
+        if (coord - gridLines [col-1] < epsilon) {
+          return col-1;
+        }
+        if (gridLines [col] - coord < epsilon) {
+          return col;
+        }
+        return -1;
+      }
+    }
+    if (coord - gridLines [gridLines.length-1] < epsilon) {
+      return gridLines.length-1;
+    }
+    return -1;
+  }
+
+  public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g2d,
+                                     final Rectangle rc) {
   }
 }

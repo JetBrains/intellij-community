@@ -17,10 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.LayoutManager;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.GridBagLayout;
+import java.awt.*;
 
 /**
  * @author yole
@@ -290,6 +287,16 @@ public class RadGridLayoutManager extends RadLayoutManager {
     return grid.getVerticalGridLines();
   }
 
+  public int[] getGridCellCoords(RadContainer container, boolean isRow) {
+    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+    return isRow ? grid.getYs() : grid.getXs();
+  }
+
+  public int[] getGridCellSizes(RadContainer container, boolean isRow) {
+    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+    return isRow ? grid.getHeights() : grid.getWidths();
+  }
+
   @Override
   public JComponent getRowColumnPropertiesPanel(GuiEditor editor, RadContainer container, boolean isRow, int[] selectedIndices) {
     if (myPropertiesPanel == null) {
@@ -297,5 +304,25 @@ public class RadGridLayoutManager extends RadLayoutManager {
     }
     myPropertiesPanel.showProperties(editor, container, isRow, selectedIndices);
     return myPropertiesPanel.getRootPanel();
+  }
+
+  public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g,
+                                     final Rectangle rc) {
+    GridLayoutManager layout = (GridLayoutManager) container.getLayout();
+    int sizePolicy = layout.getCellSizePolicy(isRow, i);
+    if ((sizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) {
+      Stroke oldStroke = g.getStroke();
+      g.setStroke(new BasicStroke(2.0f));
+      g.setColor(Color.BLUE);
+      if (isRow) {
+        int midPoint = (int) rc.getCenterX();
+        g.drawLine(midPoint+1, rc.y+1, midPoint+1, rc.y+rc.height-1);
+      }
+      else {
+        int midPoint = (int) rc.getCenterY();
+        g.drawLine(rc.x+1, midPoint+1, rc.x+rc.width-1, midPoint+1);
+      }
+      g.setStroke(oldStroke);
+    }
   }
 }

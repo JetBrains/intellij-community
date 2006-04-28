@@ -14,10 +14,10 @@ import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
 import com.intellij.uiDesigner.actions.GridChangeActionGroup;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadLayoutManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.dnd.*;
 import com.intellij.util.Alarm;
@@ -95,9 +95,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     if (container == null) {
       return;
     }
-    GridLayoutManager layout = (GridLayoutManager) container.getLayout();
-    int[] coords = myIsRow ? layout.getYs() : layout.getXs();
-    int[] sizes = myIsRow ? layout.getHeights() : layout.getWidths();
+    RadLayoutManager layout = container.getLayoutManager();
+    int[] coords = layout.getGridCellCoords(container, myIsRow);
+    int[] sizes = layout.getGridCellSizes(container, myIsRow);
 
     for(int i=0; i<coords.length; i++) {
       int x = myIsRow ? 0 : coords [i];
@@ -111,21 +111,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       g.setColor(getCaptionColor(i));
       g.fillRect(rc.x, rc.y, rc.width, rc.height);
 
-      int sizePolicy = layout.getCellSizePolicy(myIsRow, i);
-      if ((sizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) {
-        Stroke oldStroke = g2d.getStroke();
-        g2d.setStroke(new BasicStroke(2.0f));
-        g.setColor(Color.BLUE);
-        if (myIsRow) {
-          int midPoint = (int) rc.getCenterX();
-          g.drawLine(midPoint+1, rc.y+1, midPoint+1, rc.y+rc.height-1);
-        }
-        else {
-          int midPoint = (int) rc.getCenterY();
-          g.drawLine(rc.x+1, midPoint+1, rc.x+rc.width-1, midPoint+1);
-        }
-        g2d.setStroke(oldStroke);
-      }
+      layout.paintCaptionDecoration(container, myIsRow, i, g2d, rc);
 
       g.setColor(Color.DARK_GRAY);
       g.drawRect(rc.x, rc.y, rc.width, rc.height);
@@ -140,7 +126,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
 
     if (myDropInsertLine >= 0) {
-      int[] lines = myIsRow ? layout.getHorizontalGridLines() : layout.getVerticalGridLines();
+      int[] lines = myIsRow ? layout.getHorizontalGridLines(container) : layout.getVerticalGridLines(container);
       int coord = lines [myDropInsertLine];
       if (myIsRow) {
         coord = SwingUtilities.convertPoint(container.getDelegee(), 0, coord, this).y;
@@ -224,9 +210,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   private int getCellAt(Point pnt) {
     if (mySelectedContainer == null) return -1;
-    GridLayoutManager layout = (GridLayoutManager) mySelectedContainer.getLayout();
     pnt = SwingUtilities.convertPoint(this, pnt, mySelectedContainer.getDelegee());
-    return myIsRow ? layout.getRowAt(pnt.y) : layout.getColumnAt(pnt.x);
+    return myIsRow ? mySelectedContainer.getGridRowAt(pnt.y) : mySelectedContainer.getGridColumnAt(pnt.x);
   }
 
   public int[] getSelectedCells(@Nullable final Point dragOrigin) {
@@ -266,11 +251,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       requestFocus();
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
-      GridLayoutManager layout = (GridLayoutManager) mySelectedContainer.getLayout();
-      myResizeLine = myIsRow
-                     ? layout.getHorizontalGridLineNear(pnt.y, 4)
-                     : layout.getVerticalGridLineNear(pnt.x, 4);
-
+      RadLayoutManager layout = mySelectedContainer.getLayoutManager();
+      myResizeLine = layout.getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
       checkShowPopupMenu(e);
     }
 
@@ -315,8 +297,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
 
     private void doResize(final Point pnt) {
-      GridLayoutManager layout = (GridLayoutManager) mySelectedContainer.getLayout();
-      int[] coords = layout.getCoords(myIsRow);
+      int[] coords = mySelectedContainer.getLayoutManager().getGridCellCoords(mySelectedContainer, myIsRow);
       int prevCoord = coords [myResizeLine-1];
       int newCoord = myIsRow ? pnt.y : pnt.x;
       if (newCoord < prevCoord + MINIMUM_RESIZED_SIZE) {
@@ -374,10 +355,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       if (mySelectedContainer == null) return;
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
-      GridLayoutManager layout = (GridLayoutManager) mySelectedContainer.getLayout();
-      int gridLine = myIsRow
-                     ? layout.getHorizontalGridLineNear(pnt.y, 4)
-                     : layout.getVerticalGridLineNear(pnt.x, 4);
+      int gridLine = mySelectedContainer.getLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
 
       // first grid line may not be dragged
       if (gridLine <= 0) {
@@ -431,11 +409,10 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       if (mySelectedContainer == null || mySelectionModel.isSelectionEmpty()) {
         return false;
       }
-      GridLayoutManager layout = (GridLayoutManager) mySelectedContainer.getLayout();
       if (myIsRow) {
-        return layout.getRowCount() > 1;
+        return mySelectedContainer.getGridRowCount() > 1;
       }
-      return layout.getColumnCount() > 1;
+      return mySelectedContainer.getGridColumnCount() > 1;
     }
   }
 
@@ -496,9 +473,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
 
     private int getDropGridLine(final DnDEvent aEvent) {
-      GridLayoutManager layout = (GridLayoutManager) mySelectedContainer.getLayout();
       final Point point = aEvent.getPointOn(mySelectedContainer.getDelegee());
-      return myIsRow ? layout.getHorizontalGridLineNear(point.y, 20) : layout.getVerticalGridLineNear(point.x, 20);
+      return mySelectedContainer.getLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, point, 20);
     }
 
     public void drop(DnDEvent aEvent) {
