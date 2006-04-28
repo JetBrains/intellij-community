@@ -72,7 +72,7 @@ public abstract class Language {
   private List<ExternalAnnotator> myCachedExternalAnnotators;
   private FileType myFileType;
 
-  protected Language(String id) {
+  protected Language(@NonNls String id) {
     this(id, "");
   }
 
