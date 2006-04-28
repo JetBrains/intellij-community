@@ -38,8 +38,7 @@ public class EditorFactoryImpl extends EditorFactory {
     LaterInvocator.addModalityStateListener(
       new ModalityStateListener() {
         public void beforeModalityStateChanged() {
-          for (int i = 0; i < myEditors.size(); i++) {
-            Editor editor = myEditors.get(i);
+          for (Editor editor : myEditors) {
             ((EditorImpl)editor).beforeModalityStateChanged();
           }
         }
@@ -57,6 +56,7 @@ public class EditorFactoryImpl extends EditorFactory {
     });
   }
 
+  @NotNull
   public String getComponentName() {
     return "EditorFactory";
   }
@@ -64,13 +64,14 @@ public class EditorFactoryImpl extends EditorFactory {
   public void initComponent() { }
 
   public void validateEditorsAreReleased(Project project) {
-    for (int i = 0; i < myEditors.size(); i++) {
-      Editor editor = myEditors.get(i);
+    for (Editor editor : myEditors) {
       if (editor.getProject() == project) {
         final String creator = editor.getUserData(EDITOR_CREATOR);
         if (creator == null) {
-          LOG.error("Editor for the document with class:" + editor.getClass().getName() +" and the following text hasn't been released:\n" + editor.getDocument().getText());
-        } else {
+          LOG.error("Editor for the document with class:" + editor.getClass().getName() +
+                    " and the following text hasn't been released:\n" + editor.getDocument().getText());
+        }
+        else {
           LOG.error("Editor with class:" + editor.getClass().getName() + " hasn't been released:\n" + creator);
         }
       }
@@ -94,9 +95,8 @@ public class EditorFactoryImpl extends EditorFactory {
 
   public void refreshAllEditors() {
     Editor[] editors = getAllEditors();
-    for (int i = 0; i < editors.length; i++) {
-      EditorEx editor = (EditorEx)editors[i];
-      editor.reinitSettings();
+    for (Editor editor : editors) {
+      ((EditorEx)editor).reinitSettings();
     }
   }
 
@@ -151,8 +151,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   public Editor[] getEditors(Document document, Project project) {
     ArrayList<Editor> list = new ArrayList<Editor>();
-    for (int i = 0; i < myEditors.size(); i++) {
-      Editor editor = myEditors.get(i);
+    for (Editor editor : myEditors) {
       Project project1 = editor.getProject();
       if (editor.getDocument().equals(document) && (project == null || project1 == null || project1.equals(project))) {
         list.add(editor);

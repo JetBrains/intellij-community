@@ -454,7 +454,6 @@
         <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction"/>
         <action id="DupLocate" class="com.intellij.dupLocator.DuplocateAction"/>
         <separator/>
-        <action id="ShowCoverageInfo" class="com.intellij.coverage.actions.ShowCoverageInfoAction"/>
         <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction"/>
       </group>
 
