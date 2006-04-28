@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class VisibleEditorsTracker extends CommandAdapter implements ApplicationComponent{
   private Set<Editor> myEditorsVisibleOnCommandStart = new HashSet<Editor>();
   private long myCurrentCommandStart;
@@ -25,6 +27,7 @@ public class VisibleEditorsTracker extends CommandAdapter implements Application
     commandProcessor.addCommandListener(this);
   }
 
+  @NotNull
   public String getComponentName() {
     return "VisibleEditorsTracker";
   }
@@ -45,10 +48,8 @@ public class VisibleEditorsTracker extends CommandAdapter implements Application
 
   public void commandStarted(CommandEvent event) {
     Editor[] editors = EditorFactory.getInstance().getAllEditors();
-    for (int i = 0; i < editors.length; i++) {
-      Editor editor = editors[i];
-
-      if (editor.getComponent().isShowing()){
+    for (Editor editor : editors) {
+      if (editor.getComponent().isShowing()) {
         myEditorsVisibleOnCommandStart.add(editor);
       }
 
