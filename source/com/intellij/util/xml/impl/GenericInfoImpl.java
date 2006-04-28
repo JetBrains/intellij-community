@@ -216,7 +216,8 @@ public class GenericInfoImpl implements DomGenericInfo {
         for (Method method : methods) {
           sb.append("\n  "+method);
         }
-        assert false: "No implementation for methods: " + sb.toString();
+        assert false: sb.toString();
+        //System.out.println(sb.toString());
       }
     }
 
@@ -252,11 +253,12 @@ public class GenericInfoImpl implements DomGenericInfo {
       return true;
     }
 
-    final boolean isAttributeMethod = method.getReturnType().equals(GenericAttributeValue.class);
+    final boolean isAttributeValueMethod = method.getReturnType().equals(GenericAttributeValue.class);
     final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
     final Attribute annotation = signature.findAnnotation(Attribute.class, myClass);
+    final boolean isAttributeMethod = annotation != null || isAttributeValueMethod;
     if (annotation != null) {
-      assert isAttributeMethod : method + " should return " + GenericAttributeValue.class;
+      assert isAttributeValueMethod || method.getReturnType().isAssignableFrom(GenericAttributeValue.class) : method + " should return " + GenericAttributeValue.class;
     }
     if (isAttributeMethod) {
       final String s = annotation == null ? null : annotation.value();
