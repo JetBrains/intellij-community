@@ -169,7 +169,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
           }
           PsiWildcardType wildcardType = (PsiWildcardType)substituted;
           if (!substitutedBoundType.equalsToText("java.lang.Object")) {
-            if (originalBound == null || !originalBound.isAssignableFrom(substitutedBoundType)) {
+            if (originalBound == null || !substitutedBoundType.isAssignableFrom(originalBound)) {
               if (wildcardType.isExtends()) {
                 final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
                 if (glb != null) {

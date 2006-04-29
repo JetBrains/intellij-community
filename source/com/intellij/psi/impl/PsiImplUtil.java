@@ -186,7 +186,12 @@ public static PsiType normalizeWildcardTypeByPosition(final PsiType type, final 
   }
   if (type instanceof PsiWildcardType) {
     final PsiWildcardType wildcardType = (PsiWildcardType)type;
-    if (PsiUtil.isInCovariantPosition(expression)) {
+    PsiExpression toplevel = expression;
+    while(toplevel.getParent() instanceof PsiArrayAccessExpression &&
+           ((PsiArrayAccessExpression)toplevel.getParent()).getArrayExpression() == toplevel) {
+      toplevel = (PsiExpression)toplevel.getParent();
+    }
+    if (PsiUtil.isAccessedForWriting(toplevel)) {
       return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType);
     }
     else {

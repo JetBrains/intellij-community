@@ -1099,16 +1099,6 @@ public final class PsiUtil {
     return false;
   }
 
-  public static boolean isInCovariantPosition(PsiExpression expression) {
-    return isAccessedForWriting(expression) ||
-           isArrayExpressionInSelector(expression);
-  }
-
-  private static boolean isArrayExpressionInSelector(PsiExpression expression) {
-    return expression.getParent() instanceof PsiArrayAccessExpression &&
-           ((PsiArrayAccessExpression)expression.getParent()).getArrayExpression() == expression;
-  }
-
   public static boolean isRawSubstitutor (PsiTypeParameterListOwner owner, PsiSubstitutor substitutor) {
     final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(owner);
     while (iterator.hasNext()) {
