@@ -9,12 +9,10 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.jsp.JspxFileViewProvider;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -152,20 +150,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       }
     }
     myAnnotationHolder.clear();
-  }
-
-
-  public void visitFile(PsiFile file) {
-    super.visitFile(file);
-    if (file.isPhysical()) {
-      final VirtualFile vFile = file.getVirtualFile();
-      if (CompilerManager.getInstance(file.getProject()).isExcludedFromCompilation(vFile)) {
-        final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, file,
-                                                                     "Warning. This file is excluded from compliation");
-        info.isFileLevelAnnotation = true;
-        myHolder.add(info);
-      }
-    }
   }
 
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
