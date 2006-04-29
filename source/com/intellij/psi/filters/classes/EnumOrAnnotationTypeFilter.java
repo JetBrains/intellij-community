@@ -6,13 +6,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
-public class EnumFilter
-  implements ElementFilter{
-
+public class EnumOrAnnotationTypeFilter implements ElementFilter{
   protected boolean isClassAcceptable(PsiClass aClass){
-    return aClass.isEnum();
+    return aClass.isEnum() || aClass.isAnnotationType();
   }
+
   public void readExternal(Element element)
     throws InvalidDataException{
   }
@@ -28,12 +28,13 @@ public class EnumFilter
 
   public boolean isAcceptable(Object element, PsiElement context){
     if(element instanceof PsiClass){
-      return ((PsiClass)element).isEnum();
+      return ((PsiClass)element).isEnum() || ((PsiClass)element).isAnnotationType();
     }
     return false;
   }
 
+  @NonNls
   public String toString(){
-    return "enum";
+    return "enum or annotation type";
   }
 }

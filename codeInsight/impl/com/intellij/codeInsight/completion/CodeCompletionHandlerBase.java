@@ -16,12 +16,11 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -298,14 +297,19 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  protected LookupData getLookupData(CompletionContext context) {
+  protected LookupData getLookupData(final CompletionContext context) {
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     final PsiFile file = context.file;
     final PsiManager manager = file.getManager();
     final PsiElement lastElement = file.findElementAt(context.startOffset - 1);
     final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
 
-    final PsiElement insertedElement = insertDummyIdentifier(context);
+    final PsiElement insertedElement = ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
+      public PsiElement compute() {
+        return insertDummyIdentifier(context);
+      }
+    });
+
     CompletionData completionData = getCompletionData(context, lastElement);
 
     context.prefix = findPrefix(insertedElement, context.startOffset, CompletionUtil.DUMMY_IDENTIFIER, completionData);

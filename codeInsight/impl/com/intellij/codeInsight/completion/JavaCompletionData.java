@@ -139,7 +139,7 @@ public class JavaCompletionData extends CompletionData{
           new NotFilter(new AfterElementFilter(new ContentFilter(new TextFilter(PsiKeyword.EXTENDS)))),
           new NotFilter(new AfterElementFilter(new ContentFilter(new TextFilter(PsiKeyword.IMPLEMENTS)))),
           new NotFilter(new LeftNeighbour(new LeftNeighbour(new TextFilter("<", ",")))),
-          new NotFilter(new ScopeFilter(new EnumFilter())),
+          new NotFilter(new ScopeFilter(new EnumOrAnnotationTypeFilter())),
           new LeftNeighbour(new OrFilter(
             new ClassFilter(PsiIdentifier.class),
             new TextFilter(">"))));
