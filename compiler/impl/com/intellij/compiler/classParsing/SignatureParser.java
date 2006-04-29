@@ -139,10 +139,15 @@ public class SignatureParser {
   }
 
   public void parseTypeArgument(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
-    if (it.current() == '+' || it.current() == '-') {
+    if (it.current() == '*') {
       parseWildcardIndicator(it, buf);
     }
-    parseFieldTypeSignature(it, buf);
+    else {
+      if (it.current() == '+' || it.current() == '-') {
+        parseWildcardIndicator(it, buf);
+      }
+      parseFieldTypeSignature(it, buf);
+    }
   }
 
   public void parseWildcardIndicator(CharacterIterator it, final StringBuffer buf) {
