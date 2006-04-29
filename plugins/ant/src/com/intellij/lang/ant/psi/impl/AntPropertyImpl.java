@@ -1,13 +1,12 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.psi.AntCall;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -22,6 +21,21 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
+    AntElement propHolder = parent;
+    if( propHolder instanceof AntCall) {
+      propHolder = propHolder.getAntProject();
+    }
+    if (getName() != null) {
+      propHolder.setProperty(getName(), this);
+    }
+    else if (getFileName() != null) {
+      final PropertiesFile file = getPropertiesFile();
+      if (file != null) {
+        for (Property prop : file.getProperties()) {
+          propHolder.setProperty(prop.getKey(), prop);
+        }
+      }
+    }
   }
 
   public String toString() {
@@ -99,18 +113,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   @Nullable
   public PropertiesFile getPropertiesFile() {
-    final String filename = getFileName();
-    if (filename == null) return null;
-    AntFileImpl antFile = PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
-    if (antFile == null) return null;
-    VirtualFile vFile = antFile.getVirtualFile();
-    if (vFile == null) return null;
-    vFile = vFile.getParent();
-    if (vFile == null) return null;
-    final File file = new File(vFile.getPath(), filename);
-    vFile = LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
-    if (vFile == null) return null;
-    return (PropertiesFile)antFile.getViewProvider().getManager().findFile(vFile);
+    return (PropertiesFile)findFileByName(getFileName());
   }
 
   public void setPropertiesFile(final String name) throws IncorrectOperationException {

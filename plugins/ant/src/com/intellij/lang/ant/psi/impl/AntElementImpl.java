@@ -6,10 +6,12 @@ import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
@@ -31,7 +34,8 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   private AntElement[] myChildren = null;
   private PsiReference[] myReferences = null;
   private XmlAttribute[] myAttributes = null;
-  private Map<String, AntProperty> myProperties = null;
+  private Map<String, PsiElement> myProperties;
+  private PsiElement[] myPropertiesArray;
 
   public AntElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(sourceElement);
@@ -71,19 +75,6 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   @NotNull
   public AntProject getAntProject() {
     return (AntProject)((this instanceof AntProject) ? this : PsiTreeUtil.getParentOfType(this, AntProject.class));
-  }
-
-  @NotNull
-  public AntProperty[] getProperties() {
-    instantiatelProperties();
-    final int propCount = myProperties.size();
-    return propCount == 0 ? AntProperty.EMPTY_ARRAY : myProperties.values().toArray(new AntProperty[propCount]);
-  }
-
-  @Nullable
-  public AntProperty getProperty(final String name) {
-    instantiatelProperties();
-    return myProperties.get(name);
   }
 
   public PsiElement getParent() {
@@ -147,6 +138,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     myChildren = null;
     myAttributes = null;
     myProperties = null;
+    myPropertiesArray = null;
   }
 
   @NotNull
@@ -167,6 +159,45 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     final AntElement parent = getAntParent();
     clearCaches();
     if (parent != null) parent.subtreeChanged();
+  }
+
+  @Nullable
+  public PsiFile findFileByName(final String name) {
+    if (name == null) return null;
+    AntFileImpl antFile = PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
+    if (antFile == null) return null;
+    VirtualFile vFile = antFile.getVirtualFile();
+    if (vFile == null) return null;
+    vFile = vFile.getParent();
+    if (vFile == null) return null;
+    final File file = new File(vFile.getPath(), name);
+    vFile = LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
+    if (vFile == null) return null;
+    return antFile.getViewProvider().getManager().findFile(vFile);
+  }
+
+  public void setProperty(final String name, final PsiElement element) {
+    if( myProperties == null) {
+      myProperties = new HashMap<String, PsiElement>();
+    }
+    myProperties.put(name, element);
+    myPropertiesArray = null;
+  }
+
+  @Nullable
+  public PsiElement getProperty(final String name) {
+    return (myProperties == null) ? null : myProperties.get(name);
+  }
+
+  @NotNull
+  public PsiElement[] getProperties() {
+    if(myProperties == null) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+    if( myPropertiesArray == null ) {
+      myPropertiesArray = myProperties.values().toArray(new PsiElement[myProperties.size()]);
+    }
+    return myPropertiesArray;
   }
 
   public PsiElement findElementAt(int offset) {
@@ -195,6 +226,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return myReferences = result.toArray(new PsiReference[result.size()]);
   }
 
+
   protected AntElement[] getChildrenInner() {
     return AntElement.EMPTY_ARRAY;
   }
@@ -203,17 +235,5 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     final AntElementImpl element = (AntElementImpl)super.clone();
     element.clearCaches();
     return element;
-  }
-
-  private void instantiatelProperties() {
-    if (myProperties == null) {
-      myProperties = new HashMap<String, AntProperty>();
-      for (AntElement element : getChildren()) {
-        if (element instanceof AntProperty) {
-          AntProperty prop = (AntProperty)element;
-          myProperties.put(prop.getName(), prop);
-        }
-      }
-    }
   }
 }

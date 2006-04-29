@@ -1,29 +1,33 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.impl.reference.AntPropertyFileReference;
+import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.impl.reference.AntFileReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 
-public class AntPropertyFileReferenceProvider extends GenericReferenceProvider {
+public class AntFileReferenceProvider extends GenericReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
-    AntElement antElement = (AntElement)element;
-    final XmlAttribute attr = ((XmlTag)antElement.getSourceElement()).getAttribute("file", null);
+    AntStructuredElement antElement = (AntStructuredElement)element;
+    final XmlAttribute attr = antElement.getSourceElement().getAttribute("file", null);
     if (attr == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final int offsetInPosition = attr.getValueElement().getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset() + 1;
+    final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
+    if( xmlAttributeValue == null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    final int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset() + 1;
     final String attrValue = attr.getValue();
-    return new AntPropertyFileReference[]{
-      new AntPropertyFileReference(this, antElement, attrValue, new TextRange(offsetInPosition, offsetInPosition + attrValue.length()))};
+    return new AntFileReference[]{
+      new AntFileReference(this, antElement, attrValue, new TextRange(offsetInPosition, offsetInPosition + attrValue.length()))};
   }
 
   @NotNull

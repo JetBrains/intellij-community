@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AntPropertyValueReferenceProvider extends GenericReferenceProvider {
+public class AntPropertyReferenceProvider extends GenericReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
@@ -66,21 +65,20 @@ public class AntPropertyValueReferenceProvider extends GenericReferenceProvider 
   }
 
   public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-    handleElementRecursive(processor, ((AntElement)position).getAntProject());
+    handleElementUp(processor, (AntElement)position);
   }
 
-  private static boolean handleElementRecursive(PsiScopeProcessor processor, AntElement element) {
-    if (element instanceof AntProperty) {
-      AntProperty property = (AntProperty)element;
-      if (!processor.execute(property, PsiSubstitutor.EMPTY)) {
-        return false;
+  private static boolean handleElementUp(PsiScopeProcessor processor, AntElement element) {
+    element = element.getAntParent();
+    if (element != null) {
+      for (PsiElement property : element.getProperties()) {
+        if (!processor.execute(property, PsiSubstitutor.EMPTY)) {
+          return false;
+        }
       }
-    }
-    for (PsiElement child : element.getChildren()) {
-      if (!handleElementRecursive(processor, (AntElement)child)) {
-        return false;
-      }
+      return handleElementUp(processor, element);
     }
     return true;
+
   }
 }

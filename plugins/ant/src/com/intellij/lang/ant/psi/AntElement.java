@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
@@ -18,13 +19,18 @@ public interface AntElement extends PsiElement {
   AntProject getAntProject();
 
   @NotNull
-  AntProperty[] getProperties();
-
-  @Nullable
-  AntProperty getProperty(final String name);
-
-  @NotNull
   XmlAttribute[] getAttributes();
 
   void subtreeChanged();
+
+  @Nullable
+  PsiFile findFileByName(final String name);
+
+  void setProperty(final String name, final PsiElement element);
+
+  @Nullable
+  PsiElement getProperty(final String name);
+
+  @NotNull
+  PsiElement[] getProperties();
 }

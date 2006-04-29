@@ -5,11 +5,11 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -58,16 +58,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
     return myProject = new AntProjectImpl(this, tag);
   }
 
-  @NotNull
-  public AntProperty[] getProperties() {
-    return AntProperty.EMPTY_ARRAY;
-  }
-
-  @Nullable
-  public AntProperty getProperty(final String name) {
-    return null;
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "AntFile:" + getName();
@@ -94,5 +84,23 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
 
   public void subtreeChanged() {
     clearCaches();
+  }
+
+  @Nullable
+  public PsiFile findFileByName(final String name) {
+    return null;
+  }
+
+  public void setProperty(final String name, final PsiElement element) {
+  }
+
+  @Nullable
+  public PsiElement getProperty(final String name) {
+    return null;
+  }
+
+  @NotNull
+  public PsiElement[] getProperties() {
+    return PsiElement.EMPTY_ARRAY;
   }
 }

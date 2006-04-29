@@ -2,7 +2,6 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -24,21 +23,26 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final XmlAttribute attribute = getAttribute();
-    final String oldName = getCanonicalText();
-    final String value = attribute.getValue();
-    attribute.setValue(value.replace("${" + oldName + '}', "${" + newElementName + '}'));
     final AntElement element = getElement();
-    element.subtreeChanged();
+    final String oldName = getCanonicalText();
+    if (!oldName.equals(newElementName)) {
+      final XmlAttribute attribute = getAttribute();
+      final String value = attribute.getValue();
+      attribute.setValue(value.replace("${" + oldName + '}', "${" + newElementName + '}'));
+      element.subtreeChanged();
+    }
     return element;
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-    if (element instanceof AntProperty) {
+    final AntElement antElement = getElement();
+    final AntElement parent = antElement.getAntParent();
+    if( parent != null ) {
+      parent.setProperty(getCanonicalText(), element);
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       return handleElementRename(psiNamedElement.getName());
     }
-    throw new IncorrectOperationException("Can bind only to ant properties.");
+    return antElement;
   }
 
   public static ReferenceType getReferenceType() {
@@ -51,6 +55,19 @@ public class AntPropertyReference extends AntGenericReference {
 
   public ReferenceType getSoftenType() {
     return getReferenceType();
+  }
+
+  public PsiElement resolve() {
+    final String name = getCanonicalText();
+    AntElement element = getElement();
+    while (element != null) {
+      final PsiElement psiElement = element.getProperty(name);
+      if( psiElement != null ) {
+        return psiElement;
+      }
+      element = element.getAntParent();
+    }
+    return null;
   }
 
   public String getUnresolvedMessagePattern() {
