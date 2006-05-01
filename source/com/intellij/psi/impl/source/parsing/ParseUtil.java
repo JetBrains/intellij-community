@@ -27,7 +27,7 @@ public class ParseUtil implements Constants {
 
   public static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
 
-  public static boolean isStrongWhitespaceHolder(IElementType type){
+  public static boolean isStrongWhitespaceHolder(IElementType type) {
     return type == XmlElementType.XML_TEXT;
   }
 
@@ -40,16 +40,16 @@ public class ParseUtil implements Constants {
       return chameleon;
     }
     else {
-      final LeafElement leafElement = Factory.createLeafElement(tokenType, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(),
-                                                                lexer.getState(), table);
+      final LeafElement leafElement =
+        Factory.createLeafElement(tokenType, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), table);
       leafElement.setState(lexer.getState());
       return leafElement;
     }
   }
 
   public static String getTokenText(Lexer lexer) {
-    return StringFactory.createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(),
-                                                       lexer.getTokenEnd() - lexer.getTokenStart());
+    return StringFactory
+      .createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());
   }
 
   public static interface TokenProcessor {
@@ -142,8 +142,10 @@ public class ParseUtil implements Constants {
   public static void insertMissingTokens(CompositeElement root,
                                          Lexer lexer,
                                          int startOffset,
-                                         int endOffset, int state,
-                                         TokenProcessor processor, ParsingContext context) {
+                                         int endOffset,
+                                         int state,
+                                         TokenProcessor processor,
+                                         ParsingContext context) {
     if (state < 0) {
       lexer.start(lexer.getBuffer(), startOffset, endOffset);
     }
@@ -173,19 +175,19 @@ public class ParseUtil implements Constants {
     }
     // Missing in tree body
     insertMissingTokensInTreeBody(leaf, gt, lexer, processor, context, null);
-    if(lexer.getTokenType() != null){
+    if (lexer.getTokenType() != null) {
       // whitespaces at the end of the file
       final TreeElement firstMissing = processor.process(lexer, context);
-      if(firstMissing != null){
+      if (firstMissing != null) {
         ASTNode current = root;
-        while(current instanceof CompositeElement){
-          if(current.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) break;
+        while (current instanceof CompositeElement) {
+          if (current.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) break;
           current = current.getLastChildNode();
         }
-        if(current instanceof CompositeElement){
+        if (current instanceof CompositeElement) {
           TreeUtil.addChildren((CompositeElement)current, firstMissing);
         }
-        else{
+        else {
           TreeUtil.insertAfter(root.getLastChildNode(), firstMissing);
         }
       }
@@ -200,7 +202,7 @@ public class ParseUtil implements Constants {
                                                    ParsingContext context,
                                                    ASTNode endToken) {
     final CommonParentState commonParents = new CommonParentState();
-    while(leaf != null){
+    while (leaf != null) {
       commonParents.strongWhiteSpaceHolder = null;
       final IElementType tokenType = gt ? GTTokens.getTokenType(lexer) : lexer.getTokenType();
       final TreeElement next;
@@ -216,7 +218,7 @@ public class ParseUtil implements Constants {
         final TreeElement firstMissing = processor.process(lexer, context);
         final CompositeElement unclosedElement = commonParents.strongWhiteSpaceHolder;
         if (unclosedElement != null) {
-          if(commonParents.isStrongElementOnRisingSlope || unclosedElement.getFirstChildNode() == null) {
+          if (commonParents.isStrongElementOnRisingSlope || unclosedElement.getFirstChildNode() == null) {
             TreeUtil.addChildren(unclosedElement, firstMissing);
           }
           else {
@@ -273,7 +275,7 @@ public class ParseUtil implements Constants {
 
   public static TreeElement nextLeaf(TreeElement start, CommonParentState commonParent, IElementType searchedType) {
     TreeElement next = null;
-    if(commonParent != null){
+    if (commonParent != null) {
       commonParent.startLeafBranchStart = start;
       initStrongWhitespaceHolder(commonParent, start, true);
     }
@@ -284,8 +286,8 @@ public class ParseUtil implements Constants {
       }
       next = findFirstLeaf(nextTree, searchedType, commonParent);
     }
-    if(next != null){
-      if(commonParent != null) commonParent.nextLeafBranchStart = nextTree;
+    if (next != null) {
+      if (commonParent != null) commonParent.nextLeafBranchStart = nextTree;
       return next;
     }
     final CompositeElement parent = start.getTreeParent();
@@ -294,23 +296,22 @@ public class ParseUtil implements Constants {
   }
 
   private static void initStrongWhitespaceHolder(CommonParentState commonParent, ASTNode start, boolean slopeSide) {
-    if(start instanceof CompositeElement
-       && (isStrongWhitespaceHolder(start.getElementType())
-           || slopeSide && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null)){
+    if (start instanceof CompositeElement &&
+        (isStrongWhitespaceHolder(start.getElementType()) || slopeSide && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null)) {
       commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
       commonParent.isStrongElementOnRisingSlope = slopeSide;
     }
   }
 
   private static TreeElement findFirstLeaf(TreeElement element, IElementType searchedType, CommonParentState commonParent) {
-    if(commonParent != null){
+    if (commonParent != null) {
       initStrongWhitespaceHolder(commonParent, element, false);
     }
-    if (element instanceof LeafElement || element.getElementType() == searchedType){
+    if (element instanceof LeafElement || element.getElementType() == searchedType) {
       return element;
     }
-    else{
-      for(TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()){
+    else {
+      for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         TreeElement leaf = findFirstLeaf(child, searchedType, commonParent);
         if (leaf != null) return leaf;
       }
@@ -319,8 +320,9 @@ public class ParseUtil implements Constants {
   }
 
   public static LeafElement prevLeaf(TreeElement start, @Nullable CommonParentState commonParent) {
+    if (start == null) return null;
     LeafElement prev = null;
-    if(commonParent != null){
+    if (commonParent != null) {
       if (commonParent.strongWhiteSpaceHolder != null && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) {
         commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
       }
@@ -330,8 +332,8 @@ public class ParseUtil implements Constants {
     while (prev == null && (prevTree = prevTree.getTreePrev()) != null) {
       prev = TreeUtil.findLastLeaf(prevTree);
     }
-    if(prev != null){
-      if(commonParent != null) commonParent.startLeafBranchStart = (TreeElement)prevTree;
+    if (prev != null) {
+      if (commonParent != null) commonParent.startLeafBranchStart = (TreeElement)prevTree;
       return prev;
     }
     final CompositeElement parent = start.getTreeParent();
@@ -380,16 +382,13 @@ public class ParseUtil implements Constants {
     if (element == null) return false;
     TreeElement startSpaces = null;
 
-      TreeElement importList = null;
+    TreeElement importList = null;
     // Bypass meaningless tokens and hold'em in hands
-    while (element.getElementType() == WHITE_SPACE ||
-           element.getElementType() == C_STYLE_COMMENT ||
-           element.getElementType() == END_OF_LINE_COMMENT ||
-           (element.getElementType() == IMPORT_LIST && element.getTextLength() == 0)
-      ) {
+    while (element.getElementType() == WHITE_SPACE || element.getElementType() == C_STYLE_COMMENT ||
+           element.getElementType() == END_OF_LINE_COMMENT || (element.getElementType() == IMPORT_LIST && element.getTextLength() == 0)) {
       if (element.getElementType() == IMPORT_LIST) importList = element;
       if (startSpaces == null) startSpaces = element;
-        element = element.getTreeNext();
+      element = element.getTreeNext();
       if (element == null) return false;
     }
 
@@ -398,7 +397,8 @@ public class ParseUtil implements Constants {
       TreeElement first = element.getFirstChildNode();
       if (startSpaces != null) {
         TreeUtil.removeRange(docComment, element);
-      } else {
+      }
+      else {
         TreeUtil.remove(docComment);
       }
 
@@ -442,10 +442,7 @@ public class ParseUtil implements Constants {
     return false;
   }
 
-  private static final TokenSet BIND_PRECEDING_COMMENT_BIT_SET = TokenSet.create(FIELD,
-                                                                                 METHOD,
-                                                                                 CLASS,
-                                                                                 CLASS_INITIALIZER);
+  private static final TokenSet BIND_PRECEDING_COMMENT_BIT_SET = TokenSet.create(FIELD, METHOD, CLASS, CLASS_INITIALIZER);
 
   private static final TokenSet PRECEDING_COMMENT_OR_SPACE_BIT_SET = TokenSet.create(C_STYLE_COMMENT, END_OF_LINE_COMMENT, WHITE_SPACE);
 

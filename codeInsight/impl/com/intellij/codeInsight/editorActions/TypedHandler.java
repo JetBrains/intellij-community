@@ -22,13 +22,14 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.xml.XmlTokenImpl;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.jsp.el.ELTokenType;
@@ -42,7 +43,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.pom.java.LanguageLevel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -635,7 +635,7 @@ public class TypedHandler implements TypedActionHandler {
     if (element == null) return;
 
     ASTNode prevLeaf = element.getNode();
-    if (!"/".equals(prevLeaf.getText())) return;
+    if (prevLeaf != null && !"/".equals(prevLeaf.getText())) return;
     while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
     if(prevLeaf instanceof OuterLanguageElement) {
       element = file.getDocument().findElementAt(offset - 1);
