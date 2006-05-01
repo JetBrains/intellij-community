@@ -1,5 +1,7 @@
 package com.intellij.lang.ant.validation;
 
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.ant.AntBundle;
@@ -69,7 +71,8 @@ public class AntAnnotator implements Annotator {
     for (PsiReference ref : refs) {
       if (ref.resolve() == null) {
         final TextRange absoluteRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
-        holder.createErrorAnnotation(absoluteRange, ((AntGenericReference)ref).getUnresolvedMessagePattern());
+        final Annotation annotation = holder.createErrorAnnotation(absoluteRange, ((AntGenericReference)ref).getUnresolvedMessagePattern());
+        annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }
     }
   }
