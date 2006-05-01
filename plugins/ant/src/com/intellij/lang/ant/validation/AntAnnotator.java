@@ -50,7 +50,7 @@ public class AntAnnotator implements Annotator {
       final String name = attr.getName();
       final AntAttributeType type = def.getAttributeType(name);
       if (type == null) {
-        holder.createErrorAnnotation(se, AntBundle.getMessage("attribute.is.not.allowed.here", name));
+        holder.createErrorAnnotation(attr, AntBundle.getMessage("attribute.is.not.allowed.here", name));
       }
       else {
         final String value = attr.getValue();
