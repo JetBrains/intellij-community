@@ -22,7 +22,6 @@ import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.ant.impl.dom.impl.RegisterInPsi;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -253,7 +252,7 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
   }
 
   public MetaRegistry() {
-    RegisterInPsi.metaData(this);
+    // RegisterInPsi.metaData(this);
   }
 
   private final static SoftReference<CachedValue<PsiMetaData>> NULL = new SoftReference<CachedValue<PsiMetaData>>(null);

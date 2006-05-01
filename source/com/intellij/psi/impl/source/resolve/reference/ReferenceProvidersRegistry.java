@@ -1,31 +1,30 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
-import com.intellij.ant.impl.dom.impl.RegisterInPsi;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlEncodingReferenceProvider;
+import com.intellij.codeInsight.i18n.I18nUtil;
+import com.intellij.javaee.web.WebUtil;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.el.ELLiteralExpression;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.el.impl.ELLiteralManipulator;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
+import com.intellij.psi.jsp.el.ELLiteralExpression;
 import com.intellij.psi.xml.*;
+import com.intellij.util.Function;
 import com.intellij.xml.util.HtmlReferenceProvider;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlEncodingReferenceProvider;
-import com.intellij.codeInsight.i18n.I18nUtil;
-import com.intellij.util.Function;
-import com.intellij.javaee.web.WebUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +101,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ), getProviderByType(CLASS_REFERENCE_PROVIDER)
     );
 
-    RegisterInPsi.referenceProviders(this);
+    // RegisterInPsi.referenceProviders(this);
 
     registerXmlAttributeValueReferenceProvider(
       new String[]{"extends"},
