@@ -14,6 +14,8 @@ import com.intellij.psi.PsiJavaFile;
  *
  */
 public class SmartCodeCompletionAction extends BaseCodeInsightAction {
+  private static boolean ourDoingSmartCodeCompleteAction;
+
   public SmartCodeCompletionAction() {
     setEnabledInModalContext(true);
   }
@@ -29,12 +31,18 @@ public class SmartCodeCompletionAction extends BaseCodeInsightAction {
   public static CodeInsightActionHandler createHandler() {
     return new CodeInsightActionHandler() {
       public void invoke(Project project, Editor editor, PsiFile file) {
-        if (file instanceof PsiJavaFile) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.general");
-          new SmartCodeCompletionHandler().invoke(project, editor, file);
-        } else {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.basic");
-          new CodeCompletionHandler().invoke(project, editor, file);
+        try {
+          ourDoingSmartCodeCompleteAction = true;
+          if (file instanceof PsiJavaFile) {
+            FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.general");
+            new SmartCodeCompletionHandler().invoke(project, editor, file);
+          } else {
+            FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.basic");
+            new CodeCompletionHandler().invoke(project, editor, file);
+          }
+        }
+        finally {
+          ourDoingSmartCodeCompleteAction = false;
         }
       }
 
@@ -50,5 +58,9 @@ public class SmartCodeCompletionAction extends BaseCodeInsightAction {
 
   protected boolean isValidForLookup() {
     return true;
+  }
+
+  public static boolean isDoingSmartCodeCompleteAction() {
+    return ourDoingSmartCodeCompleteAction;
   }
 }
