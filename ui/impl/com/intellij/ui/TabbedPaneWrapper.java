@@ -394,7 +394,7 @@ public class TabbedPaneWrapper {
     }
 
 
-    public final void setUI(final TabbedPaneUI ui){
+    public void setUI(final TabbedPaneUI ui){
       super.setUI(ui);
       if(ui instanceof BasicTabbedPaneUI){
         myScrollableTabSupport=new ScrollableTabSupport((BasicTabbedPaneUI)ui);

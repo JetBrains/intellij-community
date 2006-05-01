@@ -2,6 +2,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
 import com.intellij.ide.actions.HideAllToolWindowsAction;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
@@ -211,6 +212,15 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
       }
     }
 
+    protected void paintComponent(Graphics g) {
+      if (LafManager.getInstance().isUnderAquaLookAndFeel()) {
+        super.paintComponent(g);
+      }
+      else {
+        super.paintComponent(new WaverGraphicsDecorator((Graphics2D)g, Color.red));
+      }
+    }
+
     public void updateUI() {
       super.updateUI();
       if (getUI() instanceof BegTabbedPaneUI) {
@@ -228,7 +238,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
       }
     }
   }
-
+  
   private final class MyTabbedPaneHolder extends TabbedPaneWrapper.TabbedPaneHolder implements DataProvider {
     @NonNls public static final String HELP_ID = "ideaInterface.editor";
 

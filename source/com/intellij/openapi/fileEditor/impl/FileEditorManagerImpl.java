@@ -151,14 +151,13 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    *         file's status
    */
   protected Color getFileColor(@NotNull final VirtualFile file) {
-    if (WolfTheProblemSolver.getInstance(getProject()).isProblemFile(file)) {
-      return WolfTheProblemSolver.PROBLEM_COLOR;
-    }
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
-    if (fileStatusManager != null) {
-      return fileStatusManager.getStatus(file).getColor();
+    Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : Color.BLACK;
+    if (statusColor == null) statusColor = Color.BLACK;
+    if (WolfTheProblemSolver.getInstance(getProject()).isProblemFile(file)) {
+      return new Color(statusColor.getRed(), statusColor.getGreen(), statusColor.getBlue(), WaverGraphicsDecorator.WAVE_ALPHA_KEY);
     }
-    return Color.BLACK;
+    return statusColor;
   }
 
 
