@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.make;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.uiDesigner.actions.PreviewFormAction;
 import org.jetbrains.annotations.NonNls;
 
@@ -75,5 +76,10 @@ public final class CopyResourcesUtil {
     copyClass(targetDir, "com/intellij/uiDesigner/core/SupportCode", deleteOnExit);
     copyClass(targetDir, "com/intellij/uiDesigner/core/Util", deleteOnExit);
     copyClass(targetDir, "com/intellij/uiDesigner/core/VerticalInfo", deleteOnExit);
+
+    @NonNls File jgoodiesFormsFile = new File(PathManager.getLibPath(), "jgoodies-forms.jar");
+    @NonNls File jgoodiesFormsTarget = new File(targetDir, "jgoodies-forms.jar");
+    FileUtil.copy(jgoodiesFormsFile, jgoodiesFormsTarget);
+    jgoodiesFormsTarget.deleteOnExit();
   }
 }

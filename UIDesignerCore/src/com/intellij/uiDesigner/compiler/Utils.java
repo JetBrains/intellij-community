@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.*;
+import com.jgoodies.forms.layout.FormLayout;
 import org.jdom.input.SAXBuilder;
 import org.jdom.Document;
 import org.xml.sax.Attributes;
@@ -280,5 +281,27 @@ public final class Utils {
       }
       return componentClass;
     }
+  }
+
+  public static String getEncodedRowSpecs(final FormLayout formLayout) {
+    StringBuffer result = new StringBuffer();
+    for(int i=1; i<=formLayout.getRowCount(); i++) {
+      if (result.length() > 0) {
+        result.append(",");
+      }
+      result.append(formLayout.getRowSpec(i).toString());
+    }
+    return result.toString();
+  }
+
+  public static String getEncodedColumnSpecs(final FormLayout formLayout) {
+    StringBuffer result = new StringBuffer();
+    for(int i=1; i<=formLayout.getColumnCount(); i++) {
+      if (result.length() > 0) {
+        result.append(",");
+      }
+      result.append(formLayout.getColumnSpec(i).toString());
+    }
+    return result.toString();
   }
 }

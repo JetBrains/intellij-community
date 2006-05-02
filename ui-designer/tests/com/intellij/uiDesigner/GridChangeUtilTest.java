@@ -20,7 +20,7 @@ public final class GridChangeUtilTest extends TestCase {
 
     {
       final LayoutManager oldLayout = grid.getLayout();
-      GridChangeUtil.insertColumnAfter(grid, 1);
+      GridChangeUtil.insertRowOrColumn(grid, 1, false, false);
       final GridLayoutManager newLayout = (GridLayoutManager)grid.getLayout();
 
       assertGridDimensions(grid, 2, 4);
@@ -168,7 +168,7 @@ public final class GridChangeUtilTest extends TestCase {
 
   public void test_insert_1() throws Exception{
     final RadContainer grid = SampleGrid.create();
-    GridChangeUtil.insertColumnAfter(grid, 1);
+    GridChangeUtil.insertRowOrColumn(grid, 1, false, false);
     assertGridDimensions(grid, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS + 1);
 
     assertComponentCellAndSpan(grid, 0, 0, 4);
@@ -182,7 +182,7 @@ public final class GridChangeUtilTest extends TestCase {
   @SuppressWarnings({"PointlessArithmeticExpression"})
   public void test_insert_first() throws Exception{
     final RadContainer grid = SampleGrid.create();
-    GridChangeUtil.insertColumnBefore(grid, 0);
+    GridChangeUtil.insertRowOrColumn(grid, 0, false, true);
     assertGridDimensions(grid, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS + 1);
 
     // all must be shifted one cell right
@@ -196,7 +196,7 @@ public final class GridChangeUtilTest extends TestCase {
 
   public void test_insert_last() throws Exception{
     final RadContainer grid = SampleGrid.create();
-    GridChangeUtil.insertColumnAfter(grid, SampleGrid.ORIGINAL_COLUMNS-1);
+    GridChangeUtil.insertRowOrColumn(grid, SampleGrid.ORIGINAL_COLUMNS-1, false, false);
     assertGridDimensions(grid, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS + 1);
 
     // no component should change its cell or span
@@ -211,11 +211,11 @@ public final class GridChangeUtilTest extends TestCase {
   public void test_insert_after_and_before() throws Exception{
     for (int i=0; i < SampleGrid.ORIGINAL_COLUMNS-1; i++){
       final RadContainer afterCurrent = SampleGrid.create();
-      GridChangeUtil.insertColumnAfter(afterCurrent, i);
+      GridChangeUtil.insertRowOrColumn(afterCurrent, i, false, false);
       assertGridDimensions(afterCurrent, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS + 1);
 
       final RadContainer beforeNext = SampleGrid.create();
-      GridChangeUtil.insertColumnBefore(beforeNext, i+1);
+      GridChangeUtil.insertRowOrColumn(beforeNext, i+1, false, true);
       assertGridDimensions(beforeNext, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS + 1);
 
       // afterCurrent and beforeNext grids should be same 
@@ -238,13 +238,13 @@ public final class GridChangeUtilTest extends TestCase {
       final RadContainer grid = SampleGrid.create();
 
       if (GridChangeUtil.canDeleteColumn(grid, i)) {
-        GridChangeUtil.deleteColumn(grid, i);
+        GridChangeUtil.deleteCell(grid, i, false);
         assertGridDimensions(grid, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS - 1);
       }
       else {
         // exception should be thrown
         try {
-          GridChangeUtil.deleteColumn(grid, i);
+          GridChangeUtil.deleteCell(grid, i, false);
           assertTrue(false);
         }
         catch (IllegalArgumentException ok) {
@@ -263,7 +263,7 @@ public final class GridChangeUtilTest extends TestCase {
 
   public void test_delete_2() throws Exception{
     final RadContainer grid = SampleGrid.create();
-    GridChangeUtil.deleteColumn(grid, 2);
+    GridChangeUtil.deleteCell(grid, 2, false);
     assertGridDimensions(grid, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS - 1);
 
     assertComponentCellAndSpan(grid, 0, 0, 2);

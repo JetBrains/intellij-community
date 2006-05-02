@@ -119,7 +119,7 @@ public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.endMethod();
   }
 
-  private void setIntField(final FormSourceCodeGenerator generator, @NonNls final String fieldName, final int value) {
+  private static void setIntField(final FormSourceCodeGenerator generator, @NonNls final String fieldName, final int value) {
     generator.append("gbc.");
     generator.append(fieldName);
     generator.append("=");
@@ -127,8 +127,8 @@ public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.append(";\n");
   }
 
-  private void setIntField(final FormSourceCodeGenerator generator, @NonNls final String fieldName, final int value,
-                           final TIntObjectHashMap<String> map) {
+  private static void setIntField(final FormSourceCodeGenerator generator, @NonNls final String fieldName, final int value,
+                                  final TIntObjectHashMap<String> map) {
     generator.append("gbc.");
     generator.append(fieldName);
     generator.append("=");
@@ -141,7 +141,7 @@ public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.append(";\n");
   }
 
-  private void setDoubleField(final FormSourceCodeGenerator generator, @NonNls final String fieldName, final double value) {
+  private static void setDoubleField(final FormSourceCodeGenerator generator, @NonNls final String fieldName, final double value) {
     generator.append("gbc.");
     generator.append(fieldName);
     generator.append("=");
@@ -149,10 +149,10 @@ public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.append(";\n");
   }
 
-  private void checkSetSize(final FormSourceCodeGenerator generator,
-                            final String variable,
-                            @NonNls final String methodName,
-                            final Dimension dimension) {
+  private static void checkSetSize(final FormSourceCodeGenerator generator,
+                                   final String variable,
+                                   @NonNls final String methodName,
+                                   final Dimension dimension) {
     if (dimension != null) {
       generator.startMethodCall(variable, methodName);
       generator.newDimension(dimension);

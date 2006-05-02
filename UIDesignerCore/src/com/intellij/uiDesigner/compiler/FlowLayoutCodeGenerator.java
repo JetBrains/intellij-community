@@ -31,22 +31,18 @@ public class FlowLayoutCodeGenerator extends LayoutCodeGenerator {
   private static Type ourFlowLayoutType = Type.getType(FlowLayout.class);
   private static Method ourConstructor = Method.getMethod("void <init>(int,int,int)");
 
-  public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
-    if (lwComponent instanceof LwContainer) {
-      LwContainer container = (LwContainer) lwComponent;
+  public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
+    generator.loadLocal(componentLocal);
 
-      generator.loadLocal(componentLocal);
+    FlowLayout flowLayout = (FlowLayout) lwContainer.getLayout();
+    generator.newInstance(ourFlowLayoutType);
+    generator.dup();
+    generator.push(flowLayout.getAlignment());
+    generator.push(flowLayout.getHgap());
+    generator.push(flowLayout.getVgap());
+    generator.invokeConstructor(ourFlowLayoutType, ourConstructor);
 
-      FlowLayout flowLayout = (FlowLayout) container.getLayout();
-      generator.newInstance(ourFlowLayoutType);
-      generator.dup();
-      generator.push(flowLayout.getAlignment());
-      generator.push(flowLayout.getHgap());
-      generator.push(flowLayout.getVgap());
-      generator.invokeConstructor(ourFlowLayoutType, ourConstructor);
-
-      generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
-    }
+    generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
   }
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,

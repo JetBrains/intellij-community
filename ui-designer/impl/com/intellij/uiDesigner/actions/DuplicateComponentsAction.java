@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.CutCopyPasteSupport;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
@@ -45,7 +44,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
         if (!insertedRows.contains(row) && !isSpaceBelowEmpty(c)) {
           insertedRows.add(row);
           for (int i = 0; i < rowSpan; i++) {
-            GridChangeUtil.insertRowAfter(parent, row + rowSpan - 1);
+            parent.getLayoutManager().insertGridCells(parent, row + rowSpan - 1, true, false);
           }
         }
       }

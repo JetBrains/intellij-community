@@ -27,14 +27,14 @@ import java.awt.*;
  * @author yole
  */
 public class GridLayoutSerializer extends LayoutSerializer {
-  private GridLayoutSerializer() {
+  protected GridLayoutSerializer() {
   }
 
   public static GridLayoutSerializer INSTANCE = new GridLayoutSerializer();
 
   void readLayout(Element element, LwContainer container) {
-    final int rowCount = LwXmlReader.getRequiredInt(element, "row-count");
-    final int columnCount = LwXmlReader.getRequiredInt(element, "column-count");
+    final int rowCount = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_ROW_COUNT);
+    final int columnCount = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_COLUMN_COUNT);
 
     final int hGap = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_HGAP);
     final int vGap = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_VGAP);

@@ -323,6 +323,9 @@ public class LwContainer extends LwComponent implements IContainer{
     else if (UIFormXmlConstants.LAYOUT_XY.equals(myLayoutManager)) {
       myLayoutSerializer = XYLayoutSerializer.INSTANCE;
     }
+    else if (UIFormXmlConstants.LAYOUT_FORM.equals(myLayoutManager)) {
+      myLayoutSerializer = FormLayoutSerializer.INSTANCE;
+    }
     else {
       myLayoutSerializer = GridLayoutSerializer.INSTANCE;
     }

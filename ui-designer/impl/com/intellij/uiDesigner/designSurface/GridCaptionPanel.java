@@ -98,8 +98,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     RadLayoutManager layout = container.getLayoutManager();
     int[] coords = layout.getGridCellCoords(container, myIsRow);
     int[] sizes = layout.getGridCellSizes(container, myIsRow);
+    int count = myIsRow ? layout.getGridRowCount(container) : layout.getGridColumnCount(container);
 
-    for(int i=0; i<coords.length; i++) {
+    for(int i=0; i<count; i++) {
       int x = myIsRow ? 0 : coords [i];
       int y = myIsRow ? coords [i] : 0;
       Point pnt = SwingUtilities.convertPoint(container.getDelegee(), x, y, this);

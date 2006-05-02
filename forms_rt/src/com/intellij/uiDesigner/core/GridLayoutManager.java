@@ -978,14 +978,6 @@ public final class GridLayoutManager extends AbstractLayout {
     return -1;
   }
 
-  public Rectangle getCellRangeRect(final int startRow, final int startCol, final int endRow, final int endCol) {
-    return new Rectangle(myXs[startCol],
-                         myYs[startRow],
-                         myXs[endCol] + myWidths[endCol] - myXs[startCol],
-                         myYs[endRow] + myHeights[endRow] - myYs[startRow]);
-
-  }
-
   public Rectangle getCellRangeGridlineRect(final int startRow, final int startCol, final int endRow, final int endCol) {
     int[] horzGridLines = getHorizontalGridLines();
     int[] vertGridLines = getVerticalGridLines();

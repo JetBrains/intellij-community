@@ -45,20 +45,17 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     return super.mapComponentClass(componentClassName);
   }
 
-  public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
-    if (lwComponent instanceof LwContainer) {
-      LwContainer container = (LwContainer) lwComponent;
-      if (container.isGrid()) {
-        generator.loadLocal(componentLocal);
+  public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
+    if (lwContainer.isGrid()) {
+      generator.loadLocal(componentLocal);
 
-        generator.newInstance(ourGridBagLayoutType);
-        generator.dup();
-        generator.invokeConstructor(ourGridBagLayoutType, ourDefaultConstructor);
+      generator.newInstance(ourGridBagLayoutType);
+      generator.dup();
+      generator.invokeConstructor(ourGridBagLayoutType, ourDefaultConstructor);
 
-        generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
+      generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
 
-        GridBagConverter.prepareConstraints(container, myIdToConstraintsMap);
-      }
+      GridBagConverter.prepareConstraints(lwContainer, myIdToConstraintsMap);
     }
   }
 
@@ -84,8 +81,8 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     }
   }
 
-  private void generateConversionResult(final GeneratorAdapter generator, final GridBagConverter.Result result, final int componentLocal,
-                                        final int parentLocal) {
+  private static void generateConversionResult(final GeneratorAdapter generator, final GridBagConverter.Result result,
+                                               final int componentLocal, final int parentLocal) {
     checkSetSize(generator, componentLocal, "setMinimumSize", result.minimumSize);
     checkSetSize(generator, componentLocal, "setPreferredSize", result.preferredSize);
     checkSetSize(generator, componentLocal, "setMaximumSize", result.maximumSize);
@@ -131,7 +128,7 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     }
     if (!defaults.insets.equals(constraints.insets)) {
       generator.loadLocal(gbcLocal);
-      AsmCodeGenerator.pushPropValue(generator, "java.awt.Insets", constraints.insets);
+      AsmCodeGenerator.pushPropValue(generator, Insets.class.getName(), constraints.insets);
       generator.putField(ourGridBagConstraintsType, "insets", Type.getType(Insets.class));
     }
 
@@ -142,7 +139,7 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     generator.invokeVirtual(ourContainerType, ourAddMethod);
   }
 
-  private void checkSetSize(final GeneratorAdapter generator, final int componentLocal, final String methodName, final Dimension dimension) {
+  private static void checkSetSize(final GeneratorAdapter generator, final int componentLocal, final String methodName, final Dimension dimension) {
     if (dimension != null) {
       generator.loadLocal(componentLocal);
       AsmCodeGenerator.pushPropValue(generator, "java.awt.Dimension", dimension);
@@ -151,13 +148,13 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     }
   }
 
-  private void setIntField(final GeneratorAdapter generator, final int local, final String fieldName, final int value) {
+  private static void setIntField(final GeneratorAdapter generator, final int local, final String fieldName, final int value) {
     generator.loadLocal(local);
     generator.push(value);
     generator.putField(ourGridBagConstraintsType, fieldName, Type.INT_TYPE);
   }
 
-  private void setDoubleField(final GeneratorAdapter generator, final int local, final String fieldName, final double value) {
+  private static void setDoubleField(final GeneratorAdapter generator, final int local, final String fieldName, final double value) {
     generator.loadLocal(local);
     generator.push(value);
     generator.putField(ourGridBagConstraintsType, fieldName, Type.DOUBLE_TYPE);

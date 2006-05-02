@@ -24,11 +24,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class PathsList  {
   private final List<String>  myPath = new ArrayList<String>();
@@ -61,7 +60,7 @@ public class PathsList  {
       }
     };
 
-  public void add(String path) {
+  public void add(@NonNls String path) {
     addAllLast(chooseFirstTimeItems(path), myPath);
   }
 

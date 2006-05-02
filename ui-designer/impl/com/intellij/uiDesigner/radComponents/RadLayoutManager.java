@@ -163,4 +163,12 @@ public abstract class RadLayoutManager {
   public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g2d,
                                      final Rectangle rc) {
   }
+
+  public void insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
+  }
+
+  public void deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow) {
+    throw new UnsupportedOperationException("Not a grid layout manager");
+  }
 }

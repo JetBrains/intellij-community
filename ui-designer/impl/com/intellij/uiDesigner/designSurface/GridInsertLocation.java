@@ -211,23 +211,23 @@ public class GridInsertLocation extends GridDropLocation {
     //noinspection EnumSwitchStatementWhichMissesCases
     switch(myMode) {
       case RowBefore:
-        GridChangeUtil.insertRowBefore(container, row);
+        container.getLayoutManager().insertGridCells(container, row, true, true);
         checkAdjustConstraints(constraintsToAdjust, true, row);
         break;
 
       case RowAfter:
-        GridChangeUtil.insertRowAfter(container, row);
+        container.getLayoutManager().insertGridCells(container, row, true, false);
         row++;
         checkAdjustConstraints(constraintsToAdjust, true, row);
         break;
 
       case ColumnBefore:
-        GridChangeUtil.insertColumnBefore(container, col);
+        container.getLayoutManager().insertGridCells(container, col, false, true);
         checkAdjustConstraints(constraintsToAdjust, false, col);
         break;
 
       case ColumnAfter:
-        GridChangeUtil.insertColumnAfter(container, col);
+        container.getLayoutManager().insertGridCells(container, col, false, false);
         col++;
         checkAdjustConstraints(constraintsToAdjust, false, col);
         break;

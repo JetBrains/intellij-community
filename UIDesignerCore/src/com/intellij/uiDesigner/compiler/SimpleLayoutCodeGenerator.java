@@ -35,21 +35,17 @@ public class SimpleLayoutCodeGenerator extends LayoutCodeGenerator {
     myLayoutType = layoutType;
   }
 
-  public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
-    if (lwComponent instanceof LwContainer) {
-      LwContainer container = (LwContainer) lwComponent;
+  public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
+    generator.loadLocal(componentLocal);
 
-      generator.loadLocal(componentLocal);
+    generator.newInstance(myLayoutType);
+    generator.dup();
+    generator.push(Utils.getHGap(lwContainer.getLayout()));
+    generator.push(Utils.getVGap(lwContainer.getLayout()));
 
-      generator.newInstance(myLayoutType);
-      generator.dup();
-      generator.push(Utils.getHGap(container.getLayout()));
-      generator.push(Utils.getVGap(container.getLayout()));
+    generator.invokeConstructor(myLayoutType, ourConstructor);
 
-      generator.invokeConstructor(myLayoutType, ourConstructor);
-
-      generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
-    }
+    generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
   }
 
   public void generateComponentLayout(final LwComponent lwComponent,

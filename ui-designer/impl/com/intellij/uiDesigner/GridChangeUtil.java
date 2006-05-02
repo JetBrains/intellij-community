@@ -14,22 +14,6 @@ public final class GridChangeUtil {
   private GridChangeUtil() {
   }
 
-  public static void insertRowBefore(final RadContainer grid, final int rowIndex) {
-    insertRowOrColumn(grid, rowIndex, true, true);
-  }
-
-  public static void insertRowAfter(final RadContainer grid, final int rowIndex) {
-    insertRowOrColumn(grid, rowIndex, true, false);
-  }
-
-  public static void insertColumnBefore(final RadContainer grid, final int columnIndex) {
-    insertRowOrColumn(grid, columnIndex, false, true);
-  }
-
-  public static void insertColumnAfter(final RadContainer grid, final int columnIndex) {
-    insertRowOrColumn(grid, columnIndex, false, false);
-  }
-
   public static void splitColumn(final RadContainer grid, final int columnIndex) {
     splitCell(grid, columnIndex, false);
   }
@@ -46,10 +30,6 @@ public final class GridChangeUtil {
     return canDeleteCell(grid, columnIndex, false, true);
   }
 
-  public static void deleteColumn(final RadContainer grid, final int columnIndex) {
-    deleteCell(grid, columnIndex, false);
-  }
-
   public static boolean canDeleteRow(final RadContainer grid, final int rowIndex) {
     return canDeleteCell(grid, rowIndex, true, false);
   }
@@ -58,16 +38,12 @@ public final class GridChangeUtil {
     return canDeleteCell(grid, rowIndex, true, true);
   }
 
-  public static void deleteRow(final RadContainer grid, final int rowIndex) {
-    deleteCell(grid, rowIndex, true);
-  }
-
   /**
    * @param cellIndex column or row index, depending on isRow parameter; must be in the range 0..grid.get{Row|Column}Count()-1
-   * @param isRow if true, row inserted, otherwise column  
-   * @param isBefore if true, row/column will be inserted before row/column with given index, otherwise after   
+   * @param isRow if true, row inserted, otherwise column
+   * @param isBefore if true, row/column will be inserted before row/column with given index, otherwise after
    */
-  private static void insertRowOrColumn(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
+  public static void insertRowOrColumn(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
     check(grid, isRow, cellIndex);
 
     final GridLayoutManager oldLayout = (GridLayoutManager)grid.getLayout();
@@ -167,7 +143,7 @@ public final class GridChangeUtil {
    * @param cellIndex column or row index, depending on isRow parameter; must be in the range 0..grid.get{Row|Column}Count()-1
    * @param isRow if true, row is deleted, otherwise column
    */
-  private static void deleteCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
+  public static void deleteCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
     check(grid, isRow, cellIndex);
     if (!canDeleteCell(grid, cellIndex, isRow, false)) {
       throw new IllegalArgumentException("cell cannot be deleted");

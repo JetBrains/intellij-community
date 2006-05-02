@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.jgoodies.forms.layout.FormLayout;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -30,6 +31,7 @@ public class LayoutManagerRegistry {
     ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_FLOW, RadFlowLayoutManager.class);
     ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_XY, RadXYLayoutManager.class);
     ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_CARD, RadCardLayoutManager.class);
+    ourLayoutManagerRegistry.put(UIFormXmlConstants.LAYOUT_FORM, RadFormLayoutManager.class);
 
     ourLayoutManagerClassRegistry.put(BorderLayout.class, RadBorderLayoutManager.class);
     ourLayoutManagerClassRegistry.put(GridBagLayout.class, RadGridBagLayoutManager.class);
@@ -37,6 +39,7 @@ public class LayoutManagerRegistry {
     ourLayoutManagerClassRegistry.put(GridLayout.class, RadSwingGridLayoutManager.class);
     ourLayoutManagerClassRegistry.put(BoxLayout.class, RadBoxLayoutManager.class);
     ourLayoutManagerClassRegistry.put(CardLayout.class, RadCardLayoutManager.class);
+    ourLayoutManagerClassRegistry.put(FormLayout.class, RadFormLayoutManager.class);
   }
 
   public static String[] getLayoutManagerNames() {

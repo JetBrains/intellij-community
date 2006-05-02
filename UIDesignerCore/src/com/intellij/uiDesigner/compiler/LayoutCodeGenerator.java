@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
+import com.intellij.uiDesigner.lw.LwContainer;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.Opcodes;
@@ -33,13 +34,13 @@ public abstract class LayoutCodeGenerator {
   protected static final Method ourAddMethod = Method.getMethod("void add(java.awt.Component,java.lang.Object)");
   protected static final Method ourAddNoConstraintMethod = Method.getMethod("java.awt.Component add(java.awt.Component)");
 
-  public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
+  public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
   }
 
   public abstract void generateComponentLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal,
                                                final int parentLocal);
 
-  protected void newDimensionOrNull(final GeneratorAdapter generator, final Dimension dimension) {
+  protected static void newDimensionOrNull(final GeneratorAdapter generator, final Dimension dimension) {
     if (dimension.width == -1 && dimension.height == -1) {
       generator.visitInsn(Opcodes.ACONST_NULL);
     }

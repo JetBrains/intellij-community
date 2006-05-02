@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.*;
@@ -126,11 +127,9 @@ public class RadGridLayoutManager extends RadLayoutManager {
 
   @NotNull @Override
   public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
-    final GridLayoutManager grid = (GridLayoutManager) container.getLayout();
-
-    if (grid.getRowCount() == 1 && grid.getColumnCount() == 1 &&
+    if (container.getGridRowCount() == 1 && container.getGridColumnCount() == 1 &&
         getComponentAtGrid(container, 0, 0) == null) {
-      final Rectangle rc = grid.getCellRangeRect(0, 0, 0, 0);
+      final Rectangle rc = getGridCellRangeRect(container, 0, 0, 0, 0);
       if (location == null) {
         return new FirstComponentInsertLocation(container, 0, 0, rc, 0, 0);
       }
@@ -144,13 +143,13 @@ public class RadGridLayoutManager extends RadLayoutManager {
       return new GridInsertLocation(container, getLastNonSpacerRow(container), 0, GridInsertMode.RowAfter);
     }
 
-    int[] xs = grid.getXs();
-    int[] ys = grid.getYs();
-    int[] widths = grid.getWidths();
-    int[] heights = grid.getHeights();
+    int[] xs = getGridCellCoords(container, false);
+    int[] ys = getGridCellCoords(container, true);
+    int[] widths = getGridCellSizes(container, false);
+    int[] heights = getGridCellSizes(container, true);
 
-    int[] horzGridLines = grid.getHorizontalGridLines();
-    int[] vertGridLines = grid.getVerticalGridLines();
+    int[] horzGridLines = getHorizontalGridLines(container);
+    int[] vertGridLines = getVerticalGridLines(container);
 
     int row=ys.length-1;
     int col=xs.length-1;
@@ -273,8 +272,14 @@ public class RadGridLayoutManager extends RadLayoutManager {
   }
 
   @Override public Rectangle getGridCellRangeRect(RadContainer container, int startRow, int startCol, int endRow, int endCol) {
-    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
-    return grid.getCellRangeRect(startRow, startCol, endRow, endCol);
+    int[] xs = getGridCellCoords(container, false);
+    int[] ys = getGridCellCoords(container, true);
+    int[] widths = getGridCellSizes(container, false);
+    int[] heights = getGridCellSizes(container, true);
+    return new Rectangle(xs[startCol],
+                         ys[startRow],
+                         xs[endCol] + widths[endCol] - xs[startCol],
+                         ys[endRow] + heights[endRow] - ys[startRow]);
   }
 
   @Override public int[] getHorizontalGridLines(RadContainer container) {
@@ -324,5 +329,15 @@ public class RadGridLayoutManager extends RadLayoutManager {
       }
       g.setStroke(oldStroke);
     }
+  }
+
+  @Override
+  public void insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
+    GridChangeUtil.insertRowOrColumn(grid, cellIndex, isRow, isBefore);
+  }
+
+  @Override
+  public void deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow) {
+    GridChangeUtil.deleteCell(grid, cellIndex, isRow);
   }
 }

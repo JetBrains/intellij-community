@@ -155,12 +155,12 @@ public final class FormEditingUtil {
   public static void deleteEmptyGridCells(final RadContainer parent, final GridConstraints delConstraints) {
     for(int row=delConstraints.getRow() + delConstraints.getRowSpan()-1; row >= delConstraints.getRow(); row--) {
       if (row < parent.getGridRowCount() && GridChangeUtil.isRowEmpty(parent, row)) {
-        GridChangeUtil.deleteRow(parent, row);
+        parent.getLayoutManager().deleteGridCells(parent, row, true);
       }
     }
     for(int col=delConstraints.getColumn() + delConstraints.getColSpan()-1; col >= delConstraints.getColumn(); col--) {
       if (col < parent.getGridColumnCount() && GridChangeUtil.isColumnEmpty(parent, col)) {
-        GridChangeUtil.deleteColumn(parent, col);
+        parent.getLayoutManager().deleteGridCells(parent, col, false);
       }
     }
   }
@@ -488,10 +488,10 @@ public final class FormEditingUtil {
     }
 
     if(SwingConstants.HORIZONTAL == orientation){
-      GridChangeUtil.deleteColumn(container, cell);
+      GridChangeUtil.deleteCell(container, cell, false);
     }
     else{
-      GridChangeUtil.deleteRow(container, cell);
+      GridChangeUtil.deleteCell(container, cell, true);
     }
     editor.refreshAndSave(true);
   }

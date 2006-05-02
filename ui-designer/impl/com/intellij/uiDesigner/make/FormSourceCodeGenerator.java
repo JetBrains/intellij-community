@@ -84,6 +84,7 @@ public final class FormSourceCodeGenerator {
     ourContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_BORDER, new BorderLayoutSourceGenerator());
     ourContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_FLOW, new FlowLayoutSourceGenerator());
     ourContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_CARD, new CardLayoutSourceGenerator());
+    ourContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_FORM, new FormLayoutSourceGenerator());
 
     final PsiPropertiesProvider propertiesProvider = new PsiPropertiesProvider(module);
 

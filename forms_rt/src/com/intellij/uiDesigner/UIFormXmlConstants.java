@@ -55,6 +55,8 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_ICON = "icon";
   public static final String ATTRIBUTE_DISABLED_ICON = "disabled-icon";
   public static final String ATTRIBUTE_ENABLED = "enabled";
+  public static final String ATTRIBUTE_ROW_COUNT = "row-count";
+  public static final String ATTRIBUTE_COLUMN_COUNT = "column-count";
 
   public static final String ELEMENT_BUTTON_GROUPS = "buttonGroups";
   public static final String ELEMENT_GROUP = "group";
@@ -70,6 +72,8 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_CONSTRAINTS = "constraints";
   public static final String ELEMENT_TABBEDPANE = "tabbedpane";
   public static final String ELEMENT_TOOLTIP = "tooltip";
+  public static final String ELEMENT_ROWSPEC = "rowspec";
+  public static final String ELEMENT_COLSPEC = "colspec";
 
   public static final String LAYOUT_INTELLIJ = "GridLayoutManager";
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";
@@ -77,6 +81,7 @@ public class UIFormXmlConstants {
   public static final String LAYOUT_FLOW = "FlowLayout";
   public static final String LAYOUT_XY = "XYLayout";
   public static final String LAYOUT_CARD = "CardLayout";
+  public static final String LAYOUT_FORM = "FormLayout";
 
   private UIFormXmlConstants() {
   }
