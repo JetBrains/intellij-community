@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface RangeMarker extends UserDataHolder{
   /**
-   * Returns the doñument to which the marker belongs.
+   * Returns the document to which the marker belongs.
    *
    * @return the document instance.
    */
