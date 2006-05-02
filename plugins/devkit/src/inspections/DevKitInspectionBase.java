@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
@@ -47,13 +48,15 @@ public abstract class DevKitInspectionBase extends LocalInspectionTool {
   }
 
   @Nullable
-  protected Set<PsiClass> getRegistrationTypes(PsiClass psiClass, boolean includeActions) {
+  protected static Set<PsiClass> getRegistrationTypes(PsiClass psiClass, boolean includeActions) {
     final Project project = psiClass.getProject();
     final PsiFile psiFile = psiClass.getContainingFile();
 
     assert psiFile != null;
 
-    final Module module = VfsUtil.getModuleForFile(project, psiFile.getVirtualFile());
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return null;
+    final Module module = VfsUtil.getModuleForFile(project, virtualFile);
 
     if (module == null) return null;
 
@@ -69,12 +72,15 @@ public abstract class DevKitInspectionBase extends LocalInspectionTool {
     }
   }
 
-  private Set<PsiClass> checkModule(Module module, PsiClass psiClass, Set<PsiClass> types, boolean includeActions) {
+  private static Set<PsiClass> checkModule(Module module, PsiClass psiClass, Set<PsiClass> types, boolean includeActions) {
     final XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (!isPluginXml(pluginXml)) return types;
     assert pluginXml != null;
 
-    final XmlTag rootTag = pluginXml.getDocument().getRootTag();
+    final XmlDocument document = pluginXml.getDocument();
+    assert document != null;
+
+    final XmlTag rootTag = document.getRootTag();
     assert rootTag != null;
 
     final String qualifiedName = psiClass.getQualifiedName();
@@ -93,14 +99,15 @@ public abstract class DevKitInspectionBase extends LocalInspectionTool {
     return types;
   }
 
-  protected boolean isPluginXml(PsiFile file) {
+  protected static boolean isPluginXml(PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
     final XmlFile pluginXml = (XmlFile)file;
 
-    final XmlTag rootTag = pluginXml.getDocument().getRootTag();
-    if (rootTag == null) return false;
+    final XmlDocument document = pluginXml.getDocument();
+    if (document == null) return false;
+    final XmlTag rootTag = document.getRootTag();
+    return rootTag != null && "idea-plugin".equals(rootTag.getLocalName());
 
-    return "idea-plugin".equals(rootTag.getLocalName());
   }
 
   @Nullable
@@ -123,7 +130,7 @@ public abstract class DevKitInspectionBase extends LocalInspectionTool {
     return checkedClass.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
-  protected boolean isActionRegistered(PsiClass psiClass) {
+  protected static boolean isActionRegistered(PsiClass psiClass) {
     final Set<PsiClass> registrationTypes = getRegistrationTypes(psiClass, true);
     if (registrationTypes != null) {
       for (PsiClass type : registrationTypes) {
