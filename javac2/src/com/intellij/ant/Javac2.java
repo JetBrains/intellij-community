@@ -45,25 +45,6 @@ public final class Javac2 extends Javac{
     // compile java
     super.compile();
 
-    try {
-      patchForms();
-    }
-    catch (Exception e) {
-      log(buildException(e), Project.MSG_ERR); // TODO: Remove, just to test in faulty team server.
-    }
-  }
-
-  private String buildException(Exception e) {
-    StringBuffer buf = new StringBuffer();
-    final StackTraceElement[] trace = e.getStackTrace();
-    for (int i = 0; i < trace.length; i++) {
-      StackTraceElement element = trace[i];
-      buf.append(element.toString());
-    }
-    return buf.toString();
-  }
-
-  private void patchForms() {
     // we instrument every file, because we cannot find which files should not be instrumented without dependency storage
     final ArrayList formsToInstrument = myFormFiles;
 
