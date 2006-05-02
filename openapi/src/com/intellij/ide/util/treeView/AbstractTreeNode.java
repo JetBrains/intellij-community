@@ -18,6 +18,7 @@ package com.intellij.ide.util.treeView;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -66,16 +67,24 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     myColor = color;
     myAttributesKey = attributesKey;
 
+    if (hashProblemFileBeneath() ) {
+      updated |= myAttributesKey != CodeInsightColors.ERRORS_ATTRIBUTES;
+      myAttributesKey = CodeInsightColors.ERRORS_ATTRIBUTES;
+    }
     return updated;
   }
 
-  protected Color computeColor() {
+  private Color computeColor() {
     Color color = getFileStatus().getColor();
 
     if (valueIsCut()) {
       color = CopyPasteManager.CUT_COLOR;
     }
     return color;
+  }
+
+  protected boolean hashProblemFileBeneath() {
+    return false;
   }
 
   protected boolean valueIsCut() {

@@ -133,34 +133,27 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   private class MyProblemListener implements WolfTheProblemSolver.ProblemListener {
-    Alarm myUpdateProblemAlarm = new Alarm();
-    Collection<VirtualFile> myFilesToRefresh = new THashSet<VirtualFile>();
+    private final Alarm myUpdateProblemAlarm = new Alarm();
+    private final Collection<VirtualFile> myFilesToRefresh = Collections.synchronizedSet(new THashSet<VirtualFile>());
 
     public void problemsChanged(Collection<VirtualFile> added, Collection<VirtualFile> removed) {
-      Set<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(added);
+      Collection<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(added);
       filesToRefresh.addAll(removed);
 
-      synchronized (myFilesToRefresh) {
-        if (myFilesToRefresh.addAll(filesToRefresh)) {
+      if (myFilesToRefresh.addAll(filesToRefresh)) {
         myUpdateProblemAlarm.cancelAllRequests();
         myUpdateProblemAlarm.addRequest(new Runnable() {
           public void run() {
-            Set<VirtualFile> filesToRefresh;
-            synchronized (myFilesToRefresh) {
-              filesToRefresh = new THashSet<VirtualFile>(myFilesToRefresh);
-            }
+            Set<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(myFilesToRefresh);
             updateNodesContaining(filesToRefresh, myRootNode);
-            synchronized (myFilesToRefresh) {
-              myFilesToRefresh.removeAll(filesToRefresh);
-            }
+            myFilesToRefresh.removeAll(filesToRefresh);
           }
         }, 200, ModalityState.NON_MMODAL);
-        }
       }
     }
   }
 
-  private void updateNodesContaining(final Set<VirtualFile> filesToRefresh, final DefaultMutableTreeNode rootNode) {
+  private void updateNodesContaining(final Collection<VirtualFile> filesToRefresh, final DefaultMutableTreeNode rootNode) {
     if (!(rootNode.getUserObject() instanceof ProjectViewNode)) return;
     ProjectViewNode node = (ProjectViewNode)rootNode.getUserObject();
     Set<VirtualFile> containingFiles = null;

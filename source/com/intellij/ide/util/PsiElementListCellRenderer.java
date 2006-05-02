@@ -4,7 +4,7 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFile;import com.intellij.openapi.editor.markup.TextAttributes;import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -41,19 +41,26 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         String name = getElementText((T)element);
         Color color = list.getForeground();
         PsiFile psiFile = element.getContainingFile();
+        boolean isProblemFile = false;
         if (psiFile != null) {
           VirtualFile vFile = psiFile.getVirtualFile();
           if (vFile != null) {
             if (WolfTheProblemSolver.getInstance(psiFile.getProject()).isProblemFile(vFile)) {
-              color = WolfTheProblemSolver.PROBLEM_COLOR;
+              isProblemFile = true;
             }
-            else {
-              FileStatus status = FileStatusManager.getInstance(psiFile.getProject()).getStatus(vFile);
-              color = status.getColor();
-            }
+            FileStatus status = FileStatusManager.getInstance(psiFile.getProject()).getStatus(vFile);
+            color = status.getColor();
           }
         }
-        append(name, new SimpleTextAttributes(Font.PLAIN, color));
+        SimpleTextAttributes nameAttributes;
+        if (isProblemFile) {
+          TextAttributes attributes = new TextAttributes(color, null, Color.red, EffectType.WAVE_UNDERSCORE, Font.PLAIN);
+          nameAttributes = SimpleTextAttributes.fromTextAttributes(attributes);
+        }
+        else {
+          nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
+        }
+        append(name, nameAttributes);
         setIcon(element.getIcon(getIconFlags()));
 
         String containerText = getContainerText(element, name + (myModuleName != null ? myModuleName + "        " : ""));

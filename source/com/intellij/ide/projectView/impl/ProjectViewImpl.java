@@ -854,6 +854,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   }
 
+  @NotNull
   public String getComponentName() {
     return "ProjectView";
   }
@@ -1022,7 +1023,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private final class MyIdeView implements IdeView {
     public void selectElement(PsiElement element) {
-      ProjectViewImpl.this.selectPsiElement(element, true);
+      selectPsiElement(element, true);
       if (element != null) {
         final boolean isDirectory = element instanceof PsiDirectory;
         if (!isDirectory) {
@@ -1490,8 +1491,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
-      final AbstractProjectViewPane pane = projectView.getCurrentProjectViewPane();
+      final AbstractProjectViewPane pane = getCurrentProjectViewPane();
       presentation.setVisible(pane != null && (PackageViewPane.ID.equals(pane.getId()) || ProjectViewPane.ID.equals(pane.getId())));
     }
   }

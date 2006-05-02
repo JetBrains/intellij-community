@@ -23,7 +23,6 @@ import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -122,11 +121,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
     return false;
   }
 
-  protected Color computeColor() {
-    boolean hasProblem = WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesUnder(this);
-    if (hasProblem) {
-      return WolfTheProblemSolver.PROBLEM_COLOR;
-    }
-    return super.computeColor();
+  protected boolean hashProblemFileBeneath() {
+    return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(this);
   }
 }

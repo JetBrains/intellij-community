@@ -67,7 +67,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   };
 
   private boolean myDaemonStopped;
-  private long myPsiModificationCount;
+  private long myPsiModificationCount = -1000;
   private class UpdateImpl implements ProblemUpdateTransaction {
     private final Map<VirtualFile, Collection<ProblemImpl>> backedProblems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
     private final Map<VirtualFile, Collection<ProblemImpl>> problems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
@@ -235,7 +235,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  public boolean hasProblemFilesUnder(ProjectViewNode scope) {
+  public boolean hasProblemFilesBeneath(ProjectViewNode scope) {
     synchronized (myProblems) {
       Set<VirtualFile> problemFiles = myProblems.keySet();
       for (VirtualFile problemFile : problemFiles) {

@@ -39,6 +39,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -98,21 +99,22 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
           element.toString() + ", class " + element.getClass().getName();
         String name = presentation.getPresentableText();
         Color color = list.getForeground();
-        if (element instanceof PsiElement && WolfTheProblemSolver.getInstance(((PsiElement)element).getProject()).isProblemFile(
-          PsiUtil.getVirtualFile((PsiElement)element))) {
-          color = WolfTheProblemSolver.PROBLEM_COLOR;
-        }
-        else {
-          FileStatus status = element.getFileStatus();
-          if (status != FileStatus.NOT_CHANGED) {
-            color = status.getColor();
-          }
+        boolean isProblemFile = element instanceof PsiElement
+                                && WolfTheProblemSolver.getInstance(((PsiElement)element).getProject())
+                                   .isProblemFile(PsiUtil.getVirtualFile((PsiElement)element));
+        FileStatus status = element.getFileStatus();
+        if (status != FileStatus.NOT_CHANGED) {
+          color = status.getColor();
         }
 
-        final SimpleTextAttributes simpleTextAttributes = NodeRenderer.getSimpleTextAttributes(presentation);
-        final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
+        final TextAttributes textAttributes = NodeRenderer.getSimpleTextAttributes(presentation).toTextAttributes();
+        if (isProblemFile) {
+          textAttributes.setEffectType(EffectType.WAVE_UNDERSCORE);
+          textAttributes.setEffectColor(Color.red);
+        }
         textAttributes.setForegroundColor(color);
-        append(name, SimpleTextAttributes.fromTextAttributes(textAttributes));
+        SimpleTextAttributes nameAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
+        append(name, nameAttributes);
         setIcon(presentation.getIcon(false));
 
         String containerText = presentation.getLocationString();

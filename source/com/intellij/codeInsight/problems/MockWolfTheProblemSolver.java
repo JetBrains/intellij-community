@@ -38,7 +38,7 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
     return myDelegate == null ? myUpdate : myDelegate.startUpdatingProblemsInScope(virtualFile);
   }
 
-  public boolean hasProblemFilesUnder(ProjectViewNode scope) {
+  public boolean hasProblemFilesBeneath(ProjectViewNode scope) {
     return false;
   }
 
