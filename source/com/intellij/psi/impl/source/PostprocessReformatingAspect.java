@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,43 +45,95 @@ public class PostprocessReformatingAspect implements PomModelAspect {
     psiManager.getProject().getModel().registerAspect(PostprocessReformatingAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
   }
 
+  public <T> T runWithPostprocessFormattingDisabled(Computable<T> computable){
+    synchronized(PsiLock.LOCK){
+      boolean oldDisabledValue = false;
+      try{
+        oldDisabledValue = myDisabled;
+        myDisabled = true;
+        return computable.compute();
+      }
+      finally{
+        myDisabled = oldDisabledValue;
+      }
+    }
+  }
+
   public void update(PomModelEvent event) {
-    if(myDisabled) return;
-    final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
-    if(changeSet == null) return;
-    final PsiElement psiElement = changeSet.getRootElement().getPsi();
-    if(psiElement == null) return;
-    final FileViewProvider viewProvider = psiElement.getContainingFile().getViewProvider();
-    if(!viewProvider.isEventSystemEnabled()) return;
-    myUpdatedProviders.add(viewProvider);
-    for (final ASTNode node : changeSet.getChangedElements()) {
-      final TreeChange treeChange = changeSet.getChangesByElement(node);
-      for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
-        final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
-        switch(childChange.getChangeType()){
-          case ChangeInfo.ADD:
-          case ChangeInfo.REPLACE:
-            postponeFormatting(viewProvider, affectedChild);
-            break;
-          case ChangeInfo.CONTENTS_CHANGED:
-            if(!CodeEditUtil.isNodeGenerated(affectedChild))
-              ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementVisitor(){
-                protected boolean visitNode(TreeElement element) {
-                  if(CodeEditUtil.isNodeGenerated(element)){
-                    postponeFormatting(viewProvider, element);
-                    return false;
+    synchronized(PsiLock.LOCK){
+      if(myDisabled) return;
+      final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
+      if(changeSet == null) return;
+      final PsiElement psiElement = changeSet.getRootElement().getPsi();
+      if(psiElement == null) return;
+      final FileViewProvider viewProvider = psiElement.getContainingFile().getViewProvider();
+      if(!viewProvider.isEventSystemEnabled()) return;
+      myUpdatedProviders.add(viewProvider);
+      for (final ASTNode node : changeSet.getChangedElements()) {
+        final TreeChange treeChange = changeSet.getChangesByElement(node);
+        for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
+          final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
+          switch(childChange.getChangeType()){
+            case ChangeInfo.ADD:
+            case ChangeInfo.REPLACE:
+              postponeFormatting(viewProvider, affectedChild);
+              break;
+            case ChangeInfo.CONTENTS_CHANGED:
+              if(!CodeEditUtil.isNodeGenerated(affectedChild))
+                ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementVisitor(){
+                  protected boolean visitNode(TreeElement element) {
+                    if(CodeEditUtil.isNodeGenerated(element)){
+                      postponeFormatting(viewProvider, element);
+                      return false;
+                    }
+                    return true;
                   }
-                  return true;
-                }
-              });
-            break;
+                });
+              break;
+          }
         }
       }
     }
   }
 
-  public void setDisabled(boolean disabled) {
-    myDisabled = disabled;
+  public void doPostponedFormatting(){
+    synchronized(PsiLock.LOCK){
+      if(myDisabled) return;
+      try{
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            for (final FileViewProvider viewProvider : myUpdatedProviders) {
+              doPostponedFormatting(viewProvider);
+            }
+          }
+        });
+      }
+      finally{
+        myUpdatedProviders.clear();
+        myReformatElements.clear();
+      }
+    }
+  }
+
+  public void doPostponedFormatting(final FileViewProvider viewProvider) {
+    synchronized(PsiLock.LOCK){
+      if(myDisabled) return;
+
+      runWithPostprocessFormattingDisabled(new Computable<Object>() {
+        public Object compute() {
+          doPostponedFormattingInner(viewProvider);
+          return null;
+        }
+      });
+    }
+  }
+
+  public boolean isViewProviderLocked(final FileViewProvider fileViewProvider) {
+    return myReformatElements.containsKey(fileViewProvider);
+  }
+
+  public static PostprocessReformatingAspect getInstance(Project project) {
+    return project.getComponent(PostprocessReformatingAspect.class);
   }
 
   private void postponeFormatting(final FileViewProvider viewProvider, final ASTNode child) {
@@ -94,35 +147,7 @@ public class PostprocessReformatingAspect implements PomModelAspect {
     list.add(child);
   }
 
-  public void doPostponedFormatting(){
-    if(myDisabled) return;
-    try{
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          for (final FileViewProvider viewProvider : myUpdatedProviders) {
-            doPostponedFormatting(viewProvider);
-          }
-        }
-      });
-    }
-    finally{
-      myUpdatedProviders.clear();
-      myReformatElements.clear();
-    }
-  }
-
-  public void doPostponedFormatting(final FileViewProvider viewProvider) {
-    if(myDisabled) return;
-    try{
-      setDisabled(true);
-      doPostponedFormattingInner(viewProvider);
-    }
-    finally{
-      setDisabled(false);
-    }
-  }
-
-  public void doPostponedFormattingInner(final FileViewProvider key) {
+  private void doPostponedFormattingInner(final FileViewProvider key) {
     final List<ASTNode> astNodes = myReformatElements.remove(key);
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
     final Document document = key.getDocument();
@@ -333,14 +358,6 @@ public class PostprocessReformatingAspect implements PomModelAspect {
     return formatHelper.getIndent(newIndentStr, true);
   }
 
-  public boolean isViewProviderLocked(final FileViewProvider fileViewProvider) {
-    return myReformatElements.containsKey(fileViewProvider);
-  }
-
-  public static PostprocessReformatingAspect getInstance(Project project) {
-    return project.getComponent(PostprocessReformatingAspect.class);
-  }
-
   private interface PostponedAction {
     void processRange(RangeMarker marker, final FileViewProvider viewProvider);
   }
@@ -400,10 +417,6 @@ public class PostprocessReformatingAspect implements PomModelAspect {
       return myOldIndent;
     }
 
-  }
-
-  public boolean isDisabled() {
-    return myDisabled;
   }
 
   final Runnable myPostprocessingApplicationAction = new Runnable() {

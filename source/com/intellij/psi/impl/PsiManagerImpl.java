@@ -283,35 +283,31 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return module != null;
   }
 
-  public void performActionWithFormatterDisabled(Runnable r) {
+  public void performActionWithFormatterDisabled(final Runnable r) {
     final PostprocessReformatingAspect component = getProject().getComponent(PostprocessReformatingAspect.class);
-    final boolean oldValue = component.isDisabled();
     try {
-      component.setDisabled(true);
       ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
-      r.run();
+      component.runWithPostprocessFormattingDisabled(new Computable<Object>() {
+        public Object compute() {
+          r.run();
+          return null;
+        }
+      });
     }
     finally {
       ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
-      if(component.isDisabled()) component.setDisabled(oldValue);
     }
   }
 
   public <T> T performActionWithFormatterDisabled(Computable<T> r) {
-    T result;
-    final PostprocessReformatingAspect component = getProject().getComponent(PostprocessReformatingAspect.class);
-    final boolean oldValue = component.isDisabled();
     try {
-      component.setDisabled(true);
+      final PostprocessReformatingAspect component = PostprocessReformatingAspect.getInstance(getProject());
       ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
-      result = r.compute();
+      return component.runWithPostprocessFormattingDisabled(r);
     }
     finally {
       ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
-      if(component.isDisabled()) component.setDisabled(oldValue);
     }
-
-    return result;
   }
 
   public void registerLanguageInjector(LanguageInjector injector) {

@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -64,170 +65,162 @@ public class EnterHandler extends EditorWriteActionHandler {
     return myOriginalHandler.isEnabled(editor, dataContext);
   }
 
-  public void executeWriteAction(Editor editor, DataContext dataContext) {
-    boolean postprocessReformatingStatus = false;
-    Project project = (Project)DataManager.getInstance().getDataContext(editor.getComponent()).getData(DataConstants.PROJECT);
+  public void executeWriteAction(final Editor editor, final DataContext dataContext) {
+    final Project project = (Project)DataManager.getInstance().getDataContext(editor.getComponent()).getData(DataConstants.PROJECT);
+    PostprocessReformatingAspect.getInstance(project).runWithPostprocessFormattingDisabled(new Computable<Object>() {
+      public Object compute() {
+        executeWriteActionInner(editor, dataContext, project);
+        return null;
+      }
+    });
+  }
 
-    try{
-      {
-        if(project != null){
-          final PostprocessReformatingAspect component = project.getComponent(PostprocessReformatingAspect.class);
-          postprocessReformatingStatus = component.isDisabled();
-          component.setDisabled(true);
+  public void executeWriteActionInner(Editor editor, DataContext dataContext, Project project) {
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    if (project == null) {
+      myOriginalHandler.execute(editor, dataContext);
+      return;
+    }
+    final Document document = editor.getDocument();
+    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+
+    if (file == null) {
+      myOriginalHandler.execute(editor, dataContext);
+      return;
+    }
+
+    CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("command.name.typing"));
+
+    EditorModificationUtil.deleteSelectedText(editor);
+
+    int caretOffset = editor.getCaretModel().getOffset();
+    CharSequence text = document.getCharsSequence();
+    int length = document.getTextLength();
+    if (caretOffset < length && text.charAt(caretOffset) != '\n') {
+      int offset1 = CharArrayUtil.shiftBackward(text, caretOffset, " \t");
+      if (offset1 < 0 || text.charAt(offset1) == '\n') {
+        int offset2 = CharArrayUtil.shiftForward(text, offset1 + 1, " \t");
+        boolean isEmptyLine = offset2 >= length || text.charAt(offset2) == '\n';
+        if (!isEmptyLine) { // we are in leading spaces of a non-empty line
+          myOriginalHandler.execute(editor, dataContext);
+          return;
         }
       }
-      CodeInsightSettings settings = CodeInsightSettings.getInstance();
-      if (project == null) {
-        myOriginalHandler.execute(editor, dataContext);
-        return;
-      }
-      final Document document = editor.getDocument();
-      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    }
 
-      if (file == null) {
-        myOriginalHandler.execute(editor, dataContext);
-        return;
-      }
-
-      CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("command.name.typing"));
-
-      EditorModificationUtil.deleteSelectedText(editor);
-
-      int caretOffset = editor.getCaretModel().getOffset();
-      CharSequence text = document.getCharsSequence();
-      int length = document.getTextLength();
-      if (caretOffset < length && text.charAt(caretOffset) != '\n') {
-        int offset1 = CharArrayUtil.shiftBackward(text, caretOffset, " \t");
-        if (offset1 < 0 || text.charAt(offset1) == '\n') {
-          int offset2 = CharArrayUtil.shiftForward(text, offset1 + 1, " \t");
-          boolean isEmptyLine = offset2 >= length || text.charAt(offset2) == '\n';
-          if (!isEmptyLine) { // we are in leading spaces of a non-empty line
-            myOriginalHandler.execute(editor, dataContext);
-            return;
-          }
-        }
-      }
-
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      PsiElement psiAtOffset = file.findElementAt(caretOffset);
-      if (file instanceof PropertiesFile) {
-        handleEnterInPropertiesFile(editor, document, psiAtOffset, caretOffset);
-        return;
-      }
-      boolean forceIndent = false;
-      int caretAdvance = 0;
-      if (psiAtOffset instanceof PsiJavaToken && psiAtOffset.getTextOffset() < caretOffset) {
-        PsiJavaToken token = (PsiJavaToken)psiAtOffset;
-        if (token.getTokenType() == JavaTokenType.STRING_LITERAL) {
-          TextRange range = token.getTextRange();
-          final StringLiteralLexer lexer = new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL);
-          char[] chars = CharArrayUtil.fromSequence(text);
-          lexer.start(chars, range.getStartOffset(), range.getEndOffset());
-          while (lexer.getTokenType() != null) {
-            if (lexer.getTokenStart() < caretOffset && caretOffset < lexer.getTokenEnd()) {
-              if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(lexer.getTokenType())) {
-                caretOffset = lexer.getTokenEnd();
-              }
-              break;
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    PsiElement psiAtOffset = file.findElementAt(caretOffset);
+    if (file instanceof PropertiesFile) {
+      handleEnterInPropertiesFile(editor, document, psiAtOffset, caretOffset);
+      return;
+    }
+    boolean forceIndent = false;
+    int caretAdvance = 0;
+    if (psiAtOffset instanceof PsiJavaToken && psiAtOffset.getTextOffset() < caretOffset) {
+      PsiJavaToken token = (PsiJavaToken)psiAtOffset;
+      if (token.getTokenType() == JavaTokenType.STRING_LITERAL) {
+        TextRange range = token.getTextRange();
+        final StringLiteralLexer lexer = new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL);
+        char[] chars = CharArrayUtil.fromSequence(text);
+        lexer.start(chars, range.getStartOffset(), range.getEndOffset());
+        while (lexer.getTokenType() != null) {
+          if (lexer.getTokenStart() < caretOffset && caretOffset < lexer.getTokenEnd()) {
+            if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(lexer.getTokenType())) {
+              caretOffset = lexer.getTokenEnd();
             }
-            lexer.advance();
+            break;
           }
-
-          document.insertString(caretOffset, "\" + \"");
-          text = document.getCharsSequence();
-          caretOffset += "\" +".length();
-          caretAdvance = 1;
-          if (CodeStyleSettingsManager.getSettings(project).BINARY_OPERATION_SIGN_ON_NEXT_LINE) {
-            caretOffset -= 1;
-            caretAdvance = 3;
-          }
-          forceIndent = true;
+          lexer.advance();
         }
-        else if (token.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
-          int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
-          if (offset < document.getTextLength() && text.charAt(offset) != '\n') {
-            document.insertString(caretOffset, "// ");
-            text = document.getCharsSequence();
-          }
+
+        document.insertString(caretOffset, "\" + \"");
+        text = document.getCharsSequence();
+        caretOffset += "\" +".length();
+        caretAdvance = 1;
+        if (CodeStyleSettingsManager.getSettings(project).BINARY_OPERATION_SIGN_ON_NEXT_LINE) {
+          caretOffset -= 1;
+          caretAdvance = 3;
+        }
+        forceIndent = true;
+      }
+      else if (token.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+        int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
+        if (offset < document.getTextLength() && text.charAt(offset) != '\n') {
+          document.insertString(caretOffset, "// ");
+          text = document.getCharsSequence();
         }
       }
+    }
 
-      if (settings.INSERT_BRACE_ON_ENTER && isAfterUnmatchedLBrace(editor, caretOffset, file.getFileType())) {
-        int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
-        if (offset < document.getTextLength()) {
-          char c = text.charAt(offset);
-          if (c != ')' && c != ']' && c != ';' && c != ',' && c != '%') {
-            offset = CharArrayUtil.shiftForwardUntil(text, caretOffset, "\n");
-          }
+    if (settings.INSERT_BRACE_ON_ENTER && isAfterUnmatchedLBrace(editor, caretOffset, file.getFileType())) {
+      int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
+      if (offset < document.getTextLength()) {
+        char c = text.charAt(offset);
+        if (c != ')' && c != ']' && c != ';' && c != ',' && c != '%') {
+          offset = CharArrayUtil.shiftForwardUntil(text, caretOffset, "\n");
         }
-        offset = Math.min(offset, document.getTextLength());
+      }
+      offset = Math.min(offset, document.getTextLength());
 
-        document.insertString(offset, "\n}");
+      document.insertString(offset, "\n}");
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      try {
+        CodeStyleManager.getInstance(project).adjustLineIndent(file, offset + 1);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      text = document.getCharsSequence();
+      forceIndent = true;
+    }
+
+    if (settings.INSERT_SCRIPTLET_END_ON_ENTER && isAfterUnmatchedScriplet(editor, caretOffset)) {
+      document.insertString(caretOffset, "%>");
+      myOriginalHandler.execute(editor, dataContext);
+      text = document.getCharsSequence();
+      forceIndent = true;
+    }
+
+    if (settings.SMART_INDENT_ON_ENTER) {
+      // special case: enter inside "()" or "{}"
+      if (caretOffset > 0 && caretOffset < text.length() && ((text.charAt(caretOffset - 1) == '(' && text.charAt(caretOffset) == ')') ||
+                                                             (text.charAt(caretOffset - 1) == '{' && text.charAt(caretOffset) == '}'))) {
+        myOriginalHandler.execute(editor, dataContext);
         PsiDocumentManager.getInstance(project).commitDocument(document);
         try {
-          CodeStyleManager.getInstance(project).adjustLineIndent(file, offset + 1);
+          CodeStyleManager.getInstance(project).adjustLineIndent(file, editor.getCaretModel().getOffset());
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
         text = document.getCharsSequence();
-        forceIndent = true;
       }
+    }
 
-      if (settings.INSERT_SCRIPTLET_END_ON_ENTER && isAfterUnmatchedScriplet(editor, caretOffset)) {
-        document.insertString(caretOffset, "%>");
-        myOriginalHandler.execute(editor, dataContext);
-        text = document.getCharsSequence();
-        forceIndent = true;
-      }
-
-      if (settings.SMART_INDENT_ON_ENTER) {
-        // special case: enter inside "()" or "{}"
-        if (caretOffset > 0 && caretOffset < text.length() && ((text.charAt(caretOffset - 1) == '(' && text.charAt(caretOffset) == ')') ||
-                                                               (text.charAt(caretOffset - 1) == '{' && text.charAt(caretOffset) == '}'))) {
-          myOriginalHandler.execute(editor, dataContext);
-          PsiDocumentManager.getInstance(project).commitDocument(document);
-          try {
-            CodeStyleManager.getInstance(project).adjustLineIndent(file, editor.getCaretModel().getOffset());
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-          text = document.getCharsSequence();
-        }
-      }
-
-      if (file instanceof XmlFile && isBetweenXmlTags(editor, caretOffset)) {
-        myOriginalHandler.execute(editor, dataContext);
-        text = document.getCharsSequence();
-        forceIndent = true;
-      }
-
-      boolean isFirstColumn = caretOffset == 0 || text.charAt(caretOffset - 1) == '\n';
-      final boolean insertSpace =
-        !isFirstColumn && !(caretOffset >= document.getTextLength() || text.charAt(caretOffset) == ' ' || text.charAt(caretOffset) == '\t');
-      editor.getCaretModel().moveToOffset(caretOffset);
+    if (file instanceof XmlFile && isBetweenXmlTags(editor, caretOffset)) {
       myOriginalHandler.execute(editor, dataContext);
-
-      if (settings.SMART_INDENT_ON_ENTER || forceIndent) {
-        caretOffset += 1;
-        caretOffset = CharArrayUtil.shiftForward(editor.getDocument().getCharsSequence(), caretOffset, " \t");
-      }
-      else {
-        caretOffset = editor.getCaretModel().getOffset();
-      }
-
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      final DoEnterAction action = new DoEnterAction(file, editor, document, caretOffset, !insertSpace, caretAdvance);
-      action.setForceIndent(forceIndent);
-      action.run();
+      text = document.getCharsSequence();
+      forceIndent = true;
     }
-    finally {
-      if (project != null) {
-        final PostprocessReformatingAspect component = project.getComponent(PostprocessReformatingAspect.class);
-        if(component.isDisabled()) component.setDisabled(postprocessReformatingStatus);
-      }
+
+    boolean isFirstColumn = caretOffset == 0 || text.charAt(caretOffset - 1) == '\n';
+    final boolean insertSpace =
+      !isFirstColumn && !(caretOffset >= document.getTextLength() || text.charAt(caretOffset) == ' ' || text.charAt(caretOffset) == '\t');
+    editor.getCaretModel().moveToOffset(caretOffset);
+    myOriginalHandler.execute(editor, dataContext);
+
+    if (settings.SMART_INDENT_ON_ENTER || forceIndent) {
+      caretOffset += 1;
+      caretOffset = CharArrayUtil.shiftForward(editor.getDocument().getCharsSequence(), caretOffset, " \t");
     }
+    else {
+      caretOffset = editor.getCaretModel().getOffset();
+    }
+
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    final DoEnterAction action = new DoEnterAction(file, editor, document, caretOffset, !insertSpace, caretAdvance);
+    action.setForceIndent(forceIndent);
+    action.run();
   }
 
   private static void handleEnterInPropertiesFile(final Editor editor,
