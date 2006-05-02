@@ -93,7 +93,7 @@ public class PackageUtil {
                                           new PackageElement(module, aPackage, inLibrary), settings));
     }
     if (settings.isFlattenPackages() || shouldSkipPackage) {
-      final PsiPackage[] subpackages = PackageUtil.getSubpackages(aPackage, module, project, inLibrary);
+      final PsiPackage[] subpackages = getSubpackages(aPackage, module, project, inLibrary);
       for (PsiPackage subpackage : subpackages) {
         addPackageAsChild(children, subpackage, module, settings, inLibrary);
       }
@@ -180,7 +180,7 @@ public class PackageUtil {
     return children;
   }
 
-  public static boolean moduleContainsFile(final Module module, VirtualFile file, ViewSettings settings, boolean isLibraryElement) {
+  public static boolean moduleContainsFile(final Module module, VirtualFile file, boolean isLibraryElement) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     if (isLibraryElement) {
       OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
@@ -197,10 +197,10 @@ public class PackageUtil {
     }
   }
 
-  public static boolean projectContainsFile(final Project project, VirtualFile file, ViewSettings settings, boolean isLibraryElement) {
+  public static boolean projectContainsFile(final Project project, VirtualFile file, boolean isLibraryElement) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
-      if (moduleContainsFile(module, file, settings, isLibraryElement)) return true;
+      if (moduleContainsFile(module, file, isLibraryElement)) return true;
     }
     return false;
   }
@@ -270,9 +270,7 @@ public class PackageUtil {
     else {
 
       if (isFQNameShown(psiDirectory, parentValue, settings)) {
-        name = (settings.isAbbreviatePackageNames()
-                ? TreeViewUtil.calcAbbreviatedPackageFQName(aPackage)
-                : aPackage.getQualifiedName());
+        name = settings.isAbbreviatePackageNames() ? TreeViewUtil.calcAbbreviatedPackageFQName(aPackage) : aPackage.getQualifiedName();
       }
       else {
         if (!isSourceRoot(psiDirectory) && aPackage != null && aPackage.getQualifiedName().length() > 0 &&
