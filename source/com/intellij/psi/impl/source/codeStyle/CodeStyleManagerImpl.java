@@ -366,7 +366,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       }
     };
     final Pair<Integer, IncorrectOperationException> pair =
-      PostprocessReformatingAspect.getInstance(file.getProject()).runWithPostprocessFormattingDisabled(computable);
+      PostprocessReformatingAspect.getInstance(file.getProject()).disablePosprocessFormattingInside(computable);
     if(pair.getSecond() != null) throw pair.getSecond();
     return pair.getFirst();
   }
@@ -406,7 +406,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public int adjustLineIndent(final Document document, final int offset) {
-    return PostprocessReformatingAspect.getInstance(getProject()).runWithPostprocessFormattingDisabled(new Computable<Integer>() {
+    return PostprocessReformatingAspect.getInstance(getProject()).disablePosprocessFormattingInside(new Computable<Integer>() {
       public Integer compute() {
         return adjustLineIndentInner(document, offset);
       }

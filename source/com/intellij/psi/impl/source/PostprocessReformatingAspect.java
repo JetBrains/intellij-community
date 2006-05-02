@@ -12,10 +12,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
@@ -45,7 +44,16 @@ public class PostprocessReformatingAspect implements PomModelAspect {
     psiManager.getProject().getModel().registerAspect(PostprocessReformatingAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
   }
 
-  public <T> T runWithPostprocessFormattingDisabled(Computable<T> computable){
+  public void disablePosprocessFormattingInside(final Runnable runnable) {
+    disablePosprocessFormattingInside(new Computable<Object>() {
+      public Object compute() {
+        runnable.run();
+        return null;
+      }
+    });
+  }
+
+  public <T> T disablePosprocessFormattingInside(Computable<T> computable){
     synchronized(PsiLock.LOCK){
       boolean oldDisabledValue = false;
       try{
@@ -55,6 +63,32 @@ public class PostprocessReformatingAspect implements PomModelAspect {
       }
       finally{
         myDisabled = oldDisabledValue;
+      }
+    }
+  }
+
+  private int myPostponedCounter = 0;
+  public void postponeFormattingInside(final Runnable runnable) {
+    postponeFormattingInside(new Computable<Object>() {
+      public Object compute() {
+        runnable.run();
+        return null;
+      }
+    });
+  }
+
+  public <T> T postponeFormattingInside(Computable<T> computable){
+    try {
+      myPostponedCounter++;
+      return computable.compute();
+    }
+    finally {
+      if (--myPostponedCounter == 0) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            doPostponedFormatting();
+          }
+        });
       }
     }
   }
@@ -100,13 +134,9 @@ public class PostprocessReformatingAspect implements PomModelAspect {
     synchronized(PsiLock.LOCK){
       if(myDisabled) return;
       try{
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            for (final FileViewProvider viewProvider : myUpdatedProviders) {
-              doPostponedFormatting(viewProvider);
-            }
-          }
-        });
+        for (final FileViewProvider viewProvider : myUpdatedProviders) {
+          doPostponedFormatting(viewProvider);
+        }
       }
       finally{
         myUpdatedProviders.clear();
@@ -119,7 +149,7 @@ public class PostprocessReformatingAspect implements PomModelAspect {
     synchronized(PsiLock.LOCK){
       if(myDisabled) return;
 
-      runWithPostprocessFormattingDisabled(new Computable<Object>() {
+      disablePosprocessFormattingInside(new Computable<Object>() {
         public Object compute() {
           doPostponedFormattingInner(viewProvider);
           return null;
@@ -419,12 +449,6 @@ public class PostprocessReformatingAspect implements PomModelAspect {
 
   }
 
-  final Runnable myPostprocessingApplicationAction = new Runnable() {
-    public void run() {
-      doPostponedFormatting();
-    }
-  };
-
   public void projectOpened() {
   }
 
@@ -437,10 +461,8 @@ public class PostprocessReformatingAspect implements PomModelAspect {
   }
 
   public void initComponent() {
-    //((ApplicationImpl)ApplicationManager.getApplication()).addPostWriteAction(myPostprocessingApplicationAction);
   }
 
   public void disposeComponent() {
-    //((ApplicationImpl)ApplicationManager.getApplication()).removePostWriteAction(myPostprocessingApplicationAction);
   }
 }

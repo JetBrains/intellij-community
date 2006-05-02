@@ -287,7 +287,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     final PostprocessReformatingAspect component = getProject().getComponent(PostprocessReformatingAspect.class);
     try {
       ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
-      component.runWithPostprocessFormattingDisabled(new Computable<Object>() {
+      component.disablePosprocessFormattingInside(new Computable<Object>() {
         public Object compute() {
           r.run();
           return null;
@@ -303,7 +303,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     try {
       final PostprocessReformatingAspect component = PostprocessReformatingAspect.getInstance(getProject());
       ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
-      return component.runWithPostprocessFormattingDisabled(r);
+      return component.disablePosprocessFormattingInside(r);
     }
     finally {
       ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();

@@ -67,7 +67,7 @@ public class EnterHandler extends EditorWriteActionHandler {
 
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
     final Project project = (Project)DataManager.getInstance().getDataContext(editor.getComponent()).getData(DataConstants.PROJECT);
-    PostprocessReformatingAspect.getInstance(project).runWithPostprocessFormattingDisabled(new Computable<Object>() {
+    PostprocessReformatingAspect.getInstance(project).disablePosprocessFormattingInside(new Computable<Object>() {
       public Object compute() {
         executeWriteActionInner(editor, dataContext, project);
         return null;

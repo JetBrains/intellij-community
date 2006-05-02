@@ -31,6 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.HashMap;
@@ -651,7 +652,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public void runWriteAction(final Runnable action) {
     assertCanRunWriteAction();
-
     fireBeforeWriteActionStart(action);
 
     myIsWaitingForWriteAction = true;
@@ -676,11 +676,21 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       synchronized (myWriteActionsStack) {
         myWriteActionsStack.push(action);
       }
-      action.run();
+      final Project project = CommandProcessor.getInstance().getCurrentCommandProject();
+      if(project != null) {
+        // run postprocess formatting inside commands only
+        PostprocessReformatingAspect.getInstance(project).postponeFormattingInside(new Computable<Object>() {
+          public Object compute() {
+            action.run();
+            return null;
+          }
+        });
+      }
+      else action.run();
     }
     finally {
       synchronized (myWriteActionsStack) {
-        if(myWriteActionsStack.size() == 1) writeActionPostprocessing();
+        writeActionPostprocessing();
         myWriteActionsStack.pop();
       }
       fireWriteActionFinished(action);
@@ -790,6 +800,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   protected void assertCanRunWriteAction() {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
+
   }
 
   public void assertIsDispatchThread() {
