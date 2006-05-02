@@ -14,7 +14,6 @@ import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -28,47 +27,47 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
   }
 
   public PsiElement add(PsiElement element) throws IncorrectOperationException {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public PsiElement addBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public PsiElement addAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public void checkAdd(PsiElement element) throws IncorrectOperationException {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public PsiElement addRangeBefore(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public void delete() throws IncorrectOperationException {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public void checkDelete() throws IncorrectOperationException {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(getClass().getName());
   }
 
   public PsiReference getReference() {
@@ -79,6 +78,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
     return true;
   }
 
+  @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);
