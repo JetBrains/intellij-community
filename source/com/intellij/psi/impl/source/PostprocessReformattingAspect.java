@@ -79,7 +79,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   public <T> T postponeFormattingInside(Computable<T> computable){
     try {
-      if(myPostponedCounter == 0) myDisabled = false;
+      //if(myPostponedCounter == 0) myDisabled = false;
       myPostponedCounter++;
       return computable.compute();
     }
@@ -93,7 +93,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
           });
         }
         else doPostponedFormatting();
-        myDisabled = true;
+        //myDisabled = true;
       }
     }
   }
