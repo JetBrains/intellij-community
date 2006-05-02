@@ -84,11 +84,14 @@ public class PostprocessReformatingAspect implements PomModelAspect {
     }
     finally {
       if (--myPostponedCounter == 0) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            doPostponedFormatting();
-          }
-        });
+        if(!ApplicationManager.getApplication().isWriteAccessAllowed()){
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              doPostponedFormatting();
+            }
+          });
+        }
+        else doPostponedFormatting();
       }
     }
   }
