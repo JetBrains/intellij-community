@@ -19,13 +19,13 @@ public final class ObjectTree {
   private Set<Object> myRootObjects = new THashSet<Object>();
   private Map<Object, ObjectNode> myObject2NodeMap = new THashMap<Object, ObjectNode>();
 
-  private List myExecutedObjects = new ArrayList();
+  private List<ObjectNode> myExecutedObjects = new ArrayList<ObjectNode>();
 
   public final Map<Object, ObjectNode> getObject2NodeMap() {
     return myObject2NodeMap;
   }
 
-  public final List getExecutedObjects() {
+  public final List<ObjectNode> getExecutedObjects() {
     return myExecutedObjects;
   }
 

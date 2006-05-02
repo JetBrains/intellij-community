@@ -9,6 +9,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public final class ObjectNode {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
 
@@ -17,7 +19,7 @@ public final class ObjectNode {
   private ObjectNode myParent;
   private Object myObject;
 
-  private List myChildren;
+  private List<ObjectNode> myChildren;
 
   public ObjectNode(ObjectTree tree, ObjectNode parentNode, Object object) {
     myTree = tree;
@@ -65,7 +67,7 @@ public final class ObjectNode {
 
   private void ensureChildArray() {
     if (myChildren == null) {
-      myChildren = new ArrayList();
+      myChildren = new ArrayList<ObjectNode>();
     }
   }
 
@@ -78,7 +80,7 @@ public final class ObjectNode {
     myTree.getExecutedObjects().add(this);
 
     if (myChildren != null) {
-      final ObjectNode[] children = (ObjectNode[])myChildren.toArray(new ObjectNode[myChildren.size()]);
+      final ObjectNode[] children = myChildren.toArray(new ObjectNode[myChildren.size()]);
       for (int i = children.length - 1; i >= 0; i--) {
         children[i].execute(disposeTree, action);
       }
@@ -116,6 +118,7 @@ public final class ObjectNode {
     return myChildren;
   }
 
+  @NonNls
   public String toString() {
     return "Node: " + myObject.toString();
   }
