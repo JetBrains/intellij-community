@@ -87,10 +87,8 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     final PsiCodeFragment file = (PsiCodeFragment)PsiDocumentManager.getInstance(project).getPsiFile(editorTextField.getDocument());
     file.addAnnotator(new Annotator() {
       public void annotate(PsiElement psiElement, AnnotationHolder holder) {
-        if (isCommitted()) {
-          for (final DomElementProblemDescriptor problem : DomElementAnnotationsManager.getInstance().getProblems(getDomElement(), true)) {
-            holder.createErrorAnnotation(psiElement.getContainingFile(), problem.getDescriptionTemplate());
-          }
+        for (final DomElementProblemDescriptor problem : DomElementAnnotationsManager.getInstance().getProblems(getDomElement(), true)) {
+          holder.createErrorAnnotation(psiElement.getContainingFile(), problem.getDescriptionTemplate());
         }
       }
     });

@@ -157,9 +157,7 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
         }
 
         doRemove(selectedElements);
-        myData.removeAll(selectedElements);
-
-        myCollectionPanel.getTableModel().fireTableDataChanged();
+        reset();
         int selection = selected[0];
         if (selection >= myData.size()) {
           selection = myData.size() - 1;
