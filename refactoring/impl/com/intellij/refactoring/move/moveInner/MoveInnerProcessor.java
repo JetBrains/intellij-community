@@ -334,25 +334,6 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  public void run(final MoveInnerDialog dialog) {
-    myPrepareSuccessfulSwingThreadCallback = new Runnable() {
-      public void run() {
-        dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-      }
-    };
-
-    final String className = dialog.getClassName();
-    final PsiClass innerClass = dialog.getInnerClass();
-    final boolean passOuterClass = dialog.isPassOuterClass();
-    final String parameterName = dialog.getParameterName();
-    final PsiElement targetContainer = dialog.getTargetContainer();
-
-    setup(innerClass, className, passOuterClass, parameterName,
-          dialog.isSearchInComments(), dialog.isSearchInNonJavaFiles(), targetContainer);
-
-    run();
-  }
-
   public void setup(final PsiClass innerClass,
                     final String className,
                     final boolean passOuterClass,

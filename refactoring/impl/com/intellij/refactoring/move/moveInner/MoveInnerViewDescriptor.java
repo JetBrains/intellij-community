@@ -23,7 +23,7 @@ class MoveInnerViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getProcessedElementsHeader() {
-    return null;
+    return RefactoringBundle.message("move.inner.class.to.be.moved");
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {

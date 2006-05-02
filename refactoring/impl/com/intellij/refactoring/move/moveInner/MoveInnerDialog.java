@@ -190,6 +190,7 @@ public class MoveInnerDialog extends RefactoringDialog {
   protected void doAction() {
     String message = null;
     final String className = getClassName();
+    final String parameterName = getParameterName();
     PsiManager manager = PsiManager.getInstance(myProject);
     if ("".equals(className)) {
       message = RefactoringBundle.message("no.class.name.specified");
@@ -199,7 +200,6 @@ public class MoveInnerDialog extends RefactoringDialog {
     }
     else {
       if (myCbPassOuterClass.isSelected()) {
-        String parameterName = getParameterName();
         if ("".equals(parameterName)) {
           message = RefactoringBundle.message("no.parameter.name.specified");
         }
@@ -211,12 +211,10 @@ public class MoveInnerDialog extends RefactoringDialog {
         if (myTargetContainer instanceof PsiClass) {
           PsiClass targetClass = (PsiClass)myTargetContainer;
           PsiClass[] classes = targetClass.getInnerClasses();
-          if (classes != null) {
-            for (PsiClass aClass : classes) {
-              if (className.equals(aClass.getName())) {
-                message = RefactoringBundle.message("inner.class.exists", className, targetClass.getName());
-                break;
-              }
+          for (PsiClass aClass : classes) {
+            if (className.equals(aClass.getName())) {
+              message = RefactoringBundle.message("inner.class.exists", className, targetClass.getName());
+              break;
             }
           }
         }
@@ -240,7 +238,9 @@ public class MoveInnerDialog extends RefactoringDialog {
       mySuggestedNameInfo.nameChoosen(getParameterName());
     }
 
-    myProcessor.run(this);
+    myProcessor.setup(getInnerClass(), className, isPassOuterClass(), parameterName,
+                      isSearchInComments(), isSearchInNonJavaFiles(), getTargetContainer());
+    invokeRefactoring(myProcessor);
   }
 
   protected void doHelpAction() {
