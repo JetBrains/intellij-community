@@ -417,17 +417,21 @@ public class FileUtil {
     }
     return name;
   }
+
   public static String createSequentFileName(File aParentFolder, String aFilePrefix, String aExtension) {
+    return findSequentNonexistentFile(aParentFolder, aFilePrefix, aExtension).getName();
+  }
+
+  public static File findSequentNonexistentFile(final File aParentFolder, final String aFilePrefix, final String aExtension) {
     int postfix = 0;
     String ext = 0 == aExtension.length() ? "" : "." + aExtension;
 
-    File candidate = new File(aParentFolder, aFilePrefix + Integer.toString(postfix) + ext);
+    File candidate = new File(aParentFolder, aFilePrefix + ext);
     while (candidate.exists()) {
       postfix++;
       candidate = new File(aParentFolder, aFilePrefix + Integer.toString(postfix) + ext);
     }
-
-    return candidate.getName();
+    return candidate;
   }
 
   public static String toSystemDependentName(@NonNls @NotNull String aFileName) {
