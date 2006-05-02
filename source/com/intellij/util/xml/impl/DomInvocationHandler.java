@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pair;import com.intellij.openapi.vfs.VirtualFile;import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
@@ -638,6 +638,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final DomElement addChild(final String tagName, final Type type, int index) throws IncorrectOperationException {
+    final VirtualFile virtualFile = getFile().getVirtualFile();
+    if (virtualFile != null && !virtualFile.isWritable()) {
+      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(virtualFile);
+    }
+
     checkInitialized(tagName);
     return addCollectionElement(type, addEmptyTag(tagName, index));
   }

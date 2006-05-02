@@ -3,8 +3,6 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Function;
 import com.intellij.util.xml.ClassChooserManager;
 import com.intellij.util.xml.DomElement;
@@ -32,10 +30,6 @@ public class AddChildInvocation implements Invocation{
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-    final VirtualFile virtualFile = handler.getFile().getVirtualFile();
-    if (virtualFile != null && !virtualFile.isWritable()) {
-      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(virtualFile);
-    }
     final Type type = myClassGetter.fun(args);
     final DomElement domElement = handler.addChild(myTagName, type, myIndexGetter.fun(args));
     final boolean b = handler.getManager().setChanging(true);
