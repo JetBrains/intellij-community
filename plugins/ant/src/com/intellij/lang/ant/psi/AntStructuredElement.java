@@ -1,12 +1,11 @@
 package com.intellij.lang.ant.psi;
 
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface AntStructuredElement extends AntElement, PsiNamedElement {
+public interface AntStructuredElement extends AntElement {
 
   @NotNull
   XmlTag getSourceElement();
@@ -19,10 +18,10 @@ public interface AntStructuredElement extends AntElement, PsiNamedElement {
   @Nullable
   String getId();
 
-  void registerRefId(final String id, AntStructuredElement element);
+  void registerRefId(final String id, AntElement element);
 
   @Nullable
-  AntStructuredElement getElementByRefId(final String refid);
+  AntElement getElementByRefId(final String refid);
 
   @NotNull
   String[] getRefIds();

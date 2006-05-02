@@ -5,10 +5,8 @@ import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,10 +20,18 @@ import java.util.Map;
 public class AntStructuredElementImpl extends AntElementImpl implements AntStructuredElement {
   protected AntTypeDefinition myDefinition;
   protected boolean myDefinitionCloned = false;
-  private Map<String, AntStructuredElement> myReferencedElements = null;
+  private AntElement myIdElement;
+  private Map<String, AntElement> myReferencedElements = null;
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(parent, sourceElement);
+    final String id = getId();
+    if (id != null && parent instanceof AntStructuredElement) {
+      myIdElement = new AntElementImpl(
+          this, getSourceElement().getAttribute("id", null));
+      AntStructuredElement se = (AntStructuredElement) parent;
+      se.registerRefId(id, myIdElement);
+    }
   }
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
@@ -33,7 +39,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     myDefinition = definition;
     final AntTypeId id = new AntTypeId(getSourceElement().getName(), getSourceElement().getNamespace());
     if (definition != null && !definition.getTypeId().equals(id)) {
-      myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)myDefinition);
+      myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl) myDefinition);
       myDefinition.setTypeId(id);
       myDefinitionCloned = true;
     }
@@ -41,7 +47,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   @NotNull
   public XmlTag getSourceElement() {
-    return (XmlTag)super.getSourceElement();
+    return (XmlTag) super.getSourceElement();
   }
 
   public String toString() {
@@ -59,19 +65,14 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
   }
 
-  public String getName() {
-    return getSourceElement().getName();
-  }
-
-  public PsiElement setName(String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
   protected AntElement[] getChildrenInner() {
     final XmlTag[] tags = getSourceElement().getSubTags();
     final List<AntElement> children = new ArrayList<AntElement>();
     for (final XmlTag tag : tags) {
       children.add(AntElementFactory.createAntElement(this, tag));
+    }
+    if (myIdElement != null) {
+      children.add(myIdElement);
     }
     return children.toArray(new AntElement[children.size()]);
   }
@@ -83,7 +84,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public void registerCustomType(final AntTypeDefinition def) {
     if (myDefinition != null) {
       if (!myDefinitionCloned) {
-        myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)myDefinition);
+        myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl) myDefinition);
         myDefinitionCloned = true;
       }
       myDefinition.registerNestedType(def.getTypeId(), def.getClassName());
@@ -96,14 +97,14 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return getSourceElement().getAttributeValue("id");
   }
 
-  public void registerRefId(final String id, AntStructuredElement element) {
+  public void registerRefId(final String id, AntElement element) {
     if (myReferencedElements == null) {
-      myReferencedElements = new HashMap<String, AntStructuredElement>();
+      myReferencedElements = new HashMap<String, AntElement>();
     }
     myReferencedElements.put(id, element);
   }
 
-  public AntStructuredElement getElementByRefId(final String refid) {
+  public AntElement getElementByRefId(final String refid) {
     AntElement parent = this;
     while (true) {
       parent = parent.getAntParent();
@@ -111,9 +112,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         return null;
       }
       if (parent instanceof AntStructuredElement) {
-        AntStructuredElementImpl se = (AntStructuredElementImpl)parent;
+        AntStructuredElementImpl se = (AntStructuredElementImpl) parent;
         if (se.myReferencedElements != null) {
-          final AntStructuredElement refse = se.myReferencedElements.get(refid);
+          final AntElement refse = se.myReferencedElements.get(refid);
           if (refse != null) {
             return refse;
           }

@@ -4,7 +4,6 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
-import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -35,11 +34,11 @@ public class AntRefIdReference extends AntGenericReference {
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-    if (element instanceof AntTask) {
+    if (element instanceof AntStructuredElement) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement) element;
       return handleElementRename(psiNamedElement.getName());
     }
-    throw new IncorrectOperationException("Can bind only to ant tasks.");
+    throw new IncorrectOperationException("Can bind only to ant structured elements.");
   }
 
   public String getUnresolvedMessagePattern() {

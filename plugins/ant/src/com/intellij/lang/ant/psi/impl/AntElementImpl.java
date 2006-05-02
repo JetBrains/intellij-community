@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,9 +63,29 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     }
   }
 
+  public String getName() {
+    final XmlElement se = getSourceElement();
+    if (se instanceof XmlTag) {
+      return ((XmlTag) se).getName();
+    }
+    if (se instanceof XmlAttribute) {
+      return ((XmlAttribute) se).getValue();
+    }
+    return null;
+  }
+
+  public PsiElement setName(String name) throws IncorrectOperationException {
+    final XmlElement se = getSourceElement();
+    if (se instanceof XmlAttribute) {
+      ((XmlAttribute) se).setValue(name);
+      return this;
+    }
+    throw new IncorrectOperationException();
+  }
+
   @NotNull
   public XmlElement getSourceElement() {
-    return (XmlElement)super.getSourceElement();
+    return (XmlElement) super.getSourceElement();
   }
 
   public AntElement getAntParent() {
@@ -74,7 +95,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   @SuppressWarnings({"ConstantConditions"})
   @NotNull
   public AntProject getAntProject() {
-    return (AntProject)((this instanceof AntProject) ? this : PsiTreeUtil.getParentOfType(this, AntProject.class));
+    return (AntProject) ((this instanceof AntProject) ? this : PsiTreeUtil.getParentOfType(this, AntProject.class));
   }
 
   public PsiElement getParent() {
@@ -146,9 +167,8 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     if (myAttributes == null) {
       final XmlElement element = getSourceElement();
       if (element instanceof XmlTag) {
-        myAttributes = ((XmlTag)element).getAttributes();
-      }
-      else {
+        myAttributes = ((XmlTag) element).getAttributes();
+      } else {
         myAttributes = EMPTY_ATTRIBUTES;
       }
     }
@@ -177,7 +197,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public void setProperty(final String name, final PsiElement element) {
-    if( myProperties == null) {
+    if (myProperties == null) {
       myProperties = new HashMap<String, PsiElement>();
     }
     myProperties.put(name, element);
@@ -191,10 +211,10 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
 
   @NotNull
   public PsiElement[] getProperties() {
-    if(myProperties == null) {
+    if (myProperties == null) {
       return PsiElement.EMPTY_ARRAY;
     }
-    if( myPropertiesArray == null ) {
+    if (myPropertiesArray == null) {
       myPropertiesArray = myProperties.values().toArray(new PsiElement[myProperties.size()]);
     }
     return myPropertiesArray;
@@ -232,7 +252,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   protected AntElement clone() {
-    final AntElementImpl element = (AntElementImpl)super.clone();
+    final AntElementImpl element = (AntElementImpl) super.clone();
     element.clearCaches();
     return element;
   }
