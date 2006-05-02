@@ -9,6 +9,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
@@ -115,7 +116,8 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
 
   private static PsiReference[] getReferences(final XmlElement xmlElement) {
     if (xmlElement instanceof XmlAttribute) {
-      return ((XmlAttribute)xmlElement).getValueElement().getReferences();
+      final XmlAttributeValue value = ((XmlAttribute)xmlElement).getValueElement();
+      return value == null ? PsiReference.EMPTY_ARRAY : value.getReferences();
     }
     return xmlElement.getReferences();
   }
