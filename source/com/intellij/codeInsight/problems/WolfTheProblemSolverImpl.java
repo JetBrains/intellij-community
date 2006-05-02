@@ -137,9 +137,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   public WolfTheProblemSolverImpl(Project project) {
     myProject = project;
-    myProgress = new ProgressIndicatorBase(){
+    myProgress = new ProgressIndicatorBase() {
       public boolean isCanceled() {
-        return super.isCanceled() || myDaemonStopped;
+        return super.isCanceled() || myDaemonStopped || !myProject.isOpen();
       }
 
       public String toString() {
@@ -174,7 +174,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
     if (psiModificationCount == myPsiModificationCount) return; //optimization
     myPsiModificationCount = psiModificationCount;
-    if (myProject.isDisposed()) return;
+    if (!myProject.isOpen()) return;
     myDaemonStopped = false;
     List<VirtualFile> toCheck;
     synchronized(myProblems) {
@@ -198,6 +198,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (psiFile == null) return;
     ProgressManager.getInstance().runProcess(new Runnable(){
       public void run() {
+        if (!myProject.isOpen()) return;
         StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
         try {
           if (statusBar != null) {
