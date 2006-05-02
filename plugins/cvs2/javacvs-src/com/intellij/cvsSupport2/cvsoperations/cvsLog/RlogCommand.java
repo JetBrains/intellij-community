@@ -27,6 +27,7 @@ public class RlogCommand extends AbstractCommand {
   private boolean mySuppressEmptyHeaders = true;
   
   private String myBranchName = null;
+  private boolean myLogDefaultBranch = false;
 
   // Implemented ============================================================
 
@@ -42,11 +43,13 @@ public class RlogCommand extends AbstractCommand {
 
     requests.addArgumentRequest(getDateFilter(), "-d");
 
-      if (myBranchName != null) {
-          requests.addArgumentRequest("-r" + myBranchName);
-      }
+    if (myBranchName != null) {
+      requests.addArgumentRequest("-r" + myBranchName);          
+    }
 
-      requests.addArgumentRequest(myModuleName);
+    requests.addArgumentRequest(myLogDefaultBranch, "-b");
+      
+    requests.addArgumentRequest(myModuleName);
 
     final ICvsListener parser = new LogMessageParser(eventSender, clientEnvironment.getCvsFileSystem());
     parser.registerListeners(listenerRegistry);
@@ -59,7 +62,12 @@ public class RlogCommand extends AbstractCommand {
 
   }
 
-  @Nullable
+
+  public void setMyLogDefaultBranch(boolean logDefaultBranch) {
+     myLogDefaultBranch = logDefaultBranch;
+  }
+
+    @Nullable
   private String getDateFilter() {
     if (myDateFrom == null && myDateTo == null) {
       return null;
