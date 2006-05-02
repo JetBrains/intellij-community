@@ -35,7 +35,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private final PsiManager myPsiManager;
   private final TreeAspect myTreeAspect;
   private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<FileViewProvider, List<ASTNode>>();
-  private boolean myDisabled;
+  private boolean myDisabled = true;
   private Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
 
   public PostprocessReformattingAspect(PsiManager psiManager, TreeAspect treeAspect) {
@@ -79,6 +79,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   public <T> T postponeFormattingInside(Computable<T> computable){
     try {
+      if(myPostponedCounter == 0) myDisabled = false;
       myPostponedCounter++;
       return computable.compute();
     }
@@ -92,6 +93,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
           });
         }
         else doPostponedFormatting();
+        myDisabled = true;
       }
     }
   }
