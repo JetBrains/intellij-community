@@ -7,6 +7,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeAction;
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 
 public class Disposer {
 
@@ -21,9 +22,7 @@ public class Disposer {
   private Disposer() {
   }
 
-  public static void register(Disposable parent, Disposable child) {
-    assert parent != null : "null parent disposable for " + child;
-    assert child != null : "null child disposable for " + parent;
+  public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
     assert parent != child : " Cannot register to intself";
 
     ourTree.register(parent, child);
