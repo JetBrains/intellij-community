@@ -121,32 +121,17 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
       font = font.isPlain()? font : font.deriveFont(Font.PLAIN);
       metrics = metrics.getFont().isPlain()? metrics : g.getFontMetrics(font);
     }
-
     g.setFont(font);
-    int y = textRect.y + metrics.getAscent();
     if (tabPane.isEnabled() && tabPane.isEnabledAt(tabIndex)) {
       g.setColor(tabPane.getForegroundAt(tabIndex));
-
-      int x = textRect.x - (myNoIconSpace ? 5 : 0);
-      g.drawString(title, x, y);
-
-      //FontRenderContext frc = ((Graphics2D)g).getFontRenderContext();
-      //double titleWidth = font.getStringBounds(title, frc).getWidth();
-      //String text = "";
-      //while (font.getStringBounds(text,frc).getWidth() < titleWidth) {
-      //  text = text + " ";
-      //}
-      //AttributedString attributedString = new AttributedString(text);
-      //attributedString.addAttribute(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_LOW_GRAY);
-      //g.setColor(Color.red);
-      //g.drawString(attributedString.getIterator(), x, y);
+      g.drawString(title, textRect.x - (myNoIconSpace ? 5 : 0), textRect.y + metrics.getAscent());
     }
     else {
       // tab disabled
       g.setColor(tabPane.getBackgroundAt(tabIndex).brighter());
-      g.drawString(title, textRect.x, y);
+      g.drawString(title, textRect.x, textRect.y + metrics.getAscent());
       g.setColor(tabPane.getBackgroundAt(tabIndex).darker());
-      g.drawString(title, textRect.x - (myNoIconSpace ? 6 : 1), y - 1);
+      g.drawString(title, textRect.x - (myNoIconSpace ? 6 : 1), textRect.y + metrics.getAscent() - 1);
     }
   }
 
