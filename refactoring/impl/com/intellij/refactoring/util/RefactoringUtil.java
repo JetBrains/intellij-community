@@ -1,6 +1,5 @@
 package com.intellij.refactoring.util;
 
-import com.intellij.ant.PsiAntElement;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
@@ -171,9 +170,6 @@ public class RefactoringUtil {
   public static boolean isValidName(final Project project, final PsiElement psiElement, final String newName) {
     if (newName == null) {
       return false;
-    }
-    if (psiElement instanceof PsiAntElement) {
-      return newName.trim().matches("[\\d\\w\\_\\.\\-]*");
     }
     if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {
       return newName.indexOf(File.separatorChar) < 0 && newName.indexOf('/') < 0;
