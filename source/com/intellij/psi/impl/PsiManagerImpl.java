@@ -314,6 +314,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     myLanguageInjectors.add(injector);
   }
 
+  @NotNull
   public List<LanguageInjector> getLanguageInjectors() {
     return Collections.unmodifiableList(myLanguageInjectors);
   }
@@ -470,18 +471,15 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
           PsiTypeParameter p1 = ((PsiTypeParameter)element1);
           PsiTypeParameter p2 = ((PsiTypeParameter)element2);
 
-          if (p1.getIndex() != p2.getIndex()) {
-            return false;
-          }
+          return p1.getIndex() == p2.getIndex() &&
+                 areElementsEquivalent(p1.getOwner(), p2.getOwner());
 
-          return areElementsEquivalent(p1.getOwner(), p2.getOwner());
         }
         else {
           return false;
         }
       }
-      if (qName1.hashCode() != qName2.hashCode()) return false;
-      return qName1.equals(qName2);
+      return qName1.hashCode() == qName2.hashCode() && qName1.equals(qName2);
     }
     if (element1 instanceof PsiField) {
       if (!(element2 instanceof PsiField)) return false;
@@ -496,7 +494,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     if (element1 instanceof PsiMethod) {
       if (!(element2 instanceof PsiMethod)) return false;
       String name1 = ((PsiMethod)element1).getName();
-      if (name1 == null) return false;
       String name2 = ((PsiMethod)element2).getName();
       if (!name1.equals(name2)) return false;
       PsiClass aClass1 = ((PsiMethod)element1).getContainingClass();
@@ -980,7 +977,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     checkIfMoveIntoSelf(element, newContainer);
   }
 
-  private void checkIfMoveIntoSelf(PsiElement element, PsiElement newContainer) throws IncorrectOperationException {
+  private static void checkIfMoveIntoSelf(PsiElement element, PsiElement newContainer) throws IncorrectOperationException {
     PsiElement container = newContainer;
     while (container != null) {
       if (container == element) {
@@ -1032,6 +1029,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "PsiManager";
   }
