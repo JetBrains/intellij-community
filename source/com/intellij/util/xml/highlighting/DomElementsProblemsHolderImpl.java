@@ -4,14 +4,15 @@
 
 package com.intellij.util.xml.highlighting;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
-import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +103,7 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
     Collection<DomElementProblemDescriptor> problems = new ArrayList<DomElementProblemDescriptor>();
     final XmlElement xmlElement = domElement.getXmlElement();
     if (xmlElement != null) {
-      for (PsiReference reference : xmlElement.getReferences()) {
+      for (PsiReference reference : getReferences(xmlElement)) {
         if (XmlHighlightVisitor.hasBadResolve(reference)) {
           final String description = XmlHighlightVisitor.getErrorDescription(reference);
           problems.add(new DomElementProblemDescriptorImpl(domElement, description, HighlightSeverity.ERROR));
@@ -110,6 +111,13 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
       }
     }
     return problems;
+  }
+
+  private static PsiReference[] getReferences(final XmlElement xmlElement) {
+    if (xmlElement instanceof XmlAttribute) {
+      return ((XmlAttribute)xmlElement).getValueElement().getReferences();
+    }
+    return xmlElement.getReferences();
   }
 
   public List<DomElementProblemDescriptor> getAllProblems() {
