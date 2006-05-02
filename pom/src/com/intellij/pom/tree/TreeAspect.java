@@ -20,14 +20,12 @@ import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
 
 import java.util.Collections;
-import java.util.Set;
+
+import org.jetbrains.annotations.NotNull;
 
 public class TreeAspect implements PomModelAspect{
-  private final PomModel myModel;
-
   public TreeAspect(PomModel model) {
-    myModel = model;
-    myModel.registerAspect(TreeAspect.class, this, Collections.<PomModelAspect>emptySet());
+    model.registerAspect(TreeAspect.class, this, Collections.<PomModelAspect>emptySet());
   }
 
   public void projectOpened() {}
@@ -36,6 +34,7 @@ public class TreeAspect implements PomModelAspect{
   public void disposeComponent() {}
   public void update(PomModelEvent event) {}
 
+  @NotNull
   public String getComponentName() {
     return "Tree POM aspect";
   }
