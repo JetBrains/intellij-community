@@ -138,15 +138,17 @@ public class ModelMerger {
     }
   }
 
-  public static Set<Class> getCommonClasses(final Object... implementations) {
+  private static Set<Class> getCommonClasses(final Object... implementations) {
     final HashSet<Class> set = new HashSet<Class>();
-    final ArrayList<Class> list = new ArrayList<Class>();
-    addAllInterfaces(implementations[0].getClass(), list);
-    set.addAll(list);
-    for (int i = 1; i < implementations.length; i++) {
-      final ArrayList<Class> list1 = new ArrayList<Class>();
-      addAllInterfaces(implementations[i].getClass(), list1);
-      set.retainAll(list1);
+    if (implementations.length > 0) {
+      final ArrayList<Class> list = new ArrayList<Class>();
+      addAllInterfaces(implementations[0].getClass(), list);
+      set.addAll(list);
+      for (int i = 1; i < implementations.length; i++) {
+        final ArrayList<Class> list1 = new ArrayList<Class>();
+        addAllInterfaces(implementations[i].getClass(), list1);
+        set.retainAll(list1);
+      }
     }
     return set;
   }
