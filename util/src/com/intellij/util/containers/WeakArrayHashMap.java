@@ -21,6 +21,7 @@ package com.intellij.util.containers;
 public class WeakArrayHashMap<T,V> {
   private WeakValueHashMap<T,WeakArrayHashMap<T,V>> myContinuationMap;
   private WeakValueHashMap<T,V> myValuesMap;
+  private V myEmptyValue;
 
   private V get(T[] array, int index) {
     if (index == array.length - 1) {
@@ -38,6 +39,9 @@ public class WeakArrayHashMap<T,V> {
   }
 
   public final V get(T[] key) {
+    if (key.length == 0) {
+      return myEmptyValue;
+    }
     return get(key, 0);
   }
 
@@ -61,7 +65,11 @@ public class WeakArrayHashMap<T,V> {
   }
 
   public final void put(T[] key, V value) {
-    put(key, 0, value);
+    if (key.length == 0) {
+      myEmptyValue = value;
+    } else {
+      put(key, 0, value);
+    }
   }
 
 }
