@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -37,8 +38,12 @@ public class AntSingleTargetReferenceProvider extends AntTargetReferenceProvider
     if (attr == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final int offsetInPosition = attr.getValueElement().getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset() + 1;
-    final String attrValue = attr.getValue();
+    final XmlAttributeValue valueElement = attr.getValueElement();
+    if( valueElement == null ) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    final int offsetInPosition = valueElement.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset() + 1;
+    final String attrValue = valueElement.getValue();
     return new PsiReference[]{
       new AntTargetReference(this, antElement, attrValue, new TextRange(offsetInPosition, offsetInPosition + attrValue.length()), attr)};
   }

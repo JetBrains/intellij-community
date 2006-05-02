@@ -37,6 +37,10 @@ public class AntResolveTest extends ResolveTestCase {
     doPropertyTest();
   }
 
+  public void testRefid() throws Exception {
+    doPropertyTest();
+  }
+
   private void doTargetTest() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ref.resolve();
