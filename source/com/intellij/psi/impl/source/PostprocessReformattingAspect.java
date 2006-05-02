@@ -30,7 +30,7 @@ import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class PostprocessReformatingAspect implements PomModelAspect {
+public class PostprocessReformattingAspect implements PomModelAspect {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PostprocessReformatingAspect");
   private final PsiManager myPsiManager;
   private final TreeAspect myTreeAspect;
@@ -38,13 +38,13 @@ public class PostprocessReformatingAspect implements PomModelAspect {
   private boolean myDisabled;
   private Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
 
-  public PostprocessReformatingAspect(PsiManager psiManager, TreeAspect treeAspect) {
+  public PostprocessReformattingAspect(PsiManager psiManager, TreeAspect treeAspect) {
     myPsiManager = psiManager;
     myTreeAspect = treeAspect;
-    psiManager.getProject().getModel().registerAspect(PostprocessReformatingAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
+    psiManager.getProject().getModel().registerAspect(PostprocessReformattingAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
   }
 
-  public void disablePosprocessFormattingInside(final Runnable runnable) {
+  public void disablePostprocessFormattingInside(final Runnable runnable) {
     disablePosprocessFormattingInside(new Computable<Object>() {
       public Object compute() {
         runnable.run();
@@ -165,8 +165,8 @@ public class PostprocessReformatingAspect implements PomModelAspect {
     return myReformatElements.containsKey(fileViewProvider);
   }
 
-  public static PostprocessReformatingAspect getInstance(Project project) {
-    return project.getComponent(PostprocessReformatingAspect.class);
+  public static PostprocessReformattingAspect getInstance(Project project) {
+    return project.getComponent(PostprocessReformattingAspect.class);
   }
 
   private void postponeFormatting(final FileViewProvider viewProvider, final ASTNode child) {

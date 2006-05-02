@@ -33,7 +33,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -67,7 +67,7 @@ public class EnterHandler extends EditorWriteActionHandler {
 
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
     final Project project = (Project)DataManager.getInstance().getDataContext(editor.getComponent()).getData(DataConstants.PROJECT);
-    PostprocessReformatingAspect.getInstance(project).disablePosprocessFormattingInside(new Computable<Object>() {
+    PostprocessReformattingAspect.getInstance(project).disablePosprocessFormattingInside(new Computable<Object>() {
       public Object compute() {
         executeWriteActionInner(editor, dataContext, project);
         return null;

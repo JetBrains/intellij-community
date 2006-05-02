@@ -23,7 +23,7 @@ import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
@@ -366,7 +366,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       }
     };
     final Pair<Integer, IncorrectOperationException> pair =
-      PostprocessReformatingAspect.getInstance(file.getProject()).disablePosprocessFormattingInside(computable);
+      PostprocessReformattingAspect.getInstance(file.getProject()).disablePosprocessFormattingInside(computable);
     if(pair.getSecond() != null) throw pair.getSecond();
     return pair.getFirst();
   }
@@ -406,7 +406,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public int adjustLineIndent(final Document document, final int offset) {
-    return PostprocessReformatingAspect.getInstance(getProject()).disablePosprocessFormattingInside(new Computable<Integer>() {
+    return PostprocessReformattingAspect.getInstance(getProject()).disablePosprocessFormattingInside(new Computable<Integer>() {
       public Integer compute() {
         return adjustLineIndentInner(document, offset);
       }

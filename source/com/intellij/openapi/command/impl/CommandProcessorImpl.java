@@ -10,7 +10,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 

@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
@@ -137,8 +138,13 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
                       }
                     }
                   };
-                  ApplicationManager.getApplication().runWriteAction(action);
-                  DuplicatesImpl.processDuplicates(processor, project, editor);
+
+                  PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable () {
+                    public void run() {
+                      ApplicationManager.getApplication().runWriteAction(action);
+                      DuplicatesImpl.processDuplicates(processor, project, editor);
+                    }
+                  });
                 }
               },
           REFACTORING_NAME,

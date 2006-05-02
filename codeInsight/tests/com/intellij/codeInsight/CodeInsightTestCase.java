@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestData;
 
@@ -298,7 +298,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected void checkResultByFile(String filePath, boolean stripTrailingSpaces) throws Exception {
-    getProject().getComponent(PostprocessReformatingAspect.class).doPostponedFormatting();
+    getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (stripTrailingSpaces) {
       ((DocumentEx)myEditor.getDocument()).stripTrailingSpaces(false);
     }

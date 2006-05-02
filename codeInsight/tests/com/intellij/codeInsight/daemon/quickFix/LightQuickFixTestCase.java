@@ -13,8 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
@@ -99,7 +100,11 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
-        DuplicatesImpl.invoke(project, editor, new MethodDuplicatesMatchProvider(method, duplicates));
+        PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable () {
+          public void run() {
+            DuplicatesImpl.invoke(project, editor, new MethodDuplicatesMatchProvider(method, duplicates));
+          }
+        });
       }
     }, REFACTORING_NAME, null);
 

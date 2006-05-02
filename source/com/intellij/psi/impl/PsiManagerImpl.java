@@ -38,7 +38,7 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
@@ -284,7 +284,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public void performActionWithFormatterDisabled(final Runnable r) {
-    final PostprocessReformatingAspect component = getProject().getComponent(PostprocessReformatingAspect.class);
+    final PostprocessReformattingAspect component = getProject().getComponent(PostprocessReformattingAspect.class);
     try {
       ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
       component.disablePosprocessFormattingInside(new Computable<Object>() {
@@ -301,7 +301,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public <T> T performActionWithFormatterDisabled(Computable<T> r) {
     try {
-      final PostprocessReformatingAspect component = PostprocessReformatingAspect.getInstance(getProject());
+      final PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(getProject());
       ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
       return component.disablePosprocessFormattingInside(r);
     }

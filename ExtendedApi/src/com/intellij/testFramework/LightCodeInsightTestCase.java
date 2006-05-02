@@ -19,8 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -197,7 +196,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
    * @throws Exception
    */
   protected void checkResultByFile(String message, final String filePath, final boolean ignoreTrailingSpaces) throws Exception {
-    getProject().getComponent(PostprocessReformatingAspect.class).doPostponedFormatting();
+    getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (ignoreTrailingSpaces) {
       ((DocumentEx) myEditor.getDocument()).stripTrailingSpaces(false);
     }
@@ -272,7 +271,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
       newFileText1 = document1.getText();
     }
 
-    PostprocessReformatingAspect.getInstance(getProject()).doPostponedFormatting();
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     String text = myFile.getText();
     assertEquals(getMessage("Text mismatch", message), newFileText1, text);

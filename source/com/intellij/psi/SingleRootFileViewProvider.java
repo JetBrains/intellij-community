@@ -26,7 +26,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -113,7 +113,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public void beforeDocumentChanged() {
-    final PostprocessReformatingAspect component = myManager.getProject().getComponent(PostprocessReformatingAspect.class);
+    final PostprocessReformattingAspect component = myManager.getProject().getComponent(PostprocessReformattingAspect.class);
     if (component.isViewProviderLocked(this)) throw new RuntimeException("Document is locked by write PSI operations");
     component.doPostponedFormatting();
     final PsiFileImpl psiFile = (PsiFileImpl)getCachedPsi(getBaseLanguage());
@@ -296,7 +296,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public boolean isLockedByPsiOperations() {
-    final PostprocessReformatingAspect component = myManager.getProject().getComponent(PostprocessReformatingAspect.class);
+    final PostprocessReformattingAspect component = myManager.getProject().getComponent(PostprocessReformattingAspect.class);
     return component.isViewProviderLocked(this);
   }
 

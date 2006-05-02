@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 
 import java.io.File;
 
@@ -31,7 +31,7 @@ public class NormalizeDeclarationTest extends PsiTestCase{
     ((PsiVariable)element.getParent()).normalizeDeclaration();
 
     String textAfter = loadFile(getTestName(false) + "_after.java");
-    PostprocessReformatingAspect.getInstance(getProject()).doPostponedFormatting();
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     String fileText = myFile.getText();

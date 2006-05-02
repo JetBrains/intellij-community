@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -78,16 +79,21 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
         CommandProcessor.getInstance().executeCommand(
             project, new Runnable() {
                   public void run() {
-                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                    PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
                       public void run() {
-                        try {
-                          processor.doRefactoring();
-                        } catch (IncorrectOperationException e) {
-                          LOG.error(e);
-                        }
+                        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                          public void run() {
+                            try {
+                              processor.doRefactoring();
+                            }
+                            catch (IncorrectOperationException e) {
+                              LOG.error(e);
+                            }
+                          }
+                        });
+                        DuplicatesImpl.processDuplicates(processor, project, editor);
                       }
                     });
-                    DuplicatesImpl.processDuplicates(processor, project, editor);
                   }
                 },
             REFACTORING_NAME,

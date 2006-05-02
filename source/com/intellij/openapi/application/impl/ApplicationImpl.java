@@ -31,7 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.HashMap;
@@ -679,7 +679,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       final Project project = CommandProcessor.getInstance().getCurrentCommandProject();
       if(project != null) {
         // run postprocess formatting inside commands only
-        PostprocessReformatingAspect.getInstance(project).postponeFormattingInside(new Computable<Object>() {
+        PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Computable<Object>() {
           public Object compute() {
             action.run();
             return null;

@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -269,7 +269,7 @@ public class TemplateState implements Disposable {
     if (PsiUtil.isInJspFile(file)) {
       try {
         caretOffset += JspUtil.escapeCharsInJspContext((PsiUtil.getJspFile(file)), caretOffset, myTemplate.getTemplateText());
-        PostprocessReformatingAspect.getInstance(myProject).doPostponedFormatting();
+        PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
         myEditor.getCaretModel().moveToOffset(caretOffset);
       }
       catch (IncorrectOperationException e) {

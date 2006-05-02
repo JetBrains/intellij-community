@@ -19,7 +19,7 @@ import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.PostprocessReformatingAspect;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -162,7 +162,7 @@ public class CodeFormatterFacade implements Constants {
       if (file.getTextLength() > 0) {
         try {
           TextRange range = formatComments(file.getNode(), startOffset, endOffset);
-          final PostprocessReformatingAspect component = file.getProject().getComponent(PostprocessReformatingAspect.class);
+          final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
           component.doPostponedFormatting(file.getViewProvider());
           FormattingModel originalModel = builder.createModel(file, mySettings);
           Project project = file.getProject();
