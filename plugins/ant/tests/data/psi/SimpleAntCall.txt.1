@@ -1,5 +1,7 @@
 AntFile:SimpleAntCall.ant
-  AntProject: null
+  AntProject: project
     AntTarget: A
+      AntElement[PsiElement(XML_ATTRIBUTE)]('name="A"')
       AntCall to AntTarget: B('<antcall target="B"/>')
-    AntTarget: B('<target name="B"/>')
+    AntTarget: B
+      AntElement[PsiElement(XML_ATTRIBUTE)]('name="B"')

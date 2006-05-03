@@ -1,7 +1,11 @@
 AntFile:AntCallNestedTargets.ant
-  AntProject: null
+  AntProject: project
     AntTarget: A
+      AntElement[PsiElement(XML_ATTRIBUTE)]('name="A"')
       AntCall to AntTarget: B -> [ C D ]
-        AntTarget: C('<target name="C"/>')
-        AntTarget: D('<target name="D"/>')
-    AntTarget: B -> [ C D ]('<target name="B"/>')
+        AntTarget: C
+          AntElement[PsiElement(XML_ATTRIBUTE)]('name="C"')
+        AntTarget: D
+          AntElement[PsiElement(XML_ATTRIBUTE)]('name="D"')
+    AntTarget: B -> [ C D ]
+      AntElement[PsiElement(XML_ATTRIBUTE)]('name="B"')

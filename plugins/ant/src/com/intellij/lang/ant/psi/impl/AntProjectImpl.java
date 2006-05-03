@@ -7,7 +7,7 @@ import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
@@ -17,6 +17,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
+import org.apache.tools.ant.taskdefs.Property;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,17 +64,6 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   @Nullable
-  public String getName() {
-    return getSourceElement().getAttributeValue("name");
-  }
-
-  public PsiElement setName(String name) throws IncorrectOperationException {
-    getSourceElement().setAttribute("name", name);
-    subtreeChanged();
-    return this;
-  }
-
-  @Nullable
   public String getBaseDir() {
     return getSourceElement().getAttributeValue("basedir");
   }
@@ -89,7 +79,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     if (myTargets != null) return myTargets;
     final List<AntTarget> targets = new ArrayList<AntTarget>();
     for (final AntElement child : getChildren()) {
-      if (child instanceof AntTarget) targets.add((AntTarget)child);
+      if (child instanceof AntTarget) targets.add((AntTarget) child);
     }
     return myTargets = targets.toArray(new AntTarget[targets.size()]);
   }
@@ -98,9 +88,9 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   public AntTarget getDefaultTarget() {
     final PsiReference[] references = getReferences();
     for (PsiReference ref : references) {
-      final GenericReference reference = (GenericReference)ref;
+      final GenericReference reference = (GenericReference) ref;
       if (reference.getType().isAssignableTo(ReferenceType.ANT_TARGET)) {
-        return (AntTarget)reference.resolve();
+        return (AntTarget) reference.resolve();
       }
     }
     return null;
@@ -130,10 +120,15 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
     Project project = new Project();
     project.init();
+
     // first, create task definitons without nested elements
     updateTypeDefinitions(project.getTaskDefinitions(), true);
+
     // second, create definitions for data types
     updateTypeDefinitions(project.getDataTypeDefinitions(), false);
+
+    // third, set predefined properties
+    setPredefinedProperties(project);
     return myTypeDefinitions.get(className);
   }
 
@@ -166,11 +161,37 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     if (ht == null) return;
     final Enumeration types = ht.keys();
     while (types.hasMoreElements()) {
-      final String typeName = (String)types.nextElement();
-      final Class typeClass = (Class)ht.get(typeName);
+      final String typeName = (String) types.nextElement();
+      final Class typeClass = (Class) ht.get(typeName);
       AntTypeDefinition def = createTypeDefinition(new AntTypeId(typeName, getSourceElement().getNamespace()), typeClass, isTask);
       if (def != null) {
         myTypeDefinitions.put(def.getClassName(), def);
+      }
+    }
+  }
+
+  private void setPredefinedProperties(Project project) {
+    Hashtable ht = project.getProperties();
+    AntTypeDefinition propertyDef = myTypeDefinitions.get(Property.class.getName());
+    final PsiElementFactory elementFactory = getManager().getElementFactory();
+    final Enumeration types = ht.keys();
+    while (types.hasMoreElements()) {
+      final String name = (String) types.nextElement();
+      final String value = (String) ht.get(name);
+      @NonNls final StringBuilder tagBuilder = StringBuilderSpinAllocator.alloc();
+      try {
+        tagBuilder.append("<property name=\"");
+        tagBuilder.append(name);
+        tagBuilder.append("\" value=\"");
+        tagBuilder.append(value);
+        tagBuilder.append("\"/>");
+        setProperty(name, new AntPropertyImpl(this,
+            elementFactory.createTagFromText(tagBuilder.toString()), propertyDef));
+      }
+      catch (IncorrectOperationException e) {
+        // ignore
+      } finally {
+        StringBuilderSpinAllocator.dispose(tagBuilder);
       }
     }
   }
@@ -198,23 +219,21 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
     final Enumeration attrEnum = helper.getAttributes();
     while (attrEnum.hasMoreElements()) {
-      String attr = (String)attrEnum.nextElement();
+      String attr = (String) attrEnum.nextElement();
       final Class attrClass = helper.getAttributeType(attr);
       if (int.class.equals(attrClass)) {
         attributes.put(attr, AntAttributeType.INTEGER);
-      }
-      else if (boolean.class.equals(attrClass)) {
+      } else if (boolean.class.equals(attrClass)) {
         attributes.put(attr, AntAttributeType.BOOLEAN);
-      }
-      else {
+      } else {
         attributes.put(attr, AntAttributeType.STRING);
       }
     }
     final HashMap<AntTypeId, String> nestedDefinitions = new HashMap<AntTypeId, String>();
     final Enumeration nestedEnum = helper.getNestedElements();
     while (nestedEnum.hasMoreElements()) {
-      final String nestedElement = (String)nestedEnum.nextElement();
-      final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
+      final String nestedElement = (String) nestedEnum.nextElement();
+      final String className = ((Class) helper.getNestedElementMap().get(nestedElement)).getName();
       nestedDefinitions.put(new AntTypeId(nestedElement), className);
     }
     return new AntTypeDefinitionImpl(id, taskClass.getName(), isTask, attributes, nestedDefinitions);

@@ -4,9 +4,7 @@ import com.intellij.lang.ant.psi.AntCall;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,17 +48,6 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
-  }
-
-  @Nullable
-  public String getName() {
-    return getSourceElement().getAttributeValue("name");
-  }
-
-  public PsiElement setName(String name) throws IncorrectOperationException {
-    getSourceElement().setAttribute("name", name);
-    subtreeChanged();
-    return this;
   }
 
   @Nullable

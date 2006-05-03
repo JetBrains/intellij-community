@@ -1,4 +1,5 @@
 AntFile:PropertyFile.ant
-  AntProject: null
-    AntProperty: [file: props.properties]('<property file="props.properties" />')
-    AntTarget: A('<target name="A"/>')
+  AntProject: project
+    AntProperty: [property = null]('<property file="props.properties" />')
+    AntTarget: A
+      AntElement[PsiElement(XML_ATTRIBUTE)]('name="A"')

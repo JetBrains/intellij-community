@@ -1,4 +1,6 @@
 AntFile:PropertyLocation.ant
-  AntProject: null
-    AntProperty: [name1 = C:\Windows\system32]('<property name="name1" location="system32" />')
-    AntTarget: A('<target name="A"/>')
+  AntProject: project
+    AntProperty: [name1 = C:\Windows\system32]
+      AntElement[PsiElement(XML_ATTRIBUTE)]('name="name1"')
+    AntTarget: A
+      AntElement[PsiElement(XML_ATTRIBUTE)]('name="A"')

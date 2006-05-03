@@ -48,6 +48,11 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return AntSupport.getLanguage();
   }
 
+  @NotNull
+  public XmlElement getSourceElement() {
+    return (XmlElement) super.getSourceElement();
+  }
+
   public String toString() {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
@@ -78,14 +83,10 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     final XmlElement se = getSourceElement();
     if (se instanceof XmlAttribute) {
       ((XmlAttribute) se).setValue(name);
+      subtreeChanged();
       return this;
     }
     throw new IncorrectOperationException();
-  }
-
-  @NotNull
-  public XmlElement getSourceElement() {
-    return (XmlElement) super.getSourceElement();
   }
 
   public AntElement getAntParent() {

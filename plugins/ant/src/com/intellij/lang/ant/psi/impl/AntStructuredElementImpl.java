@@ -5,8 +5,11 @@ import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,16 +24,20 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   protected AntTypeDefinition myDefinition;
   protected boolean myDefinitionCloned = false;
   private AntElement myIdElement;
+  private AntElement myNameElement;
   private Map<String, AntElement> myReferencedElements = null;
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(parent, sourceElement);
     final String id = getId();
     if (id != null && parent instanceof AntStructuredElement) {
-      myIdElement = new AntElementImpl(
-          this, getSourceElement().getAttribute("id", null));
+      myIdElement = new AntElementImpl(this, getSourceElement().getAttribute("id", null));
       AntStructuredElement se = (AntStructuredElement) parent;
       se.registerRefId(id, myIdElement);
+    }
+    XmlAttribute nameAttr = getSourceElement().getAttribute("name", null);
+    if (nameAttr != null) {
+      myNameElement = new AntElementImpl(this, nameAttr);
     }
   }
 
@@ -65,14 +72,29 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
   }
 
-  protected AntElement[] getChildrenInner() {
-    final XmlTag[] tags = getSourceElement().getSubTags();
-    final List<AntElement> children = new ArrayList<AntElement>();
-    for (final XmlTag tag : tags) {
-      children.add(AntElementFactory.createAntElement(this, tag));
+  public String getName() {
+    return (myNameElement == null) ? super.getName() : ((XmlAttribute) myNameElement.getSourceElement()).getValue();
+  }
+
+  public PsiElement setName(String name) throws IncorrectOperationException {
+    if (myNameElement == null) {
+      return super.setName(name);
     }
+    ((XmlAttribute) myNameElement.getSourceElement()).setValue(name);
+    subtreeChanged();
+    return this;
+  }
+
+  protected AntElement[] getChildrenInner() {
+    final List<AntElement> children = new ArrayList<AntElement>();
     if (myIdElement != null) {
       children.add(myIdElement);
+    }
+    if (myNameElement != null) {
+      children.add(myNameElement);
+    }
+    for (final XmlTag tag : getSourceElement().getSubTags()) {
+      children.add(AntElementFactory.createAntElement(this, tag));
     }
     return children.toArray(new AntElement[children.size()]);
   }

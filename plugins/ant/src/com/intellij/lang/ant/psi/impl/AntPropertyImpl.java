@@ -63,21 +63,6 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   }
 
   @Nullable
-  public String getName() {
-    return getSourceElement().getAttributeValue("name");
-  }
-
-  public PsiElement setName(final String name) throws IncorrectOperationException {
-    final XmlTag sourceElement = getSourceElement();
-    if (sourceElement.getAttribute("name", null) == null) {
-      throw new IncorrectOperationException("Can't set name of an unnamed property");
-    }
-    sourceElement.setAttribute("name", name);
-    subtreeChanged();
-    return this;
-  }
-
-  @Nullable
   public String getValue() {
     final XmlTag sourceElement = getSourceElement();
     if (sourceElement.getAttributeValue("name") != null) {
