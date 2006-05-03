@@ -5,6 +5,7 @@ package com.intellij.psi;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ResourceBundle;
 
@@ -12,7 +13,7 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class PsiBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.PsiBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.PsiBundle");
 
   private PsiBundle() {}
 
