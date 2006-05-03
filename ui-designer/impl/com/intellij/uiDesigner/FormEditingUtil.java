@@ -487,12 +487,7 @@ public final class FormEditingUtil {
       }
     }
 
-    if(SwingConstants.HORIZONTAL == orientation){
-      GridChangeUtil.deleteCell(container, cell, false);
-    }
-    else{
-      GridChangeUtil.deleteCell(container, cell, true);
-    }
+    container.getLayoutManager().deleteGridCells(container, cell, isRow);
     editor.refreshAndSave(true);
   }
 
