@@ -71,7 +71,6 @@ public class AsmCodeGenerator {
     myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_BORDER, new SimpleLayoutCodeGenerator(Type.getType(BorderLayout.class)));
     myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_CARD, new SimpleLayoutCodeGenerator(Type.getType(CardLayout.class)));
     myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_FLOW, new FlowLayoutCodeGenerator());
-    myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_FORM, new FormLayoutCodeGenerator());
 
     myComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutCodeGenerator());
     myComponentLayoutCodeGenerators.put(LwTabbedPane.class, new TabbedPaneLayoutCodeGenerator());
@@ -431,6 +430,10 @@ public class AsmCodeGenerator {
       while(parent != null) {
         final String layoutManager = parent.getLayoutManager();
         if (layoutManager != null && layoutManager.length() > 0) {
+          if (layoutManager.equals(UIFormXmlConstants.LAYOUT_FORM) &&
+              !myContainerLayoutCodeGenerators.containsKey(UIFormXmlConstants.LAYOUT_FORM)) {
+            myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_FORM, new FormLayoutCodeGenerator());
+          }
           generator = (LayoutCodeGenerator) myContainerLayoutCodeGenerators.get(layoutManager);
           if (generator != null) {
             return generator;
