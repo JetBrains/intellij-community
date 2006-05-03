@@ -16,6 +16,7 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,15 +54,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private static final Key DELETED_STATUS = Key.create("DELETED_STATUS");
 
   private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
-  public Map<String, VirtualFileImpl> myUnaccountedFiles = new THashMap<String, VirtualFileImpl>(new TObjectHashingStrategy<String>() {
-    public int computeHashCode(final String s) {
-      return SystemInfo.isFileSystemCaseSensitive ? s.hashCode() : StringUtil.stringHashCodeInsensitive(s); 
-    }
-
-    public boolean equals(final String s1, final String s2) {
-      return SystemInfo.isFileSystemCaseSensitive ? s1.equals(s2) : s1.equalsIgnoreCase(s2);
-    }
-  });
+  public Map<String, VirtualFileImpl> myUnaccountedFiles = SystemInfo.isFileSystemCaseSensitive
+                                                           ? new THashMap<String, VirtualFileImpl>()
+                                                           : new THashMap<String, VirtualFileImpl>(
+                                                               new CaseInsensitiveStringHashingStrategy()
+                                                             );
 
   private static class WatchRequestImpl implements WatchRequest {
     public String myRootPath;
