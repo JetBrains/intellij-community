@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -50,6 +51,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private String myLastKnownComment = "";
   private boolean myAllOfDefaultChangeListChangesIncluded;
+  @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION";
 
   private static void commit(Project project, List<LocalChangeList> list, final List<Change> changes, final CommitExecutor executor) {
     new CommitChangeListDialog(project, list, changes, executor).show();
@@ -222,6 +224,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   protected void dispose() {
     super.dispose();
     myOKButtonUpdateAlarm.cancelAllRequests();
+    PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, String.valueOf(myRootPane.getProportion()));
   }
 
   private String getCommitActionName() {
@@ -319,8 +322,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     bottomPanel.add(myCommitMessageArea, BorderLayout.CENTER);
 
     myRootPane.setSecondComponent(bottomPanel);
-    myRootPane.setProportion(0.5f);
+    myRootPane.setProportion(calcSplitterProportion());
     return myRootPane;
+  }
+
+  private static float calcSplitterProportion() {
+    try {
+      final String s = PropertiesComponent.getInstance().getValue(SPLITTER_PROPORTION_OPTION);
+      return s != null ? Float.valueOf(s).floatValue() : 0.5f;
+    }
+    catch (NumberFormatException e) {
+      return 0.5f;
+    }
   }
 
   public List<AbstractVcs> getAffectedVcses() {
