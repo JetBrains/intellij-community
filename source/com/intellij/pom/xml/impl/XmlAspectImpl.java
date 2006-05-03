@@ -1,8 +1,6 @@
 package com.intellij.pom.xml.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -19,6 +17,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.xml.*;
 import com.intellij.util.CharTable;
@@ -120,36 +120,51 @@ public class XmlAspectImpl implements XmlAspect {
         public void visitXmlTag(XmlTag tag) {
           ASTNode[] affectedChildren = shortenChange(myChange.getAffectedChildren(), changeSet);
 
-          for (int j = 0; j < affectedChildren.length; j++) {
-            final ASTNode treeElement = affectedChildren[j];
+          for (final ASTNode treeElement : affectedChildren) {
+            /*final IElementType type = treeElement.getElementType();
+            if (type == ElementType.WHITE_SPACE) continue;
+            if (type == ElementType.XML_NAME) {
+              if (myChange.getChangeByChild(treeElement).getChangeType() == ChangeInfo.REPLACE) {
+                continue;
+              }
+            }*/
             if (!(treeElement instanceof XmlTagChild)) {
               visitElement(tag);
               return;
             }
           }
 
-          for (int j = 0; j < affectedChildren.length; j++) {
-            final ChangeInfo changeByChild = myChange.getChangeByChild(affectedChildren[j]);
+          for (ASTNode treeElement : affectedChildren) {
+            final ChangeInfo changeByChild = myChange.getChangeByChild(treeElement);
             final int changeType = changeByChild.getChangeType();
-            final ASTNode treeElement = affectedChildren[j];
+            final IElementType type = treeElement.getElementType();
+            if (type == ElementType.WHITE_SPACE) continue;
+            /*
+            if (type == ElementType.XML_NAME) {
+              final XmlToken xmlToken = (XmlToken)((ReplaceChangeInfo)changeByChild).getReplaced();
+              xmlChangeSet.add(new XmlTagNameChangedImpl(tag, xmlToken.getText()));
+              continue;
+            }
+            */
+
             switch (changeType) {
               case ChangeInfo.ADD:
-                   xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)treeElement));
-                   break;
+                xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)treeElement));
+                break;
               case ChangeInfo.REMOVED:
-                   treeElement.putUserData(CharTable.CHAR_TABLE_KEY, table);
-                   xmlChangeSet.add(new XmlTagChildRemovedImpl(tag, (XmlTagChild)treeElement));
-                   break;
+                treeElement.putUserData(CharTable.CHAR_TABLE_KEY, table);
+                xmlChangeSet.add(new XmlTagChildRemovedImpl(tag, (XmlTagChild)treeElement));
+                break;
               case ChangeInfo.CONTENTS_CHANGED:
-                   xmlChangeSet.add(new XmlTagChildChangedImpl(tag, (XmlTagChild)treeElement));
-                   break;
+                xmlChangeSet.add(new XmlTagChildChangedImpl(tag, (XmlTagChild)treeElement));
+                break;
               case ChangeInfo.REPLACE:
-                   final XmlTagChild replaced = (XmlTagChild)((ReplaceChangeInfo)changeByChild).getReplaced();
-                   replaced.putUserData(CharTable.CHAR_TABLE_KEY, table);
-                   xmlChangeSet.add(new XmlTagChildRemovedImpl(tag, replaced));
-                   xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)treeElement));
-                   break;
-              }
+                final XmlTagChild replaced = (XmlTagChild)((ReplaceChangeInfo)changeByChild).getReplaced();
+                replaced.putUserData(CharTable.CHAR_TABLE_KEY, table);
+                xmlChangeSet.add(new XmlTagChildRemovedImpl(tag, replaced));
+                xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)treeElement));
+                break;
+            }
           }
         }
 
