@@ -45,7 +45,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntProject: ");
-      builder.append(getName());
+      final String name = getName();
+      builder.append((name == null) ? "unnamed" : name);
       if (getDescription() != null) {
         builder.append(" [");
         builder.append(getDescription());

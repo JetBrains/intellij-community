@@ -70,9 +70,6 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
 
   public String getName() {
     final XmlElement se = getSourceElement();
-    if (se instanceof XmlTag) {
-      return ((XmlTag) se).getName();
-    }
     if (se instanceof XmlAttribute) {
       return ((XmlAttribute) se).getValue();
     }

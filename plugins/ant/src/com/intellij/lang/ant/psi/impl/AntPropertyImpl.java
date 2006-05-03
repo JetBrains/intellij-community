@@ -22,13 +22,12 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
     AntElement propHolder = parent;
-    if( propHolder instanceof AntCall) {
+    if (propHolder instanceof AntCall) {
       propHolder = propHolder.getAntProject();
     }
     if (getName() != null) {
       propHolder.setProperty(getName(), this);
-    }
-    else if (getFileName() != null) {
+    } else if (getFileName() != null) {
       final PropertiesFile file = getPropertiesFile();
       if (file != null) {
         for (Property prop : file.getProperties()) {
@@ -46,8 +45,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
         builder.append(getName());
         builder.append(" = ");
         builder.append(getValue());
-      }
-      else {
+      } else {
         final String propFile = getFileName();
         if (propFile != null) {
           builder.append("file: ");
@@ -98,7 +96,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   @Nullable
   public PropertiesFile getPropertiesFile() {
-    return (PropertiesFile)findFileByName(getFileName());
+    return (PropertiesFile) findFileByName(getFileName());
   }
 
   public void setPropertiesFile(final String name) throws IncorrectOperationException {
