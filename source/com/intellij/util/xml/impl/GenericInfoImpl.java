@@ -3,10 +3,11 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
@@ -14,12 +15,14 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
-import com.intellij.javaee.ReadOnlyDeploymentDescriptorModificationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
-import java.lang.reflect.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -360,7 +363,8 @@ public class GenericInfoImpl implements DomGenericInfo {
         public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
           final VirtualFile virtualFile = handler.getFile().getVirtualFile();
           if (virtualFile != null && !virtualFile.isWritable()) {
-            throw new ReadOnlyDeploymentDescriptorModificationException(virtualFile);
+            VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(virtualFile);
+            return null;
           }
 
           for (final String qname : qnames1) {

@@ -27,6 +27,7 @@ public abstract class SetInvocation implements Invocation {
     final VirtualFile virtualFile = handler.getFile().getVirtualFile();
     if (virtualFile != null && !virtualFile.isWritable()) {
       VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(virtualFile);
+      return null;
     }
 
     final DomManagerImpl manager = handler.getManager();

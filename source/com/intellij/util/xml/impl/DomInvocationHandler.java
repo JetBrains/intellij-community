@@ -646,6 +646,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     final VirtualFile virtualFile = getFile().getVirtualFile();
     if (virtualFile != null && !virtualFile.isWritable()) {
       VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(virtualFile);
+      return null;
     }
 
     checkInitialized(tagName);
