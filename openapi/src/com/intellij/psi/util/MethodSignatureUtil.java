@@ -250,31 +250,22 @@ public class MethodSignatureUtil {
     return result;
   }
 
-  public static PsiSubstitutor combineSubstitutors(PsiSubstitutor substitutor, PsiSubstitutor parentSubstitutor) {
-    if (substitutor == PsiSubstitutor.EMPTY) return parentSubstitutor;
-    final PsiTypeParameter[] typeParameters = substitutor.getSubstitutionMap().keySet().toArray(PsiTypeParameter.EMPTY_ARRAY);
+  public static PsiSubstitutor combineSubstitutors(PsiSubstitutor substitutor1, PsiSubstitutor substitutor2) {
+    if (substitutor1 == PsiSubstitutor.EMPTY) return substitutor2;
+    final PsiTypeParameter[] typeParameters = substitutor1.getSubstitutionMap().keySet().toArray(PsiTypeParameter.EMPTY_ARRAY);
     for (PsiTypeParameter typeParameter : typeParameters) {
-      final PsiType type = substitutor.substitute(typeParameter);
-      substitutor = substitutor.put(typeParameter, promoteType(type, parentSubstitutor));
-    }
-    return substitutor;
-  }
+      final PsiType type = substitutor1.substitute(typeParameter);
+      PsiType otherSubstituted;
+      if (type instanceof PsiClassType) {
+        final PsiClass resolved = ((PsiClassType)type).resolve();
+        if (resolved instanceof PsiTypeParameter) {
+          otherSubstituted = substitutor2.substitute((PsiTypeParameter)resolved);
+        } else otherSubstituted = substitutor2.substitute(type);
+      } else otherSubstituted = substitutor2.substitute(type);
 
-  // null means raw
-  private static PsiType promoteType(PsiType type, PsiSubstitutor parentSubstitutor) {
-    if (type instanceof PsiClassType) {
-      final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-      final PsiClass aClass = resolveResult.getElement();
-      final PsiSubstitutor resolvedSubstitutor = resolveResult.getSubstitutor();
-      if (aClass != null) {
-        final PsiSubstitutor substitutor = combineSubstitutors(resolvedSubstitutor, parentSubstitutor);
-        if (aClass instanceof PsiTypeParameter && substitutor.substitute((PsiTypeParameter)aClass) == null) {
-          return null;
-        }
-        type = substitutor.substitute(type);
-      }
+      substitutor1 = substitutor1.put(typeParameter, otherSubstituted);
     }
-    return parentSubstitutor.substitute(type);
+    return substitutor1;
   }
 
   private static class MethodParametersErasureEquality implements TObjectHashingStrategy<MethodSignature> {

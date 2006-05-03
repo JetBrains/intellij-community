@@ -216,7 +216,7 @@ public class GenericsHighlightUtil {
   }
 
   private static HighlightInfo checkInterfaceMultipleInheritance(PsiClass aClass,
-                                                                 PsiSubstitutor parentSubstitutor,
+                                                                 PsiSubstitutor derivedSubstitutor,
                                                                  Map<PsiClass, PsiSubstitutor> inheritedClasses,
                                                                  Set<PsiClass> visited,
                                                                  TextRange textRange) {
@@ -226,7 +226,7 @@ public class GenericsHighlightUtil {
       final PsiClass superClass = result.getElement();
       if (superClass == null || visited.contains(superClass)) continue;
       PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();
-      superTypeSubstitutor = MethodSignatureUtil.combineSubstitutors(superTypeSubstitutor, parentSubstitutor);
+      superTypeSubstitutor = MethodSignatureUtil.combineSubstitutors(superTypeSubstitutor, derivedSubstitutor);
 
       final PsiSubstitutor inheritedSubstitutor = inheritedClasses.get(superClass);
       if (inheritedSubstitutor != null) {
