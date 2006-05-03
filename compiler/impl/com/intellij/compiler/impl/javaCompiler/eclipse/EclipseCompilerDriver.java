@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.internal.compiler.*;
@@ -147,6 +148,12 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
     catch (ProcessCanceledException e) {
       //compileContext.addMessage(CompilerMessageCategory.ERROR, "Canceled",null,-1,-1);
     }
+    catch (Exception e) {
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator == null || !indicator.isCanceled()) {
+        compileContext.addMessage(CompilerMessageCategory.ERROR, "Internal Error: "+e.toString(),null,-1,-1);
+      }
+    }
     finally {
       myCompilationResults.offer(END_OF_STREAM);
       environment.cleanup();
@@ -154,6 +161,7 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
   }
 
   public boolean processMessageLine(final OutputParser.Callback callback, final String outputDir, Project project) {
+    ProgressManager.getInstance().checkCanceled();
     CompilationResult result;
     try {
       result = myCompilationResults.take();
@@ -240,6 +248,7 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
     public char[] getContents() {
       final String fileName = String.valueOf(getFileName());
       try {
+        ProgressManager.getInstance().checkCanceled();
         return FileUtil.loadFileText(new File(fileName), myDefaultEncoding);
       }
       catch (IOException e) {
