@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 
 public class ConditionalUtils{
+
     private ConditionalUtils(){
         super();
     }
@@ -51,6 +52,9 @@ public class ConditionalUtils{
             return false;
         }
         final PsiExpression returnValue = returnStatement.getReturnValue();
+	    if (returnValue == null){
+		    return false;
+	    }
         final String returnValueText = returnValue.getText();
         return value.equals(returnValueText);
     }
@@ -71,7 +75,6 @@ public class ConditionalUtils{
         final PsiAssignmentExpression assignment =
                 (PsiAssignmentExpression) expression;
         final PsiExpression rhs = assignment.getRExpression();
-        final PsiExpression lhs = assignment.getLExpression();
         if(rhs == null){
             return false;
         }

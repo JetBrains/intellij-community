@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
@@ -23,18 +24,17 @@ import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
         }
         final PsiJavaToken token = (PsiJavaToken) element;
-
         final PsiElement parent = token.getParent();
         if(!(parent instanceof PsiIfStatement)){
             return false;
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
-
         if(ErrorUtil.containsError(ifStatement)){
             return false;
         }
@@ -51,11 +51,11 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
         return isReplaceableImplicitReturn(ifStatement);
     }
 
-    public static boolean isReplaceableImplicitReturn(PsiIfStatement ifStatement){
+    public static boolean isReplaceableImplicitReturn(
+            PsiIfStatement ifStatement){
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
-                                                new Class[]{
-                                                    PsiWhiteSpace.class});
+                        PsiWhiteSpace.class);
         if(!(nextStatement instanceof PsiReturnStatement)){
             return false;
         }
@@ -64,7 +64,6 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
         if(!(thenBranch instanceof PsiReturnStatement)){
             return false;
         }
-
         final PsiExpression thenReturn =
                 ((PsiReturnStatement) thenBranch).getReturnValue();
         if(thenReturn == null){
@@ -74,7 +73,6 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
         if(thenType == null){
             return false;
         }
-
         final PsiExpression elseReturn =
                 ((PsiReturnStatement) nextStatement).getReturnValue();
         if(elseReturn == null){
@@ -84,7 +82,6 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
         if(elseType == null){
             return false;
         }
-
         return thenType.isAssignableFrom(elseType) ||
                 elseType.isAssignableFrom(thenType);
     }
@@ -136,20 +133,22 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiAssignmentExpression thenExpression =
-                (PsiAssignmentExpression) ((PsiExpressionStatement) thenBranch).getExpression();
+                (PsiAssignmentExpression)
+                        ((PsiExpressionStatement) thenBranch).getExpression();
         final PsiAssignmentExpression elseExpression =
-                (PsiAssignmentExpression) ((PsiExpressionStatement) elseBranch).getExpression();
+                (PsiAssignmentExpression)
+                        ((PsiExpressionStatement) elseBranch).getExpression();
         final PsiJavaToken thenSign = thenExpression.getOperationSign();
         final PsiJavaToken elseSign = elseExpression.getOperationSign();
-        if(!thenSign.getTokenType().equals(elseSign.getTokenType())){
-            return false;
-        }
+	    final IElementType tokenType = thenSign.getTokenType();
+	    if(!tokenType.equals(elseSign.getTokenType())){
+	        return false;
+	    }
         final PsiExpression thenLhs = thenExpression.getLExpression();
         if(thenExpression.getRExpression() == null){
             return false;
         }
-        if(elseExpression.getRExpression() == null ||
-                elseExpression.getLExpression() == null){
+        if(elseExpression.getRExpression() == null){
             return false;
         }
         final PsiExpression thenRhs = thenExpression.getRExpression();
@@ -159,10 +158,9 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression elseRhs = elseExpression.getRExpression();
-       if(elseRhs == null)
-       {
-           return false;
-       }
+	    if(elseRhs == null) {
+		    return false;
+	    }
         final PsiType elseType = elseRhs.getType();
         if(elseType == null){
             return false;

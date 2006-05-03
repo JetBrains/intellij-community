@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
 
 class AssertTrueEqualsPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiMethodCallExpression)){
             return false;
@@ -32,9 +33,6 @@ class AssertTrueEqualsPredicate implements PsiElementPredicate{
         final PsiMethodCallExpression expression =
                 (PsiMethodCallExpression) element;
         final PsiExpressionList argumentList = expression.getArgumentList();
-        if(argumentList == null){
-            return false;
-        }
         final PsiExpression[] args = argumentList.getExpressions();
         final int numArgs = args.length;
         if(numArgs < 1 || numArgs > 2){
@@ -42,9 +40,6 @@ class AssertTrueEqualsPredicate implements PsiElementPredicate{
         }
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        if(methodExpression == null){
-            return false;
-        }
         @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"assertTrue".equals(methodName)){
             return false;
@@ -66,18 +61,13 @@ class AssertTrueEqualsPredicate implements PsiElementPredicate{
             final PsiMethodCallExpression expression =
                     (PsiMethodCallExpression) arg;
             final PsiExpressionList argumentList = expression.getArgumentList();
-            if(argumentList == null){
-                return false;
-            }
             if(argumentList.getExpressions().length != 1){
                 return false;
             }
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            if(methodExpression == null){
-                return false;
-            }
-            @NonNls final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
             return "equals".equals(methodName);
         }
         return false;

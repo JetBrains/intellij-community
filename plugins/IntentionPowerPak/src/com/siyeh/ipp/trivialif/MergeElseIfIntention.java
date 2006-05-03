@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,23 +23,23 @@ import org.jetbrains.annotations.NotNull;
 
 public class MergeElseIfIntention extends Intention {
 
+    @NotNull
+    public PsiElementPredicate getElementPredicate() {
+        return new MergeElseIfPredicate();
+    }
 
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
-    return new MergeElseIfPredicate();
-  }
-
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiJavaToken token = (PsiJavaToken)element;
-    final PsiIfStatement parentStatement =
-      (PsiIfStatement)token.getParent();
-    assert parentStatement != null;
-    final PsiBlockStatement elseBranch =
-      (PsiBlockStatement)parentStatement.getElseBranch();
-    final PsiCodeBlock elseBranchBlock = elseBranch.getCodeBlock();
-    final PsiStatement elseBranchContents =
-      elseBranchBlock.getStatements()[0];
-    replaceStatement(elseBranchContents.getText(), elseBranch);
-  }
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiJavaToken token = (PsiJavaToken)element;
+        final PsiIfStatement parentStatement =
+                (PsiIfStatement)token.getParent();
+        assert parentStatement != null;
+        final PsiBlockStatement elseBranch =
+                (PsiBlockStatement)parentStatement.getElseBranch();
+        assert elseBranch != null;
+        final PsiCodeBlock elseBranchBlock = elseBranch.getCodeBlock();
+        final PsiStatement elseBranchContents =
+                elseBranchBlock.getStatements()[0];
+        replaceStatement(elseBranchContents.getText(), elseBranch);
+    }
 }

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 
 public class ErrorUtil{
+
     private ErrorUtil(){
         super();
     }
@@ -37,7 +38,7 @@ public class ErrorUtil{
             containsErrorElement = true;
         }
 
-        private boolean containsErrorElement(){
+        public boolean containsErrorElement(){
             return containsErrorElement;
         }
     }

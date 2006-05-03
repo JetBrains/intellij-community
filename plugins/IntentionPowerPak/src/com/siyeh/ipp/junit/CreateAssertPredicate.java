@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,6 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
 class CreateAssertPredicate implements PsiElementPredicate{
-    CreateAssertPredicate(){
-        super();
-    }
 
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiExpressionStatement)){
@@ -47,27 +44,20 @@ class CreateAssertPredicate implements PsiElementPredicate{
         }
         final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
                 expression, PsiMethod.class);
-        if (containingMethod != null && AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test",
-                                       true)) {
-            return true;
-        }
-        final PsiClass containingClass =
-                PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-        if(!isTest(containingClass)){
-            return false;
-        }
         return isTestMethod(containingMethod);
     }
 
-    private boolean isTestMethod(PsiMethod method){
+    private static boolean isTestMethod(PsiMethod method){
         if(method == null){
             return false;
         }
+	    if (AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
+		    return true;
+	    }
         if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
            !method.hasModifierProperty(PsiModifier.PUBLIC)){
             return false;
         }
-
         final PsiType returnType = method.getReturnType();
         if(returnType == null){
             return false;
@@ -84,10 +74,14 @@ class CreateAssertPredicate implements PsiElementPredicate{
             return false;
         }
         @NonNls final String methodName = method.getName();
-        return methodName.startsWith("test");
+	    if (!methodName.startsWith("test")) {
+		    return false;
+	    }
+	    final PsiClass containingClass = method.getContainingClass();
+	    return isTestClass(containingClass);
     }
 
-    private static boolean isTest(PsiClass aClass){
+    private static boolean isTestClass(PsiClass aClass){
         if(aClass == null){
             return false;
         }

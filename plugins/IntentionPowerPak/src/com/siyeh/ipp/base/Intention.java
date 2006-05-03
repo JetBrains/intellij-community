@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,31 +56,32 @@ public abstract class Intention implements IntentionAction{
     protected abstract void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException;
 
-    protected abstract @NotNull PsiElementPredicate getElementPredicate();
+    @NotNull protected abstract PsiElementPredicate getElementPredicate();
 
     protected static void replaceExpression(@NotNull String newExpression,
-                                            @NotNull PsiExpression exp)
+                                            @NotNull PsiExpression expression)
             throws IncorrectOperationException{
-        final PsiManager mgr = exp.getManager();
+        final PsiManager mgr = expression.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
         final PsiExpression newCall =
                 factory.createExpressionFromText(newExpression, null);
-        final PsiElement insertedElement = exp.replace(newCall);
+        final PsiElement insertedElement = expression.replace(newCall);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
     }
 
-    protected static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression newExpression,
-                                                                 @NotNull PsiExpression exp)
+    protected static void replaceExpressionWithNegatedExpression(
+            @NotNull PsiExpression newExpression,
+            @NotNull PsiExpression expression)
             throws IncorrectOperationException{
-        final PsiManager mgr = exp.getManager();
+        final PsiManager mgr = expression.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
 
-        PsiExpression expressionToReplace = exp;
+        PsiExpression expressionToReplace = expression;
         final String newExpressionText = newExpression.getText();
         final String expString;
-        if(BoolUtils.isNegated(exp)){
-            expressionToReplace = BoolUtils.findNegation(exp);
+        if(BoolUtils.isNegated(expression)){
+            expressionToReplace = BoolUtils.findNegation(expression);
             expString = newExpressionText;
         } else if(ComparisonUtils.isComparison(newExpression)){
             final PsiBinaryExpression binaryExpression =
@@ -95,7 +96,7 @@ public abstract class Intention implements IntentionAction{
             expString = lhs.getText() + negatedComparison + rhs.getText();
         } else{
             if(ParenthesesUtils.getPrecendence(newExpression) >
-               ParenthesesUtils.PREFIX_PRECEDENCE){
+                    ParenthesesUtils.PREFIX_PRECEDENCE){
                 expString = "!(" + newExpressionText + ')';
             } else{
                 expString = '!' + newExpressionText;
@@ -109,16 +110,17 @@ public abstract class Intention implements IntentionAction{
         codeStyleManager.reformat(insertedElement);
     }
 
-    protected static void replaceExpressionWithNegatedExpressionString(String newExpression,
-                                                                       PsiExpression exp)
+    protected static void replaceExpressionWithNegatedExpressionString(
+            @NotNull String newExpression,
+            @NotNull PsiExpression expression)
             throws IncorrectOperationException{
-        final PsiManager mgr = exp.getManager();
+        final PsiManager mgr = expression.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
 
-        PsiExpression expressionToReplace = exp;
+        PsiExpression expressionToReplace = expression;
         final String expString;
-        if(BoolUtils.isNegated(exp)){
-            expressionToReplace = BoolUtils.findNegation(exp);
+        if(BoolUtils.isNegated(expression)){
+            expressionToReplace = BoolUtils.findNegation(expression);
             expString = newExpression;
         } else{
             expString = "!(" + newExpression + ')';
@@ -131,8 +133,9 @@ public abstract class Intention implements IntentionAction{
         codeStyleManager.reformat(insertedElement);
     }
 
-    protected static void replaceStatement(@NonNls @NotNull String newStatement,
-                                           @NonNls @NotNull PsiStatement statement)
+    protected static void replaceStatement(
+            @NonNls @NotNull String newStatement,
+            @NonNls @NotNull PsiStatement statement)
             throws IncorrectOperationException{
         final PsiManager mgr = statement.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
@@ -142,9 +145,10 @@ public abstract class Intention implements IntentionAction{
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
     }
-    
-    protected static void replaceStatementAndShorten(@NonNls @NotNull String newStatement,
-                                           @NonNls @NotNull PsiStatement statement)
+
+    protected static void replaceStatementAndShorten(
+            @NonNls @NotNull String newStatement,
+            @NonNls @NotNull PsiStatement statement)
             throws IncorrectOperationException{
         final PsiManager mgr = statement.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
@@ -152,8 +156,8 @@ public abstract class Intention implements IntentionAction{
                 factory.createStatementFromText(newStatement, statement);
         final PsiElement insertedElement = statement.replace(newCall);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
-        final PsiElement shortenedElement = codeStyleManager.shortenClassReferences(
-                insertedElement);
+        final PsiElement shortenedElement =
+                codeStyleManager.shortenClassReferences(insertedElement);
         codeStyleManager.reformat(shortenedElement);
     }
 
@@ -167,7 +171,9 @@ public abstract class Intention implements IntentionAction{
                 return element;
             } else{
                 element = element.getParent();
-                if (element instanceof PsiFile) break;
+                if (element instanceof PsiFile) {
+                    break;
+                }
             }
         }
         return null;
@@ -183,31 +189,37 @@ public abstract class Intention implements IntentionAction{
 
     private static boolean isFileReadOnly(Project project, PsiFile file){
         final VirtualFile virtualFile = file.getVirtualFile();
-        return ReadonlyStatusHandler.getInstance(project)
-                .ensureFilesWritable(new VirtualFile[]{virtualFile})
-                .hasReadonlyFiles();
+        final ReadonlyStatusHandler readonlyStatusHandler =
+                ReadonlyStatusHandler.getInstance(project);
+        final ReadonlyStatusHandler.OperationStatus operationStatus =
+                readonlyStatusHandler.ensureFilesWritable(virtualFile);
+        return operationStatus.hasReadonlyFiles();
     }
 
     private String getPrefix() {
-      final String name = this.getClass().getSimpleName();
-      StringBuffer buf = new StringBuffer(name.length() + 10);
-      buf.append(Character.toLowerCase(name.charAt(0)));
-      for (int i = 1; i < name.length(); i++){
-        final char c = name.charAt(i);
-        if (Character.isUpperCase(c)){
-          buf.append('.').append(Character.toLowerCase(c));
-        } else {
-          buf.append(c);
+        final Class<? extends Intention> aClass = getClass();
+        final String name = aClass.getSimpleName();
+        final StringBuffer buffer = new StringBuffer(name.length() + 10);
+        buffer.append(Character.toLowerCase(name.charAt(0)));
+        for (int i = 1; i < name.length(); i++){
+            final char c = name.charAt(i);
+            if (Character.isUpperCase(c)){
+                buffer.append('.');
+                buffer.append(Character.toLowerCase(c));
+            } else {
+                buffer.append(c);
+            }
         }
-      }
-      return buf.toString();
+        return buffer.toString();
     }
 
+    @NotNull
     public String getText() {
-      return IntentionPowerPackBundle.message(getPrefix() + ".name");
+        return IntentionPowerPackBundle.message(getPrefix() + ".name");
     }
 
+    @NotNull
     public String getFamilyName() {
-      return IntentionPowerPackBundle.message(getPrefix() + ".family.name");
+        return IntentionPowerPackBundle.message(getPrefix() + ".family.name");
     }
 }
