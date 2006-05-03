@@ -70,16 +70,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int GAP_BETWEEN_ANNOTATIONS = 6;
   private Color myBackgroundColor = null;
   private GutterDraggableObject myGutterDraggableObject;
-  private DragSource myDragSource = DragSource.getDefaultDragSource();
-
-  {
-    new DropTarget(this, new MyDropTargetListener());
-  }
+  private DragSource myDragSource;
 
 
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
-    myDragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
+    if (!GraphicsEnvironment.isHeadless()) {
+      new DropTarget(this, new MyDropTargetListener());
+      myDragSource = DragSource.getDefaultDragSource();
+      myDragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
+    }
     setOpaque(true);
   }
 
