@@ -67,11 +67,20 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   private void performWriteCommandAction(final RunResult<T> result) {
-    getApplication().runWriteAction(new Runnable() {
+    //this is needed to prevent memory leak, since command
+    // is put into undo queue
+    final RunResult[] results = new RunResult[] {result};
+
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {
-        executeCommand(result);
+        getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            results[0].run();
+            results[0] = null;
+          }
+        });
       }
-    });
+    }, getCommandName(), getGroupID(), UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
   }
 
   protected <T> RunResult<T> executeCommand(RunResult<T> result) {

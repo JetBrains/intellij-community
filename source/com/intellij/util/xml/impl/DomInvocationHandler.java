@@ -209,21 +209,14 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final boolean isValid() {
-    if (!myInvalidated) {
-      if (myXmlTag != null) {
-        if (!myXmlTag.isValid()) {
-          myInvalidated = true;
-          return false;
-        }
-      }
-      if (myParent != null && !myParent.isValid()) {
-        myInvalidated = true;
-        return false;
-      }
+    if (!myInvalidated && (myXmlTag != null && !myXmlTag.isValid() || myParent != null && !myParent.isValid())) {
+      myInvalidated = true;
+      return false;
     }
     return !myInvalidated;
   }
 
+  @NotNull
   public final GenericInfoImpl getGenericInfo() {
     myGenericInfoImpl.buildMethodMaps();
     return myGenericInfoImpl;
@@ -275,13 +268,16 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
           description.getValues(getProxy()).get(0).ensureXmlElementExists();
         }
       }
-      if (description instanceof DomFixedChildDescription) {
+      else if (description instanceof DomFixedChildDescription) {
         final DomFixedChildDescription childDescription = (DomFixedChildDescription)description;
-        final List<? extends DomElement> values = description.getValues(getProxy());
-        for (int i = 0; i < values.size(); i++) {
-          DomElement element = values.get(i);
+        List<? extends DomElement> values = null;
+        final int count = childDescription.getCount();
+        for (int i = 0; i < count; i++) {
           if (childDescription.isRequired(i)) {
-            element.ensureTagExists();
+            if (values == null) {
+              values = description.getValues(getProxy());
+            }
+            values.get(i).ensureTagExists();
           }
         }
       }
@@ -489,8 +485,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   final void checkInitialized(final String qname) {
     assert isValid();
+    checkParentInitialized();
     synchronized (PsiLock.LOCK) {
-      if (myInitializedChildren.contains(qname)) return;
+      if (myInitializedChildren.contains(qname)) {
+        return;
+      }
       try {
         myGenericInfoImpl.buildMethodMaps();
 
@@ -517,6 +516,12 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       finally {
         myInitializedChildren.add(qname);
       }
+    }
+  }
+
+  private void checkParentInitialized() {
+    if (myXmlTag == null && myParent != null && myInitializedChildren.isEmpty() && myParent.isValid()) {
+      myParent.checkInitialized(myTagName);
     }
   }
 
@@ -590,6 +595,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   @Nullable
   public XmlTag getXmlTag() {
+    checkParentInitialized();
     return myXmlTag;
   }
 
@@ -597,8 +603,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     synchronized (PsiLock.LOCK) {
       myInvalidated = invalidate;
       if (!myInitializedChildren.isEmpty()) {
-        Set<DomInvocationHandler> fixedChildren = new HashSet<DomInvocationHandler>(myFixedChildren.values());
-        for (DomInvocationHandler handler : fixedChildren) {
+        for (DomInvocationHandler handler : myFixedChildren.values()) {
           handler.detach(invalidate);
         }
         if (myXmlTag != null && myXmlTag.isValid()) {
