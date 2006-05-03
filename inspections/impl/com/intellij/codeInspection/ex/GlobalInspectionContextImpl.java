@@ -696,15 +696,15 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           final PsiManager psiManager = PsiManager.getInstance(myProject);
           try {
             psiManager.startBatchFilesProcessingMode();
-            psiManager.performActionWithFormatterDisabled(new Runnable() {
-              public void run() {
+            //psiManager.performActionWithFormatterDisabled(new Runnable() {
+            //  public void run() {
                 ((RefManagerImpl)getRefManager()).inspectionReadActionStarted();
                 EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
                 List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
                 runTools(needRepeatSearchRequest, scope, runWithEditorSettings, manager);
                 performPostRunFindUsages(needRepeatSearchRequest, manager);
-              }
-            });
+            //  }
+            //});
           }
           catch (ProcessCanceledException e) {
             cleanup();
