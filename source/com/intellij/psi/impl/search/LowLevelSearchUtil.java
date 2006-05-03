@@ -2,7 +2,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -20,9 +19,7 @@ public class LowLevelSearchUtil {
 
   public static boolean processElementsContainingWordInElement(TextOccurenceProcessor processor,
                                                                PsiElement scope,
-                                                               StringSearcher searcher,
-                                                               ProgressIndicator progress,
-                                                               final short searchContext) {
+                                                               StringSearcher searcher) {
     ProgressManager.getInstance().checkCanceled();
     char[] buffer = scope.textToCharArray();
     int startOffset = 0;

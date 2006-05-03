@@ -517,8 +517,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       return LowLevelSearchUtil.processElementsContainingWordInElement(processor,
                                                                        scopeElement,
-                                                                       searcher,
-                                                                       null, searchContext);
+                                                                       searcher);
     }
     else {
       return true;
@@ -562,7 +561,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         for (PsiElement psiRoot : psiRoots) {
           if(processed.contains(psiRoot)) continue;
           processed.add(psiRoot);
-          if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, progress, searchContext)) {
+          if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
             return false;
           }
         }
