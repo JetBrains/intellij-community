@@ -21,13 +21,11 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.util.CharTable;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -170,12 +168,12 @@ public class CodeEditUtil {
 
   private static ASTNode makePlaceHolderBetweenTokens(ASTNode left, final ASTNode right, boolean forceReformat, final boolean normalizeTailingWhitespace) {
     if(right == null) return left;
+
     markToReformatBefore(right, false);
     if(left == null){
       markToReformatBefore(right, true);
     }
-    else if(left.getElementType() == ElementType.WHITE_SPACE &&
-            left.getTreeParent().getLastChildNode() == left && normalizeTailingWhitespace){
+    else if(left.getElementType() == ElementType.WHITE_SPACE && left.getTreeNext() == null && normalizeTailingWhitespace){
       // handle tailing whitespaces if element on the left has been removed
       left.getTreeParent().removeChild(left);
       markToReformatBeforeOrInsertWhitespace(left, right, right.getTreeParent().getPsi().getManager());

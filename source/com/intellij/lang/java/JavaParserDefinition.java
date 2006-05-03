@@ -1,21 +1,22 @@
 package com.intellij.lang.java;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageUtil;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiParser;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.pom.java.LanguageLevel;
-import com.sun.java_cup.internal.lexer;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -80,6 +81,21 @@ public class JavaParserDefinition implements ParserDefinition {
     if(right.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) return SpaceRequirements.MUST_NOT;
     final SpaceRequirements spaceRequirements = LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer, 0);
     if(left.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) return SpaceRequirements.MUST_LINE_BREAK;
+
+    if(left.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+      String text = left.getText();
+      if (text.length() > 0 && Character.isWhitespace(text.charAt(text.length() - 1))) {
+        return SpaceRequirements.MAY;
+      }
+    }
+
+    if(right.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+      String text = right.getText();
+      if (text.length() > 0 && Character.isWhitespace(text.charAt(0))) {
+        return SpaceRequirements.MAY;
+      }
+    }
+
     return spaceRequirements;
   }
 }
