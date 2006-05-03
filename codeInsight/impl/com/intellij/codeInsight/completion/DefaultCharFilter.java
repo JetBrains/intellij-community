@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.Language;
 
 public class DefaultCharFilter implements CharFilter {
   private final PsiFile myFile;
@@ -36,7 +37,9 @@ public class DefaultCharFilter implements CharFilter {
         if (elementToTest instanceof PsiWhiteSpace) {
           elementToTest = elementToTest.getParent(); // JSPX has whitespace with language Java
         }
-        if (StdLanguages.JAVA.equals(elementToTest.getLanguage())) {
+
+        final Language language = elementToTest.getLanguage();
+        if (StdLanguages.JAVA.equals(language) || language.getID().equals("JavaScript")) {
           inJavaContext = true;
         }
       }
