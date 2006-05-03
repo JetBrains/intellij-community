@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,7 +47,7 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setForceHeavyweight(boolean forceHeavyweight);
 
   @NotNull
-  ComponentPopupBuilder setDimensionServiceKey(final String dimensionServiceKey);
+  ComponentPopupBuilder setDimensionServiceKey(@NonNls final String dimensionServiceKey);
 
   @NotNull
   ComponentPopupBuilder setCancelCallback(final Computable<Boolean> shouldProceed);
