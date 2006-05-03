@@ -41,6 +41,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private VariableInfo[] myVariableInfos;
   private AnonymousToInnerDialog myDialog;
   private boolean myMakeStatic;
+  private Set<String> myTypeParametersToCreate = new LinkedHashSet<String>();
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
     if (elements != null && elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
@@ -127,6 +128,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private void doRefactoring() throws IncorrectOperationException {
+    calculateTypeParametersToCreate();
     PsiClass aClass = createClass(myDialog.getClassName());
     myTargetClass.add(aClass);
 
@@ -134,6 +136,16 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     @NonNls StringBuffer buf = new StringBuffer();
     buf.append("new ");
     buf.append(aClass.getName());
+    if (!myTypeParametersToCreate.isEmpty()) {
+      buf.append("<");
+      int idx = 0;
+      for (Iterator<String> it = myTypeParametersToCreate.iterator(); it.hasNext();  idx++) {
+        String typeParam = it.next();
+        buf.append(typeParam);
+        if (idx > 0) buf.append(", ");
+      }
+      buf.append(">");
+    }
     buf.append("(");
     boolean isFirstParameter = true;
     for (VariableInfo info : myVariableInfos) {
@@ -149,7 +161,6 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     }
     buf.append(")");
     PsiExpression newClassExpression = myManager.getElementFactory().createExpressionFromText(buf.toString(), null);
-    newClassExpression = (PsiExpression) CodeStyleManager.getInstance(myProject).reformat(newClassExpression);
     newExpr.replace(newClassExpression);
   }
 
@@ -256,6 +267,12 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     final PsiMethod superConstructor = newExpression.resolveConstructor();
 
     PsiClass aClass = factory.createClass(name);
+    final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
+    LOG.assertTrue(typeParameterList != null);
+    for (String typeParamName : myTypeParametersToCreate) {
+      typeParameterList.add((factory.createTypeParameterFromText(typeParamName, null)));
+    }
+
     if (!myTargetClass.isInterface()) {
       aClass.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
     }
@@ -506,5 +523,18 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     methodCall.getArgumentList().accept(supersConvertor);
   }
 
-
+  private void calculateTypeParametersToCreate () {
+    myAnonClass.accept(new PsiRecursiveElementVisitor() {
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        final PsiElement resolved = reference.resolve();
+        if (resolved instanceof PsiTypeParameter) {
+          final PsiTypeParameterListOwner owner = ((PsiTypeParameter)resolved).getOwner();
+          if (!PsiTreeUtil.isAncestor(myAnonClass, owner, false)) {
+            myTypeParametersToCreate.add(((PsiTypeParameter)resolved).getName());
+          }
+        }
+      }
+    });
+  }
 }
