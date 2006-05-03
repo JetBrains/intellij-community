@@ -21,6 +21,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -136,7 +138,11 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
     jarFile.delete();
 
     FileUtil.createParentDirs(jarFile);
-    BuildRecipe buildRecipe = getBuildRecipe(module, buildJarSettings);
+    BuildRecipe buildRecipe = new ReadAction<BuildRecipe>() {
+      protected void run(final Result<BuildRecipe> result) {
+        result.setResult(getBuildRecipe(module, buildJarSettings));
+      }
+    }.execute().getResultObject();
     Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
     String mainClass = buildJarSettings.getMainClass();
     if (manifest != null && !Comparing.strEqual(mainClass, null)) {
