@@ -12,9 +12,11 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.IconLoader;
@@ -25,6 +27,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -112,8 +115,14 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
           ArrayList<RefParameter> unusedParameters = UnusedParametersFilter.getUnusedParameters((RefMethod)refEntity);
           for (RefParameter unusedParameter : unusedParameters) {
             Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
-            Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+            @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
             problemClassElement.addContent(InspectionsBundle.message("inspection.unused.parameter.export.results"));
+
+            final HighlightSeverity severity = getCurrentSeverity(unusedParameter);
+            final String attributeKey = getTextAttributeKey(unusedParameter, severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            problemClassElement.setAttribute("severity", severity.myName);
+            problemClassElement.setAttribute("attribute_key", attributeKey);
+
             element.addContent(problemClassElement);
 
             Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));

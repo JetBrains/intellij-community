@@ -16,6 +16,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.XMLExportUtl;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -198,6 +199,12 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
         if (filter.accepts((RefElement)refEntity)) {
           Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
           Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+
+          final HighlightSeverity severity = getCurrentSeverity((RefElement)refEntity);
+          final String attributeKey = getTextAttributeKey((RefElement)refEntity, severity, null);
+          problemClassElement.setAttribute("severity", severity.myName);
+          problemClassElement.setAttribute("attribute_key", attributeKey);
+
           problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.can.be.final"));
           element.addContent(problemClassElement);
 

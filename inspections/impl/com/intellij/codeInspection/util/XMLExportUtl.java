@@ -12,12 +12,14 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jdom.Element;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class XMLExportUtl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.util.XMLExportUtl");
   public static Element createElement(RefEntity refEntity, Element parentNode, int actualLine) {
@@ -45,6 +47,12 @@ public class XMLExportUtl {
 
       problem.addContent(fileElement);
       problem.addContent(lineElement);
+
+      final Element rangeElement = new Element("text_range");
+      final TextRange textRange = psiElement.getTextRange();
+      rangeElement.setAttribute("start", String.valueOf(textRange.getStartOffset()));
+      rangeElement.setAttribute("end", String.valueOf(textRange.getEndOffset()));
+      problem.addContent(rangeElement);
     }
 
 

@@ -7,6 +7,8 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -18,7 +20,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExternalizable, ExportableApplicationComponent {
@@ -48,10 +49,33 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
   }
 
   public ProjectJdk findJdk(String name) {
-    for (int i = 0; i < myJdks.size(); i++) {
-      ProjectJdk jdk = myJdks.get(i);
+    for (ProjectJdk jdk : myJdks) {
       if (name.equals(jdk.getName())) {
         return jdk;
+      }
+    }
+    return null;
+  }
+
+  public ProjectJdk findJdk(String name, String type) {
+    final ProjectJdk projectJdk = findJdk(name);
+    if (projectJdk != null){
+      return projectJdk;
+    }
+    if (type != null) {
+      final SdkType[] sdkTypes = ApplicationManager.getApplication().getComponents(SdkType.class);
+      for (SdkType sdkType : sdkTypes) {
+        if (Comparing.strEqual(type, sdkType.getName())){
+          @NonNls final String jdkPrefix = "jdk.";
+          final String jdkPath = System.getProperty(jdkPrefix + name);
+          if (jdkPath != null) {
+            ProjectJdkImpl projectJdkImpl = new ProjectJdkImpl(name, sdkType);
+            projectJdkImpl.setHomePath(jdkPath);
+            sdkType.setupSdkPaths(projectJdkImpl);
+            return projectJdkImpl;
+          }
+          break;
+        }
       }
     }
     return null;
@@ -116,8 +140,8 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
     final List children = element.getChildren(ELEMENT_JDK);
     final List<ProjectJdkImpl> jdks = new ArrayList<ProjectJdkImpl>(children.size());
     try {
-      for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-        final Element e = (Element)iterator.next();
+      for (final Object aChildren : children) {
+        final Element e = (Element)aChildren;
         final ProjectJdkImpl jdk = new ProjectJdkImpl(null, null);
         jdk.readExternal(e);
         jdks.add(jdk);
@@ -126,8 +150,8 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
     finally {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          for (Iterator<ProjectJdkImpl> it = jdks.iterator(); it.hasNext();) {
-            addJdk(it.next());
+          for (final ProjectJdkImpl jdk : jdks) {
+            addJdk(jdk);
           }
         }
       });
@@ -136,11 +160,10 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (int i = 0; i < myJdks.size(); i++) {
-      final ProjectJdkImpl jdk = (ProjectJdkImpl)myJdks.get(i);
+    for (ProjectJdk jdk : myJdks) {
       final Element e = new Element(ELEMENT_JDK);
       element.addContent(e);
-      jdk.writeExternal(e);
+      ((ProjectJdkImpl)jdk).writeExternal(e);
     }
   }
 

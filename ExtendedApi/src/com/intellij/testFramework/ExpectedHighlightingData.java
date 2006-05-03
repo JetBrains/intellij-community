@@ -1,7 +1,7 @@
 /**
  * @author cdr
  */
-package com.intellij.codeInsight.daemon;
+package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -13,22 +13,24 @@ import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class ExpectedHighlightingData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.ExpectedHighlightingData");
+public class ExpectedHighlightingData {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.ExpectedHighlightingData");
 
-  private static final String ERROR_MARKER = "error";
-  private static final String WARNING_MARKER = "warning";
-  private static final String INFO_MARKER = "info";
-  private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
-  private static final String END_LINE_WARNING_MARKER = "EOLWarning";
+ @NonNls private static final String ERROR_MARKER = "error";
+ @NonNls private static final String WARNING_MARKER = "warning";
+ @NonNls private static final String INFO_MARKER = "info";
+ @NonNls private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
+ @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
 
   static class ExpectedHighlightingSet {
     public final String marker;
@@ -142,7 +144,16 @@ class ExpectedHighlightingData {
     }
   }
 
-  void checkResult(Collection<HighlightInfo> infos, String text) {
+  public Collection<HighlightInfo> getExtractedHighlightInfos(){
+    final Collection<HighlightInfo> result = new ArrayList<HighlightInfo>();
+    final Collection<ExpectedHighlightingSet> collection = highlightingTypes.values();
+    for (ExpectedHighlightingSet set : collection) {
+      result.addAll(set.infos);
+    }
+    return result;
+  }
+
+  public void checkResult(Collection<HighlightInfo> infos, String text) {
     for (HighlightInfo info : infos) {
       if (!expectedInfosContainsInfo(this, info)) {
         final int startOffset = info.startOffset;

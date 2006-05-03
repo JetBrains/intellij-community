@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
@@ -140,6 +141,13 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
       for (Library myLibrary : myLibraries) {
         LibraryImpl library = (LibraryImpl)myLibrary;
         if (Comparing.equal(name, library.getName())) return library;
+      }
+      @NonNls final String libraryPrefix = "library.";
+      final String libPath = System.getProperty(libraryPrefix + name);
+      if (libPath != null) {
+        final LibraryImpl library = new LibraryImpl(name, LibraryTableBase.this);
+        library.addRoot(libPath, OrderRootType.CLASSES);
+        return library;
       }
       return null;
     }

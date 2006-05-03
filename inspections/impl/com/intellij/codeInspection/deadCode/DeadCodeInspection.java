@@ -13,10 +13,12 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.XMLExportUtl;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
@@ -513,7 +515,16 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         if (filter.accepts((RefElement)refEntity)) {
           if (refEntity instanceof RefImplicitConstructor) refEntity = ((RefImplicitConstructor)refEntity).getOwnerClass();
           Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
-          Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+          @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+
+          if (refEntity instanceof RefElement) {
+            final RefElement refElement = (RefElement)refEntity;
+            final HighlightSeverity severity = getCurrentSeverity(refElement);
+            final String attributeKey = getTextAttributeKey(refElement, severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            problemClassElement.setAttribute("severity", severity.myName);
+            problemClassElement.setAttribute("attribute_key", attributeKey);
+          }
+
           problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.dead.code"));
           element.addContent(problemClassElement);
 

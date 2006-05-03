@@ -79,28 +79,29 @@ public class ViewOfflineResultsAction extends AnAction {
     if (file == null) return;
     setLastFilePath(project, file.getParent());
 
-    Document doc;
-    try {
-      doc = JDOMUtil.loadDocument(file);
-      assert project != null;
-      ((ProjectEx) project).getExpandMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
-    } catch (JDOMException e) {
-      Messages.showMessageDialog(project, "Error parsing the results file", "Error", Messages.getErrorIcon());
-      return;
-    } catch (IOException e) {
-      Messages.showMessageDialog(project, "Error loading the results file", "Error", Messages.getErrorIcon());
-      return;
-    }
-
+    if (!file.isDirectory()) return;
     InspectionManagerEx manager = (InspectionManagerEx) InspectionManager.getInstance(project);
     final GlobalInspectionContextImpl inspectionContext = manager.createNewGlobalContext(false);
-    OfflineView view = OfflineView.create(file.getName(), project, inspectionContext);
-
-    Element root = doc.getRootElement();
-    List problems = root.getChildren("problem");
-    for (final Object problemElement : problems) {
-      Element problem = (Element)problemElement;
-      view.addProblem(problem);
+    OfflineView view = OfflineView.create(project.getName(), project, inspectionContext);
+    final File[] files = file.listFiles();
+    for (File inspectionFile : files) {
+      Document doc;
+      try {
+        doc = JDOMUtil.loadDocument(inspectionFile);
+        ((ProjectEx) project).getExpandMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
+      } catch (JDOMException e) {
+        Messages.showMessageDialog(project, "Error parsing the results file", "Error", Messages.getErrorIcon());
+        return;
+      } catch (IOException e) {
+        Messages.showMessageDialog(project, "Error loading the results file", "Error", Messages.getErrorIcon());
+        return;
+      }
+      Element root = doc.getRootElement();
+      List problems = root.getChildren("problem");
+      for (final Object problemElement : problems) {
+        Element problem = (Element)problemElement;
+        view.addProblem(problem);
+      }
     }
     view.init();
     inspectionContext.getContentManager().addContent(view.getContent());

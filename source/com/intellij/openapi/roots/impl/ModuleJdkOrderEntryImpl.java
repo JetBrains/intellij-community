@@ -24,9 +24,11 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.JdkLibraryEntryImpl");
   @NonNls static final String ENTRY_TYPE = "jdk";
   @NonNls private static final String JDK_NAME_ATTR = "jdkName";
+  @NonNls private static final String JDK_TYPE_ATTR = "jdkType";
 
   private ProjectJdk myJdk;
   private String myJdkName;
+  private String myJdkType;
 
   ModuleJdkOrderEntryImpl(ProjectJdk projectJdk,
                           RootModelImpl rootModel,
@@ -36,6 +38,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     LOG.assertTrue(projectJdk != null);
     myJdk = projectJdk;
     setJdkName(null);
+    setJdkType(null);
     init(getRootProvider());
     addListener();
   }
@@ -54,19 +57,24 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     }
 
     final String jdkName = jdkNameAttribute.getValue();
+    final String jdkType = element.getAttributeValue(JDK_TYPE_ATTR);
     final ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    final ProjectJdk jdkByName = projectJdkTable.findJdk(jdkName);
+    final ProjectJdk jdkByName = projectJdkTable.findJdk(jdkName, jdkType);
     if (jdkByName == null) {
       myJdk = null;
       setJdkName(jdkName);
+      setJdkType(jdkType);
     }
     else {
       myJdk = jdkByName;
       setJdkName(null);
+      setJdkType(null);
     }
     init(getRootProvider());
     addListener();
   }
+
+
 
   private ModuleJdkOrderEntryImpl(ModuleJdkOrderEntryImpl that,
                                   RootModelImpl rootModel,
@@ -75,8 +83,16 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     super(rootModel, projectRootManager, filePointerManager);
     myJdk = that.myJdk;
     setJdkName(that.getJdkName());
+    setJdkType(that.getJdkType());
     init(getRootProvider());
     addListener();
+  }
+
+  private String getJdkType() {
+    if (myJdk != null){
+      return myJdk.getSdkType().getName();
+    }
+    return myJdkType;
   }
 
   private void addListener() {
@@ -130,7 +146,8 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   public void jdkAdded(ProjectJdk jdk) {
     if (myJdk == null && getJdkName().equals(jdk.getName())) {
       myJdk = jdk;
-      myJdkName = null;
+      setJdkName(null);
+      setJdkType(null);
       updateFromRootProviderAndSubscribe(getRootProvider());
     }
   }
@@ -138,7 +155,8 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   public void jdkNameChanged(ProjectJdk jdk, String previousName) {
     if (myJdk == null && getJdkName().equals(jdk.getName())) {
       myJdk = jdk;
-      myJdkName = null;
+      setJdkName(null);
+      setJdkType(null);
       updateFromRootProviderAndSubscribe(getRootProvider());
     }
   }
@@ -146,6 +164,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   public void jdkRemoved(ProjectJdk jdk) {
     if (jdk == myJdk) {
       setJdkName(myJdk.getName());
+      setJdkType(myJdk.getSdkType().getName());
       myJdk = null;
       updateFromRootProviderAndSubscribe(getRootProvider());
     }
@@ -154,6 +173,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   public void writeExternal(Element rootElement) throws WriteExternalException {
     final Element element = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
     element.setAttribute(JDK_NAME_ATTR, myJdk != null ? myJdk.getName() : getJdkName());
+    element.setAttribute(JDK_TYPE_ATTR, myJdk != null ? myJdk.getSdkType().getName() : getJdkType());
     rootElement.addContent(element);
   }
 
@@ -173,4 +193,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     myJdkName = jdkName;
   }
 
+  private void setJdkType(String jdkType) {
+    myJdkType = jdkType;
+  }
 }

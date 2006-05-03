@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
 import java.util.Collection;

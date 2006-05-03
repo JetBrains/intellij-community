@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 

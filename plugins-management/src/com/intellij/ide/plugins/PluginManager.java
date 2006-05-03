@@ -102,12 +102,12 @@ public class PluginManager {
   }
 
   private static void initializePlugins() {
+    configureExtensions();
+    
     if (!shouldLoadPlugins()) {
       ourPlugins = new IdeaPluginDescriptorImpl[0];
       return;
     }
-
-    configureExtensions();
 
     final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors();
 

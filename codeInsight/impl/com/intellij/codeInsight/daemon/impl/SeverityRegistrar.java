@@ -163,4 +163,11 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
   public static boolean isSeverityValid(final HighlightSeverity severity) {
     return createCurrentSeveritiesSet().contains(severity);
   }
+
+  public static HighlightSeverity getSeverityByName(String severityName){
+    for (HighlightSeverity severity : ourMap.keySet()) {
+      if (severity.myName.equals(severityName)) return severity;
+    }
+    return HighlightSeverity.WARNING;
+  }
 }

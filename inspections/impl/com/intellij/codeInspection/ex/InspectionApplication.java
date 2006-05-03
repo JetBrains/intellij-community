@@ -23,7 +23,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author max
@@ -59,7 +60,7 @@ public class InspectionApplication {
           LOG.error(e);
         }
         finally {
-          application.exit();
+          application.exit(true);
         }
       }
     });
@@ -112,17 +113,14 @@ public class InspectionApplication {
 
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
-      final OutputStream outStream = new BufferedOutputStream(new FileOutputStream(myOutPath));
-
-      PsiClass psiObjectClass = PsiManager.getInstance(myProject).findClass("java.lang.Object");
-      if (psiObjectClass == null) {
-        logError(InspectionsBundle.message("inspection.no.jdk.error.message"));
-        return;
-      }
-
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
-          inspectionContext.launchInspectionsOffline(scope, outStream, myRunWithEditorSettings, im);
+          PsiClass psiObjectClass = PsiManager.getInstance(myProject).findClass("java.lang.Object");
+          if (psiObjectClass == null) {
+            logError(InspectionsBundle.message("inspection.no.jdk.error.message"));
+            return;
+          }
+          inspectionContext.launchInspectionsOffline(scope, myOutPath, myRunWithEditorSettings, im);
           logMessageLn(1, "\n" +
                           InspectionsBundle.message("inspection.capitalized.done") +
                           "\n");
@@ -170,13 +168,6 @@ public class InspectionApplication {
   private void runStartupActivity() {
     ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
   }
-
-  /* TODO
-  public Object getData(String dataId) {
-    if (DataConstants.PROJECT.equals(dataId)) return myProject;
-    return super.getData(dataId);
-  }
-  */
 
   public void setVerboseLevel(int verboseLevel) {
     myVerboseLevel = verboseLevel;

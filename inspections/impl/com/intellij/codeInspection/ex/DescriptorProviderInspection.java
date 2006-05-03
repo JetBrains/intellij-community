@@ -5,6 +5,7 @@ import com.intellij.codeInspection.duplicatePropertyInspection.DuplicateProperty
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
@@ -173,8 +174,17 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
             problemText = problemText.replaceAll(" #loc ", " ");
 
             Element element = XMLExportUtl.createElement(refEntity, parentNode, line);
-            Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+            @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
             problemClassElement.addContent(getDisplayName());
+            if (refEntity instanceof RefElement){
+              final RefElement refElement = (RefElement)refEntity;
+              final HighlightSeverity severity = getCurrentSeverity(refElement);
+              final String attributeKey = getTextAttributeKey(refElement, severity, description instanceof ProblemDescriptor
+                                                                                    ? ((ProblemDescriptor)description).getHighlightType()
+                                                                                    : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+              problemClassElement.setAttribute("severity", severity.myName);
+              problemClassElement.setAttribute("attribute_key", attributeKey);
+            }
             element.addContent(problemClassElement);
             try {
               Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));

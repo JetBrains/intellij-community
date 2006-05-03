@@ -8,8 +8,14 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
@@ -17,8 +23,11 @@ import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.InspectionPackageNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -168,4 +177,34 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     }
     return false;
   }
+
+  protected HighlightSeverity getCurrentSeverity(RefElement element) {
+    final PsiElement psiElement = element.getElement();
+    if (psiElement != null) {
+      final InspectionProfile profile =
+        InspectionProjectProfileManager.getInstance(getContext().getProject()).getInspectionProfile(psiElement);
+      final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(getShortName()));
+      return level.getSeverity();
+    }
+    return null;
+  }
+
+  protected String getTextAttributeKey(RefElement element, HighlightSeverity severity, ProblemHighlightType highlightType) {
+    if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
+      return HighlightInfoType.DEPRECATED.getAttributesKey().getExternalName();
+    }
+    else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
+      if (JavaDocReferenceInspection.SHORT_NAME.equals(getShortName())) {
+        return HighlightInfoType.JAVADOC_WRONG_REF.getAttributesKey().getExternalName();
+      }
+      else {
+        return HighlightInfoType.WRONG_REF.getAttributesKey().getExternalName();
+      }
+    }
+    else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
+      return HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
+    }
+    return SeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey().getExternalName();
+  }
+
 }

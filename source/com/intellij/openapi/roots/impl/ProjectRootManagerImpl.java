@@ -52,7 +52,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   @NonNls private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
   @NonNls private static final String JDK_15_ATTR = "jdk-15";
   @NonNls private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
-
+  @NonNls private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
   private final ProjectEx myProject;
   private ProjectFileIndex myProjectFileIndex;
 
@@ -64,6 +64,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private MyVirtualFileManagerListener myVirtualFileManagerListener;
 
   private String myProjectJdkName;
+  private String myProjectJdkType;
 
   private ArrayList<CacheUpdater> myChangeUpdaters = new ArrayList<CacheUpdater>();
 
@@ -261,7 +262,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public ProjectJdk getProjectJdk() {
     if (myProjectJdkName != null) {
-      return ProjectJdkTable.getInstance().findJdk(myProjectJdkName);
+      return ProjectJdkTable.getInstance().findJdk(myProjectJdkName, myProjectJdkType);
     }
     else {
       return null;
@@ -276,9 +277,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (projectJdk != null) {
       myProjectJdkName = projectJdk.getName();
+      myProjectJdkType = projectJdk.getSdkType().getName();
     }
     else {
       myProjectJdkName = null;
+      myProjectJdkType = null;
     }
     doRootsChangedOnDemand(new Runnable() {
       public void run() {
@@ -349,6 +352,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
     myOriginalLanguageLevel = myLanguageLevel;
     myProjectJdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
+    myProjectJdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -359,6 +363,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     element.setAttribute(JDK_15_ATTR, Boolean.toString(is15));
     if (myProjectJdkName != null) {
       element.setAttribute(PROJECT_JDK_NAME_ATTR, myProjectJdkName);
+    }
+    if (myProjectJdkType != null){
+      element.setAttribute(PROJECT_JDK_TYPE_ATTR, myProjectJdkType);
     }
   }
 
@@ -710,6 +717,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       if (previousName != null && previousName.equals(currentName)) {
         // if already had jdk name and that name was the name of the jdk just changed
         myProjectJdkName = jdk.getName();
+        myProjectJdkType = jdk.getSdkType().getName();
       }
     }
 

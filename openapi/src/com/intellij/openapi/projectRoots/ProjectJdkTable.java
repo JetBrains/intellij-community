@@ -26,6 +26,8 @@ public abstract class ProjectJdkTable {
 
   public abstract ProjectJdk findJdk(String name);
 
+  public abstract ProjectJdk findJdk(String name, String type);
+
   public abstract ProjectJdk getInternalJdk();
 
   public abstract ProjectJdk[] getAllJdks();

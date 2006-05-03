@@ -40,6 +40,7 @@ public class IdeaTestApplication extends CommandLineApplication {
   public synchronized static IdeaTestApplication getInstance() throws IOException, InvalidDataException {
     if (ourInstance == null) {
       new IdeaTestApplication();
+      PluginsFacade.INSTANCE.getPlugins(); //initialization
       ApplicationManagerEx.getApplicationEx().load(null);
     }
     return (IdeaTestApplication)ourInstance;

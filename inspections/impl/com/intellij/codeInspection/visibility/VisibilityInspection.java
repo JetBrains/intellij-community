@@ -18,6 +18,7 @@ import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.javaee.ejb.EjbModuleUtil;
 import com.intellij.javaee.model.common.ejb.EjbRootElement;
 import com.intellij.javaee.model.common.ejb.EntityBean;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -227,8 +228,14 @@ public class VisibilityInspection extends FilteringInspectionTool {
         if (!(refEntity instanceof RefElement)) return;
         if (getFilter().accepts((RefElement)refEntity)) {
           Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
-          Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+          @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+
+          final HighlightSeverity severity = getCurrentSeverity((RefElement)refEntity);
+          final String attributeKey = getTextAttributeKey((RefElement)refEntity, severity, null);
+          problemClassElement.setAttribute("severity", severity.myName);
+          problemClassElement.setAttribute("attribute_key", attributeKey);
           problemClassElement.addContent(InspectionsBundle.message("inspection.visibility.export.results.visibility"));
+
           element.addContent(problemClassElement);
           Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
           String possibleAccess = getFilter().getPossibleAccess((RefElement)refEntity);

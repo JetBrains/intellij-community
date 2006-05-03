@@ -6,8 +6,12 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
@@ -54,8 +58,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -298,33 +301,85 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public void launchInspectionsOffline(final AnalysisScope scope,
-                                       OutputStream outStream,
+                                       final String outputPath,
                                        final boolean runWithEditorSettings,
                                        final InspectionManager manager) {
     cleanup();
 
     myCurrentScope = scope;
-    final Element root = new Element(InspectionsBundle.message("inspection.problems"));
-    final Document doc = new Document(root);
+
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         performInspectionsWithProgress(scope, runWithEditorSettings, manager);
-        InspectionProfileEntry[] tools = getCurrentProfile().getInspectionTools();
-        for (InspectionProfileEntry tool : tools) {
-          if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
-            ((InspectionTool)tool).exportResults(root);
+        final HashMap<InspectionTool, HighlightDisplayLevel> tools = new HashMap<InspectionTool, HighlightDisplayLevel>();
+        if (runWithEditorSettings){
+          final Set<String> profiles = myCurrentScope.getActiveInspectionProfiles();
+          for (String profileName : profiles) {
+            collectProfileTools((InspectionProfileImpl)InspectionProjectProfileManager.getInstance(myProject).getProfile(profileName), tools);
+          }
+        } else {
+          collectProfileTools(getCurrentProfile(), tools);
+        }
+        final HashMap<String, Set<InspectionTool>> groupedTools = new HashMap<String, Set<InspectionTool>>();
+        for (InspectionTool tool : tools.keySet()) {
+          final String shortName = tool.getShortName();
+          Set<InspectionTool> sameTools = groupedTools.get(shortName);
+          if (sameTools == null){
+            sameTools = new HashSet<InspectionTool>();
+            groupedTools.put(tool.getShortName(), sameTools);
+          }
+          sameTools.add(tool);
+        }
+        for (String toolName : groupedTools.keySet()) {
+          final Element root = new Element(InspectionsBundle.message("inspection.problems"));
+          final Document doc = new Document(root);
+          final Set<InspectionTool> sameTools = groupedTools.get(toolName);
+          boolean hasProblems = false;
+          boolean isLocalTool = false;
+          for (InspectionTool tool : sameTools) {
+            if (tool.hasReportedProblems()){
+              hasProblems = true;
+              isLocalTool = tool instanceof LocalInspectionToolWrapper;
+              tool.exportResults(root);
+            }
+          }
+          @NonNls final String isLocalToolAttribute = "is_local_tool";
+          root.setAttribute(isLocalToolAttribute, String.valueOf(isLocalTool));
+          if (!hasProblems) continue;
+          OutputStream outStream = null;
+          try {
+            new File(outputPath).mkdirs();
+            @NonNls final String ext = ".xml";
+            final File file = new File(outputPath, toolName + ext);
+            outStream = new BufferedOutputStream(new FileOutputStream(file));
+            ((ProjectEx)getProject()).getMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
+            JDOMUtil.writeDocument(doc, outStream, "\n");
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+          finally {
+            if (outStream != null){
+              try {
+                outStream.close();}
+              catch (IOException e) {
+                LOG.error(e);
+              }
+            }
           }
         }
       }
     });
+  }
 
-    try {
-      ((ProjectEx)getProject()).getMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
-      JDOMUtil.writeDocument(doc, outStream, "\n");
-    }
-    catch (IOException e) {
-      LOG.error(e);
+  private static void collectProfileTools(final InspectionProfile profile, final HashMap<InspectionTool, HighlightDisplayLevel> tools) {
+    final InspectionTool[] inspectionTools = new InspectionProfileWrapper(profile).getInspectionTools();
+    for (InspectionTool tool : inspectionTools) {
+      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+      if (profile.isToolEnabled(key)){
+        tools.put(tool, profile.getErrorLevel(key));
+      }
     }
   }
 
