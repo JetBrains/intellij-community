@@ -6,8 +6,6 @@ import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -102,14 +100,5 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   public void setPropertiesFile(final String name) throws IncorrectOperationException {
     getSourceElement().setAttribute("file", name);
     subtreeChanged();
-  }
-
-  public PsiElement getNavigationElement() {
-    final XmlTag sourceElement = getSourceElement();
-    final XmlAttribute attribute = sourceElement.getAttribute("name", null);
-    if (attribute != null) {
-      return attribute.getValueElement();
-    }
-    return this;
   }
 }

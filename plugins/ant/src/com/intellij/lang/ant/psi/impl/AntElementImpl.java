@@ -244,6 +244,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return myReferences = result.toArray(new PsiReference[result.size()]);
   }
 
+  public boolean isPhysical() {
+    return getSourceElement().isPhysical();
+  }
 
   protected AntElement[] getChildrenInner() {
     return AntElement.EMPTY_ARRAY;

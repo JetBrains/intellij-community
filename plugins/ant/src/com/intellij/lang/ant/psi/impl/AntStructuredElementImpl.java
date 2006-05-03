@@ -157,4 +157,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     super.clearCaches();
     myReferencedElements = null;
   }
+
+  public PsiElement getNavigationElement() {
+    return (myNameElement == null) ? this : myNameElement;
+  }
 }
