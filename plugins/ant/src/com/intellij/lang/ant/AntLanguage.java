@@ -1,5 +1,6 @@
 package com.intellij.lang.ant;
 
+import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
@@ -54,5 +55,10 @@ public class AntLanguage extends Language {
       };
     }
     return myNamesValidator;
+  }
+
+  @Nullable
+  public Commenter getCommenter() {
+    return myXmlLanguage.getCommenter();
   }
 }
