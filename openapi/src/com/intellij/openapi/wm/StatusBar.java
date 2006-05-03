@@ -26,6 +26,13 @@ public interface StatusBar {
   void setInfo(String s);
 
   /**
+   * Add arbitrary component indicating something related to status in the status bar. The component shall be
+   * small enough to keep visual status bar appearance metaphor.
+   * @param c - custom component to be added to the status bar.
+   */
+  void addCustomIndicationComponent(JComponent c);
+
+  /**
    * Shows animated notification popup.
    * @param content Content of the notification
    * @param backgroundColor background color for the notification. Be sure use light colors since bright onces

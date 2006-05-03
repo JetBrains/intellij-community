@@ -29,6 +29,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     UIBundle.message("status.bar.overwrite.status.text")},false);
   protected final TogglePopupHintsPanel myEditorHighlightingPanel;
   protected final IdeMessagePanel myMessagePanel = new IdeMessagePanel(MessagePool.getInstance());
+  private final JPanel myCustomIndicationsPanel = new JPanel(new GridBagLayout());
   protected String myInfo = "";
   private final Icon myLockedIcon = IconLoader.getIcon("/nodes/lockedSingle.png");
   private final Icon myUnlockedIcon = myLockedIcon != null ? new EmptyIcon(myLockedIcon.getIconWidth(), myLockedIcon.getIconHeight()) : null;
@@ -98,12 +99,21 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     myEditorHighlightingPanel.setOpaque(false);
     rightPanel.add(myEditorHighlightingPanel, gbConstraints);
 
+    myCustomIndicationsPanel.setVisible(false); // Will become visible when any of indications really adds.
+    myCustomIndicationsPanel.setBorder(compoundBorder);
+    myCustomIndicationsPanel.setOpaque(false);
+    rightPanel.add(myCustomIndicationsPanel, gbConstraints);
+
     myMessagePanel.setOpaque(false);
     rightPanel.add(myMessagePanel, gbConstraints);
 
     //  myMemoryUsagePanel.setOpaque(false);
     myMemoryUsagePanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     rightPanel.add(myMemoryUsagePanel, gbConstraints);
+
+
+    // TODO: remove
+    addCustomIndicationComponent(new JLabel("test. remove.", IconLoader.getIcon("/objectBrowser/showGlobalInspections.png"), JLabel.LEFT));
   }
 
   public final void addProgress() {
@@ -186,6 +196,16 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
       s = " ";
     }
     myStatusPanel.setText(s);
+  }
+
+  public final void addCustomIndicationComponent(JComponent c) {
+    final GridBagConstraints gbConstraints = new GridBagConstraints();
+    gbConstraints.fill = GridBagConstraints.BOTH;
+    gbConstraints.weightx = 0;
+    gbConstraints.weighty = 1;
+
+    myCustomIndicationsPanel.setVisible(true);
+    myCustomIndicationsPanel.add(c, gbConstraints);
   }
 
   public final void setStatusEnabled(final boolean enabled) {
