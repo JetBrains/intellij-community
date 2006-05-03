@@ -44,7 +44,7 @@ public class Native2AsciiCharset extends Charset {
     return NAME_PREFIX + baseCharsetName;
   }
   public static Charset forName(String charsetName) {
-    if (charsetName.startsWith(Native2AsciiCharset.NAME_PREFIX)) {
+    if (charsetName.startsWith(NAME_PREFIX)) {
       return new Native2AsciiCharset(charsetName);
     }
     return null;

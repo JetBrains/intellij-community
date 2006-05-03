@@ -5,6 +5,7 @@ package com.intellij.lang.properties.structureView;
 
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
+import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -18,15 +19,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiManager;
 import gnu.trove.THashMap;
-import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntLongHashMap;
 import gnu.trove.TIntProcedure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.io.UnsupportedEncodingException;
 
 public class PropertiesSeparatorManager implements JDOMExternalizable, ApplicationComponent {
   @NonNls private static final String FILE_ELEMENT = "file";
@@ -58,7 +61,7 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
       PsiManager psiManager = PsiManager.getInstance(project);
       files = Collections.singletonList((PropertiesFile)psiManager.findFile(file));
     }
-    final TIntIntHashMap charCounts = new TIntIntHashMap();
+    final TIntLongHashMap charCounts = new TIntLongHashMap();
     for (PropertiesFile propertiesFile : files) {
       if (propertiesFile == null) continue;
       List<Property> properties = propertiesFile.getProperties();
@@ -76,9 +79,9 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
 
     final char[] mostProbableChar = new char[]{'.'};
     charCounts.forEachKey(new TIntProcedure() {
-      int count = -1;
+      long count = -1;
       public boolean execute(int ch) {
-        int charCount = charCounts.get(ch);
+        long charCount = charCounts.get(ch);
         if (charCount > count) {
           count = charCount;
           mostProbableChar[0] = (char)ch;
@@ -86,6 +89,9 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
         return true;
       }
     });
+    if (mostProbableChar[0] == 0) {
+      mostProbableChar[0] = '.';
+    }
     return Character.toString(mostProbableChar[0]);
   }
 
@@ -93,6 +99,7 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
     mySeparators.put(file, separator);
   }
 
+  @NotNull
   public String getComponentName() {
     return "PropertiesSeparatorManager";
   }
@@ -109,7 +116,14 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
     List<Element> files = element.getChildren(FILE_ELEMENT);
     for (Element fileElement : files) {
       String url = fileElement.getAttributeValue(URL_ELEMENT, "");
-      String separator = fileElement.getAttributeValue(SEPARATOR_ATTR);
+      String separator = fileElement.getAttributeValue(SEPARATOR_ATTR,"");
+      try {
+        @NonNls String baseCharset = "ISO-8859-1";
+        separator = new String(separator.getBytes(baseCharset), Native2AsciiCharset.makeNative2AsciiEncodingName(baseCharset));
+      }
+      catch (UnsupportedEncodingException e) {
+        //can't be
+      }
       VirtualFile file;
       ResourceBundle resourceBundle = ResourceBundleImpl.createByUrl(url);
       if (resourceBundle != null) {
@@ -135,9 +149,18 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
         url = file.getUrl();
       }
       String separator = mySeparators.get(file);
+      StringBuffer encoded = new StringBuffer(separator.length());
+      for (int i=0;i<separator.length();i++) {
+        char c = separator.charAt(i);
+        encoded.append("\\u");
+        encoded.append(Character.forDigit(c >> 12, 16));
+        encoded.append(Character.forDigit((c >> 8) & 0xf, 16));
+        encoded.append(Character.forDigit((c >> 4) & 0xf, 16));
+        encoded.append(Character.forDigit(c & 0xf, 16));
+      }
       Element fileElement = new Element(FILE_ELEMENT);
       fileElement.setAttribute(URL_ELEMENT, url);
-      fileElement.setAttribute(SEPARATOR_ATTR, separator);
+      fileElement.setAttribute(SEPARATOR_ATTR, encoded.toString());
       element.addContent(fileElement);
     }
   }
