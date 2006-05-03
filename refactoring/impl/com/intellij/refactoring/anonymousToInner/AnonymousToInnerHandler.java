@@ -412,7 +412,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     PsiElementFactory factory = myManager.getElementFactory();
     for (VariableInfo info : myVariableInfos) {
       if (info.saveInField) {
-        PsiField field = factory.createField(info.fieldName, info.variable.getType());
+        PsiType type = info.variable.getType();
+        if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
+        PsiField field = factory.createField(info.fieldName, type);
         field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
         aClass.add(field);
       }
