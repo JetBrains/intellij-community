@@ -110,10 +110,6 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     //  myMemoryUsagePanel.setOpaque(false);
     myMemoryUsagePanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     rightPanel.add(myMemoryUsagePanel, gbConstraints);
-
-
-    // TODO: remove
-    addCustomIndicationComponent(new JLabel("test. remove.", IconLoader.getIcon("/objectBrowser/showGlobalInspections.png"), JLabel.LEFT));
   }
 
   public final void addProgress() {
