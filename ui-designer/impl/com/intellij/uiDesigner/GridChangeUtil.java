@@ -58,19 +58,20 @@ public final class GridChangeUtil {
 
     for (int i=grid.getComponentCount() - 1; i >= 0; i--){
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
-      adjustConstraintsOnInsert(constraints, isRow, beforeIndex);
+      adjustConstraintsOnInsert(constraints, isRow, beforeIndex, 1);
     }
 
     grid.setLayout(newLayout);
   }
 
-  public static void adjustConstraintsOnInsert(final GridConstraints constraints, final boolean isRow, final int beforeIndex) {
+  public static void adjustConstraintsOnInsert(final GridConstraints constraints, final boolean isRow, final int beforeIndex,
+                                               final int count) {
     if (constraints.getCell(isRow) >= beforeIndex) {
-      addToCell(constraints, isRow, 1);
+      addToCell(constraints, isRow, count);
     }
     else if (isCellInsideComponent(constraints, isRow, beforeIndex)) {
       // component belongs to the cell being resized - increment component's span
-      addToSpan(constraints, isRow, 1);
+      addToSpan(constraints, isRow, count);
     }
   }
 

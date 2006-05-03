@@ -164,7 +164,10 @@ public abstract class RadLayoutManager {
                                      final Rectangle rc) {
   }
 
-  public void insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
+  /**
+   * @return the number of inserted rows or columns
+   */
+  public int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
     throw new UnsupportedOperationException("Not a grid layout manager");
   }
 

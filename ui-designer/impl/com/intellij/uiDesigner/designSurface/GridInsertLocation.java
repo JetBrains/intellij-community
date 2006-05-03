@@ -207,29 +207,30 @@ public class GridInsertLocation extends GridDropLocation {
                           final ComponentDragObject dragObject) {
     int row = getRow();
     int col = getColumn();
+    int insertedCells;
     RadContainer container = getContainer();
     //noinspection EnumSwitchStatementWhichMissesCases
     switch(myMode) {
       case RowBefore:
-        container.getLayoutManager().insertGridCells(container, row, true, true);
-        checkAdjustConstraints(constraintsToAdjust, true, row);
+        insertedCells = container.getLayoutManager().insertGridCells(container, row, true, true);
+        checkAdjustConstraints(constraintsToAdjust, true, row, insertedCells);
         break;
 
       case RowAfter:
-        container.getLayoutManager().insertGridCells(container, row, true, false);
-        row++;
-        checkAdjustConstraints(constraintsToAdjust, true, row);
+        insertedCells = container.getLayoutManager().insertGridCells(container, row, true, false);
+        row += insertedCells;
+        checkAdjustConstraints(constraintsToAdjust, true, row, insertedCells);
         break;
 
       case ColumnBefore:
-        container.getLayoutManager().insertGridCells(container, col, false, true);
-        checkAdjustConstraints(constraintsToAdjust, false, col);
+        insertedCells = container.getLayoutManager().insertGridCells(container, col, false, true);
+        checkAdjustConstraints(constraintsToAdjust, false, col, insertedCells);
         break;
 
       case ColumnAfter:
-        container.getLayoutManager().insertGridCells(container, col, false, false);
-        col++;
-        checkAdjustConstraints(constraintsToAdjust, false, col);
+        insertedCells = container.getLayoutManager().insertGridCells(container, col, false, false);
+        col += insertedCells;
+        checkAdjustConstraints(constraintsToAdjust, false, col, insertedCells);
         break;
     }
     dropIntoGrid(container, components, row, col, dragObject);
@@ -237,10 +238,10 @@ public class GridInsertLocation extends GridDropLocation {
 
   private static void checkAdjustConstraints(final GridConstraints[] constraintsToAdjust,
                                              final boolean isRow,
-                                             final int index) {
+                                             final int index, final int count) {
     if (constraintsToAdjust != null) {
       for(GridConstraints constraints: constraintsToAdjust) {
-        GridChangeUtil.adjustConstraintsOnInsert(constraints, isRow, index);
+        GridChangeUtil.adjustConstraintsOnInsert(constraints, isRow, index, count);
       }
     }
   }

@@ -331,8 +331,9 @@ public class RadGridLayoutManager extends RadLayoutManager {
   }
 
   @Override
-  public void insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
+  public int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
     GridChangeUtil.insertRowOrColumn(grid, cellIndex, isRow, isBefore);
+    return 1;
   }
 
   @Override
