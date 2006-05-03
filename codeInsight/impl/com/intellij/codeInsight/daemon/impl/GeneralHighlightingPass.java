@@ -248,8 +248,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
 
     final HighlightInfoHolder holder = new HighlightInfoHolder(myFile, filters);
-    PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
-      public void run() {
+    //PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
+    //  public void run() {
         for (PsiElement element : elements) {
           ProgressManager.getInstance().checkCanceled();
 
@@ -279,8 +279,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
             }
           }
         }
-      }
-    });
+      //}
+    //});
 
     //if (LOG.isDebugEnabled()) {
       //if(maxVisitElement != null){

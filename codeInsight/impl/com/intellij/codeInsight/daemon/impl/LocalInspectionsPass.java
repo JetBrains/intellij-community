@@ -117,8 +117,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       if (visitor != null) visitors.add(new Pair<LocalInspectionTool, PsiElementVisitor>(tool, visitor));
     }
 
-    PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
-      public void run() {
+    //PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
+    //  public void run() {
         for (PsiElement element : workSet) {
           ProgressManager.getInstance().checkCanceled();
           LocalInspectionTool currentTool = null;
@@ -180,8 +180,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
             }
           }
         }
-      }
-    });
+      //}
+    //});
   }
 
   //for tests only
