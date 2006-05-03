@@ -35,7 +35,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private final PsiManager myPsiManager;
   private final TreeAspect myTreeAspect;
   private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<FileViewProvider, List<ASTNode>>();
-  private boolean myDisabled = true;
+  private boolean myDisabled = false;
   private Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
 
   public PostprocessReformattingAspect(PsiManager psiManager, TreeAspect treeAspect) {
