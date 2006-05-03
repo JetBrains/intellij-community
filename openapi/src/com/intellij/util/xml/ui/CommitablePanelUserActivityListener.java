@@ -36,7 +36,7 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
   }
 
   final public void stateChanged() {
-    myAlarm.cancelAllRequests();
+    cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
       public void run() {
         applyChanges();
@@ -48,6 +48,10 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
     if (myPanel != null) {
       myPanel.commit();
     }
+  }
+
+  public final void cancelAllRequests() {
+    myAlarm.cancelAllRequests();
   }
 
 }

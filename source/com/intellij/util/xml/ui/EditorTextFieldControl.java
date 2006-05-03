@@ -115,9 +115,11 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
 
   protected void updateComponent() {
     final EditorTextField textField = getEditorTextField(getComponent());
-
+    final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (!project.isOpen()) return;
+        
         final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance();
         final DomElement domElement = getDomElement();
         final List<DomElementProblemDescriptor> errorProblems = manager.getProblems(domElement, true);
@@ -140,7 +142,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
 
         final Editor editor = textField.getEditor();
         if (editor != null && isCommitted()) {
-          DaemonCodeAnalyzer.getInstance(getProject()).updateVisibleHighlighters(editor);
+          DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
         }
       }
     });

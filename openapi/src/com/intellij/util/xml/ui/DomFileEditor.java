@@ -8,18 +8,16 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.xml.CaptionComponent;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomEventListener;
+import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.events.DomEvent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -28,7 +26,7 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
   private final String myName;
   private final T myComponent;
   private final UserActivityWatcher myUserActivityWatcher;
-  private final UserActivityListener myUserActivityListener;
+  private final CommitablePanelUserActivityListener myUserActivityListener;
   private DomEventListener myDomListener;
 
   protected DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
@@ -56,6 +54,7 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
   public void dispose() {
     DomManager.getDomManager(getProject()).removeDomEventListener(myDomListener);
     myUserActivityWatcher.removeUserActivityListener(myUserActivityListener);
+    myUserActivityListener.cancelAllRequests();
     myComponent.dispose();
     super.dispose();
   }
