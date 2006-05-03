@@ -29,6 +29,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
+
 public final class LocalFileSystemImpl extends LocalFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
   private VirtualFileManagerEx myManager = null;
@@ -50,7 +53,15 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private static final Key DELETED_STATUS = Key.create("DELETED_STATUS");
 
   private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
-  public Map<String, VirtualFileImpl> myUnaccountedFiles = new HashMap<String, VirtualFileImpl>();
+  public Map<String, VirtualFileImpl> myUnaccountedFiles = new THashMap<String, VirtualFileImpl>(new TObjectHashingStrategy<String>() {
+    public int computeHashCode(final String s) {
+      return SystemInfo.isFileSystemCaseSensitive ? s.hashCode() : StringUtil.stringHashCodeInsensitive(s); 
+    }
+
+    public boolean equals(final String s1, final String s2) {
+      return SystemInfo.isFileSystemCaseSensitive ? s1.equals(s2) : s1.equalsIgnoreCase(s2);
+    }
+  });
 
   private static class WatchRequestImpl implements WatchRequest {
     public String myRootPath;
@@ -1000,7 +1011,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     boolean isDirectory = file.isDirectory();
 
     parent.removeChild(file);
-    
+
     if (!handled) {
       delete(physicalFile);
     }
