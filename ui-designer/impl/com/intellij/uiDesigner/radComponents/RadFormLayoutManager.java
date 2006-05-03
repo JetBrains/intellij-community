@@ -4,26 +4,28 @@
 
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.openapi.project.Project;
-import com.jgoodies.forms.layout.*;
+import com.intellij.uiDesigner.propertyInspector.Property;
+import com.jgoodies.forms.layout.CellConstraints;
+import com.jgoodies.forms.layout.ColumnSpec;
+import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.RowSpec;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.LayoutManager;
 import java.awt.Graphics2D;
+import java.awt.LayoutManager;
 import java.awt.Rectangle;
 
 /**
  * @author yole
  */
 public class RadFormLayoutManager extends RadGridLayoutManager {
-  @Nullable
-  public String getName() {
+  private FormLayoutColumnProperties myPropertiesPanel;
+
+  @Nullable public String getName() {
     return UIFormXmlConstants.LAYOUT_FORM;
   }
 
@@ -129,8 +131,12 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
   }
 
   @Override
-  public JComponent getRowColumnPropertiesPanel(GuiEditor editor, RadContainer container, boolean isRow, int[] selectedIndices) {
-    return null; // TODO
+  public RowColumnPropertiesPanel getRowColumnPropertiesPanel(RadContainer container, boolean isRow, int[] selectedIndices) {
+    if (myPropertiesPanel == null) {
+      myPropertiesPanel = new FormLayoutColumnProperties();
+    }
+    myPropertiesPanel.showProperties(container, isRow, selectedIndices);
+    return myPropertiesPanel;
   }
 
   @Override

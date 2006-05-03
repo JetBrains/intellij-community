@@ -5,19 +5,18 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -303,12 +302,12 @@ public class RadGridLayoutManager extends RadLayoutManager {
   }
 
   @Override
-  public JComponent getRowColumnPropertiesPanel(GuiEditor editor, RadContainer container, boolean isRow, int[] selectedIndices) {
+  public RowColumnPropertiesPanel getRowColumnPropertiesPanel(RadContainer container, boolean isRow, int[] selectedIndices) {
     if (myPropertiesPanel == null) {
       myPropertiesPanel = new GridLayoutColumnProperties();
     }
-    myPropertiesPanel.showProperties(editor, container, isRow, selectedIndices);
-    return myPropertiesPanel.getRootPanel();
+    myPropertiesPanel.showProperties(container, isRow, selectedIndices);
+    return myPropertiesPanel;
   }
 
   public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g,

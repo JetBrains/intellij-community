@@ -5,17 +5,17 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadContainer;import com.intellij.uiDesigner.radComponents.RowColumnPropertiesPanel;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.GridCaptionPanel;
-import com.intellij.uiDesigner.quickFixes.QuickFixManager;
+import com.intellij.uiDesigner.quickFixes.QuickFixManager;import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.*;import javax.swing.event.ChangeListener;import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,7 +33,9 @@ public final class PropertyInspector extends JPanel{
   @NonNls private static final String INSPECTOR_CARD = "inspector";
   @NonNls private static final String EMPTY_CARD = "empty";
   @NonNls private static final String COLUMN_CARD = "column";
-  private JComponent myColumnPropertiesPanel;
+  private RowColumnPropertiesPanel myColumnPropertiesPanel;
+  private ChangeListener myColumnPropertiesChangeListener;
+  private RadContainer myPropertiesPanelContainer;
 
   public PropertyInspector(Project project, @NotNull final ComponentTree componentTree) {
     super(new CardLayout());
@@ -77,6 +79,13 @@ public final class PropertyInspector extends JPanel{
 
     // Install light bulb
     myQuickFixManager = new QuickFixManagerImpl(null, myInspectorTable);
+
+    myColumnPropertiesChangeListener = new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        myPropertiesPanelContainer.revalidate();
+        myEditor.refreshAndSave(true);
+      }
+    };
   }
 
   public void setEditor(final GuiEditor editor) {
@@ -112,18 +121,26 @@ public final class PropertyInspector extends JPanel{
   }
 
   private boolean showSelectedColumnProperties() {
+    if (myColumnPropertiesPanel != null && IJSwingUtilities.hasFocus(myColumnPropertiesPanel.getComponent())) {
+      return true;
+    }
     if (myEditor == null) return false;
     GridCaptionPanel panel = myEditor.getFocusedCaptionPanel();
     if (panel == null) return false;
     RadContainer container = panel.getSelectedContainer();
     if (container == null) return false;
     final int[] selection = panel.getSelectedCells(null);
-    final JComponent propertiesPanel = container.getLayoutManager().getRowColumnPropertiesPanel(myEditor, container, panel.isRow(), selection);
+    myPropertiesPanelContainer = container;
+    final RowColumnPropertiesPanel propertiesPanel = container.getLayoutManager().getRowColumnPropertiesPanel(container, panel.isRow(), selection);
     if (propertiesPanel == null) return false;
     if (!Comparing.equal(propertiesPanel, myColumnPropertiesPanel)) {
-      if (myColumnPropertiesPanel != null) remove(myColumnPropertiesPanel);
+      if (myColumnPropertiesPanel != null) {
+        remove(myColumnPropertiesPanel.getComponent());
+        myColumnPropertiesPanel.removeChangeListener(myColumnPropertiesChangeListener);
+      }
       myColumnPropertiesPanel = propertiesPanel;
-      add(myColumnPropertiesPanel, COLUMN_CARD);
+      myColumnPropertiesPanel.addChangeListener(myColumnPropertiesChangeListener);
+      add(myColumnPropertiesPanel.getComponent(), COLUMN_CARD);
     }
     final CardLayout cardLayout = (CardLayout)getLayout();
     cardLayout.show(this, COLUMN_CARD);
