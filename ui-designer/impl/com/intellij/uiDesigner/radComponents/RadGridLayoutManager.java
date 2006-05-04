@@ -112,8 +112,8 @@ public class RadGridLayoutManager extends RadLayoutManager {
     return new Property[] {
       HSizePolicyProperty.getInstance(project),
       VSizePolicyProperty.getInstance(project),
-      FillProperty.getInstance(project),
-      AnchorProperty.getInstance(project),
+      HorzAlignProperty.getInstance(project),
+      VertAlignProperty.getInstance(project),
       RowSpanProperty.getInstance(project),
       ColumnSpanProperty.getInstance(project),
       IndentProperty.getInstance(project),

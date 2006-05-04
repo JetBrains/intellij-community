@@ -85,6 +85,11 @@ public final class GridConstraints implements Cloneable {
   public static final int SIZEPOLICY_CAN_GROW = 2;
   public static final int SIZEPOLICY_WANT_GROW = 4;
 
+  public static final int ALIGN_LEFT   = 0;
+  public static final int ALIGN_CENTER = 1;
+  public static final int ALIGN_RIGHT  = 2;
+  public static final int ALIGN_FILL   = 3;
+
   private int myRow;
   private int myColumn;
   private int myRowSpan;

@@ -1198,8 +1198,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       updateUI(VGapProperty.getInstance(myProject));
       updateUI(HSizePolicyProperty.getInstance(myProject));
       updateUI(VSizePolicyProperty.getInstance(myProject));
-      updateUI(FillProperty.getInstance(myProject));
-      updateUI(AnchorProperty.getInstance(myProject));
+      updateUI(HorzAlignProperty.getInstance(myProject));
+      updateUI(VertAlignProperty.getInstance(myProject));
       updateUI(RowSpanProperty.getInstance(myProject));
       updateUI(ColumnSpanProperty.getInstance(myProject));
       updateUI(IndentProperty.getInstance(myProject));

@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 import org.jdom.input.SAXBuilder;
 import org.jdom.Document;
@@ -303,5 +304,17 @@ public final class Utils {
       result.append(formLayout.getColumnSpec(i).toString());
     }
     return result.toString();
+  }
+
+  public static int alignFromConstraints(final GridConstraints gc, final boolean horizontal) {
+    int anchor = gc.getAnchor();
+    int fill = gc.getFill();
+    int leftMask = horizontal ? GridConstraints.ANCHOR_WEST : GridConstraints.ANCHOR_NORTH;
+    int rightMask = horizontal ? GridConstraints.ANCHOR_EAST : GridConstraints.ANCHOR_SOUTH;
+    int fillMask = horizontal ? GridConstraints.FILL_HORIZONTAL : GridConstraints.FILL_VERTICAL;
+    if ((fill & fillMask) != 0) return GridConstraints.ALIGN_FILL;
+    if ((anchor & rightMask) != 0) return GridConstraints.ALIGN_RIGHT;
+    if ((anchor & leftMask) != 0) return GridConstraints.ALIGN_LEFT;
+    return GridConstraints.ALIGN_CENTER;
   }
 }
