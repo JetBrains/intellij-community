@@ -86,6 +86,10 @@ public class MagicNumberInspection extends ExpressionInspection {
         return new IntroduceConstantFix();
     }
 
+    boolean isSpecialCaseLiteral(String text) {
+        return s_specialCaseLiterals.contains(text);
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new MagicNumberVisitor();
     }
@@ -106,7 +110,7 @@ public class MagicNumberInspection extends ExpressionInspection {
             if (text == null) {
                 return;
             }
-            if (isSpecialCase(text)) {
+            if (isSpecialCaseLiteral(text)) {
                 return;
             }
             if (isDeclaredConstant(expression)) {
@@ -128,10 +132,6 @@ public class MagicNumberInspection extends ExpressionInspection {
             }
         }
 
-        private  boolean isSpecialCase(String text) {
-            return s_specialCaseLiterals.contains(text);
-        }
-
         private  boolean isDeclaredConstant(PsiLiteralExpression expression) {
             final PsiField field =
                     PsiTreeUtil.getParentOfType(expression, PsiField.class);
@@ -142,7 +142,11 @@ public class MagicNumberInspection extends ExpressionInspection {
                     !field.hasModifierProperty(PsiModifier.FINAL)) {
                 return false;
             }
-            final PsiType type = field.getType();
+            final PsiExpression initializer = field.getInitializer();
+            if (initializer == null) {
+                return false;
+            }
+            final PsiType type = initializer.getType();
             return ClassUtils.isImmutable(type);
         }
     }
