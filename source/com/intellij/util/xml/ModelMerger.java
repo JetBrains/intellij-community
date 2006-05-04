@@ -102,14 +102,14 @@ public class ModelMerger {
   }
 
   @NotNull
-  public <T> List<T> getFilteredImplementations(final T element) {
+  public static <T> List<T> getFilteredImplementations(final T element) {
     final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(new ArrayList<T>());
     new ImplementationProcessor<T>(processor, false).process(element);
     return (List<T>)processor.getResults();
   }
 
   @NotNull
-  public <T> List<T> getImplementations(T element) {
+  public static <T> List<T> getImplementations(T element) {
     if (element instanceof MergedObject) {
       final MergedObject<T> mergedObject = (MergedObject<T>)element;
       return mergedObject.getImplementations();
@@ -122,7 +122,7 @@ public class ModelMerger {
     }
   }
 
-  private void addAllInterfaces(Class aClass, List<Class> list) {
+  private static void addAllInterfaces(Class aClass, List<Class> list) {
     final Class[] interfaces = aClass.getInterfaces();
     list.addAll(Arrays.asList(interfaces));
     for (Class anInterface : interfaces) {
