@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.vcs.changes.ui.CommitLegendPanel">
+  <grid id="27dc6" binding="myRootPanel" layout-manager="GridLayoutManager" row-count="7" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="20" y="20" width="500" height="400"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="61fbc" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/VcsBundle" key="commit.legend.files"/>
+        </properties>
+      </component>
+      <hspacer id="f4b2c">
+        <constraints>
+          <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </hspacer>
+      <vspacer id="2b29a">
+        <constraints>
+          <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <component id="4b73" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/VcsBundle" key="commit.legend.shown"/>
+        </properties>
+      </component>
+      <component id="23f6b" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/VcsBundle" key="commit.legend.included"/>
+        </properties>
+      </component>
+      <component id="97520" class="javax.swing.JSeparator">
+        <constraints>
+          <grid row="4" column="1" row-span="1" col-span="3" vsize-policy="3" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="a7590" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/VcsBundle" key="commit.legend.modified"/>
+        </properties>
+      </component>
+      <component id="b8400" class="javax.swing.JLabel" binding="myModifiedShown">
+        <constraints>
+          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="0"/>
+        </properties>
+      </component>
+      <component id="e3e31" class="javax.swing.JLabel" binding="myModifiedIncluded">
+        <constraints>
+          <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="0"/>
+        </properties>
+      </component>
+      <component id="5d89e" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/VcsBundle" key="commit.legend.new"/>
+        </properties>
+      </component>
+      <component id="d282c" class="javax.swing.JLabel" binding="myNewShown">
+        <constraints>
+          <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="0"/>
+        </properties>
+      </component>
+      <component id="6b5fd" class="javax.swing.JLabel" binding="myNewIncluded">
+        <constraints>
+          <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="0"/>
+        </properties>
+      </component>
+      <component id="1f74b" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/VcsBundle" key="commit.legend.deleted"/>
+        </properties>
+      </component>
+      <component id="4d448" class="javax.swing.JLabel" binding="myDeletedShown">
+        <constraints>
+          <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="0"/>
+        </properties>
+      </component>
+      <component id="4836c" class="javax.swing.JLabel" binding="myDeletedIncluded">
+        <constraints>
+          <grid row="3" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="0"/>
+        </properties>
+      </component>
+      <component id="50838" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/VcsBundle" key="commit.legend.total"/>
+        </properties>
+      </component>
+      <component id="bf4d3" class="javax.swing.JLabel" binding="myTotalShown">
+        <constraints>
+          <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="0"/>
+        </properties>
+      </component>
+      <component id="9bacb" class="javax.swing.JLabel" binding="myTotalIncluded">
+        <constraints>
+          <grid row="5" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="0"/>
+        </properties>
+      </component>
+      <grid id="9f9f9" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <minimum-size width="40" height="20"/>
+          </grid>
+        </constraints>
+        <properties>
+          <background color="-15685132"/>
+        </properties>
+        <border type="etched"/>
+        <children/>
+      </grid>
+      <grid id="4d9c3" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <minimum-size width="40" height="20"/>
+          </grid>
+        </constraints>
+        <properties>
+          <background color="-6684775"/>
+        </properties>
+        <border type="etched"/>
+        <children/>
+      </grid>
+      <grid id="317c2" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <minimum-size width="40" height="20"/>
+          </grid>
+        </constraints>
+        <properties>
+          <background color="-6710887"/>
+        </properties>
+        <border type="etched"/>
+        <children/>
+      </grid>
+    </children>
+  </grid>
+</form>

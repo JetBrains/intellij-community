@@ -33,6 +33,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private final Map<Change, LocalChangeList> myChangeListsMap = new HashMap<Change, LocalChangeList>();
   private Project myProject;
   private EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
+  private final JPanel myHeaderPanel;
 
   public interface SelectedListChangeListener extends EventListener{
     void selectedListChanged();
@@ -80,12 +81,16 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     listPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("commit.dialog.changed.files.label")));
     add(listPanel, BorderLayout.CENTER);
 
-    JPanel headerPanel = new JPanel(new BorderLayout());
-    headerPanel.add(new ChangeListChooser(changeLists), BorderLayout.EAST);
-    headerPanel.add(createToolbar(), BorderLayout.WEST);
-    add(headerPanel, BorderLayout.NORTH);
+    myHeaderPanel = new JPanel(new BorderLayout());
+    myHeaderPanel.add(new ChangeListChooser(changeLists), BorderLayout.EAST);
+    myHeaderPanel.add(createToolbar(), BorderLayout.WEST);
+    add(myHeaderPanel, BorderLayout.NORTH);
 
     myViewer.setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
+  }
+
+  public JPanel getHeaderPanel() {
+    return myHeaderPanel;
   }
 
   public JComponent getContentComponent() {

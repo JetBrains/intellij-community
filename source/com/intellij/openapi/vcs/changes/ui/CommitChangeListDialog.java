@@ -38,10 +38,11 @@ import java.util.List;
  */
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, DataProvider {
   private CommitMessage myCommitMessageArea;
-  private Splitter myRootPane;
+  private Splitter mySplitter;
   private JPanel myAdditionalOptionsPanel;
 
   private ChangesBrowser myBrowser;
+  private CommitLegendPanel myLegend;
 
   private List<RefreshableOnComponent> myAdditionalComponents = new ArrayList<RefreshableOnComponent>();
   private List<CheckinHandler> myHandlers = new ArrayList<CheckinHandler>();
@@ -224,7 +225,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   protected void dispose() {
     super.dispose();
     myOKButtonUpdateAlarm.cancelAllRequests();
-    PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, String.valueOf(myRootPane.getProportion()));
+    PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, String.valueOf(mySplitter.getProportion()));
   }
 
   private String getCommitActionName() {
@@ -312,18 +313,26 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   
   @Nullable
   protected JComponent createCenterPanel() {
-    myRootPane = new Splitter(true);
-    myRootPane.setHonorComponentsMinimumSize(true);
+    JPanel rootPane = new JPanel(new BorderLayout());
 
-    myRootPane.setFirstComponent(myBrowser);
+    mySplitter = new Splitter(true);
+    mySplitter.setHonorComponentsMinimumSize(true);
+    mySplitter.setFirstComponent(myBrowser);
+    mySplitter.setSecondComponent(myCommitMessageArea);
+    mySplitter.setProportion(calcSplitterProportion());
+    rootPane.add(mySplitter, BorderLayout.CENTER);
 
-    JPanel bottomPanel = new JPanel(new BorderLayout());
-    bottomPanel.add(myAdditionalOptionsPanel, BorderLayout.EAST);
-    bottomPanel.add(myCommitMessageArea, BorderLayout.CENTER);
+    JComponent browserHeader = myBrowser.getHeaderPanel();
+    myBrowser.remove(browserHeader);
+    rootPane.add(browserHeader, BorderLayout.NORTH);
 
-    myRootPane.setSecondComponent(bottomPanel);
-    myRootPane.setProportion(calcSplitterProportion());
-    return myRootPane;
+    JPanel infoPanel = new JPanel(new BorderLayout());
+    myLegend = new CommitLegendPanel();
+    infoPanel.add(myLegend.getComponent(), BorderLayout.NORTH);
+    infoPanel.add(myAdditionalOptionsPanel, BorderLayout.CENTER);
+    rootPane.add(infoPanel, BorderLayout.EAST);
+
+    return rootPane;
   }
 
   private static float calcSplitterProportion() {
@@ -361,7 +370,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public JComponent getComponent() {
-    return myRootPane;
+    return mySplitter;
   }
 
   public boolean hasDiffs() {
@@ -450,8 +459,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myOKButtonUpdateAlarm.addRequest(new Runnable() {
       public void run() {
         updateButtons();
+        updateLegend();
       }
     }, 300, ModalityState.stateForComponent(myBrowser));
+  }
+
+  private void updateLegend() {
+    myLegend.update(myBrowser.getCurrentDisplayedChanges(), myBrowser.getCurrentIncludedChanges());
   }
 
   private List<Change> getIncludedChanges() {
