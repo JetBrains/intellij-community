@@ -456,12 +456,11 @@ public final class FormEditingUtil {
   }
 
   public static void deleteRowOrColumn(final GuiEditor editor, final RadContainer container,
-                                        final int cell, final int orientation) {
+                                        final int cell, final boolean isRow) {
     if (!editor.ensureEditable()) {
       return;
     }
 
-    boolean isRow = (orientation == SwingConstants.VERTICAL);
     if (!GridChangeUtil.canDeleteCell(container, cell, isRow, false)) {
       ArrayList<RadComponent> componentsInColumn = new ArrayList<RadComponent>();
       for(RadComponent component: container.getComponents()) {

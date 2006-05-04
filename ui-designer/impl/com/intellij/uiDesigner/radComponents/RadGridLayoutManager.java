@@ -5,9 +5,15 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.actions.DeleteAction;
+import com.intellij.uiDesigner.actions.InsertBeforeAction;
+import com.intellij.uiDesigner.actions.InsertAfterAction;
+import com.intellij.uiDesigner.actions.SplitAction;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.*;
@@ -306,6 +312,16 @@ public class RadGridLayoutManager extends RadLayoutManager {
     }
     myPropertiesPanel.showProperties(container, isRow, selectedIndices);
     return myPropertiesPanel;
+  }
+
+  @Override
+  public ActionGroup getCaptionActions() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new InsertBeforeAction());
+    group.add(new InsertAfterAction());
+    group.add(new SplitAction());
+    group.add(new DeleteAction());
+    return group;
   }
 
   public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g,

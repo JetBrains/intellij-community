@@ -4,28 +4,28 @@
 
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.dnd.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.LightColors;
+import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GridChangeUtil;
-import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
-import com.intellij.uiDesigner.actions.GridChangeActionGroup;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadLayoutManager;
-import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.dnd.*;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -40,6 +40,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   private DefaultListSelectionModel mySelectionModel = new DefaultListSelectionModel();
   private int myResizeLine = -1;
   private int myDropInsertLine = -1;
+  private int myFocusedCell = -1;
   private PreferredSizeProperty myPreferredSizeProperty = new PreferredSizeProperty();
   private LineFeedbackPainter myFeedbackPainter = new LineFeedbackPainter();
   private DeleteProvider myDeleteProvider = new MyDeleteProvider();
@@ -191,14 +192,16 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   @Nullable public Object getData(String dataId) {
+    if (dataId.equals(GuiEditor.class.getName())) {
+      return myEditor;
+    }
+    if (dataId.equals(CaptionSelection.class.getName())) {
+      return new CaptionSelection(mySelectedContainer, myIsRow, getSelectedCells(null), myFocusedCell);
+    }
     if (dataId.equals(DataConstantsEx.DELETE_ELEMENT_PROVIDER)) {
       return myDeleteProvider;
     }
     return myEditor.getData(dataId);
-  }
-
-  private int getOrientation() {
-    return myIsRow ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL;
   }
 
   public void attachToScrollPane(final JScrollPane scrollPane) {
@@ -291,9 +294,12 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       int cell = getCellAt(e.getPoint());
 
       if (cell >= 0 && e.isPopupTrigger()) {
-        GridChangeActionGroup group = new GridChangeActionGroup(myEditor, mySelectedContainer, cell, getOrientation());
-        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-        popupMenu.getComponent().show(GridCaptionPanel.this, e.getX(), e.getY());
+        myFocusedCell = cell;
+        ActionGroup group = mySelectedContainer.getLayoutManager().getCaptionActions();
+        if (group != null) {
+          final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+          popupMenu.getComponent().show(GridCaptionPanel.this, e.getX(), e.getY());
+        }
       }
     }
 
@@ -402,7 +408,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     public void deleteElement(DataContext dataContext) {
       int selectedIndex = mySelectionModel.getMinSelectionIndex();
       if (selectedIndex >= 0) {
-        FormEditingUtil.deleteRowOrColumn(myEditor, mySelectedContainer, selectedIndex, getOrientation());
+        FormEditingUtil.deleteRowOrColumn(myEditor, mySelectedContainer, selectedIndex, myIsRow);
       }
     }
 

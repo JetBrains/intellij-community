@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.NoDropLocation;
@@ -158,6 +159,11 @@ public abstract class RadLayoutManager {
       return gridLines.length-1;
     }
     return -1;
+  }
+
+  @Nullable
+  public ActionGroup getCaptionActions() {
+    return null;
   }
 
   public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g2d,
