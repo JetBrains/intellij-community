@@ -36,6 +36,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private final TreeAspect myTreeAspect;
   private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<FileViewProvider, List<ASTNode>>();
   private boolean myDisabled = false;
+  private int myDisabledCounter = 0;
   private Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
 
   public PostprocessReformattingAspect(PsiManager psiManager, TreeAspect treeAspect) {
@@ -55,14 +56,16 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   public <T> T disablePosprocessFormattingInside(Computable<T> computable){
     synchronized(PsiLock.LOCK){
-      boolean oldDisabledValue = false;
+      final boolean oldDisabledValue = myDisabled;
       try{
-        oldDisabledValue = myDisabled;
         myDisabled = true;
+        myDisabledCounter++;
         return computable.compute();
       }
-      finally{
+      finally {
+        myDisabledCounter--;
         myDisabled = oldDisabledValue;
+        LOG.assertTrue(myDisabledCounter > 0 || !myDisabled);
       }
     }
   }
