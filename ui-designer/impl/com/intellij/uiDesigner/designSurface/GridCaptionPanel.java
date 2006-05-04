@@ -40,7 +40,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   private DefaultListSelectionModel mySelectionModel = new DefaultListSelectionModel();
   private int myResizeLine = -1;
   private int myDropInsertLine = -1;
-  private int myFocusedCell = -1;
   private PreferredSizeProperty myPreferredSizeProperty = new PreferredSizeProperty();
   private LineFeedbackPainter myFeedbackPainter = new LineFeedbackPainter();
   private DeleteProvider myDeleteProvider = new MyDeleteProvider();
@@ -115,8 +114,20 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
       layout.paintCaptionDecoration(container, myIsRow, i, g2d, rc);
 
-      g.setColor(Color.DARK_GRAY);
-      g.drawRect(rc.x, rc.y, rc.width, rc.height);
+      Stroke oldStroke = g2d.getStroke();
+      int deltaX = 0;
+      int deltaY = 0;
+      if (isFocusOwner() && i == mySelectionModel.getLeadSelectionIndex()) {
+        g.setColor(Color.BLACK);
+        g2d.setStroke(new BasicStroke(2.0f));
+        deltaX = myIsRow ? 1 : 0;
+        deltaY = myIsRow ? 0 : 1;
+      }
+      else {
+        g.setColor(Color.DARK_GRAY);
+      }
+      g.drawRect(rc.x + deltaX, rc.y + deltaY, rc.width - deltaX, rc.height - deltaY);
+      g2d.setStroke(oldStroke);
     }
 
     g.setColor(Color.DARK_GRAY);
@@ -196,7 +207,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       return myEditor;
     }
     if (dataId.equals(CaptionSelection.class.getName())) {
-      return new CaptionSelection(mySelectedContainer, myIsRow, getSelectedCells(null), myFocusedCell);
+      return new CaptionSelection(mySelectedContainer, myIsRow, getSelectedCells(null), mySelectionModel.getLeadSelectionIndex());
     }
     if (dataId.equals(DataConstantsEx.DELETE_ELEMENT_PROVIDER)) {
       return myDeleteProvider;
@@ -294,7 +305,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       int cell = getCellAt(e.getPoint());
 
       if (cell >= 0 && e.isPopupTrigger()) {
-        myFocusedCell = cell;
         ActionGroup group = mySelectedContainer.getLayoutManager().getCaptionActions();
         if (group != null) {
           final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
