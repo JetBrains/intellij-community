@@ -10,13 +10,13 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.util.ParameterTablePanel;
-import com.intellij.idea.Bombed;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -124,7 +124,7 @@ public class MakeMethodStaticTest extends CodeInsightTestCase {
     checkResultByFile("/refactoring/makeMethodStatic/after15.java");
   }
 
-  @Bombed(user = "lesya", day = 4, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
+  @Bombed(user = "lesya", day = 14, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
   public void testJavadoc1() throws Exception {
     configureByFile("/refactoring/makeMethodStatic/before16.java");
     performWithFields();

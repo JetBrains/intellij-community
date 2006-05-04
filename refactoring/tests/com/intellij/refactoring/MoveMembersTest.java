@@ -1,18 +1,21 @@
 package com.intellij.refactoring;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
-import com.intellij.idea.Bombed;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.Calendar;
+import java.util.LinkedHashSet;
 
 public class MoveMembersTest extends MultiFileTestCase {
-  @Bombed(user = "lesya", day = 4, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
+  @Bombed(user = "lesya", day = 14, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
   public void testJavadocRefs() throws Exception {
     doTest("Class1", "Class2", new int[]{0});
   }
