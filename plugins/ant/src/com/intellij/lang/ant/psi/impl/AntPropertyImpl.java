@@ -48,6 +48,8 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
         if (propFile != null) {
           builder.append("file: ");
           builder.append(propFile);
+        } else {
+          builder.append(getSourceElement().getName());
         }
       }
       builder.append("]");

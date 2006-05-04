@@ -60,10 +60,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public String toString() {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append("AntStructuredElement");
-      final XmlTag sourceElement = getSourceElement();
-      builder.append("[");
-      builder.append(sourceElement.getName());
+      builder.append("AntStructuredElement[");
+      builder.append(getSourceElement().getName());
       builder.append("]");
       return builder.toString();
     }

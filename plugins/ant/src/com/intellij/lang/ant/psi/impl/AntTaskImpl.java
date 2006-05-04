@@ -17,7 +17,7 @@ public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntTask[");
-      builder.append(getName());
+      builder.append(getSourceElement().getName());
       builder.append("]");
       return builder.toString();
     }
