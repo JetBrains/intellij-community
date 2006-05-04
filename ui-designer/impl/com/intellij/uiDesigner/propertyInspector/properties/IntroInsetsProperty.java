@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -35,10 +36,10 @@ public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
   }
 
   public void write(final Insets value, final XmlWriter writer) {
-    writer.addAttribute("top",value.top);
-    writer.addAttribute("left",value.left);
-    writer.addAttribute("bottom",value.bottom);
-    writer.addAttribute("right",value.right);
+    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_TOP,value.top);
+    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_LEFT,value.left);
+    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_BOTTOM,value.bottom);
+    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_RIGHT,value.right);
   }
 
   @NotNull

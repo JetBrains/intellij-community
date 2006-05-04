@@ -11,15 +11,22 @@ import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.editors.IntRegexEditor;
+import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntFieldProperty;
 import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.Graphics2D;
 import java.awt.LayoutManager;
 import java.awt.Rectangle;
+import java.awt.Insets;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import java.util.Map;
@@ -78,7 +85,13 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
     MyPropertyChangeListener listener = new MyPropertyChangeListener(component);
     myListenerMap.put(component, listener);
     component.addPropertyChangeListener(listener);
-    container.getDelegee().add(component.getDelegee(), gridToCellConstraints(component), index);
+    final CellConstraints cc = gridToCellConstraints(component);
+    if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
+      CellConstraints customCellConstraints = (CellConstraints) component.getCustomLayoutConstraints();
+      cc.insets = customCellConstraints.insets;
+    }
+    component.setCustomLayoutConstraints(cc);
+    container.getDelegee().add(component.getDelegee(), cc, index);
   }
 
   @Override
@@ -104,6 +117,26 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
     }
 
     return new CellConstraints(gc.getColumn()+1, gc.getRow()+1, gc.getColSpan(), gc.getRowSpan(), hAlign, vAlign);
+  }
+
+  @Override
+  public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
+    super.writeChildConstraints(writer, child);
+    if (child.getCustomLayoutConstraints() instanceof CellConstraints) {
+      CellConstraints cc = (CellConstraints) child.getCustomLayoutConstraints();
+      writer.startElement(UIFormXmlConstants.ELEMENT_FORMS);
+      try {
+        if (!cc.insets.equals(new Insets(0, 0, 0, 0))) {
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_TOP, cc.insets.top);
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_LEFT, cc.insets.left);
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_BOTTOM, cc.insets.bottom);
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_RIGHT, cc.insets.right);
+        }
+      }
+      finally {
+        writer.endElement();
+      }
+    }
   }
 
   @Override public boolean isGrid() {
@@ -193,7 +226,8 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
   public Property[] getComponentProperties(final Project project, final RadComponent component) {
     return new Property[] {
       HorzAlignProperty.getInstance(project),
-      VertAlignProperty.getInstance(project)
+      VertAlignProperty.getInstance(project),
+      new ComponentInsetsProperty()
     };
   }
 
@@ -281,6 +315,62 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
         FormLayout layout = (FormLayout) myComponent.getParent().getLayout();
         layout.setConstraints(myComponent.getDelegee(), gridToCellConstraints(myComponent));
       }
+    }
+  }
+
+  private static class ComponentInsetsProperty extends Property<RadComponent, Insets> {
+    private InsetsPropertyRenderer myRenderer;
+    private IntRegexEditor<Insets> myEditor;
+    private Property[] myChildren;
+
+    public ComponentInsetsProperty() {
+      super(null, "Insets");
+      myChildren=new Property[]{
+        new IntFieldProperty(this, "top", 0),
+        new IntFieldProperty(this, "left", 0),
+        new IntFieldProperty(this, "bottom", 0),
+        new IntFieldProperty(this, "right", 0),
+      };
+    }
+
+    @NotNull @Override
+    public Property[] getChildren(final RadComponent component) {
+      return myChildren;
+    }
+
+    public Insets getValue(final RadComponent component) {
+      if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
+        final CellConstraints cellConstraints = (CellConstraints)component.getCustomLayoutConstraints();
+        return cellConstraints.insets;
+      }
+      return new Insets(0, 0, 0, 0);
+    }
+
+    protected void setValueImpl(final RadComponent component, final Insets value) throws Exception {
+      if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
+        final CellConstraints cellConstraints = (CellConstraints)component.getCustomLayoutConstraints();
+        cellConstraints.insets = value;
+
+        FormLayout layout = (FormLayout) component.getParent().getLayout();
+        CellConstraints cc = (CellConstraints)layout.getConstraints(component.getDelegee()).clone();
+        cc.insets = value;
+        layout.setConstraints(component.getDelegee(), cc);
+      }
+    }
+
+    @NotNull
+    public PropertyRenderer<Insets> getRenderer() {
+      if (myRenderer == null) {
+        myRenderer = new InsetsPropertyRenderer();
+      }
+      return myRenderer;
+    }
+
+    public PropertyEditor<Insets> getEditor() {
+      if (myEditor == null) {
+        myEditor = new IntRegexEditor<Insets>(Insets.class, myRenderer, new int[] { 0, 0, 0, 0 });
+      }
+      return myEditor;
     }
   }
 }

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 
-final class IntFieldProperty extends Property<RadComponent, Integer> {
+public final class IntFieldProperty extends Property<RadComponent, Integer> {
   private final LabelPropertyRenderer<Integer> myRenderer;
   private final IntEditor myEditor;
   @NotNull private final Property myParent;

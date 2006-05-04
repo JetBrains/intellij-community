@@ -10,6 +10,9 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.compiler.FormLayoutCodeGenerator;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.CellConstraints;
+
+import java.awt.Insets;
 
 /**
  * @author yole
@@ -38,28 +41,38 @@ public class FormLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.startMethodCall(parentVariable, "add");
     generator.pushVar(variable);
 
+    CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
     GridConstraints constraints = component.getConstraints();
-    if (constraints.getColSpan() == 1 && constraints.getRowSpan() == 1) {
-      generator.startMethodCall("cc", "xy");
-    }
-    else if (constraints.getRowSpan() == 1) {
-      generator.startMethodCall("cc", "xyw");
+    final boolean haveInsets = !cc.insets.equals(new Insets(0, 0, 0, 0));
+    if (haveInsets) {
+      generator.startConstructor(CellConstraints.class.getName());
     }
     else {
-      generator.startMethodCall("cc", "xywh");
+      if (constraints.getColSpan() == 1 && constraints.getRowSpan() == 1) {
+        generator.startMethodCall("cc", "xy");
+      }
+      else if (constraints.getRowSpan() == 1) {
+        generator.startMethodCall("cc", "xyw");
+      }
+      else {
+        generator.startMethodCall("cc", "xywh");
+      }
     }
     generator.push(constraints.getColumn()+1);
     generator.push(constraints.getRow()+1);
-    if (constraints.getColSpan() > 1 || constraints.getRowSpan() > 1) {
+    if (constraints.getColSpan() > 1 || constraints.getRowSpan() > 1 || haveInsets) {
       generator.push(constraints.getColSpan());
     }
-    if (constraints.getRowSpan() > 1) {
+    if (constraints.getRowSpan() > 1 || haveInsets) {
       generator.push(constraints.getRowSpan());
     }
     String hAlign = FormLayoutCodeGenerator.HORZ_ALIGN_FIELDS [Utils.alignFromConstraints(constraints, true)];
     String vAlign = FormLayoutCodeGenerator.VERT_ALIGN_FIELDS [Utils.alignFromConstraints(constraints, false)];
     generator.pushVar("com.jgoodies.forms.layout.CellConstraints." + hAlign);
     generator.pushVar("com.jgoodies.forms.layout.CellConstraints." + vAlign);
+    if (haveInsets) {
+      generator.newInsets(cc.insets);
+    }
     generator.endMethod();
     generator.endMethod();
   }

@@ -20,6 +20,7 @@ import org.jdom.Element;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.RowSpec;
 import com.jgoodies.forms.layout.ColumnSpec;
+import com.jgoodies.forms.layout.CellConstraints;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 
 import java.util.List;
@@ -50,5 +51,17 @@ public class FormLayoutSerializer extends GridLayoutSerializer {
       layout.appendColumn(new ColumnSpec(spec));
     }
     container.setLayout(layout);
+  }
+
+  void readChildConstraints(final Element constraintsElement, final LwComponent component) {
+    super.readChildConstraints(constraintsElement, component);
+    CellConstraints cc = new CellConstraints();
+    final Element formsElement = LwXmlReader.getChild(constraintsElement, UIFormXmlConstants.ELEMENT_FORMS);
+    if (formsElement != null) {
+      if (formsElement.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_TOP) != null) {
+        cc.insets = LwXmlReader.readInsets(formsElement);
+      }
+    }
+    component.setCustomLayoutConstraints(cc);
   }
 }

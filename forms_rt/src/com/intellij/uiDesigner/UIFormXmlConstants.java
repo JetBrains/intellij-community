@@ -57,6 +57,10 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_ENABLED = "enabled";
   public static final String ATTRIBUTE_ROW_COUNT = "row-count";
   public static final String ATTRIBUTE_COLUMN_COUNT = "column-count";
+  public static final String ATTRIBUTE_TOP = "top";
+  public static final String ATTRIBUTE_LEFT = "left";
+  public static final String ATTRIBUTE_BOTTOM = "bottom";
+  public static final String ATTRIBUTE_RIGHT = "right";
 
   public static final String ELEMENT_BUTTON_GROUPS = "buttonGroups";
   public static final String ELEMENT_GROUP = "group";
@@ -74,6 +78,7 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_TOOLTIP = "tooltip";
   public static final String ELEMENT_ROWSPEC = "rowspec";
   public static final String ELEMENT_COLSPEC = "colspec";
+  public static final String ELEMENT_FORMS = "forms";
 
   public static final String LAYOUT_INTELLIJ = "GridLayoutManager";
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";

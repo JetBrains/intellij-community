@@ -21,6 +21,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 
 import java.awt.Font;
 import java.awt.Color;
+import java.awt.Insets;
 
 public final class LwXmlReader {
   private LwXmlReader() {
@@ -153,5 +154,13 @@ public final class LwXmlReader {
       return ColorDescriptor.fromAWTColor(awtColor);
     }
     return new ColorDescriptor(null);
+  }
+
+  public static Insets readInsets(final Element element) {
+    final int top = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_TOP);
+    final int left = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_LEFT);
+    final int bottom = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_BOTTOM);
+    final int right = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_RIGHT);
+    return new Insets(top, left, bottom, right);
   }
 }
