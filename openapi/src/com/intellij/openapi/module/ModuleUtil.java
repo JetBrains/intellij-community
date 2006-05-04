@@ -188,19 +188,6 @@ public class ModuleUtil {
     return null;
   }
 
-  public static LanguageLevel getLanguageLevel(@NotNull final PsiFile file, final Project project) {
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) throw new IllegalStateException("Cannot get language level for " + file.getName());
-    final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
-    if (module != null) {
-      return module.getEffectiveLanguageLevel();
-    } else {
-      final PsiFile originalFile = file.getOriginalFile();
-    }
-
-    return PsiManager.getInstance(project).getEffectiveLanguageLevel();
-  }
-
   public static Collection<Module> collectModulesDependsOn(@NotNull final Collection<Module> modules) {
     if (modules.size() == 0) return new ArrayList<Module>(0);
     final HashSet<Module> result = new HashSet<Module>();
