@@ -37,7 +37,11 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
     XmlAttribute nameAttr = getSourceElement().getAttribute("name", null);
     if (nameAttr != null) {
-      myNameElement = new AntElementImpl(this, nameAttr);
+      myNameElement = new AntElementImpl(this, nameAttr) {
+        public String getText() {
+          return ((XmlAttribute)getSourceElement()).getValue();
+        }
+      };
     }
   }
 
@@ -156,7 +160,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     myReferencedElements = null;
   }
 
-  public PsiElement getNavigationElement() {
-    return (myNameElement == null) ? this : myNameElement;
+  public int getTextOffset() {
+    return (myNameElement == null) ? super.getTextOffset() : myNameElement.getTextOffset();
   }
 }
