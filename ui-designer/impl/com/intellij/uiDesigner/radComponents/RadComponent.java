@@ -3,7 +3,6 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.uiDesigner.RevalidateInfo;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -456,11 +455,8 @@ public abstract class RadComponent implements IComponent {
     return Util.getPreferredSize(myDelegee, myConstraints, false);
   }
 
-  /**
-   * todo[anton] get rid of
-   */
-  public final RevalidateInfo revalidate() {
-    final RevalidateInfo info = new RevalidateInfo();
+  public final void revalidate() {
+    RadContainer theContainer = null;
 
     for (RadContainer container = this instanceof RadContainer ? (RadContainer)this : getParent(); container != null; container = container.getParent()) {
       final RadContainer parent = container.getParent();
@@ -468,24 +464,21 @@ public abstract class RadComponent implements IComponent {
         final Dimension size = container.getSize();
         final Dimension minimumSize = container.getMinimumSize();
         if (size.width < minimumSize.width || size.height < minimumSize.height) {
-          info.myContainer = container;
-          info.myPreviousContainerSize = size;
+          theContainer = container;
         }
       }
     }
 
-    if (info.myContainer != null) {
-      final Dimension minimumSize = info.myContainer.getMinimumSize();
+    if (theContainer != null) {
+      final Dimension minimumSize = theContainer.getMinimumSize();
 
-      minimumSize.width = Math.max(minimumSize.width, info.myContainer.getWidth());
-      minimumSize.height = Math.max(minimumSize.height, info.myContainer.getHeight());
+      minimumSize.width = Math.max(minimumSize.width, theContainer.getWidth());
+      minimumSize.height = Math.max(minimumSize.height, theContainer.getHeight());
 
-      info.myContainer.getDelegee().setSize(minimumSize);
+      theContainer.getDelegee().setSize(minimumSize);
     }
 
     myDelegee.revalidate();
-
-    return info;
   }
 
   public final boolean isMarkedAsModified(final Property property) {
