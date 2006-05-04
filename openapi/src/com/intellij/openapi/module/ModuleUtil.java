@@ -15,12 +15,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.HashSet;
 
 public class ModuleUtil {
 
@@ -188,7 +187,7 @@ public class ModuleUtil {
 
   public static Collection<Module> collectModulesDependsOn(@NotNull final Collection<Module> modules) {
     if (modules.size() == 0) return new ArrayList<Module>(0);
-    final com.intellij.util.containers.HashSet<Module> result = new com.intellij.util.containers.HashSet<Module>();
+    final HashSet<Module> result = new HashSet<Module>();
     final Project project = modules.iterator().next().getProject();
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     for (final Module module : modules) {
