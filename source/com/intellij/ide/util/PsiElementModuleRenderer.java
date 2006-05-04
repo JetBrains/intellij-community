@@ -1,7 +1,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;

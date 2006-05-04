@@ -5,7 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;import com.intellij.openapi.vfs.VirtualFile;import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiLock;

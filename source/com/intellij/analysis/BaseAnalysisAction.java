@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -56,7 +56,8 @@ public abstract class BaseAnalysisAction extends AnAction {
                                                                   AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
                                                                   project,
                                                                   scope.getShortenName(),
-                                                                  module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil.getModuleNameInReadAction(module) : null,
+                                                                  module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil
+                                                                    .getModuleNameInReadAction(module) : null,
                                                                   rememberScope){
         @Nullable
         protected JComponent getAdditionalActionSettings(final Project project) {

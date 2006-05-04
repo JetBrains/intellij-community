@@ -1,15 +1,10 @@
-package com.intellij.execution.junit2.configuration;
+package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.configurations.RuntimeConfigurationError;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
@@ -30,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 public class RunConfigurationModule implements JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.configuration.RunConfigurationModule");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.RunConfigurationModule");
   @NonNls private static final String ELEMENT = "module";
   @NonNls private static final String ATTRIBUTE = "name";
   private String myModuleName = "";
@@ -86,7 +81,16 @@ public class RunConfigurationModule implements JDOMExternalizable {
 
   public PsiClass findClass(final String qualifiedName) {
     if (qualifiedName == null) return null;
-    return JUnitUtil.findPsiClass(qualifiedName.replace('$', '.'), getModule(), myProject, myClassesInLibraries);
+    final Module module = getModule();
+    final GlobalSearchScope scope;
+    if (module != null) {
+      scope = myClassesInLibraries ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
+              : GlobalSearchScope.moduleWithDependenciesScope(module);
+    }
+    else {
+      scope = myClassesInLibraries ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
+    }
+    return PsiManager.getInstance(myProject).findClass(qualifiedName.replace('$', '.'), scope);
   }
 
   public static Collection<Module> getModulesForClass(@NotNull final Project project, final String className) {
@@ -105,7 +109,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
       return Arrays.asList(ModuleManager.getInstance(project).getModules());
     }
     else {
-      return ExecutionUtil.collectModulesDependsOn(modules);
+      return ModuleUtil.collectModulesDependsOn(modules);
     }
   }
 

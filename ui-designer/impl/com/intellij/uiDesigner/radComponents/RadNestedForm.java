@@ -5,7 +5,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.UIFormXmlConstants;

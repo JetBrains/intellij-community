@@ -2,12 +2,11 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.junit2.configuration.RunConfigurationModule;
+import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
@@ -15,14 +14,11 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
 
 
 public class ExecutionUtil {
@@ -53,18 +49,6 @@ public class ExecutionUtil {
 
   public static Module findModule(@NotNull final PsiClass psiClass) {
     return ModuleUtil.findModuleForPsiElement(psiClass);
-  }
-
-  public static Collection<Module> collectModulesDependsOn(@NotNull final Collection<Module> modules) {
-    if (modules.size() == 0) return new ArrayList<Module>(0);
-    final HashSet<Module> result = new HashSet<Module>();
-    final Project project = modules.iterator().next().getProject();
-    final ModuleManager moduleManager = ModuleManager.getInstance(project);
-    for (final Module module : modules) {
-      result.add(module);
-      result.addAll(moduleManager.getModuleDependentModules(module));
-    }
-    return result;
   }
 
   public static PsiClass findMainClass(final Module module, final String mainClassName) {

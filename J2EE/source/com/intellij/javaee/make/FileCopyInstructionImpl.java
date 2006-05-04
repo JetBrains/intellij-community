@@ -2,7 +2,7 @@ package com.intellij.javaee.make;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.util.io.FileUtil;

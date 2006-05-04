@@ -5,8 +5,8 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.junit.ModuleBasedConfiguration;
-import com.intellij.execution.junit2.configuration.RunConfigurationModule;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.psi.PsiClass;
 
 /**

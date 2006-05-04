@@ -1,6 +1,5 @@
-package com.intellij.execution;
+package com.intellij.execution.configurations;
 
-import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;

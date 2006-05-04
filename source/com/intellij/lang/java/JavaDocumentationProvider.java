@@ -10,7 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**

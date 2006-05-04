@@ -1,65 +1,30 @@
 /**
  * @author cdr
  */
-package com.intellij.openapi.module.impl;
+package com.intellij.openapi.module;
 
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.HashSet;
 
 public class ModuleUtil {
-  public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
   private ModuleUtil() {}
-
-  public static boolean checkSourceRootsConfigured(final Module module) {
-    VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-    if (sourceRoots.length == 0) {
-      Messages.showErrorDialog(
-          module.getProject(),
-          ProjectBundle.message("module.source.roots.not.configured.error", module.getName()),
-          ProjectBundle.message("module.source.roots.not.configured.title")
-        );
-
-      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ContentEntriesEditor.NAME, false);
-
-      sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-      if (sourceRoots.length == 0) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  static String moduleNameByFileName(String fileName) {
-    if (fileName.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
-      return fileName.substring(0, fileName.length() - ModuleFileType.DOT_DEFAULT_EXTENSION.length());
-    }
-    else {
-      return fileName;
-    }
-  }
 
   public static String getModuleNameInReadAction(@NotNull final Module module) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
@@ -219,5 +184,17 @@ public class ModuleUtil {
     }
 
     return PsiManager.getInstance(project).getEffectiveLanguageLevel();
+  }
+
+  public static Collection<Module> collectModulesDependsOn(@NotNull final Collection<Module> modules) {
+    if (modules.size() == 0) return new ArrayList<Module>(0);
+    final com.intellij.util.containers.HashSet<Module> result = new com.intellij.util.containers.HashSet<Module>();
+    final Project project = modules.iterator().next().getProject();
+    final ModuleManager moduleManager = ModuleManager.getInstance(project);
+    for (final Module module : modules) {
+      result.add(module);
+      result.addAll(moduleManager.getModuleDependentModules(module));
+    }
+    return result;
   }
 }

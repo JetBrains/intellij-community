@@ -13,7 +13,7 @@ import com.intellij.javaee.ejb.role.EjbClassRole;
 import com.intellij.javaee.ejb.role.EjbClassRoleEnum;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 

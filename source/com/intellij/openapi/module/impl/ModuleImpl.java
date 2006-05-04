@@ -80,6 +80,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   private ModuleWithDependentsScope   myModuleTestsWithDependentsScope;
   private ModuleRuntimeClasspathScope myModuleTestsRuntimeClasspathScope;
   private ModuleRuntimeClasspathScope myModuleRuntimeClasspathScope;
+  public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
   public ModuleImpl(String filePath, Project project, PomModel pomModel, PathMacrosImpl pathMacros) {
     super(false, pathMacros);
@@ -190,7 +191,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     final VirtualFile file = myFile.getVirtualFile();
     try {
       if (file != null) {
-        file.rename(ModuleUtil.MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+        file.rename(MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
         return;
       }
     }
@@ -382,7 +383,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     final String fileName = myFile.getFileName();
     String moduleName = myFileToModuleName.get(fileName);
     if (moduleName == null) {
-      moduleName = ModuleUtil.moduleNameByFileName(fileName);
+      moduleName = moduleNameByFileName(fileName);
       myFileToModuleName.put(fileName, moduleName);
     }
     return moduleName;
@@ -516,11 +517,20 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     return "Module:" + getName();
   }
 
+  static String moduleNameByFileName(String fileName) {
+    if (fileName.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
+      return fileName.substring(0, fileName.length() - ModuleFileType.DOT_DEFAULT_EXTENSION.length());
+    }
+    else {
+      return fileName;
+    }
+  }
+
   private class MyVirtualFileListener extends VirtualFileAdapter {
     public void propertyChanged(VirtualFilePropertyEvent event) {
       if (!isModuleAdded) return;
       final Object requestor = event.getRequestor();
-      if (ModuleUtil.MODULE_RENAMING_REQUESTOR.equals(requestor)) return;
+      if (MODULE_RENAMING_REQUESTOR.equals(requestor)) return;
       if (!VirtualFile.PROP_NAME.equals(event.getPropertyName())) return;
       final VirtualFile moduleFile = getModuleFile();
       if (moduleFile == null) return;

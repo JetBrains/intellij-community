@@ -6,12 +6,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -134,7 +136,7 @@ public class PackageUtil {
     }
 
     if (psiDirectory == null) {
-      if (!ModuleUtil.checkSourceRootsConfigured(module)) return null;
+      if (!checkSourceRootsConfigured(module)) return null;
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       List<PsiDirectory> directoryList = new ArrayList<PsiDirectory>();
       for (VirtualFile sourceRoot : sourceRoots) {
@@ -312,5 +314,24 @@ public class PackageUtil {
       Project project = dirs[0].getProject();
       return selectDirectory(project, dirs, null, "");
     }
+  }
+
+  private static boolean checkSourceRootsConfigured(final Module module) {
+    VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
+    if (sourceRoots.length == 0) {
+      Messages.showErrorDialog(
+          module.getProject(),
+          ProjectBundle.message("module.source.roots.not.configured.error", module.getName()),
+          ProjectBundle.message("module.source.roots.not.configured.title")
+        );
+
+      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ContentEntriesEditor.NAME, false);
+
+      sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
+      if (sourceRoots.length == 0) {
+        return false;
+      }
+    }
+    return true;
   }
 }

@@ -3,7 +3,7 @@ package com.intellij.execution.util;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.junit2.configuration.RunConfigurationModule;
+import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;

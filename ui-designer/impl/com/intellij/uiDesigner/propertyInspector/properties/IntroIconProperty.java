@@ -1,6 +1,6 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.radComponents.RadComponent;

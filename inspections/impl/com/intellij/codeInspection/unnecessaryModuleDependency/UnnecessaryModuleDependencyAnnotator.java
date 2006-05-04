@@ -8,7 +8,7 @@ import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 

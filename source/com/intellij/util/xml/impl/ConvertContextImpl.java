@@ -9,7 +9,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.Module;
 
 import java.lang.reflect.Method;

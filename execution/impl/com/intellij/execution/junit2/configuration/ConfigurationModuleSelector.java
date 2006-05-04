@@ -1,6 +1,7 @@
 package com.intellij.execution.junit2.configuration;
 
-import com.intellij.execution.junit.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;

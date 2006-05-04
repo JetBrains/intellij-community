@@ -1,8 +1,5 @@
-package com.intellij.execution.junit;
+package com.intellij.execution.configurations;
 
-import com.intellij.execution.RuntimeConfiguration;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.junit2.configuration.RunConfigurationModule;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -17,7 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public abstract class ModuleBasedConfiguration extends RuntimeConfiguration {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.ModuleBasedConfiguration");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ModuleBasedConfiguration");
   private final RunConfigurationModule myModule;
   @NonNls
   protected static final String TO_CLONE_ELEMENT_NAME = "toClone";
