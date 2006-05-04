@@ -8,11 +8,13 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.Project;
@@ -38,6 +40,11 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   public AntProjectImpl(final AntFileImpl parent, final XmlTag tag) {
     super(parent, tag);
     myDefinition = createProjectDefinition();
+  }
+
+  private AntProjectImpl(final AntFileImpl parent, final XmlTag tag, final AntTypeDefinition projectDef) {
+    super(parent, tag);
+    myDefinition = projectDef;
   }
 
   @NonNls
@@ -173,27 +180,40 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   private void setPredefinedProperties(Project project) {
     Hashtable ht = project.getProperties();
-    AntTypeDefinition propertyDef = myTypeDefinitions.get(Property.class.getName());
-    final PsiElementFactory elementFactory = getManager().getElementFactory();
-    final Enumeration types = ht.keys();
-    while (types.hasMoreElements()) {
-      final String name = (String) types.nextElement();
-      final String value = (String) ht.get(name);
-      @NonNls final StringBuilder tagBuilder = StringBuilderSpinAllocator.alloc();
-      try {
-        tagBuilder.append("<property name=\"");
-        tagBuilder.append(name);
-        tagBuilder.append("\" value=\"");
-        tagBuilder.append(value);
-        tagBuilder.append("\"/>");
-        setProperty(name, new AntPropertyImpl(this,
-            elementFactory.createTagFromText(tagBuilder.toString()), propertyDef));
+    final Enumeration props = ht.keys();
+    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    builder.append("<project name=\"fake\">");
+    try {
+      while (props.hasMoreElements()) {
+        final String name = (String) props.nextElement();
+        final String value = (String) ht.get(name);
+        builder.append("<property name=\"");
+        builder.append(name);
+        builder.append("\" value=\"");
+        builder.append(value);
+        builder.append("\"/>");
       }
-      catch (IncorrectOperationException e) {
-        // ignore
-      } finally {
-        StringBuilderSpinAllocator.dispose(tagBuilder);
+      builder.append("</project>");
+      final PsiElementFactory elementFactory = getManager().getElementFactory();
+      final XmlFile fakeFile = (XmlFile)
+          elementFactory.createFileFromText("dummy.xml", builder.toString());
+      AntTypeDefinition propertyDef = myTypeDefinitions.get(Property.class.getName());
+      final XmlDocument document = fakeFile.getDocument();
+      if (document == null) return;
+      final XmlTag rootTag = document.getRootTag();
+      AntProject fakeProject = new AntProjectImpl(null, rootTag, myDefinition);
+      if (rootTag == null) return;
+      for (XmlTag tag : rootTag.getSubTags()) {
+        final AntPropertyImpl property = new AntPropertyImpl(fakeProject, tag, propertyDef) {
+          public PsiFile getContainingFile() {
+            return getSourceElement().getContainingFile();
+          }
+        };
+        setProperty(property.getName(), property);
       }
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
     }
   }
 
