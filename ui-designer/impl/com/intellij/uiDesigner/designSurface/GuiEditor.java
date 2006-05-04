@@ -285,7 +285,6 @@ public final class GuiEditor extends JPanel implements DataProvider {
     cancelCurrentOperationAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
 
     myProcessor = new MainProcessor(this);
-    //new MergeCellsToolbar(this);
 
     // PSI listener to restart error highlighter
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
