@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.designSurface.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,10 @@ import java.awt.*;
 public class RadToolBar extends RadContainer {
   public RadToolBar(final Module module, final String id) {
     super(module, JToolBar.class, id);
+  }
+
+  public RadToolBar(final String id, final Palette palette) {
+    super(JToolBar.class, id, palette);
   }
 
   @Override @Nullable
