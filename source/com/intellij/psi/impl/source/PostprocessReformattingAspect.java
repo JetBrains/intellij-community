@@ -65,6 +65,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       finally {
         myDisabledCounter--;
         myDisabled = oldDisabledValue;
+        if(myDisabledCounter == 0) myDisabled = false;
         LOG.assertTrue(myDisabledCounter > 0 || !myDisabled);
       }
     }
