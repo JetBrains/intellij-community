@@ -225,7 +225,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
 
     public boolean isAccessible() {
       if (myAccessible == null) {
-        myAccessible = Boolean.valueOf(getManager().getResolveHelper().isAccessible(myTarget, PsiImportStaticReferenceElementImpl.this, null));
+        myAccessible = getManager().getResolveHelper().isAccessible(myTarget, PsiImportStaticReferenceElementImpl.this, null);
       }
       return myAccessible.booleanValue();
     }
@@ -303,11 +303,10 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
 
   public boolean isReferenceTo(PsiElement element) {
     final String name = getReferenceName();
-    if (name == null) return false;
-    if (!(element instanceof PsiNamedElement) || !(name.equals(((PsiNamedElement)element).getName()))) {
-      return false;
-    }
-    return element.getManager().areElementsEquivalent(element, resolve());
+    return name != null &&
+           element instanceof PsiNamedElement &&
+           name.equals(((PsiNamedElement)element).getName()) &&
+           element.getManager().areElementsEquivalent(element, resolve());
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
