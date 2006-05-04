@@ -290,7 +290,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   protected final DomElement findCallerProxy(Method method) {
-    final DomElement element = ModelMerger.getImplementation(ModelMerger.getInvocationStack().findDeepestInvocation(method, new Condition() {
+    final DomElement element = ModelMerger.getImplementation(myManager.getInvocationStack().findDeepestInvocation(method, new Condition() {
       public boolean value(final Object object) {
         return ModelMerger.getImplementation(object, DomElement.class) == null;
       }
@@ -446,14 +446,14 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
-      ModelMerger.getInvocationStack().push(method, null);
+      myManager.getInvocationStack().push(method, null);
       return doInvoke(JavaMethodSignature.getSignature(method), args);
     }
     catch (InvocationTargetException ex) {
       throw ex.getTargetException();
     }
     finally {
-      ModelMerger.getInvocationStack().pop();
+      myManager.getInvocationStack().pop();
     }
   }
 

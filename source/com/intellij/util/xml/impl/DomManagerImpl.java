@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakArrayHashMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
@@ -62,6 +63,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private final List<Function<DomElement, Collection<PsiElement>>> myPsiElementProviders = new ArrayList<Function<DomElement, Collection<PsiElement>>>();
   private final Set<Consumer<XmlFile>> myFileLoaders = new HashSet<Consumer<XmlFile>>();
   private final Map<XmlFile,Object> myNonDomFiles = new WeakHashMap<XmlFile, Object>();
+  private static final InvocationStack myInvocationStack = new InvocationStack();
 
   private DomEventListener[] myCachedListeners;
   private PomModelListener myXmlListener;
@@ -90,6 +92,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     myPomModel.addModelListener(myXmlListener);
     ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(XmlTag.class, new GenericValueReferenceProvider());
     ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(XmlAttributeValue.class, new GenericValueReferenceProvider());
+  }
+
+  public static InvocationStack getInvocationStack() {
+    return myInvocationStack;
   }
 
   public final void addDomEventListener(DomEventListener listener) {

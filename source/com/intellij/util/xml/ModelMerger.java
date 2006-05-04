@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakArrayHashMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
 import com.intellij.util.xml.impl.DomImplUtil;
+import com.intellij.util.xml.impl.DomManagerImpl;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +25,7 @@ import java.util.*;
  */
 public class ModelMerger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ModelMerger");
-  private static final WeakArrayHashMap ourMergedMap = new WeakArrayHashMap();
-  private static final InvocationStack ourInvocationStack = new InvocationStack();
-
-  public static InvocationStack getInvocationStack() {
-    return ourInvocationStack;
-  }
+  private final WeakArrayHashMap myMergedMap = new WeakArrayHashMap();
 
   public static class ImplementationProcessor<T> implements Processor<T> {
     private final Processor<T> myProcessor;
@@ -52,16 +48,12 @@ public class ModelMerger {
     }
   }
 
-  private ModelMerger() {
-  }
-
   public interface MergedObject<V> {
     List<V> getImplementations();
   }
 
-
-  public static <T> T mergeModels(final Class<? extends T> aClass, final T... implementations) {
-    final Object o = ourMergedMap.get(implementations);
+  public <T> T mergeModels(final Class<? extends T> aClass, final T... implementations) {
+    final Object o = myMergedMap.get(implementations);
     if (o != null) {
       return (T) o;
     }
@@ -70,15 +62,15 @@ public class ModelMerger {
     return _mergeModels(aClass, handler, implementations);
   }
 
-  public static <T> T mergeModels(final Class<? extends T> aClass, final Collection<? extends T> implementations) {
+  public <T> T mergeModels(final Class<? extends T> aClass, final Collection<? extends T> implementations) {
     return (T) mergeModels(aClass, implementations.toArray());
   }
 
 
-  public static <T>T mergeModels(final MergingInvocationHandler<T> handler,
+  public <T> T mergeModels(final MergingInvocationHandler<T> handler,
                                   final Class<? extends T> aClass,
                                   final T... implementations) {
-    final Object o = ourMergedMap.get(implementations);
+    final Object o = myMergedMap.get(implementations);
     if (o != null) {
       return (T) o;
     }
@@ -86,14 +78,14 @@ public class ModelMerger {
     return _mergeModels(aClass, handler, implementations);
   }
 
-  private static <T> T _mergeModels(final Class<? extends T> aClass,
+  private <T> T _mergeModels(final Class<? extends T> aClass,
                                     final MergingInvocationHandler<T> handler,
                                     final T... implementations) {
     final Set<Class> commonClasses = getCommonClasses(implementations);
     commonClasses.add(MergedObject.class);
     commonClasses.remove(aClass);
     final T t = AdvancedProxy.createProxy(handler, aClass, commonClasses.toArray(new Class[commonClasses.size()]));
-    ourMergedMap.put(implementations, t);
+    myMergedMap.put(implementations, t);
     return t;
   }
 
@@ -110,14 +102,14 @@ public class ModelMerger {
   }
 
   @NotNull
-  public static <T> List<T> getFilteredImplementations(final T element) {
+  public <T> List<T> getFilteredImplementations(final T element) {
     final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(new ArrayList<T>());
     new ImplementationProcessor<T>(processor, false).process(element);
     return (List<T>)processor.getResults();
   }
 
   @NotNull
-  public static <T> List<T> getImplementations(T element) {
+  public <T> List<T> getImplementations(T element) {
     if (element instanceof MergedObject) {
       final MergedObject<T> mergedObject = (MergedObject<T>)element;
       return mergedObject.getImplementations();
@@ -130,7 +122,7 @@ public class ModelMerger {
     }
   }
 
-  private static void addAllInterfaces(Class aClass, List<Class> list) {
+  private void addAllInterfaces(Class aClass, List<Class> list) {
     final Class[] interfaces = aClass.getInterfaces();
     list.addAll(Arrays.asList(interfaces));
     for (Class anInterface : interfaces) {
@@ -138,7 +130,7 @@ public class ModelMerger {
     }
   }
 
-  private static Set<Class> getCommonClasses(final Object... implementations) {
+  private Set<Class> getCommonClasses(final Object... implementations) {
     final HashSet<Class> set = new HashSet<Class>();
     if (implementations.length > 0) {
       final ArrayList<Class> list = new ArrayList<Class>();
@@ -154,8 +146,9 @@ public class ModelMerger {
   }
 
 
-  public static class MergingInvocationHandler<T> implements InvocationHandler {
-    private static final Map<Class<? extends Object>,Method> ourPrimaryKeyMethods = new HashMap<Class<? extends Object>, Method>();
+  private static final Map<Class<? extends Object>,Method> ourPrimaryKeyMethods = new HashMap<Class<? extends Object>, Method>();
+
+  public class MergingInvocationHandler<T> implements InvocationHandler {
     private T[] myImplementations;
     private Set<JavaMethodSignature> signaturesNotToMerge = Collections.emptySet();
 
@@ -203,7 +196,7 @@ public class ModelMerger {
 
 
     public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-      ourInvocationStack.push(method, proxy);
+      DomManagerImpl.getInvocationStack().push(method, proxy);
       try {
         if (Object.class.equals(method.getDeclaringClass())) {
           @NonNls String methodName = method.getName();
@@ -266,7 +259,7 @@ public class ModelMerger {
         }
       }
       finally {
-        ourInvocationStack.pop();
+        DomManagerImpl.getInvocationStack().pop();
       }
     }
 
