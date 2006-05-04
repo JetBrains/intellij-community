@@ -43,6 +43,7 @@ public class ShowMessageHistoryAction extends AnAction {
     CheckinProjectPanel panel = (CheckinProjectPanel)e.getDataContext().getData(CheckinProjectPanel.PANEL);
     if (panel == null) {
       e.getPresentation().setVisible(false);
+      e.getPresentation().setEnabled(false);
     } else {
       e.getPresentation().setVisible(true);
       final ArrayList<String> recentMessages = VcsConfiguration.getInstance(panel.getProject()).getRecentMessages();

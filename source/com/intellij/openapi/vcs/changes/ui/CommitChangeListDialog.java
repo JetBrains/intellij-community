@@ -100,14 +100,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     LocalChangeList defaultList = ChangeListManager.getInstance(project).getDefaultChangelist();
     myAllOfDefaultChangeListChangesIncluded = changes.containsAll(defaultList.getChanges());
 
-    myBrowser = new ChangesBrowser(project, changeLists, changes);
+    myBrowser = new ChangesBrowser(project, changeLists, changes, CommitMessage.getToolbarActions());
     myBrowser.addSelectedListChangeListener(new ChangesBrowser.SelectedListChangeListener() {
       public void selectedListChanged() {
         updateComment();
       }
     });
 
-    myCommitMessageArea = new CommitMessage();
+    myCommitMessageArea = new CommitMessage(false);
     setCommitMessage(CheckinDialog.getInitialMessage(getPaths(), project));
     myCommitMessageArea.init();
 

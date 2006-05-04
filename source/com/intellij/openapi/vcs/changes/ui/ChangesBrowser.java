@@ -14,6 +14,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,6 +33,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private Collection<Change> myAllChanges;
   private final Map<Change, LocalChangeList> myChangeListsMap = new HashMap<Change, LocalChangeList>();
   private Project myProject;
+  @Nullable private final ActionGroup myAdditionalToolbarActions;
   private EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
   private final JPanel myHeaderPanel;
 
@@ -49,10 +51,12 @@ public class ChangesBrowser extends JPanel implements DataProvider {
 
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
-  public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes) {
+  public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes,
+                        final @Nullable ActionGroup additionalToolbarActions) {
     super(new BorderLayout());
 
     myProject = project;
+    myAdditionalToolbarActions = additionalToolbarActions;
     myAllChanges = new ArrayList<Change>();
 
     ChangeList initalListSelection = null;
@@ -251,6 +255,11 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     toolBarGroup.add(diffAction);
     toolBarGroup.add(moveAction);
     toolBarGroup.add(directoriesAction);
+
+    if (myAdditionalToolbarActions != null) {
+      toolBarGroup.addSeparator();
+      toolBarGroup.add(myAdditionalToolbarActions);
+    }
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolBarGroup, true).getComponent();
   }

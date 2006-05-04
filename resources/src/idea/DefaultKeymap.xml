@@ -816,6 +816,9 @@
     <action id="VcsShowPrevChangeMarker">
       <keyboard-shortcut first-keystroke="shift control alt UP" />
     </action>
+    <action id="Vcs.ShowMessageHistory">
+      <keyboard-shortcut first-keystroke="control M" />
+    </action>
     <action id="AddToFavoritesPopup">
       <keyboard-shortcut first-keystroke="alt shift F" />
     </action>

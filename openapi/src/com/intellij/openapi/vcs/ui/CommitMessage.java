@@ -20,27 +20,33 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class CommitMessage extends JPanel{
-
   private final JTextArea myCommentArea = new JTextArea();
 
-  public CommitMessage() {
+  public CommitMessage(final boolean includeCommitButton) {
     super(new BorderLayout());
     final JScrollPane scrollPane = new JScrollPane(myCommentArea);
     scrollPane.setPreferredSize(myCommentArea.getPreferredSize());
     add(scrollPane, BorderLayout.CENTER);
     setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("label.commit.comment")));
 
-    final ActionManager actionManager = ActionManager.getInstance();
-    final ActionGroup messageActionGroup = (ActionGroup)actionManager.getAction("Vcs.MessageActionGroup");
-    if (messageActionGroup != null) {
-      JComponent toolbar = actionManager.createButtonToolbar(ActionPlaces.UNKNOWN, messageActionGroup);
-      add(toolbar, BorderLayout.SOUTH);
+    if (includeCommitButton) {
+      final ActionGroup messageActionGroup = getToolbarActions();
+      if (messageActionGroup != null) {
+        JComponent toolbar = ActionManager.getInstance().createButtonToolbar(ActionPlaces.UNKNOWN, messageActionGroup);
+        add(toolbar, BorderLayout.SOUTH);
+      }
     }
+  }
+
+  @Nullable
+  public static ActionGroup getToolbarActions() {
+    return (ActionGroup)ActionManager.getInstance().getAction("Vcs.MessageActionGroup");
   }
 
   public JComponent getTextField() {

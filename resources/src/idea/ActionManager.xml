@@ -1415,14 +1415,15 @@
     </group>
 
     <group id="WelcomeScreen.QuickStart">
-
     </group>
-    <group id="WelcomeScreen.Documentation">
 
+    <group id="WelcomeScreen.Documentation">
     </group>
 
     <group id="Vcs.MessageActionGroup">
-      <action id="Vcs.ShowMessageHistory" text="_History" class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"/>
+      <action id="Vcs.ShowMessageHistory"
+              class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
+              icon="/debugger/console.png"/>
     </group>
 
      <!-- ***** java server faces actions *************************************** -->
