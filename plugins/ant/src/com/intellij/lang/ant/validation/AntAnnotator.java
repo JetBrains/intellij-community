@@ -24,7 +24,7 @@ public class AntAnnotator implements Annotator {
     if (element instanceof AntStructuredElement) {
       final AntStructuredElement se = (AntStructuredElement)element;
       AntTypeDefinition def = se.getTypeDefinition();
-      final String name = se.getName();
+      final String name = se.getSourceElement().getName();
       if (def == null) {
         holder.createErrorAnnotation(se, AntBundle.getMessage("undefined.element", name));
       }
