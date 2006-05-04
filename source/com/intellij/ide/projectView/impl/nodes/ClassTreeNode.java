@@ -58,9 +58,7 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
       if (qName != null) {
         final CoverageDataManager coverageManager = CoverageDataManager.getInstance(aClass.getProject());
         final String coverageString = coverageManager.getClassCoverageInormationString(qName);
-        if (coverageString != null) {
-          data.setLocationString(coverageString);
-        }
+        data.setLocationString(coverageString);
       }
     }
   }
