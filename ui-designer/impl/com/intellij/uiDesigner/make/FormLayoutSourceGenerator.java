@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.make;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.FormLayoutCodeGenerator;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 
@@ -55,6 +56,10 @@ public class FormLayoutSourceGenerator extends LayoutSourceGenerator {
     if (constraints.getRowSpan() > 1) {
       generator.push(constraints.getRowSpan());
     }
+    String hAlign = FormLayoutCodeGenerator.HORZ_ALIGN_FIELDS [Utils.alignFromConstraints(constraints, true)];
+    String vAlign = FormLayoutCodeGenerator.VERT_ALIGN_FIELDS [Utils.alignFromConstraints(constraints, false)];
+    generator.pushVar("com.jgoodies.forms.layout.CellConstraints." + hAlign);
+    generator.pushVar("com.jgoodies.forms.layout.CellConstraints." + vAlign);
     generator.endMethod();
     generator.endMethod();
   }

@@ -31,8 +31,12 @@ import org.objectweb.asm.commons.Method;
 public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Type ourFormLayoutType = Type.getType(FormLayout.class);
   private static final Type ourCellConstraintsType = Type.getType(CellConstraints.class);
+  private static final Type ourCellAlignmentType = Type.getType(CellConstraints.Alignment.class);
   private static final Method ourFormLayoutConstructor = Method.getMethod("void <init>(java.lang.String,java.lang.String)");
-  private static final Method ourCellConstraintsConstructor = Method.getMethod("void <init>(int,int,int,int)");
+  private static final Method ourCellConstraintsConstructor = Method.getMethod("void <init>(int,int,int,int,com.jgoodies.forms.layout.CellConstraints$Alignment,com.jgoodies.forms.layout.CellConstraints$Alignment)");
+
+  public static String[] HORZ_ALIGN_FIELDS = new String[] { "LEFT", "CENTER", "RIGHT", "FILL" };
+  public static String[] VERT_ALIGN_FIELDS = new String[] { "TOP", "CENTER", "BOTTOM", "FILL" };
 
   public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
     FormLayout formLayout = (FormLayout) lwContainer.getLayout();
@@ -65,6 +69,12 @@ public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
     generator.push(constraints.getRow()+1);
     generator.push(constraints.getColSpan());
     generator.push(constraints.getRowSpan());
+
+    int hAlign = Utils.alignFromConstraints(constraints, true);
+    generator.getStatic(ourCellConstraintsType, HORZ_ALIGN_FIELDS[hAlign], ourCellAlignmentType);
+    int vAlign = Utils.alignFromConstraints(constraints, false);
+    generator.getStatic(ourCellConstraintsType, VERT_ALIGN_FIELDS[vAlign], ourCellAlignmentType);
+
     generator.invokeConstructor(ourCellConstraintsType, ourCellConstraintsConstructor);
   }
 }

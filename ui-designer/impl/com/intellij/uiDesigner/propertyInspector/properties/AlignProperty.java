@@ -50,8 +50,10 @@ public abstract class AlignProperty extends Property<RadComponent, Integer> {
         break;
     }
     GridConstraints gc = component.getConstraints();
+    GridConstraints oldGC = (GridConstraints) gc.clone();
     gc.setAnchor((gc.getAnchor() & ~anchorMask) | anchor);
     gc.setFill((gc.getFill() & ~fillMask) | fill);
+    component.fireConstraintsChanged(oldGC);
   }
 
   @Override

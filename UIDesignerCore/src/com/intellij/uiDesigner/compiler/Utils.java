@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.compiler;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.FormSpec;
 import org.jdom.input.SAXBuilder;
 import org.jdom.Document;
 import org.xml.sax.Attributes;
@@ -290,7 +291,7 @@ public final class Utils {
       if (result.length() > 0) {
         result.append(",");
       }
-      result.append(formLayout.getRowSpec(i).toString());
+      result.append(getEncodedSpec(formLayout.getRowSpec(i)));
     }
     return result.toString();
   }
@@ -301,9 +302,13 @@ public final class Utils {
       if (result.length() > 0) {
         result.append(",");
       }
-      result.append(formLayout.getColumnSpec(i).toString());
+      result.append(getEncodedSpec(formLayout.getColumnSpec(i)));
     }
     return result.toString();
+  }
+
+  public static String getEncodedSpec(final FormSpec formSpec) {
+    return formSpec.toString().replace("dluX", "dlu").replace("dluY", "dlu");
   }
 
   public static int alignFromConstraints(final GridConstraints gc, final boolean horizontal) {
