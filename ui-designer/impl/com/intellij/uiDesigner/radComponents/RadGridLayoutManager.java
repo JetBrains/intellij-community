@@ -58,6 +58,9 @@ public class RadGridLayoutManager extends RadLayoutManager {
       }
       container.setLayoutManager(this, new GridLayoutManager(1, container.getComponentCount()));
     }
+    else if (container.getComponentCount() == 0) {
+      container.setLayoutManager(this, new GridLayoutManager(1, 1));
+    }
     else {
       throw new IncorrectOperationException("Cannot change from " + container.getLayout() + " to grid layout");
     }

@@ -10,6 +10,7 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -18,6 +19,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRendere
 import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntFieldProperty;
+import com.intellij.util.IncorrectOperationException;
 import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.*;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +33,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -53,6 +57,62 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
   @Override @Nullable
   public LayoutManager createLayout() {
     return new FormLayout("d:grow", "d:grow");
+  }
+
+  @Override
+  public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
+    if (container.getLayout() instanceof GridLayoutManager) {
+      GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+
+      RowSpec[] rowSpecs = new RowSpec [grid.getRowCount() * 2 - 1];
+      ColumnSpec[] colSpecs = new ColumnSpec [grid.getColumnCount() * 2 - 1];
+
+      int maxSizePolicy = 0;
+      for(int i=0; i<grid.getRowCount(); i++) {
+        maxSizePolicy = Math.max(maxSizePolicy, grid.getCellSizePolicy(true, i));
+      }
+      for(int i=0; i<grid.getRowCount(); i++) {
+        int sizePolicy = grid.getCellSizePolicy(true, i);
+        rowSpecs [i*2] = (sizePolicy < maxSizePolicy) ? FormFactory.DEFAULT_ROWSPEC : new RowSpec("d:grow");
+        if (i*2+1 < rowSpecs.length) {
+          rowSpecs [i*2+1] = FormFactory.RELATED_GAP_ROWSPEC;
+        }
+      }
+      maxSizePolicy = 0;
+      for(int i=0; i<grid.getColumnCount(); i++) {
+        maxSizePolicy = Math.max(maxSizePolicy, grid.getCellSizePolicy(false, i));
+      }
+      for(int i=0; i<grid.getColumnCount(); i++) {
+        int sizePolicy = grid.getCellSizePolicy(true, i);
+        colSpecs [i*2] = (sizePolicy < maxSizePolicy) ? FormFactory.DEFAULT_COLSPEC : new ColumnSpec("d:grow");
+        if (i*2+1 < colSpecs.length) {
+          colSpecs [i*2+1] = FormFactory.RELATED_GAP_COLSPEC;
+        }
+      }
+
+      List<RadComponent> contents = new ArrayList<RadComponent>();
+      for(int i=container.getComponentCount()-1; i >= 0; i--) {
+        final RadComponent component = container.getComponent(i);
+        if (!(component instanceof RadHSpacer) && !(component instanceof RadVSpacer)) {
+          contents.add(0, component);
+        }
+        container.removeComponent(component);
+      }
+
+      container.setLayoutManager(this, new FormLayout(colSpecs, rowSpecs));
+      for(RadComponent c: contents) {
+        GridConstraints gc = c.getConstraints();
+        gc.setRow(gc.getRow() * 2);
+        gc.setColumn(gc.getColumn() * 2);
+        container.addComponent(c);
+      }
+    }
+    else if (container.getComponentCount() == 0) {
+      container.setLayoutManager(this, new FormLayout("d:grow", "d:grow"));
+    }
+    else {
+      throw new IncorrectOperationException("Cannot change from " + container.getLayout() + " to grid layout");
+    }
   }
 
   @Override
