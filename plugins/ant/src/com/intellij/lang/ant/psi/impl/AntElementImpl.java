@@ -68,22 +68,8 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     }
   }
 
-  public String getName() {
-    final XmlElement se = getSourceElement();
-    if (se instanceof XmlAttribute) {
-      return ((XmlAttribute) se).getValue();
-    }
-    return null;
-  }
-
   public PsiElement setName(String name) throws IncorrectOperationException {
-    final XmlElement se = getSourceElement();
-    if (se instanceof XmlAttribute) {
-      ((XmlAttribute) se).setValue(name);
-      subtreeChanged();
-      return this;
-    }
-    throw new IncorrectOperationException();
+    throw new IncorrectOperationException("Can't rename ant element");
   }
 
   public AntElement getAntParent() {

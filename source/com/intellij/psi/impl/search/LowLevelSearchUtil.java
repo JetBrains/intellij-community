@@ -32,7 +32,7 @@ public class LowLevelSearchUtil {
       if (i >= 0) {
         final ASTNode node = scope.getNode();
         if (node != null) {
-          LeafElement leafNode = (LeafElement)node.findLeafElementAt(i);
+          LeafElement leafNode = (LeafElement) node.findLeafElementAt(i);
           if (leafNode == null) return true;
           int start = i - leafNode.getStartOffset() + scopeStartOffset;
           LOG.assertTrue(start >= 0);
@@ -54,16 +54,17 @@ public class LowLevelSearchUtil {
             run = run.getTreeParent();
           }
           assert run == node;
-        }
-        else {
+        } else {
           PsiElement leafElement;
-          if(scope instanceof PsiFile)
-            leafElement = ((PsiFile)scope).getViewProvider().findElementAt(i, scope.getLanguage());
+          if (scope instanceof PsiFile)
+            leafElement = ((PsiFile) scope).getViewProvider().findElementAt(i, scope.getLanguage());
           else
             leafElement = scope.findElementAt(i);
           if (leafElement == null) return true;
           int start = i - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
-          LOG.assertTrue(start >= 0);
+          if (start < 0) {
+            LOG.assertTrue(start >= 0, "i=" + i + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement.toString() +" " + leafElement.getTextRange().getStartOffset() + " scope=" + scope.toString());
+          }
           boolean contains = leafElement.getTextLength() - start >= patternLength;
           if (contains) {
             if (!processor.execute(leafElement, start)) return false;
@@ -85,8 +86,7 @@ public class LowLevelSearchUtil {
         }
 
         startOffset = i + 1;
-      }
-      else {
+      } else {
         return true;
       }
     }

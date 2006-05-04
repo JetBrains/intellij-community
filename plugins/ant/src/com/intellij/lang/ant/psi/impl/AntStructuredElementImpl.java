@@ -22,26 +22,24 @@ import java.util.Map;
 
 public class AntStructuredElementImpl extends AntElementImpl implements AntStructuredElement {
   protected AntTypeDefinition myDefinition;
-  protected boolean myDefinitionCloned = false;
+  private boolean myDefinitionCloned = false;
   private AntElement myIdElement;
   private AntElement myNameElement;
   private Map<String, AntElement> myReferencedElements = null;
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(parent, sourceElement);
-    final String id = getId();
-    if (id != null && parent instanceof AntStructuredElement) {
-      myIdElement = new AntElementImpl(this, getSourceElement().getAttribute("id", null));
-      AntStructuredElement se = (AntStructuredElement) parent;
-      se.registerRefId(id, myIdElement);
+    if (parent instanceof AntStructuredElement) {
+      final XmlAttribute idAttr = getSourceElement().getAttribute("id", null);
+      if (idAttr != null) {
+        AntStructuredElement se = (AntStructuredElement) parent;
+        myIdElement = new AntNameElementImpl(this, idAttr.getValueElement());
+        se.registerRefId(myIdElement.getName(), myIdElement);
+      }
     }
     XmlAttribute nameAttr = getSourceElement().getAttribute("name", null);
     if (nameAttr != null) {
-      myNameElement = new AntElementImpl(this, nameAttr) {
-        public String getText() {
-          return ((XmlAttribute)getSourceElement()).getValue();
-        }
-      };
+      myNameElement = new AntNameElementImpl(this, nameAttr.getValueElement());
     }
   }
 
@@ -75,15 +73,25 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public String getName() {
-    return (myNameElement == null) ? super.getName() : ((XmlAttribute) myNameElement.getSourceElement()).getValue();
+    if (myNameElement != null) {
+      return myNameElement.getName();
+    }
+    if (myIdElement != null) {
+      return myIdElement.getName();
+    }
+    return super.getName();
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {
-    if (myNameElement == null) {
-      return super.setName(name);
+    if (myNameElement != null) {
+      myNameElement.setName(name);
+      subtreeChanged();
+    } else if (myIdElement != null) {
+      myIdElement.setName(name);
+      subtreeChanged();
+    } else {
+      super.setName(name);
     }
-    ((XmlAttribute) myNameElement.getSourceElement()).setValue(name);
-    subtreeChanged();
     return this;
   }
 
@@ -161,6 +169,12 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public int getTextOffset() {
-    return (myNameElement == null) ? super.getTextOffset() : myNameElement.getTextOffset();
+    if(myNameElement != null) {
+      return myNameElement.getTextOffset();
+    }
+    if( myIdElement != null ) {
+      return myIdElement.getTextOffset();
+    }
+    return super.getTextOffset();
   }
 }
