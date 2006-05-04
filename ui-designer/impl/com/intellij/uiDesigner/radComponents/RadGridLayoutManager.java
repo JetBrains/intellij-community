@@ -114,8 +114,6 @@ public class RadGridLayoutManager extends RadLayoutManager {
       VSizePolicyProperty.getInstance(project),
       HorzAlignProperty.getInstance(project),
       VertAlignProperty.getInstance(project),
-      RowSpanProperty.getInstance(project),
-      ColumnSpanProperty.getInstance(project),
       IndentProperty.getInstance(project),
       UseParentLayoutProperty.getInstance(project),
       MinimumSizeProperty.getInstance(project),
