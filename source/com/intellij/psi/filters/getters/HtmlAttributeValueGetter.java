@@ -33,6 +33,11 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
         return new String[] {"_blank","_top","_self","_parent"};
       } else if ("enctype".equals(name)) {
         return new String[] {"multipart/form-data","application/x-www-form-urlencoded"};
+      } else if ("rel".equals(name)) {
+        return new String[] { "alternate", "stylesheet", "start", "next", "prev", "contents", "index", "glossary", "copyright", "chapter",
+          "section", "subsection", "appendix", "help", "bookmark", "script"};
+      } else if ("media".equals(name)) {
+        return new String[] { "screen", "tty", "tv", "projection", "handheld", "print", "all", "aural", "braille" };
       }
     }
 
