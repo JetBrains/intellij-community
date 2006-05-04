@@ -26,6 +26,7 @@ public final class DeleteAction extends AnAction {
     CaptionSelection selection = (CaptionSelection) e.getDataContext().getData(CaptionSelection.class.getName());
     if (editor == null || selection == null) return;
     FormEditingUtil.deleteRowOrColumn(editor, selection.getContainer(), selection.getFocusedIndex(), selection.isRow());
+    selection.getContainer().revalidate();
   }
 
   public void update(final AnActionEvent e) {

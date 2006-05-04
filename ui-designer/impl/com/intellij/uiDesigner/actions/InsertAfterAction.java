@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 
 /**
  * @author yole
@@ -23,8 +24,9 @@ public final class InsertAfterAction extends AnAction {
     if (editor == null || selection == null || !editor.ensureEditable()) {
       return;
     }
-    selection.getContainer().getLayoutManager().insertGridCells(selection.getContainer(), selection.getFocusedIndex(),
-                                                   selection.isRow(), false);
+    final RadContainer container = selection.getContainer();
+    container.getLayoutManager().insertGridCells(container, selection.getFocusedIndex(), selection.isRow(), false);
+    container.revalidate();
     editor.refreshAndSave(true);
   }
 
