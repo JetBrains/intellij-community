@@ -3,6 +3,8 @@ package com.intellij.util;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.InvocationHandler;
@@ -92,6 +94,15 @@ public class PendingEventDispatcher <T extends EventListener> {
     myListeners.add(listener);
     myListenersState.put(listener, Boolean.TRUE);
     myCachedListeners = null;
+  }
+
+  public synchronized void addListener(final T listener, Disposable parentDisposable) {
+    addListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeListener(listener);
+      }
+    });
   }
 
   public synchronized void removeListener(T listener) {

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -109,6 +110,8 @@ public abstract class VirtualFileManager {
    * @see VirtualFileListener
    */
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
+
+  public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener, Disposable parentDisposable);
 
   /**
    * Removes listener form the file system.

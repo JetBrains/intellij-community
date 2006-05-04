@@ -2,6 +2,7 @@ package com.intellij.ide;
 
 import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -21,6 +22,8 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.UIHelper;
+import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +43,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 //  private static long ourLastPrintTime = 0;
 //  private static long ourInvokationCounter = 0;
 
-  private ArrayList myListeners = new ArrayList();
+  private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
   private static final int DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS = 2000;
   private boolean myIsWarningShown = false;
 
@@ -143,7 +146,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     myIsWarningShown = true;
   }
 
-  PsiElement[] getElements(final Transferable content) {
+  static PsiElement[] getElements(final Transferable content) {
     if (content == null) return null;
     Object transferData;
     try {
@@ -242,10 +245,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
       public boolean isCopyEnabled(DataContext dataContext) {
         PsiElement[] elements = getValidSelectedElements();
-        if (elements == null) {
-          return false;
-        }
-        return CopyHandler.canCopy(elements);
+        return elements != null && CopyHandler.canCopy(elements);
       }
 
       public void performCut(DataContext dataContext) {
@@ -259,10 +259,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
       public boolean isCutEnabled(DataContext dataContext) {
         final PsiElement[] elements = getValidSelectedElements();
-        if (elements == null || elements.length == 0) {
-          return false;
-        }
-        return MoveHandler.canMove(elements, null);
+        return elements != null && elements.length != 0 && MoveHandler.canMove(elements, null);
       }
 
       public void performPaste(DataContext dataContext) {
@@ -419,20 +416,22 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   private void fireContentChanged(final Transferable oldTransferable) {
-    for (final Object aListener : myListeners) {
-      ContentChangedListener listener = (ContentChangedListener)aListener;
-      listener.contentChanged(oldTransferable, getContents());
-    }
+    myDispatcher.getMulticaster().contentChanged(oldTransferable, getContents());
   }
 
   public void addContentChangedListener(ContentChangedListener listener) {
-    myListeners.add(listener);
+    myDispatcher.addListener(listener);
+  }
+
+  public void addContentChangedListener(final ContentChangedListener listener, Disposable parentDisposable) {
+    myDispatcher.addListener(listener, parentDisposable);
   }
 
   public void removeContentChangedListener(ContentChangedListener listener) {
-    myListeners.remove(listener);
+    myDispatcher.removeListener(listener);
   }
 
+  @NotNull
   public String getComponentName() {
     return "CopyPasteManager";
   }
@@ -493,8 +492,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       String clipString = getStringContent(content);
       if (clipString != null) {
         Transferable same = null;
-        for (int i = 0; i < myDatas.size(); i++) {
-          Transferable old = myDatas.get(i);
+        for (Transferable old : myDatas) {
           if (clipString.equals(getStringContent(old))) {
             same = old;
             break;
@@ -514,7 +512,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     }
   }
 
-  private String getStringContent(Transferable content) throws UnsupportedFlavorException, IOException {
+  private static String getStringContent(Transferable content) throws UnsupportedFlavorException, IOException {
     return (String) content.getTransferData(DataFlavor.stringFlavor);
   }
 

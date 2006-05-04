@@ -17,17 +17,16 @@
 
 package com.intellij.util.xml.ui;
 
-import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
-import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
-import com.intellij.util.xml.DomElement;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 
+import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTableCellRenderer {
@@ -45,10 +44,9 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     final Component component = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-    final List<DomElementProblemDescriptor> errorProblems =
-      DomElementAnnotationsManager.getInstance().getProblems(myCellValueDomElement, true);
-    final List<DomElementProblemDescriptor> warningProblems =
-      DomElementAnnotationsManager.getInstance().getProblems(myCellValueDomElement, true, true, HighlightSeverity.WARNING);
+    final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(myRowDomElement.getManager().getProject());
+    final List<DomElementProblemDescriptor> errorProblems = annotationsManager.getProblems(myCellValueDomElement, true);
+    final List<DomElementProblemDescriptor> warningProblems = annotationsManager.getProblems(myCellValueDomElement, true, true, HighlightSeverity.WARNING);
 
 
     final boolean hasErrors = errorProblems.size() > 0;
@@ -69,7 +67,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     }
 
     final List<DomElementProblemDescriptor> errorDescriptors =
-      DomElementAnnotationsManager.getInstance().getProblems(myRowDomElement, true, true);
+      annotationsManager.getProblems(myRowDomElement, true, true);
 
     if (table.getModel().getColumnCount() - 1 == column && errorDescriptors.size() > 0) {
       final JPanel wrapper = new JPanel(new BorderLayout());

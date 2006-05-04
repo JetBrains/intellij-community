@@ -87,7 +87,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     final PsiCodeFragment file = (PsiCodeFragment)PsiDocumentManager.getInstance(project).getPsiFile(editorTextField.getDocument());
     file.addAnnotator(new Annotator() {
       public void annotate(PsiElement psiElement, AnnotationHolder holder) {
-        for (final DomElementProblemDescriptor problem : DomElementAnnotationsManager.getInstance().getProblems(getDomElement(), true)) {
+        for (final DomElementProblemDescriptor problem : DomElementAnnotationsManager.getInstance(project).getProblems(getDomElement(), true)) {
           holder.createErrorAnnotation(psiElement.getContainingFile(), problem.getDescriptionTemplate());
         }
       }
@@ -120,7 +120,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
       public void run() {
         if (!project.isOpen()) return;
         
-        final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance();
+        final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
         final DomElement domElement = getDomElement();
         final List<DomElementProblemDescriptor> errorProblems = manager.getProblems(domElement, true);
         final List<DomElementProblemDescriptor> warningProblems = manager.getProblems(domElement, true, true, HighlightSeverity.WARNING);

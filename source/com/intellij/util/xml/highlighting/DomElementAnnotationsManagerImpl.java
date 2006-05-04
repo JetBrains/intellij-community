@@ -4,24 +4,24 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.ide.IdeBundle;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.reflect.*;
-import com.intellij.util.containers.WeakValueHashMap;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.PsiManager;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager implements ApplicationComponent {
+public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager implements ProjectComponent {
   private Map<Class, List<DomElementsAnnotator>> myClass2Annotator = new HashMap<Class, List<DomElementsAnnotator>>();
 
   private Map<DomFileElement, CachedValue<DomElementsProblemsHolder>> myCache =
@@ -119,6 +119,12 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   public void disposeComponent() {
 
+  }
+
+  public void projectOpened() {
+  }
+
+  public void projectClosed() {
   }
 
   private static class MyDomElementsAnnotator implements DomElementsAnnotator {

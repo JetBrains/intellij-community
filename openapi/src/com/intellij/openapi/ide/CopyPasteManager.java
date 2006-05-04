@@ -16,9 +16,11 @@
 package com.intellij.openapi.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
 
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
+import java.util.EventListener;
 
 public abstract class CopyPasteManager {
   public static final Color CUT_COLOR = new Color(160, 160, 160);
@@ -28,6 +30,8 @@ public abstract class CopyPasteManager {
   }
 
   public abstract void addContentChangedListener(ContentChangedListener listener);
+
+  public abstract void addContentChangedListener(ContentChangedListener listener, Disposable parentDisposable);
 
   public abstract void removeContentChangedListener(ContentChangedListener listener);
 
@@ -39,7 +43,7 @@ public abstract class CopyPasteManager {
 
   public abstract boolean isCutElement(Object element);
 
-  public interface ContentChangedListener {
+  public interface ContentChangedListener extends EventListener {
     void contentChanged(final Transferable oldTransferable, final Transferable newTransferable);
   }
 }

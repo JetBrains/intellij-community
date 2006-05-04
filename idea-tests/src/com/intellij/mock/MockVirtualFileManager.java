@@ -1,6 +1,8 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 
 public class MockVirtualFileManager extends VirtualFileManager {
   public MockVirtualFileManager() {
@@ -30,6 +32,9 @@ public class MockVirtualFileManager extends VirtualFileManager {
   }
 
   public void addVirtualFileListener(VirtualFileListener listener) {
+  }
+
+  public void addVirtualFileListener(@NotNull VirtualFileListener listener, Disposable parentDisposable) {
   }
 
   public void removeVirtualFileListener(VirtualFileListener listener) {

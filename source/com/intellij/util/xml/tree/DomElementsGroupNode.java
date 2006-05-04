@@ -67,7 +67,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
 
     private boolean hasErrors() {
         for (DomElement domElement : myChildDescription.getValues(myParentElement)) {
-            if (DomElementAnnotationsManager.getInstance().getProblems(domElement, true).size() > 0) return true;
+            if (DomElementAnnotationsManager.getInstance(myParentElement.getManager().getProject()).getProblems(domElement, true).size() > 0) return true;
         }
 
         return false;

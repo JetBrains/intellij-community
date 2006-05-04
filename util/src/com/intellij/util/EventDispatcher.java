@@ -4,6 +4,8 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.InvocationHandler;
@@ -88,6 +90,15 @@ public class EventDispatcher <T extends EventListener>{
   public synchronized void addListener(T listener) {
     myListeners.add(listener);
     myCachedListeners = null;
+  }
+
+  public synchronized void addListener(final T listener, Disposable parentDisposable) {
+    addListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeListener(listener);
+      }
+    });
   }
 
   public synchronized void removeListener(T listener) {

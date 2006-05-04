@@ -4,34 +4,24 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.util.xml.DomFileElement;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.RefreshStatusRenderer;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.Alarm;
 import com.intellij.util.xml.DomChangeListener;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ui.CommittablePanel;
-import com.intellij.util.Alarm;
-import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.Disposable;
-import com.intellij.codeInsight.daemon.impl.RefreshStatusRenderer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.hint.LineTooltipRenderer;
-import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.lang.annotation.HighlightSeverity;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseEvent;
 
 /**
  * User: Sergey.Vasiliev
@@ -104,6 +94,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
   }
 
   public void dispose() {
+    myAlarm.cancelAllRequests();
     myDomManager.removeDomEventListener(myDomChangeListener);
   }
 
@@ -131,10 +122,11 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
     protected int getErrorsCount(final HighlightSeverity minSeverity) {
       int sum = 0;
       for (DomElement element : myDomElements) {
+        final Project project = element.getManager().getProject();
         if (minSeverity.equals(HighlightSeverity.WARNING)) {
-          sum += DomElementAnnotationsManager.getInstance().getProblems(element, true, true).size();
+          sum += DomElementAnnotationsManager.getInstance(project).getProblems(element, true, true).size();
         } else {
-          sum += DomElementAnnotationsManager.getInstance().getProblems(element, true, true, minSeverity).size();
+          sum += DomElementAnnotationsManager.getInstance(project).getProblems(element, true, true, minSeverity).size();
         }
       }
       return sum;

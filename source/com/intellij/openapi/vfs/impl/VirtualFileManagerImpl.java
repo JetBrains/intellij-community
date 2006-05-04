@@ -2,6 +2,7 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -13,15 +14,13 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Stack;
-
-import org.jetbrains.annotations.NotNull;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
 
@@ -138,6 +137,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   public void addVirtualFileListener(VirtualFileListener listener) {
     myVirtualFileListenerMulticaster.addListener(listener);
+  }
+
+  public void addVirtualFileListener(@NotNull VirtualFileListener listener, Disposable parentDisposable) {
+    myVirtualFileListenerMulticaster.addListener(listener, parentDisposable);
   }
 
   public void removeVirtualFileListener(VirtualFileListener listener) {

@@ -17,17 +17,17 @@
 
 package com.intellij.util.xml.highlighting;
 
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.lang.annotation.HighlightSeverity;
 
 import java.util.List;
 
 public abstract class DomElementAnnotationsManager {
 
-  public static DomElementAnnotationsManager getInstance() {
-      return ApplicationManager.getApplication().getComponent(DomElementAnnotationsManager.class);
+  public static DomElementAnnotationsManager getInstance(Project project) {
+    return project.getComponent(DomElementAnnotationsManager.class);
   }
 
   public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement);

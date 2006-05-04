@@ -34,7 +34,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     public BaseDomElementNode(final DomElement modelElement, SimpleNode parent) {
         super(parent);
 
-        myDomElement = modelElement;
+      myDomElement = modelElement;
         myTagName = modelElement.getXmlElementName();
         folder = isMarkedType(modelElement.getDomElementType(), FOLDER_NODES_KEY);
     }
@@ -96,7 +96,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
         setUniformIcon(getNodeIcon());
         clearColoredText();
 
-        final List<DomElementProblemDescriptor> problems = DomElementAnnotationsManager.getInstance()
+        final List<DomElementProblemDescriptor> problems = DomElementAnnotationsManager.getInstance(myDomElement.getManager().getProject())
           .getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
 
         if (problems.size() > 0) {
