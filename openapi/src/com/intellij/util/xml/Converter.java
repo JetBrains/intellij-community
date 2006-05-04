@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public interface Converter<T> {
-  T fromString(@Nullable String s, final ConvertContext context);
+  @Nullable T fromString(@Nullable String s, final ConvertContext context);
   @Nullable String toString(@Nullable T t, final ConvertContext context);
 
   Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
