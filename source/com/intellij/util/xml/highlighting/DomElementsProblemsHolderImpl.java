@@ -93,7 +93,7 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
 
   private static Collection<DomElementProblemDescriptor> getXmlProblems(DomElement domElement) {
     Collection<DomElementProblemDescriptor> problems = new ArrayList<DomElementProblemDescriptor>();
-    if (domElement.getXmlTag() != null) {
+    if (domElement != null && domElement.getXmlTag() != null) {
       problems.addAll(getResolveProblems(domElement));
 
     }
