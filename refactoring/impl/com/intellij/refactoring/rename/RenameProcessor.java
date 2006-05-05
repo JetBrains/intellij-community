@@ -54,7 +54,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private boolean myShouldRenameInheritors;
 
   private boolean myShouldRenameForms;
-  private UsageInfo[] myUsagesForNonCodeRenaming;
+  private NonCodeUsageInfo[] myNonCodeUsages;
   private List<AutomaticRenamer> myRenamers = new ArrayList<AutomaticRenamer>();
 
   public RenameProcessor(Project project,
@@ -469,13 +469,17 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       pair.getSecond().elementRenamed(aPackage);
     }
 
-    final UsageInfo[] usagesForNonCodeRenaming;
-    usagesForNonCodeRenaming = usages;
-    myUsagesForNonCodeRenaming = usagesForNonCodeRenaming;
+    List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
+    for (UsageInfo usage : usages) {
+      if (usage instanceof NonCodeUsageInfo) {
+        nonCodeUsages.add((NonCodeUsageInfo)usage);
+      }
+    }
+    myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
   }
 
   protected void performPsiSpoilingRefactoring() {
-    RefactoringUtil.renameNonCodeUsages(myProject, myUsagesForNonCodeRenaming);
+    RefactoringUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
   }
 
   protected String getCommandName() {

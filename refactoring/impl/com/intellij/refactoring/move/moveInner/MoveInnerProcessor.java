@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -24,9 +23,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -38,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 public class MoveInnerProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInner.MoveInnerProcessor");
@@ -53,7 +51,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   private String myNewClassName;
   private boolean mySearchInComments;
   private boolean mySearchInNonJavaFiles;
-  private UsageInfo[] myUsagesAfterRefactoring;
+  private NonCodeUsageInfo[] myNonCodeUsages;
 
   public MoveInnerProcessor(Project project, MoveCallback moveCallback) {
     super(project);
@@ -245,7 +243,13 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       }
       elementListener.elementMoved(newClass);
 
-      myUsagesAfterRefactoring = usages;
+      List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
+      for (UsageInfo usage : usages) {
+        if (usage instanceof NonCodeUsageInfo) {
+          nonCodeUsages.add((NonCodeUsageInfo)usage);
+        }
+      }
+      myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -253,8 +257,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performPsiSpoilingRefactoring() {
-    if (myUsagesAfterRefactoring != null) {
-      RefactoringUtil.renameNonCodeUsages(myProject, myUsagesAfterRefactoring);
+    if (myNonCodeUsages != null) {
+      RefactoringUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
     }
   }
 

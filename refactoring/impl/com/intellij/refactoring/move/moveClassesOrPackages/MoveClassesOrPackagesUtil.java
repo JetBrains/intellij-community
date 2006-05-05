@@ -123,13 +123,11 @@ public class MoveClassesOrPackagesUtil {
   }
 
   // Does not process non-code usages!
-  public static PsiPackage doMovePackage(PsiPackage aPackage, MoveDestination moveDestination, UsageInfo[] usages)
+  public static PsiPackage doMovePackage(PsiPackage aPackage, MoveDestination moveDestination)
     throws IncorrectOperationException {
     PsiManager manager = aPackage.getManager();
     final PackageWrapper targetPackage = moveDestination.getTargetPackage();
 
-    // Collect destination packages
-    Map<MoveRenameUsageInfo, String> targetPackages = new HashMap<MoveRenameUsageInfo, String>();
     final String newPrefix;
     if ("".equals(targetPackage.getQualifiedName())) {
       newPrefix = "";
@@ -140,14 +138,6 @@ public class MoveClassesOrPackagesUtil {
 
     final String newPackageQualifiedName = newPrefix + aPackage.getName();
 
-    for (UsageInfo usage1 : usages) {
-      MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usage1;
-      LOG.assertTrue(usage.getReferencedElement() instanceof PsiPackage);
-      final PsiPackage oldPackage = (PsiPackage)usage.getReferencedElement();
-      LOG.assertTrue(!"".equals(oldPackage.getName()));
-      targetPackages.put(usage, newPrefix + oldPackage.getName());
-    }
-
     // do actual move
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(aPackage.getProject());
     PsiDirectory[] dirs = aPackage.getDirectories(projectScope);
@@ -155,18 +145,6 @@ public class MoveClassesOrPackagesUtil {
       final PsiDirectory targetDirectory = moveDestination.getTargetDirectory(dir);
       if (targetDirectory != null) {
         moveDirectoryRecursively(dir, targetDirectory);
-      }
-    }
-
-    // rename all references
-    for (UsageInfo usage2 : usages) {
-      MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usage2;
-      if (usage.getElement() == null) continue;
-      PsiReference reference = usage.getReference();
-      if (reference != null) {
-        final String newQName = targetPackages.get(usage);
-        final PsiPackage newPackage = manager.findPackage(newQName);
-        reference.bindToElement(newPackage);
       }
     }
 
@@ -238,7 +216,7 @@ public class MoveClassesOrPackagesUtil {
   }
 
 // Does not process non-code usages!
-  public static PsiClass doMoveClass(PsiClass aClass, MoveDestination moveDestination, UsageInfo[] usages)
+  public static PsiClass doMoveClass(PsiClass aClass, MoveDestination moveDestination)
     throws IncorrectOperationException {
 
     PsiFile file = aClass.getContainingFile();
@@ -264,24 +242,6 @@ public class MoveClassesOrPackagesUtil {
         if (file instanceof PsiJavaFile) {
           setPackageStatement((PsiJavaFile)file, newDirectory.getPackage());
         }
-      }
-    }
-
-    // rebind all references
-    for (UsageInfo usage1 : usages) {
-      MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usage1;
-      if (usage.getElement() == null) continue;
-      PsiReference reference = usage.getReference();
-      if (reference != null) {
-        PsiElement parent = reference.getElement().getParent();
-        if (parent instanceof PsiImportStatement) {
-          if (parent.getContainingFile().getContainingDirectory().equals(newDirectory)) {
-            parent.delete(); // remove import statement to the class in the same package
-            continue;
-          }
-        }
-
-        reference.bindToElement(newClass);
       }
     }
 

@@ -43,7 +43,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private PackageWrapper myTargetPackage;
   private MoveCallback myMoveCallback;
   private final MoveDestination myMoveDestination;
-  private UsageInfo[] myUsages;
+  private NonCodeUsageInfo[] myNonCodeUsages;
 
   public MoveClassesOrPackagesProcessor(
     Project project,
@@ -409,19 +409,23 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     // Move files with correction of references.
 
     try {
+      Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
       for (int idx = 0; idx < myElementsToMove.length; idx++) {
         PsiElement element = myElementsToMove[idx];
         final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
         if (element instanceof PsiPackage) {
 
-          element = MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination,
-                                                            extractElementUsages(element, usages));
-
+          final PsiPackage newElement =
+          MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination);
+          oldToNewElementsMapping.put(element, newElement);
+          element = newElement;
         }
         else if (element instanceof PsiClass) {
           ChangeContextUtil.encodeContextInfo(element, true);
-          element =
-          MoveClassesOrPackagesUtil.doMoveClass((PsiClass)element, myMoveDestination, extractElementUsages(element, usages));
+          final PsiClass newElement =
+            MoveClassesOrPackagesUtil.doMoveClass((PsiClass)element, myMoveDestination);
+          oldToNewElementsMapping.put(element, newElement);
+          element = newElement;
         } else {
           LOG.error("Unexpected element to move: " + element);
         }
@@ -435,29 +439,32 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      myUsages = usages;
+      List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
+      for (UsageInfo usage : usages) {
+        if (usage instanceof NonCodeUsageInfo) {
+          nonCodeUsages.add((NonCodeUsageInfo)usage);
+        } else if (usage instanceof MoveRenameUsageInfo) {
+          final MoveRenameUsageInfo moveRenameUsage = (MoveRenameUsageInfo)usage;
+          final PsiElement oldElement = moveRenameUsage.getReferencedElement();
+          final PsiElement newElement = oldToNewElementsMapping.get(oldElement);
+          LOG.assertTrue(newElement != null);
+          final PsiReference reference = moveRenameUsage.getReference();
+          if (reference != null) reference.bindToElement(newElement);
+        }
+      }
+      myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
     }
     catch (IncorrectOperationException e) {
-      myUsages = new UsageInfo[0];
+      myNonCodeUsages = new NonCodeUsageInfo[0];
       RefactoringUtil.processIncorrectOperation(myProject, e);
     }
   }
 
   protected void performPsiSpoilingRefactoring() {
-    RefactoringUtil.renameNonCodeUsages(myProject, myUsages);
+    RefactoringUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
     if (myMoveCallback != null) {
       myMoveCallback.refactoringCompleted();
     }
-  }
-
-  private static MoveRenameUsageInfo[] extractElementUsages(PsiElement element, UsageInfo[] allUsages) {
-    ArrayList<MoveRenameUsageInfo> usages = new ArrayList<MoveRenameUsageInfo>();
-    for (UsageInfo usage : allUsages) {
-      if (usage instanceof MoveRenameUsageInfo && element.equals(((MoveRenameUsageInfo)usage).getReferencedElement())) {
-        usages.add((MoveRenameUsageInfo)usage);
-      }
-    }
-    return usages.toArray(new MoveRenameUsageInfo[usages.size()]);
   }
 
   protected String getCommandName() {

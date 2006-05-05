@@ -302,25 +302,23 @@ public class RefactoringUtil {
     }
   }
 
-  public static void renameNonCodeUsages(final Project project, final UsageInfo[] usages) {
+  public static void renameNonCodeUsages(final Project project, final NonCodeUsageInfo[] usages) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     HashMap<PsiFile,ArrayList<UsageOffset>> filesToOffsetsMap = new HashMap<PsiFile, ArrayList<UsageOffset>>();
-    for (UsageInfo usage : usages) {
+    for (NonCodeUsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
 
-      if (element == null || !element.isValid()) continue;
-      if (usage instanceof NonCodeUsageInfo) {
-        final PsiFile containingFile = element.getContainingFile();
-        int fileOffset = element.getTextRange().getStartOffset() + usage.startOffset;
+      if (element == null) continue;
+      final PsiFile containingFile = element.getContainingFile();
+      int fileOffset = element.getTextRange().getStartOffset() + usage.startOffset;
 
-        ArrayList<UsageOffset> list = filesToOffsetsMap.get(containingFile);
-        if (list == null) {
-          list = new ArrayList<UsageOffset>();
-          filesToOffsetsMap.put(containingFile, list);
-        }
-        list.add(new UsageOffset(fileOffset, fileOffset + usage.endOffset - usage.startOffset,
-                                 ((NonCodeUsageInfo)usage).newText));
+      ArrayList<UsageOffset> list = filesToOffsetsMap.get(containingFile);
+      if (list == null) {
+        list = new ArrayList<UsageOffset>();
+        filesToOffsetsMap.put(containingFile, list);
       }
+      list.add(new UsageOffset(fileOffset, fileOffset + usage.endOffset - usage.startOffset,
+                               ((NonCodeUsageInfo)usage).newText));
     }
 
     for (PsiFile file : filesToOffsetsMap.keySet()) {
