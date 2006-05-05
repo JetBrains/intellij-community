@@ -13,9 +13,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
-import java.lang.reflect.Field;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -144,24 +143,11 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
   private void showSize(Size size, final boolean row) {
     Size minimumSize = null;
     Size maximumSize = null;
-    final Class<? extends Size> sizeClass = size.getClass();
-    if (sizeClass.getName().equals("com.jgoodies.forms.layout.BoundedSize")) {
-      try {
-        Field field = sizeClass.getDeclaredField("lowerBound");
-        field.setAccessible(true);
-        minimumSize = (Size) field.get(size);
-
-        field = sizeClass.getDeclaredField("upperBound");
-        field.setAccessible(true);
-        maximumSize = (Size) field.get(size);
-
-        field = sizeClass.getDeclaredField("basis");
-        field.setAccessible(true);
-        size = (Size) field.get(size);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+    if (size instanceof BoundedSize) {
+      BoundedSize boundedSize = (BoundedSize) size;
+      minimumSize = boundedSize.getLowerBound();
+      maximumSize = boundedSize.getUpperBound();
+      size = boundedSize.getBasis();
     }
 
     if (size instanceof ConstantSize) {
@@ -190,21 +176,8 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
   }
 
   private static void showConstantSize(final ConstantSize size, final JComboBox unitsCombo, final JSpinner spinner) {
-    double value;
-    ConstantSize.Unit unit;
-    try {
-      Field field = size.getClass().getDeclaredField("value");
-      field.setAccessible(true);
-      value = field.getDouble(size);
-
-      field = size.getClass().getDeclaredField("unit");
-      field.setAccessible(true);
-      unit = (ConstantSize.Unit) field.get(size);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return;
-    }
+    double value = size.getValue();
+    ConstantSize.Unit unit = size.getUnit();
 
     @NonNls String abbreviation = unit.abbreviation();
     if (abbreviation.startsWith("dlu")) {
