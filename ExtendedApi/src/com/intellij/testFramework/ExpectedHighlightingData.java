@@ -28,6 +28,7 @@ public class ExpectedHighlightingData {
 
  @NonNls private static final String ERROR_MARKER = "error";
  @NonNls private static final String WARNING_MARKER = "warning";
+ @NonNls private static final String INFORMATION_MARKER = "information";
  @NonNls private static final String INFO_MARKER = "info";
  @NonNls private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
  @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
@@ -52,9 +53,14 @@ public class ExpectedHighlightingData {
   Map<String,ExpectedHighlightingSet> highlightingTypes;
 
   public ExpectedHighlightingData(Document document,boolean checkWarnings, boolean checkInfos) {
+    this(document, checkWarnings, false, checkInfos);
+  }
+
+  public ExpectedHighlightingData(Document document,boolean checkWarnings,boolean checkWeakWarnings, boolean checkInfos) {
     highlightingTypes = new THashMap<String,ExpectedHighlightingSet>();
     highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(ERROR_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
     highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(WARNING_MARKER, HighlightInfoType.UNUSED_SYMBOL, HighlightSeverity.WARNING, false, checkWarnings));
+    highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(INFORMATION_MARKER, HighlightInfoType.INFO, HighlightSeverity.INFO, false, checkWeakWarnings));
     highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(INFO_MARKER, HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
     highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(END_LINE_HIGHLIGHT_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
     highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(END_LINE_WARNING_MARKER, HighlightInfoType.WARNING, HighlightSeverity.WARNING, true, checkWarnings));
