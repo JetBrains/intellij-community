@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -73,47 +74,51 @@ public class ImplementAbstractClassAction implements IntentionAction {
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     if (targetDirectory == null) return;
 
-    PsiClass targetClass = ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>() {
-      public PsiClass compute() {
+    PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable () {
+      public void run() {
+        PsiClass targetClass = ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>() {
+          public PsiClass compute() {
 
-        IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+            IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-        PsiClass targetClass;
-        try {
-          targetClass = targetDirectory.createClass(dialog.getClassName());
-        }
-        catch (IncorrectOperationException e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    Messages.showErrorDialog(project,
-                                             CodeInsightBundle.message( "intention.implement.abstract.class.error.cannot.create.class.message", dialog.getClassName()),
-                                             CodeInsightBundle.message("intention.implement.abstract.class.error.cannot.create.class.title"));
-                  }
-                });
-          return null;
-        }
-        PsiJavaCodeReferenceElement ref = file.getManager().getElementFactory().createClassReferenceElement(psiClass);
+            PsiClass targetClass;
+            try {
+              targetClass = targetDirectory.createClass(dialog.getClassName());
+            }
+            catch (IncorrectOperationException e) {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                      public void run() {
+                        Messages.showErrorDialog(project,
+                                                 CodeInsightBundle.message( "intention.implement.abstract.class.error.cannot.create.class.message", dialog.getClassName()),
+                                                 CodeInsightBundle.message("intention.implement.abstract.class.error.cannot.create.class.title"));
+                      }
+                    });
+              return null;
+            }
+            PsiJavaCodeReferenceElement ref = file.getManager().getElementFactory().createClassReferenceElement(psiClass);
 
-        try {
-          if (psiClass.isInterface()) {
-            targetClass.getImplementsList().add(ref);
+            try {
+              if (psiClass.isInterface()) {
+                targetClass.getImplementsList().add(ref);
+              }
+              else {
+                targetClass.getExtendsList().add(ref);
+              }
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+
+            return targetClass;
           }
-          else {
-            targetClass.getExtendsList().add(ref);
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        });
+        if (targetClass == null) return;
 
-        return targetClass;
+        final Editor editor1 = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
+        if (editor1 == null) return;
+        OverrideImplementUtil.chooseAndImplementMethods(project, editor1, targetClass);
       }
     });
-    if (targetClass == null) return;
-
-    final Editor editor1 = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
-    if (editor1 == null) return;
-    OverrideImplementUtil.chooseAndImplementMethods(project, editor1, targetClass);
   }
 
   public boolean startInWriteAction() {
