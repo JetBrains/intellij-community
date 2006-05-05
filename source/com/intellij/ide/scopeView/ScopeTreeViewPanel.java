@@ -5,8 +5,8 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
@@ -393,6 +393,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           PsiJavaFile file = PsiTreeUtil.getParentOfType(parent, PsiJavaFile.class, false);
           myTreeExpansionMonitor.freeze();
           if (file != null) {
+            if (!file.getViewProvider().isPhysical()) return;
             collapseExpand(myBuilder.getFileParentNode(file));
           }
           myTreeExpansionMonitor.restore();
