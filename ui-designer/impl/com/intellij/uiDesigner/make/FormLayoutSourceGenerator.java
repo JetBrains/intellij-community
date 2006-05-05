@@ -4,13 +4,14 @@
 
 package com.intellij.uiDesigner.make;
 
+import com.intellij.uiDesigner.compiler.FormLayoutCodeGenerator;
+import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
-import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.compiler.FormLayoutCodeGenerator;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.CellConstraints;
+import com.jgoodies.forms.layout.FormLayout;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.Insets;
 
@@ -30,6 +31,31 @@ public class FormLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.push(Utils.getEncodedRowSpecs(layout));
     generator.endConstructor();
 
+    generator.endMethod();
+
+    generateGroups(generator, variable, "setRowGroups", layout.getRowGroups());
+    generateGroups(generator, variable, "setColumnGroups", layout.getColumnGroups());
+  }
+
+  private static void generateGroups(final FormSourceCodeGenerator generator, final String variable,
+                                     @NonNls final String methodName, final int[][] groups) {
+    if (groups.length == 0) return;
+    generator.startMethodCall("((com.jgoodies.forms.layout.FormLayout) " + variable + ".getLayout())",
+                              methodName);
+
+    @NonNls StringBuilder groupBuilder = new StringBuilder("new int[][] {");
+    for(int i=0; i<groups.length; i++) {
+      if (i > 0) groupBuilder.append(", ");
+      groupBuilder.append("new int[] { ");
+      for(int j=0; j<groups [i].length; j++) {
+        if (j > 0) groupBuilder.append(", ");
+        groupBuilder.append(groups [i] [j]);
+      }
+      groupBuilder.append(" }");
+    }
+    groupBuilder.append(" }");
+
+    generator.pushVar(groupBuilder.toString());
     generator.endMethod();
   }
 

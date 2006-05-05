@@ -5,9 +5,12 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.GridChangeUtil;
+import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -133,6 +136,24 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
       writer.startElement(UIFormXmlConstants.ELEMENT_COLSPEC);
       try {
         writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, Utils.getEncodedSpec(columnSpec));
+      }
+      finally {
+        writer.endElement();
+      }
+    }
+    writeGroups(writer, UIFormXmlConstants.ELEMENT_ROWGROUP, layout.getRowGroups());
+    writeGroups(writer, UIFormXmlConstants.ELEMENT_COLGROUP, layout.getColumnGroups());
+  }
+
+  private static void writeGroups(final XmlWriter writer, final String elementName, final int[][] groups) {
+    for(int[] group: groups) {
+      writer.startElement(elementName);
+      try {
+        for(int member: group) {
+          writer.startElement(UIFormXmlConstants.ELEMENT_MEMBER);
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_INDEX, member);
+          writer.endElement();
+        }
       }
       finally {
         writer.endElement();
@@ -268,6 +289,17 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
     }
     myPropertiesPanel.showProperties(container, isRow, selectedIndices);
     return myPropertiesPanel;
+  }
+
+  @Override
+  public ActionGroup getCaptionActions() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new InsertBeforeAction());
+    group.add(new InsertAfterAction());
+    group.add(new DeleteAction());
+    group.add(new GroupRowsColumnsAction());
+    group.add(new UngroupRowsColumnsAction());
+    return group;
   }
 
   @Override

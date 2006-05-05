@@ -53,11 +53,15 @@ public abstract class RowColumnAction extends AnAction {
       presentation.setEnabled(selection.getContainer() != null);
       if (!selection.isRow()) {
         presentation.setText(myColumnText);
-        presentation.setIcon(IconLoader.getIcon(myColumnIcon));
+        if (myColumnIcon != null) {
+          presentation.setIcon(IconLoader.getIcon(myColumnIcon));
+        }
       }
       else {
         presentation.setText(myRowText);
-        presentation.setIcon(IconLoader.getIcon(myRowIcon));
+        if (myRowIcon != null) {
+          presentation.setIcon(IconLoader.getIcon(myRowIcon));
+        }
       }
     }
   }

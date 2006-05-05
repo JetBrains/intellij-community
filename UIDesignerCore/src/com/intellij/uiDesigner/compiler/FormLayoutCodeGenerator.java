@@ -22,6 +22,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.CellConstraints;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
@@ -36,6 +37,8 @@ public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Type ourCellAlignmentType = Type.getType(CellConstraints.Alignment.class);
   private static final Method ourFormLayoutConstructor = Method.getMethod("void <init>(java.lang.String,java.lang.String)");
   private static final Method ourCellConstraintsConstructor = Method.getMethod("void <init>(int,int,int,int,com.jgoodies.forms.layout.CellConstraints$Alignment,com.jgoodies.forms.layout.CellConstraints$Alignment,java.awt.Insets)");
+  private static final Method ourSetRowGroupsMethod = Method.getMethod("void setRowGroups(int[][])");
+  private static final Method ourSetColumnGroupsMethod = Method.getMethod("void setColumnGroups(int[][])");
 
   public static String[] HORZ_ALIGN_FIELDS = new String[] { "LEFT", "CENTER", "RIGHT", "FILL" };
   public static String[] VERT_ALIGN_FIELDS = new String[] { "TOP", "CENTER", "BOTTOM", "FILL" };
@@ -52,7 +55,34 @@ public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
 
     generator.invokeConstructor(ourFormLayoutType, ourFormLayoutConstructor);
 
+    generateGroups(generator, formLayout.getRowGroups(), ourSetRowGroupsMethod);
+    generateGroups(generator, formLayout.getColumnGroups(), ourSetColumnGroupsMethod);
+
     generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
+  }
+
+  private static void generateGroups(final GeneratorAdapter generator, final int[][] groups, final Method setGroupsMethod) {
+    if (groups.length == 0) return;
+    int groupLocal = generator.newLocal(Type.getType("[I"));
+    generator.dup();   // duplicate FormLayout reference
+    generator.push(groups.length);
+    generator.newArray(Type.getType("[I"));
+    for(int i=0; i<groups.length; i++) {
+      generator.dup();
+      generator.push(groups [i].length);
+      generator.newArray(Type.INT_TYPE);
+      generator.storeLocal(groupLocal);
+      for(int j=0; j<groups [i].length; j++) {
+        generator.loadLocal(groupLocal);
+        generator.push(j);
+        generator.push(groups [i][j]);
+        generator.visitInsn(Opcodes.IASTORE);
+      }
+      generator.push(i);
+      generator.loadLocal(groupLocal);
+      generator.visitInsn(Opcodes.AASTORE);
+    }
+    generator.invokeVirtual(ourFormLayoutType, setGroupsMethod);
   }
 
   public void generateComponentLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal, final int parentLocal) {

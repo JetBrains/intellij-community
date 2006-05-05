@@ -50,7 +50,31 @@ public class FormLayoutSerializer extends GridLayoutSerializer {
       final String spec = LwXmlReader.getRequiredString(colSpecElement, UIFormXmlConstants.ATTRIBUTE_VALUE);
       layout.appendColumn(new ColumnSpec(spec));
     }
+
+    int[][] rowGroups = readGroups(element, UIFormXmlConstants.ELEMENT_ROWGROUP);
+    int[][] colGroups = readGroups(element, UIFormXmlConstants.ELEMENT_COLGROUP);
+    if (rowGroups != null) {
+      layout.setRowGroups(rowGroups);
+    }
+    if (colGroups != null) {
+      layout.setColumnGroups(colGroups);
+    }
     container.setLayout(layout);
+  }
+
+  private static int[][] readGroups(final Element element, final String elementName) {
+    final List groupElements = element.getChildren(elementName, element.getNamespace());
+    if (groupElements.size() == 0) return null;
+    int[][] groups = new int[groupElements.size()][];
+    for(int i=0; i<groupElements.size(); i++) {
+      Element groupElement = (Element) groupElements.get(i);
+      List groupMembers = groupElement.getChildren(UIFormXmlConstants.ELEMENT_MEMBER, element.getNamespace());
+      groups [i] = new int[groupMembers.size()];
+      for(int j=0; j<groupMembers.size(); j++) {
+        groups [i][j] = LwXmlReader.getRequiredInt((Element) groupMembers.get(j), UIFormXmlConstants.ATTRIBUTE_INDEX);
+      }
+    }
+    return groups;
   }
 
   void readChildConstraints(final Element constraintsElement, final LwComponent component) {
