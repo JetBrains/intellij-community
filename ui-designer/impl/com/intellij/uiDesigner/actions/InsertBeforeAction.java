@@ -4,12 +4,6 @@
 
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.radComponents.RadContainer;
@@ -17,35 +11,14 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 /**
  * @author yole
 */
-public final class InsertBeforeAction extends AnAction {
-  public void actionPerformed(final AnActionEvent e) {
-    GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
-    CaptionSelection selection = (CaptionSelection) e.getDataContext().getData(CaptionSelection.class.getName());
-    if (editor == null || selection == null || !editor.ensureEditable()) {
-      return;
-    }
-    final RadContainer container = selection.getContainer();
-    container.getLayoutManager().insertGridCells(container, selection.getFocusedIndex(), selection.isRow(), true);
-    container.revalidate();
-    editor.refreshAndSave(true);
+public final class InsertBeforeAction extends RowColumnAction {
+  public InsertBeforeAction() {
+    super(UIDesignerBundle.message("action.insert.column.before.this"), "/com/intellij/uiDesigner/icons/insertColumnLeft.png",
+          UIDesignerBundle.message("action.insert.row.before.this"), "/com/intellij/uiDesigner/icons/insertRowAbove.png");
   }
 
-  public void update(final AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    CaptionSelection selection = (CaptionSelection) e.getDataContext().getData(CaptionSelection.class.getName());
-    if (selection == null) {
-      presentation.setEnabled(false);
-    }
-    else {
-      presentation.setEnabled(selection.getContainer() != null);
-      if (!selection.isRow()) {
-        presentation.setText(UIDesignerBundle.message("action.insert.column.before.this"));
-        presentation.setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/insertColumnLeft.png"));
-      }
-      else {
-        presentation.setText(UIDesignerBundle.message("action.insert.row.before.this"));
-        presentation.setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/insertRowAbove.png"));
-      }
-    }
+  protected void actionPerformed(CaptionSelection selection) {
+    RadContainer container = selection.getContainer();
+    container.getLayoutManager().insertGridCells(container, selection.getFocusedIndex(), selection.isRow(), true);
   }
 }
