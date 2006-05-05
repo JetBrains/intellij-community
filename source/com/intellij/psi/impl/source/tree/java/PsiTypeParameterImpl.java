@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 /**
  *  @author dsl
@@ -166,10 +167,9 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
   @NotNull
   public PsiTypeParameterListOwner getOwner() {
     final PsiElement parent = getParent();
-    if (parent == null) return null;
+    if (parent == null) throw new PsiInvalidElementAccessException(this);
     final PsiElement parentParent = parent.getParent();
-    if (parentParent instanceof PsiTypeParameterListOwner) return (PsiTypeParameterListOwner) parentParent;
-    return null;
+    return (PsiTypeParameterListOwner) parentParent;
   }
 
 
@@ -190,12 +190,13 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     }
   }
 
+  @NotNull
   public PsiIdentifier getNameIdentifier() {
     return (PsiIdentifier) getMirrorTreeElement().findChildByRole(ChildRole.NAME);
   }
 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place){
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place, false);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet<PsiClass>(), lastParent, place, false);
   }
 
   public String getName() {
@@ -353,6 +354,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     visitor.visitTypeParameter(this);
   }
 
+  @NonNls
   public String toString() {
     return "PsiTypeParameter";
   }
