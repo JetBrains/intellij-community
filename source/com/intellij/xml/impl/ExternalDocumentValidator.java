@@ -297,7 +297,13 @@ public class ExternalDocumentValidator {
 
   public static synchronized void doValidation(final PsiElement context, final Validator.ValidationHost host) {
     final PsiFile containingFile = context.getContainingFile();
-    if (containingFile == null || containingFile.getFileType() != StdFileTypes.XML) return;
+    if (containingFile == null ||
+        ( containingFile.getFileType() != StdFileTypes.XML &&
+          containingFile.getFileType() != StdFileTypes.XHTML
+        )
+      ) {
+      return;
+    }
     final Project project = context.getProject();
 
     SoftReference<ExternalDocumentValidator> validatorReference = project.getUserData(validatorInstanceKey);
