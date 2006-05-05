@@ -87,7 +87,7 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
     addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType));
   }
 
-  public final void addProblem(final DomElementProblemDescriptor problemDescriptor) {
+  public void addProblem(final DomElementProblemDescriptor problemDescriptor) {
     add(problemDescriptor);
   }
 

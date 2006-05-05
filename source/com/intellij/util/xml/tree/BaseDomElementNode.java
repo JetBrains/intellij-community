@@ -96,8 +96,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
         setUniformIcon(getNodeIcon());
         clearColoredText();
 
-        final List<DomElementProblemDescriptor> problems = DomElementAnnotationsManager.getInstance(myDomElement.getManager().getProject())
-          .getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
+      final List<DomElementProblemDescriptor> problems = DomElementAnnotationsManager.getInstance(myDomElement.getManager().getProject())
+        .getCachedProblemHolder(myDomElement).getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
 
         if (problems.size() > 0) {
             addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems),

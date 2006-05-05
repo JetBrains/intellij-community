@@ -21,6 +21,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,10 +31,32 @@ public abstract class DomElementAnnotationsManager {
     return project.getComponent(DomElementAnnotationsManager.class);
   }
 
-  public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement);
-  public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems);
-  public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren);
-  public abstract List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren, HighlightSeverity minSeverity);
+  public final List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
+    return getProblemHolder(domElement).getProblems(domElement);
+  }
+  public final List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems) {
+    return getProblemHolder(domElement).getProblems(domElement, includeXmlProblems);
+  }
+
+  /**
+     * Result is: Errors and Warnings
+     * @param domElement
+     * @param includeXmlProblems
+     * @param withChildren
+     * @return
+     */
+
+  public final List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren) {
+    return getProblemHolder(domElement).getProblems(domElement, includeXmlProblems, withChildren);
+  }
+  public final List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren, HighlightSeverity minSeverity) {
+    return getProblemHolder(domElement).getProblems(domElement, includeXmlProblems, withChildren, minSeverity);
+  }
+
+  @NotNull
+  public abstract DomElementsProblemsHolder getProblemHolder(DomElement element);
+  @NotNull
+  public abstract DomElementsProblemsHolder getCachedProblemHolder(DomElement element);
 
   public abstract List<DomElementProblemDescriptor> getAllProblems(final DomFileElement<?> fileElement, HighlightSeverity minSeverity);
 

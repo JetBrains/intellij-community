@@ -18,6 +18,7 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -26,40 +27,24 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   private Map<DomFileElement, CachedValue<DomElementsProblemsHolder>> myCache =
     new WeakValueHashMap<DomFileElement, CachedValue<DomElementsProblemsHolder>>();
+  private static final DomElementsProblemsHolderImpl EMPTY_PROBLEMS_HOLDER = new DomElementsProblemsHolderImpl() {
+    public void addProblem(final DomElementProblemDescriptor problemDescriptor) {
+      throw new UnsupportedOperationException("This holder is immutable");
+    }
+  };
 
-  public List<DomElementProblemDescriptor> getProblems(final DomElement domElement) {
-    return getProblems(domElement, false);
+  @NotNull
+  public DomElementsProblemsHolder getProblemHolder(DomElement element) {
+    if (element == null || !element.isValid()) return EMPTY_PROBLEMS_HOLDER;
+    return getDomElementsProblemsHolder(element.getRoot());
   }
 
-  public List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems) {
-    return getProblems(domElement, includeXmlProblems, true, HighlightSeverity.ERROR);
-  }
-
-  /**
-   * Result is: Errors and Warnings
-   * @param domElement
-   * @param includeXmlProblems
-   * @param withChildren
-   * @return
-   */
-  public List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren) {
-    if (domElement == null || !domElement.isValid()) return Collections.emptyList();
-
-    final DomElementsProblemsHolder holder = getDomElementsProblemsHolder(domElement.getRoot());
-
-    return holder.getProblems(domElement, includeXmlProblems, withChildren);
-  }
-
-  public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
-                                                       boolean includeXmlProblems,
-                                                       boolean withChildren,
-                                                       HighlightSeverity minSeverity) {
-    if (domElement == null || !domElement.isValid()) return Collections.emptyList();
-
-    final DomFileElement<?> fileElement = domElement.getRoot();
-    final DomElementsProblemsHolder holder = getDomElementsProblemsHolder(fileElement);
-
-    return holder.getProblems(domElement, includeXmlProblems, withChildren, minSeverity);
+  @NotNull
+  public DomElementsProblemsHolder getCachedProblemHolder(DomElement element) {
+    if (element == null || !element.isValid()) return EMPTY_PROBLEMS_HOLDER;
+    final DomFileElement<?> fileElement = element.getRoot();
+    final CachedValue<DomElementsProblemsHolder> cachedValue = myCache.get(fileElement);
+    return cachedValue == null || !cachedValue.hasUpToDateValue() ? EMPTY_PROBLEMS_HOLDER : cachedValue.getValue();
   }
 
   public List<DomElementProblemDescriptor> getAllProblems(final DomFileElement<?> fileElement, HighlightSeverity minSeverity) {
@@ -108,6 +93,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return annotators;
   }
 
+  @NotNull
   @NonNls
   public String getComponentName() {
     return "DomElementAnnotationsManager";
