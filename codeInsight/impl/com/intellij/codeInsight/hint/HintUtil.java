@@ -145,7 +145,7 @@ public class HintUtil {
 
     public int getTextEndOffset(PsiElement element) {
       if (element instanceof XmlAttributeValue) {
-        element = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+        element = PsiTreeUtil.getParentOfType(element, XmlTag.class); // for convenience
       }
       return element.getTextRange().getEndOffset();
     }
