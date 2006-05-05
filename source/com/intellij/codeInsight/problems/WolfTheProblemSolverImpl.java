@@ -183,7 +183,14 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     try {
       for (VirtualFile virtualFile : toCheck) {
         if (myProgress.isCanceled()) break;
-        orderVincentToCleanTheCar(virtualFile);
+        if (virtualFile.isValid()) {
+          orderVincentToCleanTheCar(virtualFile);
+        }
+        else {
+          synchronized(myProblems) {
+            myProblems.remove(virtualFile);
+          }
+        }
       }
     }
     catch (ProcessCanceledException e) {
