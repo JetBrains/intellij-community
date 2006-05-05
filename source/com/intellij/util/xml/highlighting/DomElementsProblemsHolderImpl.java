@@ -55,7 +55,7 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
                                                        final boolean includeXmlProblems,
                                                        final boolean withChildren) {
 
-    if (!withChildren) return getProblems(domElement);
+    if (!withChildren || domElement == null) return getProblems(domElement);
 
     final Set<DomElementProblemDescriptor> problems = new HashSet<DomElementProblemDescriptor>();
 
