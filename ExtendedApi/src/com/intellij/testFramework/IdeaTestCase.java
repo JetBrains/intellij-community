@@ -192,6 +192,7 @@ import java.util.HashSet;
     try {
       assertNotNull("Application components damaged", ProjectManager.getInstance());
 
+      ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
       FileDocumentManager.getInstance().saveAllDocuments();
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
