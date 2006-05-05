@@ -57,7 +57,7 @@ public class ModelMerger {
     if (o != null) {
       return (T) o;
     }
-
+    if (implementations.length == 1) return implementations[0];
     final MergingInvocationHandler<T> handler = new MergingInvocationHandler<T>(implementations);
     return _mergeModels(aClass, handler, implementations);
   }
