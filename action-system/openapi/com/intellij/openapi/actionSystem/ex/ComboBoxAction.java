@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -27,8 +28,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
-import org.jetbrains.annotations.NotNull;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
@@ -75,6 +74,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           }
         }
       );
+
+      //noinspection HardCodedStringLiteral
+      putClientProperty("Quaqua.Button.style", "placard");
     }
 
     public void showPopup() {
