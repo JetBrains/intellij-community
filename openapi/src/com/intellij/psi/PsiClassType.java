@@ -102,6 +102,29 @@ public abstract class PsiClassType extends PsiType {
     return true;
   }
 
+  /**
+   * Checks if the class type has any parameters which are not unbounded wildcards
+   * and do not have substituted arguments.
+   *
+   * @return true if the class type has nontrivial non-substituted parameters, false otherwise
+   */
+  public boolean hasNonTrivialParameters() {
+    final ClassResolveResult resolveResult = resolveGenerics();
+    if (resolveResult.getElement() == null) return false;
+    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(resolveResult.getElement());
+    if (!iterator.hasNext()) return false;
+    while (iterator.hasNext()) {
+      PsiTypeParameter parameter = iterator.next();
+      PsiType type = resolveResult.getSubstitutor().substitute(parameter);
+      if (type != null) {
+        if (!(type instanceof PsiWildcardType) || ((PsiWildcardType)type).getBound() != null) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public int hashCode() {
     final String className = getClassName();
     if (className == null) return 0;

@@ -506,7 +506,7 @@ public class GenericsHighlightUtil {
     if (expression == null) return null;
     final PsiType exprType = expression.getType();
     if (exprType == null) return null;
-    if (isRawToGeneric(castType, exprType)) {
+    if (isUncheckedCast(castType, exprType)) {
       String description = JavaErrorMessages.message("generics.unchecked.cast",
                                                      HighlightUtil.formatType(exprType),
                                                      HighlightUtil.formatType(castType));
@@ -521,6 +521,44 @@ public class GenericsHighlightUtil {
       return highlightInfo;
     }
     return null;
+  }
+
+  private static boolean isUncheckedCast(PsiType castType, PsiType operandType) {
+    if (TypeConversionUtil.isAssignable(castType, operandType, false)) return false;
+
+    castType = castType.getDeepComponentType();
+    if (castType instanceof PsiClassType) {
+      final PsiClassType castClassType = ((PsiClassType)castType);
+      operandType = operandType.getDeepComponentType();
+
+      if (!(operandType instanceof PsiClassType)) return false;
+      final PsiClassType operandClassType = (PsiClassType)operandType;
+      final PsiClassType.ClassResolveResult castResult = castClassType.resolveGenerics();
+      final PsiClassType.ClassResolveResult operandResult = operandClassType.resolveGenerics();
+      final PsiClass operandClass = operandResult.getElement();
+      final PsiClass castClass = castResult.getElement();
+
+      if (operandClass == null || castClass == null) return false;
+      if (operandClass instanceof PsiTypeParameter || castClass instanceof PsiTypeParameter) return true;
+
+      if (castClassType.hasNonTrivialParameters()) {
+        if (operandClassType.isRaw()) return true;
+        if (castClass.isInheritor(operandClass, true)) {
+          PsiSubstitutor castSubstitutor = castResult.getSubstitutor();
+          final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(castClass);
+          while(iterator.hasNext()) {
+            final PsiTypeParameter typeParameter = iterator.next();
+            PsiSubstitutor modifiedSubstitutor = castSubstitutor.put(typeParameter, null);
+            PsiClassType otherType = typeParameter.getManager().getElementFactory().createType(castClass, modifiedSubstitutor);
+            if (TypeConversionUtil.isAssignable(operandType, otherType, false)) return true;
+          }
+          return false;
+        }
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private static boolean isUncheckedTypeArgumentConversion (PsiType lTypeArg, PsiType rTypeArg) {
