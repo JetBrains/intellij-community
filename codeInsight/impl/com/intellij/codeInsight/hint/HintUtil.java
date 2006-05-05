@@ -10,6 +10,9 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.lang.Language;
@@ -141,6 +144,9 @@ public class HintUtil {
     }
 
     public int getTextEndOffset(PsiElement element) {
+      if (element instanceof XmlAttributeValue) {
+        element = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+      }
       return element.getTextRange().getEndOffset();
     }
   }
