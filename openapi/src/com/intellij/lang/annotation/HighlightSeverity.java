@@ -38,15 +38,21 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
    */
   public static final HighlightSeverity INFORMATION = new HighlightSeverity("INFORMATION", 0);
 
+
+  /**
+   * The standard severity level for 'weak' :) warning annotations.
+   */
+  public static final HighlightSeverity INFO = new HighlightSeverity("INFO", 100);
+
   /**
    * The standard severity level for warning annotations.
    */
-  public static final HighlightSeverity WARNING = new HighlightSeverity("WARNING", 100);
+  public static final HighlightSeverity WARNING = new HighlightSeverity("WARNING", 200);
 
   /**
    * The standard severity level for error annotations.
    */
-  public static final HighlightSeverity ERROR = new HighlightSeverity("ERROR", 200);
+  public static final HighlightSeverity ERROR = new HighlightSeverity("ERROR", 300);
 
   /**
    * Creates a new highlighting severity level with the specified name and value.

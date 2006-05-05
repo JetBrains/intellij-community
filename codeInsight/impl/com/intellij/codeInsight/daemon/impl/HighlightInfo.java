@@ -60,6 +60,9 @@ public class HighlightInfo {
     if (severity == HighlightSeverity.WARNING) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).getErrorStripeColor();
     }
+    if (severity == HighlightSeverity.INFO){
+      return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.INFO_ATTRIBUTES).getErrorStripeColor();
+    }
     TextAttributes attributes = getAttributesByType(type);
     return attributes == null ? null : attributes.getErrorStripeColor();
   }

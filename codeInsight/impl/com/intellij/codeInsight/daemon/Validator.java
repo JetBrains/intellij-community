@@ -13,6 +13,7 @@ public interface Validator {
   interface ValidationHost {
     int ERROR = 1;
     int WARNING = 0;
+    int INFO = 2;
 
     void addMessage(PsiElement context, String message, int type);
   }

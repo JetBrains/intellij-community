@@ -30,6 +30,7 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
   @NonNls private static final String ERROR = "error";
   @NonNls private static final String WARNING = "warning";
   @NonNls private static final String COLOR = "color";
+  @NonNls private static final String INFORMATION = "information";
 
   public static SeverityRegistrar getInstance(){
     return ApplicationManager.getApplication().getComponent(SeverityRegistrar.class);
@@ -56,6 +57,9 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     }
     if (severity == HighlightSeverity.WARNING){
       return (HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.WARNING;
+    }
+    if (severity == HighlightSeverity.INFO){
+      return (HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.INFO;
     }
     if (severity == HighlightSeverity.INFORMATION){
       return (HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.INFORMATION;
@@ -93,6 +97,11 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     if (warning != null){
       HighlightSeverity.WARNING.readExternal(warning);
     }
+
+    final Element info = element.getChild(INFORMATION);
+    if (info != null){
+      HighlightSeverity.INFO.readExternal(info);
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -114,6 +123,9 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     HighlightSeverity.WARNING.writeExternal(warningSeverity);
     element.addContent(warningSeverity);
 
+    Element infoSeverity = new Element(INFORMATION);
+    HighlightSeverity.INFO.writeExternal(infoSeverity);
+    element.addContent(infoSeverity);
   }
 
   @NonNls
@@ -145,6 +157,7 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     TreeSet<HighlightSeverity> set = new TreeSet<HighlightSeverity>();
     set.add(HighlightSeverity.ERROR);
     set.add(HighlightSeverity.WARNING);
+    set.add(HighlightSeverity.INFO);
     set.addAll(ourMap.keySet());
     return set;
   }
@@ -156,6 +169,9 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     }
     if (severity == HighlightSeverity.WARNING){
       return CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor();
+    }
+    if (severity == HighlightSeverity.INFO){
+      return CodeInsightColors.INFO_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor();
     }
     return ourRendererColors.get(severity);
   }

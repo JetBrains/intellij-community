@@ -107,6 +107,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     ourTags.put("unusedField", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
     ourTags.put("error", CodeInsightColors.ERRORS_ATTRIBUTES);
     ourTags.put("warning", CodeInsightColors.WARNINGS_ATTRIBUTES);
+    ourTags.put("info", CodeInsightColors.INFO_ATTRIBUTES);
     ourTags.put("unknownType", CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
     ourTags.put("localVar", CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
     ourTags.put("reassignedLocalVar", CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
@@ -145,6 +146,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unused.symbol"), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.error"), CodeInsightColors.ERRORS_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.warning"), CodeInsightColors.WARNINGS_ATTRIBUTES));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.info"), CodeInsightColors.INFO_ATTRIBUTES));
     final Collection<HighlightInfoType.HighlightInfoTypeImpl> infoTypes = SeverityRegistrar.getRegisteredHighlightingInfoTypes();
     for (HighlightInfoType type : infoTypes) {
       descriptors.add(new AttributesDescriptor(type.getSeverity(null).toString(), type.getAttributesKey()));

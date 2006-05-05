@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.todo.TodoConfiguration;
@@ -62,6 +61,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -552,7 +552,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
 
     for (HighlightInfo highlight : highlights) {
-      if (highlight.getSeverity() == HighlightSeverity.WARNING) {
+      if (highlight.getSeverity().myVal < HighlightSeverity.ERROR.myVal &&
+          highlight.getSeverity().myVal > 0) {
         for (HighlightInfo errorInfo : errors) {
           if (isCoveredBy(highlight, errorInfo)) {
             all.remove(highlight);

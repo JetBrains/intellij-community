@@ -110,7 +110,7 @@ public class UpdateHighlightersUtil {
 
       if (infoStartOffset < startOffset || infoEndOffset > endOffset) continue;
       HighlightSeverity severity = info.getSeverity();
-      if (severity == HighlightSeverity.INFORMATION) {
+      if (severity == HighlightSeverity.INFORMATION || severity == HighlightSeverity.INFO) {
         layer = HighlighterLayer.ADDITIONAL_SYNTAX;
       }
       else if (severity == HighlightSeverity.WARNING) {

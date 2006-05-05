@@ -993,7 +993,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   public void addMessage(PsiElement context, String message, int type) {
     if (message != null && message.length() > 0) {
       if (context instanceof XmlTag) {
-        addElementsForTag((XmlTag)context, message, type == ERROR ? HighlightInfoType.ERROR : HighlightInfoType.WARNING, null);
+        addElementsForTag((XmlTag)context, message, type == ERROR ? HighlightInfoType.ERROR : type == WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO, null);
       }
       else {
         addToResults(HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, context, message));

@@ -192,6 +192,7 @@ public final class Annotation {
     if (myHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
       if (mySeverity == HighlightSeverity.ERROR) return CodeInsightColors.ERRORS_ATTRIBUTES;
       if (mySeverity == HighlightSeverity.WARNING) return CodeInsightColors.WARNINGS_ATTRIBUTES;
+      if (mySeverity == HighlightSeverity.INFO) return CodeInsightColors.INFO_ATTRIBUTES;
     }
     if (myHighlightType == ProblemHighlightType.LIKE_DEPRECATED) {
       return CodeInsightColors.DEPRECATED_ATTRIBUTES;

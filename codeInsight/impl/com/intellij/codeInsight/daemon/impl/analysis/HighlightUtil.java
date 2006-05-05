@@ -2076,11 +2076,13 @@ public class HighlightUtil {
     if (type == ProblemHighlightType.J2EE_PROBLEM) {
       return annotation.getSeverity() == HighlightSeverity.ERROR
              ? HighlightInfoType.ERROR
-             : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFORMATION;
+             : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING
+               : annotation.getSeverity() == HighlightSeverity.INFO ? HighlightInfoType.INFO : HighlightInfoType.INFORMATION;
     }
     return annotation.getSeverity() == HighlightSeverity.ERROR
            ? HighlightInfoType.ERROR
-           : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFORMATION;
+           : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING
+             : annotation.getSeverity() == HighlightSeverity.INFO ? HighlightInfoType.INFO : HighlightInfoType.INFORMATION;
   }
 
   public static boolean isSerializable(PsiClass aClass) {

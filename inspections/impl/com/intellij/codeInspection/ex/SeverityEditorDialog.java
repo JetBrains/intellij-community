@@ -113,6 +113,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     infoTypes.addAll(SeverityRegistrar.getRegisteredHighlightingInfoTypes());
     infoTypes.add((HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.ERROR);
     infoTypes.add((HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.WARNING);
+    infoTypes.add((HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.INFO);
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     for (HighlightInfoType.HighlightInfoTypeImpl type : infoTypes) {
       model.addElement(new MyHighlightInfoTypeWithAtrributesDescription(scheme.getAttributes(type.getAttributesKey()), type));
@@ -191,12 +192,22 @@ public class SeverityEditorDialog extends DialogWrapper {
         boolean canMove = ListUtil.canMoveSelectedItemsUp(myOptionsList);
         MyHighlightInfoTypeWithAtrributesDescription pair =
           (MyHighlightInfoTypeWithAtrributesDescription)myOptionsList.getSelectedValue();
-        if (pair != null && pair.getSeverity() == HighlightSeverity.WARNING) {
-          final int newPosition = myOptionsList.getSelectedIndex() - 1;
-          if (newPosition >= 0) {
-            pair = (MyHighlightInfoTypeWithAtrributesDescription)myOptionsList.getModel().getElementAt(newPosition);
-            if (pair.getSeverity() == HighlightSeverity.ERROR) {
-              canMove = false;
+        if (pair != null) {
+          if (pair.getSeverity() == HighlightSeverity.WARNING) {
+            final int newPosition = myOptionsList.getSelectedIndex() - 1;
+            if (newPosition >= 0) {
+              pair = (MyHighlightInfoTypeWithAtrributesDescription)myOptionsList.getModel().getElementAt(newPosition);
+              if (pair.getSeverity() == HighlightSeverity.ERROR) {
+                canMove = false;
+              }
+            }
+          } else if (pair.getSeverity() == HighlightSeverity.INFO) {
+            final int newPosition = myOptionsList.getSelectedIndex() - 1;
+            if (newPosition >= 0) {
+              pair = (MyHighlightInfoTypeWithAtrributesDescription)myOptionsList.getModel().getElementAt(newPosition);
+              if (pair.getSeverity() == HighlightSeverity.WARNING) {
+                canMove = false;
+              }
             }
           }
         }
@@ -214,13 +225,24 @@ public class SeverityEditorDialog extends DialogWrapper {
         boolean canMove = ListUtil.canMoveSelectedItemsDown(myOptionsList);
         MyHighlightInfoTypeWithAtrributesDescription pair =
           (MyHighlightInfoTypeWithAtrributesDescription)myOptionsList.getSelectedValue();
-        if (pair != null && pair.getSeverity() == HighlightSeverity.ERROR) {
-          final int newPosition = myOptionsList.getSelectedIndex() + 1;
-          final ListModel model = myOptionsList.getModel();
-          if (newPosition < model.getSize()) {
-            pair = (MyHighlightInfoTypeWithAtrributesDescription)model.getElementAt(newPosition);
-            if (pair.getSeverity() == HighlightSeverity.WARNING) {
-              canMove = false;
+        if (pair != null) {
+          if (pair.getSeverity() == HighlightSeverity.ERROR) {
+            final int newPosition = myOptionsList.getSelectedIndex() + 1;
+            final ListModel model = myOptionsList.getModel();
+            if (newPosition < model.getSize()) {
+              pair = (MyHighlightInfoTypeWithAtrributesDescription)model.getElementAt(newPosition);
+              if (pair.getSeverity() == HighlightSeverity.WARNING) {
+                canMove = false;
+              }
+            }
+          } else if (pair.getSeverity() == HighlightSeverity.WARNING) {
+            final int newPosition = myOptionsList.getSelectedIndex() + 1;
+            final ListModel model = myOptionsList.getModel();
+            if (newPosition < model.getSize()) {
+              pair = (MyHighlightInfoTypeWithAtrributesDescription)model.getElementAt(newPosition);
+              if (pair.getSeverity() == HighlightSeverity.INFO) {
+                canMove = false;
+              }
             }
           }
         }
@@ -237,7 +259,7 @@ public class SeverityEditorDialog extends DialogWrapper {
 
   private static boolean isDefaultSetting(HighlightInfoType info) {
     HighlightSeverity severity = info.getSeverity(null);
-    if (severity == HighlightSeverity.ERROR || severity == HighlightSeverity.WARNING || severity == HighlightSeverity.INFORMATION) {
+    if (severity == HighlightSeverity.ERROR || severity == HighlightSeverity.WARNING || severity == HighlightSeverity.INFORMATION || severity == HighlightSeverity.INFO) {
       return true;
     }
     return false;

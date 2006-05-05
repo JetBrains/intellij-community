@@ -76,14 +76,17 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
   }
 
   public String getProfileName(PsiFile psiFile) {
-    final NamedScopesHolder scopeManager = DependencyValidationManager.getInstance(myProject);
-    for (NamedScope scope : myScopeToProfileMap.keySet()) {
-      if (scope.getValue().contains(psiFile, scopeManager)) {
-        return myScopeToProfileMap.get(scope);
+    if (USE_PROJECT_LEVEL_SETTINGS){
+      final NamedScopesHolder scopeManager = DependencyValidationManager.getInstance(myProject);
+      for (NamedScope scope : myScopeToProfileMap.keySet()) {
+        if (scope.getValue().contains(psiFile, scopeManager)) {
+          return myScopeToProfileMap.get(scope);
+        }
       }
+      final Profile profile = myProfiles.get(PROJECT_PROFILE);
+      if (profile != null) return profile.getName();
     }
-    final Profile profile = myProfiles.get(PROJECT_PROFILE);
-    return profile != null ? profile.getName() : null;
+    return myApplicationProfileManager.getRootProfile().getName();
   }
 
   public Profile getProfile(String name) {

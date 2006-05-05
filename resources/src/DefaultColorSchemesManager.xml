@@ -200,6 +200,16 @@
           <option name="ERROR_STRIPE_COLOR" value="ffff00" />
         </value>
       </option>
+      <option name="INFO_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="FONT_TYPE" value="0"/>
+          <option name="EFFECT_COLOR" value="cccccc"/>
+          <option name="EFFECT_TYPE" value="2"/>
+          <option name="ERROR_STRIPE_COLOR" value="ffffcc" />
+        </value>
+      </option>
       <option name="EJB_ERROR_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>

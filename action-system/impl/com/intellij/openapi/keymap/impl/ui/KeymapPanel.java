@@ -88,9 +88,9 @@ public class KeymapPanel extends JPanel {
     myKeymapList = new JComboBox(myKeymapListModel);
     myKeymapList.setEditor(new MyEditor());
     myKeymapList.setRenderer(new MyKeymapRenderer());
-    panel.add(myKeymapList, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
+    panel.add(myKeymapList, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
 
-    panel.add(createKeymapButtonsPanel(), new GridBagConstraints(2,0,1,1,0,0,GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
+    panel.add(createKeymapButtonsPanel(), new GridBagConstraints(2,0,1,1,0,0,GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
     myKeymapList.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         processCurrentKeymapChanged();
@@ -238,7 +238,7 @@ public class KeymapPanel extends JPanel {
     rightPanel.add(createDescriptionPanel());
     rightPanel.add(createShortcutsPanel());
 
-    panel.add(rightPanel, new GridBagConstraints(1,1,1,1,0,1,GridBagConstraints.WEST, GridBagConstraints.BOTH,new Insets(0,5,20,0),0,0));
+    panel.add(rightPanel, new GridBagConstraints(1,1,1,1,0,1,GridBagConstraints.WEST, GridBagConstraints.BOTH,new Insets(0,5,0,0),0,0));
 
     myTreeExpansionMonitor = TreeExpansionMonitor.install(myActionsTree.getTree());
     return panel;
@@ -352,7 +352,7 @@ public class KeymapPanel extends JPanel {
 
   private JPanel createFilteringPanel() {
     JPanel filterComponent = new JPanel(new GridBagLayout());
-    filterComponent.setBorder(BorderFactory.createEmptyBorder(0, 2, 2, 2));
+    filterComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
     final ShortcutTextField firstShortcut = new ShortcutTextField();
     final ShortcutTextField secondShortcut = new ShortcutTextField();
@@ -369,8 +369,8 @@ public class KeymapPanel extends JPanel {
     });
     final JLabel firstLabel = new JLabel(KeyMapBundle.message("filter.first.stroke.input"));
     final JLabel secondLabel = new JLabel(KeyMapBundle.message("filter.second.stroke.input"));
-    filterComponent.add(firstLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(5,20,0,0),0,0));
-    filterComponent.add(firstShortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,20,0,0),0,0));
+    filterComponent.add(firstLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(5,2,0,0),0,0));
+    filterComponent.add(firstShortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,2,0,0),0,0));
     enable2Shortcut.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         secondShortcut.setEnabled(enable2Shortcut.isSelected());
@@ -380,9 +380,9 @@ public class KeymapPanel extends JPanel {
         }
       }
     });
-    filterComponent.add(enable2Shortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,15,0,0),0,0));
-    filterComponent.add(secondLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,20,0,0),0,0));
-    filterComponent.add(secondShortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,20,0,0),0,0));
+    filterComponent.add(enable2Shortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
+    filterComponent.add(secondLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,2,0,0),0,0));
+    filterComponent.add(secondShortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,2,0,0),0,0));
     enable2Shortcut.setSelected(false);
     secondLabel.setEnabled(false);
     secondShortcut.setEnabled(false);

@@ -41,6 +41,18 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return createAnnotation(range, HighlightSeverity.WARNING, message);
   }
 
+  public Annotation createInformationAnnotation(PsiElement elt, String message) {
+    return createAnnotation(elt.getTextRange(), HighlightSeverity.INFO, message);
+  }
+
+  public Annotation createInformationAnnotation(ASTNode node, String message) {
+    return createAnnotation(node.getTextRange(), HighlightSeverity.INFO, message);
+  }
+
+  public Annotation createInformationAnnotation(TextRange range, String message) {
+    return createAnnotation(range, HighlightSeverity.INFO, message);
+  }
+
   public Annotation createInfoAnnotation(PsiElement elt, String message) {
     return createAnnotation(elt.getTextRange(), HighlightSeverity.INFORMATION, message);
   }

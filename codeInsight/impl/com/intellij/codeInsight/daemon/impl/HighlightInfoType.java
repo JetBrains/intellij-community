@@ -69,6 +69,7 @@ public interface HighlightInfoType {
   HighlightInfoType REASSIGNED_PARAMETER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES);
 
   HighlightInfoType WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES);
+  HighlightInfoType INFO = new HighlightInfoTypeImpl(HighlightSeverity.INFO, CodeInsightColors.INFO_ATTRIBUTES);
   HighlightInfoType OVERFLOW_WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.ERRORS_ATTRIBUTES);
   HighlightInfoType INFORMATION = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
 
@@ -191,7 +192,8 @@ public interface HighlightInfoType {
     public TextAttributesKey getAttributesKey() {
       final HighlightSeverity severity = getSeverity(null);
       final HighlightInfoTypeImpl infoType = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
-      return infoType != null ? infoType.getAttributesKey() : (severity == HighlightSeverity.ERROR ? CodeInsightColors.ERRORS_ATTRIBUTES : CodeInsightColors.WARNINGS_ATTRIBUTES);
+      return infoType != null ? infoType.getAttributesKey() : (severity == HighlightSeverity.ERROR ? CodeInsightColors.ERRORS_ATTRIBUTES
+                                                               : (severity == HighlightSeverity.WARNING ? CodeInsightColors.WARNINGS_ATTRIBUTES : CodeInsightColors.INFO_ATTRIBUTES));
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})

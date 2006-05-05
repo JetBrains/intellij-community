@@ -305,24 +305,34 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void save() {
-    if (isLocal() && myFile != null) {
-      try {
-        if (!myFile.exists()){
-          if (!myFile.createNewFile()){
-            myFile = File.createTempFile("profile", ".xml", InspectionProfileManager.getInstance().getProfileDirectory());
-          }
+    if (isLocal()) {
+      if (myName.compareTo("Default") == 0 && myFile == null){
+        try {
+          myFile = InspectionProfileManager.getInstance().createUniqueProfileFile("Default");
         }
-        Element root = new Element(ROOT_ELEMENT_TAG);
-        root.setAttribute(PROFILE_NAME_TAG, myName);
-        writeExternal(root);
-        myVisibleTreeState.writeExternal(root);
-        JDOMUtil.writeDocument(new Document(root), myFile, CodeStyleSettingsManager.getSettings(null).getLineSeparator());        
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
-      catch (WriteExternalException e) {
-        LOG.error(e);
-      }
-      catch (IOException e) {
-        LOG.error(e);
+      if (myFile != null) {
+        try {
+          if (!myFile.exists()){
+            if (!myFile.createNewFile()){
+              myFile = File.createTempFile("profile", ".xml", InspectionProfileManager.getInstance().getProfileDirectory());
+            }
+          }
+          Element root = new Element(ROOT_ELEMENT_TAG);
+          root.setAttribute(PROFILE_NAME_TAG, myName);
+          writeExternal(root);
+          myVisibleTreeState.writeExternal(root);
+          JDOMUtil.writeDocument(new Document(root), myFile, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+        }
+        catch (WriteExternalException e) {
+          LOG.error(e);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
     }
     InspectionProfileManager.getInstance().fireProfileChanged(this);

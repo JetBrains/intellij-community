@@ -83,6 +83,34 @@ public interface AnnotationHolder {
   Annotation createWarningAnnotation(TextRange range, @Nullable String message);
 
   /**
+    * Creates an info annotation with the specified message over the specified PSI element.
+    *
+    * @param elt     the element over which the annotation is created.
+    * @param message the info message.
+    * @return the annotation (which can be modified to set additional annotation parameters)
+    */
+   Annotation createInformationAnnotation(PsiElement elt, @Nullable String message);
+
+   /**
+    * Creates an info annotation with the specified message over the specified AST node.
+    *
+    * @param node    the node over which the annotation is created.
+    * @param message the info message.
+    * @return the annotation (which can be modified to set additional annotation parameters)
+    */
+   Annotation createInformationAnnotation(ASTNode node, @Nullable String message);
+
+   /**
+    * Creates an info annotation with the specified message over the specified text range.
+    *
+    * @param range   the text range over which the annotation is created.
+    * @param message the info message.
+    * @return the annotation (which can be modified to set additional annotation parameters)
+    */
+   Annotation createInformationAnnotation(TextRange range, String message);
+
+
+  /**
    * Creates an information annotation with the specified message over the specified PSI element.
    *
    * @param elt     the element over which the annotation is created.
