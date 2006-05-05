@@ -15,9 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -32,13 +30,10 @@ import java.util.Map;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
-  static final XmlAttribute[] EMPTY_ATTRIBUTES = new XmlAttribute[0];
-
   private final AntElement myParent;
   private AntElement[] myChildren = null;
   private PsiReference[] myReferences = null;
-  private XmlAttribute[] myAttributes = null;
-  private Map<String, PsiElement> myProperties;
+  protected Map<String, PsiElement> myProperties;
   private PsiElement[] myPropertiesArray;
 
   public AntElementImpl(final AntElement parent, final XmlElement sourceElement) {
@@ -148,22 +143,8 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   public void clearCaches() {
     myReferences = null;
     myChildren = null;
-    myAttributes = null;
     myProperties = null;
     myPropertiesArray = null;
-  }
-
-  @NotNull
-  public XmlAttribute[] getAttributes() {
-    if (myAttributes == null) {
-      final XmlElement element = getSourceElement();
-      if (element instanceof XmlTag) {
-        myAttributes = ((XmlTag) element).getAttributes();
-      } else {
-        myAttributes = EMPTY_ATTRIBUTES;
-      }
-    }
-    return myAttributes;
   }
 
   public void subtreeChanged() {
@@ -233,7 +214,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     final List<PsiReference> result = new ArrayList<PsiReference>();
     for (final GenericReferenceProvider provider : providers) {
       final PsiReference[] refs = provider.getReferencesByElement(this);
-      for( PsiReference ref: refs) {
+      for (PsiReference ref : refs) {
         result.add(ref);
       }
     }

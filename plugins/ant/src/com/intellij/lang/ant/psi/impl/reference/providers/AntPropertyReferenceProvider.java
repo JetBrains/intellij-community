@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -20,8 +21,8 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
-    AntElement antElement = (AntElement)element;
-    final XmlAttribute[] attributes = antElement.getAttributes();
+    AntStructuredElement antElement = (AntStructuredElement) element;
+    final XmlAttribute[] attributes = antElement.getSourceElement().getAttributes();
     if (attributes.length > 0) {
       List<PsiReference> refs = new ArrayList<PsiReference>();
       for (XmlAttribute attr : attributes) {
@@ -48,7 +49,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
         if (endIndex > startIndex) {
           final String propName = value.substring(startIndex, endIndex);
           refs.add(new AntPropertyReference(this, element, propName,
-                                            new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
+              new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
         }
       }
     }
@@ -65,7 +66,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
   }
 
   public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-    handleElementUp(processor, (AntElement)position);
+    handleElementUp(processor, (AntElement) position);
   }
 
   private static void handleElementUp(PsiScopeProcessor processor, AntElement element) {

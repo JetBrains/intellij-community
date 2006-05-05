@@ -5,6 +5,8 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import org.apache.tools.ant.Target;
@@ -12,7 +14,7 @@ import org.apache.tools.ant.taskdefs.CallTarget;
 import org.apache.tools.ant.taskdefs.Property;
 import org.apache.tools.ant.taskdefs.Taskdef;
 import org.apache.tools.ant.taskdefs.Typedef;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -24,14 +26,17 @@ public class AntElementFactory {
   private AntElementFactory() {
   }
 
-  @NotNull
-  public static AntElement createAntElement(final AntElement parent, final XmlTag tag) {
+  @Nullable
+  public static AntElement createAntElement(final AntElement parent, final XmlElement element) {
     instantiate();
+    if (element instanceof XmlComment) return new AntCommentImpl(parent, element);
+    if (!(element instanceof XmlTag)) return null;
+    XmlTag tag = (XmlTag) element;
     AntTypeDefinition typeDef = null;
     final AntTypeId id = new AntTypeId(tag.getName(), tag.getNamespace());
     final AntProject project = parent.getAntProject();
     if (parent instanceof AntStructuredElement) {
-      final AntTypeDefinition parentDef = ((AntStructuredElement)parent).getTypeDefinition();
+      final AntTypeDefinition parentDef = ((AntStructuredElement) parent).getTypeDefinition();
       if (parentDef != null) {
         final String className = parentDef.getNestedClassName(id);
         if (className != null) {

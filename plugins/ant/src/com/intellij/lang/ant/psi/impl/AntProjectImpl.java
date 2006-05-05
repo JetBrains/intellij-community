@@ -2,11 +2,13 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -36,6 +38,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private Map<String, AntTypeDefinition> myTypeDefinitions;
   private AntTypeDefinition[] myTypeDefinitionArrays;
   private AntTypeDefinition myTargetDefinition;
+  private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
 
   public AntProjectImpl(final AntFileImpl parent, final XmlTag tag) {
     super(parent, tag);
@@ -115,6 +118,22 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     return null;
   }
 
+  @Nullable
+  public PsiElement getProperty(final String name) {
+    if (myProperties == null) {
+      myProperties = new HashMap<String, PsiElement>(myPredefinedProps.size());
+      setPredefinedProperties();
+    }
+    return super.getProperty(name);
+  }
+
+
+  @NotNull
+  public PsiElement[] getProperties() {
+    getProperty(null);
+    return super.getProperties();
+  }
+
   @NotNull
   public AntTypeDefinition[] getBaseTypeDefinitions() {
     if (myTypeDefinitionArrays != null) return myTypeDefinitionArrays;
@@ -128,15 +147,12 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
     Project project = new Project();
     project.init();
-
     // first, create task definitons without nested elements
     updateTypeDefinitions(project.getTaskDefinitions(), true);
-
     // second, create definitions for data types
     updateTypeDefinitions(project.getDataTypeDefinitions(), false);
-
-    // third, set predefined properties
-    setPredefinedProperties(project);
+    // third, load and set predefined properties
+    loadPredefinedProperties(project);
     return myTypeDefinitions.get(className);
   }
 
@@ -178,7 +194,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     }
   }
 
-  private void setPredefinedProperties(Project project) {
+  private void loadPredefinedProperties(Project project) {
     Hashtable ht = project.getProperties();
     final Enumeration props = ht.keys();
     @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
@@ -193,27 +209,40 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         builder.append(value);
         builder.append("\"/>");
       }
+      final String basedir = getBaseDir();
+      if (basedir != null) {
+        builder.append("<property name=\"basedir\" value=\"");
+        builder.append(basedir);
+        builder.append("\"/>");
+      }
       builder.append("</project>");
       final PsiElementFactory elementFactory = getManager().getElementFactory();
       final XmlFile fakeFile = (XmlFile)
           elementFactory.createFileFromText("dummy.xml", builder.toString());
-      AntTypeDefinition propertyDef = myTypeDefinitions.get(Property.class.getName());
       final XmlDocument document = fakeFile.getDocument();
       if (document == null) return;
       final XmlTag rootTag = document.getRootTag();
-      AntProject fakeProject = new AntProjectImpl(null, rootTag, myDefinition);
       if (rootTag == null) return;
+      AntTypeDefinition propertyDef = myTypeDefinitions.get(Property.class.getName());
+      AntProject fakeProject = new AntProjectImpl(null, rootTag, myDefinition);
       for (XmlTag tag : rootTag.getSubTags()) {
         final AntPropertyImpl property = new AntPropertyImpl(fakeProject, tag, propertyDef) {
           public PsiFile getContainingFile() {
             return getSourceElement().getContainingFile();
           }
         };
-        setProperty(property.getName(), property);
+        myPredefinedProps.add(property);
       }
     }
     finally {
       StringBuilderSpinAllocator.dispose(builder);
+    }
+    setPredefinedProperties();
+  }
+
+  private void setPredefinedProperties() {
+    for (AntProperty property : myPredefinedProps) {
+      setProperty(property.getName(), property);
     }
   }
 

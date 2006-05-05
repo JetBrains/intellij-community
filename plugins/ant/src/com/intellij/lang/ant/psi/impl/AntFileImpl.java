@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -68,18 +67,16 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
     myChildren = null;
   }
 
+  public void subtreeChanged() {
+  }
+
   @NotNull
   public XmlFile getSourceElement() {
-    return (XmlFile)getViewProvider().getPsi(StdLanguages.XML);
+    return (XmlFile) getViewProvider().getPsi(StdLanguages.XML);
   }
 
   public AntElement getAntParent() {
     return null;
-  }
-
-  @NotNull
-  public XmlAttribute[] getAttributes() {
-    return AntElementImpl.EMPTY_ATTRIBUTES;
   }
 
   @Nullable
