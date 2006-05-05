@@ -21,8 +21,25 @@ import javax.swing.*;
  * @author peter
  */
 public class BooleanTableCellEditor extends DefaultCellEditor {
-  public BooleanTableCellEditor() {
+
+  private final boolean myStringEditor;
+
+  public BooleanTableCellEditor(boolean isStringEditor) {
     super(new JCheckBox());
+    myStringEditor = isStringEditor;
     ((JCheckBox) editorComponent).setHorizontalAlignment(SwingConstants.CENTER);
+  }
+
+  public BooleanTableCellEditor() {
+    this(false);
+  }
+
+  public Object getCellEditorValue() {
+    Object value = super.getCellEditorValue();
+    if (myStringEditor && value instanceof Boolean) {
+      return value.toString();
+    } else {
+      return value;
+    }
   }
 }
