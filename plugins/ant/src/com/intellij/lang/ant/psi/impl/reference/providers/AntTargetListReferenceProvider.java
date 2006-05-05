@@ -27,7 +27,7 @@ public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBa
     }
     PsiReference[] result = new PsiReference[length];
     for (int i = 0; i < result.length; i++) {
-      final String t = targets[i];
+      final String t = targets[i].trim();
       result[i] = new AntTargetReference(this, target, t, new TextRange(offsetInPosition, offsetInPosition + t.length()), attr);
       offsetInPosition += t.length() + 1;
     }
