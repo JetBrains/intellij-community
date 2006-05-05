@@ -12,6 +12,8 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 
 import javax.swing.*;
 import java.awt.*;
@@ -92,14 +94,14 @@ public class HintUtil {
     return label;
   }
 
-  public static ImplementationTextSelectioner getImplementationTextSelectioner(final FileType fileType) {
-    ImplementationTextSelectioner implementationTextSelectioner = ourTextSelectionsMap.get(fileType);
-    if (implementationTextSelectioner == null) implementationTextSelectioner = ourTextSelectionsMap.get(StdFileTypes.JAVA);
+  public static ImplementationTextSelectioner getImplementationTextSelectioner(final Language language) {
+    ImplementationTextSelectioner implementationTextSelectioner = ourTextSelectionsMap.get(language);
+    if (implementationTextSelectioner == null) implementationTextSelectioner = ourTextSelectionsMap.get(StdLanguages.JAVA);
     return implementationTextSelectioner;
   }
 
-  public static void registerImplementationTextSelectioner(final FileType fileType, final ImplementationTextSelectioner selectioner) {
-    ourTextSelectionsMap.put(fileType, selectioner);
+  public static void registerImplementationTextSelectioner(final Language language, final ImplementationTextSelectioner selectioner) {
+    ourTextSelectionsMap.put(language, selectioner);
   }
 
   public interface ImplementationTextSelectioner {
@@ -108,8 +110,8 @@ public class HintUtil {
   }
 
   // TODO: Move to Language OpeanAPI
-  private static final Map<FileType,ImplementationTextSelectioner> ourTextSelectionsMap
-    = new HashMap<FileType, ImplementationTextSelectioner>(2);
+  private static final Map<Language,ImplementationTextSelectioner> ourTextSelectionsMap
+    = new HashMap<Language, ImplementationTextSelectioner>(2);
 
   static class DefaultImplementationTextSelectioner implements ImplementationTextSelectioner {
 
@@ -144,7 +146,7 @@ public class HintUtil {
   }
 
   static {
-    ourTextSelectionsMap.put(StdFileTypes.JAVA, new DefaultImplementationTextSelectioner());
+    ourTextSelectionsMap.put(StdLanguages.JAVA, new DefaultImplementationTextSelectioner());
   }
 
   public static JLabel createErrorLabel(String text) {

@@ -54,11 +54,14 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -125,7 +128,19 @@ public class ImplementationViewComponent extends JPanel {
     doc.setReadOnly(true);
     myEditor = factory.createEditor(doc, project);
     PsiFile psiFile = getContainingFile(myElements[0]);
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, psiFile.getName());
+    String fileName = psiFile.getName();
+    final Language language = myElements[0].getLanguage();
+
+    if (psiFile.getFileType() instanceof LanguageFileType &&
+        ((LanguageFileType)psiFile.getFileType()).getLanguage() != language
+       ) {
+      final FileType associatedFileType = language.getAssociatedFileType();
+      if (associatedFileType != null) {
+        fileName += "." + associatedFileType.getDefaultExtension();
+      }
+    }
+
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, fileName);
     ((EditorEx)myEditor).setHighlighter(highlighter);
     ((EditorEx)myEditor).setBackgroundColor(EditorFragmentComponent.getBackgroundColor(myEditor));
 
@@ -261,7 +276,7 @@ public class ImplementationViewComponent extends JPanel {
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
 
     final HintUtil.ImplementationTextSelectioner implementationTextSelectioner =
-      HintUtil.getImplementationTextSelectioner(psiFile.getFileType());
+      HintUtil.getImplementationTextSelectioner(elt.getLanguage());
     int start = implementationTextSelectioner.getTextStartOffset(elt);
     final int end = implementationTextSelectioner.getTextEndOffset(elt);
 
