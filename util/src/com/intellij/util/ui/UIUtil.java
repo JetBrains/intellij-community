@@ -491,6 +491,11 @@ public class UIUtil {
     return UIManager.getColor("TextArea.foreground");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderQuaquaLookAndFeel() {
+    return UIManager.getLookAndFeel().getName().indexOf("Quaqua") >= 0;
+  }
+
   public static boolean isControlKeyDown(MouseEvent mouseEvent) {
     return SystemInfo.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
   }

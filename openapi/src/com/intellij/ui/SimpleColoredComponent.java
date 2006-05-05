@@ -224,7 +224,7 @@ public class SimpleColoredComponent extends JComponent {
     if(myIcon!=null){
       final Container parent = getParent();
       final Color iconBackgroundColor;
-      if(parent!=null && !myFocusBorderAroundIcon){
+      if(parent!=null && !myFocusBorderAroundIcon && !UIUtil.isUnderQuaquaLookAndFeel()){
         iconBackgroundColor=parent.getBackground();
       }
       else{

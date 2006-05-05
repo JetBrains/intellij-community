@@ -92,6 +92,11 @@ public class IdeaApplication {
     UIManager.installLookAndFeel(AlloyBedouin.NAME, AlloyBedouin.class.getName());
     UIManager.installLookAndFeel(AlloyAcid.NAME, AlloyAcid.class.getName());
     UIManager.installLookAndFeel(AlloyGlass.NAME, AlloyGlass.class.getName());
+
+    if (SystemInfo.isMac) {
+      UIManager.put("Panel.opaque", Boolean.TRUE);
+      UIManager.installLookAndFeel("Quaqua", "ch.randelshofer.quaqua.QuaquaLookAndFeel");
+    }
   }
 
   private class IdeStarter implements ApplicationStarter {

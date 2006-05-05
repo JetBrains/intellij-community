@@ -2,6 +2,8 @@ package com.intellij.ide.ui;
 
 import com.incors.plaf.alloy.AlloyBedouin;
 import com.incors.plaf.alloy.AlloyIdea;
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,8 +15,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.SideBorder2;
 import com.intellij.ui.plaf.beg.*;
-import com.intellij.ide.IdeBundle;
-import com.intellij.CommonBundle;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -175,6 +175,11 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
   public boolean isUnderAquaLookAndFeel() {
     //noinspection HardCodedStringLiteral
     return "Mac OS X".equals(getCurrentLookAndFeel().getName());
+  }
+
+  public boolean isUnderQuaquaLookAndFeel() {
+    //noinspection HardCodedStringLiteral
+    return "Quaqua".equals(getCurrentLookAndFeel().getName());
   }
 
   /**

@@ -40,7 +40,7 @@
     <key>Java</key>
    <dict>
       <key>ClassPath</key>
-      <string>$APP_PACKAGE/lib/extensions.jar:$APP_PACKAGE/lib/openapi.jar:$APP_PACKAGE/lib/idea.jar:$APP_PACKAGE/lib/jdom.jar:$APP_PACKAGE/lib/log4j.jar</string>
+      <string>$APP_PACKAGE/lib/extensions.jar:$APP_PACKAGE/lib/openapi.jar:$APP_PACKAGE/lib/idea.jar:$APP_PACKAGE/lib/jdom.jar:$APP_PACKAGE/lib/log4j.jar:/System/Library/Java</string>
       <key>JVMVersion</key>
       <string>1.5+</string>
       <key>MainClass</key>
