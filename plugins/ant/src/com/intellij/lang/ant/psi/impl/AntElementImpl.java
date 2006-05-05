@@ -25,7 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
@@ -83,7 +86,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public AntFileImpl getAntFile() {
-    return (AntFileImpl) PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
+    return PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
   }
 
   public PsiElement getParent() {
@@ -229,7 +232,10 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     final GenericReferenceProvider[] providers = AntReferenceProvidersRegistry.getProvidersByElement(this);
     final List<PsiReference> result = new ArrayList<PsiReference>();
     for (final GenericReferenceProvider provider : providers) {
-      result.addAll(Arrays.asList(provider.getReferencesByElement(this)));
+      final PsiReference[] refs = provider.getReferencesByElement(this);
+      for( PsiReference ref: refs) {
+        result.add(ref);
+      }
     }
     return myReferences = result.toArray(new PsiReference[result.size()]);
   }

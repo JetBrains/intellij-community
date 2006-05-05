@@ -82,10 +82,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
     return AntElementImpl.EMPTY_ATTRIBUTES;
   }
 
-  public void subtreeChanged() {
-    clearCaches();
-  }
-
   @Nullable
   public PsiFile findFileByName(final String name) {
     return null;
