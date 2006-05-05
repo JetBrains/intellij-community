@@ -28,16 +28,11 @@ import com.jgoodies.forms.layout.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Graphics2D;
-import java.awt.LayoutManager;
-import java.awt.Rectangle;
-import java.awt.Insets;
+import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author yole
@@ -303,11 +298,75 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
   }
 
   @Override
-  public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g2d,
+  public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int index, final Graphics2D g2d,
                                      final Rectangle rc) {
-    // TODO
+    FormLayout layout = (FormLayout) container.getLayout();
+    int[][] groups = isRow ? layout.getRowGroups() : layout.getColumnGroups();
+    //noinspection MultipleVariablesInDeclaration
+    boolean haveTopLeft = false, haveTopRight = false, haveTopLine = false;
+    //noinspection MultipleVariablesInDeclaration
+    boolean haveBottomLeft = false, haveBottomRight = false, haveBottomLine = false;
+    for(int i=0; i<groups.length; i++) {
+      int minMember = Integer.MAX_VALUE;
+      int maxMember = -1;
+      for(int member: groups [i]) {
+        minMember = Math.min(member-1, minMember);
+        maxMember = Math.max(member-1, maxMember);
+      }
+      if (minMember <= index && index <= maxMember) {
+        if (i % 2 == 0) {
+          haveTopLeft = haveTopLeft || index > minMember;
+          haveTopRight = haveTopRight || index < maxMember;
+          haveTopLine = haveTopLine || index == minMember || index == maxMember;
+        }
+        else {
+          haveBottomLeft = haveBottomLeft || index > minMember;
+          haveBottomRight = haveBottomRight || index < maxMember;
+          haveBottomLine = haveBottomLine || index == minMember || index == maxMember;
+        }
+      }
+    }
+
+    g2d.setColor(Color.BLACK);
+    drawGroupLine(rc, isRow, g2d, true, haveTopLeft, haveTopRight, haveTopLine);
+    drawGroupLine(rc, isRow, g2d, false, haveBottomLeft, haveBottomRight, haveBottomLine);
   }
 
+  private static void drawGroupLine(final Rectangle rc, final boolean isRow, final Graphics2D g2d, boolean isTop,
+                                    final boolean haveLeft, final boolean haveRight, final boolean haveLine) {
+
+    Point linePos = isTop ? new Point(rc.x+3, rc.y+3) : new Point((int) rc.getMaxX()-2, (int) rc.getMaxY()-2);
+    Point markerPos = isTop ?  new Point((int) rc.getMaxX()-4, (int) rc.getMaxY()-4) : new Point(rc.x+5, rc.y+5);
+
+    int midX = (int) rc.getCenterX();
+    int midY = (int) rc.getCenterY();
+    int maxX = (int) rc.getMaxX();
+    int maxY = (int) rc.getMaxY();
+    if (haveLine) {
+      if (isRow) {
+        g2d.drawLine(linePos.x, midY, markerPos.x, midY);
+      }
+      else {
+        g2d.drawLine(midX, linePos.y, midX, markerPos.y);
+      }
+    }
+    if (haveLeft) {
+      if (isRow) {
+        g2d.drawLine(linePos.x, rc.y, linePos.x, midY);
+      }
+      else {
+        g2d.drawLine(rc.x, linePos.y, midX, linePos.y);
+      }
+    }
+    if (haveRight) {
+      if (isRow) {
+        g2d.drawLine(linePos.x, midY, linePos.x, maxY);
+      }
+      else {
+        g2d.drawLine(midX, linePos.y, maxX, linePos.y);
+      }
+    }
+  }
 
   @Override
   public Property[] getContainerProperties(final Project project) {
