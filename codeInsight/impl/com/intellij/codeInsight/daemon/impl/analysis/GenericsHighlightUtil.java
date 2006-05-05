@@ -25,6 +25,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -408,7 +409,7 @@ public class GenericsHighlightUtil {
   }
 
   //precondition: TypeConversionUtil.isAssignable(lType, rType) || expressionAssignable
-  public static HighlightInfo checkRawToGenericAssignment(PsiType lType, PsiType rType, PsiElement elementToHighlight) {
+  public static HighlightInfo checkRawToGenericAssignment(PsiType lType, PsiType rType, @NotNull PsiElement elementToHighlight) {
     if (PsiUtil.getLanguageLevel(elementToHighlight).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     if (!InspectionProjectProfileManager.getInstance(elementToHighlight.getProject()).getInspectionProfile(elementToHighlight).isToolEnabled(key)) return null;
