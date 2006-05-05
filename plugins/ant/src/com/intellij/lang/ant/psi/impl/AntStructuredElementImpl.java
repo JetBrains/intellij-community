@@ -34,7 +34,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       if (idAttr != null) {
         AntStructuredElement se = (AntStructuredElement) parent;
         myIdElement = new AntNameElementImpl(this, idAttr.getValueElement());
-        se.registerRefId(myIdElement.getName(), myIdElement);
+        se.registerRefId(myIdElement.getName(), this);
       }
     }
     XmlAttribute nameAttr = getSourceElement().getAttribute("name", null);

@@ -68,17 +68,15 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
     handleElementUp(processor, (AntElement)position);
   }
 
-  private static boolean handleElementUp(PsiScopeProcessor processor, AntElement element) {
+  private static void handleElementUp(PsiScopeProcessor processor, AntElement element) {
     element = element.getAntParent();
     if (element != null) {
       for (PsiElement property : element.getProperties()) {
         if (!processor.execute(property, PsiSubstitutor.EMPTY)) {
-          return false;
+          return;
         }
       }
-      return handleElementUp(processor, element);
+      handleElementUp(processor, element);
     }
-    return true;
-
   }
 }
