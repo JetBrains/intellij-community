@@ -53,8 +53,24 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     PsiElement target = getTargetElement(editor);
+    PsiElement[] targets = null;
 
     if (target == null) {
+      PsiReference ref = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
+
+      if (ref instanceof PsiPolyVariantReference) {
+        ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
+
+        if (results.length > 0) {
+          targets = new PsiElement[results.length];
+          for(int i = 0; i < results.length; ++ i) targets[i] = results[i].getElement();
+        }
+      }
+    } else {
+      targets = new PsiElement[] {target};
+    }
+
+    if (targets == null) {
       if (file.findElementAt(editor.getCaretModel().getOffset()) instanceof PsiWhiteSpace) return;
       selectionModel.selectWordAtCaret(false);
       String selection = selectionModel.getSelectedText();
@@ -71,7 +87,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return;
     }
 
-    createHighlightAction(project, file, target, editor).run();
+    createHighlightAction(project, file, targets, editor).run();
   }
 
   protected static PsiElement getTargetElement(Editor editor) {
@@ -264,8 +280,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  protected Runnable createHighlightAction(final Project project, PsiFile file, PsiElement target, final Editor editor) {
+  protected Runnable createHighlightAction(final Project project, PsiFile file, PsiElement[] targets, final Editor editor) {
     if (file instanceof PsiCompiledElement) file = (PsiFile)((PsiCompiledElement)file).getMirror();
+    PsiElement target = targets[0];
 
     if (target instanceof PsiKeyword) {
       if (PsiKeyword.TRY.equals(target.getText())) {
