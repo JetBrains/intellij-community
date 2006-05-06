@@ -103,7 +103,8 @@ public class GridDropLocation implements DropLocation {
     }
   }
 
-  protected Rectangle getGridFeedbackRect(ComponentDragObject dragObject) {
+  @Nullable
+  protected Rectangle getGridFeedbackCellRect(ComponentDragObject dragObject) {
     if (dragObject.getComponentCount() == 0) {
       LOG.debug("no feedback rect because component count=0");
       return null;
@@ -128,8 +129,15 @@ public class GridDropLocation implements DropLocation {
                 ", firstCol=" + firstCol + ", lastRow=" + lastRow + ", lastCol=" + lastCol);
       return null;
     }
+    return new Rectangle(firstCol, firstRow, lastCol-firstCol, lastRow-firstRow);
+  }
 
-    return getContainer().getLayoutManager().getGridCellRangeRect(getContainer(), firstRow, firstCol, lastRow, lastCol);
+  @Nullable
+  protected Rectangle getGridFeedbackRect(ComponentDragObject dragObject) {
+    Rectangle cellRect = getGridFeedbackCellRect(dragObject);
+    if (cellRect == null) return null;
+    return getContainer().getLayoutManager().getGridCellRangeRect(getContainer(), cellRect.y, cellRect.x,
+                                                                  cellRect.y+cellRect.height, cellRect.x+cellRect.width);
   }
 
   public void processDrop(final GuiEditor editor,

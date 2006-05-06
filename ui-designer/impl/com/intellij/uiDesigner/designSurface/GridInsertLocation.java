@@ -123,11 +123,16 @@ public class GridInsertLocation extends GridDropLocation {
     final int insertCol = getColumn();
     final int insertRow = getRow();
 
-    Rectangle cellRect = getGridFeedbackRect(dragObject);
-    if (cellRect == null) {
+    Rectangle feedbackRect = getGridFeedbackRect(dragObject);
+    if (feedbackRect == null) {
       feedbackLayer.removeFeedback();
       return;
     }
+    Rectangle cellRect = getGridFeedbackCellRect(dragObject);
+    assert cellRect != null;
+
+    int[] vGridLines = getContainer().getLayoutManager().getVerticalGridLines(getContainer());
+    int[] hGridLines = getContainer().getLayoutManager().getHorizontalGridLines(getContainer());
 
     FeedbackPainter painter = (myMode == GridInsertMode.ColumnBefore ||
                                myMode == GridInsertMode.ColumnAfter)
@@ -140,8 +145,6 @@ public class GridInsertLocation extends GridDropLocation {
       RadComponent component = getContainer().getLayoutManager().getComponentAtGrid(getContainer(), insertRow, insertCol);
       if (component != null) {
         Rectangle bounds = component.getBounds();
-        int[] vGridLines = getContainer().getLayoutManager().getVerticalGridLines(getContainer());
-        int[] hGridLines = getContainer().getLayoutManager().getHorizontalGridLines(getContainer());
         int cellWidth = vGridLines [insertCol+1] - vGridLines [insertCol];
         int cellHeight = hGridLines [insertRow+1] - hGridLines [insertRow];
         bounds.translate(-vGridLines [insertCol], -hGridLines [insertRow]);
@@ -173,27 +176,27 @@ public class GridInsertLocation extends GridDropLocation {
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (myMode) {
       case ColumnBefore:
-        rc = new Rectangle(cellRect.x - w, cellRect.y - INSERT_ARROW_SIZE,
-                           2 * w, cellRect.height + 2 * INSERT_ARROW_SIZE);
+        rc = new Rectangle(vGridLines [cellRect.x] - w, feedbackRect.y - INSERT_ARROW_SIZE,
+                           2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
         break;
 
       case ColumnAfter:
-        rc = new Rectangle((int)cellRect.getMaxX() - w, (int)cellRect.getMinY() - INSERT_ARROW_SIZE,
-                           2 * w, (int)cellRect.getHeight() + 2 * INSERT_ARROW_SIZE);
+        rc = new Rectangle(vGridLines [cellRect.x + cellRect.width+1] - w, feedbackRect.y - INSERT_ARROW_SIZE,
+                           2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
         break;
 
       case RowBefore:
-        rc = new Rectangle((int)cellRect.getMinX() - INSERT_ARROW_SIZE, (int)cellRect.getMinY() - w,
-                           (int)cellRect.getWidth() + 2 * INSERT_ARROW_SIZE, 2 * w);
+        rc = new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y] - w,
+                           feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
         break;
 
       case RowAfter:
-        rc = new Rectangle((int)cellRect.getMinX() - INSERT_ARROW_SIZE, (int)cellRect.getMaxY() - w,
-                           (int)cellRect.getWidth() + 2 * INSERT_ARROW_SIZE, 2 * w);
+        rc = new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y+cellRect.height+1] - w,
+                           feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
         break;
 
       default:
-        rc = cellRect;
+        rc = feedbackRect;
         painter = null;
     }
     feedbackLayer.putFeedback(getContainer().getDelegee(), rc, painter);
