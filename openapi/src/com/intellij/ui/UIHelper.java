@@ -43,7 +43,7 @@ public interface UIHelper {
 
   void installEditSourceOnDoubleClick(Table table);
 
-  void installTreeSpeedSearch(Tree tree);
+  void installTreeSpeedSearch(JTree tree);
 
   void installListSpeedSearch(JList list);
 

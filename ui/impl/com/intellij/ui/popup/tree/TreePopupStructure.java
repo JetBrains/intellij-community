@@ -8,8 +8,8 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.popup.util.ElementFilter;
-import jetbrains.fabrique.ui.treeStructure.CachingSimpleNode;
-import jetbrains.fabrique.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.CachingSimpleNode;
+import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

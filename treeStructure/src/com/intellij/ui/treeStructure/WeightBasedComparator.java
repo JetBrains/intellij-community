@@ -2,9 +2,7 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fabrique.ui.treeStructure;
-
-import com.intellij.ide.util.treeView.AlphaComparator;
+package com.intellij.ui.treeStructure;
 
 import java.util.Comparator;
 
@@ -17,10 +15,12 @@ public class WeightBasedComparator implements Comparator {
     SimpleNode second = (SimpleNode) o2;
 
     if (first.getWeight() == second.getWeight()) {
-      return AlphaComparator.INSTANCE.compare(first, second);
+      String s1 = first.toString();
+      String s2 = second.toString();
+      if (s1 == null) return s2 == null ? 0 : -1;
+      if (s2 == null) return +1;
+      return s1.compareToIgnoreCase(s2);
     }
-    else {
-      return second.getWeight() - first.getWeight();
-    }
+    return second.getWeight() - first.getWeight();
   }
 }

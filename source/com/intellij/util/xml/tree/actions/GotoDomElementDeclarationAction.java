@@ -10,7 +10,7 @@ import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.DomElementsNavigationManager;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigateProvider;
-import jetbrains.fabrique.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleNode;
 
 /**
  * User: Sergey.Vasiliev

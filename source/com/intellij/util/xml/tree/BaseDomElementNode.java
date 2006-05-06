@@ -12,7 +12,7 @@ import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.lang.annotation.HighlightSeverity;
-import jetbrains.fabrique.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleNode;
 
 import java.util.*;
 import java.util.List;

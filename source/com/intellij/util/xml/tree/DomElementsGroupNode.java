@@ -7,7 +7,7 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import jetbrains.fabrique.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleNode;
 
 import javax.swing.*;
 import java.util.ArrayList;

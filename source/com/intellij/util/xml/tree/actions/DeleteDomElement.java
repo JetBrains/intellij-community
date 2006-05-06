@@ -11,7 +11,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
-import jetbrains.fabrique.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleNode;
 
 /**
  * User: Sergey.Vasiliev

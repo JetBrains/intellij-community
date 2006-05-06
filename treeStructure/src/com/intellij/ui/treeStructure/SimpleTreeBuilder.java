@@ -2,22 +2,18 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fabrique.ui.treeStructure;
+package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.StatusBarProgress;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.Comparator;
-
-import org.jetbrains.annotations.NotNull;
 
 public class SimpleTreeBuilder extends AbstractTreeBuilder {
 
@@ -67,8 +63,4 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
     return this;
   }
 
-  @NotNull
-  protected ProgressIndicator createProgressIndicator() {
-    return new StatusBarProgress();
-  }
 }

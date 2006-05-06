@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fabrique.ui.treeStructure;
+package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -14,12 +14,12 @@ public abstract class SimpleTreeStructure extends AbstractTreeStructure {
     return ((SimpleNode) element).getChildren();
   }
 
-  public final Object getParentElement(Object element) {
+  public Object getParentElement(Object element) {
     return ((SimpleNode) element).getParent();
   }
 
   @NotNull
-  public final NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     return (NodeDescriptor) element;
   }
 

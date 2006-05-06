@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fabrique.ui.treeStructure;
+package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -65,9 +65,20 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     return FileStatus.NOT_CHANGED;
   }
 
+  protected Object updateElement() {
+    return getElement();
+  }
+
   public final boolean update() {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
+        Object newElement = updateElement();
+        boolean changed = false;
+        if (getElement() != newElement) {
+          changed = true;
+        }
+        if (getElement() == null) return changed;
+
         Color oldColor = myColor;
         String oldName = myName;
         Icon oldOpenIcon = myOpenIcon;
@@ -84,8 +95,7 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
         doUpdate();
         myName = getName();
 
-        return !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, oldFragments, myColor},
-                                        new Object[]{oldOpenIcon, oldClosedIcon, oldName, oldFragments, oldColor});
+        return changed || !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, oldFragments, myColor}, new Object[]{oldOpenIcon, oldClosedIcon, oldName, oldFragments, oldColor});
       }
     }).booleanValue();
   }
@@ -136,7 +146,7 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   protected void doUpdate() {
   }
 
-  public final Object getElement() {
+  public Object getElement() {
     return this;
   }
 

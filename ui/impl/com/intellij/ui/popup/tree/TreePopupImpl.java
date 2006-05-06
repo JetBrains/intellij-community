@@ -17,7 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.BasePopup;
-import jetbrains.fabrique.ui.treeStructure.*;
+import com.intellij.ui.treeStructure.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 

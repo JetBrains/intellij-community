@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fabrique.ui.treeStructure;
+package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -10,8 +10,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.peer.PeerFactory;
+import com.intellij.ui.UIHelper;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,10 +46,11 @@ public class SimpleTree extends JTree implements CellEditorListener {
 
   public SimpleTree() {
     setModel(new DefaultTreeModel(new PatchedDefaultMutableTreeNode()));
-    TreeToolTipHandler.install(this);
     TreeUtil.installActions(this);
 
-    new TreeSpeedSearch(this);
+    final UIHelper helper = PeerFactory.getInstance().getUIHelper();
+    helper.installTreeSpeedSearch(this);
+    helper.installToolTipHandler(this);
 
     addMouseListener(myMouseListener);
     setCellRenderer(new SimpleNodeRenderer());

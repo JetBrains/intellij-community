@@ -1,6 +1,6 @@
 package com.intellij.util.xml.tree;
 
-import jetbrains.fabrique.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.DomElement;
 import com.intellij.ui.SimpleTextAttributes;

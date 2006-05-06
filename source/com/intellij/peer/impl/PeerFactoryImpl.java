@@ -56,7 +56,6 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.Table;
-import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.TreeTable;
 
@@ -151,7 +150,7 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
       EditSourceOnDoubleClickHandler.install(table);
     }
 
-    public void installTreeSpeedSearch(Tree tree) {
+    public void installTreeSpeedSearch(JTree tree) {
       new TreeSpeedSearch(tree);
     }
 

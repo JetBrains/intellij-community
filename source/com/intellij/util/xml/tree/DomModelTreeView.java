@@ -5,17 +5,20 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.treeStructure.*;
+import com.intellij.ui.treeStructure.actions.CollapseAllAction;
+import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.DomChangeListener;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventListener;
 import com.intellij.util.xml.DomManager;
-import jetbrains.fabrique.ui.treeStructure.*;
-import jetbrains.fabrique.ui.treeStructure.actions.CollapseAllAction;
-import jetbrains.fabrique.ui.treeStructure.actions.ExpandAllAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -60,9 +63,14 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    SimpleTreeStructure treeStructure = rootElement == null ? getTreeStructure() : getTreeStructure(rootElement);
+    final SimpleTreeStructure treeStructure = rootElement != null ? getTreeStructure(rootElement) : getTreeStructure();
+    myBuilder = new SimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE) {
 
-    myBuilder = new SimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE);
+      @NotNull
+      protected ProgressIndicator createProgressIndicator() {
+        return new StatusBarProgress();
+      }
+    };
 
     myBuilder.setNodeDescriptorComparator(null);
 
@@ -102,7 +110,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
           }
           else {
 */
-            myBuilder.updateFromRoot();
+          myBuilder.updateFromRoot();
 //          }
         }
       }
@@ -192,7 +200,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     return parentsNodes;
   }
 
-  private static boolean isParent(final DomElement potentialParent, final DomElement domElement) {
+  private boolean isParent(final DomElement potentialParent, final DomElement domElement) {
     DomElement currParent = domElement;
     while (currParent != null) {
       if (currParent.equals(potentialParent)) return true;

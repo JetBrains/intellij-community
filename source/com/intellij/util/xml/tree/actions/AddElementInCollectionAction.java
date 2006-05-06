@@ -14,7 +14,7 @@ import com.intellij.util.xml.ui.actions.AddDomElementAction;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.tree.DomElementsGroupNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
-import jetbrains.fabrique.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleNode;
 
 import javax.swing.*;
 import java.lang.reflect.Type;
