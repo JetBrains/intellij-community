@@ -127,15 +127,16 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
   private void updateValidData(final PresentationData presentation) {
-    final PsiPackage aPackage = getValue().getPackage();
+    final PackageElement value = getValue();
+    final PsiPackage aPackage = value.getPackage();
     final String qName = aPackage.getQualifiedName();
     final CoverageDataManager coverageManager = CoverageDataManager.getInstance(aPackage.getProject());
-    final String coverageString = coverageManager.getPackageCoverageInformationString(qName);
+    final String coverageString = coverageManager.getPackageCoverageInformationString(qName, value.getModule());
     presentation.setLocationString(coverageString);
 
     if (!getSettings().isFlattenPackages()) {
       if (getSettings().isHideEmptyMiddlePackages()) {
-        if (PackageUtil.isPackageEmpty(aPackage, getValue().getModule(), true, isLibraryElement())) {
+        if (PackageUtil.isPackageEmpty(aPackage, value.getModule(), true, isLibraryElement())) {
           setValue(null);
           return;
         }

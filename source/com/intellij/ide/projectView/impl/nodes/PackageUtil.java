@@ -31,12 +31,14 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.coverage.CoverageDataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.TreeViewUtil;
+import com.intellij.javaee.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -46,8 +48,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
-import com.intellij.coverage.CoverageDataManager;
-import com.intellij.javaee.web.WebUtil;
 
 import javax.swing.*;
 import java.util.*;
@@ -242,8 +242,16 @@ public class PackageUtil {
     if (isModuleContentRoot(directoryFile, project) || isLibraryRoot(directoryFile, project)) {
       data.setLocationString(directoryFile.getPresentableUrl());
     } else {
-      data.setLocationString(CoverageDataManager.getInstance(project).getDirCoverageInformationString(psiDirectory));
+      if (!isInTestSource(directoryFile, project)) {
+        data.setLocationString(CoverageDataManager.getInstance(project).getDirCoverageInformationString(psiDirectory));
+      }
     }
+  }
+
+  private static boolean isInTestSource(final VirtualFile directoryFile, final Project project) {
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final boolean isTestSource = projectFileIndex.isInTestSourceContent(directoryFile);
+    return isTestSource;
   }
 
   private static void updateDefault(PresentationData data,
