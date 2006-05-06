@@ -354,9 +354,9 @@ public class CustomizableActionsPanel {
     if (isToolbarAction(node) &&
         anAction.getTemplatePresentation() != null &&
         anAction.getTemplatePresentation().getIcon() == null) {
-      final int exitCode = Messages.showYesNoDialog(IdeBundle.message("error.adding.action.without.icon.to.toolbar"),
-                                                    IdeBundle.message("title.unable.to.add.action.without.icon.to.toolbar"),
-                                                    Messages.getInformationIcon());
+      final int exitCode = Messages.showOkCancelDialog(IdeBundle.message("error.adding.action.without.icon.to.toolbar"),
+                                                       IdeBundle.message("title.unable.to.add.action.without.icon.to.toolbar"),
+                                                       Messages.getInformationIcon());
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
         schemas.addIconCustomization(actionId, null);
         anAction.getTemplatePresentation().setIcon(FULLISH_ICON);
