@@ -90,10 +90,15 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return new LocalInspectionTool[0];
   }
 
-  protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
+  protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {
     configureByFile(filePath);
-    doDoTest(checkWarnings, checkInfos);
+    doDoTest(checkWarnings, checkInfos, checkWeakWarnings);
   }
+
+  protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
+    doTest(filePath, checkWarnings, checkInfos, false);
+  }
+
   protected void doTest(String filePath, String projectRoot, boolean checkWarnings, boolean checkInfos) throws Exception {
     configureByFile(filePath, projectRoot);
     doDoTest(checkWarnings, checkInfos);
@@ -109,7 +114,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos) {
-    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkInfos);
+    return doDoTest(checkWarnings, checkInfos, false);
+  }
+
+  protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
+    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkInfos, checkWeakWarnings);
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     
