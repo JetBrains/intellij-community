@@ -300,6 +300,12 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
   @Override
   public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int index, final Graphics2D g2d,
                                      final Rectangle rc) {
+    // don't paint gap rows/columns with red background
+    if (index % 2 == 1) {
+      g2d.setColor(Color.LIGHT_GRAY);
+      g2d.fillRect(rc.x, rc.y, rc.width, rc.height);
+    }
+
     FormLayout layout = (FormLayout) container.getLayout();
     int[][] groups = isRow ? layout.getRowGroups() : layout.getColumnGroups();
     //noinspection MultipleVariablesInDeclaration
