@@ -47,7 +47,7 @@ public class TestsUIUtil {
       if (JUnitConsoleProperties.OPEN_FAILURE_LINE.value(properties)) {
         return testProxy.getState().getDescriptor(location);
       }
-      final OpenFileDescriptor openFileDescriptor = location != null ? location.getOpenFileDescriptor() : null;
+      final OpenFileDescriptor openFileDescriptor = location == null ? null : location.getOpenFileDescriptor();
       if (openFileDescriptor != null && openFileDescriptor.getFile().isValid()) {
         return openFileDescriptor;
       }
