@@ -173,7 +173,7 @@ public abstract class RadLayoutManager {
   /**
    * @return the number of inserted rows or columns
    */
-  public int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
+  public int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore, final boolean grow) {
     throw new UnsupportedOperationException("Not a grid layout manager");
   }
 

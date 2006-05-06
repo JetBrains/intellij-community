@@ -207,28 +207,30 @@ public class GridInsertLocation extends GridDropLocation {
                           final ComponentDragObject dragObject) {
     int row = getRow();
     int col = getColumn();
+    boolean canHGrow = (dragObject.getHSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
+    boolean canVGrow = (dragObject.getHSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
     int insertedCells;
     RadContainer container = getContainer();
     //noinspection EnumSwitchStatementWhichMissesCases
     switch(myMode) {
       case RowBefore:
-        insertedCells = container.getLayoutManager().insertGridCells(container, row, true, true);
+        insertedCells = container.getLayoutManager().insertGridCells(container, row, true, true, canVGrow);
         checkAdjustConstraints(constraintsToAdjust, true, row, insertedCells);
         break;
 
       case RowAfter:
-        insertedCells = container.getLayoutManager().insertGridCells(container, row, true, false);
+        insertedCells = container.getLayoutManager().insertGridCells(container, row, true, false, canVGrow);
         row += insertedCells;
         checkAdjustConstraints(constraintsToAdjust, true, row, insertedCells);
         break;
 
       case ColumnBefore:
-        insertedCells = container.getLayoutManager().insertGridCells(container, col, false, true);
+        insertedCells = container.getLayoutManager().insertGridCells(container, col, false, true, canHGrow);
         checkAdjustConstraints(constraintsToAdjust, false, col, insertedCells);
         break;
 
       case ColumnAfter:
-        insertedCells = container.getLayoutManager().insertGridCells(container, col, false, false);
+        insertedCells = container.getLayoutManager().insertGridCells(container, col, false, false, canHGrow);
         col += insertedCells;
         checkAdjustConstraints(constraintsToAdjust, false, col, insertedCells);
         break;

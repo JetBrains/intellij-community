@@ -27,6 +27,7 @@ import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.beans.PropertyChangeListener;
@@ -47,6 +48,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
   private static CellConstraints.Alignment[] ourVerticalAlignments = new CellConstraints.Alignment[] {
     CellConstraints.TOP, CellConstraints.CENTER, CellConstraints.BOTTOM, CellConstraints.FILL
   };
+  @NonNls private static final String ENCODED_FORMSPEC_GROW = "d:grow";
 
   @Nullable public String getName() {
     return UIFormXmlConstants.LAYOUT_FORM;
@@ -54,7 +56,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
 
   @Override @Nullable
   public LayoutManager createLayout() {
-    return new FormLayout("d:grow", "d:grow");
+    return new FormLayout(ENCODED_FORMSPEC_GROW, ENCODED_FORMSPEC_GROW);
   }
 
   @Override
@@ -71,7 +73,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
       }
       for(int i=0; i<grid.getRowCount(); i++) {
         int sizePolicy = grid.getCellSizePolicy(true, i);
-        rowSpecs [i*2] = (sizePolicy < maxSizePolicy) ? FormFactory.DEFAULT_ROWSPEC : new RowSpec("d:grow");
+        rowSpecs [i*2] = (sizePolicy < maxSizePolicy) ? FormFactory.DEFAULT_ROWSPEC : new RowSpec(ENCODED_FORMSPEC_GROW);
         if (i*2+1 < rowSpecs.length) {
           rowSpecs [i*2+1] = FormFactory.RELATED_GAP_ROWSPEC;
         }
@@ -82,7 +84,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
       }
       for(int i=0; i<grid.getColumnCount(); i++) {
         int sizePolicy = grid.getCellSizePolicy(true, i);
-        colSpecs [i*2] = (sizePolicy < maxSizePolicy) ? FormFactory.DEFAULT_COLSPEC : new ColumnSpec("d:grow");
+        colSpecs [i*2] = (sizePolicy < maxSizePolicy) ? FormFactory.DEFAULT_COLSPEC : new ColumnSpec(ENCODED_FORMSPEC_GROW);
         if (i*2+1 < colSpecs.length) {
           colSpecs [i*2+1] = FormFactory.RELATED_GAP_COLSPEC;
         }
@@ -106,7 +108,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
       }
     }
     else if (container.getComponentCount() == 0) {
-      container.setLayoutManager(this, new FormLayout("d:grow", "d:grow"));
+      container.setLayoutManager(this, new FormLayout(ENCODED_FORMSPEC_GROW, ENCODED_FORMSPEC_GROW));
     }
     else {
       throw new IncorrectOperationException("Cannot change from " + container.getLayout() + " to grid layout");
@@ -389,18 +391,18 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
   }
 
   @Override
-  public int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
+  public int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore, final boolean grow) {
     FormLayout formLayout = (FormLayout) grid.getLayout();
     int index = isBefore ? cellIndex+1 : cellIndex+2;
     if (isRow) {
       insertOrAppendRow(formLayout, index, FormFactory.RELATED_GAP_ROWSPEC);
       if (!isBefore) index++;
-      insertOrAppendRow(formLayout, index, new RowSpec("d:grow"));
+      insertOrAppendRow(formLayout, index, grow ? new RowSpec(ENCODED_FORMSPEC_GROW) : FormFactory.DEFAULT_ROWSPEC);
     }
     else {
       insertOrAppendColumn(formLayout, index, FormFactory.RELATED_GAP_COLSPEC);
       if (!isBefore) index++;
-      insertOrAppendColumn(formLayout, index, new ColumnSpec("d:grow"));
+      insertOrAppendColumn(formLayout, index, grow ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : FormFactory.DEFAULT_COLSPEC);
     }
     updateGridConstraintsFromCellConstraints(grid);
     return 2;

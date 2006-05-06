@@ -44,7 +44,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
         if (!insertedRows.contains(row) && !isSpaceBelowEmpty(c)) {
           insertedRows.add(row);
           for (int i = 0; i < rowSpan; i++) {
-            parent.getLayoutManager().insertGridCells(parent, row + rowSpan - 1, true, false);
+            parent.getLayoutManager().insertGridCells(parent, row + rowSpan - 1, true, false, false);
           }
         }
       }
