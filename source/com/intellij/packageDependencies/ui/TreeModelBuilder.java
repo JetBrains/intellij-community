@@ -594,7 +594,7 @@ public class TreeModelBuilder {
 
   private PackageDependenciesNode getModuleNode(Module module, ScopeType scopeType) {
     if (module == null || !myShowModules) {
-      return getScopeNode(scopeType);
+      return getRootNode(scopeType);
     }
     ModuleNode node = getMap(myModuleNodes, scopeType).get(module);
     if (node != null) return node;
@@ -603,7 +603,7 @@ public class TreeModelBuilder {
     final String[] groupPath = moduleManager.getModuleGroupPath(module);
     if (groupPath == null) {
       getMap(myModuleNodes, scopeType).put(module, node);
-      getScopeNode(scopeType).add(node);
+      getRootNode(scopeType).add(node);
       return node;
     }
     getMap(myModuleNodes, scopeType).put(module, node);
@@ -616,7 +616,7 @@ public class TreeModelBuilder {
     if (groupNode == null) {
       groupNode = new ModuleGroupNode(new ModuleGroup(groupPath));
       getMap(myModuleGroupNodes, scopeType).put(groupPath[groupPath.length - 1], groupNode);
-      getScopeNode(scopeType).add(groupNode);
+      getRootNode(scopeType).add(groupNode);
     }
     if (groupPath.length > 1) {
       String [] path = new String[groupPath.length - 1];
@@ -629,14 +629,14 @@ public class TreeModelBuilder {
 
   private PackageDependenciesNode getLibraryOrJDKNode(OrderEntry libraryOrJdk) {
     if (libraryOrJdk == null || !myShowModules) {
-      return getScopeNode(ScopeType.LIB);
+      return getRootNode(ScopeType.LIB);
     }
 
     if (!myShowIndividualLibs) {
-      if (myGroupByScopeType) return getScopeNode(ScopeType.LIB);
+      if (myGroupByScopeType) return getRootNode(ScopeType.LIB);
       if (myAllLibsNode == null) {
         myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"), LIB_ICON_OPEN, LIB_ICON_CLOSED);
-        getScopeNode(ScopeType.LIB).add(myAllLibsNode);
+        getRootNode(ScopeType.LIB).add(myAllLibsNode);
       }
       return myAllLibsNode;
     }
@@ -646,12 +646,12 @@ public class TreeModelBuilder {
     node = new LibraryNode(libraryOrJdk);
     getMap(myLibraryNodes, ScopeType.LIB).put(libraryOrJdk, node);
 
-    getScopeNode(ScopeType.LIB).add(node);
+    getRootNode(ScopeType.LIB).add(node);
     return node;
   }
 
 
-  private PackageDependenciesNode getScopeNode(ScopeType scopeType) {
+  public PackageDependenciesNode getRootNode(ScopeType scopeType) {
     if (!myGroupByScopeType) {
       return myRoot;
     }
@@ -668,4 +668,9 @@ public class TreeModelBuilder {
     }
     return null;
   }
+
+  public TreeNode getRootNode() {
+    return myRoot;
+  }
+
 }

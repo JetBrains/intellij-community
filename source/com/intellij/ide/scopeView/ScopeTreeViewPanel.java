@@ -57,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
@@ -168,8 +167,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
   private void refreshScope(NamedScope scope, final NamedScopesHolder holder, boolean showProgress) {
     myTreeExpansionMonitor.freeze();
-    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
-    root.removeAllChildren();
     if (scope == null || scope.getValue() == null) { //was deleted
       scope = DependencyValidationManager.getInstance(myProject).getProjectScope();
     }
@@ -187,11 +184,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
         return packageSet.contains(file, holder);
       }
     }, settings);
-    final TreeModelBuilder.TreeModel treeModel = myBuilder.build(myProject, showProgress);
-    final DefaultMutableTreeNode scopeRootNode = (DefaultMutableTreeNode)treeModel.getRoot();
-    for(int i = scopeRootNode.getChildCount() - 1; i >= 0; i--){
-      root.add((MutableTreeNode)scopeRootNode.getChildAt(i));
-    }
+    myTree.setModel(myBuilder.build(myProject, showProgress));
     ((DefaultTreeModel)myTree.getModel()).reload();
     myTreeExpansionMonitor.restore();
   }
