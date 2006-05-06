@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -15,11 +16,11 @@ import java.lang.reflect.Method;
  * @author Vladimir Kondratyev
  */
 public final class IntroIntProperty extends IntrospectedProperty<Integer> {
-  private final PropertyRenderer<Integer> myRenderer;
-  private final PropertyEditor<Integer> myEditor;
+  private PropertyRenderer<Integer> myRenderer;
+  private PropertyEditor<Integer> myEditor;
 
   public IntroIntProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
-    this(name, readMethod, writeMethod, new LabelPropertyRenderer<Integer>(), new IntEditor(Integer.MIN_VALUE), storeAsClient);
+    this(name, readMethod, writeMethod, null, null, storeAsClient);
   }
 
   public IntroIntProperty(final String name,
@@ -34,15 +35,21 @@ public final class IntroIntProperty extends IntrospectedProperty<Integer> {
   }
 
   @NotNull
-  public PropertyRenderer<Integer> getRenderer(){
+  public PropertyRenderer<Integer> getRenderer() {
+    if (myRenderer == null) {
+      myRenderer = new LabelPropertyRenderer<Integer>();
+    }
     return myRenderer;
   }
 
-  public PropertyEditor<Integer> getEditor(){
+  public PropertyEditor<Integer> getEditor() {
+    if (myEditor == null) {
+      myEditor = new IntEditor(Integer.MIN_VALUE);
+    }
     return myEditor;
   }
 
   public void write(final Integer value, final XmlWriter writer){
-    writer.addAttribute("value", value.intValue());
+    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, value.intValue());
   }
 }

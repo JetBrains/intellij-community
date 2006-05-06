@@ -13,36 +13,44 @@ import javax.swing.event.PopupMenuListener;
  * @author Vladimir Kondratyev
  */
 public final class IntEnumEditor extends PropertyEditor<Integer> {
-  private final JComboBox myCbx;
+  private JComboBox myCbx;
+  private final Pair[] myPairs;
 
   public IntEnumEditor(@NotNull final Pair[] pairs) {
-    myCbx = new JComboBox(pairs);
-    myCbx.setBorder(BorderFactory.createEmptyBorder());
-    myCbx.addPopupMenuListener(new MyPopupMenuListener());
+    myPairs = pairs;
   }
 
   public final void updateUI() {
-    SwingUtilities.updateComponentTreeUI(myCbx);
-    SwingUtilities.updateComponentTreeUI((JComponent)myCbx.getRenderer());
+    SwingUtilities.updateComponentTreeUI(getCbx());
+    SwingUtilities.updateComponentTreeUI((JComponent)getCbx().getRenderer());
   }
 
   public final Integer getValue() throws Exception {
-    final Object selectedItem = myCbx.getSelectedItem();
+    final Object selectedItem = getCbx().getSelectedItem();
     final Pair pair = (Pair)selectedItem;
     return pair.myValue;
   }
 
   public JComponent getComponent(final RadComponent ignored, @NotNull final Integer value, final boolean inplace) {
     // Find pair
-    final ComboBoxModel model = myCbx.getModel();
+    final ComboBoxModel model = getCbx().getModel();
     for (int i = model.getSize() - 1; i >= 0; i--) {
       final Pair pair = (Pair)model.getElementAt(i);
       if (pair.myValue == value.intValue()) {
-        myCbx.setSelectedIndex(i);
-        return myCbx;
+        getCbx().setSelectedIndex(i);
+        return getCbx();
       }
     }
     throw new IllegalArgumentException("unknown value: " + value);
+  }
+
+  private JComboBox getCbx() {
+    if (myCbx == null) {
+      myCbx = new JComboBox(myPairs);
+      myCbx.setBorder(BorderFactory.createEmptyBorder());
+      myCbx.addPopupMenuListener(new MyPopupMenuListener());
+    }
+    return myCbx;
   }
 
   private final class MyPopupMenuListener implements PopupMenuListener {

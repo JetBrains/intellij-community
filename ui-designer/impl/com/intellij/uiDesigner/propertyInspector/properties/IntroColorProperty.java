@@ -22,7 +22,7 @@ import java.lang.reflect.Method;
  * @author yole
  */
 public class IntroColorProperty extends IntrospectedProperty<ColorDescriptor> {
-  private ColorRenderer myColorRenderer = new ColorRenderer();
+  private ColorRenderer myColorRenderer = null;
   private ColorEditor myColorEditor = null;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroColorProperty_";
 
@@ -31,6 +31,9 @@ public class IntroColorProperty extends IntrospectedProperty<ColorDescriptor> {
   }
 
   @NotNull public PropertyRenderer<ColorDescriptor> getRenderer() {
+    if (myColorRenderer == null) {
+      myColorRenderer = new ColorRenderer();
+    }
     return myColorRenderer;
   }
 
