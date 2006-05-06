@@ -845,7 +845,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     return null;
   }
 
-  private final class MyLayeredPane extends JLayeredPane {
+  private final class MyLayeredPane extends JLayeredPane implements Scrollable {
     /**
      * All components allocate whole pane's area.
      */
@@ -874,6 +874,29 @@ public final class GuiEditor extends JPanel implements DataProvider {
       height += 30;
 
       return new Dimension(width, height);
+    }
+
+    public Dimension getPreferredScrollableViewportSize() {
+      return getPreferredSize();
+    }
+
+    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+      return 10;
+    }
+
+    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+      if (orientation == SwingConstants.HORIZONTAL) {
+        return visibleRect.width-10;
+      }
+      return visibleRect.height-10;
+    }
+
+    public boolean getScrollableTracksViewportWidth() {
+      return false;
+    }
+
+    public boolean getScrollableTracksViewportHeight() {
+      return false;
     }
   }
 
