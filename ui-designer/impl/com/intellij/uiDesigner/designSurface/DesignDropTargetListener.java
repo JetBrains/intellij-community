@@ -268,7 +268,7 @@ class DesignDropTargetListener implements DropTargetListener {
       for (RadComponent component : droppedComponents) {
         InsertComponentProcessor.createBindingWhenDrop(myEditor, component);
       }
-      FormEditingUtil.selectComponents(droppedComponents);
+      FormEditingUtil.selectComponents(myEditor, droppedComponents);
     }
     else {
       setDraggingState(dcl, false);

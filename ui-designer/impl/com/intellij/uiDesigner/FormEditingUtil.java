@@ -572,10 +572,10 @@ public final class FormEditingUtil {
    * Selects the component and ensures that the tabbed panes containing the component are
    * switched to the correct tab.
    *
-   * @param component the component to select.
-   * @return true if the component is enclosed in at least one tabbed pane, false otherwise.
+   * @param editor
+   * @param component the component to select. @return true if the component is enclosed in at least one tabbed pane, false otherwise.
    */
-  public static boolean selectComponent(@NotNull final RadComponent component) {
+  public static boolean selectComponent(final GuiEditor editor, @NotNull final RadComponent component) {
     boolean hasTab = false;
     RadComponent parent = component;
     while(parent.getParent() != null) {
@@ -585,6 +585,7 @@ public final class FormEditingUtil {
       parent = parent.getParent();
     }
     component.setSelected(true);
+    editor.setSelectionLead(component);
     return hasTab;
   }
 
@@ -596,7 +597,7 @@ public final class FormEditingUtil {
     builder.beginUpdateSelection();
     try {
       clearSelection(root);
-      selectComponent(component);
+      selectComponent(editor, component);
       editor.setSelectionAnchor(component);
     }
     finally {
@@ -604,7 +605,7 @@ public final class FormEditingUtil {
     }
   }
 
-  public static void selectComponents(List<RadComponent> components) {
+  public static void selectComponents(final GuiEditor editor, List<RadComponent> components) {
     if (components.size() > 0) {
       RadComponent component = components.get(0);
       ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(component.getProject()).getComponentTreeBuilder();
@@ -612,7 +613,7 @@ public final class FormEditingUtil {
       try {
         clearSelection((RadContainer) getRoot(component));
         for(RadComponent aComponent: components) {
-          selectComponent(aComponent);
+          selectComponent(editor, aComponent);
         }
       }
       finally {

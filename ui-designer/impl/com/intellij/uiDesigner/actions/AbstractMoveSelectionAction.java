@@ -39,7 +39,10 @@ abstract class AbstractMoveSelectionAction extends AnAction{
       moveToFirstComponent(rootContainerDelegee);
       return;
     }
-    final RadComponent selectedComponent = selectedComponents.get(0);
+    RadComponent selectedComponent = myEditor.getSelectionLead();
+    if (selectedComponent == null || !selectedComponents.contains(selectedComponent)) {
+      selectedComponent = selectedComponents.get(0);
+    }
 
     if (moveSelectionByGrid(selectedComponent) || myMoveToLast) {
       return;
@@ -50,12 +53,13 @@ abstract class AbstractMoveSelectionAction extends AnAction{
 
     final ArrayList<RadComponent> components = new ArrayList<RadComponent>();
     final ArrayList<Point> points = new ArrayList<Point>();
+    final RadComponent selectedComponent1 = selectedComponent;
     FormEditingUtil.iterate(
       myEditor.getRootContainer(),
       new FormEditingUtil.ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
           if (component instanceof RadAtomicComponent) {
-            if(selectedComponent.equals(component)){
+            if(selectedComponent1.equals(component)){
               return true;
             }
             if (!FormEditingUtil.isComponentSwitchedInView(component)) {
@@ -108,7 +112,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
 
   private void selectOrExtend(final RadComponent component) {
     if (myExtend) {
-      FormEditingUtil.selectComponent(component);
+      FormEditingUtil.selectComponent(myEditor, component);
     }
     else {
       FormEditingUtil.selectSingleComponent(myEditor, component);
@@ -141,7 +145,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
       }
     );
     if(!componentToBeSelected.isNull()){
-      FormEditingUtil.selectComponent(componentToBeSelected.get());
+      FormEditingUtil.selectComponent(myEditor, componentToBeSelected.get());
     }
   }
 
@@ -174,7 +178,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
       if (component != null && component != selectedComponent) {
         if (myMoveToLast) {
           if (myExtend) {
-            FormEditingUtil.selectComponent(component);
+            FormEditingUtil.selectComponent(myEditor, component);
           }
           lastComponent = component;
         }

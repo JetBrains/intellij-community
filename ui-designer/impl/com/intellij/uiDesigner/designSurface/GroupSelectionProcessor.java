@@ -55,6 +55,7 @@ public final class GroupSelectionProcessor extends EventProcessor {
           }
           else {
             selectComponentsInRange(component, anchor);
+            myEditor.setSelectionLead(component);
           }
         }
       }

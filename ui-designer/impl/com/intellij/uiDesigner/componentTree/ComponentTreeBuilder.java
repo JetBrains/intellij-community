@@ -264,7 +264,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
             final RadComponent component=ptr.getComponent();
             LOG.assertTrue(component!=null);
             if (!hasComponentInTab) {
-              hasComponentInTab = FormEditingUtil.selectComponent(component);
+              hasComponentInTab = FormEditingUtil.selectComponent(myEditor, component);
             }
             else {
               component.setSelected(true);

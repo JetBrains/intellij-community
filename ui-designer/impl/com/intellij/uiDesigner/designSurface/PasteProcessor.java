@@ -110,7 +110,7 @@ public class PasteProcessor extends EventProcessor {
     if (location.canDrop(myPastedComponentList)) {
       RadComponent[] componentsToPaste = myComponentsToPaste.toArray(new RadComponent[myComponentsToPaste.size()]);
       location.processDrop(myEditor, componentsToPaste, null, myPastedComponentList);
-      FormEditingUtil.selectComponents(myComponentsToPaste);
+      FormEditingUtil.selectComponents(myEditor, myComponentsToPaste);
       endPaste();
     }
   }

@@ -61,7 +61,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
         duplicates.add(copy);
       }
     }
-    FormEditingUtil.selectComponents(duplicates);
+    FormEditingUtil.selectComponents(editor, duplicates);
   }
 
   private static void copyBinding(final RadComponent c, final RadComponent copy) {

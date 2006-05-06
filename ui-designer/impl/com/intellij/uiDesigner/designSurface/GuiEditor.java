@@ -172,6 +172,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private MyPaletteKeyListener myPaletteKeyListener;
   private MyPaletteDragListener myPaletteDragListener;
   private ComponentPtr mySelectionAnchor;
+  private ComponentPtr mySelectionLead;
   /**
    * Undo group ID for undoing actions that need to be undone together with the form modification.
    */
@@ -612,6 +613,16 @@ public final class GuiEditor extends JPanel implements DataProvider {
   public RadComponent getSelectionAnchor() {
     mySelectionAnchor.validate();
     return mySelectionAnchor.getComponent();
+  }
+
+  public void setSelectionLead(final RadComponent component) {
+    mySelectionLead = new ComponentPtr(this, component);
+  }
+
+  @Nullable
+  public RadComponent getSelectionLead() {
+    mySelectionLead.validate();
+    return mySelectionLead.getComponent();
   }
 
   public static final class ReplaceInfo {
