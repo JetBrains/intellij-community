@@ -26,6 +26,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private AntElement myIdElement;
   private AntElement myNameElement;
   private Map<String, AntElement> myReferencedElements = null;
+  private int myLastFoundElementOffset = -1;
+  private PsiElement myLastFoundElement;
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(parent, sourceElement);
@@ -85,26 +87,16 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return this;
   }
 
-  protected AntElement[] getChildrenInner() {
-    final List<AntElement> children = new ArrayList<AntElement>();
-    AntElement idElement = getIdElement();
-    if (idElement != ourNull) {
-      children.add(idElement);
+  public PsiElement findElementAt(int offset) {
+    if (offset == myLastFoundElementOffset) {
+      return myLastFoundElement;
     }
-    AntElement nameElement = getNameElement();
-    if (nameElement != ourNull) {
-      children.add(nameElement);
+    final PsiElement foundElement = super.findElementAt(offset);
+    if (foundElement != null) {
+      myLastFoundElement = foundElement;
+      myLastFoundElementOffset = offset;
     }
-    for (final PsiElement element : getSourceElement().getChildren()) {
-      if (element instanceof XmlElement) {
-        final AntElement antElement =
-            AntElementFactory.createAntElement(this, (XmlElement) element);
-        if (antElement != null) {
-          children.add(antElement);
-        }
-      }
-    }
-    return children.toArray(new AntElement[children.size()]);
+    return foundElement;
   }
 
   public AntTypeDefinition getTypeDefinition() {
@@ -166,6 +158,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     myReferencedElements = null;
     myIdElement = null;
     myNameElement = null;
+    myLastFoundElementOffset = -1;
+    myLastFoundElement = null;
   }
 
   public int getTextOffset() {
@@ -176,6 +170,28 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       return getIdElement().getTextOffset();
     }
     return super.getTextOffset();
+  }
+
+  protected AntElement[] getChildrenInner() {
+    final List<AntElement> children = new ArrayList<AntElement>();
+    AntElement idElement = getIdElement();
+    if (idElement != ourNull) {
+      children.add(idElement);
+    }
+    AntElement nameElement = getNameElement();
+    if (nameElement != ourNull) {
+      children.add(nameElement);
+    }
+    for (final PsiElement element : getSourceElement().getChildren()) {
+      if (element instanceof XmlElement) {
+        final AntElement antElement =
+            AntElementFactory.createAntElement(this, (XmlElement) element);
+        if (antElement != null) {
+          children.add(antElement);
+        }
+      }
+    }
+    return children.toArray(new AntElement[children.size()]);
   }
 
   @NotNull
