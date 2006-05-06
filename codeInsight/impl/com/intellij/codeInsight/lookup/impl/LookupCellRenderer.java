@@ -15,6 +15,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.StrikeoutLabel;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
 
@@ -110,6 +111,8 @@ class LookupCellRenderer implements ListCellRenderer {
         myMaxTemplateDescriptionLength = Math.max(myMaxTemplateDescriptionLength, template.getDescription().length());
       }
     }
+
+    UIUtil.removeQuaquaVisualMarginsIn(myPanel);
   }
 
   public Component getListCellRendererComponent(

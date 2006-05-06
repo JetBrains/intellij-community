@@ -109,6 +109,9 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
     //  myMemoryUsagePanel.setOpaque(false);
     myMemoryUsagePanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+
+    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gbConstraints.anchor = GridBagConstraints.WEST;
     rightPanel.add(myMemoryUsagePanel, gbConstraints);
   }
 

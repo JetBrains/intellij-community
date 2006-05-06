@@ -1,6 +1,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -133,6 +134,13 @@ final class TitlePanel extends JPanel {
     myCntColor = new Color(Math.max(0, Math.min(cntRed, 255)),
                            Math.max(0, Math.min(cntGreen, 255)),
                            Math.max(0, Math.min(cntBlue, 255)));
+  }
+
+
+  @Override
+  protected void addImpl(Component comp, Object constraints, int index) {
+    UIUtil.removeQuaquaVisualMarginsIn(comp);
+    super.addImpl(comp, constraints, index);
   }
 
   protected final void paintComponent(final Graphics g) {

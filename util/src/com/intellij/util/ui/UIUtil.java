@@ -81,7 +81,7 @@ public class UIUtil {
     if (mnemoPos >= 0 && mnemoPos < text.length() - 2) {
       String mnemoChar = text.substring(mnemoPos + 1, mnemoPos + 2).trim();
       if (mnemoChar.length() == 1) {
-        action.putValue(Action.MNEMONIC_KEY, (int)mnemoChar.charAt(0));
+        action.putValue(Action.MNEMONIC_KEY, Integer.valueOf((int)mnemoChar.charAt(0)));
       }
     }
 
@@ -373,7 +373,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void setSliderIsFilled(final JSlider slider, final boolean value) {
-    slider.putClientProperty("JSlider.isFilled", value);
+    slider.putClientProperty("JSlider.isFilled", Boolean.valueOf(value));
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -494,6 +494,19 @@ public class UIUtil {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderQuaquaLookAndFeel() {
     return UIManager.getLookAndFeel().getName().indexOf("Quaqua") >= 0;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static void removeQuaquaVisualMarginsIn(Component component) {
+    if (component instanceof JComponent ) {
+      final JComponent jComponent = (JComponent)component;
+      final Component[] children = jComponent.getComponents();
+      for (Component child : children) {
+        removeQuaquaVisualMarginsIn(child);
+      }
+
+      jComponent.putClientProperty("Quaqua.Component.visualMargin", new Insets(0, 0, 0, 0));
+    }
   }
 
   public static boolean isControlKeyDown(MouseEvent mouseEvent) {
