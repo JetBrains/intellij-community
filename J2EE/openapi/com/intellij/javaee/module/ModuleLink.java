@@ -40,6 +40,10 @@ public abstract class ModuleLink extends ContainerElement {
 
   public static String getId(Module module) {
     final String baseName = module == null ? "" : new File(module.getModuleFilePath()).getName();
+    return convertNameToXmlName(baseName);
+  }
+
+  private static String convertNameToXmlName(final String baseName) {
     final StringBuilder builder = new StringBuilder(baseName.length());
     for (int i = 0; i < baseName.length(); i++) {
       char c = baseName.charAt(i);
