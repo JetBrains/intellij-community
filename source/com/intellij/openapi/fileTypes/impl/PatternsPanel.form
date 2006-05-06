@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable.PatternsPanel">
+  <grid id="2f1ff" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="255" y="126" width="612" height="132"/>
+    </constraints>
+    <properties/>
+    <border type="etched" title-resource-bundle="messages/FileTypesBundle" title-key="filetype.registered.patterns.group"/>
+    <children>
+      <scrollpane id="6d594">
+        <constraints>
+          <grid row="0" column="0" row-span="3" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <minimum-size width="80" height="80"/>
+            <preferred-size width="200" height="150"/>
+          </grid>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="5f100" class="javax.swing.JList" binding="myPatternsList">
+            <constraints/>
+            <properties>
+              <selectionMode value="0"/>
+            </properties>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="bf532" class="javax.swing.JButton" binding="myAddButton">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/FileTypesBundle" key="filetype.registered.pattern.add.button"/>
+        </properties>
+      </component>
+      <component id="6bc56" class="javax.swing.JButton" binding="myRemoveButton">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/FileTypesBundle" key="filetype.registered.pattern.remove.button"/>
+        </properties>
+      </component>
+      <vspacer id="ca6cc">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+    </children>
+  </grid>
+</form>

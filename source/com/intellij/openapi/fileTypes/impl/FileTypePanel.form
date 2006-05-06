@@ -9,7 +9,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="1ff7f" class="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable$ExtensionsPanel" binding="myExtensions">
+      <component id="1ff7f" class="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable$PatternsPanel" binding="myPatterns">
         <constraints>
           <xy x="0" y="204" width="426" height="198"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3"/>

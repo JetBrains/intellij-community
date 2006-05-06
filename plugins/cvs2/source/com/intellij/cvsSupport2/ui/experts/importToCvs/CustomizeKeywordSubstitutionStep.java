@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.ui.experts.importToCvs;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ImportConfiguration;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
 import com.intellij.cvsSupport2.ui.experts.CvsWizard;
@@ -12,7 +13,6 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -69,9 +69,8 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
     public Comparator getComparator() {
       return new Comparator(){
         public int compare(Object o, Object o1) {
-          return ((FileExtension)o).getExtension()
-            .compareTo(((FileExtension)o1).getExtension());
-        };
+          return ((FileExtension)o).getExtension().compareTo(((FileExtension)o1).getExtension());
+        }
       };
     }
   };
@@ -81,13 +80,13 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
   };
 
   private final TableView myTable;
-  private ListTableModel myModel;
+  private ListTableModel<FileExtension> myModel;
   private final ImportConfiguration myImportConfiguration;
 
   public CustomizeKeywordSubstitutionStep(String description, CvsWizard wizard,
                                           ImportConfiguration importConfiguration) {
     super(description, wizard);
-    myModel = new ListTableModel(COLUMNS);
+    myModel = new ListTableModel<FileExtension>(COLUMNS);
     myTable = new TableView(myModel);
     myTable.setMinRowHeight(new JComboBox().getPreferredSize().height + 2);
     myImportConfiguration = importConfiguration;
@@ -98,19 +97,17 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
   protected void dispose() {
   }
 
-  private List collectFileTypes() {
+  private List<FileExtension> collectFileTypes() {
     Collection<FileExtension> storedExtensions = myImportConfiguration.getExtensions();
 
-    ArrayList result = new ArrayList();
+    ArrayList<FileExtension> result = new ArrayList<FileExtension>();
     result.addAll(storedExtensions);
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-    for (int i = 0; i < fileTypes.length; i++) {
-      FileType fileType = fileTypes[i];
+    for (FileType fileType : fileTypes) {
       String[] extensions = FileTypeManager.getInstance().getAssociatedExtensions(fileType);
-      for (int j = 0; j < extensions.length; j++) {
-        FileExtension fileExtension = new FileExtension(extensions[j]);
-        if (!result.contains(fileExtension))
-          result.add(fileExtension);
+      for (String extension : extensions) {
+        FileExtension fileExtension = new FileExtension(extension);
+        if (!result.contains(fileExtension)) result.add(fileExtension);
       }
     }
     return result;
@@ -132,7 +129,7 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
     return ScrollPaneFactory.createScrollPane(myTable);
   }
 
-  public List getFileExtensions() {
+  public List<FileExtension> getFileExtensions() {
     return myModel.getItems();
   }
 

@@ -16,7 +16,6 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.lang.Language;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public abstract class UserFileType <T extends UserFileType> implements FileType, Cloneable {
-  @NotNull private String myName;
-  private String myDescription;
+  @NotNull private String myName = "";
+  private String myDescription = "";
   private Icon myIcon = Icons.CUSTOM_FILE_ICON;
 
   public abstract SettingsEditor<T> getEditor();

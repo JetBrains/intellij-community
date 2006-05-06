@@ -18,9 +18,12 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Manages the relationship between filenames and {@link FileType} instances.
@@ -36,6 +39,8 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
     return ApplicationManager.getApplication().getComponent(FileTypeManager.class);
   }
 
+  public abstract void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations);
+
   /**
    * Registers a file type.
    *
@@ -43,7 +48,15 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param defaultAssociatedExtensions The list of extensions which cause the file to be
    *                                    treated as the specified file type. The extensions should not start with '.'.
    */
-  public abstract void registerFileType(@NotNull FileType type, @NonNls @Nullable String[] defaultAssociatedExtensions);
+  public final void registerFileType(@NotNull FileType type, @NonNls @Nullable String[] defaultAssociatedExtensions) {
+    List<FileNameMatcher> matchers = new ArrayList<FileNameMatcher>();
+    if (defaultAssociatedExtensions != null) {
+      for (String extension : defaultAssociatedExtensions) {
+        matchers.add(new ExtensionFileNameMatcher(extension));
+      }
+    }
+    registerFileType(type, matchers);
+  }
 
   /**
    * Returns the file type for the specified file name.
@@ -70,6 +83,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    *
    * @param extension The extension for which the file type is requested, not including the leading '.'.
    * @return The file type instance.
+   * @deprecated since more generic way of associations by means of whildcards exist not every associations matches extension paradigm
    */
   public abstract
   @NotNull
@@ -97,9 +111,14 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    *
    * @param type The file type for which the extensions are requested.
    * @return The array of extensions associated with the file type.
+   * @deprecated since more generic way of associations by means of whildcards exist not every associations matches extension paradigm
    */
   @NotNull
   public abstract String[] getAssociatedExtensions(FileType type);
+
+
+  @NotNull
+  public abstract List<FileNameMatcher> getAssociations(FileType type);  
 
   /**
    * Adds a listener for receiving notifications about changes in the list of
@@ -135,7 +154,15 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param extension the extension to associate.
    * @since 5.0.2
    */
-  public abstract void associateExtension(FileType type, @NonNls String extension);
+  public final void associateExtension(FileType type, @NonNls String extension) {
+    associate(type, new ExtensionFileNameMatcher(extension));
+  }
+
+  public final void associatePattern(FileType type, @NonNls String pattern) {
+    associate(type, parseFromString(pattern));
+  }
+
+  public abstract void associate(FileType type, FileNameMatcher matcher);
 
   /**
    * Removes an extension from the list of extensions associated with a file type.
@@ -144,5 +171,19 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param extension the extension to remove.
    * @since 5.0.2
    */
-  public abstract void removeAssociatedExtension(FileType type, @NonNls String extension);
+  public final void removeAssociatedExtension(FileType type, @NonNls String extension) {
+    removeAssociation(type, new ExtensionFileNameMatcher(extension));
+  }
+
+  public abstract void removeAssociation(FileType type, FileNameMatcher matcher);
+
+  public static FileNameMatcher parseFromString(String pattern) {
+    if (pattern.startsWith("*.") &&
+        pattern.indexOf('*', 2) < 0 &&
+        pattern.indexOf('.', 2) < 0 &&
+        pattern.indexOf('?', 2) < 0) {
+      return new ExtensionFileNameMatcher(pattern.substring(2).toLowerCase());
+    }
+    return new WildcardFileNameMatcher(pattern);
+  }
 }

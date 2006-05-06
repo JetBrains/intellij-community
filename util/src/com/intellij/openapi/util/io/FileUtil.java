@@ -485,4 +485,11 @@ public class FileUtil {
   public static boolean pathsEqual(String path1, String path2) {
     return SystemInfo.isFileSystemCaseSensitive? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
+
+  @NotNull
+  public static String getExtension(@NotNull String fileName) {
+    int index = fileName.lastIndexOf('.');
+    if (index < 0) return "";
+    return fileName.substring(index + 1).toLowerCase();
+  }
 }
