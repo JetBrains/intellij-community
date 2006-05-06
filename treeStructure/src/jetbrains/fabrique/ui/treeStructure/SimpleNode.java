@@ -8,10 +8,9 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
 
@@ -62,10 +61,6 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     return new SimpleTextAttributes(Font.PLAIN, getColor());
   }
 
-  public final void setWeight(int weight) {
-    myWeight = weight;
-  }
-
   protected FileStatus getFileStatus() {
     return FileStatus.NOT_CHANGED;
   }
@@ -73,6 +68,12 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   public final boolean update() {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
+        Color oldColor = myColor;
+        String oldName = myName;
+        Icon oldOpenIcon = myOpenIcon;
+        Icon oldClosedIcon = myClosedIcon;
+        List<ColoredFragment> oldFragments = new ArrayList<ColoredFragment>(myColoredText);
+
         myColor = Color.black;
         assert getFileStatus() != null: getClass().getName() + ' ' + toString();
         Color fileStatusColor = getFileStatus().getColor();
@@ -80,40 +81,18 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
           myColor = fileStatusColor;
         }
 
-        final boolean result = doUpdate();
+        doUpdate();
         myName = getName();
 
-        if (SimpleNode.this instanceof DeletableNode) {
-          DeletableNode deletableNode = (DeletableNode) SimpleNode.this;
-          if (deletableNode.isReadOnly()) {
-            makeIconsReadOnly();
-          }
-        }
-
-        return Boolean.valueOf(result);
+        return !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, oldFragments, myColor},
+                                        new Object[]{oldOpenIcon, oldClosedIcon, oldName, oldFragments, oldColor});
       }
     }).booleanValue();
   }
 
-  private void makeIconsReadOnly() {
-    myOpenIcon = makeIconReadOnly(myOpenIcon);
-    myClosedIcon = makeIconReadOnly(myClosedIcon);
-  }
-
-  private Icon makeIconReadOnly(Icon icon) {
-    if (icon != null) {
-      LayeredIcon layeredIcon = new LayeredIcon(2);
-      layeredIcon.setIcon(icon, 0);
-      layeredIcon.setIcon(Icons.LOCKED_ICON, 1);
-      return layeredIcon;
-    }
-    return icon;
-  }
-
   public final String getName() {
     StringBuffer result = new StringBuffer("");
-    for (int i = 0; i < myColoredText.size(); i++) {
-      ColoredFragment each = myColoredText.get(i);
+    for (ColoredFragment each : myColoredText) {
       result.append(each.getText());
     }
     return result.toString();
@@ -154,8 +133,7 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     myColoredText.add(new ColoredFragment(fragment.getText(), fragment.getAttributes()));
   }
 
-  protected boolean doUpdate() {
-    return false;
+  protected void doUpdate() {
   }
 
   public final Object getElement() {
@@ -229,6 +207,28 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     public SimpleTextAttributes getAttributes() {
       return myAttributes;
     }
+
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final ColoredFragment that = (ColoredFragment)o;
+
+      if (myAttributes != null ? !myAttributes.equals(that.myAttributes) : that.myAttributes != null) return false;
+      if (myText != null ? !myText.equals(that.myText) : that.myText != null) return false;
+      if (myToolTip != null ? !myToolTip.equals(that.myToolTip) : that.myToolTip != null) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = (myText != null ? myText.hashCode() : 0);
+      result = 31 * result + (myToolTip != null ? myToolTip.hashCode() : 0);
+      result = 31 * result + (myAttributes != null ? myAttributes.hashCode() : 0);
+      return result;
+    }
   }
 
   public boolean isAncestorOrSelf(SimpleNode selectedNode) {
@@ -247,7 +247,6 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   public void setFont(Font font) {
     myFont = font;
   }
-
 
   public final boolean equals(Object o) {
     return ComparableObjectCheck.equals(this, o);

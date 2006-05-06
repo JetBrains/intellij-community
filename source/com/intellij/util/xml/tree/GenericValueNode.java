@@ -28,7 +28,7 @@ public class GenericValueNode extends AbstractDomElementNode {
     return myModelElement;
   }
 
-  protected boolean doUpdate() {
+  protected void doUpdate() {
     setUniformIcon(getNodeIcon());
     clearColoredText();
     final String stringValue = myModelElement.getStringValue();
@@ -44,8 +44,6 @@ public class GenericValueNode extends AbstractDomElementNode {
     } else {
       addColoredFragment(getNodeName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
-
-    return super.doUpdate();
   }
 
   public SimpleNode[] getChildren() {

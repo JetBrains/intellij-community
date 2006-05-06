@@ -68,12 +68,11 @@ public class TreePopupStructure extends AbstractTreeStructure {
       return myDelegate;
     }
 
-    protected boolean doUpdate() {
+    protected void doUpdate() {
       clearColoredText();
-      boolean result = true;
       if (myDelegate instanceof SimpleNode) {
         SimpleNode node = (SimpleNode)myDelegate;
-        result = node.update();
+        node.update();
 
         ColoredFragment[] text = node.getColoredText();
         for (ColoredFragment each : text) {
@@ -93,7 +92,6 @@ public class TreePopupStructure extends AbstractTreeStructure {
         }
         setIcons(closedIcon, openIcon);
       }
-      return result;
     }
 
     public void clear() {

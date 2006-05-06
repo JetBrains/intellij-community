@@ -90,8 +90,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
         return new Object[]{myDomElement};
     }
 
-    protected boolean doUpdate() {
-        if (!myDomElement.isValid()) return true;
+    protected void doUpdate() {
+        if (!myDomElement.isValid()) return;
 
         setUniformIcon(getNodeIcon());
         clearColoredText();
@@ -112,8 +112,6 @@ public class BaseDomElementNode extends AbstractDomElementNode {
         } else {
             addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
-
-        return true;
     }
 
     protected boolean isMarkedType(Type type, Key<List<Class>> key) {

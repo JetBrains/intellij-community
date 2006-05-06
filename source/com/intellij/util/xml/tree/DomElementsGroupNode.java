@@ -41,7 +41,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
         return new Object[]{myParentElement, myChildrenTagName};
     }
 
-    protected boolean doUpdate() {
+    protected void doUpdate() {
         setUniformIcon(getNodeIcon());
 
         clearColoredText();
@@ -61,8 +61,6 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
         } else {
             addColoredFragment(getNodeName(), SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
         }
-
-        return true;
     }
 
     private boolean hasErrors() {
