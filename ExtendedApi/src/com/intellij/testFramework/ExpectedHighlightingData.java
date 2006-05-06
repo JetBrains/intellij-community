@@ -28,7 +28,7 @@ public class ExpectedHighlightingData {
 
  @NonNls private static final String ERROR_MARKER = "error";
  @NonNls private static final String WARNING_MARKER = "warning";
- @NonNls private static final String INFORMATION_MARKER = "information";
+ @NonNls private static final String INFORMATION_MARKER = "weak_warning";
  @NonNls private static final String INFO_MARKER = "info";
  @NonNls private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
  @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
