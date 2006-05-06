@@ -30,6 +30,8 @@ import java.util.Map;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
+  protected static AntElement ourNull = new AntElementImpl(null, null);
+
   private final AntElement myParent;
   private AntElement[] myChildren = null;
   private PsiReference[] myReferences = null;
@@ -54,10 +56,8 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   public String toString() {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append("AntElement");
-      final XmlElement sourceElement = getSourceElement();
-      builder.append("[");
-      builder.append(sourceElement.toString());
+      builder.append("AntElement[");
+      builder.append((this == ourNull) ? "null" : getSourceElement().toString());
       builder.append("]");
       return builder.toString();
     }

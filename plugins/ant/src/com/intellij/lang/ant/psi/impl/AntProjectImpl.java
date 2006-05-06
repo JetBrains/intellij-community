@@ -54,13 +54,13 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   public String toString() {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append("AntProject: ");
+      builder.append("AntProject[");
       final String name = getName();
       builder.append((name == null) ? "unnamed" : name);
+      builder.append("]");
       if (getDescription() != null) {
-        builder.append(" [");
+        builder.append(" :");
         builder.append(getDescription());
-        builder.append("]");
       }
       return builder.toString();
     }
@@ -120,18 +120,20 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   @Nullable
   public PsiElement getProperty(final String name) {
-    if (myProperties == null) {
-      myProperties = new HashMap<String, PsiElement>(myPredefinedProps.size());
-      setPredefinedProperties();
-    }
+    checkPropertiesMap();
     return super.getProperty(name);
   }
 
-
   @NotNull
   public PsiElement[] getProperties() {
-    getProperty(null);
+    checkPropertiesMap();
     return super.getProperties();
+  }
+
+
+  public void setProperty(final String name, final PsiElement element) {
+    checkPropertiesMap();
+    super.setProperty(name, element);
   }
 
   @NotNull
@@ -243,6 +245,13 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private void setPredefinedProperties() {
     for (AntProperty property : myPredefinedProps) {
       setProperty(property.getName(), property);
+    }
+  }
+
+  private void checkPropertiesMap() {
+    if (myProperties == null) {
+      myProperties = new HashMap<String, PsiElement>(myPredefinedProps.size());
+      setPredefinedProperties();
     }
   }
 

@@ -39,7 +39,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   public String toString() {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append("AntProperty: [");
+      builder.append("AntProperty[");
       if (getName() != null) {
         builder.append(getName());
         builder.append(" = ");

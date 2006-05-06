@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class AntFileImpl extends LightPsiFileBase implements AntElement {
   private AntProject myProject;
-  private PsiElement[] myChildren = null;
+  private PsiElement[] myChildren;
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
@@ -59,15 +59,18 @@ public class AntFileImpl extends LightPsiFileBase implements AntElement {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return "AntFile:" + getName();
+    return "AntFile[" + getName() + "]";
   }
 
   public void clearCaches() {
-    myProject = null;
-    myChildren = null;
+    if (myChildren != null) {
+      myChildren = null;
+      myProject.subtreeChanged();
+    }
   }
 
   public void subtreeChanged() {
+    clearCaches();
   }
 
   @NotNull

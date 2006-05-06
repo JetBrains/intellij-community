@@ -27,13 +27,13 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
   public String toString() {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append("AntTarget: ");
+      builder.append("AntTarget:[");
       builder.append(getName());
       if (getDescription() != null) {
-        builder.append(" [");
+        builder.append(" :");
         builder.append(getDescription());
-        builder.append(']');
       }
+      builder.append("]");
       final AntTarget[] targets = getDependsTargets();
       if (targets.length > 0) {
         builder.append(" -> [");
@@ -61,9 +61,8 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
       final String depends = getSourceElement().getAttributeValue("depends");
       if (depends == null || depends.length() == 0) {
         myDependsTargets = AntProjectImpl.EMPTY_TARGETS;
-      }
-      else {
-        AntProject project = (AntProject)getAntParent();
+      } else {
+        AntProject project = (AntProject) getAntParent();
         final List<AntTarget> targets = new ArrayList<AntTarget>();
         for (String name : depends.split(",")) {
           final AntTarget antTarget = project.getTarget(name);
@@ -87,7 +86,7 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
       List<AntCall> calls = new ArrayList<AntCall>();
       for (AntElement element : getChildren()) {
         if (element instanceof AntCall) {
-          calls.add((AntCall)element);
+          calls.add((AntCall) element);
         }
       }
       myCalls = calls.toArray(new AntCall[calls.size()]);

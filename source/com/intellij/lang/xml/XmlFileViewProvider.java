@@ -1,11 +1,11 @@
 package com.intellij.lang.xml;
 
-import com.intellij.psi.CompositeLanguageFileViewProvider;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.CompositeLanguageFileViewProvider;
+import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -25,7 +25,7 @@ public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
   }
 
   public Set<Language> getRelevantLanguages() {
-    if(myRelevantLanguages != null) return myRelevantLanguages;
+    if (myRelevantLanguages != null) return myRelevantLanguages;
     List<Language> relevantLanguages = new ArrayList<Language>();
     relevantLanguages.add(myLanguage);
     relevantLanguages.addAll(Arrays.asList(myLanguage.getLanguageExtensionsForFile(getPsi(myLanguage))));
@@ -33,6 +33,7 @@ public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
   }
 
 
+  @NotNull
   public LanguageExtension[] getLanguageExtensions() {
     return myLanguage.getLanguageExtensions();
   }

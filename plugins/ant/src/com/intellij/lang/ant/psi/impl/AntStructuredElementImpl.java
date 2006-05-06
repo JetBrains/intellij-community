@@ -21,9 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 public class AntStructuredElementImpl extends AntElementImpl implements AntStructuredElement {
-
-  private static AntElement ourNull = new AntElementImpl(null, null);
-
   protected AntTypeDefinition myDefinition;
   private boolean myDefinitionCloned = false;
   private AntElement myIdElement;
@@ -32,6 +29,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(parent, sourceElement);
+    getIdElement();
+    getNameElement();
   }
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
@@ -167,11 +166,6 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     myReferencedElements = null;
     myIdElement = null;
     myNameElement = null;
-  }
-
-
-  public void subtreeChanged() {
-    super.subtreeChanged();
   }
 
   public int getTextOffset() {

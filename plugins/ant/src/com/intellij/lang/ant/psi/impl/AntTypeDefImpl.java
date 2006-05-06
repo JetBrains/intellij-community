@@ -6,7 +6,9 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.apache.tools.ant.Task;
+import org.jetbrains.annotations.NonNls;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -30,8 +32,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       catch (MalformedURLException e) {
         LOG.error(e);
       }
-    }
-    else {
+    } else {
       myNewDefinition = getAntProject().getBaseTypeDefinition(classname);
       if (myNewDefinition != null) return;
     }
@@ -39,8 +40,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     try {
       if (loader == null) {
         clazz = Class.forName(classname);
-      }
-      else {
+      } else {
         clazz = loader.loadClass(classname);
       }
     }
@@ -52,10 +52,26 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     AntTypeId id = (uri == null) ? new AntTypeId(name) : new AntTypeId(name, uri);
     if (clazz == null) {
       myNewDefinition = null;
-    }
-    else {
+    } else {
       myNewDefinition = AntProjectImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
       getAntProject().registerCustomType(myNewDefinition);
+    }
+  }
+
+  public String toString() {
+    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append("AntTypeDef[");
+      builder.append(getSourceElement().getName());
+      builder.append("]");
+      if (myNewDefinition != null) {
+        builder.append(" class=");
+        builder.append(myNewDefinition.getClassName());
+      }
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
     }
   }
 
