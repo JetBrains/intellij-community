@@ -66,8 +66,9 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public PsiFile getContainingFile() {
-    if (!isValid()) throw new PsiInvalidElementAccessException(this);
-    return SharedImplUtil.getContainingFile(this);
+    PsiFile file = SharedImplUtil.getContainingFile(this);
+    if (file == null || !file.isValid()) throw new PsiInvalidElementAccessException(this);
+    return file;
   }
 
   public PsiElement findElementAt(int offset) {
@@ -196,8 +197,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   public boolean isPhysical() {
     PsiFile file = getContainingFile();
-    if (file == null) return false;
-    return file.isPhysical();
+    return file != null && file.isPhysical();
   }
 
   public GlobalSearchScope getResolveScope() {

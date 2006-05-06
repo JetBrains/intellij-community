@@ -2,14 +2,12 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.Helper;import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -56,13 +54,12 @@ public class SharedImplUtil {
   public static boolean isValid(ASTNode thisElement) {
     LOG.assertTrue(thisElement instanceof PsiElement);
     PsiFile file = getContainingFile(thisElement);
-    if (file == null) return false;
-    return file.isValid();
+    return file != null && file.isValid();
   }
 
   public static boolean isWritable(ASTNode thisElement) {
-    PsiFile file = (SourceTreeToPsiMap.treeElementToPsi(thisElement)).getContainingFile();
-    return file != null ? file.isWritable() : true;
+    PsiFile file = SourceTreeToPsiMap.treeElementToPsi(thisElement).getContainingFile();
+    return file == null || file.isWritable();
   }
 
   public static CharTable findCharTableByTree(ASTNode tree) {
@@ -83,9 +80,6 @@ public class SharedImplUtil {
                                     Boolean before) throws IncorrectOperationException {
     CheckUtil.checkWritable(thisElement);
     final CharTable table = findCharTableByTree(SourceTreeToPsiMap.psiElementToTree(thisElement));
-    FileType fileType = thisElement.getContainingFile().getFileType();
-    Project project = thisElement.getProject();
-    Helper helper = new Helper(fileType, project);
 
     TreeElement copyFirst = null;
     ASTNode copyLast = null;
@@ -190,7 +184,7 @@ public class SharedImplUtil {
       }
 
       CompositeElement newType = (CompositeElement)type.clone();
-      final CharTable treeCharTable = SharedImplUtil.findCharTableByTree(type);
+      final CharTable treeCharTable = findCharTableByTree(type);
       for (int i = 0; i < arrayCount; i++) {
         CompositeElement newType1 = Factory.createCompositeElement(ElementType.TYPE);
         TreeUtil.addChildren(newType1, newType);
@@ -200,7 +194,7 @@ public class SharedImplUtil {
         newType = newType1;
         newType.acceptTree(new GeneratedMarkerVisitor());
       }
-      newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
+      newType.putUserData(CharTable.CHAR_TABLE_KEY, findCharTableByTree(type));
       variableElement.replaceChild(type, newType);
     }
   }

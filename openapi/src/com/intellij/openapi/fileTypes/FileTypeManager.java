@@ -20,6 +20,7 @@ import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Manages the relationship between filenames and {@link FileType} instances.
@@ -42,7 +43,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param defaultAssociatedExtensions The list of extensions which cause the file to be
    *                                    treated as the specified file type. The extensions should not start with '.'.
    */
-  public abstract void registerFileType(@NotNull FileType type, @Nullable String[] defaultAssociatedExtensions);
+  public abstract void registerFileType(@NotNull FileType type, @NonNls @Nullable String[] defaultAssociatedExtensions);
 
   /**
    * Returns the file type for the specified file name.
@@ -52,7 +53,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    */
   public abstract
   @NotNull
-  FileType getFileTypeByFileName(@NotNull String fileName);
+  FileType getFileTypeByFileName(@NotNull @NonNls String fileName);
 
   /**
    * Returns the file type for the specified file.
@@ -72,7 +73,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    */
   public abstract
   @NotNull
-  FileType getFileTypeByExtension(@NotNull String extension);
+  FileType getFileTypeByExtension(@NonNls @NotNull String extension);
 
   /**
    * Returns the list of all registered file types.
@@ -89,7 +90,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @return true if the file is ignored, false otherwise.
    */
 
-  public abstract boolean isFileIgnored(@NotNull String name);
+  public abstract boolean isFileIgnored(@NonNls @NotNull String name);
 
   /**
    * Returns the list of extensions associated with the specified file type.
@@ -134,7 +135,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param extension the extension to associate.
    * @since 5.0.2
    */
-  public abstract void associateExtension(FileType type, String extension);
+  public abstract void associateExtension(FileType type, @NonNls String extension);
 
   /**
    * Removes an extension from the list of extensions associated with a file type.
@@ -143,5 +144,5 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param extension the extension to remove.
    * @since 5.0.2
    */
-  public abstract void removeAssociatedExtension(FileType type, String extension);
+  public abstract void removeAssociatedExtension(FileType type, @NonNls String extension);
 }
