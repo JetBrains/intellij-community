@@ -11,6 +11,8 @@ import com.intellij.uiDesigner.radComponents.RadLayoutManager;
 import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -19,11 +21,20 @@ import javax.swing.*;
  * @author yole
  */
 public class LayoutManagerProperty extends Property<RadContainer, String> {
-  private PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>();
+  private PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
+    @Override protected void customize(final String value) {
+      setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));
+    }
+  };
 
   private static class LayoutManagerEditor extends ComboBoxPropertyEditor<String> {
     public LayoutManagerEditor() {
       myCbx.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
+      myCbx.setRenderer(new ColoredListCellRenderer() {
+        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          append(LayoutManagerRegistry.getLayoutManagerDisplayName((String) value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      });
     }
 
     public JComponent getComponent(RadComponent component, String value, boolean inplace) {

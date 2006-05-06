@@ -18,7 +18,10 @@ import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
 import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -44,6 +47,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "uidesigner-configurable";
   }
@@ -126,6 +130,11 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     myGeneralUI.myIridaCompatibleLayout.setSelected(configuration.IRIDA_LAYOUT_MODE);
 
     myGeneralUI.myLayoutManagerCombo.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
+    myGeneralUI.myLayoutManagerCombo.setRenderer(new ColoredListCellRenderer() {
+        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          append(LayoutManagerRegistry.getLayoutManagerDisplayName((String) value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      });
     myGeneralUI.myLayoutManagerCombo.setSelectedItem(configuration.DEFAULT_LAYOUT_MANAGER);
   }
 
@@ -172,7 +181,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
             FormSourceCodeGenerator.cleanup(aClass);
           }
           catch (IncorrectOperationException e) {
-            e.printStackTrace();
+            LOG.error(e);
           }
         }
       }

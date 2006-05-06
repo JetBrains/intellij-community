@@ -20,6 +20,7 @@ import java.util.Map;
 public class LayoutManagerRegistry {
   @NonNls private static Map<String, Class<? extends RadLayoutManager>> ourLayoutManagerRegistry = new HashMap<String, Class<? extends RadLayoutManager>>();
   @NonNls private static Map<Class, Class<? extends RadLayoutManager>> ourLayoutManagerClassRegistry = new HashMap<Class, Class<? extends RadLayoutManager>>();
+  @NonNls private static Map<String, String> ourLayoutManagerDisplayNames = new HashMap<String, String>();
 
   private LayoutManagerRegistry() {
   }
@@ -40,12 +41,22 @@ public class LayoutManagerRegistry {
     ourLayoutManagerClassRegistry.put(BoxLayout.class, RadBoxLayoutManager.class);
     ourLayoutManagerClassRegistry.put(CardLayout.class, RadCardLayoutManager.class);
     ourLayoutManagerClassRegistry.put(FormLayout.class, RadFormLayoutManager.class);
+
+    ourLayoutManagerDisplayNames.put(UIFormXmlConstants.LAYOUT_INTELLIJ, "GridLayoutManager (IntelliJ)");
+    ourLayoutManagerDisplayNames.put(UIFormXmlConstants.LAYOUT_FORM, "FormLayout (JGoodies)");
   }
 
   public static String[] getLayoutManagerNames() {
     final String[] layoutManagerNames = ourLayoutManagerRegistry.keySet().toArray(new String[0]);
     Arrays.sort(layoutManagerNames);
     return layoutManagerNames;
+  }
+
+  public static String getLayoutManagerDisplayName(String name) {
+    if (ourLayoutManagerDisplayNames.containsKey(name)) {
+      return ourLayoutManagerDisplayNames.get(name);
+    }
+    return name;
   }
 
   public static RadLayoutManager createLayoutManager(String name) throws IllegalAccessException, InstantiationException {
