@@ -22,6 +22,7 @@ import com.jgoodies.forms.layout.RowSpec;
 import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.compiler.Utils;
 
 import java.util.List;
 import java.util.Iterator;
@@ -34,6 +35,13 @@ public class FormLayoutSerializer extends GridLayoutSerializer {
   }
 
   public static FormLayoutSerializer INSTANCE = new FormLayoutSerializer();
+
+  public static CellConstraints.Alignment[] ourHorizontalAlignments = new CellConstraints.Alignment[] {
+    CellConstraints.LEFT, CellConstraints.CENTER, CellConstraints.RIGHT, CellConstraints.FILL
+  };
+  public static CellConstraints.Alignment[] ourVerticalAlignments = new CellConstraints.Alignment[] {
+    CellConstraints.TOP, CellConstraints.CENTER, CellConstraints.BOTTOM, CellConstraints.FILL
+  };
 
   void readLayout(Element element, LwContainer container) {
     FormLayout layout = new FormLayout();
@@ -84,6 +92,12 @@ public class FormLayoutSerializer extends GridLayoutSerializer {
     if (formsElement != null) {
       if (formsElement.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_TOP) != null) {
         cc.insets = LwXmlReader.readInsets(formsElement);
+      }
+      if (!LwXmlReader.getOptionalBoolean(formsElement, UIFormXmlConstants.ATTRIBUTE_DEFAULTALIGN_HORZ, true)) {
+        cc.hAlign = ourHorizontalAlignments [Utils.alignFromConstraints(component.getConstraints(), true)];
+      }
+      if (!LwXmlReader.getOptionalBoolean(formsElement, UIFormXmlConstants.ATTRIBUTE_DEFAULTALIGN_VERT, true)) {
+        cc.vAlign = ourVerticalAlignments [Utils.alignFromConstraints(component.getConstraints(), false)];
       }
     }
     component.setCustomLayoutConstraints(cc);

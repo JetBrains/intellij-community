@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.GridChangeUtil;
+import com.intellij.uiDesigner.lw.FormLayoutSerializer;
 import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -22,6 +23,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRendere
 import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntFieldProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.AlignPropertyProvider;
 import com.intellij.util.IncorrectOperationException;
 import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.*;
@@ -38,16 +40,10 @@ import java.util.List;
 /**
  * @author yole
  */
-public class RadFormLayoutManager extends RadGridLayoutManager {
+public class RadFormLayoutManager extends RadGridLayoutManager implements AlignPropertyProvider {
   private FormLayoutColumnProperties myPropertiesPanel;
   private Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
 
-  private static CellConstraints.Alignment[] ourHorizontalAlignments = new CellConstraints.Alignment[] {
-    CellConstraints.LEFT, CellConstraints.CENTER, CellConstraints.RIGHT, CellConstraints.FILL
-  };
-  private static CellConstraints.Alignment[] ourVerticalAlignments = new CellConstraints.Alignment[] {
-    CellConstraints.TOP, CellConstraints.CENTER, CellConstraints.BOTTOM, CellConstraints.FILL
-  };
   @NonNls private static final String ENCODED_FORMSPEC_GROW = "d:grow";
 
   @Nullable public String getName() {
@@ -184,17 +180,8 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
 
   private static CellConstraints gridToCellConstraints(final RadComponent component) {
     GridConstraints gc = component.getConstraints();
-    CellConstraints.Alignment hAlign = CellConstraints.DEFAULT;
-    CellConstraints.Alignment vAlign = CellConstraints.DEFAULT;
-
-    if (HorzAlignProperty.getInstance(component.getProject()).isModified(component)) {
-      hAlign = ourHorizontalAlignments [Utils.alignFromConstraints(gc, true)];
-    }
-    if (VertAlignProperty.getInstance(component.getProject()).isModified(component)) {
-      vAlign = ourVerticalAlignments [Utils.alignFromConstraints(gc, false)];
-    }
-
-    return new CellConstraints(gc.getColumn()+1, gc.getRow()+1, gc.getColSpan(), gc.getRowSpan(), hAlign, vAlign);
+    CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
+    return new CellConstraints(gc.getColumn()+1, gc.getRow()+1, gc.getColSpan(), gc.getRowSpan(), cc.hAlign, cc.vAlign);
   }
 
   @Override
@@ -209,6 +196,12 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
           writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_LEFT, cc.insets.left);
           writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_BOTTOM, cc.insets.bottom);
           writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_RIGHT, cc.insets.right);
+        }
+        if (cc.hAlign != CellConstraints.DEFAULT) {
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_DEFAULTALIGN_HORZ, false);
+        }
+        if (cc.vAlign != CellConstraints.DEFAULT) {
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_DEFAULTALIGN_VERT, false);
         }
       }
       finally {
@@ -462,6 +455,57 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
     }
   }
 
+  public int getAlignment(RadComponent component, boolean horizontal) {
+    CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
+    CellConstraints.Alignment al = horizontal ? cc.hAlign : cc.vAlign;
+    if (al == CellConstraints.DEFAULT) {
+      FormLayout formLayout = (FormLayout) component.getParent().getLayout();
+      FormSpec formSpec = horizontal
+                          ? formLayout.getColumnSpec(component.getConstraints().getColumn()+1)
+                          : formLayout.getRowSpec(component.getConstraints().getRow()+1);
+      switch(formSpec.getDefaultAlignment().abbreviation()) {
+        case 'f': return GridConstraints.ALIGN_FILL;
+        case 'l': case 't': return GridConstraints.ALIGN_LEFT;
+        case 'c': return GridConstraints.ALIGN_CENTER;
+        default: return GridConstraints.ALIGN_RIGHT;
+      }
+    }
+    return Utils.alignFromConstraints(component.getConstraints(), horizontal);
+  }
+
+  public void setAlignment(RadComponent component, boolean horizontal, int alignment) {
+    CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
+    if (horizontal) {
+      cc.hAlign = FormLayoutSerializer.ourHorizontalAlignments [alignment];
+    }
+    else {
+      cc.vAlign = FormLayoutSerializer.ourVerticalAlignments [alignment];
+    }
+  }
+
+  public void resetAlignment(RadComponent component, boolean horizontal) {
+    CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
+    if (horizontal) {
+      cc.hAlign = CellConstraints.DEFAULT;
+    }
+    else {
+      cc.vAlign = CellConstraints.DEFAULT;
+    }
+    updateConstraints(component);
+  }
+
+  public boolean isAlignmentModified(RadComponent component, boolean horizontal) {
+    CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
+    CellConstraints.Alignment al = horizontal ? cc.hAlign : cc.vAlign;
+    return al != CellConstraints.DEFAULT;
+  }
+
+  private static void updateConstraints(final RadComponent component) {
+    FormLayout layout = (FormLayout) component.getParent().getLayout();
+    layout.setConstraints(component.getDelegee(), gridToCellConstraints(component));
+    component.getParent().revalidate();
+  }
+
   private static class MyPropertyChangeListener implements PropertyChangeListener {
     private final RadComponent myComponent;
 
@@ -471,8 +515,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager {
 
     public void propertyChange(PropertyChangeEvent evt) {
       if (evt.getPropertyName().equals(RadComponent.PROP_CONSTRAINTS)) {
-        FormLayout layout = (FormLayout) myComponent.getParent().getLayout();
-        layout.setConstraints(myComponent.getDelegee(), gridToCellConstraints(myComponent));
+        updateConstraints(myComponent);
       }
     }
   }

@@ -92,10 +92,18 @@ public class FormLayoutSourceGenerator extends LayoutSourceGenerator {
     if (constraints.getRowSpan() > 1 || haveInsets) {
       generator.push(constraints.getRowSpan());
     }
-    String hAlign = FormLayoutCodeGenerator.HORZ_ALIGN_FIELDS [Utils.alignFromConstraints(constraints, true)];
-    String vAlign = FormLayoutCodeGenerator.VERT_ALIGN_FIELDS [Utils.alignFromConstraints(constraints, false)];
-    generator.pushVar("com.jgoodies.forms.layout.CellConstraints." + hAlign);
-    generator.pushVar("com.jgoodies.forms.layout.CellConstraints." + vAlign);
+
+    if (cc.hAlign != CellConstraints.DEFAULT || cc.vAlign != CellConstraints.DEFAULT) {
+      @NonNls String hAlign = (cc.hAlign == CellConstraints.DEFAULT)
+                              ? "DEFAULT"
+                              : FormLayoutCodeGenerator.HORZ_ALIGN_FIELDS [Utils.alignFromConstraints(constraints, true)];
+      @NonNls String vAlign = (cc.vAlign == CellConstraints.DEFAULT)
+                              ? "DEFAULT"
+                              : FormLayoutCodeGenerator.VERT_ALIGN_FIELDS [Utils.alignFromConstraints(constraints, false)];
+      generator.pushVar("com.jgoodies.forms.layout.CellConstraints." + hAlign);
+      generator.pushVar("com.jgoodies.forms.layout.CellConstraints." + vAlign);
+    }
+
     if (haveInsets) {
       generator.newInsets(cc.insets);
     }

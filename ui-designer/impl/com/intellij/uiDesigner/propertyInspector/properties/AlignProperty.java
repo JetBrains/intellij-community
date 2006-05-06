@@ -30,7 +30,18 @@ public abstract class AlignProperty extends Property<RadComponent, Integer> {
   }
 
   public Integer getValue(final RadComponent component) {
+    AlignPropertyProvider provider = getAlignPropertyProvider(component);
+    if (provider != null) {
+      return provider.getAlignment(component, myHorizontal);
+    }
     return Utils.alignFromConstraints(component.getConstraints(), myHorizontal);
+  }
+
+  private static AlignPropertyProvider getAlignPropertyProvider(final RadComponent component) {
+    if (component.getParent().getLayoutManager() instanceof AlignPropertyProvider) {
+      return ((AlignPropertyProvider) component.getParent().getLayoutManager());
+    }
+    return null;
   }
 
   protected void setValueImpl(final RadComponent component, final Integer value) throws Exception {
@@ -53,11 +64,19 @@ public abstract class AlignProperty extends Property<RadComponent, Integer> {
     GridConstraints oldGC = (GridConstraints) gc.clone();
     gc.setAnchor((gc.getAnchor() & ~anchorMask) | anchor);
     gc.setFill((gc.getFill() & ~fillMask) | fill);
+    AlignPropertyProvider provider = getAlignPropertyProvider(component);
+    if (provider != null) {
+      provider.setAlignment(component, myHorizontal, value.intValue());
+    }
     component.fireConstraintsChanged(oldGC);
   }
 
   @Override
   public boolean isModified(final RadComponent component) {
+    AlignPropertyProvider provider = getAlignPropertyProvider(component);
+    if (provider != null) {
+      return provider.isAlignmentModified(component, myHorizontal);
+    }
     final ComponentItem item = component.getPalette().getItem(component.getComponentClassName());
     if (item == null) return false;
     return Utils.alignFromConstraints(component.getConstraints(), myHorizontal) !=
@@ -66,9 +85,15 @@ public abstract class AlignProperty extends Property<RadComponent, Integer> {
 
   @Override
   public void resetValue(final RadComponent component) throws Exception {
-    final ComponentItem item = component.getPalette().getItem(component.getComponentClassName());
-    if (item != null) {
-      setValueEx(component, Utils.alignFromConstraints(item.getDefaultConstraints(), myHorizontal));
+    AlignPropertyProvider provider = getAlignPropertyProvider(component);
+    if (provider != null) {
+      provider.resetAlignment(component, myHorizontal);
+    }
+    else {
+      final ComponentItem item = component.getPalette().getItem(component.getComponentClassName());
+      if (item != null) {
+        setValueEx(component, Utils.alignFromConstraints(item.getDefaultConstraints(), myHorizontal));
+      }
     }
   }
 

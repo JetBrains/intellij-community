@@ -94,6 +94,7 @@ public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
 
   private static void addNewCellConstraints(final GeneratorAdapter generator, final LwComponent lwComponent) {
     final GridConstraints constraints = lwComponent.getConstraints();
+    final CellConstraints cc = (CellConstraints) lwComponent.getCustomLayoutConstraints();
 
     generator.newInstance(ourCellConstraintsType);
     generator.dup();
@@ -102,12 +103,21 @@ public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
     generator.push(constraints.getColSpan());
     generator.push(constraints.getRowSpan());
 
-    int hAlign = Utils.alignFromConstraints(constraints, true);
-    generator.getStatic(ourCellConstraintsType, HORZ_ALIGN_FIELDS[hAlign], ourCellAlignmentType);
-    int vAlign = Utils.alignFromConstraints(constraints, false);
-    generator.getStatic(ourCellConstraintsType, VERT_ALIGN_FIELDS[vAlign], ourCellAlignmentType);
+    if (cc.hAlign == CellConstraints.DEFAULT) {
+      generator.getStatic(ourCellConstraintsType, "DEFAULT", ourCellAlignmentType);
+    }
+    else {
+      int hAlign = Utils.alignFromConstraints(constraints, true);
+      generator.getStatic(ourCellConstraintsType, HORZ_ALIGN_FIELDS[hAlign], ourCellAlignmentType);
+    }
+    if (cc.vAlign == CellConstraints.DEFAULT) {
+      generator.getStatic(ourCellConstraintsType, "DEFAULT", ourCellAlignmentType);
+    }
+    else {
+      int vAlign = Utils.alignFromConstraints(constraints, false);
+      generator.getStatic(ourCellConstraintsType, VERT_ALIGN_FIELDS[vAlign], ourCellAlignmentType);
+    }
 
-    CellConstraints cc = (CellConstraints) lwComponent.getCustomLayoutConstraints();
     AsmCodeGenerator.pushPropValue(generator, Insets.class.getName(), cc.insets);
 
     generator.invokeConstructor(ourCellConstraintsType, ourCellConstraintsConstructor);
