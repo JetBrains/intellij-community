@@ -1,25 +1,25 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.uiDesigner.ReferenceUtil;
+import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
+import com.intellij.uiDesigner.lw.FontDescriptor;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.BorderTypeEditor;
-import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
-import com.intellij.uiDesigner.propertyInspector.editors.FontEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.ColorEditor;
+import com.intellij.uiDesigner.propertyInspector.editors.FontEditor;
+import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.*;
-import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.shared.BorderType;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -130,7 +130,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
 
     public StringDescriptor getValue(final RadContainer component) {
       final StringDescriptor descriptor = component.getBorderTitle();
-      final String resolvedValue = ReferenceUtil.resolve(component, descriptor);
+      final String resolvedValue = StringDescriptorManager.getInstance(component.getModule()).resolve(component, descriptor);
       if (descriptor != null) {
         descriptor.setResolvedValue(resolvedValue);
       }
@@ -139,7 +139,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
 
     protected void setValueImpl(final RadContainer component,final StringDescriptor value) throws Exception {
       StringDescriptor title=value;
-      if(title != null && ReferenceUtil.resolve(component, title).length()==0){
+      if(title != null && StringDescriptorManager.getInstance(component.getModule()).resolve(component, title).length()==0){
         title=null;
       }
       component.setBorderTitle(title);

@@ -6,6 +6,8 @@ package com.intellij.uiDesigner;
 
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiPackage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -18,6 +20,7 @@ import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev

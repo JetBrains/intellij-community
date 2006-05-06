@@ -1,17 +1,17 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.uiDesigner.ReferenceUtil;
+import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.core.SupportCode;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.quickFixes.QuickFix;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -56,10 +56,10 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
         StringDescriptor descriptor = (StringDescriptor)propValue;
         String value;
         if (component instanceof RadComponent) {
-          value = ReferenceUtil.resolve((RadComponent) component, descriptor);
+          value = StringDescriptorManager.getInstance(module).resolve((RadComponent) component, descriptor);
         }
         else {
-          value = ReferenceUtil.resolve(module, descriptor, null);
+          value = StringDescriptorManager.getInstance(module).resolve(module, descriptor, null);
         }
         SupportCode.TextWithMnemonic twm = SupportCode.parseText(value);
         if (twm.myMnemonicIndex >= 0 &&

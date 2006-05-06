@@ -5,11 +5,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.uiDesigner.StringDescriptorManager;
+import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.SwingProperties;
-import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +42,10 @@ public class FormInspectionUtil {
       if (propValue instanceof StringDescriptor) {
         StringDescriptor descriptor = (StringDescriptor) propValue;
         if (component instanceof RadComponent) {
-          value = ReferenceUtil.resolve((RadComponent) component, descriptor);
+          value = StringDescriptorManager.getInstance(module).resolve((RadComponent) component, descriptor);
         }
         else {
-          value = ReferenceUtil.resolve(module, descriptor, null);
+          value = StringDescriptorManager.getInstance(module).resolve(module, descriptor, null);
         }
       }
       else if (propValue instanceof String) {

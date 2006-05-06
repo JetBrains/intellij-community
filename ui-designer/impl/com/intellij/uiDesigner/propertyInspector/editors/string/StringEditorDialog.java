@@ -28,6 +28,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -378,7 +379,7 @@ public final class StringEditorDialog extends DialogWrapper{
     }
 
     public void showStringDescriptor(@Nullable final StringDescriptor descriptor) {
-      myTfValue.setText(ReferenceUtil.resolve(myModule, descriptor, myLocale));
+      myTfValue.setText(StringDescriptorManager.getInstance(myModule).resolve(myModule, descriptor, myLocale));
       myNoI18nCheckbox.setSelected(descriptor != null && descriptor.isNoI18n());
     }
 
@@ -387,7 +388,7 @@ public final class StringEditorDialog extends DialogWrapper{
       LOG.assertTrue(key != null);
       myTfBundleName.setText(descriptor.getBundleName());
       myTfKey.setText(key);
-      myTfRbValue.setText(ReferenceUtil.resolve(myModule, descriptor, myLocale));
+      myTfRbValue.setText(StringDescriptorManager.getInstance(myModule).resolve(myModule, descriptor, myLocale));
     }
   }
 }

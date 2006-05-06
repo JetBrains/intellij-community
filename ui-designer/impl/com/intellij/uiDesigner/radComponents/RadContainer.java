@@ -3,10 +3,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.uiDesigner.GuiDesignerConfiguration;
-import com.intellij.uiDesigner.ReferenceUtil;
-import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.lw.*;
@@ -391,7 +388,7 @@ public class RadContainer extends RadComponent implements IContainer {
   public void updateBorder() {
     String title = null;
     if (myBorderTitle != null) {
-      title = ReferenceUtil.resolve(this, myBorderTitle);
+      title = StringDescriptorManager.getInstance(getModule()).resolve(this, myBorderTitle);
     }
     Font font = (myBorderTitleFont != null) ? myBorderTitleFont.getResolvedFont() : null;
     Color color = (myBorderTitleColor != null) ? myBorderTitleColor.getResolvedColor() : null;

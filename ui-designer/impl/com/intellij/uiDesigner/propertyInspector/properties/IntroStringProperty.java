@@ -2,10 +2,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.uiDesigner.ReferenceUtil;
-import com.intellij.uiDesigner.SwingProperties;
-import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.StringDescriptor;
@@ -176,7 +173,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     final JComponent delegee = component.getDelegee();
     final String resolvedValue = (value != null && value.getValue() != null)
                                  ? value.getValue()
-                                 : ReferenceUtil.resolve(component, value);
+                                 : StringDescriptorManager.getInstance(component.getModule()).resolve(component, value);
 
     if (value != null) {
       value.setResolvedValue(resolvedValue);
