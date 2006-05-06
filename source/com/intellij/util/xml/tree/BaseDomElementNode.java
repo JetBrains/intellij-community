@@ -5,6 +5,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.ui.TooltipUtils;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
@@ -101,8 +102,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
         if (problems.size() > 0) {
             addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems),
-                               SimpleTextAttributes.ERROR_ATTRIBUTES); //new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.BLACK, Color.RED)
-        } else if (myDomElement.getXmlTag() == null) {
+                               SimpleTextAttributes.ERROR_ATTRIBUTES); 
+        } else if (myDomElement.getXmlTag() == null && !(myDomElement instanceof DomFileElement)) {
             addColoredFragment(getNodeName(), folder ? SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
         } else if (folder) {
             addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);

@@ -36,7 +36,11 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
       setForeground(table.getForeground());
       setBackground(table.getBackground());
     }
-    setSelected(((Boolean)value).booleanValue());
+    if (value instanceof String) {
+      setSelected((Boolean.parseBoolean((String)value)));            
+    } else {
+      setSelected(((Boolean)value).booleanValue());
+    }
     return this;
   }
 }

@@ -10,8 +10,8 @@ import com.intellij.util.xml.JavaMethodSignature;
 /**
  * @author peter
  */
-public interface DomAttributeChildDescription extends DomChildrenDescription{
-  GenericAttributeValue getDomAttributeValue(DomElement parent);
+public interface DomAttributeChildDescription<T> extends DomChildrenDescription{
+  GenericAttributeValue<T> getDomAttributeValue(DomElement parent);
 
   JavaMethodSignature getGetterMethod();
 

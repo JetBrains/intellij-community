@@ -11,6 +11,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.*;
 
@@ -75,8 +76,11 @@ public class DomElementsNavigationManagerImpl extends DomElementsNavigationManag
     }
 
     public void navigate(DomElement domElement, boolean requestFocus) {
-      final OpenFileDescriptor fileDescriptor =
-        new OpenFileDescriptor(myProject, domElement.getRoot().getFile().getVirtualFile(), domElement.getXmlTag().getTextOffset());
+
+      VirtualFile file = domElement.getRoot().getFile().getVirtualFile();
+      final OpenFileDescriptor fileDescriptor = domElement.getXmlTag() != null ?
+        new OpenFileDescriptor(myProject, file, domElement.getXmlTag().getTextOffset()) :
+        new OpenFileDescriptor(myProject, file);
 
       FileEditorManagerEx.getInstanceEx(myProject).openTextEditor(fileDescriptor, requestFocus);
     }

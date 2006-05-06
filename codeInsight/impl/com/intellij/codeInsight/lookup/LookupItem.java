@@ -44,7 +44,7 @@ public final class LookupItem implements Comparable{
   private String myLookupString;
   private Map<Object,Object> myAttributes = null;
 
-  public LookupItem(Object o, String lookupString){
+  public LookupItem(Object o, @NotNull String lookupString){
     setObject(o);
     myLookupString = lookupString;
   }

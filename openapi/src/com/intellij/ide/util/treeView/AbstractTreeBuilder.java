@@ -234,7 +234,7 @@ public abstract class AbstractTreeBuilder {
     updateSubtree(myRootNode);
   }
 
-  protected final void updateSubtree(DefaultMutableTreeNode node) {
+  public final void updateSubtree(DefaultMutableTreeNode node) {
     if (!(node.getUserObject() instanceof NodeDescriptor)) return;
     final TreeState treeState = TreeState.createOn(myTree, node);
     updateNode(node);

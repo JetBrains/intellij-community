@@ -12,6 +12,7 @@ import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.lang.reflect.Array;
 
 public class DomElementsGroupNode extends AbstractDomElementNode {
     private DomElement myParentElement;
@@ -89,7 +90,10 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
         return myChildDescription;
     }
 
+    
     public Icon getNodeIcon() {
-        return ElementPresentationManager.getIcon(DomUtil.getRawType(myChildDescription.getType()));
+        Class clazz = DomUtil.getRawType(myChildDescription.getType());
+//        Class arrayClass = Array.newInstance(clazz, 0).getClass();
+        return ElementPresentationManager.getIconForClass(clazz);
     }
 }

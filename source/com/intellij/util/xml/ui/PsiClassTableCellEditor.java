@@ -56,7 +56,7 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
   }
 
   public final Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-    final Document document = ReferenceEditorWithBrowseButton.createDocument((String)value, PsiManager.getInstance(myProject), true);
+    final Document document = ReferenceEditorWithBrowseButton.createDocument(value == null ? "" : (String)value, PsiManager.getInstance(myProject), true);
     myEditor = new EditorTextField(document, myProject, StdFileTypes.JAVA){
       protected boolean shouldHaveBorder() {
         return false;
