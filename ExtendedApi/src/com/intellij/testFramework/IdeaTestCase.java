@@ -193,7 +193,13 @@ import java.util.HashSet;
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+            try {
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
+              PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+            }
+            catch (Exception e) {
+              // Way to go.
+            }
           }
         });
       }
@@ -208,9 +214,7 @@ import java.util.HashSet;
       ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       doPostponedFormatting(myProject);
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
       try {
         Disposer.dispose(myProject);

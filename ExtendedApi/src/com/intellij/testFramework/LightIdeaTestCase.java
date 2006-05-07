@@ -324,7 +324,13 @@ import java.util.Map;
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+            try {
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
+              PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+            }
+            catch (Exception e) {
+              // Way to go.
+            }
           }
         });
       }
@@ -332,7 +338,6 @@ import java.util.Map;
   }
 
   static void doTearDown() throws Exception {
-    PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
     doPostponedFormatting(ourProject);
 
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
