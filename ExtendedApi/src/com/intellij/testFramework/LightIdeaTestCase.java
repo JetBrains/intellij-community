@@ -14,7 +14,6 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -45,6 +44,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import junit.framework.TestCase;
@@ -318,16 +318,16 @@ import java.util.Map;
     doTearDown();
   }
 
-  private static void doPostponedFormatting() {
-    CommandProcessor.getInstance().executeCommand(ourProject, new Runnable() {
+  private static void doPostponedFormatting(final Project project) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
+        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
       }
-    }, "", null);
+    });
   }
 
   static void doTearDown() throws Exception {
-    doPostponedFormatting();
+    doPostponedFormatting(ourProject);
 
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(null);

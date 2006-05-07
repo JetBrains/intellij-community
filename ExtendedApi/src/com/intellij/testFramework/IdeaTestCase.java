@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -187,12 +188,12 @@ import java.util.HashSet;
     resetAllFields();
   }
 
-  private static void doPostponedFormatting(Project project) {
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+  private static void doPostponedFormatting(final Project project) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
+        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
       }
-    }, "", null);
+    });
   }
 
   protected void tearDown() throws Exception {
