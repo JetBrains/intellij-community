@@ -201,13 +201,15 @@ import java.util.HashSet;
   }
 
   protected void tearDown() throws Exception {
-    doPostponedFormatting(myProject);
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     try {
       assertNotNull("Application components damaged", ProjectManager.getInstance());
 
       ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
       FileDocumentManager.getInstance().saveAllDocuments();
+
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      doPostponedFormatting(myProject);
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
       try {

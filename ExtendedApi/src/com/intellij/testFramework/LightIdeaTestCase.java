@@ -332,6 +332,7 @@ import java.util.Map;
   }
 
   static void doTearDown() throws Exception {
+    PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
     doPostponedFormatting(ourProject);
 
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
