@@ -187,7 +187,16 @@ import java.util.HashSet;
     resetAllFields();
   }
 
+  private static void doPostponedFormatting(Project project) {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
+      }
+    }, "", null);
+  }
+
   protected void tearDown() throws Exception {
+    doPostponedFormatting(myProject);
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     try {
       assertNotNull("Application components damaged", ProjectManager.getInstance());

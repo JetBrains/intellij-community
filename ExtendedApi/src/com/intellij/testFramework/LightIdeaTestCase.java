@@ -14,6 +14,7 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -317,7 +318,17 @@ import java.util.Map;
     doTearDown();
   }
 
+  private static void doPostponedFormatting() {
+    CommandProcessor.getInstance().executeCommand(ourProject, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
+      }
+    }, "", null);
+  }
+
   static void doTearDown() throws Exception {
+    doPostponedFormatting();
+
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(null);
     assertNotNull("Application components damaged", ProjectManager.getInstance());
