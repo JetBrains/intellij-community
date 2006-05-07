@@ -14,6 +14,7 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -319,9 +320,13 @@ import java.util.Map;
   }
 
   private static void doPostponedFormatting(final Project project) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
       public void run() {
-        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+          }
+        });
       }
     });
   }

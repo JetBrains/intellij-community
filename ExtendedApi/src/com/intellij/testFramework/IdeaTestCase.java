@@ -189,9 +189,13 @@ import java.util.HashSet;
   }
 
   private static void doPostponedFormatting(final Project project) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
       public void run() {
-        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+          }
+        });
       }
     });
   }
