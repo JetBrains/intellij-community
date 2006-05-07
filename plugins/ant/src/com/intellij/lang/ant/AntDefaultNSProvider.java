@@ -12,7 +12,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Maxim.Mossienko, lvo
  */
 public class AntDefaultNSProvider implements XmlFileNSInfoProvider, ApplicationComponent {
-  @NonNls private static final String ANT_URI = "http://ant.apache.org/schema.xsd"; // XmlUtil.ANT_URI
+  @NonNls
+  private static final String ANT_URI = "http://ant.apache.org/schema.xsd"; // XmlUtil.ANT_URI
   private static final String[][] myNamespaces = new String[][]{new String[]{"", ANT_URI}};
 
   // nsPrefix, namespaceId
@@ -30,12 +31,6 @@ public class AntDefaultNSProvider implements XmlFileNSInfoProvider, ApplicationC
   @NonNls
   public String getComponentName() {
     return "AntSupport.DefaultNSInfoProvider";
-  }
-
-  public static
-  @NonNls
-  String getNamespace() {
-    return ANT_URI;
   }
 
   public void initComponent() {

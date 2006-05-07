@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class AntSupport implements ApplicationComponent {
 
@@ -14,7 +15,7 @@ public class AntSupport implements ApplicationComponent {
 
   public AntSupport(FileTypeManager fileTypeManager) {
     fileTypeManager.getRegisteredFileTypes();
-    ((CompositeLanguage)StdLanguages.XML).registerLanguageExtension(new AntLanguageExtension());
+    ((CompositeLanguage) StdLanguages.XML).registerLanguageExtension(new AntLanguageExtension());
   }
 
   public static AntLanguage getLanguage() {
@@ -22,11 +23,12 @@ public class AntSupport implements ApplicationComponent {
       if (ourAntFileType == null) {
         ourAntFileType = new AntFileType();
       }
-      ourAntLanguage = (AntLanguage)ourAntFileType.getLanguage();
+      ourAntLanguage = (AntLanguage) ourAntFileType.getLanguage();
     }
     return ourAntLanguage;
   }
 
+  @NotNull
   @NonNls
   public String getComponentName() {
     return "AntSupport";

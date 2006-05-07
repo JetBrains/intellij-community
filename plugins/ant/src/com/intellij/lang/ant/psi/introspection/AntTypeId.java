@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.psi.introspection;
 
-import com.intellij.lang.ant.AntDefaultNSProvider;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 
@@ -13,7 +12,7 @@ public class AntTypeId {
   }
 
   public AntTypeId(@NonNls final String name) {
-    this(name, AntDefaultNSProvider.getNamespace());
+    this(name, null);
   }
 
   public int hashCode() {
@@ -21,7 +20,7 @@ public class AntTypeId {
   }
 
   public boolean equals(Object obj) {
-    return obj instanceof AntTypeId && myId.equals(((AntTypeId)obj).myId);
+    return obj instanceof AntTypeId && myId.equals(((AntTypeId) obj).myId);
   }
 
   @NonNls

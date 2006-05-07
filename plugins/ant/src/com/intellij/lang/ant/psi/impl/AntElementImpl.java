@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
 import com.intellij.openapi.util.TextRange;
@@ -30,7 +31,12 @@ import java.util.Map;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
-  protected static AntElement ourNull = new AntElementImpl(null, null);
+  protected static AntElement ourNull = new AntElementImpl(null, null) {
+    @NonNls
+    public String getName() {
+      return "AntNull";
+    }
+  };
 
   private final AntElement myParent;
   private AntElement[] myChildren = null;
@@ -74,14 +80,12 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return myParent;
   }
 
-  @SuppressWarnings({"ConstantConditions"})
-  @NotNull
   public AntProject getAntProject() {
     return (AntProject) ((this instanceof AntProject) ? this : PsiTreeUtil.getParentOfType(this, AntProject.class));
   }
 
-  public AntFileImpl getAntFile() {
-    return PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
+  public AntFile getAntFile() {
+    return PsiTreeUtil.getParentOfType(this, AntFile.class);
   }
 
   public PsiElement getParent() {

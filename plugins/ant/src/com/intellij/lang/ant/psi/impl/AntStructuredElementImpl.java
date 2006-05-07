@@ -13,7 +13,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,7 +37,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     this(parent, sourceElement);
     myDefinition = definition;
-    final AntTypeId id = new AntTypeId(getSourceElement().getName(), getSourceElement().getNamespace());
+    final AntTypeId id = new AntTypeId(getSourceElement().getName(), null);
     if (definition != null && !definition.getTypeId().equals(id)) {
       myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl) myDefinition);
       myDefinition.setTypeId(id);
@@ -101,22 +100,6 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   public AntTypeDefinition getTypeDefinition() {
     return myDefinition;
-  }
-
-  public void registerCustomType(final AntTypeDefinition def) {
-    if (myDefinition != null) {
-      if (!myDefinitionCloned) {
-        myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl) myDefinition);
-        myDefinitionCloned = true;
-      }
-      myDefinition.registerNestedType(def.getTypeId(), def.getClassName());
-      getAntProject().registerCustomType(def);
-    }
-  }
-
-  @Nullable
-  public String getId() {
-    return getSourceElement().getAttributeValue("id");
   }
 
   public void registerRefId(final String id, AntElement element) {

@@ -15,7 +15,8 @@ public interface AntElement extends PsiNamedElement {
 
   AntElement getAntParent();
 
-  @NotNull
+  AntFile getAntFile();
+
   AntProject getAntProject();
 
   void subtreeChanged();

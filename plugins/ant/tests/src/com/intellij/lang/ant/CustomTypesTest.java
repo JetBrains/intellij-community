@@ -1,7 +1,6 @@
 package com.intellij.lang.ant;
 
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.impl.AntFileImpl;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiElement;
@@ -30,7 +29,7 @@ public class CustomTypesTest extends ParsingTestCase {
     String name = getTestName(false);
     String text = loadFile(name + "." + myFileExt);
     PsiFile file = createFile(name + "." + myFileExt, text);
-    final AntFileImpl antFile = (AntFileImpl)file.getViewProvider().getPsi(AntSupport.getLanguage());
+    final AntFile antFile = (AntFile) file.getViewProvider().getPsi(AntSupport.getLanguage());
     antFile.accept(new PsiRecursiveElementVisitor() {
       public void visitElement(PsiElement element) {
         super.visitElement(element);
@@ -39,8 +38,7 @@ public class CustomTypesTest extends ParsingTestCase {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
       }
     });
-    final AntProject project = antFile.getAntProject();
-    final AntTypeDefinition result = project.getBaseTypeDefinition("com.intellij.lang.ant.typedefs." + name);
+    final AntTypeDefinition result = antFile.getBaseTypeDefinition("com.intellij.lang.ant.typedefs." + name);
     assertNotNull(result);
     return result;
   }

@@ -20,7 +20,7 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
 
   public AntTargetImpl(AntElement parent, final XmlTag tag) {
     super(parent, tag);
-    myDefinition = getAntProject().getTargetDefinition();
+    myDefinition = getAntFile().getTargetDefinition();
   }
 
   @NonNls

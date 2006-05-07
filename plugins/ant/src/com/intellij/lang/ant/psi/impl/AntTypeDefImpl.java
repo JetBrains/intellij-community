@@ -33,7 +33,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         LOG.error(e);
       }
     } else {
-      myNewDefinition = getAntProject().getBaseTypeDefinition(classname);
+      myNewDefinition = getAntFile().getBaseTypeDefinition(classname);
       if (myNewDefinition != null) return;
     }
     Class clazz;
@@ -53,8 +53,8 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     if (clazz == null) {
       myNewDefinition = null;
     } else {
-      myNewDefinition = AntProjectImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
-      getAntProject().registerCustomType(myNewDefinition);
+      myNewDefinition = AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
+      getAntFile().registerCustomType(myNewDefinition);
     }
   }
 

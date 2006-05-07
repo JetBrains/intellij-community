@@ -13,11 +13,6 @@ public interface AntStructuredElement extends AntElement {
   @Nullable
   AntTypeDefinition getTypeDefinition();
 
-  void registerCustomType(final AntTypeDefinition def);
-
-  @Nullable
-  String getId();
-
   void registerRefId(final String id, AntElement element);
 
   @Nullable
