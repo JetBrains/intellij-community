@@ -550,7 +550,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             new NamespaceFilter(MetaRegistry.SCHEMA_URIS),
             new AndFilter(
               new ClassFilter(XmlTag.class),
-              new TextFilter("import","include")
+              new TextFilter(new String[] {"import","include","redefine"})
             )
           ), 2
         )

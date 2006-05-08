@@ -359,17 +359,12 @@ public class FetchExtResourceAction extends BaseIntentionAction {
               }
             }
           } else if (element instanceof XmlTag) {
-            XmlTag tag = (XmlTag)element;
-
-            if(tag.getLocalName().equals(INCLUDE_TAG)) {
-              //String namespace = tag.getNamespace();
-              // we do not check for namespace here since there are many schema defs like
-              // http://www.w3.org/1999/XMLSchema, http://www.w3.org/2001/XMLSchema, add your own here
-
-              String schemaLocation = ((XmlTag)element).getAttributeValue("schemaLocation");
-              if (schemaLocation!=null) {
-                result.add(schemaLocation);
-              }
+            final XmlTag tag = (XmlTag)element;
+            final String schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
+            
+            if (schemaLocation != null) {
+              final PsiReference[] references = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, null).getValueElement().getReferences();
+              if (references.length > 0) result.add(schemaLocation);
             }
           }
 
