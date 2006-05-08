@@ -1,29 +1,26 @@
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.SideBorder2;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleColoredText;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.ui.SideBorder2;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 public class HintUtil {
   public static final Color INFORMATION_COLOR = new Color(253, 254, 226);
@@ -58,25 +55,7 @@ public class HintUtil {
   }
 
   public static JComponent createInformationLabel(SimpleColoredText text) {
-    SimpleColoredComponent  highlighted = new SimpleColoredComponent ();
-
-    highlighted.setIcon(INFORMATION_ICON);
-    highlighted.setBackground(INFORMATION_COLOR);
-    highlighted.setForeground(Color.black);
-    highlighted.setFont(getBoldFont());
-    text.appendToComponent(highlighted);
-
-
-    Box box = Box.createHorizontalBox();
-    box.setBorder(
-      new SideBorder2(Color.white, Color.white, Color.gray, Color.gray, 1)
-    );
-    box.setForeground(Color.black);
-    box.setBackground(INFORMATION_COLOR);
-    box.add(highlighted);
-    box.setOpaque(true);
-
-    return box;
+    return createInformationLabel(text, INFORMATION_ICON);
   }
 
   public static JLabel createQuestionLabel(String text) {
@@ -105,6 +84,26 @@ public class HintUtil {
 
   public static void registerImplementationTextSelectioner(final Language language, final ImplementationTextSelectioner selectioner) {
     ourTextSelectionsMap.put(language, selectioner);
+  }
+
+  public static JComponent createInformationLabel(final SimpleColoredText text, final Icon icon) {
+    SimpleColoredComponent  highlighted = new SimpleColoredComponent ();
+
+    highlighted.setIcon(icon);
+    highlighted.setBackground(INFORMATION_COLOR);
+    highlighted.setForeground(Color.black);
+    highlighted.setFont(getBoldFont());
+    text.appendToComponent(highlighted);
+
+    Box box = Box.createHorizontalBox();
+    box.setBorder(
+      new SideBorder2(Color.white, Color.white, Color.gray, Color.gray, 1)
+    );
+    box.setForeground(Color.black);
+    box.setBackground(INFORMATION_COLOR);
+    box.add(highlighted);
+    box.setOpaque(true);
+    return box;
   }
 
   public interface ImplementationTextSelectioner {

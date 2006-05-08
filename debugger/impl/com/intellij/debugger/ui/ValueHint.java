@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
@@ -40,8 +41,7 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 /**
@@ -51,6 +51,7 @@ import java.util.ArrayList;
  */
 public class ValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.ValueHint");
+  private static final Icon COLLAPSED_TREE_ICON = IconLoader.getIcon("/general/add.png");
   public final static int MOUSE_OVER_HINT       = 0;
   public final static int MOUSE_ALT_OVER_HINT   = 1;
   public final static int MOUSE_CLICK_HINT      = 2;
@@ -178,31 +179,13 @@ public class ValueHint {
                       if (!(value instanceof PrimitiveValue)){
                         simpleColoredText.append(" (" + DebuggerBundle.message("active.tooltip.suggestion") + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
                       }
-                      showHint(simpleColoredText);
+                      showHint(simpleColoredText, descriptor);
                     }
                   }
                 }
               });
             } else {
-              final InspectDebuggerTree tree = new InspectDebuggerTree(myProject);
-              tree.getModel().addTreeModelListener(new TreeModelListener() {
-                public void treeNodesChanged(TreeModelEvent e) {
-                  //do nothing
-                }
-
-                public void treeNodesInserted(TreeModelEvent e) {
-                  //do nothing
-                }
-
-                public void treeNodesRemoved(TreeModelEvent e) {
-                  //do nothing
-                }
-
-                public void treeStructureChanged(TreeModelEvent e) {
-                  resize(e.getTreePath(), tree);
-                }
-              });
-              tree.setInspectDescriptor(descriptor);
+              final InspectDebuggerTree tree = getInspectTree(descriptor);
               showHint(tree, debuggerContext, myCurrentExpression.getText(), new ActiveTooltipComponent(tree, myCurrentExpression.getText()));
             }
           }
@@ -278,12 +261,35 @@ public class ValueHint {
     popupWindow.repaint();
   }
 
-  private void showHint(final SimpleColoredText text) {
+  private void showHint(final SimpleColoredText text, final WatchItemDescriptor descriptor) {
     DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
       public void run() {
         if(myShowHint) {
-          JComponent label = HintUtil.createInformationLabel(text);
-          myCurrentHint = new LightweightHint(label);
+          JComponent component;
+          if (descriptor.getValue()instanceof PrimitiveValue) {
+            component = HintUtil.createInformationLabel(text);
+          }
+          else {
+            component = HintUtil.createInformationLabel(text, COLLAPSED_TREE_ICON);
+            addMouseListenerToHierarchy(component, new MouseAdapter() {
+              public void mouseClicked(MouseEvent e) {
+                if (myCurrentHint != null) {
+                  myCurrentHint.hide();
+                }
+                final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(myProject).getContext();
+                final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+                debugProcess.getManagerThread().invokeLater(new DebuggerContextCommandImpl(debuggerContext) {
+                  public void threadAction() {
+                    descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
+                    final InspectDebuggerTree tree = getInspectTree(descriptor);
+                    showHint(tree, debuggerContext, myCurrentExpression.getText(),
+                             new ActiveTooltipComponent(tree, myCurrentExpression.getText()));
+                  }
+                });
+              }
+            });
+          }
+          myCurrentHint = new LightweightHint(component);
           HintManager hintManager = HintManager.getInstance();
 
           //Editor may be disposed before later invokator process this action
@@ -298,11 +304,45 @@ public class ValueHint {
             HINT_TIMEOUT,
             false);
           if(myType == MOUSE_CLICK_HINT) {
-            label.requestFocusInWindow();
+            HintUtil.createInformationLabel(text).requestFocusInWindow();
           }
         }
       }
     });
+  }
+
+  private static void addMouseListenerToHierarchy(Component c, MouseListener l) {
+    c.addMouseListener(l);
+    if (c instanceof Container) {
+      final Container container = (Container)c;
+      Component[] children = container.getComponents();
+      for (Component child : children) {
+        addMouseListenerToHierarchy(child, l);
+      }
+    }
+  }
+
+  private InspectDebuggerTree getInspectTree(final WatchItemDescriptor descriptor) {
+    final InspectDebuggerTree tree = new InspectDebuggerTree(myProject);
+    tree.getModel().addTreeModelListener(new TreeModelListener() {
+      public void treeNodesChanged(TreeModelEvent e) {
+        //do nothing
+      }
+
+      public void treeNodesInserted(TreeModelEvent e) {
+        //do nothing
+      }
+
+      public void treeNodesRemoved(TreeModelEvent e) {
+        //do nothing
+      }
+
+      public void treeStructureChanged(TreeModelEvent e) {
+        resize(e.getTreePath(), tree);
+      }
+    });
+    tree.setInspectDescriptor(descriptor);
+    return tree;
   }
 
   // call inside ReadAction only
