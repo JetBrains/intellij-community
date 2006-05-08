@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * Created by IntelliJ IDEA.
@@ -58,10 +59,18 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       super(element);
     }
 
+    private static Pattern pattern = Pattern.compile("^(?:\\\\i|\\\\l)");
+    private static Pattern pattern2 = Pattern.compile("([^\\\\])(?:\\\\i|\\\\l)");
+
     @Nullable
     public PsiElement resolve() {
       try {
-        Pattern.compile(getCanonicalText());
+        String text = getCanonicalText();
+
+        // \i and \l are special classes that does not present in java reg exps, so replace their occurences with more usable \w
+        text = pattern2.matcher(pattern.matcher(text).replaceFirst("\\\\w")).replaceAll("$1\\\\w");
+
+        Pattern.compile(text);
         message = null;
         return myElement;
       }
