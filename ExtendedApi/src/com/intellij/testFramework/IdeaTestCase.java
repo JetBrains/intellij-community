@@ -189,21 +189,21 @@ import java.util.HashSet;
   }
 
   private static void doPostponedFormatting(final Project project) {
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
+    try {
+      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
               PsiDocumentManager.getInstance(project).commitAllDocuments();
               PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
             }
-            catch (Exception e) {
-              // Way to go.
-            }
-          }
-        });
-      }
-    });
+          });
+        }
+      });
+    }
+    catch (Throwable e) {
+      // Way to go...
+    }
   }
 
   protected void tearDown() throws Exception {
