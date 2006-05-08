@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -103,7 +104,6 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
       TemplateBuilder builder = new TemplateBuilder(method);
 
       targetClass = (PsiClass)method.getParent();
-      parentClass = PsiTreeUtil.getParentOfType(getMethodCall(), PsiClass.class);
       final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(getMethodCall(), true);
       final PsiSubstitutor substitutor = getTargetSubstitutor(getMethodCall());
       final PsiElement context = PsiTreeUtil.getParentOfType(getMethodCall(), PsiClass.class, PsiMethod.class);
@@ -163,6 +163,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
     return CreateFromUsageUtils.isValidMethodReference(referenceExpression, callExpression);
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");
   }
