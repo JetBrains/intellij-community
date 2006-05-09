@@ -4,9 +4,11 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,10 +27,25 @@ public class CommitLegendPanel {
   private JLabel myTotalIncluded;
   private JPanel myRootPanel;
   private JLabel myDeletedShown;
+  private JPanel myModifiedPanel;
+  private JLabel myModifiedLabel;
+  private JPanel myNewPanel;
+  private JLabel myNewLabel;
+  private JPanel myDeletedPanel;
+  private JLabel myDeletedLabel;
 
 
   public CommitLegendPanel() {
     myRootPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("commit.legend.summary")));
+
+    final Color background = UIUtil.getListBackground();
+    myModifiedPanel.setBackground(background);
+    myNewPanel.setBackground(background);
+    myDeletedPanel.setBackground(background);
+
+    myModifiedLabel.setForeground(FileStatus.MODIFIED.getColor());
+    myNewLabel.setForeground(FileStatus.ADDED.getColor());
+    myDeletedLabel.setForeground(FileStatus.DELETED.getColor());
   }
 
   public JComponent getComponent() {
