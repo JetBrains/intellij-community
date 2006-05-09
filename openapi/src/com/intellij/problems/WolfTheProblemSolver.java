@@ -4,10 +4,13 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 
-import java.util.Collection;import java.awt.*;
+import java.awt.*;
+import java.util.Collection;
 
 /**
  * @author cdr
@@ -26,6 +29,10 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
   public abstract ProblemUpdateTransaction startUpdatingProblemsInScope(VirtualFile virtualFile);
 
   public abstract boolean hasProblemFilesBeneath(ProjectViewNode scope);
+
+  public abstract boolean hasProblemFilesBeneath(PsiElement scope);
+
+  public abstract boolean hasProblemFilesBeneath(Module scope);
 
   public interface ProblemUpdateTransaction {
     void addProblem(Problem problem);

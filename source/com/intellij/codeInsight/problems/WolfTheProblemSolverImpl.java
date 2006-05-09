@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -19,16 +20,16 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
@@ -243,14 +244,49 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  public boolean hasProblemFilesBeneath(ProjectViewNode scope) {
+  public boolean hasProblemFilesBeneath(final ProjectViewNode scope) {
+    return hasProblemFilesBeneath(new Condition<VirtualFile>() {
+      public boolean value(final VirtualFile virtualFile) {
+        return scope.contains(virtualFile);
+      }
+    });
+  }
+
+  private boolean hasProblemFilesBeneath(Condition<VirtualFile> condition){
     synchronized (myProblems) {
       Set<VirtualFile> problemFiles = myProblems.keySet();
       for (VirtualFile problemFile : problemFiles) {
-        if (scope.contains(problemFile)) return true;
+        if (condition.value(problemFile)) return true;
       }
       return false;
     }
+  }
+
+  public boolean hasProblemFilesBeneath(final PsiElement scope) {
+    return hasProblemFilesBeneath(new Condition<VirtualFile>(){
+      public boolean value(final VirtualFile virtualFile) {
+        if (scope instanceof PsiDirectory) {
+          final PsiDirectory directory = (PsiDirectory)scope;
+          return VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false);
+        } else if (scope instanceof PsiPackage){
+          final PsiDirectory[] psiDirectories = ((PsiPackage)scope).getDirectories();
+          for (PsiDirectory directory : psiDirectories) {
+            if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+    });
+  }
+
+  public boolean hasProblemFilesBeneath(final Module scope) {
+    return hasProblemFilesBeneath(new Condition<VirtualFile>() {
+      public boolean value(final VirtualFile virtualFile) {
+        return PackageUtil.moduleContainsFile(scope, virtualFile, false);
+      }
+    });
   }
 
   public void addProblemListener(ProblemListener listener) {

@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.DottedBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -36,7 +38,7 @@ import java.util.Arrays;
  */
 public class HorizontalList extends JPanel {
   private ArrayList<Object> myModel = new ArrayList<Object>();
-  private ArrayList<JLabel> myList = new ArrayList<JLabel>();
+  private ArrayList<SimpleColoredComponent> myList = new ArrayList<SimpleColoredComponent>();
 
   private int myFirstIndex = 0;
   private int mySelectedIndex = -1;
@@ -102,6 +104,20 @@ public class HorizontalList extends JPanel {
         shiftFocus(1);
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), JComponent.WHEN_FOCUSED);
+
+
+    registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        shiftFocus(- mySelectedIndex);
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), JComponent.WHEN_FOCUSED);
+
+    registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        shiftFocus(getModelSize() - 1 - mySelectedIndex);
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), JComponent.WHEN_FOCUSED);
+
 
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -185,7 +201,7 @@ public class HorizontalList extends JPanel {
     return getElement(mySelectedIndex);
   }
 
-  public JLabel getItem(int index){
+  public SimpleColoredComponent getItem(int index){
     if (index != -1 && index < myModel.size()){
       return myList.get(index);
     }
@@ -219,7 +235,15 @@ public class HorizontalList extends JPanel {
       myList.clear();
       int index = 0;
       for (final Object object : myModel) {
-        final JLabel label = new JLabel(getPresentableText(object), getIcon(object), SwingUtilities.RIGHT);
+        //noinspection NonStaticInitializer
+        final SimpleColoredComponent label = new SimpleColoredComponent(){
+          {
+            setFocusBorderAroundIcon(true);
+          }
+        };
+        label.setFont(UIUtil.getLabelFont());
+        label.setIcon(getIcon(object));
+        label.append(getPresentableText(object), getTextAttributes(object, false));
         clearBorder(label);
         label.setOpaque(true);
         label.setBackground(UIUtil.getListBackground());
@@ -231,17 +255,21 @@ public class HorizontalList extends JPanel {
     paintComponent();
   }
 
-  private static void clearBorder(JLabel label){
+  protected SimpleTextAttributes getTextAttributes(final Object object, final boolean selected){
+    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+  }
+
+  private static void clearBorder(SimpleColoredComponent label){
     label.setBorder(BorderFactory.createEmptyBorder(2,2,2,4));
   }
 
-  private static void installDottedBorder(JLabel label){
+  private static void installDottedBorder(SimpleColoredComponent label){
     label.setBorder(new DottedBorder(new Insets(2,2,2,4), UIUtil.getListForeground()));
   }
 
 
   private void installActions(final int index) {
-    final JLabel label = myList.get(index);
+    final SimpleColoredComponent label = myList.get(index);
     final Runnable doubleClickHandler = getDoubleClickHandler(index);
     if (doubleClickHandler != null){
       label.addMouseListener(getMouseListener(new Condition<MouseEvent>() {
@@ -314,28 +342,31 @@ public class HorizontalList extends JPanel {
 
 
   private void paintComponent() {
-
     myScrollablePanel.removeAll();
     myScrollablePanel.revalidate();
     GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0);
     int width = 0;
     int widthToTheRight = 0;
-    final JLabel toBeContLabel = new JLabel("...");
+    final SimpleColoredComponent toBeContLabel = new SimpleColoredComponent();
+    toBeContLabel.setFont(UIUtil.getLabelFont());
+    toBeContLabel.append("...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
     clearBorder(toBeContLabel);
-    final int additionalWidth = toBeContLabel.getFontMetrics(toBeContLabel.getFont()).stringWidth("...") + 6;
+    final int additionalWidth = toBeContLabel.getPreferredSize().width;//toBeContLabel.getFontMetrics(toBeContLabel.getFont()).stringWidth("...") + 6;
     int wholeWidth = getWidth() - 2 * myLeftButton.getWidth();
     if (mySelectedIndex != -1) {
       myScrollablePanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
       if (myFirstIndex > 0){
-        final JLabel preList = new JLabel("...");
+        final SimpleColoredComponent preList = new SimpleColoredComponent();
+        preList.setFont(UIUtil.getLabelFont());
+        preList.append("...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         clearBorder(preList);
         myScrollablePanel.add(preList, gc);
         wholeWidth -= additionalWidth;
       }
       for (int i = 0; i < myList.size(); i++) {
-        final JLabel linkLabel = myList.get(i);
-        final Icon icon = linkLabel.getIcon();
-        final int labelWidth = linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText()) + (icon != null ?  icon.getIconWidth() + linkLabel.getIconTextGap() : 0) + 6;
+        final SimpleColoredComponent linkLabel = myList.get(i);
+        //final Icon icon = linkLabel.getIcon();
+        final int labelWidth = linkLabel.getPreferredSize().width;//linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText()) + (icon != null ?  icon.getIconWidth() + linkLabel.getIconTextGap() : 0) + 6;
         width += labelWidth;
         if (i + 1 > myFirstIndex){
           widthToTheRight += labelWidth;
@@ -359,12 +390,12 @@ public class HorizontalList extends JPanel {
 
       gc.weightx = 0;
       gc.fill = GridBagConstraints.NONE;
-      final JLabel preselected = myList.get(myModel.size() - 1);
+      final SimpleColoredComponent preselected = myList.get(myModel.size() - 1);
       installDottedBorder(preselected);
       for (int i = myModel.size() - 1; i >= 0; i--){
-        final JLabel linkLabel = myList.get(i);
-        final Icon icon = linkLabel.getIcon();
-        width += linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText()) + (icon != null ?  icon.getIconWidth() + linkLabel.getIconTextGap() : 0) + 6;
+        final SimpleColoredComponent linkLabel = myList.get(i);
+        //final Icon icon = linkLabel.getIcon();
+        width += linkLabel.getPreferredSize().width;//linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText()) + (icon != null ?  icon.getIconWidth() + linkLabel.getIconTextGap() : 0) + 6;
         if (wholeWidth == 0 || width + additionalWidth < wholeWidth || (i == 0 && width < wholeWidth)){
           myScrollablePanel.add(linkLabel, gc);
         } else {
@@ -403,15 +434,24 @@ public class HorizontalList extends JPanel {
   }
 
   private void paintBorder(){
-    final JLabel focusedLabel = myList.get(mySelectedIndex);
-    installDottedBorder(focusedLabel);
+    final SimpleColoredComponent focusedLabel = myList.get(mySelectedIndex);
+    focusedLabel.clear();
+    final Object o = myModel.get(mySelectedIndex);
+    focusedLabel.setIcon(getIcon(o));
+    focusedLabel.append(getPresentableText(o), getTextAttributes(o, true));
     focusedLabel.setBackground(UIUtil.getListSelectionBackground());
     focusedLabel.setForeground(UIUtil.getListSelectionForeground());
+    installDottedBorder(focusedLabel);
   }
 
   private void clearBorder(){
     if (myModel.isEmpty()) return;
-    final JLabel focusLostLabel = myList.get(mySelectedIndex != -1 ? mySelectedIndex : myModel.size() - 1);
+    final int index = mySelectedIndex != -1 ? mySelectedIndex : myModel.size() - 1;
+    final SimpleColoredComponent focusLostLabel = myList.get(index);
+    focusLostLabel.clear();
+    final Object o = myModel.get(index);
+    focusLostLabel.setIcon(getIcon(o));
+    focusLostLabel.append(getPresentableText(o), getTextAttributes(o, false));
     focusLostLabel.setBackground(UIUtil.getListBackground());
     focusLostLabel.setForeground(UIUtil.getListForeground());
     clearBorder(focusLostLabel);

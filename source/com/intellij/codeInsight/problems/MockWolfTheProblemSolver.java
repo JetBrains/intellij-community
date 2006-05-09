@@ -3,9 +3,11 @@ package com.intellij.codeInsight.problems;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +41,14 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   public boolean hasProblemFilesBeneath(ProjectViewNode scope) {
+    return false;
+  }
+
+  public boolean hasProblemFilesBeneath(PsiElement scope) {
+    return false;
+  }
+
+  public boolean hasProblemFilesBeneath(Module scope) {
     return false;
   }
 

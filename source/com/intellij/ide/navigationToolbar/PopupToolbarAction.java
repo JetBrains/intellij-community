@@ -1,6 +1,7 @@
 
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -19,6 +20,10 @@ public class PopupToolbarAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) return;
+    if (UISettings.getInstance().SHOW_NAVIGATION_BAR){
+      new SelectInNavBarTarget(project).select(null, false);
+      return;
+    }
     final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (editor != null){
       final NavigationToolbarPanel toolbarPanel = new NavigationToolbarPanel(project){
