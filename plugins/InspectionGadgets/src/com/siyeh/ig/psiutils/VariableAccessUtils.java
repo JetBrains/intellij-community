@@ -93,14 +93,26 @@ public class VariableAccessUtils{
         if(expression == null){
             return false;
         }
+        if(expression instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression)expression;
+            final PsiExpression lOperand = binaryExpression.getLOperand();
+            final PsiExpression rOperand = binaryExpression.getROperand();
+            return mayEvaluateToVariable(lOperand, variable) ||
+                    mayEvaluateToVariable(rOperand, variable);
+        }
         if(expression instanceof PsiParenthesizedExpression){
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression)expression;
             final PsiExpression containedExpression =
-                    ((PsiParenthesizedExpression) expression).getExpression();
+                    parenthesizedExpression.getExpression();
             return mayEvaluateToVariable(containedExpression, variable);
         }
         if(expression instanceof PsiTypeCastExpression){
+            final PsiTypeCastExpression typeCastExpression =
+                    (PsiTypeCastExpression)expression;
             final PsiExpression containedExpression =
-                    ((PsiTypeCastExpression) expression) .getOperand();
+                    typeCastExpression.getOperand();
             return mayEvaluateToVariable(containedExpression, variable);
         }
         if(expression instanceof PsiConditionalExpression){
@@ -112,9 +124,11 @@ public class VariableAccessUtils{
                     mayEvaluateToVariable(elseExpression, variable);
         }
         if(expression instanceof PsiArrayAccessExpression){
-            final PsiExpression arrayAccessExpression =
-                    ((PsiArrayAccessExpression)expression).getArrayExpression();
-            return mayEvaluateToVariable(arrayAccessExpression, variable);
+            final PsiArrayAccessExpression arrayAccessExpression =
+                    (PsiArrayAccessExpression)expression;
+            final PsiExpression arrayExpression =
+                    arrayAccessExpression.getArrayExpression();
+            return mayEvaluateToVariable(arrayExpression, variable);
         }
         if(!(expression instanceof PsiReferenceExpression)){
             return false;

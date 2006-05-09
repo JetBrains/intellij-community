@@ -110,7 +110,9 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         if(!(qualifier instanceof PsiReferenceExpression)){
             return;
         }
-        final PsiElement referent = ((PsiReference) qualifier).resolve();
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression)qualifier;
+        final PsiElement referent = referenceExpression.resolve();
         if(referent == null){
             return;
         }
@@ -118,10 +120,10 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         final boolean isStatement =
-                        call.getParent() instanceof PsiExpressionStatement;
+                call.getParent() instanceof PsiExpressionStatement;
         if(!isStatement){
-            // this gets the cases wher you're using the return values of updates
-            // as an implicit query
+            // this gets the cases where the return values of updates
+            // are used as an implicit query
             queried = true;
         }
         final String methodName = methodExpression.getReferenceName();

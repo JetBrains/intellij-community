@@ -10,4 +10,10 @@ public class MismatchedCollectionQueryUpdateInspection2 {
         final Set localFoo = foo;
     }
 
+    private static String foos() {
+        final List bar = new ArrayList();
+        bar.add("okay");
+        return "not " + bar;
+    }
+
 }
