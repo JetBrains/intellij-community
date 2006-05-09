@@ -15,9 +15,11 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -38,7 +40,7 @@ import java.util.Arrays;
  */
 public class HorizontalList extends JPanel {
   private ArrayList<Object> myModel = new ArrayList<Object>();
-  private ArrayList<SimpleColoredComponent> myList = new ArrayList<SimpleColoredComponent>();
+  private ArrayList<MyCompositeLabel> myList = new ArrayList<MyCompositeLabel>();
 
   private int myFirstIndex = 0;
   private int mySelectedIndex = -1;
@@ -140,12 +142,6 @@ public class HorizontalList extends JPanel {
     registerKeyboardAction(dblClickAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
     registerKeyboardAction(dblClickAction, KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), JComponent.WHEN_FOCUSED);
 
-    /*registerKeyboardAction(new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        select();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);*/
-
     registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         clearBorder();
@@ -201,7 +197,7 @@ public class HorizontalList extends JPanel {
     return getElement(mySelectedIndex);
   }
 
-  public SimpleColoredComponent getItem(int index){
+  public MyCompositeLabel getItem(int index){
     if (index != -1 && index < myModel.size()){
       return myList.get(index);
     }
@@ -220,6 +216,9 @@ public class HorizontalList extends JPanel {
   }
 
 
+  public int getIndexOf(Object object){
+    return myModel.indexOf(object);
+  }
 
   /**
    * to be invoked by alarm
@@ -236,16 +235,53 @@ public class HorizontalList extends JPanel {
       int index = 0;
       for (final Object object : myModel) {
         //noinspection NonStaticInitializer
-        final SimpleColoredComponent label = new SimpleColoredComponent(){
-          {
-            setFocusBorderAroundIcon(true);
+        final MyCompositeLabel label = new MyCompositeLabel();
+        label.getLabel().addMouseListener(new MouseAdapter() {
+          public void mouseExited(MouseEvent e) {
+            if (!hasChildren(object)) return;
+            label.getLabel().setIcon(wrapIcon(object, Color.gray));
+            label.repaint();
           }
-        };
+
+          public void mouseClicked(MouseEvent e) {
+            if (!hasChildren(object)) return;
+            final int selectedIndex = myModel.indexOf(object);
+            final ListPopup popup = getPopup();
+            if (mySelectedIndex == selectedIndex && popup != null){
+              cancelPopup();
+              if (isInsideIcon(e.getPoint(), object)) {
+                label.getLabel().setIcon(wrapIcon(object, Color.black));
+                label.getLabel().repaint();
+              }
+              return;
+            }
+            if (isInsideIcon(e.getPoint(), object)) {
+              getCtrlClickHandler(selectedIndex).run();
+              clearBorder();
+              mySelectedIndex = selectedIndex;
+              paintBorder();
+              label.getLabel().setIcon(wrapIcon(object, Color.black));
+              label.getLabel().repaint();
+            }
+          }
+        });
+        label.getLabel().addMouseMotionListener(new MouseMotionAdapter() {
+          public void mouseMoved(MouseEvent e) {
+            if (!hasChildren(object)) return;
+            if (isInsideIcon(e.getPoint(), object)) {
+              label.getLabel().setIcon(wrapIcon(object, Color.black));
+            } else {
+              label.getLabel().setIcon(wrapIcon(object, Color.gray));
+            }
+            label.repaint();
+          }
+        });
         label.setFont(UIUtil.getLabelFont());
-        label.setIcon(getIcon(object));
-        label.append(getPresentableText(object), getTextAttributes(object, false));
-        clearBorder(label);
-        label.setOpaque(true);
+        label.getLabel().setIcon(wrapIcon(object, Color.gray));
+        label.getColoredComponent().append(getPresentableText(object), getTextAttributes(object, false));
+        clearBorder(label.getColoredComponent());
+        label.getLabel().setOpaque(false);
+        label.getColoredComponent().setOpaque(true);
         label.setBackground(UIUtil.getListBackground());
         myList.add(label);
         installActions(index);
@@ -253,6 +289,12 @@ public class HorizontalList extends JPanel {
       }
     }
     paintComponent();
+  }
+
+  private boolean isInsideIcon(final Point point, final Object object) {
+    //noinspection ConstantConditions
+    final int height = getIcon(object).getIconHeight();
+    return point.x > 0 && point.x < 10 && point.y > height / 2 - 4 && point.y < height/ 2 + 4;
   }
 
   protected SimpleTextAttributes getTextAttributes(final Object object, final boolean selected){
@@ -269,7 +311,7 @@ public class HorizontalList extends JPanel {
 
 
   private void installActions(final int index) {
-    final SimpleColoredComponent label = myList.get(index);
+    final SimpleColoredComponent label = myList.get(index).getColoredComponent();
     final Runnable doubleClickHandler = getDoubleClickHandler(index);
     if (doubleClickHandler != null){
       label.addMouseListener(getMouseListener(new Condition<MouseEvent>() {
@@ -309,6 +351,7 @@ public class HorizontalList extends JPanel {
       public void run() {
         //just select
         requestFocusInWindow();
+        cancelPopup();
       }
     }, index));
   }
@@ -347,26 +390,25 @@ public class HorizontalList extends JPanel {
     GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0);
     int width = 0;
     int widthToTheRight = 0;
-    final SimpleColoredComponent toBeContLabel = new SimpleColoredComponent();
-    toBeContLabel.setFont(UIUtil.getLabelFont());
-    toBeContLabel.append("...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    clearBorder(toBeContLabel);
-    final int additionalWidth = toBeContLabel.getPreferredSize().width;//toBeContLabel.getFontMetrics(toBeContLabel.getFont()).stringWidth("...") + 6;
+    final MyCompositeLabel toBeContLabel = new MyCompositeLabel();
+    toBeContLabel.getColoredComponent().setFont(UIUtil.getLabelFont());
+    toBeContLabel.getColoredComponent().append("...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    clearBorder(toBeContLabel.getColoredComponent());
+    final int additionalWidth = toBeContLabel.getPreferredSize().width;
     int wholeWidth = getWidth() - 2 * myLeftButton.getWidth();
     if (mySelectedIndex != -1) {
       myScrollablePanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
       if (myFirstIndex > 0){
-        final SimpleColoredComponent preList = new SimpleColoredComponent();
-        preList.setFont(UIUtil.getLabelFont());
-        preList.append("...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        clearBorder(preList);
+        final MyCompositeLabel preList = new MyCompositeLabel();
+        preList.getColoredComponent().setFont(UIUtil.getLabelFont());
+        preList.getColoredComponent().append("...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        clearBorder(preList.getColoredComponent());
         myScrollablePanel.add(preList, gc);
         wholeWidth -= additionalWidth;
       }
       for (int i = 0; i < myList.size(); i++) {
-        final SimpleColoredComponent linkLabel = myList.get(i);
-        //final Icon icon = linkLabel.getIcon();
-        final int labelWidth = linkLabel.getPreferredSize().width;//linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText()) + (icon != null ?  icon.getIconWidth() + linkLabel.getIconTextGap() : 0) + 6;
+        final MyCompositeLabel linkLabel = myList.get(i);
+        final int labelWidth = linkLabel.getPreferredSize().width;
         width += labelWidth;
         if (i + 1 > myFirstIndex){
           widthToTheRight += labelWidth;
@@ -390,12 +432,11 @@ public class HorizontalList extends JPanel {
 
       gc.weightx = 0;
       gc.fill = GridBagConstraints.NONE;
-      final SimpleColoredComponent preselected = myList.get(myModel.size() - 1);
-      installDottedBorder(preselected);
+      final MyCompositeLabel preselected = myList.get(myModel.size() - 1);
+      installDottedBorder(preselected.getColoredComponent());
       for (int i = myModel.size() - 1; i >= 0; i--){
-        final SimpleColoredComponent linkLabel = myList.get(i);
-        //final Icon icon = linkLabel.getIcon();
-        width += linkLabel.getPreferredSize().width;//linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText()) + (icon != null ?  icon.getIconWidth() + linkLabel.getIconTextGap() : 0) + 6;
+        final MyCompositeLabel linkLabel = myList.get(i);
+        width += linkLabel.getPreferredSize().width;
         if (wholeWidth == 0 || width + additionalWidth < wholeWidth || (i == 0 && width < wholeWidth)){
           myScrollablePanel.add(linkLabel, gc);
         } else {
@@ -433,28 +474,55 @@ public class HorizontalList extends JPanel {
     return index;
   }
 
+  private Icon wrapIcon(final Object object, final Color color){
+    final Icon icon = getIcon(object);
+    if (icon == null || !hasChildren(object)) return icon;
+    LayeredIcon layeredIcon = new LayeredIcon(2);
+    layeredIcon.setIcon(icon, 0);
+    Icon plusIcon = new Icon() {
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        g.setColor(color);
+        g.drawRect(x + 1, y - 4, 8, 8);
+        g.drawLine(x + 3, y, x + 7, y);
+        if (mySelectedIndex != myModel.indexOf(object) || !isExpanded(object)) g.drawLine(x + 5, y - 2, x + 5, y + 2);
+      }
+
+      public int getIconWidth() {
+        return 10;
+      }
+
+      public int getIconHeight() {
+        return 8;
+      }
+    };
+    layeredIcon.setIcon(plusIcon, 1, -12, icon.getIconHeight()/2) ;
+    return layeredIcon;
+  }
+
   private void paintBorder(){
-    final SimpleColoredComponent focusedLabel = myList.get(mySelectedIndex);
-    focusedLabel.clear();
+    final MyCompositeLabel focusedLabel = myList.get(mySelectedIndex);
     final Object o = myModel.get(mySelectedIndex);
-    focusedLabel.setIcon(getIcon(o));
-    focusedLabel.append(getPresentableText(o), getTextAttributes(o, true));
-    focusedLabel.setBackground(UIUtil.getListSelectionBackground());
-    focusedLabel.setForeground(UIUtil.getListSelectionForeground());
-    installDottedBorder(focusedLabel);
+    focusedLabel.getLabel().setIcon(wrapIcon(o, Color.gray));
+    final SimpleColoredComponent simpleColoredComponent = focusedLabel.getColoredComponent();
+    simpleColoredComponent.clear();
+    simpleColoredComponent.append(getPresentableText(o), getTextAttributes(o, true));
+    simpleColoredComponent.setBackground(UIUtil.getListSelectionBackground());
+    simpleColoredComponent.setForeground(UIUtil.getListSelectionForeground());
+    installDottedBorder(simpleColoredComponent);
   }
 
   private void clearBorder(){
     if (myModel.isEmpty()) return;
     final int index = mySelectedIndex != -1 ? mySelectedIndex : myModel.size() - 1;
-    final SimpleColoredComponent focusLostLabel = myList.get(index);
-    focusLostLabel.clear();
+    final MyCompositeLabel focusLostLabel = myList.get(index);
     final Object o = myModel.get(index);
-    focusLostLabel.setIcon(getIcon(o));
-    focusLostLabel.append(getPresentableText(o), getTextAttributes(o, false));
-    focusLostLabel.setBackground(UIUtil.getListBackground());
-    focusLostLabel.setForeground(UIUtil.getListForeground());
-    clearBorder(focusLostLabel);
+    focusLostLabel.getLabel().setIcon(wrapIcon(o, Color.gray));
+    final SimpleColoredComponent simpleColoredComponent = focusLostLabel.getColoredComponent();
+    simpleColoredComponent.clear();
+    simpleColoredComponent.append(getPresentableText(o), getTextAttributes(o, false));
+    simpleColoredComponent.setBackground(UIUtil.getListBackground());
+    simpleColoredComponent.setForeground(UIUtil.getListForeground());
+    clearBorder(simpleColoredComponent);
   }
 
   protected void shiftFocus(int direction){
@@ -464,6 +532,10 @@ public class HorizontalList extends JPanel {
     while (!myList.get(mySelectedIndex).isShowing()){
       scrollToVisible(direction);
     }
+  }
+
+  protected boolean hasChildren(Object object){
+    return false;
   }
 
   protected String getPresentableText(Object object){
@@ -486,5 +558,39 @@ public class HorizontalList extends JPanel {
 
   protected Runnable getRightClickHandler(int index){
     return null;
+  }
+
+  protected boolean isExpanded(Object object){
+    return false;
+  }
+
+  protected ListPopup getPopup() {
+    return null;
+  }
+
+  protected void cancelPopup() {
+
+  }
+
+  protected static class MyCompositeLabel extends JPanel {
+    private JLabel myLabel = new JLabel();
+    private SimpleColoredComponent myColoredComponent = new SimpleColoredComponent();
+
+    public MyCompositeLabel() {
+      super(new GridBagLayout());
+      final GridBagConstraints gc =
+        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 2, 0, 0), 0, 0);
+      add(myLabel, gc);
+      gc.insets.left = 1;
+      add(myColoredComponent, gc);
+    }
+
+    public JLabel getLabel() {
+      return myLabel;
+    }
+
+    public SimpleColoredComponent getColoredComponent() {
+      return myColoredComponent;
+    }
   }
 }
