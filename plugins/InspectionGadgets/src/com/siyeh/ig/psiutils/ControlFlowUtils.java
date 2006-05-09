@@ -270,10 +270,16 @@ public class ControlFlowUtils{
     }
 
     public static boolean isInLoop(@NotNull PsiElement element){
-        return isInForStatementBody(element) ||
-                isInForeachStatementBody(element) ||
-                isInWhileStatementBody(element) ||
-                isInDoWhileStatementBody(element);
+        final PsiLoopStatement loopStatement =
+                PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
+        if (loopStatement == null){
+            return false;
+        }
+        final PsiStatement body = loopStatement.getBody();
+        if (body == null) {
+            return false;
+        }
+        return PsiTreeUtil.isAncestor(body, element, true);
     }
 
     public static boolean isInFinallyBlock(@NotNull PsiElement element){
@@ -319,64 +325,6 @@ public class ControlFlowUtils{
             }
             currentElement = tryStatement;
         }
-    }
-
-    private static boolean isInWhileStatementBody(@NotNull PsiElement element){
-        final PsiWhileStatement whileStatement =
-                PsiTreeUtil.getParentOfType(element,
-                                            PsiWhileStatement.class);
-        if(whileStatement == null){
-            return false;
-        }
-        final PsiStatement body = whileStatement.getBody();
-        if (body == null) {
-            return false;
-        }
-        return PsiTreeUtil.isAncestor(body, element, true);
-    }
-
-    private static boolean isInDoWhileStatementBody(
-            @NotNull PsiElement element){
-        final PsiDoWhileStatement doWhileStatement =
-                PsiTreeUtil.getParentOfType(element,
-                                            PsiDoWhileStatement.class);
-        if(doWhileStatement == null){
-            return false;
-        }
-        final PsiStatement body = doWhileStatement.getBody();
-        if (body == null) {
-            return false;
-        }
-        return PsiTreeUtil.isAncestor(body, element, true);
-    }
-
-    private static boolean isInForStatementBody(@NotNull PsiElement element){
-        final PsiForStatement forStatement =
-                PsiTreeUtil.getParentOfType(element,
-                                            PsiForStatement.class);
-        if(forStatement == null){
-            return false;
-        }
-        final PsiStatement body = forStatement.getBody();
-        if (body == null) {
-            return false;
-        }
-        return PsiTreeUtil.isAncestor(body, element, true);
-    }
-
-    private static boolean isInForeachStatementBody(
-            @NotNull PsiElement element){
-        final PsiForeachStatement foreachStatement =
-                PsiTreeUtil.getParentOfType(element,
-                                            PsiForeachStatement.class);
-        if(foreachStatement == null){
-            return false;
-        }
-        final PsiStatement body = foreachStatement.getBody();
-        if (body == null) {
-            return false;
-        }
-        return PsiTreeUtil.isAncestor(body, element, true);
     }
 
     @Nullable
