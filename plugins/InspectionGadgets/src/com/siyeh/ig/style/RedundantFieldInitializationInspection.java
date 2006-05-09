@@ -18,10 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
@@ -114,6 +111,11 @@ public class RedundantFieldInitializationInspection extends FieldInspection {
             }
             final String text = initializer.getText();
             if (!s_defaultValues.contains(text)) {
+                return;
+            }
+            final PsiType type = field.getType();
+            if (!(type instanceof PsiPrimitiveType) &&
+                    !text.equals(PsiKeyword.NULL)) {
                 return;
             }
             registerError(initializer);
