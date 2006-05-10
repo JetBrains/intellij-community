@@ -23,5 +23,12 @@ package com.intellij.openapi.fileEditor;
  * @author Vladimir Kondratyev
  */
 public interface FileEditorState {
+
+  FileEditorState INSTANCE = new FileEditorState() {
+    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+      return true;
+    }
+  };
+
   boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level);
 }
