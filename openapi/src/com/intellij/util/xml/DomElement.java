@@ -27,6 +27,7 @@ public interface DomElement {
 
   XmlTag ensureTagExists();
 
+  @Nullable
   XmlElement getXmlElement();
 
   XmlElement ensureXmlElementExists();

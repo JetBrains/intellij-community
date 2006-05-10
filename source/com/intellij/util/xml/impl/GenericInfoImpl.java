@@ -32,14 +32,16 @@ public class GenericInfoImpl implements DomGenericInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.GenericInfoImpl");
   private final Class<? extends DomElement> myClass;
   private DomManagerImpl myDomManager;
-  private final BidirectionalMap<JavaMethodSignature, Pair<String, Integer>> myFixedChildrenMethods = new BidirectionalMap<JavaMethodSignature, Pair<String, Integer>>();
+  private final BidirectionalMap<JavaMethodSignature, Pair<String, Integer>> myFixedChildrenMethods =
+    new BidirectionalMap<JavaMethodSignature, Pair<String, Integer>>();
   private final Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
   private final Map<JavaMethodSignature, String> myCollectionChildrenGetterMethods = new HashMap<JavaMethodSignature, String>();
   private final Map<JavaMethodSignature, String> myCollectionChildrenAdditionMethods = new HashMap<JavaMethodSignature, String>();
   private final Map<String, Type> myCollectionChildrenClasses = new HashMap<String, Type>();
   private final Map<JavaMethodSignature, String> myAttributeChildrenMethods = new HashMap<JavaMethodSignature, String>();
   private final Map<JavaMethodSignature, Set<String>> myCompositeChildrenMethods = new HashMap<JavaMethodSignature, Set<String>>();
-  private final Map<JavaMethodSignature, Pair<String,Set<String>>> myCompositeCollectionAdditionMethods = new HashMap<JavaMethodSignature, Pair<String,Set<String>>>();
+  private final Map<JavaMethodSignature, Pair<String, Set<String>>> myCompositeCollectionAdditionMethods =
+    new HashMap<JavaMethodSignature, Pair<String, Set<String>>>();
   private final Set<JavaMethodSignature> myRequiredChildrenGetters = new HashSet<JavaMethodSignature>();
   @Nullable private Method myNameValueGetter;
   private boolean myValueElement;
@@ -101,7 +103,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   private String getSubTagName(final JavaMethodSignature method) {
     final SubTag subTagAnnotation = method.findAnnotation(SubTag.class, myClass);
     if (subTagAnnotation == null || StringUtil.isEmpty(subTagAnnotation.value())) {
-      return getNameFromMethod(method);
+      return getNameFromMethod(method, false);
     }
     return subTagAnnotation.value();
   }
@@ -111,15 +113,15 @@ public class GenericInfoImpl implements DomGenericInfo {
     final SubTagList subTagList = method.findAnnotation(SubTagList.class, myClass);
     if (subTagList == null || StringUtil.isEmpty(subTagList.value())) {
       final String propertyName = getPropertyName(method);
-      return propertyName != null ? getNameStrategy().convertName(StringUtil.unpluralize(propertyName)) : null;
+      return propertyName != null ? getNameStrategy(false).convertName(StringUtil.unpluralize(propertyName)) : null;
     }
     return subTagList.value();
   }
 
   @Nullable
-  private String getNameFromMethod(final JavaMethodSignature method) {
+  private String getNameFromMethod(final JavaMethodSignature method, boolean isAttribute) {
     final String propertyName = getPropertyName(method);
-    return propertyName == null ? null : getNameStrategy().convertName(propertyName);
+    return propertyName == null ? null : getNameStrategy(isAttribute).convertName(propertyName);
   }
 
   private static String getPropertyName(JavaMethodSignature method) {
@@ -127,9 +129,14 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @NotNull
-  private DomNameStrategy getNameStrategy() {
+  private DomNameStrategy getNameStrategy(boolean isAttribute) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomUtil.getRawType(myClass));
-    return strategy == null ? DomNameStrategy.HYPHEN_STRATEGY : strategy;
+    if (strategy != null) {
+      return strategy;
+    }
+    else {
+      return isAttribute ? DomNameStrategy.JAVA_STRATEGY : DomNameStrategy.HYPHEN_STRATEGY;
+    }
   }
 
   public final synchronized void buildMethodMaps() {
@@ -217,9 +224,9 @@ public class GenericInfoImpl implements DomGenericInfo {
       if (!methods.isEmpty()) {
         StringBuilder sb = new StringBuilder(myClass + " should provide the following implementations:");
         for (Method method : methods) {
-          sb.append("\n  "+method);
+          sb.append("\n  " + method);
         }
-        assert false: sb.toString();
+        assert false : sb.toString();
         //System.out.println(sb.toString());
       }
     }
@@ -246,7 +253,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       return subTagAnnotation.value();
     }
 
-    final String tagName = getNameStrategy().convertName(name.substring(prefix.length()));
+    final String tagName = getNameStrategy(false).convertName(name.substring(prefix.length()));
     return StringUtil.isEmpty(tagName) ? null : tagName;
   }
 
@@ -261,11 +268,13 @@ public class GenericInfoImpl implements DomGenericInfo {
     final Attribute annotation = signature.findAnnotation(Attribute.class, myClass);
     final boolean isAttributeMethod = annotation != null || isAttributeValueMethod;
     if (annotation != null) {
-      assert isAttributeValueMethod || method.getReturnType().isAssignableFrom(GenericAttributeValue.class) : method + " should return " + GenericAttributeValue.class;
+      assert
+        isAttributeValueMethod || method.getReturnType().isAssignableFrom(GenericAttributeValue.class) :
+        method + " should return " + GenericAttributeValue.class;
     }
     if (isAttributeMethod) {
       final String s = annotation == null ? null : annotation.value();
-      String attributeName = StringUtil.isEmpty(s) ? getNameFromMethod(signature) : s;
+      String attributeName = StringUtil.isEmpty(s) ? getNameFromMethod(signature, true) : s;
       assert StringUtil.isNotEmpty(attributeName) : "Can't guess attribute name from method name: " + method.getName();
       myAttributeChildrenMethods.put(signature, attributeName);
       return true;
@@ -274,7 +283,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     if (isDomElement(method.getReturnType())) {
       final String qname = getSubTagName(signature);
       if (qname != null) {
-        assert !isCollectionChild(qname) : "Collection and fixed children cannot intersect: " + qname;
+        assert!isCollectionChild(qname) : "Collection and fixed children cannot intersect: " + qname;
         int index = 0;
         final SubTag subTagAnnotation = signature.findAnnotation(SubTag.class, myClass);
         if (subTagAnnotation != null && subTagAnnotation.index() != 0) {
@@ -299,7 +308,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
       final String qname = getSubTagNameForCollection(signature);
       if (qname != null) {
-        assert !isFixedChild(qname) : "Collection and fixed children cannot intersect: " + qname;
+        assert!isFixedChild(qname) : "Collection and fixed children cannot intersect: " + qname;
         myCollectionChildrenClasses.put(qname, type);
         myCollectionChildrenGetterMethods.put(signature, qname);
         return true;
@@ -372,7 +381,7 @@ public class GenericInfoImpl implements DomGenericInfo {
           }
 
           final XmlTag tag = handler.ensureTagExists();
-          int index = args != null && args.length == 1 ? (Integer) args[0] : Integer.MAX_VALUE;
+          int index = args != null && args.length == 1 ? (Integer)args[0] : Integer.MAX_VALUE;
 
           XmlTag lastTag = null;
           int i = 0;
@@ -394,12 +403,14 @@ public class GenericInfoImpl implements DomGenericInfo {
             final XmlTag newTag;
             if (lastTag == null) {
               if (tags.length == 0) {
-                newTag = (XmlTag) tag.add(emptyTag);
-              } else {
-                newTag = (XmlTag) tag.addBefore(emptyTag, tags[0]);
+                newTag = (XmlTag)tag.add(emptyTag);
               }
-            } else {
-              newTag = (XmlTag) tag.addAfter(emptyTag, lastTag);
+              else {
+                newTag = (XmlTag)tag.addBefore(emptyTag, tags[0]);
+              }
+            }
+            else {
+              newTag = (XmlTag)tag.addAfter(emptyTag, lastTag);
             }
             return handler.createCollectionElement(type, newTag);
           }
@@ -417,10 +428,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
     qname = myCollectionChildrenAdditionMethods.get(signature);
     if (qname != null) {
-      return new AddChildInvocation(getTypeGetter(method),
-                                    getIndexGetter(method),
-                                    qname,
-                                    myCollectionChildrenClasses.get(qname));
+      return new AddChildInvocation(getTypeGetter(method), getIndexGetter(method), qname, myCollectionChildrenClasses.get(qname));
     }
 
     throw new UnsupportedOperationException("No implementation for method " + method.toString() + " in class " + myClass);
@@ -573,7 +581,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     final Object o;
     try {
       o = myNameValueGetter.invoke(element);
-      return o == null || o instanceof String ? (String) o : ((GenericValue) o).getStringValue();
+      return o == null || o instanceof String ? (String)o : ((GenericValue)o).getStringValue();
     }
     catch (IllegalAccessException e) {
       LOG.error(e);
@@ -618,14 +626,12 @@ public class GenericInfoImpl implements DomGenericInfo {
     buildMethodMaps();
     final Method[] getterMethods = getFixedChildrenGetterMethods(tagName);
     assert getterMethods.length > 0 : tagName + " " + myClass;
-    return new FixedChildDescriptionImpl(tagName,
-                                         getterMethods[0].getGenericReturnType(),
-                                         getFixedChildrenCount(tagName),
-                                         getterMethods, ContainerUtil.map2Array(getterMethods, Boolean.class, new Function<Method, Boolean>() {
-      public Boolean fun(final Method s) {
-        return isRequired(s);
-      }
-    }));
+    return new FixedChildDescriptionImpl(tagName, getterMethods[0].getGenericReturnType(), getFixedChildrenCount(tagName), getterMethods,
+                                         ContainerUtil.map2Array(getterMethods, Boolean.class, new Function<Method, Boolean>() {
+                                           public Boolean fun(final Method s) {
+                                             return isRequired(s);
+                                           }
+                                         }));
   }
 
   final boolean isRequired(Method method) {
@@ -636,15 +642,11 @@ public class GenericInfoImpl implements DomGenericInfo {
   public DomCollectionChildDescription getCollectionChildDescription(String tagName) {
     buildMethodMaps();
     final Method getter = findGetterMethod(myCollectionChildrenGetterMethods, tagName);
-    return new CollectionChildDescriptionImpl(tagName,
-                                              getCollectionChildrenType(tagName),
-                                              getCollectionAddMethod(tagName),
-                                              getCollectionAddMethod(tagName, Class.class),
-                                              getter,
+    return new CollectionChildDescriptionImpl(tagName, getCollectionChildrenType(tagName), getCollectionAddMethod(tagName),
+                                              getCollectionAddMethod(tagName, Class.class), getter,
                                               getCollectionAddMethod(tagName, int.class),
                                               getCollectionAddMethod(tagName, Class.class, int.class),
-                                              getCollectionAddMethod(tagName, int.class, Class.class),
-                                              isRequired(getter));
+                                              getCollectionAddMethod(tagName, int.class, Class.class), isRequired(getter));
   }
 
   @Nullable
