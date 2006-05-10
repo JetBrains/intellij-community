@@ -83,8 +83,9 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
 
     if (file instanceof XmlFile) {
       // TODO: Hackery. Need an API for language plugin developers to define dirty scope for their changes.
-      XmlFileViewProvider provider = (XmlFileViewProvider) file.getViewProvider();
-      if (provider.getLanguageExtensions().length > 0) {
+      final FileViewProvider provider = file.getViewProvider();
+      if (provider instanceof XmlFileViewProvider &&
+          ((XmlFileViewProvider)provider).getLanguageExtensions().length > 0) {
         myDaemonCodeAnalyzer.getFileStatusMap().markFileDirty(document);
       }
     }
