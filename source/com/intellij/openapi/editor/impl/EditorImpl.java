@@ -48,6 +48,7 @@ import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.datatransfer.*;
+import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
@@ -468,17 +469,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
 //    myBorderEffect.reset();
     try {
-      myEditorComponent.getDropTarget().addDropTargetListener(new DropTargetAdapter() {
-        public void drop(DropTargetDropEvent dtde) {
-        }
+      final DropTarget dropTarget = myEditorComponent.getDropTarget();
+      if (dropTarget != null) { // might be null in headless environment
+        dropTarget.addDropTargetListener(new DropTargetAdapter() {
+          public void drop(DropTargetDropEvent dtde) {
+          }
 
-        public void dragOver(DropTargetDragEvent dtde) {
-          Point location = dtde.getLocation();
+          public void dragOver(DropTargetDragEvent dtde) {
+            Point location = dtde.getLocation();
 
-          moveCaretToScreenPos(location.x, location.y);
-          getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        }
-      });
+            moveCaretToScreenPos(location.x, location.y);
+            getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          }
+        });
+      }
     }
     catch (TooManyListenersException e) {
       LOG.error(e);
