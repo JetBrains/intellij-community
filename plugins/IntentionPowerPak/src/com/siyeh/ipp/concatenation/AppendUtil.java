@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,30 @@
  */
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
 class AppendUtil{
-    private AppendUtil(){
+
+	private AppendUtil(){
         super();
     }
 
-    public static boolean isAppend(PsiMethodCallExpression call){
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        if(methodExpression == null){
-            return false;
-        }
-        @NonNls final String callName = methodExpression.getReferenceName();
+    public static boolean isAppendCall(PsiElement element){
+	    if (!(element instanceof PsiMethodCallExpression)) {
+		    return false;
+	    }
+	    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
+	    final PsiReferenceExpression methodExpression =
+			    methodCallExpression.getMethodExpression();
+	    @NonNls final String callName = methodExpression.getReferenceName();
         if(!"append".equals(callName)){
             return false;
         }
-        final PsiMethod method = call.resolveMethod();
+        final PsiMethod method = methodCallExpression.resolveMethod();
         if(method == null){
             return false;
         }
@@ -45,7 +47,17 @@ class AppendUtil{
             return false;
         }
         final String name = containingClass.getQualifiedName();
-        return "java.lang.StringBuffer".equals(name) ||
-               "java.lang.StringBuilder".equals(name);
+	    if ("java.lang.StringBuffer".equals(name) ||
+	        "java.lang.StringBuilder".equals(name)) {
+		    return true;
+	    }
+	    final PsiManager manager = containingClass.getManager();
+	    final Project project = containingClass.getProject();
+	    final PsiClass appendableClass =
+			    manager.findClass("java.lang.Appendable", GlobalSearchScope.allScope(project));
+	    if (appendableClass == null) {
+		    return false;
+	    }
+	    return containingClass.isInheritor(appendableClass, true);
     }
 }
