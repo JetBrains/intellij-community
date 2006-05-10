@@ -35,7 +35,7 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
   }
 
   public DomNameStrategy getDomNameStrategy(DomElement parent) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomUtil.getRawType(myType));
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomUtil.getRawType(myType), false);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
 

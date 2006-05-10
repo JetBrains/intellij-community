@@ -368,7 +368,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public final DomNameStrategy getNameStrategy() {
     final Class<?> rawType = DomUtil.getRawType(myType);
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(rawType);
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(rawType, isAttribute());
     if (strategy != null) {
       return strategy;
     }
@@ -376,6 +376,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return parent != null ? parent.getNameStrategy() : DomNameStrategy.HYPHEN_STRATEGY;
   }
 
+  protected boolean isAttribute() {
+    return false;
+  }
+  
   @NotNull
   public ElementPresentation getPresentation() {
     return new ElementPresentation() {

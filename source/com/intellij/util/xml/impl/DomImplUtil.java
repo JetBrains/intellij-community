@@ -137,10 +137,21 @@ public class DomImplUtil {
     return setter && (hasTagValueAnnotation(method) || "setValue".equals(method.getName()));
   }
 
-  public static DomNameStrategy getDomNameStrategy(final Class<?> rawType) {
-    final NameStrategy annotation = DomUtil.findAnnotationDFS(rawType, NameStrategy.class);
-    if (annotation != null) {
-      final Class aClass = annotation.value();
+  public static DomNameStrategy getDomNameStrategy(final Class<?> rawType, boolean isAttribute) {
+    Class aClass = null;
+    if (isAttribute) {
+      NameStrategyForAttributes annotation = DomUtil.findAnnotationDFS(rawType, NameStrategyForAttributes.class);
+      if (annotation != null) {
+        aClass = annotation.value();
+      }
+    }
+    if (aClass == null) {
+      NameStrategy annotation = DomUtil.findAnnotationDFS(rawType, NameStrategy.class);
+      if (annotation != null) {
+        aClass = annotation.value();
+      }
+    }
+    if (aClass != null) {
       if (HyphenNameStrategy.class.equals(aClass)) return DomNameStrategy.HYPHEN_STRATEGY;
       if (JavaNameStrategy.class.equals(aClass)) return DomNameStrategy.JAVA_STRATEGY;
       try {

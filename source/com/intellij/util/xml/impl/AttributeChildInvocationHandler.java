@@ -37,6 +37,10 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     return tag;
   }
 
+  protected boolean isAttribute() {
+    return true;
+  }
+
   public final XmlAttribute getXmlElement() {
     final XmlTag tag = getXmlTag();
     return tag == null ? null : tag.getAttribute(getXmlElementName(), null);

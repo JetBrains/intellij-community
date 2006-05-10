@@ -3,10 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.util.xml.JavaMethodSignature;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 
@@ -26,6 +23,12 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     myGetterMethod = JavaMethodSignature.getSignature(getter);
     myRequired = required;
   }
+
+  public DomNameStrategy getDomNameStrategy(DomElement parent) {
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomUtil.getRawType(getType()), true);
+    return strategy == null ? parent.getNameStrategy() : strategy;
+  }
+
 
   public final JavaMethodSignature getGetterMethod() {
     return myGetterMethod;

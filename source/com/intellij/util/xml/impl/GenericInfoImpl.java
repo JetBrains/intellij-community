@@ -130,7 +130,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   @NotNull
   private DomNameStrategy getNameStrategy(boolean isAttribute) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomUtil.getRawType(myClass));
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomUtil.getRawType(myClass), isAttribute);
     if (strategy != null) {
       return strategy;
     }
