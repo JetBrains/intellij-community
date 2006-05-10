@@ -42,9 +42,13 @@ public class ScriptSupportUtil {
         new PsiElementProcessor() {
         public boolean execute(final PsiElement element) {
           if (element instanceof XmlTag) {
-            final XmlElementDescriptor descriptor = ((XmlTag)element).getDescriptor();
-            if (descriptor != null && SCRIPT_TAG.equals(descriptor.getName())) {
-              scriptTags.add((XmlTag)element);
+            final XmlTag tag = (XmlTag)element;
+            
+            if (SCRIPT_TAG.equalsIgnoreCase(tag.getName())) {
+              final XmlElementDescriptor descriptor = tag.getDescriptor();
+              if (descriptor != null && SCRIPT_TAG.equals(descriptor.getName())) {
+                scriptTags.add(tag);
+              }
             }
           }
           return true;
