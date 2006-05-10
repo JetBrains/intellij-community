@@ -44,10 +44,14 @@ public class DeleteDomElement extends BaseDomTreeAction {
   public void update(AnActionEvent e, DomModelTreeView treeView) {
     final SimpleNode selectedNode = treeView.getTree().getSelectedNode();
 
-    final boolean enabled = selectedNode instanceof BaseDomElementNode;
+    boolean enabled = false;
+    if (selectedNode instanceof BaseDomElementNode) {
+      if (((BaseDomElementNode)selectedNode).getDomElement().getXmlElement() != null) {
+        enabled = true;
+      }
+    }
 
     e.getPresentation().setEnabled(enabled);
-    //e.getPresentation().setVisible(enabled);
 
     if (enabled) {
       final ElementPresentation presentation = ((BaseDomElementNode)selectedNode).getDomElement().getPresentation();
