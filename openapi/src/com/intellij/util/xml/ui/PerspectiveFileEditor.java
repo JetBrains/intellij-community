@@ -142,7 +142,9 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   protected DomElement getSelectedDomElementFromTextEditor(final TextEditor textEditor) {
-    final PsiElement psiElement = getPsiFile().findElementAt(textEditor.getEditor().getCaretModel().getOffset());
+    final PsiFile psiFile = getPsiFile();
+    if (psiFile == null) return null;
+    final PsiElement psiElement = psiFile.findElementAt(textEditor.getEditor().getCaretModel().getOffset());
 
     if(psiElement == null) return null;
 

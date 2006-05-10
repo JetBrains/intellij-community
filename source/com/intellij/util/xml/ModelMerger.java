@@ -164,7 +164,7 @@ public class ModelMerger {
     }
 
     protected Object getPrimaryKey(Object implementation) throws IllegalAccessException, InvocationTargetException {
-      if (implementation instanceof GenericValue) return ((GenericValue)implementation).getValue();
+      if (implementation instanceof GenericValue) return Boolean.TRUE; // ((GenericValue)implementation).getValue();
       final Method method = getPrimaryKeyMethod(implementation.getClass());
       if (method == null) return null;
 
@@ -239,9 +239,9 @@ public class ModelMerger {
                                             DomUtil.getRawType(DomImplUtil.extractCollectionElementType(method.getGenericReturnType())));
           }
 
-          if (GenericValue.class.isAssignableFrom(returnType)) {
-            return new MergedGenericValue(method, args);
-          }
+          //if (GenericValue.class.isAssignableFrom(returnType)) {
+          //  return new MergedGenericValue(method, args);
+          //}
 
           if (void.class == returnType) {
             for (final T t : myImplementations) {
@@ -336,92 +336,92 @@ public class ModelMerger {
       return true;
     }
 
-    public class MergedGenericValue extends ReadOnlyGenericValue implements MergedObject<GenericValue> {
-      private final Method myMethod;
-      private final Object[] myArgs;
-
-      public MergedGenericValue(final Method method, final Object[] args) {
-        myMethod = method;
-        myArgs = args;
-      }
-
-      public boolean equals(Object obj) {
-        return obj != null && (obj instanceof MergedObject) &&
-               ((MergedObject)obj).getImplementations().equals(getImplementations());
-      }
-
-      public <V extends GenericValue> V findImplementation(Class<V> clazz) {
-        for (final T t : myImplementations) {
-          try {
-            GenericValue genericValue = (GenericValue)myMethod.invoke(t, myArgs);
-            if (genericValue!=null && clazz.isAssignableFrom(genericValue.getClass())) {
-              return (V)genericValue;
-            }
-          }
-          catch (IllegalAccessException e) {
-            LOG.error(e);
-          }
-          catch (InvocationTargetException e) {
-            LOG.error(e);
-          }
-        }
-        return null;
-      }
-
-      public List<GenericValue> getImplementations() {
-        ArrayList<GenericValue> result = new ArrayList<GenericValue>(myImplementations.length);
-        for (final T t : myImplementations) {
-          try {
-            GenericValue genericValue = (GenericValue)myMethod.invoke(t, myArgs);
-            result.add(genericValue);
-          }
-          catch (IllegalAccessException e) {
-            LOG.error(e);
-          }
-          catch (InvocationTargetException e) {
-            LOG.error(e);
-          }
-        }
-        return result;
-      }
-
-      private GenericValue findGenericValue() {
-        for (final T t : myImplementations) {
-          try {
-            GenericValue genericValue = (GenericValue)myMethod.invoke(t, myArgs);
-            if (genericValue != null) {
-              final Object value = genericValue.getValue();
-              if (value != null) {
-                return genericValue;
-              }
-            }
-          }
-          catch (IllegalAccessException e) {
-            LOG.error(e);
-          }
-          catch (InvocationTargetException e) {
-            final Throwable throwable = e.getTargetException();
-            if (throwable instanceof RuntimeException) {
-              throw (RuntimeException)throwable;
-            }
-            else if (throwable instanceof Error) {
-              throw (Error)throwable;
-            }
-            LOG.error(throwable);
-          }
-        }
-        return null;
-      }
-
-      public Object getValue() {
-        final GenericValue genericValue = findGenericValue();
-        return genericValue != null ? genericValue.getValue() : null;
-      }
-
-      public String getStringValue() {
-        final GenericValue genericValue = findGenericValue();
-        return genericValue != null ? genericValue.getStringValue() : super.getStringValue();
-      }
-    }
+  //  public class MergedGenericValue extends ReadOnlyGenericValue implements MergedObject<GenericValue> {
+  //    private final Method myMethod;
+  //    private final Object[] myArgs;
+  //
+  //    public MergedGenericValue(final Method method, final Object[] args) {
+  //      myMethod = method;
+  //      myArgs = args;
+  //    }
+  //
+  //    public boolean equals(Object obj) {
+  //      return obj != null && (obj instanceof MergedObject) &&
+  //             ((MergedObject)obj).getImplementations().equals(getImplementations());
+  //    }
+  //
+  //    public <V extends GenericValue> V findImplementation(Class<V> clazz) {
+  //      for (final T t : myImplementations) {
+  //        try {
+  //          GenericValue genericValue = (GenericValue)myMethod.invoke(t, myArgs);
+  //          if (genericValue!=null && clazz.isAssignableFrom(genericValue.getClass())) {
+  //            return (V)genericValue;
+  //          }
+  //        }
+  //        catch (IllegalAccessException e) {
+  //          LOG.error(e);
+  //        }
+  //        catch (InvocationTargetException e) {
+  //          LOG.error(e);
+  //        }
+  //      }
+  //      return null;
+  //    }
+  //
+  //    public List<GenericValue> getImplementations() {
+  //      ArrayList<GenericValue> result = new ArrayList<GenericValue>(myImplementations.length);
+  //      for (final T t : myImplementations) {
+  //        try {
+  //          GenericValue genericValue = (GenericValue)myMethod.invoke(t, myArgs);
+  //          result.add(genericValue);
+  //        }
+  //        catch (IllegalAccessException e) {
+  //          LOG.error(e);
+  //        }
+  //        catch (InvocationTargetException e) {
+  //          LOG.error(e);
+  //        }
+  //      }
+  //      return result;
+  //    }
+  //
+  //    private GenericValue findGenericValue() {
+  //      for (final T t : myImplementations) {
+  //        try {
+  //          GenericValue genericValue = (GenericValue)myMethod.invoke(t, myArgs);
+  //          if (genericValue != null) {
+  //            final Object value = genericValue.getValue();
+  //            if (value != null) {
+  //              return genericValue;
+  //            }
+  //          }
+  //        }
+  //        catch (IllegalAccessException e) {
+  //          LOG.error(e);
+  //        }
+  //        catch (InvocationTargetException e) {
+  //          final Throwable throwable = e.getTargetException();
+  //          if (throwable instanceof RuntimeException) {
+  //            throw (RuntimeException)throwable;
+  //          }
+  //          else if (throwable instanceof Error) {
+  //            throw (Error)throwable;
+  //          }
+  //          LOG.error(throwable);
+  //        }
+  //      }
+  //      return null;
+  //    }
+  //
+  //    public Object getValue() {
+  //      final GenericValue genericValue = findGenericValue();
+  //      return genericValue != null ? genericValue.getValue() : null;
+  //    }
+  //
+  //    public String getStringValue() {
+  //      final GenericValue genericValue = findGenericValue();
+  //      return genericValue != null ? genericValue.getStringValue() : super.getStringValue();
+  //    }
+  //  }
   }
 }
