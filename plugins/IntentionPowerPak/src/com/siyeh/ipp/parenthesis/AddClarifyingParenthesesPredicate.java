@@ -1,25 +1,30 @@
-/**
- * (c) 2004 Carp Technologies BV
- * Hengelosestraat 705, 7521PA Enschede
- * Created: Mar 22, 2006, 1:30:36 AM
+/*
+ * Copyright 2003-2006 Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.siyeh.ipp.parenthesis;
 
-import com.siyeh.ipp.base.PsiElementPredicate;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
-/**
- * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
- */
 public class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
 
 	public boolean satisfiedBy(PsiElement element) {
 		if (!(element instanceof PsiBinaryExpression)) {
-			return false;
+			return element instanceof PsiInstanceOfExpression &&
+			       element.getParent()instanceof PsiBinaryExpression;
 		}
 		final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
 		final PsiJavaToken sign = binaryExpression.getOperationSign();
@@ -29,7 +34,11 @@ public class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
 			final PsiBinaryExpression parentBinaryExpression = (PsiBinaryExpression)parent;
 			final PsiJavaToken parentSign = parentBinaryExpression.getOperationSign();
 			final IElementType parentTokenType = parentSign.getTokenType();
-			return !tokenType.equals(parentTokenType);
+			if (!tokenType.equals(parentTokenType)) {
+				return true;
+			}
+		} else if (parent instanceof PsiInstanceOfExpression) {
+			return true;
 		}
 		final PsiExpression lhs = binaryExpression.getLOperand();
 		final PsiExpression rhs = binaryExpression.getROperand();
@@ -40,6 +49,8 @@ public class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
 			if (!tokenType.equals(lhsTokenType)) {
 				return true;
 			}
+		} else if (lhs instanceof PsiInstanceOfExpression) {
+			return true;
 		}
 		if (rhs instanceof PsiBinaryExpression) {
 			final PsiBinaryExpression rhsBinaryExpression = (PsiBinaryExpression)rhs;
@@ -48,6 +59,8 @@ public class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
 			if (!tokenType.equals(rhsTokenType)) {
 				return true;
 			}
+		} else if (rhs instanceof PsiInstanceOfExpression) {
+			return true;
 		}
 		return false;
 	}
