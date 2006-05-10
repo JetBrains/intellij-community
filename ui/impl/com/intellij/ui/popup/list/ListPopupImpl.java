@@ -48,7 +48,7 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
   protected void afterShow() {
     final int defaultIndex = getListStep().getDefaultOptionIndex();
     if (defaultIndex != -1) {
-      myList.setSelectedIndex(defaultIndex);
+      ListScrollingUtil.selectItem(myList, defaultIndex);
     }
     else {
       selectFirstSelectableItem();
