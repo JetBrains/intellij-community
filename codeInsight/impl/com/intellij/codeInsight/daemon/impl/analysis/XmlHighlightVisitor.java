@@ -762,8 +762,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
         if (attributeById == null ||
             !attributeById.isValid() ||
-            attributeById == attribute ||
-            attributeById.getTextOffset() == attribute.getTextOffset() // to overcome noninvalidation problem
+            attributeById == attribute 
            ) {
           refCountHolder.registerAttributeWithId(unquotedValue,attribute);
         } else {
