@@ -135,7 +135,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       return strategy;
     }
     else {
-      return isAttribute ? DomNameStrategy.JAVA_STRATEGY : DomNameStrategy.HYPHEN_STRATEGY;
+      return DomNameStrategy.HYPHEN_STRATEGY;
     }
   }
 
