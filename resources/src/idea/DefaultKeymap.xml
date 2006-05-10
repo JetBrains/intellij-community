@@ -701,7 +701,7 @@
     <action id="ActivateHierarchyToolWindow">
       <keyboard-shortcut first-keystroke="alt 8"/>
     </action>
-    <action id="ActivateFavoritesToolWindow">
+    <action id="ActivateChangesToolWindow">
       <keyboard-shortcut first-keystroke="alt 9"/>
     </action>
     <action id="NewElement">
@@ -979,7 +979,7 @@
     <action id="ActivateHierarchyToolWindow">
       <keyboard-shortcut first-keystroke="meta 8"/>
     </action>
-    <action id="ActivateFavoritesToolWindow">
+    <action id="ActivateChangesToolWindow">
       <keyboard-shortcut first-keystroke="meta 9"/>
     </action>
     <action id="GotoBookmark8">
