@@ -15,6 +15,7 @@ import java.net.Socket;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.ArrayList;
+import java.nio.charset.Charset;
 
 /**
  * @author yole
@@ -31,8 +32,9 @@ public class SnapShotClient {
   public void connect(int port) throws IOException {
     mySocket = new Socket(InetAddress.getLocalHost(), port);
     mySocket.setSoTimeout(2000);
-    myReader = new BufferedReader(new InputStreamReader(mySocket.getInputStream(), "UTF-8"));
-    myWriter = new OutputStreamWriter(mySocket.getOutputStream(), "UTF-8");
+    final Charset utf8Charset = Charset.forName("UTF-8");
+    myReader = new BufferedReader(new InputStreamReader(mySocket.getInputStream(), utf8Charset));
+    myWriter = new OutputStreamWriter(mySocket.getOutputStream(), utf8Charset);
   }
 
   public void dispose() {

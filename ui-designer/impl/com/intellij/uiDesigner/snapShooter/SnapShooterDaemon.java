@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.nio.charset.Charset;
 
 /**
  * @author yole
@@ -61,9 +62,10 @@ public class SnapShooterDaemon implements Runnable {
     try {
       clientSocket = serverSocket.accept();
       System.out.println("SnapShooter connection accepted");
-      InputStreamReader reader = new InputStreamReader(clientSocket.getInputStream(), "UTF-8");
+      final Charset utf8Charset = Charset.forName("UTF-8");
+      InputStreamReader reader = new InputStreamReader(clientSocket.getInputStream(), utf8Charset);
       BufferedReader bufferedReader = new BufferedReader(reader);
-      OutputStreamWriter writer = new OutputStreamWriter(clientSocket.getOutputStream(), "UTF-8");
+      OutputStreamWriter writer = new OutputStreamWriter(clientSocket.getOutputStream(), utf8Charset);
       while(true) {
         String command;
         try {

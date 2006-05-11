@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.nio.charset.Charset;
 
 /**
  * @author yole
@@ -182,6 +183,8 @@ public class CreateSnapShotAction extends AnAction {
                 try {
                   PsiFile formFile = dir.getManager().getElementFactory().createFileFromText(dlg.getFormName() + FORM_EXTENSION, snapshot1);
                   formFile = (PsiFile)dir.add(formFile);
+                  formFile.getVirtualFile().setCharset(Charset.forName("UTF-8"));
+                  formFile.getViewProvider().getDocument().setText(snapshot1);
                   view.selectElement(formFile);
                 }
                 catch (IncorrectOperationException ex) {
