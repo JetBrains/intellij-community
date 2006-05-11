@@ -1,8 +1,8 @@
 package com.intellij.ui;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -327,7 +327,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
     editor.setBackgroundColor(getBackgroundColor(!myIsViewer));
 
-    if (myUseTextFieldPreferredSize) {
+    if (myUseTextFieldPreferredSize && !UIUtil.isUnderQuaquaLookAndFeel()) {
       editor.getComponent().setPreferredSize(new JTextField().getPreferredSize());
     }
 
