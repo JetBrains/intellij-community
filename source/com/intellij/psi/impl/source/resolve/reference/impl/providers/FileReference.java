@@ -69,7 +69,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final Collection<PsiElement> contexts = getContexts();
-    Collection<ResolveResult> result = new ArrayList<ResolveResult>();
+    Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
     for (PsiElement context : contexts) {
       PsiElement resolved = null;
       if (context instanceof WebDirectoryElement) {
@@ -114,7 +114,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
         result.add(new PsiElementResolveResult(resolved));
       }
     }
-    return result.toArray(new ResolveResult[result.size()]);
+    return result.size() > 0? result.toArray(new ResolveResult[result.size()]): ResolveResult.EMPTY_ARRAY;
   }
 
   public Object[] getVariants(){
