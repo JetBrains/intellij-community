@@ -378,6 +378,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                   }
 
                   public void processUnversionedFile(VirtualFile file) {
+                    if (file == null) return;
                     if (myDisposed) throw new DisposedException();
                     if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                       unversionedHolder.addFile(file);
