@@ -133,7 +133,7 @@ public class WrongPackageStatementInspection extends LocalInspectionTool {
       if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
 
       //hack. Need a way to check applicability of the fix
-      if (myStatement != null && myStatement.isValid()) return;
+      if (myStatement != null && !myStatement.isValid()) return;
 
       try {
         PsiElementFactory factory = myFile.getManager().getElementFactory();
