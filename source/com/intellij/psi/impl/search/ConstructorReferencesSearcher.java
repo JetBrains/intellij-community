@@ -19,7 +19,7 @@ public class ConstructorReferencesSearcher implements QueryExecutor<PsiReference
     final PsiElement elt = p.getElementToSearch();
     if (elt instanceof PsiMethod && ((PsiMethod)elt).isConstructor()) {
       return new ConstructorReferencesSearchHelper(PsiManager.getInstance(elt.getProject()))
-        .processConstructorReferences(consumer, (PsiMethod)p.getElementToSearch(), p.getScope(), p.isIgnoreAcccessScope(), true);
+        .processConstructorReferences(consumer, (PsiMethod)p.getElementToSearch(), p.getScope(), p.isIgnoreAccessScope(), true);
     }
     return true;
   }

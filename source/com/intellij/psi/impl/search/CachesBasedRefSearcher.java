@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
@@ -31,7 +30,7 @@ import java.util.Set;
 public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
-    boolean ignoreAccessScope = p.isIgnoreAcccessScope();
+    boolean ignoreAccessScope = p.isIgnoreAccessScope();
     SearchScope originalScope = p.getScope();
 
     String text;

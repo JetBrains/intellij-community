@@ -21,12 +21,12 @@ public class ReferencesSearch extends QueryFactory<PsiReference, ReferencesSearc
   public static class SearchParameters {
     private final PsiElement myElementToSearch;
     private final SearchScope myScope;
-    private final boolean myIgnoreAcccessScope;
+    private final boolean myIgnoreAccessScope;
 
-    public SearchParameters(final PsiElement elementToSearch, final SearchScope scope, final boolean ignoreAcccessScope) {
+    public SearchParameters(final PsiElement elementToSearch, final SearchScope scope, final boolean ignoreAccessScope) {
       myElementToSearch = elementToSearch;
       myScope = scope;
-      myIgnoreAcccessScope = ignoreAcccessScope;
+      myIgnoreAccessScope = ignoreAccessScope;
     }
 
     public PsiElement getElementToSearch() {
@@ -37,8 +37,8 @@ public class ReferencesSearch extends QueryFactory<PsiReference, ReferencesSearc
       return myScope;
     }
 
-    public boolean isIgnoreAcccessScope() {
-      return myIgnoreAcccessScope;
+    public boolean isIgnoreAccessScope() {
+      return myIgnoreAccessScope;
     }
   }
 
