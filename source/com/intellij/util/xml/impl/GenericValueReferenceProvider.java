@@ -91,10 +91,11 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
         }
       }};
     }
-    if (!String.class.isAssignableFrom(parameter)) {
-      return new PsiReference[] {new GenericDomValueReference(this, domElement)};
+    if (String.class.isAssignableFrom(parameter)) {
+      return null;
     }
-    return null;
+
+    return new PsiReference[] {new GenericDomValueReference(this, domElement)};
   }
 
 
