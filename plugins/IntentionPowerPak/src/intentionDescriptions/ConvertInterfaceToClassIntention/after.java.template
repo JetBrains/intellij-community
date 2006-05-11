@@ -1,0 +1,7 @@
+public abstract class X {
+  public abstract void f();
+}
+class Y extends X {
+  public void f() {
+  }
+}
