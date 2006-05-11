@@ -38,12 +38,10 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       if (!UIFormUtil.processReferencesInUIForms(consumer, (PsiField)refElement, scope)) return false;
     }
     else if (refElement instanceof Property) {
-      //no need to do anything
-      //if (!UIFormUtil.processReferencesInUIForms(consumer, (Property)refElement, scope)) return false;
+      if (!UIFormUtil.processReferencesInUIForms(consumer, (Property)refElement, scope)) return false;
     }
     else if (refElement instanceof PropertiesFile) {
-      //no need to do anything
-      //if (!UIFormUtil.processReferencesInUIForms(consumer, (PropertiesFile)refElement, scope)) return false;
+      if (!UIFormUtil.processReferencesInUIForms(consumer, (PropertiesFile)refElement, scope)) return false;
     }
 
     return true;

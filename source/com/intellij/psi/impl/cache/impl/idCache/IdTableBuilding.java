@@ -25,19 +25,17 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.IndexPattern;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.lw.IProperty;
-import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.TIntIntHashMap;
@@ -240,16 +238,6 @@ public class IdTableBuilding {
                                     final String binding = iComponent.getBinding();
                                     if (binding != null) {
                                       IdCacheUtil.addOccurrence(wordsTable, binding, UsageSearchContext.IN_FOREIGN_LANGUAGES);
-                                    }
-                                    final IProperty[] properties = iComponent.getModifiedProperties();
-                                    for (IProperty property : properties) {
-                                      final Object value = property.getPropertyValue(iComponent);
-                                      if (value instanceof StringDescriptor) {
-                                        final String key = ((StringDescriptor)value).getKey();
-                                        if (key != null) {
-                                          IdCacheUtil.addOccurrence(wordsTable, key, UsageSearchContext.IN_FOREIGN_LANGUAGES);
-                                        }
-                                      }
                                     }
                                     return true;
                                   }
