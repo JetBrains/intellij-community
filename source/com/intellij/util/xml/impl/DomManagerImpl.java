@@ -36,8 +36,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -394,74 +392,4 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     myFileLoaders.remove(consumer);
   }
 
-  private static class StableInvocationHandler<T extends DomElement> implements InvocationHandler, StableElement {
-    private T myCachedValue;
-    private final Factory<T> myProvider;
-
-    public StableInvocationHandler(final T initial, final Factory<T> provider) {
-      myProvider = provider;
-      myCachedValue = initial;
-    }
-
-    public final Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-      if (StableElement.class.equals(method.getDeclaringClass())) {
-        try {
-          return method.invoke(this, args);
-        }
-        catch (InvocationTargetException e) {
-          throw e.getCause();
-        }
-      }
-
-      if (isNotValid(myCachedValue)) {
-        if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
-          return null;
-        }
-
-        myCachedValue = myProvider.create();
-        if (isNotValid(myCachedValue)) {
-          if ("isValid".equals(method.getName())) {
-            return Boolean.FALSE;
-          }
-          throw new AssertionError("Calling methods on invalid value");
-        }
-      }
-
-      try {
-        return method.invoke(myCachedValue, args);
-      }
-      catch (InvocationTargetException e) {
-        throw e.getCause();
-      }
-    }
-
-    public final void revalidate() {
-      final T t = myProvider.create();
-      if (!isNotValid(t) && !t.equals(myCachedValue)) {
-        doInvalidate();
-        myCachedValue = t;
-      }
-    }
-
-    private void doInvalidate() {
-      getDomInvocationHandler(myCachedValue).detach(true);
-    }
-
-    public final void invalidate() {
-      if (!isNotValid(myCachedValue)) {
-        doInvalidate();
-      }
-    }
-
-    public final DomElement getWrappedElement() {
-      if (isNotValid(myCachedValue)) {
-        myCachedValue = myProvider.create();
-      }
-      return myCachedValue;
-    }
-
-    private boolean isNotValid(final T t) {
-      return t == null || !t.isValid();
-    }
-  }
 }
