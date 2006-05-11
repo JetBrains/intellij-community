@@ -3,12 +3,15 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.openapi.util.Factory;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
@@ -24,6 +27,20 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
 
   public String getXmlElementName() {
     return myTagName;
+  }
+
+  public List<? extends DomElement> getStableValues(DomElement parent) {
+    final List<? extends DomElement> list = getValues(parent);
+    final ArrayList<DomElement> result = new ArrayList<DomElement>(list.size());
+    for (int i = 0; i < list.size(); i++) {
+      final int i1 = i;
+      result.add(parent.getManager().createStableValue(new Factory<DomElement>() {
+        public DomElement create() {
+          return list.get(i1);
+        }
+      }));
+    }
+    return result;
   }
 
   public Type getType() {

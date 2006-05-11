@@ -69,6 +69,10 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     return getElement();
   }
 
+  protected boolean shouldUpdate() {
+    return true;
+  }
+
   public final boolean update() {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {

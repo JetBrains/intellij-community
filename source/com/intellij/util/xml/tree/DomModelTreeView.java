@@ -35,13 +35,13 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
   @NonNls public static String DOM_MODEL_TREE_VIEW_POPUP = "DOM_MODEL_TREE_VIEW_POPUP";
 
   private final SimpleTree myTree;
-  private final SimpleTreeBuilder myBuilder;
+  private final LazyTreeBuilder myBuilder;
   private DomManager myDomManager;
   private DomEventListener myDomEventListener;
-  private DomElement myRootElement;
+  @Nullable private DomElement myRootElement;
 
   public DomModelTreeView(Project project) {
-    this(null, true, project);
+    this(null, DomManager.getDomManager(project), false);
   }
 
   public DomModelTreeView(DomElement rootElement) {
@@ -49,12 +49,11 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
   }
 
   public DomModelTreeView(DomElement rootElement, boolean isRootVisible) {
-    this(rootElement, isRootVisible, null);
-
+    this(rootElement, rootElement.getManager(), isRootVisible);
   }
 
-  protected DomModelTreeView(DomElement rootElement, boolean isRootVisible, Project project) {
-
+  private DomModelTreeView(DomElement rootElement, DomManager manager, boolean isRootVisible) {
+    myDomManager = manager;
     myRootElement = rootElement;
     myTree = new SimpleTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myTree.setRootVisible(isRootVisible);
@@ -63,8 +62,8 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    final SimpleTreeStructure treeStructure = rootElement != null ? getTreeStructure(rootElement) : getTreeStructure();
-    myBuilder = new SimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE) {
+    final SimpleTreeStructure treeStructure = rootElement != null ? new DomModelTreeStructure(rootElement) : getTreeStructure();
+    myBuilder = new LazyTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE) {
 
       @NotNull
       protected ProgressIndicator createProgressIndicator() {
@@ -110,13 +109,12 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
           }
           else {
 */
-          myBuilder.updateFromRoot();
+          myBuilder.queueUpdate();
 //          }
         }
       }
     };
 
-    myDomManager = rootElement == null ? DomManager.getDomManager(project) : rootElement.getManager();
     myDomManager.addDomEventListener(myDomEventListener);
 
     myTree.setPopupGroup(getPopupActions(), DOM_MODEL_TREE_VIEW_POPUP);
@@ -126,8 +124,8 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     return myRootElement;
   }
 
-  protected SimpleTreeStructure getTreeStructure(final DomElement rootDomElement) {
-    return new DomModelTreeStructure(rootDomElement);
+  protected final Project getProject() {
+    return myDomManager.getProject();
   }
 
   protected SimpleTreeStructure getTreeStructure() {
@@ -200,7 +198,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     return parentsNodes;
   }
 
-  private boolean isParent(final DomElement potentialParent, final DomElement domElement) {
+  private static boolean isParent(final DomElement potentialParent, final DomElement domElement) {
     DomElement currParent = domElement;
     while (currParent != null) {
       if (currParent.equals(potentialParent)) return true;

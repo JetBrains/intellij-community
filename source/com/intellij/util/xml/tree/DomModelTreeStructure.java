@@ -1,7 +1,7 @@
 package com.intellij.util.xml.tree;
 
-import com.intellij.util.xml.DomElement;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import com.intellij.util.xml.DomElement;
 
 public class DomModelTreeStructure extends SimpleTreeStructure {
   private DomElement myDomElement;

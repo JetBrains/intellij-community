@@ -148,10 +148,6 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     return myValue;
   }
 
-  public final Project getProject() {
-    return myProject;
-  }
-
   public final void setValue(T value) {
     myValue = value;
   }

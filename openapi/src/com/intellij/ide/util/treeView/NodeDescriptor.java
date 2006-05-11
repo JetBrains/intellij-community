@@ -70,6 +70,10 @@ public abstract class NodeDescriptor<E> {
     return myColor;
   }
 
+  public final Project getProject() {
+    return myProject;
+  }
+
   public boolean expandOnDoubleClick() {
     return true;
   }
