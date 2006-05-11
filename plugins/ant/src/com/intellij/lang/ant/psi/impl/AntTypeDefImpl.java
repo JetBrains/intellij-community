@@ -1,10 +1,12 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTypeDef;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.apache.tools.ant.Task;
@@ -54,7 +56,10 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       myNewDefinition = null;
     } else {
       myNewDefinition = AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
-      getAntFile().registerCustomType(myNewDefinition);
+      final AntStructuredElement se = PsiTreeUtil.getParentOfType(this, AntStructuredElementImpl.class);
+      if (se != null) {
+        se.registerCustomType(myNewDefinition);
+      }
     }
   }
 

@@ -1,0 +1,8 @@
+<project name="testProject" default="test">
+<target name="test">
+  <path id="id-after" />
+  <rmic>
+    <classpath refid="id-after"/>
+  </rmic>
+</target>
+</project>

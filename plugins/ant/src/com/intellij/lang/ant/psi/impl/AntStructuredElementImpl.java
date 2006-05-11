@@ -102,6 +102,17 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return myDefinition;
   }
 
+  public void registerCustomType(final AntTypeDefinition def) {
+    if (myDefinition != null) {
+      if (!myDefinitionCloned) {
+        myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl) myDefinition);
+        myDefinitionCloned = true;
+      }
+      myDefinition.registerNestedType(def.getTypeId(), def.getClassName());
+    }
+    getAntFile().registerCustomType(def);
+  }
+
   public void registerRefId(final String id, AntElement element) {
     if (myReferencedElements == null) {
       myReferencedElements = new HashMap<String, AntElement>();
@@ -171,6 +182,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
             AntElementFactory.createAntElement(this, (XmlElement) element);
         if (antElement != null) {
           children.add(antElement);
+          if (antElement instanceof AntStructuredElement) {
+            antElement.getChildren();
+          }
         }
       }
     }

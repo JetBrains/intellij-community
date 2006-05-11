@@ -1,0 +1,10 @@
+<project name="testProject" default="test">
+  <target name="test">
+    <antcall target="a">
+      <param name="<ren>p" value="v"/>
+    </antcall>
+  </target>
+  <target name="a">
+    <echo message="${p}"/>
+  </target>
+</project>

@@ -1,0 +1,3 @@
+<project name="testProject" default="t">
+  <target name="<ren>t"/>
+</project>
