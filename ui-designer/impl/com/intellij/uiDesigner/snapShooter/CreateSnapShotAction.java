@@ -25,6 +25,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -65,7 +67,18 @@ public class CreateSnapShotAction extends AnAction {
   public void update(AnActionEvent e) {
     final Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
     final IdeView view = (IdeView)e.getDataContext().getData(DataConstants.IDE_VIEW);
-    e.getPresentation().setVisible(project != null && view != null);
+    e.getPresentation().setVisible(project != null && view != null && hasDirectoryInPackage(project, view));
+  }
+
+  private static boolean hasDirectoryInPackage(final Project project, final IdeView view) {
+    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    PsiDirectory[] dirs = view.getDirectories();
+    for (PsiDirectory dir : dirs) {
+      if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void actionPerformed(AnActionEvent e) {
