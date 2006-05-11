@@ -261,7 +261,6 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     return layoutInfo.columnOrigins;
   }
 
-
   @Override public int getGridRowAt(RadContainer container, int y) {
     final FormLayout.LayoutInfo layoutInfo = getFormLayout(container).getLayoutInfo(container.getDelegee());
     return findCell(layoutInfo.rowOrigins, y);
@@ -293,6 +292,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new InsertBeforeAction());
     group.add(new InsertAfterAction());
+    group.add(new SplitAction());
     group.add(new DeleteAction());
     group.add(new GroupRowsColumnsAction());
     group.add(new UngroupRowsColumnsAction());

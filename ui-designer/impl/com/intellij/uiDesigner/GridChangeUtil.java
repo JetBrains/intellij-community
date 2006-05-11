@@ -82,24 +82,16 @@ public final class GridChangeUtil {
   private static void splitCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
     check(grid, isRow, cellIndex);
 
-    final GridLayoutManager oldLayout = (GridLayoutManager)grid.getLayout();
-
-    final GridLayoutManager newLayout = copyLayout(oldLayout, isRow ? 1 : 0, isRow ? 0 : 1);
+    grid.getLayoutManager().insertGridCells(grid, cellIndex, isRow, false, false);
 
     for (int i=grid.getComponentCount() - 1; i >= 0; i--){
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
 
-      if (constraints.getCell(isRow) > cellIndex) {
-        // component starts after the cell being splitted - move it
-        addToCell(constraints, isRow, 1);
-      }
-      else if (isCellInsideComponent(constraints, isRow, cellIndex)) {
+      if (constraints.getCell(isRow) + constraints.getSpan(isRow) - 1 == cellIndex) {
         // component belongs to the cell being resized - increment component's span
         addToSpan(constraints, isRow, 1);
       }
     }
-
-    grid.setLayout(newLayout);
   }
 
   /**
