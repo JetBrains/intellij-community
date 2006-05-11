@@ -13,11 +13,15 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The base class for actions which create new file elements.
@@ -100,12 +104,12 @@ public abstract class CreateElementActionBase extends AnAction {
   protected class MyInputValidator implements InputValidator {
     private final Project myProject;
     private final PsiDirectory myDirectory;
-    private PsiElement[] myCreatedElements;
+    private SmartPsiElementPointer[] myCreatedElements;
 
     public MyInputValidator(final Project project, final PsiDirectory directory) {
       myProject = project;
       myDirectory = directory;
-      myCreatedElements = PsiElement.EMPTY_ARRAY;
+      myCreatedElements = new SmartPsiElementPointer[0];
     }
 
     public boolean checkInput(final String inputString) {
@@ -143,7 +147,12 @@ public abstract class CreateElementActionBase extends AnAction {
               LvcsAction action = LvcsAction.EMPTY;
               try {
                 action = lvcs.startAction(getActionName(myDirectory, inputString), "", false);
-                myCreatedElements = create(inputString, myDirectory);
+                PsiElement[] psiElements = create(inputString, myDirectory);
+                myCreatedElements = new SmartPsiElementPointer[psiElements.length];
+                SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
+                for (int i = 0; i < myCreatedElements.length; i++) {
+                  myCreatedElements[i] = manager.createSmartPsiElementPointer(psiElements[i]);
+                }
               }
               catch (Exception ex) {
                 exception[0] = ex;
@@ -172,7 +181,12 @@ public abstract class CreateElementActionBase extends AnAction {
     }
 
     public final PsiElement[] getCreatedElements() {
-      return myCreatedElements;
+      List<PsiElement> elts = new ArrayList<PsiElement>();
+      for (SmartPsiElementPointer pointer : myCreatedElements) {
+        final PsiElement elt = pointer.getElement();
+        if (elt != null) elts.add(elt);
+      }
+      return elts.toArray(new PsiElement[elts.size()]);
     }
   }
 }
