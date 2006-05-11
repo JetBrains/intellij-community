@@ -6,8 +6,8 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import org.jetbrains.annotations.NonNls;
@@ -73,9 +73,11 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   }
 
   public void registerSource(DnDSource source, JComponent component) {
-    component.putClientProperty(SOURCE_KEY, source);
-    final DragSource defaultDragSource = DragSource.getDefaultDragSource();
-    defaultDragSource.createDefaultDragGestureRecognizer(component, DnDConstants.ACTION_COPY_OR_MOVE, myDragGestureListener);
+    if (!GraphicsEnvironment.isHeadless()) {
+      component.putClientProperty(SOURCE_KEY, source);
+      final DragSource defaultDragSource = DragSource.getDefaultDragSource();
+      defaultDragSource.createDefaultDragGestureRecognizer(component, DnDConstants.ACTION_COPY_OR_MOVE, myDragGestureListener);
+    }
   }
 
   public void unregisterSource(DnDSource source, JComponent component) {
@@ -83,8 +85,10 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   }
 
   public void registerTarget(DnDTarget target, JComponent component) {
-    component.putClientProperty(TARGET_KEY, target);
-    new DropTarget(component, DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
+    if (!GraphicsEnvironment.isHeadless()) {
+      component.putClientProperty(TARGET_KEY, target);
+      new DropTarget(component, DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
+    }
   }
 
   public void unregisterTarget(DnDTarget target, JComponent component) {
