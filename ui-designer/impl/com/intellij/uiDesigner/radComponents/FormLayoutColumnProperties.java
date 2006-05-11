@@ -47,6 +47,7 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
   private int myIndex;
   private boolean myIsRow;
   private List<ChangeListener> myListeners = new ArrayList<ChangeListener>();
+  private boolean myShowing = false;
   private boolean mySaving = false;
 
   public FormLayoutColumnProperties() {
@@ -103,23 +104,29 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
   public void showProperties(final RadContainer container, final boolean row, final int[] selectedIndices) {
     if (mySaving) return;
     if (selectedIndices.length == 1) {
-      myLayout = (FormLayout) container.getLayout();
-      myIndex = selectedIndices [0] + 1;
-      myIsRow = row;
+      myShowing = true;
+      try {
+        myLayout = (FormLayout) container.getLayout();
+        myIndex = selectedIndices [0] + 1;
+        myIsRow = row;
 
-      myLeftRadioButton.setText(row ? "Top" : "Left");
-      myRightRadioButton.setText(row ? "Bottom" : "Right");
+        myLeftRadioButton.setText(row ? "Top" : "Left");
+        myRightRadioButton.setText(row ? "Bottom" : "Right");
 
-      FormSpec formSpec = row ? myLayout.getRowSpec(myIndex) : myLayout.getColumnSpec(myIndex);
-      showAlignment(formSpec.getDefaultAlignment());
-      showSize(formSpec.getSize(), row);
-      if (formSpec.getResizeWeight() < 0.01) {
-        myGrowCheckBox.setSelected(false);
-        myGrowSpinner.setValue(1.0);
+        FormSpec formSpec = row ? myLayout.getRowSpec(myIndex) : myLayout.getColumnSpec(myIndex);
+        showAlignment(formSpec.getDefaultAlignment());
+        showSize(formSpec.getSize(), row);
+        if (formSpec.getResizeWeight() < 0.01) {
+          myGrowCheckBox.setSelected(false);
+          myGrowSpinner.setValue(1.0);
+        }
+        else {
+          myGrowCheckBox.setSelected(true);
+          myGrowSpinner.setValue(formSpec.getResizeWeight());
+        }
       }
-      else {
-        myGrowCheckBox.setSelected(true);
-        myGrowSpinner.setValue(formSpec.getResizeWeight());
+      finally {
+        myShowing = false;
       }
     }
   }
@@ -201,7 +208,7 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
   }
 
   private void updateSpec() {
-    if (myLayout == null) return;
+    if (myLayout == null || myShowing) return;
 
     mySaving = true;
     try {

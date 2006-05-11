@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -50,12 +52,19 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     myEditor = editor;
     myIsRow = isRow;
     mySelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    mySelectionModel.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        repaint();
+        myEditor.fireSelectedComponentChanged();
+      }
+    });
     setBackground(Color.LIGHT_GRAY);
     editor.addComponentSelectionListener(this);
 
     final MyMouseListener listener = new MyMouseListener();
     addMouseListener(listener);
     addMouseMotionListener(listener);
+    addKeyListener(new MyKeyListener());
     setFocusable(true);
 
     DnDManager.getInstance(editor.getProject()).registerSource(new MyDnDSource(), this);
@@ -235,7 +244,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     if (container == null) {
       return new int[0];
     }
-    int size = myIsRow ? container.getGridRowCount() : container.getGridColumnCount();
+    int size = getCellCount();
     for(int i=0; i<size; i++) {
       if (mySelectionModel.isSelectedIndex(i)) {
         selection.add(i);
@@ -252,6 +261,12 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       result [i] = selection.get(i).intValue();
     }
     return result;
+  }
+
+  private int getCellCount() {
+    final RadContainer gridContainer = getSelectedGridContainer();
+    assert gridContainer != null;
+    return myIsRow ? gridContainer.getGridRowCount() : gridContainer.getGridColumnCount();
   }
 
   private class MyMouseListener extends MouseAdapter implements MouseMotionListener {
@@ -283,8 +298,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       else {
         mySelectionModel.setSelectionInterval(cell, cell);
       }
-      repaint();
-      myEditor.fireSelectedComponentChanged();
     }
 
     @Override public void mouseReleased(MouseEvent e) {
@@ -530,6 +543,29 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     public MyDragBean(final boolean row, final int[] cells) {
       isRow = row;
       this.cells = cells;
+    }
+  }
+
+  private class MyKeyListener extends KeyAdapter {
+    @Override public void keyPressed(KeyEvent e) {
+      int cellCount = getCellCount();
+      int leadIndex = mySelectionModel.getLeadSelectionIndex();
+      if (e.getKeyCode() == KeyEvent.VK_HOME) {
+        mySelectionModel.setSelectionInterval(0, 0);
+      }
+      else if (e.getKeyCode() == KeyEvent.VK_END) {
+        mySelectionModel.setSelectionInterval(cellCount-1, cellCount-1);
+      }
+      else if (e.getKeyCode() == (myIsRow ? KeyEvent.VK_UP : KeyEvent.VK_LEFT)) {
+        if (leadIndex > 0) {
+          mySelectionModel.setSelectionInterval(leadIndex-1, leadIndex-1);
+        }
+      }
+      else if (e.getKeyCode() == (myIsRow ? KeyEvent.VK_DOWN : KeyEvent.VK_RIGHT)) {
+        if (leadIndex < cellCount-1) {
+          mySelectionModel.setSelectionInterval(leadIndex+1, leadIndex+1);
+        }
+      }
     }
   }
 }
