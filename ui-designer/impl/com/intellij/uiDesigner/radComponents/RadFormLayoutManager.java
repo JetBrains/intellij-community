@@ -524,6 +524,8 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
                                    final LayoutManager layout) {
     ColumnSpec[] colSpecs;
     RowSpec[] rowSpecs;
+    int[][] rowGroups;
+    int[][] columnGroups;
     try {
       Method method = layout.getClass().getMethod("getRowCount", ArrayUtil.EMPTY_CLASS_ARRAY);
       int rowCount = ((Integer)method.invoke(layout, ArrayUtil.EMPTY_OBJECT_ARRAY)).intValue();
@@ -541,12 +543,21 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       for (int i = 0; i < columnCount; i++) {
         colSpecs[i] = (ColumnSpec)createSerializedCopy(method.invoke(layout, i + 1));
       }
+
+      method = layout.getClass().getMethod("getRowGroups", ArrayUtil.EMPTY_CLASS_ARRAY);
+      rowGroups = (int[][])method.invoke(layout);
+
+      method = layout.getClass().getMethod("getColumnGroups", ArrayUtil.EMPTY_CLASS_ARRAY);
+      columnGroups = (int[][])method.invoke(layout);
     }
     catch (Exception ex) {
       throw new RuntimeException(ex);
     }
 
-    container.setLayout(new FormLayout(colSpecs, rowSpecs));
+    final FormLayout formLayout = new FormLayout(colSpecs, rowSpecs);
+    formLayout.setRowGroups(rowGroups);
+    formLayout.setColumnGroups(columnGroups);
+    container.setLayout(formLayout);
   }
 
   private static Object createSerializedCopy(final Object original) {
