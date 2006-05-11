@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * @author peter
  */
-class ConverterManagerImpl {
+class ConverterManagerImpl implements ConverterManager {
   private final FactoryMap<Class<? extends Converter>,Converter> myConverterInstances = new FactoryMap<Class<? extends Converter>, Converter>() {
     @NotNull
     protected Converter create(final Class<? extends Converter> key) {
@@ -44,8 +44,13 @@ class ConverterManagerImpl {
     mySimpleConverters.put(PsiType.class, Converter.PSI_TYPE_CONVERTER);
   }
 
+  public void addConverter(Class clazz, Converter converter) {
+    mySimpleConverters.put(clazz, converter);
+  }
+
+
   @NotNull
-  final Converter getConverter(Method method, Class aClass, Converter genericConverter) throws IllegalAccessException, InstantiationException {
+  public final Converter getConverter(Method method, Class aClass, Converter genericConverter) throws IllegalAccessException, InstantiationException {
     final Resolve resolveAnnotation = DomUtil.findAnnotationDFS(method, Resolve.class);
     if (resolveAnnotation != null) {
       return DomResolveConverter.createConverter(resolveAnnotation.value());

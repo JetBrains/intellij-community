@@ -66,4 +66,7 @@ public abstract class DomManager implements ProjectComponent {
 
   public abstract void registerFileLoader(Consumer<XmlFile> consumer);
   public abstract void unregisterFileLoader(Consumer<XmlFile> consumer);
+
+  public abstract ConverterManager getConverterManager();
+
 }

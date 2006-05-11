@@ -107,7 +107,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     myListeners.remove(listener);
   }
 
-  public final ConverterManagerImpl getConverterManager() {
+  public final ConverterManager getConverterManager() {
     return myConverterManager;
   }
 
