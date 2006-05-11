@@ -4,13 +4,15 @@
  */
 package com.intellij.ui.treeStructure;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
+
 import java.util.Comparator;
 
-public class WeightBasedComparator implements Comparator {
+public class WeightBasedComparator implements Comparator<NodeDescriptor> {
 
   public static final WeightBasedComparator INSTANCE = new WeightBasedComparator();
 
-  public int compare(Object o1, Object o2) {
+  public int compare(NodeDescriptor o1, NodeDescriptor o2) {
     SimpleNode first = (SimpleNode) o1;
     SimpleNode second = (SimpleNode) o2;
 

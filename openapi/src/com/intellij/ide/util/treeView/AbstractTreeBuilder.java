@@ -40,14 +40,15 @@ public abstract class AbstractTreeBuilder {
       if (n1 instanceof LoadingNode || n2 instanceof LoadingNode) return 0;
       NodeDescriptor nodeDescriptor1 = (NodeDescriptor)((DefaultMutableTreeNode)n1).getUserObject();
       NodeDescriptor nodeDescriptor2 = (NodeDescriptor)((DefaultMutableTreeNode)n2).getUserObject();
-      return myNodeDescriptorComparator != null ? myNodeDescriptorComparator.compare(nodeDescriptor1, nodeDescriptor2) :
-             nodeDescriptor1.getIndex() - nodeDescriptor2.getIndex();
+      return myNodeDescriptorComparator != null
+             ? myNodeDescriptorComparator.compare(nodeDescriptor1, nodeDescriptor2)
+             : nodeDescriptor1.getIndex() - nodeDescriptor2.getIndex();
     }
   };
 
   protected final DefaultMutableTreeNode myRootNode;
 
-  private final HashMap<Object,Object> myElementToNodeMap = new HashMap<Object, Object>();
+  private final HashMap<Object, Object> myElementToNodeMap = new HashMap<Object, Object>();
   protected final HashSet<DefaultMutableTreeNode> myUnbuiltNodes = new HashSet<DefaultMutableTreeNode>();
   private final TreeExpansionListener myExpansionListener;
 
@@ -60,8 +61,10 @@ public abstract class AbstractTreeBuilder {
   // used for searching only
   private final AbstractTreeNodeWrapper TREE_NODE_WRAPPER = new AbstractTreeNodeWrapper(null);
 
-  public AbstractTreeBuilder(JTree tree, DefaultTreeModel treeModel,
-                             AbstractTreeStructure treeStructure, Comparator<NodeDescriptor> comparator) {
+  public AbstractTreeBuilder(JTree tree,
+                             DefaultTreeModel treeModel,
+                             AbstractTreeStructure treeStructure,
+                             Comparator<NodeDescriptor> comparator) {
     myTree = tree;
     myTreeModel = treeModel;
     myRootNode = (DefaultMutableTreeNode)treeModel.getRoot();
@@ -132,7 +135,9 @@ public abstract class AbstractTreeBuilder {
     return myTree;
   }
 
-  public final @Nullable DefaultMutableTreeNode getNodeForElement(Object element) {
+  public final
+  @Nullable
+  DefaultMutableTreeNode getNodeForElement(Object element) {
     //DefaultMutableTreeNode node = (DefaultMutableTreeNode)myElementToNodeMap.get(element);
     DefaultMutableTreeNode node = getFirstNode(element);
     if (node != null) {
@@ -235,7 +240,7 @@ public abstract class AbstractTreeBuilder {
   }
 
   public final void updateSubtree(DefaultMutableTreeNode node) {
-    if (!(node.getUserObject() instanceof NodeDescriptor)) return;
+    if (!(node.getUserObject()instanceof NodeDescriptor)) return;
     final TreeState treeState = TreeState.createOn(myTree, node);
     updateNode(node);
     updateNodeChildren(node);
@@ -243,16 +248,14 @@ public abstract class AbstractTreeBuilder {
   }
 
   protected void updateNode(DefaultMutableTreeNode node) {
-    if (!(node.getUserObject() instanceof NodeDescriptor)) return;
+    if (!(node.getUserObject()instanceof NodeDescriptor)) return;
     NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
     Object prevElement = descriptor.getElement();
     if (prevElement == null) return;
     boolean changes = descriptor.update();
     if (descriptor.getElement() == null) {
-      LOG.assertTrue(false,
-                     "element == null, updateSubtree should be invoked for parent! builder=" + this +
-                     ", prevElement = " + prevElement +
-                     ", node = " + node);
+      LOG.assertTrue(false, "element == null, updateSubtree should be invoked for parent! builder=" + this + ", prevElement = " +
+                            prevElement + ", node = " + node);
     }
     if (changes) {
       updateNodeImageAndPosition(node);
@@ -308,7 +311,7 @@ public abstract class AbstractTreeBuilder {
     Object[] children = myTreeStructure.getChildElements(descriptor.getElement());
     if (children.length == 0) {
       for (int i = 0; i < node.getChildCount(); i++) {
-        if (node.getChildAt(i) instanceof LoadingNode) {
+        if (node.getChildAt(i)instanceof LoadingNode) {
           myTreeModel.removeNodeFromParent((MutableTreeNode)node.getChildAt(i));
           break;
         }
@@ -335,7 +338,7 @@ public abstract class AbstractTreeBuilder {
   }
 
   private Map<Object, Integer> collectElementToIndexMap(final NodeDescriptor descriptor) {
-    Map<Object,Integer> elementToIndexMap = new LinkedHashMap<Object, Integer>();
+    Map<Object, Integer> elementToIndexMap = new LinkedHashMap<Object, Integer>();
     Object[] children = myTreeStructure.getChildElements(descriptor.getElement());
     int index = 0;
     for (Object child : children) {
@@ -352,14 +355,11 @@ public abstract class AbstractTreeBuilder {
 
   private void expand(final DefaultMutableTreeNode node, final NodeDescriptor descriptor, final boolean wasLeaf) {
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-    alarm.addRequest(
-      new Runnable() {
-        public void run() {
-          myTree.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        }
-      },
-      WAIT_CURSOR_DELAY
-    );
+    alarm.addRequest(new Runnable() {
+      public void run() {
+        myTree.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+      }
+    }, WAIT_CURSOR_DELAY);
 
     if (wasLeaf && isAutoExpandNode(descriptor)) {
       myTree.expandPath(new TreePath(node.getPath()));
@@ -405,9 +405,8 @@ public abstract class AbstractTreeBuilder {
   }
 
   /**
-   * @fabrique
-   * We use IBM Rational Software Functional Tester to functionally test Visual Fabrique.
-   * For capturing data from trees it requires 'String getText()' method defined in the 
+   * @fabrique We use IBM Rational Software Functional Tester to functionally test Visual Fabrique.
+   * For capturing data from trees it requires 'String getText()' method defined in the
    * nodes. So, in overriding method we define this method in the DefaultMutableTreeNode.
    */
   protected DefaultMutableTreeNode createChildNode(final NodeDescriptor childDescr) {
@@ -459,15 +458,18 @@ public abstract class AbstractTreeBuilder {
     addTaskToWorker(updateRunnable, true, postRunnable);
   }
 
-  private void processChildNode(final DefaultMutableTreeNode childNode, final NodeDescriptor childDescr, final DefaultMutableTreeNode node,
+  private void processChildNode(final DefaultMutableTreeNode childNode,
+                                final NodeDescriptor childDescr,
+                                final DefaultMutableTreeNode node,
                                 final Map<Object, Integer> elementToIndexMap) {
     if (childDescr == null) {
       boolean isInMap = myElementToNodeMap.containsValue(childNode);
-      LOG.error("childDescr == null, builder=" + this + ", childNode=" + childNode.getClass() + ", isInMap = " + isInMap + ", node = " + node);
+      LOG.error(
+        "childDescr == null, builder=" + this + ", childNode=" + childNode.getClass() + ", isInMap = " + isInMap + ", node = " + node);
       return;
     }
     Object oldElement = childDescr.getElement();
-    if (oldElement == null){
+    if (oldElement == null) {
       LOG.error("oldElement == null, builder=" + this + ", childDescr=" + childDescr);
       return;
     }
@@ -574,16 +576,17 @@ public abstract class AbstractTreeBuilder {
       public void run() {
         try {
           Runnable runnable2 = new Runnable() {
-              public void run() {
-                ApplicationManager.getApplication().runReadAction(runnable);
-                if (postRunnable != null) {
-                  ApplicationManager.getApplication().invokeLater(postRunnable);
-                }
+            public void run() {
+              ApplicationManager.getApplication().runReadAction(runnable);
+              if (postRunnable != null) {
+                ApplicationManager.getApplication().invokeLater(postRunnable);
               }
-            };
+            }
+          };
           if (myProgress != null) {
             ProgressManager.getInstance().runProcess(runnable2, myProgress);
-          } else {
+          }
+          else {
             runnable2.run();
           }
         }
@@ -615,7 +618,7 @@ public abstract class AbstractTreeBuilder {
   }
 
   private void updateNodeImageAndPosition(final DefaultMutableTreeNode node) {
-    if (!(node.getUserObject() instanceof NodeDescriptor)) return;
+    if (!(node.getUserObject()instanceof NodeDescriptor)) return;
     NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
     if (descriptor.getElement() == null) return;
     DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)node.getParent();
@@ -626,7 +629,7 @@ public abstract class AbstractTreeBuilder {
       for (int i = 0; i < parentNode.getChildCount(); i++) {
         DefaultMutableTreeNode node1 = (DefaultMutableTreeNode)parentNode.getChildAt(i);
         if (node == node1) continue;
-        if (node1.getUserObject() instanceof NodeDescriptor && ((NodeDescriptor)node1.getUserObject()).getElement() == null) continue;
+        if (node1.getUserObject()instanceof NodeDescriptor && ((NodeDescriptor)node1.getUserObject()).getElement() == null) continue;
         if (myNodeComparator.compare(node, node1) > 0) newIndex++;
       }
 
@@ -675,9 +678,7 @@ public abstract class AbstractTreeBuilder {
 
   private void disposeNode(DefaultMutableTreeNode node) {
     if (node.getChildCount() > 0) {
-      for (DefaultMutableTreeNode _node = (DefaultMutableTreeNode)node.getFirstChild();
-           _node != null;
-           _node = _node.getNextSibling()) {
+      for (DefaultMutableTreeNode _node = (DefaultMutableTreeNode)node.getFirstChild(); _node != null; _node = _node.getNextSibling()) {
         disposeNode(_node);
       }
     }
@@ -700,19 +701,16 @@ public abstract class AbstractTreeBuilder {
       if (!myUnbuiltNodes.contains(node)) return;
       myUnbuiltNodes.remove(node);
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-      alarm.addRequest(
-        new Runnable() {
-          public void run() {
-            myTree.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-          }
-        },
-        WAIT_CURSOR_DELAY
-      );
+      alarm.addRequest(new Runnable() {
+        public void run() {
+          myTree.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        }
+      }, WAIT_CURSOR_DELAY);
 
       expandNodeChildren(node);
 
       for (int i = 0; i < node.getChildCount(); i++) {
-        if (node.getChildAt(i) instanceof LoadingNode) {
+        if (node.getChildAt(i)instanceof LoadingNode) {
           myTreeModel.removeNodeFromParent((MutableTreeNode)node.getChildAt(i));
           break;
         }
@@ -736,12 +734,12 @@ public abstract class AbstractTreeBuilder {
       if (isSelectionInside(node)) {
         // when running outside invokeLater, in EJB view just collapsed node get expanded again (bug 4585)
         ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
-              }
-            });
+          public void run() {
+            myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
+          }
+        });
       }
-      if (!(node.getUserObject() instanceof NodeDescriptor)) return;
+      if (!(node.getUserObject()instanceof NodeDescriptor)) return;
       NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
       if (isDisposeOnCollapsing(descriptor)) {
         removeChildren(node);
@@ -828,7 +826,7 @@ public abstract class AbstractTreeBuilder {
   }
 
   protected Object findNodeByElement(Object element) {
-    if (myElementToNodeMap.containsKey(element)){
+    if (myElementToNodeMap.containsKey(element)) {
       return myElementToNodeMap.get(element);
     }
 

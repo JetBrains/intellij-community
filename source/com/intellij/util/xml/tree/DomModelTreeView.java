@@ -35,7 +35,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
   @NonNls public static String DOM_MODEL_TREE_VIEW_POPUP = "DOM_MODEL_TREE_VIEW_POPUP";
 
   private final SimpleTree myTree;
-  private final LazyTreeBuilder myBuilder;
+  private final LazySimpleTreeBuilder myBuilder;
   private DomManager myDomManager;
   private DomEventListener myDomEventListener;
   @Nullable private DomElement myRootElement;
@@ -63,7 +63,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     TreeUtil.installActions(myTree);
 
     final SimpleTreeStructure treeStructure = rootElement != null ? new DomModelTreeStructure(rootElement) : getTreeStructure();
-    myBuilder = new LazyTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE) {
+    myBuilder = new LazySimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE) {
 
       @NotNull
       protected ProgressIndicator createProgressIndicator() {
@@ -136,7 +136,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     };
   }
 
-  public SimpleTreeBuilder getBuilder() {
+  public LazySimpleTreeBuilder getBuilder() {
     return myBuilder;
   }
 
