@@ -514,31 +514,26 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           myTreeExpansionMonitor.freeze();
 
           final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
-          TreeUtil.sort(treeModel, new DependencyNodeComparator());
-          treeModel.reload();
-          selectCurrentScope();
-
-          //for (VirtualFile virtualFile : filesToRefresh) {
-          //  PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
-          //  if (psiFile == null) continue;
-          //  DefaultMutableTreeNode rootToReload = added.contains(virtualFile) ?
-          //                                        myBuilder.addFileNode(psiFile) :
-          //                                        myBuilder.removeNode(psiFile, psiFile.getContainingDirectory());
-          //  if (rootToReload != null) {
-          //    TreeUtil.sort(rootToReload, new DependencyNodeComparator());
-          //    treeModel.reload(rootToReload);
-          //    collapseExpand(rootToReload);
-          //  }
-          //  else {
-          //    TreeUtil.sort(treeModel, new DependencyNodeComparator());
-          //    treeModel.reload();
-          //    selectCurrentScope();
-          //  }
-          //}
+          for (VirtualFile virtualFile : filesToRefresh) {
+            PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
+            if (psiFile == null) continue;
+            DefaultMutableTreeNode rootToReload = added.contains(virtualFile) ?
+                                                  myBuilder.addFileNode(psiFile) :
+                                                  myBuilder.removeNode(psiFile, psiFile.getContainingDirectory());
+            if (rootToReload != null) {
+              TreeUtil.sort(rootToReload, new DependencyNodeComparator());
+              treeModel.reload(rootToReload);
+              collapseExpand(rootToReload);
+            }
+            else {
+              TreeUtil.sort(treeModel, new DependencyNodeComparator());
+              treeModel.reload();
+              selectCurrentScope();
+            }
+          }
           myTreeExpansionMonitor.restore();
         }
       }, ModalityState.NON_MMODAL);
-
     }
   }
 }

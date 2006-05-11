@@ -356,12 +356,13 @@ public class TreeModelBuilder {
     }
   }
 
-  public DefaultMutableTreeNode removeNode(final PsiElement element, final PsiDirectory parent){
-    if (element != null && element.isValid()) {
+  public DefaultMutableTreeNode removeNode(final PsiElement element, PsiDirectory parent) {
+    if (false && element != null && element.isValid()) {
       boolean isMarked = false;
-      if (element instanceof PsiFile){
+      if (element instanceof PsiFile) {
         isMarked = myMarker.isMarked((PsiFile)element);
-      } else if (element instanceof PsiDirectory){
+      }
+      else if (element instanceof PsiDirectory) {
         final PsiDirectory psiDirectory = (PsiDirectory)element;
         final PsiFile[] psiFiles = psiDirectory.getFiles();
         for (PsiFile psiFile : psiFiles) {
@@ -370,32 +371,48 @@ public class TreeModelBuilder {
       }
       if (!isMarked) return null;
     }
-    DefaultMutableTreeNode dirNode = getModuleDirNode(parent, myFileIndex.getModuleForFile(parent.getVirtualFile()), ScopeType.SOURCE, null);
-    if (dirNode != null){
-      final PackageDependenciesNode[] classOrDirNodes = findNodeForPsiElement((PackageDependenciesNode)dirNode, element);
-      if (classOrDirNodes != null){
-        for (PackageDependenciesNode classNode : classOrDirNodes) {
-          classNode.removeFromParent();
-        }
-      }
-      if (dirNode.getChildCount() == 0) {
-        final TreeNode treeNode = dirNode.getParent();
-        dirNode.removeFromParent();
-        getMap(myModuleDirNodes, ScopeType.SOURCE).put(parent, null);
-        dirNode = (DefaultMutableTreeNode)treeNode;
-      }
-      if (myCompactEmptyMiddlePackages && dirNode instanceof DirectoryNode && dirNode.getChildCount() == 1) { //compact
-        final TreeNode treeNode = dirNode.getChildAt(0);
-        if (treeNode instanceof DirectoryNode){
-          dirNode.removeAllChildren();
-          for (int i = treeNode.getChildCount() - 1; i >= 0; i--){
-            dirNode.add((MutableTreeNode)treeNode.getChildAt(i));
-          }
-          ((DirectoryNode)dirNode).setCompactedDirNode((DirectoryNode)treeNode);
-        }
+    Module module = myFileIndex.getModuleForFile(parent.getVirtualFile());
+    DefaultMutableTreeNode dirNode = getModuleDirNode(parent, module, ScopeType.SOURCE, null);
+    if (dirNode == null) return null;
+    final PackageDependenciesNode[] classOrDirNodes = findNodeForPsiElement((PackageDependenciesNode)dirNode, element);
+    if (classOrDirNodes != null){
+      for (PackageDependenciesNode classNode : classOrDirNodes) {
+        classNode.removeFromParent();
       }
     }
-    return dirNode;
+
+    DefaultMutableTreeNode node = dirNode;
+    DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)dirNode.getParent();
+    while (node != null && node.getChildCount() == 0) {
+      PsiDirectory directory = parent.getParentDirectory();
+      node.removeFromParent();
+      getMap(myModuleDirNodes, ScopeType.SOURCE).put(parent, null);
+      node = getMap(myModuleDirNodes, ScopeType.SOURCE).get(directory);
+      parent = directory;
+    }
+    if (myCompactEmptyMiddlePackages && parentNode instanceof DirectoryNode && parentNode.getChildCount() == 1) { //compact
+      final TreeNode treeNode = parentNode.getChildAt(0);
+      if (treeNode instanceof DirectoryNode){
+        parentNode.removeAllChildren();
+        for (int i = treeNode.getChildCount() - 1; i >= 0; i--){
+          parentNode.add((MutableTreeNode)treeNode.getChildAt(i));
+        }
+        ((DirectoryNode)parentNode).setCompactedDirNode((DirectoryNode)treeNode);
+      }
+    }
+    if (parentNode instanceof ModuleNode && parentNode.getChildCount() == 0) {
+      final TreeNode treeNode = parentNode.getParent();
+      parentNode.removeFromParent();
+      getMap(myModuleNodes, ScopeType.SOURCE).put(((ModuleNode)parentNode).getModule(), null);
+      parentNode = (DefaultMutableTreeNode)treeNode;
+    }
+    if (parentNode instanceof ModuleGroupNode && parentNode.getChildCount() == 0) {
+      final TreeNode treeNode = parentNode.getParent();
+      parentNode.removeFromParent();
+      getMap(myModuleGroupNodes, ScopeType.SOURCE).put(((ModuleGroupNode)parentNode).getModuleGroupName(), null);
+      parentNode = (DefaultMutableTreeNode)treeNode;
+    }
+    return parentNode;
   }
 
   public DefaultMutableTreeNode addFileNode(final PsiFile file){
@@ -530,34 +547,35 @@ public class TreeModelBuilder {
   }
 
   private PackageDependenciesNode getModuleDirNode(PsiDirectory psiDirectory, Module module, ScopeType scopeType, DirectoryNode childNode) {
-    if (psiDirectory == null){
+    if (psiDirectory == null) {
       return getModuleNode(module, scopeType);
     }
 
     PackageDependenciesNode directoryNode = getMap(myModuleDirNodes, scopeType).get(psiDirectory);
-    if (directoryNode != null){
+    if (directoryNode != null) {
       if (myCompactEmptyMiddlePackages) {
         DirectoryNode nestedNode = ((DirectoryNode)directoryNode).getCompactedDirNode();
-        if (nestedNode != null){ //decompact
+        if (nestedNode != null) { //decompact
           DirectoryNode parentWrapper = nestedNode.getWrapper();
-          while (parentWrapper.getWrapper() != null){
+          while (parentWrapper.getWrapper() != null) {
             parentWrapper = parentWrapper.getWrapper();
           }
-          for (int i = parentWrapper.getChildCount() - 1; i >=0; i--){
+          for (int i = parentWrapper.getChildCount() - 1; i >= 0; i--) {
             nestedNode.add((MutableTreeNode)parentWrapper.getChildAt(i));
           }
           ((DirectoryNode)directoryNode).setCompactedDirNode(null);
-          if (parentWrapper.getCompactedDirNode() != null){
+          if (parentWrapper.getCompactedDirNode() != null) {
             parentWrapper.add(nestedNode);
             return parentWrapper;
-          } else {
+          }
+          else {
             directoryNode.add(nestedNode);
           }
-        } else if (directoryNode.getParent() == null){    //find first node in tree
+        }
+        else if (directoryNode.getParent() == null) {    //find first node in tree
           DirectoryNode parentWrapper = ((DirectoryNode)directoryNode).getWrapper();
           if (parentWrapper != null) {
-            while (parentWrapper.getWrapper() != null
-                   && parentWrapper.getWrapper().getCompactedDirNode() != null){
+            while (parentWrapper.getWrapper() != null && parentWrapper.getWrapper().getCompactedDirNode() != null) {
               parentWrapper = parentWrapper.getWrapper();
             }
             return parentWrapper;
@@ -574,17 +592,21 @@ public class TreeModelBuilder {
     final PsiDirectory directory = psiDirectory.getParentDirectory();
     if (!myFlattenPackages && directory != null) {
       final PsiDirectory parentDirectory = directory.getParentDirectory();
-      if (parentDirectory != null && ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(parentDirectory.getVirtualFile()) == module) {
+      if (parentDirectory != null &&
+          ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(parentDirectory.getVirtualFile()) == module) {
         DirectoryNode parentDirectoryNode = getMap(myModuleDirNodes, scopeType).get(directory);
-        if (parentDirectoryNode != null || !myCompactEmptyMiddlePackages){
+        if (parentDirectoryNode != null || !myCompactEmptyMiddlePackages) {
           getModuleDirNode(directory, module, scopeType, (DirectoryNode)directoryNode).add(directoryNode);
-        } else {
+        }
+        else {
           directoryNode = getModuleDirNode(directory, module, scopeType, (DirectoryNode)directoryNode);
         }
-      } else {
+      }
+      else {
         getModuleNode(module, scopeType).add(directoryNode);
       }
-    } else {
+    }
+    else {
       getModuleNode(module, scopeType).add(directoryNode);
     }
 
