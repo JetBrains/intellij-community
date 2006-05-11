@@ -208,11 +208,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       final PsiElement psiElement;
 
       if(manager instanceof PsiManagerImpl){
-        psiElement = ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, new ResolveCache.Resolver() {
-          public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
-            return resolveInner();
-          }
-        }, false, false);
+        psiElement = ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, MyResolver.INSTANCE, false, false);
       } else {
         psiElement = resolveInner();
       }
@@ -404,6 +400,13 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
     public boolean isSoft() {
       return false;
+    }
+
+    private static class MyResolver implements ResolveCache.Resolver {
+      static MyResolver INSTANCE = new MyResolver(); 
+      public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
+        return ((TypeOrElementOrAttributeReference)ref).resolveInner();
+      }
     }
   }
 

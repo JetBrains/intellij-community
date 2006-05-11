@@ -13,6 +13,8 @@ import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -68,8 +70,19 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
 
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
+    final PsiManager manager = getElement().getManager();
+    if (manager instanceof PsiManagerImpl) {
+      return ((PsiManagerImpl) manager).getResolveCache().resolveWithCaching(
+        this, MyResolver.INSTANCE, false, false
+      );
+    }
+    return innerResolve();
+  }
+
+  private final ResolveResult[] innerResolve() {
     final Collection<PsiElement> contexts = getContexts();
     Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
+
     for (PsiElement context : contexts) {
       PsiElement resolved = null;
       if (context instanceof WebDirectoryElement) {
@@ -270,5 +283,12 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
 
   public boolean needToCheckAccessibility() {
     return false;
+  }
+
+  static class MyResolver implements ResolveCache.PolyVariantResolver {
+    static MyResolver INSTANCE = new MyResolver();
+    public ResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {
+      return ((FileReference)ref).innerResolve();
+    }
   }
 }

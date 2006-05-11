@@ -157,10 +157,10 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return myCanonicalText;
   }
 
-  private static class Resolver implements ResolveCache.GenericsResolver {
+  private static class Resolver implements ResolveCache.PolyVariantResolver {
     public static Resolver INSTANCE = new Resolver();
 
-    public JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
+    public JavaResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {
       final JavaResolveResult resolveResult = ((ClsJavaCodeReferenceElementImpl)ref).advancedResolveImpl();
       return resolveResult.getElement() == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[] {resolveResult};
     }
@@ -200,7 +200,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = ((PsiManagerImpl)getManager()).getResolveCache();
-    return resolveCache.resolveWithCaching(this, Resolver.INSTANCE, false, incompleteCode);
+    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, Resolver.INSTANCE, false, incompleteCode);
   }
 
   public PsiElement resolve() {

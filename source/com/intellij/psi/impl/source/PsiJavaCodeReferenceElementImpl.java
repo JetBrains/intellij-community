@@ -281,7 +281,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return advancedResolve(false).getElement();
   }
 
-  private static final class OurGenericsResolver implements ResolveCache.GenericsResolver {
+  private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver {
     public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
     public static JavaResolveResult[] _resolve(final PsiJavaReference ref, final boolean incompleteCode) {
@@ -302,8 +302,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return result;
     }
 
-    public JavaResolveResult[] resolve(final PsiJavaReference ref, final boolean incompleteCode) {
-      final JavaResolveResult[] result = _resolve(ref, incompleteCode);
+    public JavaResolveResult[] resolve(final PsiPolyVariantReference ref, final boolean incompleteCode) {
+      final JavaResolveResult[] result = _resolve((PsiJavaReference)ref, incompleteCode);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
         final PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
         final JavaResolveResult[] newResult = new JavaResolveResult[result.length];
@@ -341,7 +341,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     final ResolveCache resolveCache = ((PsiManagerImpl)manager).getResolveCache();
     final boolean needToPreventRecursion = getContext() instanceof PsiReferenceList;
-    return resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, needToPreventRecursion, incompleteCode);
+    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, needToPreventRecursion, incompleteCode);
   }
 
   private PsiSubstitutor updateSubstitutor(PsiSubstitutor subst, final PsiClass psiClass) {

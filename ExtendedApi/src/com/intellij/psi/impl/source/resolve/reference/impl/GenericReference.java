@@ -39,11 +39,7 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
   public PsiElement resolve(){
     final PsiManager manager = getElement().getManager();
     if(manager instanceof PsiManagerImpl){
-      return ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, new ResolveCache.Resolver() {
-        public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
-          return resolveInner();
-        }
-      }, false, false);
+      return ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, MyResolver.INSTANCE, false, false);
     }
     return resolveInner();
   }
@@ -110,4 +106,11 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
   public abstract ReferenceType getType();
   public abstract ReferenceType getSoftenType();
   public abstract boolean needToCheckAccessibility();
+
+  private static class MyResolver implements ResolveCache.Resolver {
+    static MyResolver INSTANCE = new MyResolver();
+    public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
+      return ((GenericReference)ref).resolveInner();
+    }
+  }
 }

@@ -1,24 +1,27 @@
 package com.intellij.xml.util;
 
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-
-import java.util.List;
-import java.util.ArrayList;
-
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,6 +37,7 @@ class AnchorReference implements PsiReference {
   private int myOffset;
   @NonNls
   public static final String ANCHOR_ELEMENT_NAME = "a";
+  private static Key<CachedValue<Map<String,XmlTag>>> ourCachedIdsKey = Key.create("cached.ids");
 
   AnchorReference(final String anchor, final PsiReference psiReference, final PsiElement element) {
     myAnchor = anchor;
@@ -51,16 +55,15 @@ class AnchorReference implements PsiReference {
   }
 
   public PsiElement resolve(){
-    final PsiManager manager = getElement().getManager();
-
-    if(manager instanceof PsiManagerImpl){
-      return ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, new ResolveCache.Resolver() {
-        public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
-          return resolveInner();
-        }
-      }, false, false);
+    Map<String,XmlTag> map = getIdMap();
+    final XmlTag tag = map != null ? map.get(myAnchor):null;
+    if (tag != null) {
+      XmlAttribute attribute = tag.getAttribute("id", null);
+      if (attribute==null) attribute = tag.getAttribute("name",null);
+      return attribute.getValueElement();
     }
-    return resolveInner();
+
+    return null;
   }
 
   static boolean processXmlElements(XmlTag element, PsiElementProcessor processor) {
@@ -86,47 +89,51 @@ class AnchorReference implements PsiReference {
     return true;
   }
 
-  private PsiElement resolveInner() {
-    final PsiElement[] result = new PsiElement[1];
-
+  private Map<String,XmlTag> getIdMap() {
     final XmlFile file = getFile();
+
     if (file != null) {
-      processXmlElements(
-        HtmlUtil.getRealXmlDocument(file.getDocument()).getRootTag(),
-        new PsiElementProcessor() {
-          public boolean execute(final PsiElement element) {
-            final String anchorValue = getAnchorValue(element);
+      CachedValue<Map<String, XmlTag>> value = file.getUserData(ourCachedIdsKey);
+      if (value == null) {
+        final Map<String,XmlTag> resultMap = new HashMap<String, XmlTag>();
 
-            if (anchorValue!=null && anchorValue.equals(myAnchor)) {
-              final XmlTag xmlTag = (XmlTag)element;
-              XmlAttribute attribute = xmlTag.getAttribute("id", null);
-              if (attribute==null) attribute = xmlTag.getAttribute("name",null);
-              result[0] = attribute.getValueElement();
-              return false;
+        processXmlElements(
+          HtmlUtil.getRealXmlDocument(file.getDocument()).getRootTag(),
+          new PsiElementProcessor() {
+            public boolean execute(final PsiElement element) {
+              final String anchorValue = element instanceof XmlTag ? getAnchorValue((XmlTag)element):null;
+
+              if (anchorValue!=null) {
+                resultMap.put(anchorValue, (XmlTag)element);
+              }
+              return true;
             }
-            return true;
           }
-        }
-      );
-    }
-
-    return result[0];
-  }
-
-  private String getAnchorValue(final PsiElement element) {
-    if (element instanceof XmlTag) {
-      final XmlTag xmlTag = ((XmlTag)element);
-      final String attributeValue = xmlTag.getAttributeValue("id");
-
-      if (attributeValue!=null) {
-        return attributeValue;
+        );
+        value = file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, XmlTag>>() {
+          public Result<Map<String, XmlTag>> compute() {
+            return new Result<Map<String, XmlTag>>(resultMap, file);
+          }
+        }, false);
+        file.putUserData(ourCachedIdsKey, value);
       }
 
-      if (ANCHOR_ELEMENT_NAME.equalsIgnoreCase(xmlTag.getName())) {
-        final String attributeValue2 = xmlTag.getAttributeValue("name");
-        if (attributeValue2!=null) {
-          return attributeValue2;
-        }
+      return value.getValue();
+    }
+    return null;
+  }
+
+  private static String getAnchorValue(final XmlTag xmlTag) {
+    final String attributeValue = xmlTag.getAttributeValue("id");
+
+    if (attributeValue!=null) {
+      return attributeValue;
+    }
+
+    if (ANCHOR_ELEMENT_NAME.equalsIgnoreCase(xmlTag.getName())) {
+      final String attributeValue2 = xmlTag.getAttributeValue("name");
+      if (attributeValue2!=null) {
+        return attributeValue2;
       }
     }
 
@@ -154,26 +161,10 @@ class AnchorReference implements PsiReference {
   }
 
   public Object[] getVariants() {
-    final List<String> variants = new ArrayList<String>(3);
+    final Map<String, XmlTag> idMap = getIdMap();
+    if (idMap == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
-    final XmlFile file = getFile();
-    if (file!=null) {
-      processXmlElements(
-        HtmlUtil.getRealXmlDocument(file.getDocument()).getRootTag(),
-        new PsiElementProcessor() {
-          public boolean execute(final PsiElement element) {
-            final String anchorValue = getAnchorValue(element);
-
-            if (anchorValue!=null) {
-              variants.add(anchorValue);
-            }
-            return true;
-          }
-        }
-      );
-    }
-
-    return variants.toArray(new String[variants.size()]);
+    return idMap.keySet().toArray(new Object[idMap.size()]);
   }
 
   private XmlFile getFile() {

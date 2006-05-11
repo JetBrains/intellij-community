@@ -199,7 +199,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = ((PsiManagerImpl)getManager()).getResolveCache();
-    return resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode);
+    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode);
   }
 
   private class OurResolveResult implements JavaResolveResult {
@@ -244,9 +244,9 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
 
   }
 
-  private static final class OurGenericsResolver implements ResolveCache.GenericsResolver {
+  private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
-    public JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
+    public JavaResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {
       LOG.assertTrue(ref instanceof PsiImportStaticReferenceElementImpl);
       final PsiImportStaticReferenceElementImpl referenceElement = ((PsiImportStaticReferenceElementImpl)ref);
       final PsiElement qualifier = referenceElement.getQualifier();

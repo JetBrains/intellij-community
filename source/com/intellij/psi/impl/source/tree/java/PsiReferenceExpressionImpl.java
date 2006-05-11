@@ -15,7 +15,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiSubstitutorEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
@@ -123,7 +122,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     super.clearCaches();
   }
 
-  private static final class OurGenericsResolver implements ResolveCache.GenericsResolver {
+  private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver {
     public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
     public JavaResolveResult[] _resolve(PsiJavaReference ref, boolean incompleteCode) {
@@ -137,8 +136,8 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       return result;
     }
 
-    public JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
-      final JavaResolveResult[] result = _resolve(ref, incompleteCode);
+    public JavaResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {
+      final JavaResolveResult[] result = _resolve((PsiJavaReference)ref, incompleteCode);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
         final PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
         final JavaResolveResult[] newResult = new JavaResolveResult[result.length];
@@ -230,7 +229,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     }
 
     final ResolveCache resolveCache = ((PsiManagerImpl)manager).getResolveCache();
-    return resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode);
+    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode);
   }
 
   public String getCanonicalText() {
