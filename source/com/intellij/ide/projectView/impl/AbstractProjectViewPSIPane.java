@@ -45,6 +45,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
@@ -64,7 +65,9 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(null);
     DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
     myTree = createTree(treeModel);
-    DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
+    if (!GraphicsEnvironment.isHeadless()) {
+      DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
+    }
     myComponent = new JScrollPane(myTree);
     myTreeStructure = createStructure();
     myTreeBuilder = createBuilder(treeModel);
