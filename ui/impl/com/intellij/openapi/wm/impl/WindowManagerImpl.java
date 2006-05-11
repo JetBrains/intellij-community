@@ -135,10 +135,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     // Calculate screen bounds.
 
     myScreenBounds = new Rectangle();
-    final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    final GraphicsDevice[] devices = env.getScreenDevices();
-    for (final GraphicsDevice device : devices) {
-      myScreenBounds = myScreenBounds.union(device.getDefaultConfiguration().getBounds());
+    if (!GraphicsEnvironment.isHeadless()) {
+      final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      final GraphicsDevice[] devices = env.getScreenDevices();
+      for (final GraphicsDevice device : devices) {
+        myScreenBounds = myScreenBounds.union(device.getDefaultConfiguration().getBounds());
+      }
     }
 
     myActivationListener = new WindowAdapter() {
