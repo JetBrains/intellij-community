@@ -719,7 +719,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return visualToLogicalPosition(xyToVisualPosition(pp));
   }
 
-  public int logicalLineToY(int line) {
+  private int logicalLineToY(int line) {
     VisualPosition visible = logicalToVisualPosition(new LogicalPosition(line, 0));
     return visibleLineNumberToYPosition(visible.line);
   }
@@ -1002,7 +1002,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return isReleased;
   }
 
-  public void paint(Graphics g) {
+  void paint(Graphics g) {
     startOptimizedScrolling();
 
     if (myCursorUpdater != null) {
@@ -1470,11 +1470,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
     private char[] myLastData;
 
-    public CachedFontContent(FontInfo fontInfo) {
+    private CachedFontContent(FontInfo fontInfo) {
       myFontType = fontInfo;
     }
 
-    public void flushContent(Graphics g) {
+    private void flushContent(Graphics g) {
       if (myCount != 0) {
         if (myCurrentFontType != myFontType) {
           myCurrentFontType = myFontType;
@@ -1497,7 +1497,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       }
     }
 
-    public void addContent(Graphics g, char[] _data, int _start, int _end, int _x, int _y, Color _color) {
+    private void addContent(Graphics g, char[] _data, int _start, int _end, int _x, int _y, Color _color) {
       final int count = myCount;
       if (count > 0) {
         final int lastCount = count - 1;
@@ -1825,7 +1825,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return myDescent;
   }
 
-  public FontMetrics getFontMetrics(int fontType) {
+  FontMetrics getFontMetrics(int fontType) {
     if (myPlainFontMetrics == null) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       myPlainFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
@@ -2350,7 +2350,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return getProjectAwareDataContext(DataManager.getInstance().getDataContext(getContentComponent()));
   }
 
-  public DataContext getProjectAwareDataContext(final DataContext original) {
+  private DataContext getProjectAwareDataContext(final DataContext original) {
     if (original.getData(DataConstants.PROJECT) == myProject) return original;
 
     return new DataContext() {
@@ -2561,7 +2561,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     private MyRepaintRunnable myRepaintRunnable;
     @NonNls private static final String EDITOR_CARET_THREAD_NAME = "EditorCaretThread";
 
-    public RepaintCursorThread() {
+    private RepaintCursorThread() {
       super(EDITOR_CARET_THREAD_NAME);
       myRepaintRunnable = new MyRepaintRunnable();
     }
@@ -2575,15 +2575,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       }
     }
 
-    public void setBlinkPeriod(int blinkPeriod) {
+    private void setBlinkPeriod(int blinkPeriod) {
       mySleepTime = blinkPeriod > 10 ? blinkPeriod : 10;
     }
 
-    public void setBlinkCaret(boolean value) {
+    private void setBlinkCaret(boolean value) {
       myIsBlinkCaret = value;
     }
 
-    public synchronized void stopThread() {
+    private synchronized void stopThread() {
       isStopped = true;
     }
 
@@ -2705,11 +2705,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     private boolean isVisible = true;
     private long myStartTime = 0;
 
-    public CaretCursor() {
+    private CaretCursor() {
       myLocation = new Point(0, 0);
     }
 
-    public void activate() {
+    private void activate() {
       final boolean blink = mySettings.isBlinkCaret();
       final int blinkPeriod = mySettings.getCaretBlinkPeriod();
       synchronized (ourCaretThread) {
@@ -2720,13 +2720,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       }
     }
 
-    public void passivate() {
+    private void passivate() {
       synchronized (ourCaretThread) {
         isVisible = false;
       }
     }
 
-    public void setPosition(Point location, int width) {
+    private void setPosition(Point location, int width) {
       myStartTime = System.currentTimeMillis();
       myLocation = location;
       isVisible = true;
@@ -2738,7 +2738,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       myEditorComponent.repaintEditorComponent(myLocation.x, myLocation.y, myWidth, getLineHeight());
     }
 
-    public void paint(Graphics g) {
+    private void paint(Graphics g) {
       if (!isVisible || !IJSwingUtilities.hasFocus(getContentComponent()) || isRendererMode()) return;
 
       int x = myLocation.x;
@@ -2782,7 +2782,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     private int xPassedCycles = 0;
     private int yPassedCycles = 0;
 
-    public void start(int dx, int dy) {
+    private void start(int dx, int dy) {
       myDx = 0;
       myDy = 0;
       if (dx > 0) {
@@ -2887,7 +2887,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       myTimer.start();
     }
 
-    public void stop() {
+    private void stop() {
       if (myTimer != null) {
         myTimer.stop();
         myTimer = null;
@@ -2906,7 +2906,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     @NonNls private static final String INCR_BUTTON_FIELD = "incrButton";
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
 
-    public MyScrollBar(int orientation) {
+    private MyScrollBar(int orientation) {
       super(orientation);
       setFocusable(false);
     }
@@ -3092,15 +3092,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
   }
 
-  public int getVerticalScrollbarOrientation() {
+  int getVerticalScrollbarOrientation() {
     return myScrollbarOrientation;
   }
 
-  public MyScrollBar getVerticalScrollBar() {
+  MyScrollBar getVerticalScrollBar() {
     return myVerticalScrollBar;
   }
 
-  public JPanel getPanel() {
+  JPanel getPanel() {
     return myPanel;
   }
 
@@ -3114,17 +3114,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
 
-  public void replaceInputMethodText(InputMethodEvent e) {
+  void replaceInputMethodText(InputMethodEvent e) {
     getInputMethodRequests();
     myInputMethodRequestsHandler.replaceInputMethodText(e);
   }
 
-  public void inputMethodCaretPositionChanged(InputMethodEvent e) {
+  void inputMethodCaretPositionChanged(InputMethodEvent e) {
     getInputMethodRequests();
     myInputMethodRequestsHandler.setInputMethodCaretPosition(e);
   }
 
-  public InputMethodRequests getInputMethodRequests() {
+  InputMethodRequests getInputMethodRequests() {
     if (myInputMethodRequestsHandler == null) {
       myInputMethodRequestsHandler = new MyInputMethodHandler();
       myInputMethodRequestsSwingWrapper = new MyInputMethodHandleSwingThreadWrapper(myInputMethodRequestsHandler);
@@ -3144,14 +3144,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
   }
 
-  public void beforeModalityStateChanged() {
+  void beforeModalityStateChanged() {
     myScrollingModel.beforeModalityStateChanged();
   }
 
   private static class MyInputMethodHandleSwingThreadWrapper implements InputMethodRequests {
     private InputMethodRequests myDelegate;
 
-    public MyInputMethodHandleSwingThreadWrapper(InputMethodRequests delegate) {
+    private MyInputMethodHandleSwingThreadWrapper(InputMethodRequests delegate) {
       myDelegate = delegate;
     }
 

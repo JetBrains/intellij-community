@@ -2,7 +2,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
-import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.lang.Language;
@@ -11,8 +10,11 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -32,6 +34,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -58,6 +61,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private final Map<MethodSignature, PsiElement> mySingleImportedMethods = new THashMap<MethodSignature, PsiElement>();
   private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
 
+  @NotNull
   public String getComponentName() {
     return "HighlightVisitorImpl";
   }
@@ -116,7 +120,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitElement(PsiElement element) {
     Language lang = element.getLanguage();
     List<Annotator> annotators = lang.getAnnotators();
-    boolean hasAnnotators = false;
+    boolean hasAnnotators = highlightInjectedPsi(element);
+
     if (annotators.size() > 0) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < annotators.size(); i++) {
@@ -143,13 +148,53 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
   }
 
+  private boolean highlightInjectedPsi(final PsiElement element) {
+    if (element instanceof PsiLanguageInjectionHost) {
+      PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
+      final Language injectedLanguage = element.getManager().getInjectedLanguage(injectionHost);
+      if (injectedLanguage != null) {
+
+        Pair<PsiElement,TextRange> injectedInfo = injectionHost.getInjectedPsi();
+        if (injectedInfo != null) {
+          VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+          SyntaxHighlighter syntaxHighlighter = injectedLanguage.getSyntaxHighlighter(element.getProject(), virtualFile);
+          final Annotator languageAnnotator = injectedLanguage.getAnnotator();
+          final int injectedPsiOffset = injectionHost.getTextRange().getStartOffset() + injectedInfo.second.getStartOffset();
+          PsiElement injectedPsi = injectedInfo.first;
+
+          final SyntaxHighlighterAsAnnotator syntaxAnnotator = new SyntaxHighlighterAsAnnotator(syntaxHighlighter, injectedPsiOffset);
+          PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
+            public void visitElement(PsiElement element) {
+              super.visitElement(element);
+              syntaxAnnotator.annotate(element, myAnnotationHolder);
+              if (languageAnnotator != null) {
+                languageAnnotator.annotate(element, myAnnotationHolder);
+              }
+            }
+
+            public void visitErrorElement(PsiErrorElement element) {
+              HighlightInfo info = createErrorElementInfo(element);
+              HighlightInfo fixed = new HighlightInfo(HighlightInfoType.ERROR, info.startOffset + injectedPsiOffset,
+                                                      info.endOffset + injectedPsiOffset, info.description, info.toolTip);
+              myHolder.add(fixed);
+            }
+          };
+
+          injectedPsi.accept(visitor);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private void convertAnnotationsToHighlightInfos() {
     if (myAnnotationHolder.hasAnnotations()) {
       for (Annotation annotation : myAnnotationHolder) {
         myHolder.add(HighlightUtil.convertToHighlightInfo(annotation));
       }
+      myAnnotationHolder.clear();
     }
-    myAnnotationHolder.clear();
   }
 
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
@@ -245,58 +290,54 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitErrorElement(PsiErrorElement element) {
-
     if(filterJspErrors(element)) return;
-    HighlightInfoType errorType;
 
-    if (PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) {
-      return;
-    }
-    else {
-      errorType = HighlightInfoType.ERROR;
-    }
+    if (PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) return;
 
+    HighlightInfo info = createErrorElementInfo(element);
+    myHolder.add(info);
+  }
+
+  private HighlightInfo createErrorElementInfo(final PsiErrorElement element) {
     TextRange range = element.getTextRange();
     if (range.getLength() > 0) {
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(errorType, range, element.getErrorDescription());
-      myHolder.add(highlightInfo);
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, element.getErrorDescription());
       if (PsiTreeUtil.getParentOfType(element, XmlTag.class) != null) {
         myXmlVisitor.registerXmlErrorQuickFix(element,highlightInfo);
       }
+      return highlightInfo;
+    }
+    int offset = range.getStartOffset();
+    PsiFile containingFile = element.getContainingFile();
+    int fileLength = containingFile.getTextLength();
+    PsiElement elementAtOffset = containingFile.findElementAt(offset);
+    String text = elementAtOffset == null ? null : elementAtOffset.getText();
+    HighlightInfo info;
+    if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
+      int start = offset;
+      PsiElement prevElement = containingFile.findElementAt(offset - 1);
+      if (offset > 0 && prevElement != null && prevElement.getText().equals("(") && StringUtil.startsWithChar(text, ')')) {
+        start = offset - 1;
+      }
+      int end = offset + 1;
+      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, element.getErrorDescription());
+      info.navigationShift = offset - start;
     }
     else {
-      int offset = range.getStartOffset();
-      PsiFile containingFile = element.getContainingFile();
-      int fileLength = containingFile.getTextLength();
-      PsiElement elementAtOffset = containingFile.findElementAt(offset);
-      String text = elementAtOffset == null ? null : elementAtOffset.getText();
-      if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
-        int start = offset;
-        PsiElement prevElement = containingFile.findElementAt(offset - 1);
-        if (offset > 0 && prevElement != null && prevElement.getText().equals("(") && StringUtil.startsWithChar(text, ')')) {
-          start = offset - 1;
-        }
-        int end = offset + 1;
-        HighlightInfo info = HighlightInfo.createHighlightInfo(errorType, start, end, element.getErrorDescription());
-        myHolder.add(info);
-        info.navigationShift = offset - start;
+      int start;
+      int end;
+      if (offset > 0) {
+        start = offset - 1;
+        end = offset;
       }
       else {
-        int start;
-        int end;
-        if (offset > 0) {
-          start = offset - 1;
-          end = offset;
-        }
-        else {
-          start = offset;
-          end = offset < fileLength ? offset + 1 : offset;
-        }
-        HighlightInfo info = HighlightInfo.createHighlightInfo(errorType, start, end, element.getErrorDescription());
-        myHolder.add(info);
-        info.isAfterEndOfLine = true;
+        start = offset;
+        end = offset < fileLength ? offset + 1 : offset;
       }
+      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, element.getErrorDescription());
+      info.isAfterEndOfLine = true;
     }
+    return info;
   }
 
   private static boolean filterJspErrors(final PsiErrorElement element) {
@@ -324,7 +365,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
 
     final XmlAttributeValue parentOfType = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
-    if(parentOfType != null && parentOfType.getUserData(DO_NOT_VALIDATE_KEY) != null) {
+    if(parentOfType != null && parentOfType.getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null) {
       return true;
     }
 
@@ -335,7 +376,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       return true;
     }
 
-    return element.getParent().getUserData(DO_NOT_VALIDATE_KEY) != null;
+    return element.getParent().getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null;
 
   }
 
@@ -351,6 +392,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitExpression(PsiExpression expression) {
+    super.visitExpression(expression);
     if (myHolder.add(HighlightUtil.checkMustBeBoolean(expression))) return;
     if (expression instanceof PsiArrayAccessExpression
         && ((PsiArrayAccessExpression)expression).getIndexExpression() != null) {

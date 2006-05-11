@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLiteralExpression;
@@ -71,7 +73,7 @@ public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiter
     visitor.visitLiteralExpression(this);
   }
 
-  public PsiElement getInjectedPsi() {
+  public Pair<PsiElement,TextRange> getInjectedPsi() {
     return null;
   }
 }

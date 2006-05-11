@@ -314,6 +314,10 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     myLanguageInjectors.add(injector);
   }
 
+  public void unregisterLanguageInjector(@NotNull LanguageInjector injector) {
+    myLanguageInjectors.remove(injector);
+  }
+
   @NotNull
   public List<LanguageInjector> getLanguageInjectors() {
     return Collections.unmodifiableList(myLanguageInjectors);

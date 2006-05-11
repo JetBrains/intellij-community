@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.CharTableImpl;
@@ -39,11 +38,6 @@ public class FileElement extends RepositoryTreeElement{
     SrcRepositoryPsiElement psiElement = getPsiElement();
     SrcRepositoryPsiElement psiElementCopy = (SrcRepositoryPsiElement)psiElement.copy();
     return psiElementCopy.getTreeElement();
-  }
-
-  public Object clone() {
-    FileElement clone = (FileElement)super.clone();
-    return clone;
   }
 
   @NotNull

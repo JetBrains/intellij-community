@@ -209,6 +209,10 @@ public class MockPsiManager extends PsiManager {
   public void registerLanguageInjector(LanguageInjector injector) {
   }
 
+  public void unregisterLanguageInjector(@NotNull LanguageInjector injector) {
+
+  }
+
   public List<LanguageInjector> getLanguageInjectors() {
     return Collections.emptyList();
   }

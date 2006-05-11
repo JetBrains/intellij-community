@@ -13,6 +13,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 
@@ -163,9 +165,34 @@ public class TargetElementUtil {
       //if (referenceOrReferencedElement == null) {
       //  return getReferenceOrReferencedElement(file, editor, flags, offset);
       //}
-      return referenceOrReferencedElement != null && referenceOrReferencedElement.isValid() ? referenceOrReferencedElement : null;
+      if (referenceOrReferencedElement != null && referenceOrReferencedElement.isValid()) return referenceOrReferencedElement;
     }
 
+    return null;
+  }
+
+
+  public static PsiLanguageInjectionHost findInjectionHost(final PsiElement element) {
+    if (element instanceof PsiLanguageInjectionHost) {
+      return (PsiLanguageInjectionHost)element;
+    }
+    else if (element != null && element.getParent()instanceof PsiLanguageInjectionHost) {
+      return (PsiLanguageInjectionHost)element.getParent();
+    }
+    else {
+      return null;
+    }
+  }
+
+  public static PsiElement lookInInjectedPsi(PsiLanguageInjectionHost injectionHost,final int offset) {
+    if (injectionHost != null) {
+      Pair<PsiElement, TextRange> injectedInfo = injectionHost.getInjectedPsi();
+      if (injectedInfo != null) {
+        PsiElement psi = injectedInfo.getFirst();
+        TextRange textRange = injectedInfo.getSecond();
+        return psi.findElementAt(offset - injectionHost.getTextRange().getStartOffset() - textRange.getStartOffset());
+      }
+    }
     return null;
   }
 
@@ -256,7 +283,6 @@ public class TargetElementUtil {
     PsiFile file = element.getContainingFile();
     if (file == null) return false;
     if (file.getOriginalFile() != null) file = file.getOriginalFile();
-    if (file == null) return false;
-    return file.getVirtualFile() != null;
+    return file != null && file.getVirtualFile() != null;
   }
 }

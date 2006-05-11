@@ -18,10 +18,10 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.editor.markup.TextAttributes;import com.intellij.util.text.CharArrayUtil;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.text.CharArrayUtil;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
@@ -282,29 +282,17 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     int lineHeight = myEditor.getLineHeight();
     Rectangle visibleRect = myEditor.getScrollingModel().getVisibleArea();
 
+    int updateWidth = myEditor.getScrollPane()
+      .getHorizontalScrollBar()
+      .getValue() + visibleRect.width;
     if (Math.abs(newY - oldY) <= 2 * lineHeight) {
       int minY = Math.min(oldY, newY);
       int maxY = Math.max(oldY + lineHeight, newY + lineHeight);
-      ((EditorComponentImpl)myEditor.getContentComponent()).repaintEditorComponent(0, minY,
-                                                                                   myEditor.getScrollPane()
-                                                                                   .getHorizontalScrollBar()
-                                                                                   .getValue() +
-                                                                                   visibleRect.width,
-                                                                                   maxY - minY);
+      ((EditorComponentImpl)myEditor.getContentComponent()).repaintEditorComponent(0, minY, updateWidth, maxY - minY);
     }
     else {
-      ((EditorComponentImpl)myEditor.getContentComponent()).repaintEditorComponent(0, oldY,
-                                                                                   myEditor.getScrollPane()
-                                                                                   .getHorizontalScrollBar()
-                                                                                   .getValue() +
-                                                                                   visibleRect.width,
-                                                                                   2 * lineHeight);
-      ((EditorComponentImpl)myEditor.getContentComponent()).repaintEditorComponent(0, newY,
-                                                                                   myEditor.getScrollPane()
-                                                                                   .getHorizontalScrollBar()
-                                                                                   .getValue() +
-                                                                                   visibleRect.width,
-                                                                                   2 * lineHeight);
+      ((EditorComponentImpl)myEditor.getContentComponent()).repaintEditorComponent(0, oldY, updateWidth, 2 * lineHeight);
+      ((EditorComponentImpl)myEditor.getContentComponent()).repaintEditorComponent(0, newY, updateWidth, 2 * lineHeight);
     }
   }
 

@@ -8,10 +8,16 @@ import com.intellij.lang.PsiParser;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -403,7 +409,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   }
 
   @Nullable
-  public PsiElement getInjectedPsi() {
+  public Pair<PsiElement,TextRange> getInjectedPsi() {
     final Language language = getManager().getInjectedLanguage(this);
     if (language == null) return null;
 
@@ -414,10 +420,21 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     final PsiParser parser = parserDefinition.createParser(project);
     final IElementType root = parserDefinition.getFileNodeType();
 
-    final PsiBuilderImpl builder = new PsiBuilderImpl(language, project, null, (String)getValue());
+    Object value = getValue();
+    if (!(value instanceof String)) return null;
+    String text = (String)value;
+    final PsiBuilderImpl builder = new PsiBuilderImpl(language, project, null, text);
     final ASTNode parsedNode = parser.parse(root, builder);
+    if (parsedNode instanceof FileElement) {
+      parsedNode.putUserData(MANAGER_KEY, getManager());
+      final VirtualFile virtualFile = new LightVirtualFile("x."+language.getAssociatedFileType().getDefaultExtension(),language, text);
+      PsiFile psiFile = parserDefinition.createFile(new SingleRootFileViewProvider(getManager(), virtualFile));
+      SrcRepositoryPsiElement repositoryPsiElement = (SrcRepositoryPsiElement)psiFile;
+      ((FileElement)parsedNode).setPsiElement(repositoryPsiElement);
+      repositoryPsiElement.setTreeElement(parsedNode);
+    }
 
-    return parsedNode.getPsi();
+    return Pair.create(parsedNode/*.getFirstChildNode()*/.getPsi(), new TextRange(1, text.length()-2));
   }
 }
 

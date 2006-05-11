@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
@@ -13,11 +14,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.DocumentRange;
+import com.intellij.openapi.editor.impl.EditorDelegate;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -36,7 +43,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   private LookupItemPreferencePolicy myPreferencePolicy = null;
 
-  public final void invoke(final Project project, final Editor editor, final PsiFile file) {
+  public final void invoke(final Project project, final Editor editor, PsiFile file) {
     if (!file.isWritable()){
       if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
         return;
@@ -65,13 +72,27 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     });
 
-    final int offset1 = editor.getSelectionModel().hasSelection()
+    int offset1 = editor.getSelectionModel().hasSelection()
       ? editor.getSelectionModel().getSelectionStart()
       : editor.getCaretModel().getOffset();
-    final int offset2 = editor.getSelectionModel().hasSelection()
+    int offset2 = editor.getSelectionModel().hasSelection()
       ? editor.getSelectionModel().getSelectionEnd()
       : offset1;
-    final CompletionContext context = new CompletionContext(project, editor, file, offset1, offset2);
+    final CompletionContext context;
+    PsiElement element1 = file.findElementAt(offset1);
+    PsiLanguageInjectionHost injectionHost = TargetElementUtil.findInjectionHost(element1);
+    Pair<PsiElement,TextRange> injectedPsi = injectionHost == null ? null : injectionHost.getInjectedPsi();
+    if (injectedPsi == null) {
+      context = new CompletionContext(project, editor, file, offset1, offset2);
+    }
+    else {
+      TextRange injtextRange = injectionHost.getTextRange();
+      injtextRange = injtextRange.cutOut(injectedPsi.getSecond());
+
+      DocumentRange document = new DocumentRange((DocumentEx)editor.getDocument(), injtextRange);
+      Editor newEditor = new EditorDelegate(document, (EditorImpl)editor);
+      context = new CompletionContext(project, newEditor, injectedPsi.getFirst().getContainingFile(), offset1 - injtextRange.getStartOffset(), offset2 - injtextRange.getStartOffset());
+    }
 
     final LookupData data = getLookupData(context);
     final LookupItem[] items = data.items;
@@ -298,11 +319,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   protected LookupData getLookupData(final CompletionContext context) {
-    final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     final PsiFile file = context.file;
     final PsiManager manager = file.getManager();
     final PsiElement lastElement = file.findElementAt(context.startOffset - 1);
-    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
 
     final PsiElement insertedElement = ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
       public PsiElement compute() {
@@ -316,12 +335,14 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (completionData == null) {
       // some completion data may depend on prefix
       completionData = getCompletionData(context, lastElement);
-    }
+    } 
 
     if(completionData == null) return new LookupData(new LookupItem[0], context.prefix);
 
+    final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     complete(context, insertedElement, completionData, lookupSet);
     insertedElement.putUserData(CompletionUtil.COMPLETION_PREFIX, context.prefix);
+    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
     completionData.addKeywordVariants(keywordVariants, context, insertedElement);
     CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
     CompletionUtil.highlightMembersOfContainer(lookupSet);
