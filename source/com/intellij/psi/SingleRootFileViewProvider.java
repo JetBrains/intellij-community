@@ -32,7 +32,6 @@ import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.codeInsight.TargetElementUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
@@ -186,7 +185,8 @@ public class SingleRootFileViewProvider implements FileViewProvider {
       }
 
       if (fileType instanceof JavaClassFileType) {
-        if (projectFileIndex.isInLibraryClasses(vFile)) {
+        ProjectFileIndex fileIndex = projectFileIndex;
+        if (fileIndex.isInLibraryClasses(vFile)) {
           // skip inners & anonymous
           int dotIndex = name.lastIndexOf('.');
           if (dotIndex < 0) dotIndex = name.length();
@@ -265,8 +265,12 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public FileViewProvider clone() {
-    return new SingleRootFileViewProvider(getManager(), new LightVirtualFile(getVirtualFile().getName(), getRealFileType(), getContents(),
-                                                                             getModificationStamp()), false);
+    final SingleRootFileViewProvider clone = new SingleRootFileViewProvider(getManager(), new LightVirtualFile(getVirtualFile().getName(),
+                                                                                                               getRealFileType(),
+                                                                                                               getContents(),
+                                                                                                               getModificationStamp()),
+                                                                                          false);
+    return clone;
   }
 
   public PsiReference findReferenceAt(final int offset) {
@@ -275,19 +279,8 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public PsiElement findElementAt(final int offset, final Language language) {
-    PsiFile psiFile = getPsi(language);
-    if (psiFile == null) {
-      psiFile = getPsi(getBaseLanguage());
-      if (psiFile == null) {
-        return null;
-      }
-    }
-    PsiElement element = findElementAt(psiFile, offset);
-    PsiLanguageInjectionHost injectionHost = TargetElementUtil.findInjectionHost(element);
-    if (injectionHost != null) {
-      return TargetElementUtil.lookInInjectedPsi(injectionHost, offset);
-    }
-    return element;
+    final PsiFile psiFile = getPsi(language);
+    return psiFile != null ? findElementAt(psiFile, offset) : null;
   }
 
   public PsiReference findReferenceAt(final int offset, final Language language) {
@@ -307,7 +300,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return component.isViewProviderLocked(this);
   }
 
-  protected static PsiReference findReferenceAt(final PsiFile psiFile, final int offset) {
+  protected PsiReference findReferenceAt(final PsiFile psiFile, final int offset) {
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();
     while (child != null) {
@@ -326,7 +319,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return findElementAt(getPsi(getBaseLanguage()), offset);
   }
 
-  protected static PsiElement findElementAt(final PsiElement psiFile, final int offset) {
+  protected PsiElement findElementAt(final PsiElement psiFile, final int offset) {
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();
     while (child != null) {
