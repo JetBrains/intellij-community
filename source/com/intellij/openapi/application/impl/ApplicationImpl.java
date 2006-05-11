@@ -560,7 +560,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           if (!force) {
             if (!showConfirmation()) {
               saveAll();
-              System.exit(0);
               return;
             }
           }
