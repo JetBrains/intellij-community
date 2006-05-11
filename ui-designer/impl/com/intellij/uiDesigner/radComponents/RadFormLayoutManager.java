@@ -4,38 +4,45 @@
 
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.Project;
+import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.GridChangeUtil;
-import com.intellij.uiDesigner.lw.FormLayoutSerializer;
 import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.lw.FormLayoutSerializer;
 import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntRegexEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.IntFieldProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.AlignPropertyProvider;
+import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntFieldProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
+import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRenderer;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.*;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
-import java.util.*;
+import java.beans.PropertyChangeListener;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.lang.reflect.Method;
 
 /**
  * @author yole
@@ -448,11 +455,15 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     for(RadComponent c: grid.getComponents()) {
       CellConstraints cc = layout.getConstraints(c.getDelegee());
       GridConstraints gc = c.getConstraints();
-      gc.setColumn(cc.gridX-1);
-      gc.setRow(cc.gridY-1);
-      gc.setColSpan(cc.gridWidth);
-      gc.setRowSpan(cc.gridHeight);
+      copyCellToGridConstraints(gc, cc);
     }
+  }
+
+  private static void copyCellToGridConstraints(final GridConstraints gc, final CellConstraints cc) {
+    gc.setColumn(cc.gridX-1);
+    gc.setRow(cc.gridY-1);
+    gc.setColSpan(cc.gridWidth);
+    gc.setRowSpan(cc.gridHeight);
   }
 
   public int getAlignment(RadComponent component, boolean horizontal) {
@@ -504,6 +515,85 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     FormLayout layout = (FormLayout) component.getParent().getLayout();
     layout.setConstraints(component.getDelegee(), gridToCellConstraints(component));
     component.getParent().revalidate();
+  }
+
+  @Override
+  public void createSnapshotLayout(final SnapshotContext context,
+                                   final JComponent parent,
+                                   final RadContainer container,
+                                   final LayoutManager layout) {
+    ColumnSpec[] colSpecs;
+    RowSpec[] rowSpecs;
+    try {
+      Method method = layout.getClass().getMethod("getRowCount", ArrayUtil.EMPTY_CLASS_ARRAY);
+      int rowCount = ((Integer)method.invoke(layout, ArrayUtil.EMPTY_OBJECT_ARRAY)).intValue();
+      method = layout.getClass().getMethod("getColumnCount", ArrayUtil.EMPTY_CLASS_ARRAY);
+      int columnCount = ((Integer)method.invoke(layout, ArrayUtil.EMPTY_OBJECT_ARRAY)).intValue();
+
+      rowSpecs = new RowSpec[rowCount];
+      colSpecs = new ColumnSpec[columnCount];
+
+      method = layout.getClass().getMethod("getRowSpec", int.class);
+      for (int i = 0; i < rowCount; i++) {
+        rowSpecs[i] = (RowSpec)createSerializedCopy(method.invoke(layout, i + 1));
+      }
+      method = layout.getClass().getMethod("getColumnSpec", int.class);
+      for (int i = 0; i < columnCount; i++) {
+        colSpecs[i] = (ColumnSpec)createSerializedCopy(method.invoke(layout, i + 1));
+      }
+    }
+    catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
+
+    container.setLayout(new FormLayout(colSpecs, rowSpecs));
+  }
+
+  private static Object createSerializedCopy(final Object original) {
+    // FormLayout may have been loaded with a different classloader, so we need to create a copy through serialization
+    Object copy;
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ObjectOutputStream os = new ObjectOutputStream(baos);
+      try {
+        os.writeObject(original);
+      }
+      finally {
+        os.close();
+      }
+
+      InputStream bais = new ByteArrayInputStream(baos.toByteArray());
+      ObjectInputStream is = new ObjectInputStream(bais);
+      try {
+        copy = is.readObject();
+      }
+      finally {
+        is.close();
+      }
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    return copy;
+  }
+
+  @Override
+  public void addSnapshotComponent(final JComponent parent,
+                                   final JComponent child,
+                                   final RadContainer container,
+                                   final RadComponent component) {
+    CellConstraints cc;
+    try {
+      LayoutManager layout = parent.getLayout();
+      Method method = layout.getClass().getMethod("getConstraints", Component.class);
+      cc = (CellConstraints)createSerializedCopy(method.invoke(layout, child));
+    }
+    catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
+    copyCellToGridConstraints(component.getConstraints(), cc);
+    component.setCustomLayoutConstraints(cc);
+    container.addComponent(component);
   }
 
   private static class MyPropertyChangeListener implements PropertyChangeListener {

@@ -19,6 +19,7 @@
             <constraints/>
             <properties>
               <rootVisible value="false"/>
+              <showsRootHandles value="true"/>
             </properties>
           </component>
         </children>

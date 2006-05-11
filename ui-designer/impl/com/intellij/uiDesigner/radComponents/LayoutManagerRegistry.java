@@ -68,8 +68,14 @@ public class LayoutManagerRegistry {
   }
 
   public static RadLayoutManager createFromLayout(LayoutManager layout) {
+    return createFromLayoutClass(layout.getClass());
+  }
+
+  private static RadLayoutManager createFromLayoutClass(final Class aClass) {
+    // we can't use isInstance() because the class in our map and aClass may have been loaded with
+    // different classloaders
     for(Map.Entry<Class, Class<? extends RadLayoutManager>> e: ourLayoutManagerClassRegistry.entrySet()) {
-      if (e.getKey().isInstance(layout)) {
+      if (e.getKey().getName().equals(aClass.getName())) {
         try {
           return e.getValue().newInstance();
         }
@@ -77,6 +83,9 @@ public class LayoutManagerRegistry {
           throw new RuntimeException(ex);
         }
       }
+    }
+    if (aClass.getSuperclass() != null) {
+      return createFromLayoutClass(aClass.getSuperclass());
     }
     return null;
   }
