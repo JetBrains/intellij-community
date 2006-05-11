@@ -21,6 +21,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -249,6 +253,7 @@ public class CreateSnapShotAction extends AnAction {
     private final Project myProject;
     private final SnapShotClient myClient;
     private final PsiDirectory myDirectory;
+    @NonNls private static final String SWING_PACKAGE = "javax.swing.";
 
     public MyDialog(Project project, final SnapShotClient client, final PsiDirectory dir) {
       super(project, true);
@@ -257,16 +262,43 @@ public class CreateSnapShotAction extends AnAction {
       myDirectory = dir;
       init();
       setTitle(UIDesignerBundle.message("snapshot.title"));
-      myComponentTree.setModel(new SnapShotTreeModel(client));
+      final SnapShotTreeModel model = new SnapShotTreeModel(client);
+      myComponentTree.setModel(model);
       myComponentTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
         public void valueChanged(TreeSelectionEvent e) {
           updateOKAction();
         }
       });
+      for(int i=0; i<2; i++) {
+        for(int row=myComponentTree.getRowCount()-1; row >= 0; row--) {
+          myComponentTree.expandRow(row);
+        }
+      }
+
+      final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      final TextAttributes attributes = globalScheme.getAttributes(HighlighterColors.JAVA_STRING);
+      final SimpleTextAttributes titleAttributes =
+        new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, attributes.getForegroundColor());
+
       myComponentTree.setCellRenderer(new ColoredTreeCellRenderer() {
         public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
           SnapShotRemoteComponent rc = (SnapShotRemoteComponent) value;
-          append(rc.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+          String className = rc.getClassName();
+          if (className.startsWith(SWING_PACKAGE)) {
+            append(className.substring(SWING_PACKAGE.length()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+          else {
+            append(className, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+
+          if (rc.getText().length() > 0) {
+            append(" \"" + rc.getText() + "\"", titleAttributes);
+          }
+          if (rc.getLayoutManager().length() > 0) {
+            append(" (" + rc.getLayoutManager() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
+
           final Palette palette = Palette.getInstance(myProject);
           final ComponentItem item = palette.getItem(rc.getClassName());
           if (item != null) {

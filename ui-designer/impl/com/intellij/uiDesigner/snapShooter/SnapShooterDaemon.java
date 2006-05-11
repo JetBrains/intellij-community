@@ -119,7 +119,7 @@ public class SnapShooterDaemon implements Runnable {
   }
 
   private static String getLayoutManagerClass(final Component component) {
-    if (component instanceof Container) {
+    if (component instanceof JPanel) {
       LayoutManager layoutManager = ((Container) component).getLayout();
       if (layoutManager != null) {
         Class layoutManagerClass = layoutManager.getClass();

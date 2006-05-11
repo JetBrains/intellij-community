@@ -95,27 +95,16 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
   }
 
   @Override public void resetValue(RadComponent component) throws Exception {
-    final V defaultValue = getDefaultValue(component);
+    final V defaultValue = getDefaultValue(component.getDelegee());
     invokeSetter(component, defaultValue);
     markTopmostModified(component, false);
-  }
-
-  private V getDefaultValue(final RadComponent component) throws Exception {
-    if (myStoreAsClient) {
-      return null;
-    }
-    final Constructor constructor = component.getDelegee().getClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
-    constructor.setAccessible(true);
-    JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
-    //noinspection unchecked
-    return (V) myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY);
   }
 
   public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
     try {
       //noinspection unchecked
       V value = (V) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
-      V defaultValue = getDefaultValue(radComponent);
+      V defaultValue = getDefaultValue(radComponent.getDelegee());
       if (!Comparing.equal(value, defaultValue)) {
         setValue(radComponent, value);
       }
@@ -124,4 +113,16 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
       // ignore
     }
   }
+
+  protected V getDefaultValue(final JComponent delegee) throws Exception {
+    if (myStoreAsClient) {
+      return null;
+    }
+    final Constructor constructor = delegee.getClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
+    constructor.setAccessible(true);
+    JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
+    //noinspection unchecked
+    return (V) myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY);
+  }
+
 }

@@ -53,19 +53,6 @@ public class SnapShotRemoteComponent {
     myChildren = children;
   }
 
-  @Override
-  public String toString() {
-    StringBuilder resultBuilder = new StringBuilder();
-    resultBuilder.append(myClassName);
-    if (myText.length() > 0) {
-      resultBuilder.append(" \"").append(myText).append("\"");
-    }
-    if (myLayoutManager.length() > 0) {
-      resultBuilder.append(" (").append(myLayoutManager).append(")");
-    }
-    return resultBuilder.toString();
-  }
-
   public String toProtocolString() {
     return myId + ";" + myClassName + ";" + myLayoutManager + ";" + myText;
   }
