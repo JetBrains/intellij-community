@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
@@ -62,6 +63,7 @@ public class PaletteManager implements ProjectComponent {
     myFileEditorManager.removeFileEditorManagerListener(myListener);
   }
 
+  @NotNull
   public String getComponentName() {
     return "PaletteManager";
   }
