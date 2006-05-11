@@ -13,11 +13,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.containers.BidirectionalMap;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.vfs.local.win32.FileWatcher;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +29,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 
 public final class LocalFileSystemImpl extends LocalFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
@@ -280,8 +277,19 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
             VirtualFile child = myUnaccountedFiles.get(runPath);
             if (child == null || !child.isValid()) {
               if (!createIfNoCache) return null;
-              root = ((VirtualFileImpl)root).findSingleChild(name);
-              if (root == null) return null;
+              if (myUnaccountedFiles.containsKey(runPath)) {
+                if (refreshIfNotFound) {
+                  root.refresh(false, false);
+                  child = root.findChild(name);
+                  if (child == null) return null;
+                  root = child;
+                } else {
+                  return null;
+                }
+              } else {
+                root = ((VirtualFileImpl)root).findSingleChild(name);
+                if (root == null) return null;
+              }
             } else {
               root = child;
             }
