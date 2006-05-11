@@ -20,14 +20,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakArrayHashMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
@@ -406,7 +405,12 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
     public final Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
       if (StableElement.class.equals(method.getDeclaringClass())) {
-        return method.invoke(this, args);
+        try {
+          return method.invoke(this, args);
+        }
+        catch (InvocationTargetException e) {
+          throw e.getCause();
+        }
       }
 
       if (isNotValid(myCachedValue)) {
