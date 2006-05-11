@@ -103,17 +103,19 @@ public final class ComponentTree extends Tree implements DataProvider {
       this
     );
 
-    setDragEnabled(true);
-    setTransferHandler(new TransferHandler() {
-      public int getSourceActions(JComponent c) {
-        return DnDConstants.ACTION_COPY_OR_MOVE;
-      }
+    if (!GraphicsEnvironment.isHeadless()) {
+      setDragEnabled(true);
+      setTransferHandler(new TransferHandler() {
+        public int getSourceActions(JComponent c) {
+          return DnDConstants.ACTION_COPY_OR_MOVE;
+        }
 
-      protected Transferable createTransferable(JComponent c) {
-        return DraggedComponentList.pickupSelection(myEditor, null);
-      }
-    });
-    setDropTarget(new DropTarget(this, new MyDropTargetListener()));
+        protected Transferable createTransferable(JComponent c) {
+          return DraggedComponentList.pickupSelection(myEditor, null);
+        }
+      });
+      setDropTarget(new DropTarget(this, new MyDropTargetListener()));
+    }
   }
 
   public void setEditor(final GuiEditor editor) {

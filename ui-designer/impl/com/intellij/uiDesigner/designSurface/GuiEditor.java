@@ -294,7 +294,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myQuickFixManager = new QuickFixManagerImpl(this, myGlassLayer);
 
     myDropTargetListener = new DesignDropTargetListener(this);
-    new DropTarget(getGlassLayer(), DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
+    if (!GraphicsEnvironment.isHeadless()) {
+      new DropTarget(getGlassLayer(), DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
+    }
 
     myActiveDecorationLayer.installSelectionWatcher();
 

@@ -187,17 +187,19 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         return getSelectedPsiElements();
       }
     };
-    myTree.setTransferHandler(new TransferHandler() {
-      public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
-        for (DataFlavor transferFlavor : transferFlavors) {
-          if (transferFlavor.getHumanPresentableName().equals(ABSTRACT_TREE_NODE_TRANSFERABLE)) {
-            return true;
+    if (!GraphicsEnvironment.isHeadless()) {
+      myTree.setTransferHandler(new TransferHandler() {
+        public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+          for (DataFlavor transferFlavor : transferFlavors) {
+            if (transferFlavor.getHumanPresentableName().equals(ABSTRACT_TREE_NODE_TRANSFERABLE)) {
+              return true;
+            }
           }
+          return false;
         }
-        return false;
-      }
-    });
-    new DropTarget(myTree, new MyDropTargetListener());
+      });
+      new DropTarget(myTree, new MyDropTargetListener());
+    }
 
     //DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
   }

@@ -1,10 +1,10 @@
 package com.intellij.ide.palette.impl;
 
-import com.intellij.ide.palette.PaletteGroup;
-import com.intellij.ide.palette.PaletteItem;
+import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDTarget;
-import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.palette.PaletteGroup;
+import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
@@ -85,18 +85,20 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
       }
     }, this);
 
-    new DropTarget(this, new DropTargetAdapter() {
-      public void dragEnter(DropTargetDragEvent dtde) {
-        setBorderPainted(true);
-      }
+    if (!GraphicsEnvironment.isHeadless()) {
+      new DropTarget(this, new DropTargetAdapter() {
+        public void dragEnter(DropTargetDragEvent dtde) {
+          setBorderPainted(true);
+        }
 
-      public void dragExit(DropTargetEvent dte) {
-        setBorderPainted(false);
-      }
+        public void dragExit(DropTargetEvent dte) {
+          setBorderPainted(false);
+        }
 
-      public void drop(DropTargetDropEvent dtde) {
-      }
-    });
+        public void drop(DropTargetDropEvent dtde) {
+        }
+      });
+    }
 
     initActions();
   }
