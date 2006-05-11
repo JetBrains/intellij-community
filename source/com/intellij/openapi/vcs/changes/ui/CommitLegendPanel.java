@@ -44,8 +44,11 @@ public class CommitLegendPanel {
     myDeletedPanel.setBackground(background);
 
     myModifiedLabel.setForeground(FileStatus.MODIFIED.getColor());
+    myModifiedLabel.putClientProperty("Quaqua.Component.visualMargin", new Insets(0, 0, 0, 0));
     myNewLabel.setForeground(FileStatus.ADDED.getColor());
+    myNewLabel.putClientProperty("Quaqua.Component.visualMargin", new Insets(0, 0, 0, 0));
     myDeletedLabel.setForeground(FileStatus.DELETED.getColor());
+    myDeletedLabel.putClientProperty("Quaqua.Component.visualMargin", new Insets(0, 0, 0, 0));
   }
 
   public JComponent getComponent() {
