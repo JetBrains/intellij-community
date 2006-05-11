@@ -420,6 +420,15 @@ public final class GridConstraints implements Cloneable {
     return isRow ? getRowSpan() : getColSpan();
   }
 
+  public void setSpan(final boolean isRow, final int value) {
+    if (isRow) {
+      setRowSpan(value);
+    }
+    else {
+      setColSpan(value);
+    }
+  }
+
   public boolean contains(final boolean isRow, final int cell) {
     if (isRow) {
       return cell >= myRow && cell < myRow + myRowSpan;

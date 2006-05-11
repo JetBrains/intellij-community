@@ -397,12 +397,12 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     if (isRow) {
       insertOrAppendRow(formLayout, index, FormFactory.RELATED_GAP_ROWSPEC);
       if (!isBefore) index++;
-      insertOrAppendRow(formLayout, index, grow ? new RowSpec(ENCODED_FORMSPEC_GROW) : FormFactory.DEFAULT_ROWSPEC);
+      insertOrAppendRow(formLayout, index, grow ? new RowSpec(ENCODED_FORMSPEC_GROW) : new RowSpec("10dlu"));
     }
     else {
       insertOrAppendColumn(formLayout, index, FormFactory.RELATED_GAP_COLSPEC);
       if (!isBefore) index++;
-      insertOrAppendColumn(formLayout, index, grow ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : FormFactory.DEFAULT_COLSPEC);
+      insertOrAppendColumn(formLayout, index, grow ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : new ColumnSpec("10dlu"));
     }
     updateGridConstraintsFromCellConstraints(grid);
     return 2;

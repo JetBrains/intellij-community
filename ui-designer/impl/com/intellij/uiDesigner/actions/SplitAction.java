@@ -18,11 +18,6 @@ public final class SplitAction extends RowColumnAction {
   }
 
   protected void actionPerformed(CaptionSelection selection) {
-    if(!selection.isRow()){
-      GridChangeUtil.splitColumn(selection.getContainer(), selection.getFocusedIndex());
-    }
-    else{
-      GridChangeUtil.splitRow(selection.getContainer(), selection.getFocusedIndex());
-    }
+    GridChangeUtil.splitCell(selection.getContainer(), selection.getFocusedIndex(), selection.isRow());
   }
 }
