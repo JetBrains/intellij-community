@@ -51,14 +51,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
   private ModalityState MODALITY_STATE_NONE;
 
-  private final ArrayList<ApplicationListener> myListeners = new ArrayList<ApplicationListener>();
-  private ApplicationListener[] myCachedListeners;
+  private final List<ApplicationListener> myListeners = new CopyOnWriteArrayList<ApplicationListener>();
 
   private boolean myTestModeFlag = false;
 
@@ -592,9 +592,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private boolean canExit() {
-    ApplicationListener[] listeners = getListeners();
-
-    for (ApplicationListener applicationListener : listeners) {
+    for (ApplicationListener applicationListener : myListeners) {
       if (!applicationListener.canExitApplication()) {
         return false;
       }
@@ -842,60 +840,35 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void addApplicationListener(ApplicationListener l) {
-    synchronized (myListeners) {
-      myListeners.add(l);
-      myCachedListeners = null;
-    }
+    myListeners.add(l);
   }
 
   public void removeApplicationListener(ApplicationListener l) {
-    synchronized (myListeners) {
-      myListeners.remove(l);
-      myCachedListeners = null;
-    }
+    myListeners.remove(l);
   }
 
   private void fireApplicationExiting() {
-    ApplicationListener[] listeners = myListeners.toArray(new ApplicationListener[myListeners.size()]);
-    for (ApplicationListener applicationListener : listeners) {
+    for (ApplicationListener applicationListener : myListeners) {
       applicationListener.applicationExiting();
     }
   }
 
   private void fireBeforeWriteActionStart(Runnable action) {
-    ApplicationListener[] listeners = getListeners();
-
-    for (ApplicationListener listener : listeners) {
+    for (ApplicationListener listener : myListeners) {
       listener.beforeWriteActionStart(action);
     }
   }
 
   private void fireWriteActionStarted(Runnable action) {
-    ApplicationListener[] listeners = getListeners();
-
-    for (ApplicationListener listener : listeners) {
+    for (ApplicationListener listener : myListeners) {
       listener.writeActionStarted(action);
     }
   }
 
   private void fireWriteActionFinished(Runnable action) {
-    ApplicationListener[] listeners = getListeners();
-
-    for (ApplicationListener listener : listeners) {
+    for (ApplicationListener listener : myListeners) {
       listener.writeActionFinished(action);
     }
-  }
-
-  private ApplicationListener[] getListeners() {
-    ApplicationListener[] listeners;
-    synchronized (myListeners) {
-      if (myCachedListeners == null) {
-        myCachedListeners = myListeners.toArray(new ApplicationListener[myListeners.size()]);
-      }
-      listeners = myCachedListeners;
-    }
-
-    return listeners;
   }
 
   protected Element getDefaults(BaseComponent component) throws IOException, JDOMException, InvalidDataException {
