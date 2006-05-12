@@ -88,7 +88,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     file.addAnnotator(new Annotator() {
       public void annotate(PsiElement psiElement, AnnotationHolder holder) {
         final DomElement domElement = getDomElement();
-        if (!domElement.isValid()) return;
+        if (domElement == null || !domElement.isValid()) return;
         for (final DomElementProblemDescriptor problem : DomElementAnnotationsManager.getInstance(project).getProblems(domElement, true)) {
           holder.createErrorAnnotation(psiElement.getContainingFile(), problem.getDescriptionTemplate());
         }
