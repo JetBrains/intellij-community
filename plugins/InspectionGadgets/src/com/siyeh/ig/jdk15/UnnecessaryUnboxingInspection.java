@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -114,30 +115,15 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return;
-            }
-            final PsiType qualifierType = qualifier.getType();
-            if (qualifierType == null) {
-                return;
-            }
-            final String qualifierTypeName = qualifierType.getCanonicalText();
-            if (!s_unboxingMethods.containsKey(qualifierTypeName)) {
-                return;
-            }
-            final String unboxingMethod =
-                    s_unboxingMethods.get(qualifierTypeName);
-            if (!unboxingMethod.equals(methodName)) {
+            if (isUnboxingExpression(expression)) {
                 return;
             }
             final PsiExpression containingExpression =
                     getContainingExpression(expression);
             if (containingExpression instanceof PsiTypeCastExpression) {
+                return;
+            }
+            if (isPossibleObjectComparison(expression, containingExpression)) {
                 return;
             }
             if (containingExpression instanceof PsiMethodCallExpression) {
@@ -149,6 +135,67 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
                 }
             }
             registerError(expression);
+        }
+
+        private static boolean isPossibleObjectComparison(
+                PsiMethodCallExpression expression,
+                PsiExpression containingExpression) {
+            if (!(containingExpression instanceof PsiBinaryExpression)) {
+                return false;
+            }
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression)containingExpression;
+            final PsiJavaToken operationSign =
+                    binaryExpression.getOperationSign();
+            final IElementType tokenType = operationSign.getTokenType();
+            if (!JavaTokenType.EQEQ.equals(tokenType) &&
+                    !JavaTokenType.NE.equals(tokenType)) {
+                return false;
+            }
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiExpression rhs = binaryExpression.getROperand();
+            if (rhs == null) {
+                return true;
+            }
+            if (expression == lhs) {
+                if (!(rhs.getType() instanceof PsiPrimitiveType)) {
+                    return true;
+                }
+            }
+            if (expression == rhs) {
+                if (!(lhs.getType() instanceof PsiPrimitiveType)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static boolean isUnboxingExpression(
+                PsiExpression expression) {
+            if (!(expression instanceof PsiMethodCallExpression)) {
+                return false;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression)expression;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (qualifier == null) {
+                return true;
+            }
+            final PsiType qualifierType = qualifier.getType();
+            if (qualifierType == null) {
+                return true;
+            }
+            final String qualifierTypeName = qualifierType.getCanonicalText();
+            if (!s_unboxingMethods.containsKey(qualifierTypeName)) {
+                return true;
+            }
+            final String methodName = methodExpression.getReferenceName();
+            final String unboxingMethod =
+                    s_unboxingMethods.get(qualifierTypeName);
+            return !unboxingMethod.equals(methodName);
         }
 
         private static boolean isSameMethodCalledWithoutUnboxing(
