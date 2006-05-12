@@ -56,8 +56,12 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     final XmlTag parentTag = parent.getXmlTag();
     if (parentTag == null) return;
 
-    parent.checkInitialized(getXmlElementName());
-    final XmlTag[] subTags = parentTag.findSubTags(getXmlElementName());
+    final String xmlElementName = getXmlElementName();
+    parent.checkInitialized(xmlElementName);
+
+    final int totalCount = parent.getGenericInfo().getFixedChildrenCount(xmlElementName);
+
+    final XmlTag[] subTags = parentTag.findSubTags(xmlElementName);
     if (subTags.length <= myIndex) {
       return;
     }
@@ -67,7 +71,12 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
       XmlTag tag = getXmlTag();
       assert tag != null;
       detach(false);
-      if (subTags.length == myIndex + 1) {
+      if (totalCount == myIndex + 1 && subTags.length >= myIndex + 1) {
+        for (int i = myIndex; i < subTags.length; i++) {
+          subTags[i].delete();
+        }
+      }
+      else if (subTags.length == myIndex + 1) {
         tag.delete();
       } else {
         attach((XmlTag) tag.replace(createEmptyTag()));

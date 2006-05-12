@@ -42,8 +42,8 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
   }
 
   public TableCellRenderer getCustomizedRenderer(final T domElement, final TableCellRenderer renderer) {
+    assert domElement.isValid();
     return getErroableCellRenderer(renderer, domElement);
-
   }
 
   public DefaultTableCellRenderer getErroableCellRenderer(final TableCellRenderer renderer, final T domElement) {
