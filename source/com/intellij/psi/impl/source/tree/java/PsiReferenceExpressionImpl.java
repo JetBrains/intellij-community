@@ -98,8 +98,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
           dot = Factory.createSingleLeafElement(DOT, new char[]{'.'}, 0, 1, treeCharTab, getManager());
           dot = addInternal(dot, dot, getFirstChildNode(), Boolean.TRUE);
         }
-        final ASTNode newQualifierNode = newQualifier.getNode();
-        addInternal((TreeElement)newQualifierNode, newQualifierNode, dot, Boolean.TRUE);
+        addBefore(newQualifier, dot.getPsi());
       }
     }
   }
