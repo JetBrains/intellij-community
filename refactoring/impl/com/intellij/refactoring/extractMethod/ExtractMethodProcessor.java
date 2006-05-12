@@ -714,7 +714,6 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private PsiMethod generateEmptyMethod(PsiClassType[] exceptions, boolean isStatic) throws IncorrectOperationException {
-
     PsiMethod newMethod = myElementFactory.createMethod(myMethodName, myReturnType);
     newMethod.getModifierList().setModifierProperty(myMethodVisibility, true);
     newMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
@@ -741,7 +740,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
         buffer.append("int ");
         buffer.append(data.name);
-        buffer.append("=x;");
+        buffer.append("=;");
         String text = buffer.toString();
 
         PsiDeclarationStatement declaration = (PsiDeclarationStatement)myElementFactory.createStatementFromText(text, null);
@@ -749,12 +748,6 @@ public class ExtractMethodProcessor implements MatchProvider {
         final PsiTypeElement typeElement = myElementFactory.createTypeElement(data.type);
         ((PsiVariable)declaration.getDeclaredElements()[0]).getTypeElement().replace(typeElement);
         declaration = (PsiDeclarationStatement)body.add(declaration);
-
-        PsiExpression initializer = ((PsiVariable)declaration.getDeclaredElements()[0]).getInitializer();
-        LOG.assertTrue(initializer != null);
-        TextRange range = initializer.getTextRange();
-        BlockSupport blockSupport = myProject.getComponent(BlockSupport.class);
-        blockSupport.reparseRange(body.getContainingFile(), range.getStartOffset(), range.getEndOffset(), "...");
       }
     }
 

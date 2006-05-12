@@ -36,7 +36,7 @@ public class LightVirtualFile extends VirtualFile {
     myName = name;
   }
 
-  public LightVirtualFile(String name, CharSequence content) {
+  public LightVirtualFile(@NonNls String name, CharSequence content) {
     myName = name;
     myContent = content;
   }

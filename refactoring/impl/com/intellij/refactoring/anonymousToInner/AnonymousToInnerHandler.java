@@ -444,9 +444,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
           rExpr.replace(factory.createExpressionFromText(info.parameterName, null));
         }
         else {
-          TextRange range = rExpr.getTextRange();
-          BlockSupport blockSupport = myProject.getComponent(BlockSupport.class);
-          blockSupport.reparseRange(statement.getContainingFile(), range.getStartOffset(), range.getEndOffset(), "...");
+          rExpr.delete();
         }
       }
     }
