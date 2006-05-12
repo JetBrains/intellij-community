@@ -88,7 +88,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
 
     if (message != null) {
       return new ProblemDescriptor[]{
-        manager.createProblemDescriptor(refMethod.getElement(), message, getFix(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+        manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, getFix(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 
     return null;

@@ -227,7 +227,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
       public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         if (getFilter().accepts((RefElement)refEntity)) {
-          Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
+          Element element = XMLExportUtl.createElement(refEntity, parentNode, -1, null);
           @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
           final HighlightSeverity severity = getCurrentSeverity((RefElement)refEntity);

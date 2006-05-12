@@ -173,7 +173,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
             @NonNls String problemText = template.replaceAll("#ref", text.replaceAll("\\$", "\\\\\\$"));
             problemText = problemText.replaceAll(" #loc ", " ");
 
-            Element element = XMLExportUtl.createElement(refEntity, parentNode, line);
+            Element element = XMLExportUtl.createElement(refEntity, parentNode, line, description instanceof ProblemDescriptorImpl ? ((ProblemDescriptorImpl)description).getTextRange() : null);
             @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
             problemClassElement.addContent(getDisplayName());
             if (refEntity instanceof RefElement){

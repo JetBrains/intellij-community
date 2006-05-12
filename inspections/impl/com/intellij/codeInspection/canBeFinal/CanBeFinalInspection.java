@@ -194,10 +194,11 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     final CanBeFinalFilter filter = new CanBeFinalFilter(this);
 
     getRefManager().iterate(new RefVisitor() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         if (filter.accepts((RefElement)refEntity)) {
-          Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
+          Element element = XMLExportUtl.createElement(refEntity, parentNode, -1, null);
           Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
           final HighlightSeverity severity = getCurrentSeverity((RefElement)refEntity);

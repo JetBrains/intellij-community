@@ -22,9 +22,9 @@ import org.jdom.Element;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class XMLExportUtl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.util.XMLExportUtl");
-  public static Element createElement(RefEntity refEntity, Element parentNode, int actualLine) {
+  public static Element createElement(RefEntity refEntity, Element parentNode, int actualLine, final TextRange range) {
     if (refEntity instanceof RefImplicitConstructor) {
-      return createElement(refEntity.getOwner(), parentNode, actualLine);
+      return createElement(refEntity.getOwner(), parentNode, actualLine, range);
     }
 
     Element problem = new Element(InspectionsBundle.message("inspection.export.results.problem"));
@@ -49,7 +49,7 @@ public class XMLExportUtl {
       problem.addContent(lineElement);
 
       final Element rangeElement = new Element("text_range");
-      final TextRange textRange = psiElement.getTextRange();
+      final TextRange textRange = range != null ? range : psiElement.getTextRange();
       rangeElement.setAttribute("start", String.valueOf(textRange.getStartOffset()));
       rangeElement.setAttribute("end", String.valueOf(textRange.getEndOffset()));
       problem.addContent(rangeElement);

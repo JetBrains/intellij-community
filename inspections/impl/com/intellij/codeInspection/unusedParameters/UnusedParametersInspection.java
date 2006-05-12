@@ -114,7 +114,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
         if (refEntity instanceof RefElement && filter.accepts((RefElement)refEntity)) {
           ArrayList<RefParameter> unusedParameters = UnusedParametersFilter.getUnusedParameters((RefMethod)refEntity);
           for (RefParameter unusedParameter : unusedParameters) {
-            Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
+            Element element = XMLExportUtl.createElement(refEntity, parentNode, -1, null);
             @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
             problemClassElement.addContent(InspectionsBundle.message("inspection.unused.parameter.export.results"));
 

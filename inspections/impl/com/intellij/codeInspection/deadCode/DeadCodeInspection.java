@@ -514,7 +514,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         if (!(refEntity instanceof RefElement)) return;
         if (filter.accepts((RefElement)refEntity)) {
           if (refEntity instanceof RefImplicitConstructor) refEntity = ((RefImplicitConstructor)refEntity).getOwnerClass();
-          Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
+          Element element = XMLExportUtl.createElement(refEntity, parentNode, -1, null);
           @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
           if (refEntity instanceof RefElement) {
