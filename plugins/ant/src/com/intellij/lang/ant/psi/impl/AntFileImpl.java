@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
@@ -33,6 +34,7 @@ import java.util.Map;
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
 public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private AntProject myProject;
+  private AntElement myPrologElement;
   private PsiElement[] myChildren;
   private Project myAntProject;
   /**
@@ -60,7 +62,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public PsiElement[] getChildren() {
     if (myChildren == null) {
       final AntProject project = getAntProject();
-      myChildren = new PsiElement[]{project};
+      myChildren = (myPrologElement == null) ?  new PsiElement[]{project} : new PsiElement[] {myPrologElement, project};
     }
     return myChildren;
   }
@@ -70,7 +72,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   public PsiElement getLastChild() {
-    return getChildren()[0];
+    final PsiElement[] psiElements = getChildren();
+    return psiElements[psiElements.length - 1];
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -81,6 +84,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public void clearCaches() {
     myChildren = null;
     myProject = null;
+    myPrologElement = null;
   }
 
   public void subtreeChanged() {
@@ -89,7 +93,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @NotNull
   public XmlFile getSourceElement() {
-    return (XmlFile) getViewProvider().getPsi(StdLanguages.XML);
+    return (XmlFile)getViewProvider().getPsi(StdLanguages.XML);
   }
 
   public AntElement getAntParent() {
@@ -106,8 +110,19 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     final XmlDocument document = baseFile.getDocument();
     assert document != null;
     final XmlTag tag = document.getRootTag();
+    assert tag != null;
+    final int projectStart = tag.getTextRange().getStartOffset();
+    if (projectStart > 0) {
+      try {
+        myPrologElement = new AntElementImpl(
+          this, getManager().getElementFactory().createDisplayText(baseFile.getText().substring(0, projectStart)));
+      }
+      catch (IncorrectOperationException e) {
+        myPrologElement = null;
+      }
+    }
     myProject = new AntProjectImpl(this, tag, createProjectDefinition());
-    ((AntProjectImpl) myProject).loadPredefinedProperties(myAntProject);
+    ((AntProjectImpl)myProject).loadPredefinedProperties(myAntProject);
     return myProject;
   }
 
@@ -178,8 +193,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     if (ht == null) return;
     final Enumeration types = ht.keys();
     while (types.hasMoreElements()) {
-      final String typeName = (String) types.nextElement();
-      final Class typeClass = (Class) ht.get(typeName);
+      final String typeName = (String)types.nextElement();
+      final Class typeClass = (Class)ht.get(typeName);
       AntTypeDefinition def = createTypeDefinition(new AntTypeId(typeName, null), typeClass, isTask);
       if (def != null) {
         myTypeDefinitions.put(def.getClassName(), def);
@@ -210,21 +225,23 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
     final Enumeration attrEnum = helper.getAttributes();
     while (attrEnum.hasMoreElements()) {
-      String attr = (String) attrEnum.nextElement();
+      String attr = (String)attrEnum.nextElement();
       final Class attrClass = helper.getAttributeType(attr);
       if (int.class.equals(attrClass)) {
         attributes.put(attr, AntAttributeType.INTEGER);
-      } else if (boolean.class.equals(attrClass)) {
+      }
+      else if (boolean.class.equals(attrClass)) {
         attributes.put(attr, AntAttributeType.BOOLEAN);
-      } else {
+      }
+      else {
         attributes.put(attr, AntAttributeType.STRING);
       }
     }
     final HashMap<AntTypeId, String> nestedDefinitions = new HashMap<AntTypeId, String>();
     final Enumeration nestedEnum = helper.getNestedElements();
     while (nestedEnum.hasMoreElements()) {
-      final String nestedElement = (String) nestedEnum.nextElement();
-      final String className = ((Class) helper.getNestedElementMap().get(nestedElement)).getName();
+      final String nestedElement = (String)nestedEnum.nextElement();
+      final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
       nestedDefinitions.put(new AntTypeId(nestedElement), className);
     }
     return new AntTypeDefinitionImpl(id, taskClass.getName(), isTask, attributes, nestedDefinitions);
