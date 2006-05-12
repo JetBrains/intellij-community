@@ -900,6 +900,7 @@ public class TemplateState implements Disposable {
           toProcessChangedUpdate = false;
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
           codeStyleManager.shortenClassReferences(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
+          PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
           toProcessChangedUpdate = true;
         }
         catch (IncorrectOperationException e) {
