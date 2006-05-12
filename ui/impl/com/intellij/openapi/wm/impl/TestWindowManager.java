@@ -62,6 +62,9 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     public void addCustomIndicationComponent(JComponent c) {}
 
     public final void updateEditorHighlightingStatus(final boolean isClear) {}
+
+    public void cleanupCustomComponents() {
+    }
   }
 
   public IdeFrame[] getAllFrames() {

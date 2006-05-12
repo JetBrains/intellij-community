@@ -252,6 +252,10 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     myEditorHighlightingPanel.updateStatus(isClear);
   }
 
+  public void cleanupCustomComponents() {
+    myCustomIndicationsPanel.removeAll();
+  }
+
   public final Dimension getMinimumSize() {
     final Dimension p = super.getPreferredSize();
     final Dimension m = super.getMinimumSize();

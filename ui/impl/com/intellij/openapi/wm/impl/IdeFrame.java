@@ -163,6 +163,7 @@ public class IdeFrame extends JFrame implements DataProvider {
   }
 
   public void setProject(final Project project) {
+    getStatusBar().cleanupCustomComponents();
     myProject = project;
     if (myProject != null) {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable(){

@@ -29,4 +29,6 @@ public interface StatusBarEx extends StatusBar{
   void clear();
 
   void updateEditorHighlightingStatus(final boolean isClear);
+
+  void cleanupCustomComponents();
 }
