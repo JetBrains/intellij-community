@@ -20,7 +20,17 @@ package com.intellij.psi.xml;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Implementations of this interface exposed as ApplicationComponent add default mappings
+ * for namespace prefixes to namespaces for any xml file.
+ */
 public interface XmlFileNSInfoProvider {
-  // Array of [nsPrefix, namespaceId]
+  /**
+   * Provides information (if any) for default mappings of namespace prefix to namespace identifiers.
+   * @param file for which ns mapping information is requested.
+   * @return array of namespace prefix to namespace mappings for given file in the format [nsPrefix, namespaceId] or
+   * null if the interface implementation does not know about such mapping.
+   * Empty nsPrefix is "", nsPrefix, namespaceId should not be null, invalid mapping table is skipped.
+   */
   @Nullable String[][] getDefaultNamespaces(@NotNull XmlFile file);
 }
