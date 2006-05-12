@@ -3,11 +3,9 @@ package com.intellij.codeInsight.problems;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.editor.Document;
@@ -18,10 +16,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -33,7 +31,6 @@ import com.intellij.psi.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +41,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author cdr
  */
 public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
-  private final Map<VirtualFile, Collection<ProblemImpl>> myProblems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
+  private final Map<VirtualFile, Collection<Problem>> myProblems = new THashMap<VirtualFile, Collection<Problem>>();
+  private final CopyOnWriteArrayList<VirtualFile> myCheckingQueue = new CopyOnWriteArrayList<VirtualFile>();
   private final Alarm myHighlightingAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
   private final Runnable myRehighlightRequest = new Runnable() {
     public void run() {
@@ -56,7 +54,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   };
   private final Project myProject;
-  private ProjectFileIndex myProjectFileIndex;
   private final ProgressIndicator myProgress;
   private final List<ProblemListener> myProblemListeners = new CopyOnWriteArrayList<ProblemListener>();
   private final ProblemListener fireProblemListeners = new ProblemListener() {
@@ -69,72 +66,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   private boolean myDaemonStopped;
   private long myPsiModificationCount = -1000;
-  private class UpdateImpl implements ProblemUpdateTransaction {
-    private final Map<VirtualFile, Collection<ProblemImpl>> backedProblems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
-    private final Map<VirtualFile, Collection<ProblemImpl>> problems = new THashMap<VirtualFile, Collection<ProblemImpl>>();
-    private final CompileScope scope;
-
-    public UpdateImpl(final Map<VirtualFile, Collection<ProblemImpl>> problems, CompileScope compileScope) {
-      scope = compileScope;
-      backedProblems.putAll(problems);
-    }
-
-    public synchronized void addProblem(Problem problem) {
-      VirtualFile virtualFile = problem.getVirtualFile();
-      Collection<ProblemImpl> storedProblems = problems.get(virtualFile);
-      if (storedProblems == null) {
-        storedProblems = new SmartList<ProblemImpl>();
-        problems.put(virtualFile, storedProblems);
-      }
-      storedProblems.add((ProblemImpl)problem);
-    }
-
-    public void addProblem(final CompilerMessage message) {
-      if (message.getCategory() != CompilerMessageCategory.ERROR) return;
-      ApplicationManager.getApplication().runReadAction(new Runnable(){
-        public void run() {
-          ProblemImpl problem = convertToProblem(message);
-          if (problem != null) {
-            addProblem(problem);
-          }
-        }
-      });
-    }
-
-    public void commit() {
-      Set<VirtualFile> added = new THashSet<VirtualFile>();
-      added.addAll(problems.keySet());
-      added.removeAll(backedProblems.keySet());
-
-      Set<VirtualFile> removed = new THashSet<VirtualFile>();
-      for (VirtualFile oldFile : backedProblems.keySet()) {
-        if (scope.belongs(oldFile.getUrl())) {
-          removed.add(oldFile);
-        }
-      }
-      removed.removeAll(problems.keySet());
-
-      synchronized(myProblems) {
-        for (VirtualFile addedFile : added) {
-          Collection<ProblemImpl> addedProblems = problems.get(addedFile);
-          Collection<ProblemImpl> existingProblems = myProblems.get(addedFile);
-          if (existingProblems == null) {
-            myProblems.put(addedFile, addedProblems);
-          }
-          else {
-            existingProblems.addAll(addedProblems);
-          }
-        }
-        for (VirtualFile removedFile : removed) {
-          myProblems.remove(removedFile);
-        }
-      }
-      if (!added.isEmpty() || !removed.isEmpty()) {
-        fireProblemListeners.problemsChanged(added, removed);
-      }
-      problems.clear();
-    }
-  }
 
   public WolfTheProblemSolverImpl(Project project) {
     myProject = project;
@@ -150,7 +81,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   public void projectOpened() {
-    myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
   }
 
   public void projectClosed() {
@@ -171,25 +101,25 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   }
 
-  protected void startCheckingIfVincentSolvedProblemsYet() {
+  private void startCheckingIfVincentSolvedProblemsYet() {
     long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
     if (psiModificationCount == myPsiModificationCount) return; //optimization
     myPsiModificationCount = psiModificationCount;
     if (!myProject.isOpen()) return;
     myDaemonStopped = false;
-    List<VirtualFile> toCheck;
-    synchronized(myProblems) {
-      toCheck = new ArrayList<VirtualFile>(myProblems.keySet());
-    }
     try {
-      for (VirtualFile virtualFile : toCheck) {
+      for (VirtualFile virtualFile : myCheckingQueue) {
         if (myProgress.isCanceled()) break;
         if (virtualFile.isValid()) {
+          // place the file to the end of queue to give all files a fair share
+          myCheckingQueue.remove(virtualFile);
+          myCheckingQueue.add(virtualFile);
           orderVincentToCleanTheCar(virtualFile);
         }
         else {
           synchronized(myProblems) {
             myProblems.remove(virtualFile);
+            myCheckingQueue.remove(virtualFile);
           }
         }
       }
@@ -308,7 +238,34 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  private static ProblemImpl convertToProblem(final CompilerMessage message) {
+  public void weHaveGotProblem(Problem problem) {
+    VirtualFile virtualFile = problem == null ? null : problem.getVirtualFile();
+    if (virtualFile == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(virtualFile)) return;
+
+    synchronized (myProblems) {
+      Collection<Problem> storedProblems = myProblems.get(virtualFile);
+      if (storedProblems == null) {
+        storedProblems = new SmartList<Problem>();
+
+        myProblems.put(virtualFile, storedProblems);
+        fireProblemListeners.problemsChanged(Collections.singletonList(virtualFile), Collections.<VirtualFile>emptyList());
+      }
+      storedProblems.add(problem);
+      myCheckingQueue.addIfAbsent(virtualFile);
+    }
+  }
+
+  public void clearProblems(@NotNull VirtualFile virtualFile) {
+    synchronized (myProblems) {
+      Collection<Problem> old = myProblems.remove(virtualFile);
+      if (old != null) {
+        fireProblemListeners.problemsChanged(Collections.<VirtualFile>emptyList(), Collections.singletonList(virtualFile));
+      }
+      myCheckingQueue.remove(virtualFile);
+    }
+  }
+
+  public Problem convertToProblem(final CompilerMessage message) {
     VirtualFile virtualFile = message.getVirtualFile();
     if (virtualFile == null) {
       Navigatable navigatable = message.getNavigatable();
@@ -319,6 +276,17 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (virtualFile == null) return null;
     HighlightInfo info = HighlightInfo.createHighlightInfo(convertToHighlightInfoType(message), getTextRange(message), message.getMessage());
     return new ProblemImpl(virtualFile, info);
+  }
+
+  public Problem convertToProblem(VirtualFile virtualFile, int line, int column, String[] message) {
+    HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, getTextRange(virtualFile, line, column), StringUtil.join(message, "\n"));
+    return new ProblemImpl(virtualFile, info);
+  }
+
+  private static TextRange getTextRange(final VirtualFile virtualFile, final int line, final int column) {
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    int offset = document.getLineStartOffset(line - 1) + column - 1;
+    return new TextRange(offset, offset);
   }
 
   private static TextRange getTextRange(final CompilerMessage message) {
@@ -339,17 +307,5 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       case STATISTICS: return HighlightInfoType.INFORMATION;
     }
     return null;
-  }
-
-  public ProblemUpdateTransaction startUpdatingProblemsInScope(final CompileScope compileScope) {
-    synchronized (myProblems) {
-      return new UpdateImpl(myProblems, compileScope);
-    }
-  }
-
-  public ProblemUpdateTransaction startUpdatingProblemsInScope(final VirtualFile virtualFile) {
-    Module module = myProjectFileIndex.getModuleForFile(virtualFile);
-    CompileScope compileScope = new FileSetCompileScope(new VirtualFile[]{virtualFile}, new Module[]{module});
-    return startUpdatingProblemsInScope(compileScope);
   }
 }

@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
+import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -167,17 +168,24 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     if (!PsiManager.getInstance(myProject).isInProject(myFile)) return; // do not report problems in libraries
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
     VirtualFile file = myFile.getVirtualFile();
-    WolfTheProblemSolver.ProblemUpdateTransaction update = wolf.startUpdatingProblemsInScope(file);
+    List<Problem> problems = new SmartList<Problem>();
     try {
       for (HighlightInfo info : infos) {
         if (info.getSeverity() == HighlightSeverity.ERROR) {
           Problem problem = new ProblemImpl(file, info);
-          update.addProblem(problem);
+          problems.add(problem);
         }
       }
     }
     finally {
-      update.commit();
+      if (problems.isEmpty()) {
+        wolf.clearProblems(file);
+      }
+      else {
+        for (Problem problem : problems) {
+          wolf.weHaveGotProblem(problem);
+        }
+      }
     }
   }
 

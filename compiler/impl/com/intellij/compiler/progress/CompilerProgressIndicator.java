@@ -43,8 +43,8 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
   private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
   private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
-  private static final Key<Key> CONTENT_ID_KEY = Key.create("CONTENT_ID");
-  private final Key myContentId = Key.create("compile_content");
+  private static final Key<Key<?>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
+  private final Key<Key<?>> myContentId = Key.create("compile_content");
   private CompilerProgressDialog myDialog;
   private NewErrorTreeViewPanel myErrorTreeView;
   private final Object myMessageViewLock = new Object();
@@ -55,16 +55,11 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   private int myWarningCount = 0;
   private String myStatisticsText = "";
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private final WolfTheProblemSolver.ProblemUpdateTransaction myUpdate;
 
-  public CompilerProgressIndicator(@NotNull Project project,
-                                   boolean compileInBackground,
-                                   String contentName,
-                                   @NotNull WolfTheProblemSolver.ProblemUpdateTransaction update) {
+  public CompilerProgressIndicator(@NotNull Project project, boolean compileInBackground, String contentName) {
     myProject = project;
     myIsBackgroundMode = compileInBackground;
     myContentName = contentName;
-    myUpdate = update;
   }
 
   public void cancel() {
@@ -93,12 +88,12 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     openMessageView();
     if (CompilerMessageCategory.ERROR.equals(message.getCategory())) {
       myErrorCount += 1;
+      WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
+      wolf.weHaveGotProblem(wolf.convertToProblem(message));
     }
     if (CompilerMessageCategory.WARNING.equals(message.getCategory())) {
       myWarningCount += 1;
     }
-
-    myUpdate.addProblem(message);
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       doAddMessage(message);

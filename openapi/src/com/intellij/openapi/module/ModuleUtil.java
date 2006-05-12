@@ -28,8 +28,10 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -176,8 +178,8 @@ public class ModuleUtil {
                                                      final Project project,
                                                      final GlobalSearchScope scope) {
     int index = resourceName.lastIndexOf('/');
-    String packageName = (index >= 0) ? resourceName.substring(0, index).replace('/', '.') : "";
-    String fileName = (index >= 0) ? resourceName.substring(index+1) : resourceName;
+    String packageName = index >= 0 ? resourceName.substring(0, index).replace('/', '.') : "";
+    String fileName = index >= 0 ? resourceName.substring(index+1) : resourceName;
     final VirtualFile[] files = ProjectRootManager.getInstance(project).getFileIndex().getDirectoriesByPackageName(packageName, false);
     for(VirtualFile file: files) {
       final VirtualFile child = file.findChild(fileName);

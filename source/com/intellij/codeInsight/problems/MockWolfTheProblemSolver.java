@@ -1,10 +1,9 @@
 package com.intellij.codeInsight.problems;
 
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
@@ -17,27 +16,12 @@ import org.jetbrains.annotations.NotNull;
 public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   private WolfTheProblemSolver myDelegate;
 
-  private final ProblemUpdateTransaction myUpdate = new ProblemUpdateTransaction() {
-    public void addProblem(Problem problem) {
-    }
-
-    public void addProblem(CompilerMessage message) {
-    }
-
-    public void commit() {
-    }
-  };
-
   public boolean isProblemFile(VirtualFile virtualFile) {
     return myDelegate != null && myDelegate.isProblemFile(virtualFile);
   }
 
-  public ProblemUpdateTransaction startUpdatingProblemsInScope(CompileScope compileScope) {
-    return myDelegate == null ? myUpdate : myDelegate.startUpdatingProblemsInScope(compileScope);
-  }
-
-  public ProblemUpdateTransaction startUpdatingProblemsInScope(VirtualFile virtualFile) {
-    return myDelegate == null ? myUpdate : myDelegate.startUpdatingProblemsInScope(virtualFile);
+  public void weHaveGotProblem(Problem problem) {
+    if (myDelegate != null) myDelegate.weHaveGotProblem(problem);
   }
 
   public boolean hasProblemFilesBeneath(ProjectViewNode scope) {
@@ -80,6 +64,18 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
 
   public void disposeComponent() {
 
+  }
+
+  public void clearProblems(@NotNull VirtualFile virtualFile) {
+    if (myDelegate != null) myDelegate.clearProblems(virtualFile);
+  }
+
+  public Problem convertToProblem(CompilerMessage message) {
+    return myDelegate == null ? null : myDelegate.convertToProblem(message);
+  }
+
+  public Problem convertToProblem(VirtualFile virtualFile, int line, int column, String[] message) {
+    return myDelegate == null ? null : myDelegate.convertToProblem(virtualFile, line, column, message);
   }
 
   public void setDelegate(final WolfTheProblemSolver delegate) {
