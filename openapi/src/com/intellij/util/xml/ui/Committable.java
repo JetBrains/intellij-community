@@ -15,14 +15,14 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.Disposable;
+
 /**
  * author: lesya
  */
-public interface Committable {
+public interface Committable extends Disposable {
   void commit();
 
   void reset();
-
-  void dispose();
 
 }

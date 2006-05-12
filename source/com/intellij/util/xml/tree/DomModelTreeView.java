@@ -12,9 +12,9 @@ import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.xml.DomChangeListener;
+import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomEventListener;
+import com.intellij.util.xml.DomEventAdapter;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
   private final SimpleTree myTree;
   private final LazySimpleTreeBuilder myBuilder;
   private DomManager myDomManager;
-  private DomEventListener myDomEventListener;
+  private DomEventAdapter myDomEventListener;
   @Nullable private DomElement myRootElement;
 
   public DomModelTreeView(Project project) {
@@ -98,7 +98,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
       }
     });
 
-    myDomEventListener = new DomChangeListener() {
+    myDomEventListener = new DomChangeAdapter() {
       protected void elementChanged(DomElement element) {
         if (myTree.isShowing()) {
 /*

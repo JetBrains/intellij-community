@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.Disposable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -828,6 +829,11 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
     assertThread();
     myDispatcher.addListener(listener);
+  }
+
+  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, Disposable parentDisposable) {
+    assertThread();
+    myDispatcher.addListener(listener, parentDisposable);
   }
 
   public void removeFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {

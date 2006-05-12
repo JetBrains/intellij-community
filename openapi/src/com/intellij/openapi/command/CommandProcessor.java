@@ -17,6 +17,7 @@ package com.intellij.openapi.command;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Nls;
 
@@ -45,6 +46,7 @@ public abstract class CommandProcessor {
   public abstract Project getCurrentCommandProject();
 
   public abstract void addCommandListener(CommandListener listener);
+  public abstract void addCommandListener(CommandListener listener, Disposable parentDisposable);
   public abstract void removeCommandListener(CommandListener listener);
 
   public abstract void runUndoTransparentAction(Runnable action);

@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,6 +111,8 @@ public abstract class FileEditorManager {
    * @param listener listener to be added
    */
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
+
+  public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, Disposable parentDisposable);
 
   /**
    * Removes specified <code>listener</code>

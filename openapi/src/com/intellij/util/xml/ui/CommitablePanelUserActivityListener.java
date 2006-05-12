@@ -19,11 +19,12 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.ui.UserActivityListener;
 import com.intellij.util.Alarm;
+import com.intellij.openapi.Disposable;
 
 /**
  * User: Sergey.Vasiliev
  */
-public class CommitablePanelUserActivityListener implements UserActivityListener {
+public class CommitablePanelUserActivityListener implements UserActivityListener, Disposable {
   private final Committable myPanel;
   private final Alarm myAlarm = new Alarm();
 
@@ -54,4 +55,7 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
     myAlarm.cancelAllRequests();
   }
 
+  public void dispose() {
+    cancelAllRequests();
+  }
 }

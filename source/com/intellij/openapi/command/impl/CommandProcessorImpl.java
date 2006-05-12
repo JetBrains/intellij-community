@@ -10,6 +10,8 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -172,6 +174,15 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
 
   public void addCommandListener(CommandListener listener) {
     myListeners.add(listener);
+  }
+
+  public void addCommandListener(final CommandListener listener, Disposable parentDisposable) {
+    addCommandListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeCommandListener(listener);
+      }
+    });
   }
 
   public void removeCommandListener(CommandListener listener) {

@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
@@ -263,6 +264,11 @@ import java.util.HashSet;
 
   protected void resetAllFields() {
     resetClassFields(getClass());
+  }
+
+  protected final <T extends Disposable> T disposeOnTearDown(T disposable) {
+    Disposer.register(myProject, disposable);
+    return disposable;
   }
 
   private void resetClassFields(final Class<?> aClass) {

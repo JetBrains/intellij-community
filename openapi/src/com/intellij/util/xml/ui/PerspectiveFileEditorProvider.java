@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Disposer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,7 @@ public abstract class PerspectiveFileEditorProvider implements WeighedFileEditor
   public abstract PerspectiveFileEditor createEditor(Project project, VirtualFile file);
 
   public void disposeEditor(FileEditor editor) {
-    ((PerspectiveFileEditor)editor).dispose();
+    Disposer.dispose((PerspectiveFileEditor)editor);
   }
 
   @NotNull

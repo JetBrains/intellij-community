@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -28,6 +29,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
@@ -52,7 +54,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
 
-  private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
+  private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
 
 
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
@@ -64,7 +66,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private final Map<XmlFile,Object> myNonDomFiles = new WeakHashMap<XmlFile, Object>();
   private static final InvocationStack myInvocationStack = new InvocationStack();
 
-  private DomEventListener[] myCachedListeners;
   private PomModelListener myXmlListener;
   private Project myProject;
   private PomModel myPomModel;
@@ -99,14 +100,16 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return myInvocationStack;
   }
 
-  public final void addDomEventListener(DomEventListener listener) {
-    myCachedListeners = null;
-    myListeners.add(listener);
+  public final void addDomEventListener(DomEventAdapter listener) {
+    myListeners.addListener(listener);
   }
 
-  public final void removeDomEventListener(DomEventListener listener) {
-    myCachedListeners = null;
-    myListeners.remove(listener);
+  public void addDomEventListener(DomEventAdapter listener, Disposable parentDisposable) {
+    myListeners.addListener(listener, parentDisposable);
+  }
+
+  public final void removeDomEventListener(DomEventAdapter listener) {
+    myListeners.removeListener(listener);
   }
 
   public final ConverterManager getConverterManager() {
@@ -118,13 +121,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   protected final void fireEvent(DomEvent event) {
-    DomEventListener[] listeners = myCachedListeners;
-    if (listeners == null) {
-      listeners = myCachedListeners = myListeners.toArray(new DomEventListener[myListeners.size()]);
-    }
-    for (DomEventListener listener : listeners) {
-      listener.eventOccured(event);
-    }
+    myListeners.getMulticaster().eventOccured(event);
   }
 
   public final GenericInfoImpl getGenericInfo(final Type type) {

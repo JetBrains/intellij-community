@@ -5,13 +5,14 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.xml.CaptionComponent;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomEventListener;
+import com.intellij.util.xml.DomEventAdapter;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.events.DomEvent;
 import org.jetbrains.annotations.NotNull;
@@ -25,38 +26,28 @@ import java.awt.*;
 public abstract class DomFileEditor<T extends BasicDomElementComponent> extends PerspectiveFileEditor{
   private final String myName;
   private final T myComponent;
-  private final UserActivityWatcher myUserActivityWatcher;
-  private final CommitablePanelUserActivityListener myUserActivityListener;
-  private DomEventListener myDomListener;
 
   protected DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
     super(project, file);
     myComponent = component;
     myName = name;
-    myUserActivityWatcher = DomUIFactory.getDomUIFactory().createEditorAwareUserActivityWatcher();
-    myUserActivityListener = new CommitablePanelUserActivityListener() {
+    final UserActivityWatcher userActivityWatcher = DomUIFactory.getDomUIFactory().createEditorAwareUserActivityWatcher();
+    final CommitablePanelUserActivityListener userActivityListener = new CommitablePanelUserActivityListener() {
       protected void applyChanges() {
         doCommit();
       }
     };
-    myUserActivityWatcher.addUserActivityListener(myUserActivityListener);
-    myUserActivityWatcher.register(getComponent());
+    userActivityWatcher.addUserActivityListener(userActivityListener, this);
+    userActivityWatcher.register(getComponent());
     new MnemonicHelper().register(getComponent());
     addWatchedElement(component.getDomElement());
-    myDomListener = new DomEventListener() {
+    DomManager.getDomManager(project).addDomEventListener(new DomEventAdapter() {
       public void eventOccured(DomEvent event) {
         checkIsValid();
       }
-    };
-    DomManager.getDomManager(project).addDomEventListener(myDomListener);
-  }
-
-  public void dispose() {
-    DomManager.getDomManager(getProject()).removeDomEventListener(myDomListener);
-    myUserActivityWatcher.removeUserActivityListener(myUserActivityListener);
-    myUserActivityListener.cancelAllRequests();
-    myComponent.dispose();
-    super.dispose();
+    }, this);
+    Disposer.register(this, myComponent);
+    Disposer.register(this, userActivityListener);
   }
 
   public void commit() {

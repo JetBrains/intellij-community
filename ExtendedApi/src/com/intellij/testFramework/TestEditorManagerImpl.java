@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -305,6 +306,9 @@ import java.util.Map;
   }
 
   public void addFileEditorManagerListener(FileEditorManagerListener listener) {
+  }
+
+  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, Disposable parentDisposable) {
   }
 
   public void removeFileEditorManagerListener(FileEditorManagerListener listener) {

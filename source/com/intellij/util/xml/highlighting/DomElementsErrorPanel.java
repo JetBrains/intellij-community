@@ -15,7 +15,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
-import com.intellij.util.xml.DomChangeListener;
+import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ui.CommittablePanel;
@@ -34,7 +34,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
   private DomElement[] myDomElements;
   private DomManager myDomManager;
 
-  private final DomChangeListener myDomChangeListener;
+  private final DomChangeAdapter myDomChangeListener;
   private final DomElementsRefreshStatusRenderer myErrorStripeRenderer;
 
   private final Alarm myAlarm = new Alarm();
@@ -55,7 +55,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
 
     addUpdateRequest();
 
-    myDomChangeListener = new DomChangeListener() {
+    myDomChangeListener = new DomChangeAdapter() {
       protected void elementChanged(DomElement element) {
         updatePanel();
       }

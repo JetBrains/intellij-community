@@ -8,7 +8,7 @@ import com.intellij.util.xml.events.*;
 /**
  * @author peter
  */
-public abstract class DomChangeListener extends DomEventListener{
+public abstract class DomChangeAdapter extends DomEventAdapter {
 
   protected abstract void elementChanged(DomElement element);
 

@@ -15,7 +15,9 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -26,11 +28,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 
 public class UserActivityWatcher extends ComponentTreeWatcher {
   private boolean myIsModified = false;
-  private ArrayList<UserActivityListener> myListeners = new ArrayList<UserActivityListener>();
+  private EventDispatcher<UserActivityListener> myListeners = EventDispatcher.create(UserActivityListener.class);
 
   private final DocumentListener myDocumentListener = new DocumentAdapter() {
     public void textChanged(DocumentEvent event) {
@@ -61,19 +62,20 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
   };
 
   public void addUserActivityListener(UserActivityListener listener) {
-    myListeners.add(listener);
+    myListeners.addListener(listener);
+  }
+
+  public void addUserActivityListener(UserActivityListener listener, Disposable parentDisposable) {
+    myListeners.addListener(listener, parentDisposable);
   }
 
   public void removeUserActivityListener(UserActivityListener listener) {
-    myListeners.remove(listener);
+    myListeners.removeListener(listener);
   }
 
   protected final void fireUIChanged() {
     myIsModified = true;
-    UserActivityListener[] listeners = myListeners.toArray(new UserActivityListener[myListeners.size()]);
-    for (UserActivityListener listener : listeners) {
-      listener.stateChanged();
-    }
+    myListeners.getMulticaster().stateChanged();
   }
 
   private final ItemListener myItemListener = new ItemListener() {

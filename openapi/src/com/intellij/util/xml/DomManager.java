@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.xml.XmlFile;
@@ -35,9 +36,11 @@ public abstract class DomManager implements ProjectComponent {
   @NotNull
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, @NonNls String rootTagName);
 
-  public abstract void addDomEventListener(DomEventListener listener);
+  public abstract void addDomEventListener(DomEventAdapter listener);
 
-  public abstract void removeDomEventListener(DomEventListener listener);
+  public abstract void addDomEventListener(DomEventAdapter listener, Disposable parentDisposable);
+
+  public abstract void removeDomEventListener(DomEventAdapter listener);
 
   public abstract DomGenericInfo getGenericInfo(Type type);
 

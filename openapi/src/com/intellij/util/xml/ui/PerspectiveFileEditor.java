@@ -6,6 +6,9 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.command.CommandAdapter;
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -28,8 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User: Sergey.Vasiliev
@@ -38,21 +41,16 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Project myProject;
   private final VirtualFile myFile;
-  private final FileEditorManagerAdapter myFileEditorManagerAdapter;
 
   private boolean myIsValid;
-  private boolean myShowing;              
+  private boolean myShowing;
   private boolean myCommitting;
   private final Set<Document> myCurrentDocuments = new HashSet<Document>();
+  private boolean myDirty;
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
     public void documentChanged(DocumentEvent e) {
       if (myShowing && !myCommitting) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            commitAllDocuments();
-            reset();
-          }
-        });
+        myDirty = true;
       }
     }
   };
@@ -68,7 +66,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     myFile = file;
 
     myIsValid = true;
-    myFileEditorManagerAdapter = new FileEditorManagerAdapter() {
+    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new FileEditorManagerAdapter() {
       public void selectionChanged(FileEditorManagerEvent event) {
         checkIsValid();
         if (PerspectiveFileEditor.this.equals(event.getOldEditor())) {
@@ -89,8 +87,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
           }
         }
       }
-    };
-    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myFileEditorManagerAdapter);
+    }, this);
     startListeningDocuments();
 
     final PsiFile psiFile = getPsiFile();
@@ -100,6 +97,31 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
         addWatchedDocument(document);
       }
     }
+
+    CommandProcessor.getInstance().addCommandListener(new CommandAdapter() {
+      public void commandStarted(CommandEvent event) {
+        undoTransparentActionStarted();
+      }
+
+      public void undoTransparentActionStarted() {
+        myDirty = false;
+      }
+
+      public void undoTransparentActionFinished() {
+        if (myDirty) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
+              reset();
+            }
+          });
+        }
+      }
+
+      public void commandFinished(CommandEvent event) {
+        undoTransparentActionFinished();
+      }
+    }, this);
   }
 
   protected final void startListeningDocuments() {
@@ -192,7 +214,6 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
   public void dispose() {
     stopListeningDocuments();
-    FileEditorManager.getInstance(myProject).removeFileEditorManagerListener(myFileEditorManagerAdapter);
   }
 
   protected final void stopListeningDocuments() {
