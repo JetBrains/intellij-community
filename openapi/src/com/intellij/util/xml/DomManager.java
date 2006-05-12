@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Consumer;
@@ -69,4 +70,5 @@ public abstract class DomManager implements ProjectComponent {
 
   public abstract ConverterManager getConverterManager();
 
+  public abstract void addPsiReferenceFactoryForClass(Class clazz, PsiReferenceFactory psiReferenceFactory);
 }

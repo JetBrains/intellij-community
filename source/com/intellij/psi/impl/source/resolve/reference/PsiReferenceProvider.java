@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,10 +13,9 @@ import org.jetbrains.annotations.NotNull;
  * Time: 16:59:58
  * To change this template use Options | File Templates.
  */
-public interface PsiReferenceProvider{
+public interface PsiReferenceProvider extends PsiReferenceFactory {
   PsiReferenceProvider[] EMPTY_ARRAY = new PsiReferenceProvider[0];
 
-  @NotNull PsiReference[] getReferencesByElement(PsiElement element);
   /**
    * @deprecated
    */

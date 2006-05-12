@@ -3,10 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
@@ -22,10 +19,19 @@ import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+import java.util.HashMap;
+
 /**
  * @author peter
  */
 public class GenericValueReferenceProvider implements PsiReferenceProvider {
+
+  private final Map<Class, PsiReferenceFactory> myProviders = new HashMap<Class, PsiReferenceFactory>();
+
+  public void addReferenceProviderForClass(Class clazz, PsiReferenceFactory provider) {
+    myProviders.put(clazz, provider);
+  }
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
@@ -75,24 +81,28 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     }
 
     GenericDomValue domElement = (GenericDomValue) element;
-    final Class parameter = DomUtil.getGenericValueType(domElement.getDomElementType());
-    if (PsiType.class.isAssignableFrom(parameter)) {
+    final Class clazz = DomUtil.getGenericValueType(domElement.getDomElementType());
+    if (PsiType.class.isAssignableFrom(clazz)) {
       return new PsiReference[] {new PsiTypeReference(this, (GenericDomValue<PsiType>)domElement)};
     }
-    if (PsiClass.class.isAssignableFrom(parameter)) {
+    if (PsiClass.class.isAssignableFrom(clazz)) {
       JavaClassReferenceProvider provider = new JavaClassReferenceProvider();
       return provider.getReferencesByElement(psiElement);
 //      return new PsiReference[] {new PsiClassReference(this, (GenericDomValue<PsiClass>)domElement)};
     }
-    if (Integer.class.isAssignableFrom(parameter)) {
+    if (Integer.class.isAssignableFrom(clazz)) {
       return new PsiReference[] {new GenericDomValueReference(this, domElement) {
         public Object[] getVariants() {
           return new Object[]{"239", "42"};
         }
       }};
     }
-    if (String.class.isAssignableFrom(parameter)) {
+    if (String.class.isAssignableFrom(clazz)) {
       return null;
+    }
+    PsiReferenceFactory provider = myProviders.get(clazz);
+    if (provider != null) {
+      return provider.getReferencesByElement(psiElement);
     }
 
     return new PsiReference[] {new GenericDomValueReference(this, domElement)};

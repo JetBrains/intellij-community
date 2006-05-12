@@ -19,7 +19,9 @@ import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -68,6 +70,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private PomModel myPomModel;
   private boolean myChanging;
 
+  private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
+
   public DomManagerImpl(final PomModel pomModel, final Project project) {
     myPomModel = pomModel;
     myProject = project;
@@ -87,8 +91,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       }
     };
     myPomModel.addModelListener(myXmlListener);
-    ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(XmlTag.class, new GenericValueReferenceProvider());
-    ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(XmlAttributeValue.class, new GenericValueReferenceProvider());
+    ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(XmlTag.class, myGenericValueReferenceProvider);
+    ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(XmlAttributeValue.class, myGenericValueReferenceProvider);
   }
 
   public static InvocationStack getInvocationStack() {
@@ -107,6 +111,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   public final ConverterManager getConverterManager() {
     return myConverterManager;
+  }
+
+  public void addPsiReferenceFactoryForClass(Class clazz, PsiReferenceFactory psiReferenceFactory) {
+    myGenericValueReferenceProvider.addReferenceProviderForClass(clazz, psiReferenceFactory);
   }
 
   protected final void fireEvent(DomEvent event) {
