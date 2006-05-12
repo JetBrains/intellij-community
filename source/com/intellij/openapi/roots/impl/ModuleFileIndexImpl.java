@@ -27,7 +27,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     myContentFilter = new ContentFilter();
   }
 
-  public boolean iterateContent(ContentIterator iterator) {
+  public boolean iterateContent(@NotNull ContentIterator iterator) {
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(myModule).getContentRoots();
     for (VirtualFile contentRoot : contentRoots) {
       VirtualFile parent = contentRoot.getParent();
@@ -43,18 +43,18 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     return true;
   }
 
-  public boolean iterateContentUnderDirectory(VirtualFile dir, ContentIterator iterator) {
+  public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator) {
     return FileIndexImplUtil.iterateRecursively(dir, myContentFilter, iterator);
   }
 
-  public boolean isContentJavaSourceFile(VirtualFile file) {
+  public boolean isContentJavaSourceFile(@NotNull VirtualFile file) {
     if (file.isDirectory()) return false;
     if (myFileTypeManager.getFileTypeByFile(file) != StdFileTypes.JAVA) return false;
     if (myFileTypeManager.isFileIgnored(file.getName())) return false;
     return isInSourceContent(file);
   }
 
-  public boolean isInContent(VirtualFile fileOrDir) {
+  public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
       return info != null && myModule.equals(info.module);
@@ -66,7 +66,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     }
   }
 
-  public boolean isInSourceContent(VirtualFile fileOrDir) {
+  public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
       return info != null && info.isInModuleSource && myModule.equals(info.module);
@@ -79,7 +79,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   }
 
   @NotNull
-  public List<OrderEntry> getOrderEntriesForFile(VirtualFile fileOrDir) {
+  public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
     VirtualFile dir = fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParent();
     if (dir == null) return Collections.emptyList();
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
@@ -94,7 +94,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     return Collections.unmodifiableList(result);
   }
 
-  public OrderEntry getOrderEntryForFile(VirtualFile fileOrDir) {
+  public OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir) {
     VirtualFile dir = fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParent();
     if (dir == null) return null;
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
@@ -106,7 +106,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     return null;
   }
 
-  public boolean isInTestSourceContent(VirtualFile fileOrDir) {
+  public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
       return info != null && info.isInModuleSource && info.isTestSource && myModule.equals(info.module);
@@ -118,7 +118,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     }
   }
 
-  public VirtualFile[] getDirectoriesByPackageName(String packageName, boolean includeLibrarySources) {
+  public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     VirtualFile[] allDirs = myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
     if (allDirs.length == 0) return allDirs;
 
@@ -132,7 +132,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   }
 
   private class ContentFilter implements VirtualFileFilter {
-    public boolean accept(VirtualFile file) {
+    public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
         DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
         if (info == null) return false;

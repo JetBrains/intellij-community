@@ -215,9 +215,6 @@ public class FileManagerImpl implements FileManager {
       if (psiFile1 != null) { // might get collected
         LOG.assertTrue(psiFile1.getClass().equals(psiProvider.getPsi(psiProvider.getBaseLanguage()).getClass()));
       }
-
-      VirtualFile parent = vFile.getParent();
-      //LOG.assertTrue(myVFileToPsiDirMap.containsKey(parent));
     }
 
     HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = myVFileToPsiDirMap;
@@ -1212,8 +1209,6 @@ public class FileManagerImpl implements FileManager {
       ApplicationManager.getApplication().runWriteAction(
         new PsiExternalChangeAction() {
           public void run() {
-            RepositoryManager repositoryManager = myManager.getRepositoryManager();
-
             removeInvalidFilesAndDirs(true);
 
             PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);

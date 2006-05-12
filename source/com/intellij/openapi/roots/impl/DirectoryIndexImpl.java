@@ -23,6 +23,7 @@ import com.intellij.util.PendingEventDispatcher;
 import gnu.trove.THashMap;
 import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -58,6 +59,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     );
   }
 
+  @NotNull
   public String getComponentName() {
     return "DirectoryIndex";
   }
@@ -403,7 +405,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     return myDirToInfoMap.get(dir);
   }
 
-  public VirtualFile[] getDirectoriesByPackageName(String packageName, boolean includeLibrarySources) {
+  @NotNull public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     LOG.assertTrue(myInitialized);
     LOG.assertTrue(!myDisposed);
 
@@ -424,7 +426,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
-  private VirtualFile[] getDirectoriesByPackageName(String packageName) {
+  @NotNull private VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName) {
     dispatchPendingEvents();
 
     if (!LAZY_MODE) {
@@ -440,7 +442,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
-  private VirtualFile[] _getDirectoriesByPackageNameInLazyMode(String packageName) {
+  @NotNull private VirtualFile[] _getDirectoriesByPackageNameInLazyMode(@NotNull String packageName) {
     ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
 
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
@@ -474,8 +476,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
-    VirtualFile[] result = list.toArray(new VirtualFile[list.size()]);
-    return result;
+    return list.toArray(new VirtualFile[list.size()]);
   }
 
   private void dispatchPendingEvents() {
@@ -486,7 +487,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
-  private void findAndAddDirByPackageName(ArrayList<VirtualFile> list, VirtualFile root, String packageName) {
+  private void findAndAddDirByPackageName(ArrayList<VirtualFile> list, VirtualFile root, @NotNull String packageName) {
     VirtualFile dir = findDirByPackageName(root, packageName);
     if (dir == null) return;
     DirectoryInfo info = getInfoForDirectory(dir);
@@ -497,7 +498,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
-  private static VirtualFile findDirByPackageName(VirtualFile root, String packageName) {
+  private static VirtualFile findDirByPackageName(VirtualFile root, @NotNull String packageName) {
     if (packageName.length() == 0) {
       return root;
     }

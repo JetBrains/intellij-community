@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides information about files contained in a project or module.
@@ -30,7 +31,7 @@ public interface FileIndex {
    * @param iterator the iterator receiving the files.
    * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
    */
-  boolean iterateContent(ContentIterator iterator);
+  boolean iterateContent(@NotNull ContentIterator iterator);
 
   /**
    * Iterates all files and directories in the content under directory <code>dir</code> (including the directory itself).
@@ -40,7 +41,7 @@ public interface FileIndex {
    * @param iterator the iterator receiving the files.
    * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
    */
-  boolean iterateContentUnderDirectory(VirtualFile dir, ContentIterator iterator);
+  boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator);
 
   /**
    * Returns true if <code>fileOrDir</code> is a file or directory under a content root of this
@@ -49,7 +50,7 @@ public interface FileIndex {
    * @param fileOrDir the file or directory to check.
    * @return true if the file or directory belongs to a content root, false otherwise.
    */
-  boolean isInContent(VirtualFile fileOrDir);
+  boolean isInContent(@NotNull VirtualFile fileOrDir);
 
   /**
    * Returns true if <code>file</code> is a java source file which belongs to sources of the content.
@@ -59,7 +60,7 @@ public interface FileIndex {
    * @param file the file to check.
    * @return true if the file is a Java source file in the content sources, false otherwise.
    */
-  boolean isContentJavaSourceFile(VirtualFile file);
+  boolean isContentJavaSourceFile(@NotNull VirtualFile file);
 
   /**
    * Returns true if <code>fileOrDir</code> is a file or directory from the content source.
@@ -68,7 +69,7 @@ public interface FileIndex {
    * @param fileOrDir the file or directory to check.
    * @return true if the file or directory belongs to a source or test source root, false otherwise.
    */
-  boolean isInSourceContent(VirtualFile fileOrDir);
+  boolean isInSourceContent(@NotNull VirtualFile fileOrDir);
 
   /**
    * Returns true if <code>fileOrDir</code> is a file or directory from the test content source
@@ -76,7 +77,7 @@ public interface FileIndex {
    * @param fileOrDir the file or directory to check.
    * @return true if the file or directory belongs to a test source root, false otherwise.
    */
-  boolean isInTestSourceContent(VirtualFile fileOrDir);
+  boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir);
 
   /**
    * Returns all directories in content sources and libraries (and optionally library sources)
@@ -86,5 +87,5 @@ public interface FileIndex {
    * @param includeLibrarySources if true, directories under library sources are included in the returned list.
    * @return the list of directories.
    */
-  VirtualFile[] getDirectoriesByPackageName(String packageName, boolean includeLibrarySources);
+  VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
 }
