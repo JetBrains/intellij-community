@@ -45,7 +45,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
   public CompositeLanguageFileViewProvider clone() {
     final CompositeLanguageFileViewProvider viewProvider = cloneInner();
-    final PsiFileImpl psiFile = (PsiFileImpl)getPsi(getBaseLanguage());
+    final PsiFileImpl psiFile = (PsiFileImpl)viewProvider.getPsi(getBaseLanguage());
 
     // copying main tree
     final FileElement treeClone = (FileElement)psiFile.calcTreeElement().clone(); // base language tree clone
