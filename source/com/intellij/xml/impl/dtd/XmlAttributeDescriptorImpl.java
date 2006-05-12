@@ -14,7 +14,9 @@ import java.util.List;
  */
 public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   private XmlAttributeDecl myDecl;
-  private boolean required;
+  private boolean myRequired;
+  private boolean myEnumerated;
+  private boolean myFixed;
   private String myName;
 
   public XmlAttributeDescriptorImpl() {
@@ -25,7 +27,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   }
 
   public boolean isRequired() {
-    return required;
+    return myRequired;
   }
 
   public PsiElement getDeclaration(){
@@ -42,7 +44,9 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
 
   public void init(PsiElement element){
     myDecl = (XmlAttributeDecl) element;
-    required = myDecl.isAttributeRequired();
+    myRequired = myDecl.isAttributeRequired();
+    myFixed = myDecl.isAttributeFixed();
+    myEnumerated = myDecl.isEnumerated();
   }
 
   public Object[] getDependences(){
@@ -50,7 +54,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   }
 
   public boolean isFixed() {
-    return myDecl.isAttributeFixed();
+    return myFixed;
   }
 
   public boolean hasIdType() {
@@ -73,7 +77,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   }
 
   public boolean isEnumerated() {
-    return myDecl.isEnumerated();
+    return myEnumerated;
   }
 
   public String[] getEnumeratedValues() {
