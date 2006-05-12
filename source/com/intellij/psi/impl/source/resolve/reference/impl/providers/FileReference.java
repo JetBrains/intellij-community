@@ -285,6 +285,13 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     return false;
   }
 
+  public void clearResolveCaches() {
+    final PsiManager manager = getElement().getManager();
+    if (manager instanceof PsiManagerImpl) {
+      ((PsiManagerImpl)manager).getResolveCache().clearResolveCaches(this);
+    }
+  }
+
   static class MyResolver implements ResolveCache.PolyVariantResolver {
     static MyResolver INSTANCE = new MyResolver();
     public ResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {

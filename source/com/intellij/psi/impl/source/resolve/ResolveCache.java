@@ -110,7 +110,7 @@ public class ResolveCache {
   }
 
   //for Visual Fabrique
-  public void clearJavaResolveCaches(PsiReference ref) {
+  public void clearResolveCaches(PsiReference ref) {
     final boolean physical = ref.getElement().isPhysical();
     setCachedPolyVariantResolve(ref, null, physical, false);
     setCachedPolyVariantResolve(ref, null, physical, true);
