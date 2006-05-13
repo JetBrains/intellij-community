@@ -18,41 +18,41 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
 /**
  * @author max
  */
-public class CollectionQuery<T> implements Query<T> {
-  private Collection<T> myCollection;
+public class ArrayQuery<T> implements Query<T> {
+  private T[] myArray;
 
-  public CollectionQuery(@NotNull final Collection<T> collection) {
-    myCollection = collection;
+  public ArrayQuery(final T[] array) {
+    myArray = array;
   }
 
   @NotNull
   public Collection<T> findAll() {
-    return myCollection;
+    return Arrays.asList(myArray);
   }
 
   public T findFirst() {
-    final Iterator<T> i = iterator();
-    return i.hasNext() ? i.next() : null;
+    return myArray.length > 0 ? myArray[0] : null;
   }
 
   public boolean forEach(final Processor<T> consumer) {
-    for (T t : myCollection) {
+    for (T t : myArray) {
       if (!consumer.process(t)) return false;
     }
     return true;
   }
 
   public T[] toArray(final T[] a) {
-    return findAll().toArray(a);
+    return myArray;
   }
 
   public Iterator<T> iterator() {
-    return myCollection.iterator();
+    return Arrays.asList(myArray).iterator();
   }
 }

@@ -3,7 +3,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,9 +12,6 @@ import java.util.Collection;
  * @author max
  */
 public interface Query<Result> extends Iterable<Result> {
-  Condition<Result> getFilter();
-  void setFilter(Condition<Result> filter);
-
   /**
    * Get all of the results in the {@link java.util.Collection}
    * @return results in a collection or empty collection if no results found.

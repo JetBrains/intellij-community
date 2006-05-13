@@ -23,8 +23,9 @@ public class QueryFactory<Result, Parameters> {
    * This method is intentionally made protected to be used only by QueryFactory implementations
    * It is supposed that the implementors will box Parameters themselves based on info passed to them
    * @return query to perform the search
+   * @param parameters of the search
    */
   protected final Query<Result> createQuery(Parameters parameters) {
-    return new QueryInstance<Result, Parameters>(parameters, myExecutors);
+    return new UniqueResultsQuery<Result>(new ExecutorsQuery<Result, Parameters>(parameters, myExecutors));
   }
 }

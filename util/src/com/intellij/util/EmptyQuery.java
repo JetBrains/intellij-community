@@ -3,7 +3,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -15,14 +14,6 @@ import java.util.Iterator;
  */
 public class EmptyQuery<R> implements Query<R> {
   private static final EmptyQuery EMPTY_QUERY_INSTANCE = new EmptyQuery();
-
-  public Condition<R> getFilter() {
-    return null;
-  }
-
-  public void setFilter(final Condition<R> filter) {
-    // ignore
-  }
 
   @NotNull
   public Collection<R> findAll() {

@@ -16,36 +16,52 @@
 
 package com.intellij.util;
 
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author max
  */
-public class CollectionQuery<T> implements Query<T> {
-  private Collection<T> myCollection;
+public class UniqueResultsQuery<T> implements Query<T> {
+  private Query<T> myOriginal;
 
-  public CollectionQuery(@NotNull final Collection<T> collection) {
-    myCollection = collection;
+  public UniqueResultsQuery(final Query<T> original) {
+    myOriginal = original;
+  }
+
+  public T findFirst() {
+    return myOriginal.findFirst();
+  }
+
+  public boolean forEach(final Processor<T> consumer) {
+    final Set<T> processedElements = new THashSet<T>();
+    myOriginal.forEach(new Processor<T>() {
+      public boolean process(final T t) {
+        if (processedElements.contains(t)) return true;
+        processedElements.add(t);
+
+        if (!consumer.process(t)) return false;
+
+        return true;
+      }
+    });
+
+    return true;
   }
 
   @NotNull
   public Collection<T> findAll() {
-    return myCollection;
-  }
+    final List<T> result = new ArrayList<T>();
+    forEach(new Processor<T>() {
+      public boolean process(final T t) {
+        result.add(t);
+        return true;
+      }
+    });
 
-  public T findFirst() {
-    final Iterator<T> i = iterator();
-    return i.hasNext() ? i.next() : null;
-  }
-
-  public boolean forEach(final Processor<T> consumer) {
-    for (T t : myCollection) {
-      if (!consumer.process(t)) return false;
-    }
-    return true;
+    return result;
   }
 
   public T[] toArray(final T[] a) {
@@ -53,6 +69,6 @@ public class CollectionQuery<T> implements Query<T> {
   }
 
   public Iterator<T> iterator() {
-    return myCollection.iterator();
+    return findAll().iterator();
   }
 }

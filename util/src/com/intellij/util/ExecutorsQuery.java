@@ -3,7 +3,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,14 +13,13 @@ import java.util.List;
 /**
  * @author max
  */
-public final class QueryInstance<Result, Parameter> implements Query<Result> {
+public final class ExecutorsQuery<Result, Parameter> implements Query<Result> {
   private final Parameter myParameters;
   private final List<QueryExecutor<Result, Parameter>> myExecutors;
 
-  private Condition<Result> myFilter = null;
   private boolean myIsProcessing = false;
 
-  public QueryInstance(@NotNull final Parameter params, @NotNull List<QueryExecutor<Result, Parameter>> executors) {
+  public ExecutorsQuery(@NotNull final Parameter params, @NotNull List<QueryExecutor<Result, Parameter>> executors) {
     myParameters = params;
     myExecutors = executors;
   }
@@ -31,19 +29,10 @@ public final class QueryInstance<Result, Parameter> implements Query<Result> {
     return myParameters;
   }
 
-  public Condition<Result> getFilter() {
-    return myFilter;
-  }
-
-  public void setFilter(final Condition<Result> filter) {
-    assertNotProcessing();
-    myFilter = filter;
-  }
-
   @NotNull
   public Collection<Result> findAll() {
     assertNotProcessing();
-    final CommonProcessors.CollectUniquesProcessor<Result> processor = new CommonProcessors.CollectUniquesProcessor<Result>();
+    final CommonProcessors.CollectProcessor<Result> processor = new CommonProcessors.CollectProcessor<Result>();
     forEach(processor);
     return processor.getResults();
   }
@@ -66,10 +55,6 @@ public final class QueryInstance<Result, Parameter> implements Query<Result> {
 
     myIsProcessing = true;
     try {
-      if (myFilter != null) {
-        consumer = new FilteringProcessor<Result>(myFilter, consumer);
-      }
-
       for (QueryExecutor<Result, Parameter> executor : myExecutors) {
         if (!executor.execute(myParameters, consumer)) return false;
       }
