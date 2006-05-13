@@ -8,6 +8,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -50,8 +51,9 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     final GlobalSearchScope resolveScope = control.getDomWrapper().getResolveScope();
     editor.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+        final Condition<PsiClass> c = Conditions.alwaysTrue();
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(control.getProject())
-          .createInheritanceClassChooser(UIBundle.message("choose.class"), resolveScope, null, true, true, Condition.TRUE);
+          .createInheritanceClassChooser(UIBundle.message("choose.class"), resolveScope, null, true, true, c);
         chooser.showDialog();
         final PsiClass psiClass = chooser.getSelectedClass();
         if (psiClass != null) {

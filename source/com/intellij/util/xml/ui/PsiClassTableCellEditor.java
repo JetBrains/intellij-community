@@ -3,11 +3,13 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -16,8 +18,6 @@ import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.xml.DomElement;
-import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -70,7 +70,7 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
-          .createInheritanceClassChooser(UIBundle.message("choose.class"), mySearchScope, null, true, true, Condition.TRUE);
+          .createInheritanceClassChooser(UIBundle.message("choose.class"), mySearchScope, null, true, true, Conditions.<PsiClass>alwaysTrue());
         chooser.showDialog();
         final PsiClass psiClass = chooser.getSelectedClass();
         if (psiClass != null) {

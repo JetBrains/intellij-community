@@ -20,27 +20,4 @@ package com.intellij.openapi.util;
  */
 public interface Condition<T> {
   boolean value(T object);
-
-  class Not<T> implements Condition<T> {
-    private final Condition<T> myCondition;
-
-    private Not(Condition<T> condition) {
-      myCondition = condition;
-    }
-
-    public boolean value(T value) {
-      return !myCondition.value(value);
-    }
-
-    public static <T> Condition<T> create(Condition<T> condition) {
-      if (condition instanceof Not) return ((Not<T>)condition).myCondition;
-      else return new Not<T>(condition);
-    }
-  }
-
-  Condition TRUE = new Condition() {
-    public boolean value(final Object object) {
-      return true;
-    }
-  };
 }
