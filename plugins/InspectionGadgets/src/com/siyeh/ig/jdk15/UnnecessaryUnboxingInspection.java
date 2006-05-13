@@ -115,7 +115,7 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
-            if (isUnboxingExpression(expression)) {
+            if (!isUnboxingExpression(expression)) {
                 return;
             }
             final PsiExpression containingExpression =
@@ -158,12 +158,14 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
                 return true;
             }
             if (expression == lhs) {
-                if (!(rhs.getType() instanceof PsiPrimitiveType)) {
+                if (!(rhs.getType() instanceof PsiPrimitiveType) ||
+                        isUnboxingExpression(rhs)) {
                     return true;
                 }
             }
             if (expression == rhs) {
-                if (!(lhs.getType() instanceof PsiPrimitiveType)) {
+                if (!(lhs.getType() instanceof PsiPrimitiveType) ||
+                        isUnboxingExpression(lhs)) {
                     return true;
                 }
             }
@@ -182,20 +184,20 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if (qualifier == null) {
-                return true;
+                return false;
             }
             final PsiType qualifierType = qualifier.getType();
             if (qualifierType == null) {
-                return true;
+                return false;
             }
             final String qualifierTypeName = qualifierType.getCanonicalText();
             if (!s_unboxingMethods.containsKey(qualifierTypeName)) {
-                return true;
+                return false;
             }
             final String methodName = methodExpression.getReferenceName();
             final String unboxingMethod =
                     s_unboxingMethods.get(qualifierTypeName);
-            return !unboxingMethod.equals(methodName);
+            return unboxingMethod.equals(methodName);
         }
 
         private static boolean isSameMethodCalledWithoutUnboxing(
