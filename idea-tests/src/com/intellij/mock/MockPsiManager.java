@@ -10,6 +10,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -211,6 +212,10 @@ public class MockPsiManager extends PsiManager {
 
   public void unregisterLanguageInjector(@NotNull LanguageInjector injector) {
 
+  }
+
+  public void disableAutoFormattingInside(Runnable runnable) {
+    PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(runnable);
   }
 
   public List<LanguageInjector> getLanguageInjectors() {

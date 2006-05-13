@@ -13,15 +13,12 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The base class for actions which create new file elements.
@@ -60,14 +57,21 @@ public abstract class CreateElementActionBase extends AnAction {
     }
 
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    if (project == null) return;
 
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
-    final PsiElement[] createdElements = invokeDialog(project, dir);
 
-    for (PsiElement createdElement : createdElements) {
-      view.selectElement(createdElement);
-    }
+    PsiManager.getInstance(project).disableAutoFormattingInside(new Runnable () {
+      public void run() {
+        final PsiElement[] createdElements = invokeDialog(project, dir);
+
+        for (PsiElement createdElement : createdElements) {
+          view.selectElement(createdElement);
+        }
+      }
+    });
+
   }
 
   public void update(final AnActionEvent e) {
@@ -104,12 +108,12 @@ public abstract class CreateElementActionBase extends AnAction {
   protected class MyInputValidator implements InputValidator {
     private final Project myProject;
     private final PsiDirectory myDirectory;
-    private SmartPsiElementPointer[] myCreatedElements;
+    private PsiElement[] myCreatedElements;
 
     public MyInputValidator(final Project project, final PsiDirectory directory) {
       myProject = project;
       myDirectory = directory;
-      myCreatedElements = new SmartPsiElementPointer[0];
+      myCreatedElements = PsiElement.EMPTY_ARRAY;
     }
 
     public boolean checkInput(final String inputString) {
@@ -147,12 +151,7 @@ public abstract class CreateElementActionBase extends AnAction {
               LvcsAction action = LvcsAction.EMPTY;
               try {
                 action = lvcs.startAction(getActionName(myDirectory, inputString), "", false);
-                PsiElement[] psiElements = create(inputString, myDirectory);
-                myCreatedElements = new SmartPsiElementPointer[psiElements.length];
-                SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
-                for (int i = 0; i < myCreatedElements.length; i++) {
-                  myCreatedElements[i] = manager.createSmartPsiElementPointer(psiElements[i]);
-                }
+                myCreatedElements = create(inputString, myDirectory);
               }
               catch (Exception ex) {
                 exception[0] = ex;
@@ -181,12 +180,7 @@ public abstract class CreateElementActionBase extends AnAction {
     }
 
     public final PsiElement[] getCreatedElements() {
-      List<PsiElement> elts = new ArrayList<PsiElement>();
-      for (SmartPsiElementPointer pointer : myCreatedElements) {
-        final PsiElement elt = pointer.getElement();
-        if (elt != null) elts.add(elt);
-      }
-      return elts.toArray(new PsiElement[elts.size()]);
+      return myCreatedElements;
     }
   }
 }

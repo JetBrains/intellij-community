@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.HashMap;
@@ -35,8 +36,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private final PsiManager myPsiManager;
   private final TreeAspect myTreeAspect;
   private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<FileViewProvider, List<ASTNode>>();
-  private boolean myDisabled = false;
-  private int myDisabledCounter = 0;
+  private volatile int myDisabledCounter = 0;
   private Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
 
   public PostprocessReformattingAspect(PsiManager psiManager, TreeAspect treeAspect) {
@@ -46,7 +46,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   public void disablePostprocessFormattingInside(final Runnable runnable) {
-    disablePosprocessFormattingInside(new Computable<Object>() {
+    disablePostprocessFormattingInside(new Computable<Object>() {
       public Object compute() {
         runnable.run();
         return null;
@@ -54,20 +54,14 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     });
   }
 
-  public <T> T disablePosprocessFormattingInside(Computable<T> computable){
-    synchronized(PsiLock.LOCK){
-      final boolean oldDisabledValue = myDisabled;
-      try{
-        myDisabled = true;
-        myDisabledCounter++;
-        return computable.compute();
-      }
-      finally {
-        myDisabledCounter--;
-        myDisabled = oldDisabledValue;
-        if(myDisabledCounter == 0) myDisabled = false;
-        LOG.assertTrue(myDisabledCounter > 0 || !myDisabled);
-      }
+  public <T> T disablePostprocessFormattingInside(Computable<T> computable){
+    try {
+      myDisabledCounter++;
+      return computable.compute();
+    }
+    finally {
+      myDisabledCounter--;
+      LOG.assertTrue(myDisabledCounter > 0 || !isDisabled());
     }
   }
 
@@ -104,7 +98,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   public void update(PomModelEvent event) {
     synchronized(PsiLock.LOCK){
-      if(myDisabled) return;
+      if(isDisabled()) return;
       final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
       if(changeSet == null) return;
       final PsiElement psiElement = changeSet.getRootElement().getPsi();
@@ -141,7 +135,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   public void doPostponedFormatting(){
     synchronized(PsiLock.LOCK){
-      if(myDisabled) return;
+      if(isDisabled()) return;
       try{
         for (final FileViewProvider viewProvider : myUpdatedProviders) {
           doPostponedFormatting(viewProvider);
@@ -156,12 +150,11 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   public void doPostponedFormatting(final FileViewProvider viewProvider) {
     synchronized(PsiLock.LOCK){
-      if(myDisabled) return;
+      if(isDisabled()) return;
 
-      disablePosprocessFormattingInside(new Computable<Object>() {
-        public Object compute() {
+      disablePostprocessFormattingInside(new Runnable() {
+        public void run() {
           doPostponedFormattingInner(viewProvider);
-          return null;
         }
       });
     }
@@ -377,8 +370,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private static void adjustIndentationInRange(final PsiFile file, final Document document, final TextRange[] indents, final int indentAdjustment) {
     final Helper formatHelper = new Helper(file.getFileType(), file.getProject());
     final CharSequence charsSequence = document.getCharsSequence();
-    for (int i = 0; i < indents.length; i++) {
-      final TextRange indent = indents[i];
+    for (final TextRange indent : indents) {
       final String oldIndentStr = charsSequence.subSequence(indent.getStartOffset() + 1, indent.getEndOffset()).toString();
       final int oldIndent = formatHelper.getIndent(oldIndentStr, true);
       final String newIndentStr = formatHelper.fillIndent(Math.max(oldIndent + indentAdjustment, 0));
@@ -395,6 +387,10 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     while(Character.isWhitespace(charsSequence.charAt(endOffset++)));
     final String newIndentStr = charsSequence.subSequence(startOffset, endOffset - 1).toString();
     return formatHelper.getIndent(newIndentStr, true);
+  }
+
+  public boolean isDisabled() {
+    return myDisabledCounter > 0;
   }
 
   private interface PostponedAction {
@@ -464,7 +460,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   public void projectClosed() {
   }
 
-  @NonNls
+  @NotNull @NonNls
   public String getComponentName() {
     return "Postponed reformatting model";
   }
