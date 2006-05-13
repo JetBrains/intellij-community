@@ -1,11 +1,11 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.util.Filter;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -15,10 +15,10 @@ import java.util.ArrayList;
  */
 public class ComponentEditor extends ComboBoxPropertyEditor<String> {
   private Class myPropertyType;
-  private Filter<RadComponent> myFilter;
+  private Condition<RadComponent> myFilter;
   private String myOldValue;
 
-  public ComponentEditor(final Class propertyType, final Filter<RadComponent> filter) {
+  public ComponentEditor(final Class propertyType, final Condition<RadComponent> filter) {
     myPropertyType = propertyType;
     myFilter = filter;
     myCbx.setRenderer(new ComponentRenderer());
@@ -59,7 +59,7 @@ public class ComponentEditor extends ComboBoxPropertyEditor<String> {
         if (!myPropertyType.isInstance(delegee)) {
           return true;
         }
-        if (myFilter == null || myFilter.accepts(radComponent)) {
+        if (myFilter == null || myFilter.value(radComponent)) {
           result.add(radComponent);
         }
         return true;

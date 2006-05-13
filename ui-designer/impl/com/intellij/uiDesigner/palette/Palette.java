@@ -8,11 +8,11 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.uiDesigner.Properties;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.SwingProperties;
-import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwXmlReader;
 import com.intellij.uiDesigner.lw.StringDescriptor;
@@ -23,7 +23,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
-import com.intellij.util.Filter;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -641,10 +641,10 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
             // these properties are set through layout
             continue;
           }
-          Filter<RadComponent> filter = null;
+          Condition<RadComponent> filter = null;
           if (name.equals(SwingProperties.LABEL_FOR)) {
-            filter = new Filter<RadComponent>() {
-              public boolean accepts(final RadComponent t) {
+            filter = new Condition<RadComponent>() {
+              public boolean value(final RadComponent t) {
                 ComponentItem item = getItem(t.getComponentClassName());
                 return item != null && item.isCanAttachLabel();
               }
