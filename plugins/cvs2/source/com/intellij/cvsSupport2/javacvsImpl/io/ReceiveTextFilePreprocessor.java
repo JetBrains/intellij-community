@@ -26,7 +26,7 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
   }
 
   public void copyTextFileToLocation(File textFileSource, File targetFile, IReaderFactory readerFactory) throws IOException {
-    VirtualFile virtualFile = CvsVfsUtil.refreshAndFindFileByIoFile(targetFile);
+    VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(targetFile);
     if (myReceivedFileProcessor.shouldProcess(virtualFile, targetFile)) {
       PrintStream target = new PrintStream(new BufferedOutputStream(new FileOutputStream(targetFile)));
       try {
