@@ -17,15 +17,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.DefinitionsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.Processor;
+import com.intellij.util.QueryExecutor;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 public class GotoImplementationHandler implements CodeInsightActionHandler {
   protected interface ResultsFilter {
@@ -41,12 +41,9 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
                 | TargetElementUtil.THIS_ACCEPTED
                 | TargetElementUtil.SUPER_ACCEPTED;
     final PsiElement element = TargetElementUtil.findTargetElement(editor, flags);
-    if (getImplementationSearcher(element) == null) {
-      return;
-    }
 
     PsiElement[] result = searchImplementations(editor, file, element, false);
-    if (result != null) {
+    if (result != null && result.length != 0) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.implementation");
       show(editor, element, result);
     }
@@ -56,7 +53,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     final PsiElement[][] result = new PsiElement[1][];
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        result[0] = getSearchResults(element);
+        result[0] = DefinitionsSearch.search(element).toArray(PsiElement.EMPTY_ARRAY);
       }
     }, CodeInsightBundle.message("searching.for.implementations"), true, element.getProject())) {
       return null;
@@ -119,50 +116,11 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     }
   }
 
-  public interface ImplementationSearcher {
-    PsiElement[] getImplementations(PsiElement element);
-  }
-
-  private static Map<Class,ImplementationSearcher> ourSearchers = new HashMap<Class, ImplementationSearcher>(3);
-
   static {
-    registerImplemetationSearcher(
-      PsiMethod.class,
-      new ImplementationSearcher() {
-        public PsiElement[] getImplementations(PsiElement element) {
-          return getMethodImplementations((PsiMethod)element);
-        }
-      }
-    );
-
-    registerImplemetationSearcher(
-      PsiClass.class,
-      new ImplementationSearcher() {
-        public PsiElement[] getImplementations(PsiElement element) {
-          return getClassImplementations((PsiClass)element);
-        }
-      }
-    );
+    DefinitionsSearch.INSTANCE.registerExecutor(new MethodImplementationsSearch());
+    DefinitionsSearch.INSTANCE.registerExecutor(new ClassImplementationsSearch());
   }
 
-  public static <T extends PsiElement> void registerImplemetationSearcher(@NotNull Class<T> clazz, @NotNull ImplementationSearcher searcher) {
-    ourSearchers.put(clazz,searcher);
-  }
-
-  public static ImplementationSearcher getImplementationSearcher(PsiElement sourceElement) {
-    for(Map.Entry<Class,ImplementationSearcher> entry:ourSearchers.entrySet()) {
-      if (entry.getKey().isInstance(sourceElement)) {
-        return entry.getValue();
-      }
-    }
-    return null;
-  }
-  private static PsiElement[] getSearchResults(PsiElement sourceElement) {
-    final ImplementationSearcher implementationSearcher = getImplementationSearcher(sourceElement);
-    if (implementationSearcher != null) return implementationSearcher.getImplementations(sourceElement);
-
-    throw new IllegalArgumentException(sourceElement == null ? null : sourceElement.getClass().getName());
-  }
 
   private static PsiElement[] getClassImplementations(final PsiClass psiClass) {
     final ArrayList<PsiClass> list = new ArrayList<PsiClass>();
@@ -183,6 +141,27 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     }
 
     return list.toArray(new PsiElement[list.size()]);
+  }
+
+  private static class MethodImplementationsSearch implements QueryExecutor<PsiElement, PsiElement> {
+    public boolean execute(final PsiElement sourceElement, final Processor<PsiElement> consumer) {
+      if (sourceElement instanceof PsiMethod) {
+        for (PsiElement implementation : getMethodImplementations((PsiMethod)sourceElement)) {
+          consumer.process(implementation);
+        }
+      }
+      return true;
+    }
+  }
+  private static class ClassImplementationsSearch implements QueryExecutor<PsiElement, PsiElement> {
+    public boolean execute(final PsiElement sourceElement, final Processor<PsiElement> consumer) {
+      if (sourceElement instanceof PsiClass) {
+        for (PsiElement implementation : getClassImplementations((PsiClass)sourceElement)) {
+          consumer.process(implementation);
+        }
+      }
+      return true;
+    }
   }
 
   private static PsiElement[] getMethodImplementations(final PsiMethod method) {

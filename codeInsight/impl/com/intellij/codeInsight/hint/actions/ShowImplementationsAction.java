@@ -185,20 +185,22 @@ public class ShowImplementationsAction extends AnAction {
   }
 
   private static PsiElement[] getSelfAndImplementations(Editor editor, PsiFile file, PsiElement element) {
-    if (GotoImplementationHandler.getImplementationSearcher(element) != null) {
-      GotoImplementationHandler handler = new GotoImplementationHandler() {
-        protected PsiElement[] filterElements(Editor editor, PsiFile file, PsiElement element, PsiElement[] targetElements) {
-          Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
-          for (PsiElement elt : targetElements) {
-            PsiFile psiFile = elt.getContainingFile();
-            final PsiFile originalFile = psiFile.getOriginalFile();
-            if (originalFile != null) psiFile = originalFile;
-            if (psiFile.getVirtualFile() == null) unique.remove(elt);
-          }
-          return unique.toArray(new PsiElement[unique.size()]);
+    GotoImplementationHandler handler = new GotoImplementationHandler() {
+      protected PsiElement[] filterElements(Editor editor, PsiFile file, PsiElement element, PsiElement[] targetElements) {
+        Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
+        for (PsiElement elt : targetElements) {
+          PsiFile psiFile = elt.getContainingFile();
+          final PsiFile originalFile = psiFile.getOriginalFile();
+          if (originalFile != null) psiFile = originalFile;
+          if (psiFile.getVirtualFile() == null) unique.remove(elt);
         }
-      };
-      return handler.searchImplementations(editor, file, element, true);
+        return unique.toArray(new PsiElement[unique.size()]);
+      }
+    };
+
+    final PsiElement[] handlerImplementations = handler.searchImplementations(editor, file, element, true);
+    if (handlerImplementations != null && handlerImplementations.length > 0) {
+      return handlerImplementations;
     }
 
     PsiFile psiFile = element.getContainingFile();
