@@ -24,7 +24,7 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
 
   public void testWithInner() throws Exception { doTest(true, 0); }
 
-  @Bombed(user = "lesya", day = 14, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
+  @Bombed(user = "lesya", day = 21, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
   public void testJavadoc() throws Exception { doTest(true, 0); }
 
   public void testRecursive() throws Exception { doTest(true, 0); }

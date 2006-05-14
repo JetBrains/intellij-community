@@ -124,7 +124,7 @@ public class MakeMethodStaticTest extends CodeInsightTestCase {
     checkResultByFile("/refactoring/makeMethodStatic/after15.java");
   }
 
-  @Bombed(user = "lesya", day = 14, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
+  @Bombed(user = "lesya", day = 21, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
   public void testJavadoc1() throws Exception {
     configureByFile("/refactoring/makeMethodStatic/before16.java");
     performWithFields();
