@@ -4,7 +4,6 @@
     <action id="CaptureCPUUsageData" class = "com.intellij.util.CaptureCPUUsageDataAction" icon="/actions/profuleCPU.png" />
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationAction"/>
-    <action id="ToggleCoverage" class="com.intellij.coverage.actions.ChooseCoverageSuiteAction"/>
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
     <action id="ToggleReadOnlyAttribute" class="com.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
     <action id="TogglePopupHints" class="com.intellij.ide.actions.TogglePopupHintsAction"/>
@@ -315,6 +314,8 @@
         <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction"/>
         <reference ref="EditorToggleShowWhitespaces"/>
         <reference ref="EditorToggleShowLineNumbers"/>
+        <separator/>
+        <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
         <separator/>
         <action id="ToggleFullScreenMode" class="com.intellij.ide.actions.ToggleFullScreenModeAction"/>
         <separator/>
@@ -665,7 +666,6 @@
       <reference ref="CompileDirty"/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
-      <reference ref="ToggleCoverage"/>
       <separator/>
       <reference ref="ShowSettings"/>
       <separator/>

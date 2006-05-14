@@ -34,6 +34,9 @@
     <action id="ToggleFullScreenMode">
       <keyboard-shortcut first-keystroke="control alt F11"/>
     </action>
+    <action id="SwitchCoverage">
+      <keyboard-shortcut first-keystroke="control C" second-keystroke="C"/>
+    </action>
     <action id="EditorPageUpWithSelection">
       <keyboard-shortcut first-keystroke="shift PAGE_UP"/>
     </action>
