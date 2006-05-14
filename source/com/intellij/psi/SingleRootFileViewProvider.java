@@ -46,6 +46,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   private PsiFile myPsiFile = null;
   private Content myContent;
   private WeakReference<Document> myDocument;
+  private Language myBaseLanguage;
 
   public SingleRootFileViewProvider(PsiManager manager, VirtualFile file) {
     this(manager, file, true);
@@ -55,11 +56,16 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     myManager = manager;
     myFile = virtualFile;
     myPhysical = physical;
+    myBaseLanguage = calcBaseLanguage(virtualFile);
     setContent(new VirtualFileContent());
   }
 
   public Language getBaseLanguage() {
-    final FileType fileType = getVirtualFile().getFileType();
+    return myBaseLanguage;
+  }
+
+  private static Language calcBaseLanguage(VirtualFile file) {
+    final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
       final LanguageFileType languageFileType = (LanguageFileType)fileType;
       return languageFileType.getLanguage();
