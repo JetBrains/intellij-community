@@ -50,6 +50,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
   }
 
   public PsiElement[] searchImplementations(Editor editor, PsiFile file, final PsiElement element, boolean includeSelf) {
+    if (element == null) return null;
     final PsiElement[][] result = new PsiElement[1][];
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
