@@ -62,7 +62,7 @@ public abstract class CreateElementActionBase extends AnAction {
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
 
-    PsiManager.getInstance(project).disableAutoFormattingInside(new Runnable () {
+    PsiManager.getInstance(project).postponeAutoFormattingInside(new Runnable () {
       public void run() {
         final PsiElement[] createdElements = invokeDialog(project, dir);
 

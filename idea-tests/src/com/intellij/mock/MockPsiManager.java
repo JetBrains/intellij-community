@@ -214,8 +214,8 @@ public class MockPsiManager extends PsiManager {
 
   }
 
-  public void disableAutoFormattingInside(Runnable runnable) {
-    PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(runnable);
+  public void postponeAutoFormattingInside(Runnable runnable) {
+    PostprocessReformattingAspect.getInstance(getProject()).postponeFormattingInside(runnable);
   }
 
   public List<LanguageInjector> getLanguageInjectors() {
