@@ -42,6 +42,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author max
@@ -51,9 +55,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private static Alarm ourUpdateAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
+  private static ScheduledExecutorService ourUpdateAlarm = Executors.newSingleThreadScheduledExecutor();
 
   private Alarm myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private ScheduledFuture<?> myCurrentUpdate = null;
 
   private boolean myInitialized = false;
 
@@ -120,11 +125,18 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public void projectClosed() {
     myDisposed = true;
-    ourUpdateAlarm.cancelAllRequests();
+    cancelUpdates();
     myRepaintAlarm.cancelAllRequests();
 
     ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
     myView.dispose();
+  }
+
+  private void cancelUpdates() {
+    if (myCurrentUpdate != null) {
+      myCurrentUpdate.cancel(false);
+      myCurrentUpdate = null;
+    }
   }
 
   @NonNls
@@ -282,7 +294,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
         synchronized (myPendingUpdatesLock) {
           scheduleUpdate(10);
-          while (ourUpdateAlarm.getActiveRequestCount() > 0 || myUpdateInProgress) {
+          while (myCurrentUpdate != null && !myCurrentUpdate.isDone() || myUpdateInProgress) {
             if (indicator != null && indicator.isCanceled()) break;
 
             try {
@@ -306,8 +318,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private static class DisposedException extends RuntimeException {}
 
   private void scheduleUpdate(int millis) {
-    ourUpdateAlarm.cancelAllRequests();
-    ourUpdateAlarm.addRequest(new Runnable() {
+    cancelUpdates();
+    myCurrentUpdate = ourUpdateAlarm.schedule(new Runnable() {
       public void run() {
         if (myDisposed) return;
         if (!myInitialized) {
@@ -324,19 +336,19 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
             myUpdateInProgress = true;
           }
 
-          if (myDisposed) return;
+          if (myDisposed) throw new DisposedException();
 
           final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
           for (final VcsDirtyScope scope : scopes) {
             final AbstractVcs vcs = scope.getVcs();
             if (vcs == null) continue;
-            
+
             updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()));
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 synchronized (myChangeLists) {
                   for (LocalChangeList list : getChangeLists()) {
-                    if (myDisposed) return;
+                    if (myDisposed) throw new DisposedException();
                     list.startProcessingChanges(scope);
                   }
                 }
@@ -436,7 +448,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         final ContentRevision after = change.getAfterRevision();
         return before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile());
       }
-    }, millis);
+    }, millis, TimeUnit.MILLISECONDS);
   }
 
   public void scheduleUpdate() {
