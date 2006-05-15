@@ -15,13 +15,14 @@
  */
 package com.intellij.util.containers;
 
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class BidirectionalMap<K,V> implements Map<K,V>{
-  private Map<K,V> myKeyToValueMap = new com.intellij.util.containers.HashMap<K,V>();
-  private Map<V,List<K>> myValueToKeysMap = new com.intellij.util.containers.HashMap<V,List<K>>();
+  private Map<K,V> myKeyToValueMap = new THashMap<K,V>();
+  private Map<V,List<K>> myValueToKeysMap = new THashMap<V,List<K>>();
 
   public V put(K key, V value){
     V oldValue = myKeyToValueMap.put(key, value);
@@ -67,8 +68,9 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
 
   public boolean containsKey(Object key){
     return myKeyToValueMap.containsKey(key);
-  }
+  }                                                               
 
+  @SuppressWarnings({"SuspiciousMethodCalls"})
   public boolean containsValue(Object value){
     return myValueToKeysMap.containsKey(value);
   }
@@ -77,6 +79,7 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
     return myKeyToValueMap.get(key);
   }
 
+  @SuppressWarnings({"SuspiciousMethodCalls"})
   public V remove(Object key){
     final V value = myKeyToValueMap.remove(key);
     final List<K> ks = myValueToKeysMap.get(value);

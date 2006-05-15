@@ -5,35 +5,34 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceHashingStrategy;
-import org.apache.commons.collections.map.ReferenceMap;
-
-import java.lang.ref.Reference;
-import java.util.Map;
+import gnu.trove.THashSet;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 07.06.2004
- * Time: 15:37:59
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
-public class CharTableImpl implements CharTable {
+public class CharTableImpl extends THashSet<CharSequence> implements CharTable {
   private final static CharSequenceHashingStrategy HASHER = new CharSequenceHashingStrategy();
-  private final Map<CharSequence,CharSequence> myEntries = new WeakCharEntryMap();
 
   private char[] myCurrentPage = null;
   private int bufferEnd = 0;
 
   public CharTableImpl() {
+    super(10, 0.9f, HASHER);
+
     bufferEnd = PAGE_SIZE;
   }
 
   public synchronized CharSequence intern(final CharSequence text) {
-    CharSequence entry = myEntries.get(text);
-    if (entry == null ) {
-      entry = createEntry(text);
-      myEntries.put(entry, entry);
+    int idx = index(text);
+    if (idx >= 0) {
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      return (CharSequence)_set[idx];
     }
+
+    final CharTableEntry entry = createEntry(text);
+    boolean added = add(entry);
+    assert added;
+
     return entry;
   }
 
@@ -88,24 +87,6 @@ public class CharTableImpl implements CharTable {
 
     public int hashCode() {
       return hashCode;
-    }
-  }
-
-  private static final class WeakCharEntryMap extends ReferenceMap {
-    public WeakCharEntryMap() {
-      super(ReferenceMap.WEAK, ReferenceMap.WEAK, true);
-    }
-
-    protected int hash(Object key) {
-      return HASHER.computeHashCode((CharSequence)key);
-    }
-
-    protected int hashEntry(Object key, Object value) {
-      return HASHER.computeHashCode((CharSequence)key);
-    }
-
-    protected boolean isEqualKey(Object key1, Object key2) {
-      return HASHER.equals((CharSequence)key1, (CharSequence)((Reference)key2).get());
     }
   }
 }

@@ -74,7 +74,7 @@ public class UserDataHolderBase implements UserDataHolder, Cloneable{
     synchronized(USER_MAP_LOCK){
       if (myUserMap == null){
         if (value == null) return;
-        myUserMap = new THashMap<Key, Object>(4);
+        myUserMap = new THashMap<Key, Object>(2, 0.9f);
       }
       if (value != null){
         myUserMap.put(key, value);
@@ -109,7 +109,7 @@ public class UserDataHolderBase implements UserDataHolder, Cloneable{
       HashMap<Key,Object> map = getUserData(COPYABLE_USER_MAP_KEY);
       if (map == null){
         if (value == null) return;
-        map = new HashMap<Key, Object>(4);
+        map = new HashMap<Key, Object>(2, 0.9f);
         putUserData(COPYABLE_USER_MAP_KEY, map);
       }
       if (value != null){
