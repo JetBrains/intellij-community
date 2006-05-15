@@ -267,7 +267,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         final String name = tokenizer.nextToken();
         if (".".equals(name)) continue;
         if ("..".equals(name)) {
-          runPath = runPath.substring(0, runPath.lastIndexOf("/"));
+          final int index = runPath.lastIndexOf("/");
+          if (index >= 0) {
+            runPath = runPath.substring(0, index);
+          }
           root = root.getParent();
           if (root == null) return null;
         }
