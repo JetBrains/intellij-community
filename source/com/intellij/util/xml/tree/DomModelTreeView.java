@@ -186,7 +186,8 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
   private List<SimpleNode> getNodesFor(final DomElement domElement) {
     final List<SimpleNode> parentsNodes = new ArrayList<SimpleNode>();
 
-    SimpleNodeVisitor visitor = new SimpleNodeVisitor() {
+    myBuilder.setWaiting(false);
+    myTree.accept(myBuilder, new SimpleNodeVisitor() {
       public boolean accept(SimpleNode simpleNode) {
         if (simpleNode instanceof BaseDomElementNode) {
           final DomElement nodeElement = ((AbstractDomElementNode)simpleNode).getDomElement();
@@ -196,8 +197,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
         }
         return false;
       }
-    };
-    getTree().accept(getBuilder(), visitor);
+    });
 
     return parentsNodes;
   }
