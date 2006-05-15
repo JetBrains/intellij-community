@@ -98,7 +98,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   public void update(PomModelEvent event) {
     synchronized(PsiLock.LOCK){
-      if(isDisabled()) return;
+      if(isDisabled() || myPostponedCounter == 0 && !ApplicationManager.getApplication().isUnitTestMode()) return;
       final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
       if(changeSet == null) return;
       final PsiElement psiElement = changeSet.getRootElement().getPsi();
