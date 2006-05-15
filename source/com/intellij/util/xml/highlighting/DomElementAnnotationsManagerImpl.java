@@ -27,6 +27,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       throw new UnsupportedOperationException("This holder is immutable");
     }
   };
+  private final AnnotationBasedDomElementsAnnotator myAnnotationBasedDomElementsAnnotator = new AnnotationBasedDomElementsAnnotator();
 
   @NotNull
   public DomElementsProblemsHolder getProblemHolder(DomElement element) {
@@ -67,6 +68,8 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
           for (DomElementsAnnotator annotator : list) {
             annotator.annotate(rootElement, holder);
           }
+        } else {
+          myAnnotationBasedDomElementsAnnotator.annotate(rootElement, holder);
         }
         return new Result<DomElementsProblemsHolder>(holder, fileElement.getFile());
       }
@@ -82,7 +85,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     List<DomElementsAnnotator> annotators = myClass2Annotator.get(aClass);
     if (annotators == null) {
       annotators = new ArrayList<DomElementsAnnotator>();
-      annotators.add(new AnnotationBasedDomElementsAnnotator());
+      annotators.add(myAnnotationBasedDomElementsAnnotator);
       myClass2Annotator.put(aClass, annotators);
     }
     return annotators;
