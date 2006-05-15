@@ -16,13 +16,18 @@
  */
 package com.intellij.util.xml;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-@Retention(RetentionPolicy.RUNTIME)
-public @interface NameValue {
-  Class<? extends ScopeProvider> scopeProvider() default ParentScopeProvider.class;
+public class ParentScopeProvider implements ScopeProvider{
+  public DomElement getParentWhereUnique(DomElement element) {
+    return element.getParent();
+  }
+
+  @Nullable
+  public String getScopeName(final DomElement element) {
+    return null;
+  }
 }

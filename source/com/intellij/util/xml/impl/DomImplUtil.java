@@ -7,11 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.*;
-import java.util.List;
-import java.util.Collection;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * @author peter
@@ -58,38 +56,6 @@ public class DomImplUtil {
     }
   }
 
-  @Nullable
-  public static Type extractCollectionElementType(Type returnType) {
-    if (returnType instanceof ParameterizedType) {
-      ParameterizedType parameterizedType = (ParameterizedType)returnType;
-      final Type rawType = parameterizedType.getRawType();
-      if (rawType instanceof Class) {
-        final Class<?> rawClass = (Class<?>)rawType;
-        if (List.class.equals(rawClass) || Collection.class.equals(rawClass)) {
-          final Type[] arguments = parameterizedType.getActualTypeArguments();
-          if (arguments.length == 1) {
-            final Type argument = arguments[0];
-            if (argument instanceof WildcardType) {
-              final Type[] upperBounds = ((WildcardType)argument).getUpperBounds();
-              if (upperBounds.length == 1) {
-                return upperBounds[0];
-              }
-            }
-            else if (argument instanceof ParameterizedType) {
-              if (DomUtil.getGenericValueType(argument) != null) {
-                return argument;
-              }
-            }
-            else if (argument instanceof Class) {
-              return argument;
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
-
   public static boolean isTagValueGetter(final Method method) {
     if (!isGetter(method)) {
       return false;
@@ -122,15 +88,11 @@ public class DomImplUtil {
       return returnType != void.class;
     }
     if (name.startsWith("is")) {
-      return canHaveIsPropertyGetterPrefix(method.getGenericReturnType());
+      return DomUtil.canHaveIsPropertyGetterPrefix(method.getGenericReturnType());
     }
     return false;
   }
 
-  public static boolean canHaveIsPropertyGetterPrefix(final Type type) {
-    return boolean.class.equals(type) || Boolean.class.equals(type)
-           || Boolean.class.equals(DomUtil.getGenericValueType(type));
-  }
 
   public static boolean isTagValueSetter(final Method method) {
     boolean setter = method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;

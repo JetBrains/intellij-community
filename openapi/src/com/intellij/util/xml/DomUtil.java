@@ -5,14 +5,12 @@ package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -187,4 +185,75 @@ public class DomUtil {
     }
     return result;
   }
+
+  @Nullable
+  public static Type extractCollectionElementType(Type returnType) {
+    if (returnType instanceof ParameterizedType) {
+      ParameterizedType parameterizedType = (ParameterizedType)returnType;
+      final Type rawType = parameterizedType.getRawType();
+      if (rawType instanceof Class) {
+        final Class<?> rawClass = (Class<?>)rawType;
+        if (List.class.equals(rawClass) || Collection.class.equals(rawClass)) {
+          final Type[] arguments = parameterizedType.getActualTypeArguments();
+          if (arguments.length == 1) {
+            final Type argument = arguments[0];
+            if (argument instanceof WildcardType) {
+              final Type[] upperBounds = ((WildcardType)argument).getUpperBounds();
+              if (upperBounds.length == 1) {
+                return upperBounds[0];
+              }
+            }
+            else if (argument instanceof ParameterizedType) {
+              if (getGenericValueType(argument) != null) {
+                return argument;
+              }
+            }
+            else if (argument instanceof Class) {
+              return argument;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean canHaveIsPropertyGetterPrefix(final Type type) {
+    return boolean.class.equals(type) || Boolean.class.equals(type)
+           || Boolean.class.equals(DomUtil.getGenericValueType(type));
+  }
+
+  public static Method[] getGetterMethods(final String[] path, final Class<? extends DomElement> startClass) {
+    final Method[] methods = new Method[path.length];
+    Class aClass = startClass;
+    for (int i = 0; i < path.length; i++) {
+      final Method getter = findGetter(aClass, path[i]);
+      assert getter != null : "Couldn't find getter for property " + path[i] + " in class " + aClass;
+      methods[i] = getter;
+      aClass = getter.getReturnType();
+      if (List.class.isAssignableFrom(aClass)) {
+        aClass = DomUtil.getRawType(DomUtil.extractCollectionElementType(getter.getGenericReturnType()));
+      }
+    }
+    return methods;
+  }
+
+  @Nullable
+  private static Method findGetter(Class aClass, String propertyName) {
+    final String capitalized = StringUtil.capitalize(propertyName);
+    try {
+      return aClass.getMethod("get" + capitalized);
+    }
+    catch (NoSuchMethodException e) {
+      final Method method;
+      try {
+        method = aClass.getMethod("is" + capitalized);
+        return DomUtil.canHaveIsPropertyGetterPrefix(method.getGenericReturnType()) ? method : null;
+      }
+      catch (NoSuchMethodException e1) {
+        return null;
+      }
+    }
+  }
+
 }

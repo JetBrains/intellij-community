@@ -9,7 +9,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakArrayHashMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
-import com.intellij.util.xml.impl.DomImplUtil;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
@@ -236,7 +235,7 @@ public class ModelMerger {
           }
           if (Collection.class.isAssignableFrom(returnType)) {
             return getMergedImplementations(method, args,
-                                            DomUtil.getRawType(DomImplUtil.extractCollectionElementType(method.getGenericReturnType())));
+                                            DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())));
           }
 
           //if (GenericValue.class.isAssignableFrom(returnType)) {

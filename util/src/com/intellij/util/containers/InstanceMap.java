@@ -12,17 +12,25 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-package com.intellij.util.xml;
+package com.intellij.util.containers;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-@Retention(RetentionPolicy.RUNTIME)
-public @interface NameValue {
-  Class<? extends ScopeProvider> scopeProvider() default ParentScopeProvider.class;
+public class InstanceMap extends FactoryMap<Class,Object>{
+  @NotNull
+  protected Object create(final Class key) {
+    try {
+      return key.newInstance();
+    }
+    catch (InstantiationException e) {
+      throw new RuntimeException(e);
+    }
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

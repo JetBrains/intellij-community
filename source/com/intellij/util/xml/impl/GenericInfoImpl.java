@@ -299,7 +299,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       }
     }
 
-    final Type type = DomImplUtil.extractCollectionElementType(method.getGenericReturnType());
+    final Type type = DomUtil.extractCollectionElementType(method.getGenericReturnType());
     if (isDomElement(type)) {
       final SubTagsList subTagsList = method.getAnnotation(SubTagsList.class);
       if (subTagsList != null) {
@@ -436,18 +436,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   private Invocation createPropertyAccessorInvocation(final PropertyAccessor accessor) {
-    final String[] names = accessor.value();
-    final Method[] methods = new Method[names.length];
-    Class aClass = myClass;
-    for (int i = 0; i < names.length; i++) {
-      final Method getter = findGetter(aClass, names[i]);
-      assert getter != null : "Couldn't find getter for property " + names[i] + " in class " + aClass;
-      methods[i] = getter;
-      aClass = getter.getReturnType();
-      if (List.class.isAssignableFrom(aClass)) {
-        aClass = DomUtil.getRawType(DomImplUtil.extractCollectionElementType(getter.getGenericReturnType()));
-      }
-    }
+    final Method[] methods = DomUtil.getGetterMethods(accessor.value(), myClass);
     final int lastElement = methods.length - 1;
     return new Invocation() {
       public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
@@ -468,24 +457,6 @@ public class GenericInfoImpl implements DomGenericInfo {
         return invoke(i + 1, o);
       }
     };
-  }
-
-  @Nullable
-  private static Method findGetter(Class aClass, String propertyName) {
-    final String capitalized = StringUtil.capitalize(propertyName);
-    try {
-      return aClass.getMethod("get" + capitalized);
-    }
-    catch (NoSuchMethodException e) {
-      final Method method;
-      try {
-        method = aClass.getMethod("is" + capitalized);
-        return DomImplUtil.canHaveIsPropertyGetterPrefix(method.getGenericReturnType()) ? method : null;
-      }
-      catch (NoSuchMethodException e1) {
-        return null;
-      }
-    }
   }
 
   private static Function<Object[], Type> getTypeGetter(final Method method) {

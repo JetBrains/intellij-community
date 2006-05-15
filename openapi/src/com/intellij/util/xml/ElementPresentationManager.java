@@ -141,7 +141,7 @@ public class ElementPresentationManager {
     return ourIcons.get(clazz);    
   }
 
-  private static Method findNameValueMethod(final Class<? extends Object> aClass) {
+  public static Method findNameValueMethod(final Class<? extends Object> aClass) {
     for (final Method method : aClass.getMethods()) {
       if (DomUtil.findAnnotationDFS(method, NameValue.class) != null) {
         return method;
