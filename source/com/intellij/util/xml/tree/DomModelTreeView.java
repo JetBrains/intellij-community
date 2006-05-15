@@ -120,6 +120,10 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     myTree.setPopupGroup(getPopupActions(), DOM_MODEL_TREE_VIEW_POPUP);
   }
 
+  public final void updateTree() {
+    myBuilder.updateFromRoot();
+  }
+
   public DomElement getRootElement() {
     return myRootElement;
   }
