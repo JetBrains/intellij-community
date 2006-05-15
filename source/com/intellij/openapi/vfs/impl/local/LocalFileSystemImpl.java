@@ -430,7 +430,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         final Set<Map.Entry<String, VirtualFileImpl>> entries = new HashSet<Map.Entry<String, VirtualFileImpl>>(myUnaccountedFiles.entrySet());
         for (final Map.Entry<String,VirtualFileImpl> entry : entries) {
           final VirtualFileImpl file = entry.getValue();
-          if (file != null) {
+          if (file != null && file.isValid()) {
             if (!file.getPhysicalFile().exists()) {
               final Runnable action = new Runnable() {
                 public void run() {
