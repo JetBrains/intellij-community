@@ -78,9 +78,8 @@ public class AddElementInCollectionAction extends AddDomElementAction {
    String text = "Add";
    if (e.getPresentation().isEnabled()) {
       final DomElementsGroupNode selectedNode = getDomElementsGroupNode(getTreeView(e));
-      DomElement domElement = selectedNode.getDomElement();
-//      final Type type = selectedNode.getChildDescription().getType();
-      text += " " + selectedNode.getChildDescription().getCommonPresentableName(domElement); //ElementPresentationManager.getElementName(DomUtil.getRawType(type));
+      final Type type = selectedNode.getChildDescription().getType();
+      text += " " + ElementPresentationManager.getTypeName(DomUtil.getRawType(type));
     }
     return text;
   }
