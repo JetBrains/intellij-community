@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -102,10 +103,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   private void startCheckingIfVincentSolvedProblemsYet() {
+    if (!myProject.isOpen()) return;
     long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
     if (psiModificationCount == myPsiModificationCount) return; //optimization
-    myPsiModificationCount = psiModificationCount;
-    if (!myProject.isOpen()) return;
     myDaemonStopped = false;
     try {
       for (VirtualFile virtualFile : myCheckingQueue) {
@@ -123,6 +123,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
           }
         }
       }
+      myPsiModificationCount = psiModificationCount;
     }
     catch (ProcessCanceledException e) {
       // ignore
@@ -274,12 +275,20 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
     }
     if (virtualFile == null) return null;
-    HighlightInfo info = HighlightInfo.createHighlightInfo(convertToHighlightInfoType(message), getTextRange(message), message.getMessage());
+    HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>(){
+      public HighlightInfo compute() {
+        return HighlightInfo.createHighlightInfo(convertToHighlightInfoType(message), getTextRange(message), message.getMessage());
+      }
+    });
     return new ProblemImpl(virtualFile, info);
   }
 
-  public Problem convertToProblem(VirtualFile virtualFile, int line, int column, String[] message) {
-    HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, getTextRange(virtualFile, line, column), StringUtil.join(message, "\n"));
+  public Problem convertToProblem(final VirtualFile virtualFile, final int line, final int column, final String[] message) {
+    HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>(){
+      public HighlightInfo compute() {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, getTextRange(virtualFile, line, column), StringUtil.join(message, "\n"));
+      }
+    });
     return new ProblemImpl(virtualFile, info);
   }
 
