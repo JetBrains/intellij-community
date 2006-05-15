@@ -57,13 +57,13 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
 
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
-  private final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
+  private static final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
   private final Map<Pair<Type, Type>, InvocationCache> myInvocationCaches = new HashMap<Pair<Type, Type>, InvocationCache>();
   private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private final List<Function<DomElement, Collection<PsiElement>>> myPsiElementProviders = new ArrayList<Function<DomElement, Collection<PsiElement>>>();
   private final Set<Consumer<XmlFile>> myFileLoaders = new HashSet<Consumer<XmlFile>>();
   private final Map<XmlFile,Object> myNonDomFiles = new WeakHashMap<XmlFile, Object>();
-  private static final InvocationStack myInvocationStack = new InvocationStack();
+  private static final InvocationStack ourInvocationStack = new InvocationStack();
 
   private PomModelListener myXmlListener;
   private Project myProject;
@@ -96,7 +96,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public static InvocationStack getInvocationStack() {
-    return myInvocationStack;
+    return ourInvocationStack;
   }
 
   public final void addDomEventListener(DomEventAdapter listener) {

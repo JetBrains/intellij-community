@@ -3,11 +3,14 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
-import com.intellij.openapi.util.Factory;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -54,6 +57,10 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
   public DomNameStrategy getDomNameStrategy(DomElement parent) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomUtil.getRawType(myType), false);
     return strategy == null ? parent.getNameStrategy() : strategy;
+  }
+
+  public final DomGenericInfo getChildGenericInfo(Project project) {
+    return DomManager.getDomManager(project).getGenericInfo(myType);
   }
 
   public boolean equals(final Object o) {

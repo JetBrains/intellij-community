@@ -657,6 +657,10 @@ public class GenericInfoImpl implements DomGenericInfo {
     return new AttributeChildDescriptionImpl(attributeName, getter, isRequired(getter));
   }
 
+  public final Class[] getConcreteInterfaceVariants() {
+    return ClassChooserManager.getClassChooser(myClass).getChooserClasses();
+  }
+
   public boolean isTagValueElement() {
     buildMethodMaps();
     return myValueElement;

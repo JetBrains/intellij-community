@@ -91,6 +91,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     public DomAttributeChildDescription getAttributeChildDescription(String attributeName) {
       return null;
     }
+
+    public Class[] getConcreteInterfaceVariants() {
+      return new Class[]{DomFileElement.class};
+    }
   };
 
   private final XmlFile myFile;

@@ -42,6 +42,8 @@ public interface DomGenericInfo {
   @Nullable
   DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName);
 
+  Class[] getConcreteInterfaceVariants();
+
   /**
    * @return true, if there's no children in the element, only tag value accessors
    */

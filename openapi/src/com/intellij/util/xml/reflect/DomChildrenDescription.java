@@ -5,6 +5,7 @@ package com.intellij.util.xml.reflect;
 
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.openapi.project.Project;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -20,4 +21,5 @@ public interface DomChildrenDescription {
   String getCommonPresentableName(DomNameStrategy strategy);
   String getCommonPresentableName(DomElement parent);
   DomNameStrategy getDomNameStrategy(DomElement parent);
+  DomGenericInfo getChildGenericInfo(Project project);
 }
