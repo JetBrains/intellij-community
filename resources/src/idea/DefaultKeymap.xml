@@ -35,7 +35,7 @@
       <keyboard-shortcut first-keystroke="control alt F11"/>
     </action>
     <action id="SwitchCoverage">
-      <keyboard-shortcut first-keystroke="control C" second-keystroke="C"/>
+      <keyboard-shortcut first-keystroke="control alt F6"/>
     </action>
     <action id="EditorPageUpWithSelection">
       <keyboard-shortcut first-keystroke="shift PAGE_UP"/>
