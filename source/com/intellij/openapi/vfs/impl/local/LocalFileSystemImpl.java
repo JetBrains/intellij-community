@@ -270,6 +270,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
           final int index = runPath.lastIndexOf("/");
           if (index >= 0) {
             runPath = runPath.substring(0, index);
+          } else {
+            return null;
           }
           root = root.getParent();
           if (root == null) return null;
