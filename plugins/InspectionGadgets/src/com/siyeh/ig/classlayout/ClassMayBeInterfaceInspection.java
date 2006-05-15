@@ -32,6 +32,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassMayBeInterfaceInspection extends ClassInspection {
 
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "class.may.be.interface.display.name");
+    }
+
     public String getGroupDisplayName() {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
@@ -83,6 +88,7 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
             }
             final PsiModifierList modifierList = aClass.getModifierList();
             modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+            modifierList.setModifierProperty(PsiModifier.FINAL, false);
             classKeyword.replace(interfaceKeyword);
         }
 
