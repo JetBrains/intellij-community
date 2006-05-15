@@ -16,9 +16,9 @@ import java.util.List;
  */
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription {
   private final JavaMethodSignature myGetterMethod;
-  private final boolean myRequired;
+  private final Required myRequired;
 
-  protected AttributeChildDescriptionImpl(final String attributeName, final Method getter, boolean required) {
+  protected AttributeChildDescriptionImpl(final String attributeName, final Method getter, Required required) {
     super(attributeName, getter.getGenericReturnType());
     myGetterMethod = JavaMethodSignature.getSignature(getter);
     myRequired = required;
@@ -34,7 +34,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     return myGetterMethod;
   }
 
-  public final boolean isRequired() {
+  public final Required getRequiredAnnotation() {
     return myRequired;
   }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,22 +59,29 @@ public class ElementPresentationManager {
         return s;
       }
     }
+    Object o = invokeNameValueMethod(element);
+    return o == null || o instanceof String ? (String)o : ((GenericValue)o).getStringValue();
+  }
+
+  public static Object invokeNameValueMethod(final Object element) {
     final Method nameValueMethod = findNameValueMethod(element.getClass());
     if (nameValueMethod == null) {
       return null;
     }
 
     try {
-      final Object o = nameValueMethod.invoke(element);
-      return o == null || o instanceof String ? (String) o : ((GenericValue) o).getStringValue();
+      return nameValueMethod.invoke(element);
     }
     catch (IllegalAccessException e) {
-      LOG.error(e);
+      throw new RuntimeException(e);
     }
     catch (InvocationTargetException e) {
-      LOG.error(e);
+      final Throwable throwable = e.getCause();
+      if (throwable instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)throwable;
+      }
+      throw new RuntimeException(e);
     }
-    return null;
   }
 
   public static String getTypeName(Object o) {

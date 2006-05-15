@@ -3,6 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -10,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.Disposable;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -22,14 +22,13 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
@@ -338,7 +337,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return getCachedElement(tag);
   }
 
-  private DomInvocationHandler getDomFileElement(final XmlFile xmlFile) {
+  public final DomInvocationHandler getDomFileElement(final XmlFile xmlFile) {
     if (xmlFile != null && !myNonDomFiles.containsKey(xmlFile)) {
       DomFileElementImpl element = getCachedElement(xmlFile);
       if (element == null) {

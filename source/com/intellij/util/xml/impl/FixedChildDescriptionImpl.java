@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.Required;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import java.lang.reflect.InvocationTargetException;
@@ -24,9 +25,9 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FixedChildDescriptionImpl");
   private final Method[] myGetterMethods;
   private final int myCount;
-  private final Boolean[] myRequired;
+  private final Required[] myRequired;
 
-  public FixedChildDescriptionImpl(final String tagName, final Type type, final int count, final Method[] getterMethods, Boolean[] required) {
+  public FixedChildDescriptionImpl(final String tagName, final Type type, final int count, final Method[] getterMethods, Required[] required) {
     super(tagName, type);
     myRequired = required;
     assert getterMethods.length == count;
@@ -42,7 +43,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     DomManagerImpl.getDomInvocationHandler(parent).setFixedChildClass(getXmlElementName(), aClass);
   }
 
-  public boolean isRequired(int index) {
+  public Required getRequiredAnnotation(int index) {
     return myRequired[index];
   }
 

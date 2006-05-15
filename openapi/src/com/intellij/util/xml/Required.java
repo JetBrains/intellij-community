@@ -24,4 +24,6 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Required {
+  boolean nonEmpty() default true;
+  boolean identifier() default false;
 }

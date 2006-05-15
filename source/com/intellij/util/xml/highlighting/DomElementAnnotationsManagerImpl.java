@@ -12,10 +12,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.WeakValueHashMap;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementVisitor;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +110,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   public void projectClosed() {
   }
 
-  private static class MyDomElementsAnnotator implements DomElementsAnnotator {
+  static class MyDomElementsAnnotator implements DomElementsAnnotator {
     public void annotate(DomElement element, final DomElementsProblemsHolder annotator) {
       element.accept(new DomElementVisitor() {
         public void visitDomElement(DomElement element) {
@@ -122,20 +119,26 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
           for (final DomChildrenDescription description : list) {
             final List<? extends DomElement> values = description.getValues(element);
             if (description instanceof DomAttributeChildDescription) {
-              if (((DomAttributeChildDescription)description).isRequired()) {
-                final DomElement child = values.get(0);
+              final Required required = ((DomAttributeChildDescription)description).getRequiredAnnotation();
+              if (required != null) {
+                final GenericAttributeValue child = (GenericAttributeValue)values.get(0);
                 if (child.getXmlElement() == null) {
                   annotator.createProblem(child, IdeBundle.message("attribute.0.should.be.defined", child.getXmlElementName()));
+                } else {
+                  checkRequiredGenericValue(child, required, annotator);
                 }
               }
             }
             else if (description instanceof DomFixedChildDescription) {
               final DomFixedChildDescription childDescription = (DomFixedChildDescription)description;
               for (int i = 0; i < values.size(); i++) {
-                if (childDescription.isRequired(i)) {
+                final Required required = childDescription.getRequiredAnnotation(i);
+                if (required != null) {
                   final DomElement child = values.get(i);
                   if (child.getXmlElement() == null) {
                     annotator.createProblem(child, IdeBundle.message("child.tag.0.should.be.defined", child.getXmlElementName()));
+                  } else if (child instanceof GenericDomValue) {
+                    checkRequiredGenericValue((GenericDomValue)child, required, annotator);
                   }
                 }
               }
@@ -151,6 +154,17 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
         }
 
       });
+    }
+
+    private static void checkRequiredGenericValue(final GenericDomValue child, final Required required, final DomElementsProblemsHolder annotator) {
+      final String stringValue = child.getStringValue();
+      assert stringValue != null;
+      if (required.nonEmpty() && stringValue.trim().length() == 0) {
+        annotator.createProblem(child, IdeBundle.message("value.should.not.be.empty"));
+      }
+      else if (required.identifier() && !PsiManager.getInstance(child.getManager().getProject()).getNameHelper().isIdentifier(stringValue)) {
+        annotator.createProblem(child, IdeBundle.message("value.should.be.identifier"));
+      }
     }
   }
 }
