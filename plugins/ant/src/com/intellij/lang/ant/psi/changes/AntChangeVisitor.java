@@ -7,45 +7,72 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
 import com.intellij.psi.xml.XmlElement;
+import org.jetbrains.annotations.Nullable;
 
 public class AntChangeVisitor implements XmlChangeVisitor {
 
   public void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet) {
-    getAntParent(xmlAttributeSet.getTag()).clearCaches();
+    final AntElement element = getAntParent(xmlAttributeSet.getTag());
+    if (element != null) {
+      element.clearCaches();
+    }
   }
 
   public void visitDocumentChanged(final XmlDocumentChanged xmlDocumentChanged) {
-    getAntParent(xmlDocumentChanged.getDocument()).clearCaches();
+    final AntElement element = getAntParent(xmlDocumentChanged.getDocument());
+    if (element != null) {
+      element.clearCaches();
+    }
   }
 
   public void visitXmlElementChanged(final XmlElementChanged xmlElementChanged) {
-    getAntParent(xmlElementChanged.getElement()).clearCaches();
+    final AntElement element = getAntParent(xmlElementChanged.getElement());
+    if (element != null) {
+      element.clearCaches();
+    }
   }
 
   public void visitXmlTagChildAdd(final XmlTagChildAdd xmlTagChildAdd) {
-    getAntParent(xmlTagChildAdd.getTag()).clearCaches();
+    final AntElement element = getAntParent(xmlTagChildAdd.getTag());
+    if (element != null) {
+      element.clearCaches();
+    }
   }
 
   public void visitXmlTagChildChanged(final XmlTagChildChanged xmlTagChildChanged) {
-    getAntParent(xmlTagChildChanged.getTag()).clearCaches();
+    final AntElement element = getAntParent(xmlTagChildChanged.getTag());
+    if (element != null) {
+      element.clearCaches();
+    }
   }
 
   public void visitXmlTagChildRemoved(final XmlTagChildRemoved xmlTagChildRemoved) {
-    getAntParent(xmlTagChildRemoved.getTag()).clearCaches();
+    final AntElement element = getAntParent(xmlTagChildRemoved.getTag());
+    if (element != null) {
+      element.clearCaches();
+    }
   }
 
   public void visitXmlTagNameChanged(final XmlTagNameChanged xmlTagNameChanged) {
-    getAntParent(xmlTagNameChanged.getTag()).clearCaches();
+    final AntElement element = getAntParent(xmlTagNameChanged.getTag());
+    if (element != null) {
+      element.clearCaches();
+    }
   }
 
   public void visitXmlTextChanged(final XmlTextChanged xmlTextChanged) {
-    getAntParent(xmlTextChanged.getText()).clearCaches();
+    final AntElement element = getAntParent(xmlTextChanged.getText());
+    if (element != null) {
+      element.clearCaches();
+    }
   }
 
+  @Nullable
   private static AntElement getAntParent(final XmlElement el) {
     final TextRange textRange = el.getTextRange();
     final AntFile antFile = (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
-    AntElement antElement = (AntElement)antFile.findElementAt(textRange.getStartOffset() + 1);
+    if (antFile == null) return null;
+    AntElement antElement = (AntElement)antFile.findElementAt(textRange.getStartOffset());
     while (!(antElement instanceof AntFile) && antElement.getTextLength() < textRange.getLength()) {
       antElement = antElement.getAntParent();
     }
