@@ -153,6 +153,8 @@ public interface IdeActions {
 
   String GROUP_BOOKMARKS = "Bookmarks";
 
+  String GROUP_COMPILER_ERROR_VIEW_POPUP = "CompilerErrorViewPopupMenu";
+
   String GROUP_OTHER_MENU = "OtherMenu";
   String GROUP_EDITOR = "EditorActions";
   String GROUP_DEBUGGER = "DebuggerActions";
