@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,6 +36,11 @@ import org.jetbrains.annotations.NotNull;
 public class StringConcatenationInsideStringBufferAppendInspection
         extends ExpressionInspection{
 
+    public String getDisplayName(){
+        return InspectionGadgetsBundle.message(
+                "string.concatenation.inside.string.buffer.append.display.name");
+    }
+
     public String getGroupDisplayName(){
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
@@ -45,8 +51,11 @@ public class StringConcatenationInsideStringBufferAppendInspection
 
     @NotNull
     public String buildErrorString(Object... infos){
+        final PsiClass aClass = (PsiClass)infos[0];
+        final String className = aClass.getName();
         return InspectionGadgetsBundle.message(
-                "string.concatenation.inside.string.buffer.append.problem.descriptor");
+                "string.concatenation.inside.string.buffer.append.problem.descriptor",
+                className);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -70,22 +79,38 @@ public class StringConcatenationInsideStringBufferAppendInspection
             final PsiElement methodNameElement = descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression =
                     (PsiReferenceExpression) methodNameElement.getParent();
-            if (methodExpression == null) {
+            if (methodExpression == null){
                 return;
             }
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression) methodExpression.getParent();
-            if (methodCallExpression == null) {
+            if (methodCallExpression == null){
                 return;
             }
-            final PsiExpressionList argList =
+            final PsiExpressionList argumentList =
                     methodCallExpression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            final PsiExpression arg = args[0];
-            final List<String> expressions = findConcatenationComponents(arg);
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            final PsiExpression argument = arguments[0];
+            final boolean useStringValueOf;
+            final PsiMethod method = methodCallExpression.resolveMethod();
+            if (method == null){
+                useStringValueOf = false;
+            } else{
+                final PsiClass containingClass = method.getContainingClass();
+                final String qualifiedName = containingClass.getQualifiedName();
+                if (qualifiedName == null){
+                    useStringValueOf = false;
+                } else{
+                    useStringValueOf =
+                            !qualifiedName.equals("java.lang.StringBuffer") &&
+                                    !qualifiedName.equals("java.lang.StringBuilder");
+                }
+            }
+            final List<String> expressions =
+                    findConcatenationComponents(argument, useStringValueOf);
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if (qualifier == null) {
+            if (qualifier == null){
                 return;
             }
             @NonNls final StringBuffer newExpressionBuffer = new StringBuffer();
@@ -100,36 +125,38 @@ public class StringConcatenationInsideStringBufferAppendInspection
         }
 
         private static List<String> findConcatenationComponents(
-                PsiExpression concatenation) throws IncorrectOperationException {
+                PsiExpression concatenation, boolean useStringValueOf)
+                throws IncorrectOperationException{
             final List<String> out = new ArrayList<String>();
-            findConcatenationComponents(concatenation, out);
+            findConcatenationComponents(concatenation, out, useStringValueOf);
             return out;
         }
 
         private static void findConcatenationComponents(
-                PsiExpression concatenation, List<String> out)
-                throws IncorrectOperationException {
+                PsiExpression concatenation, @NonNls List<String> out,
+                boolean useStringValueOf)
+                throws IncorrectOperationException{
+            final PsiType type = concatenation.getType();
             if(concatenation instanceof PsiBinaryExpression){
-                final PsiType type = concatenation.getType();
                 if (type != null && type.equalsToText("java.lang.String")){
                     PsiBinaryExpression binaryExpression =
-                            (PsiBinaryExpression) concatenation.copy();
+                            (PsiBinaryExpression) concatenation;
                     PsiExpression lhs = binaryExpression.getLOperand();
                     PsiExpression rhs = binaryExpression.getROperand();
                     assert rhs != null;
-                    if (!PsiUtil.isConstantExpression(rhs)) {
-                        findConcatenationComponents(lhs, out);
-                        findConcatenationComponents(rhs, out);
+                    if (!PsiUtil.isConstantExpression(rhs)){
+                        findConcatenationComponents(lhs, out, useStringValueOf);
+                        findConcatenationComponents(rhs, out,useStringValueOf);
                         return;
                     }
                     final StringBuffer builder =
                             new StringBuffer(rhs.getText());
-                    while (lhs instanceof PsiBinaryExpression) {
+                    while (lhs instanceof PsiBinaryExpression){
                         binaryExpression = (PsiBinaryExpression)lhs;
                         rhs = binaryExpression.getROperand();
                         assert rhs != null;
-                        if (!PsiUtil.isConstantExpression(rhs)) {
-                            findConcatenationComponents(lhs, out);
+                        if (!PsiUtil.isConstantExpression(rhs)){
+                            findConcatenationComponents(lhs, out, useStringValueOf);
                             out.add(builder.toString());
                             return;
                         }
@@ -137,37 +164,51 @@ public class StringConcatenationInsideStringBufferAppendInspection
                         builder.insert(0, " + ");
                         builder.insert(0, rhs.getText());
                     }
-                    if (PsiUtil.isConstantExpression(lhs)) {
+                    if (PsiUtil.isConstantExpression(lhs)){
                         builder.insert(0, " + ");
                         builder.insert(0, lhs.getText());
                         out.add(builder.toString());
-                    } else {
-                        findConcatenationComponents(lhs, out);
+                    } else{
+                        findConcatenationComponents(lhs, out, useStringValueOf);
                         out.add(builder.toString());
                     }
-                } else {
-                    out.add(concatenation.getText());
+                } else{
+                    if (useStringValueOf && type != null &&
+                            !type.equalsToText("java.lang.String")){
+                        out.add("String.valueOf(" + concatenation.getText() + ')');
+                    } else{
+                        out.add(concatenation.getText());
+                    }
                 }
             } else if(concatenation instanceof PsiParenthesizedExpression){
-                final PsiExpression expression = ((PsiParenthesizedExpression)
-                        concatenation).getExpression();
-                if (expression != null) {
+                final PsiParenthesizedExpression parenthesizedExpression =
+                        (PsiParenthesizedExpression)concatenation;
+                final PsiExpression expression =
+                        parenthesizedExpression.getExpression();
+                if (expression != null){
                     out.add(expression.getText());
                 }
             } else{
-                out.add(concatenation.getText());
+                if (useStringValueOf && type != null &&
+                        !type.equalsToText("java.lang.String")){
+                    out.add("String.valueOf(" + concatenation.getText() + ')');
+                } else{
+                    out.add(concatenation.getText());
+                }
             }
         }
     }
 
     private static class StringConcatenationInsideStringBufferAppendVisitor
             extends BaseInspectionVisitor{
+
         public void visitMethodCallExpression(
                 PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression
-                    .getMethodExpression();
-            @NonNls final String methodName = methodExpression.getReferenceName();
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
             if(!"append".equals(methodName)){
                 return;
             }
@@ -189,18 +230,30 @@ public class StringConcatenationInsideStringBufferAppendInspection
                 return;
             }
             final String className = containingClass.getQualifiedName();
-            if(!"java.lang.StringBuffer".equals(className) &&
-               !"java.lang.StringBuilder".equals(className)){
+            if("java.lang.StringBuffer".equals(className) ||
+                    "java.lang.StringBuilder".equals(className)){
+                registerMethodCallError(expression, containingClass);
                 return;
             }
-            registerMethodCallError(expression);
+            final PsiManager manager = containingClass.getManager();
+            final Project project = containingClass.getProject();
+            final PsiClass appendableClass =
+                    manager.findClass("java.lang.Appendable",
+                            GlobalSearchScope.allScope(project));
+            if(appendableClass == null){
+                return;
+            }
+            if(!containingClass.isInheritor(appendableClass, true)){
+                return;
+            }
+            registerMethodCallError(expression, containingClass);
         }
 
         private static boolean isConcatenation(PsiExpression arg){
             if(!(arg instanceof PsiBinaryExpression)){
                 return false;
             }
-            if (PsiUtil.isConstantExpression(arg)) {
+            if (PsiUtil.isConstantExpression(arg)){
                return false;
             }
             final PsiType type = arg.getType();
