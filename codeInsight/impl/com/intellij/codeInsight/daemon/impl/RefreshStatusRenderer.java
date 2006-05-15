@@ -77,6 +77,10 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     return DaemonCodeAnalyzerImpl.getHighlights(myDocument, minSeverity, myProject).length;
   }
 
+  public final Project getProject() {
+    return myProject;
+  }
+
   public RefreshStatusRenderer(Project project, DaemonCodeAnalyzerImpl highlighter, Document document, PsiFile file) {
     myProject = project;
     myHighlighter = highlighter;
