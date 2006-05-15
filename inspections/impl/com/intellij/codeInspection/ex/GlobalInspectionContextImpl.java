@@ -247,7 +247,11 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         }
       }
     } else {
-      InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(profile.getName()).getInspectionProfile().cleanup();
+      final InspectionProfileWrapper profileWrapper =
+        InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(profile.getName());
+      if (profileWrapper != null) {  //not offline inspections 
+        profileWrapper.getInspectionProfile().cleanup();
+      }
     }
 
     EntryPointsManager.getInstance(getProject()).cleanup();

@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionMain;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.PathManager;
@@ -91,6 +92,7 @@ public class InspectionApplication {
       final AnalysisScope scope;
 
       final GlobalInspectionContextImpl inspectionContext = im.createNewGlobalContext(true);
+      inspectionContext.setExternalProfile((InspectionProfile)inspectionProfile);
       im.setProfile(inspectionProfile.getName());
 
       if (mySourceDirectory == null) {
