@@ -17,6 +17,8 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
+import com.intellij.openapi.roots.ProjectRootManager;
 
 public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   public CompilerErrorTreeView(Project project) {
@@ -57,7 +59,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
       if (file != null && file.isValid()) {
         ExcludeEntryDescription description = new ExcludeEntryDescription(file, false, true);
-        CompilerConfiguration.getInstance(myProject).addExcludeEntryDescription(description);
+        CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
         FileStatusManager.getInstance(myProject).fileStatusesChanged();
       }
     }

@@ -4,9 +4,10 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.RmicSettings;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.Project;import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.Options;
@@ -22,7 +23,7 @@ public class CompilerUIConfigurable implements Configurable {
   private JPanel myExcludeTablePanel;
   private JavaCompilersTab myJavaCompilersTab;
   private Project myProject;
-  private ExcludeFromCompilePanel myExcludeFromCompilePanel;
+  private ExcludedEntriesConfigurable myExcludedEntriesConfigurable;
 
   private JTextField myResourcePatternsField;
   private JCheckBox myCbCompileInBackground;
@@ -36,27 +37,32 @@ public class CompilerUIConfigurable implements Configurable {
   private JRadioButton myShowDialog;
   private JCheckBox myCbAssertNotNull;
 
-  private final TabbedPaneWrapper myTabbedPane;
-
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
 
-    myExcludeFromCompilePanel = new ExcludeFromCompilePanel(project);
-    myExcludeFromCompilePanel.setBorder(BorderFactory.createCompoundBorder(
+    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
+    myExcludedEntriesConfigurable = new ExcludedEntriesConfigurable(project, compilerConfiguration.getExcludedEntriesConfiguration()) {
+      public void apply() {
+        super.apply();
+        FileStatusManager.getInstance(myProject).fileStatusesChanged(); // refresh exclude from compile status
+        //ProjectView.getInstance(myProject).refresh();
+      }
+    };
+    final JComponent exludedPanel = myExcludedEntriesConfigurable.createComponent();
+    exludedPanel.setBorder(BorderFactory.createCompoundBorder(
       IdeBorderFactory.createTitledBorder(CompilerBundle.message("label.group.exclude.from.compile")), BorderFactory.createEmptyBorder(2, 2, 2, 2))
     );
     myExcludeTablePanel.setLayout(new BorderLayout());
-    myExcludeTablePanel.add(myExcludeFromCompilePanel, BorderLayout.CENTER);
+    myExcludeTablePanel.add(exludedPanel, BorderLayout.CENTER);
 
     myTabbedPanePanel.setLayout(new BorderLayout());
-    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    myJavaCompilersTab = new JavaCompilersTab(project,compilerConfiguration.getRegisteredJavaCompilers(), compilerConfiguration.getDefaultCompiler());
+    myJavaCompilersTab = new JavaCompilersTab(project, compilerConfiguration.getRegisteredJavaCompilers(), compilerConfiguration.getDefaultCompiler());
 
-    myTabbedPane = new TabbedPaneWrapper();
-    myTabbedPane.addTab(CompilerBundle.message("java.compiler.description"), myJavaCompilersTab.createComponent());
+    final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
+    tabbedPane.addTab(CompilerBundle.message("java.compiler.description"), myJavaCompilersTab.createComponent());
     myRmicConfigurable = new RmicConfigurable(RmicSettings.getInstance(project));
-    myTabbedPane.addTab(CompilerBundle.message("rmi.compiler.description"), myRmicConfigurable.createComponent());
-    myTabbedPanePanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+    tabbedPane.addTab(CompilerBundle.message("rmi.compiler.description"), myRmicConfigurable.createComponent());
+    myTabbedPanePanel.add(tabbedPane.getComponent(), BorderLayout.CENTER);
 
 
     ButtonGroup deployGroup = new ButtonGroup();
@@ -69,7 +75,7 @@ public class CompilerUIConfigurable implements Configurable {
 
   public void reset() {
 
-    myExcludeFromCompilePanel.reset();
+    myExcludedEntriesConfigurable.reset();
 
     myJavaCompilersTab.reset();
 
@@ -110,7 +116,7 @@ public class CompilerUIConfigurable implements Configurable {
   }
 
   public void apply() throws ConfigurationException {
-    myExcludeFromCompilePanel.apply();
+    myExcludedEntriesConfigurable.apply();
 
     myJavaCompilersTab.apply();
 
@@ -164,7 +170,7 @@ public class CompilerUIConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    if (myExcludeFromCompilePanel.isModified()) {
+    if (myExcludedEntriesConfigurable.isModified()) {
       return true;
     }
 

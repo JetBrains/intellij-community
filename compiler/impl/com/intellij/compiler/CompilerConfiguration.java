@@ -5,7 +5,6 @@
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
-import com.intellij.compiler.impl.ExcludeEntryDescription;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
@@ -16,22 +15,22 @@ import com.intellij.compiler.impl.javaCompiler.jikes.JikesCompiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFile;import com.intellij.openapi.fileChooser.FileChooserDescriptor;import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.util.Options;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
 import java.io.File;
+import java.util.*;
 
 public class CompilerConfiguration implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
@@ -42,8 +41,6 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   public String DEFAULT_COMPILER;
   @NotNull private BackendCompiler myDefaultJavaCompiler;
 
-  // exclude from compile
-  private List<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
   // extensions of the files considered as resource files
   private List<Pattern> myRegexpResourcePaterns = new ArrayList<Pattern>(getDefaultRegexpPatterns());
   // extensions of the files considered as resource files. If present, Overrides patterns in old regexp format stored in myRegexpResourcePaterns
@@ -51,6 +48,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   private List<Pattern> myWildcardCompiledPatterns = new ArrayList<Pattern>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
+  private final ExcludedEntriesConfiguration myExcludedEntriesConfiguration;
 
 
   public int DEPLOY_AFTER_MAKE = Options.SHOW_DIALOG;
@@ -69,6 +67,16 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
 
   public CompilerConfiguration(Project project) {
     myProject = project;
+    myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration(new Factory<FileChooserDescriptor>() {
+      public FileChooserDescriptor create() {
+        final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
+        final VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentSourceRoots();
+        for (VirtualFile contentSourceRoot : roots) {
+          descriptor.addRoot(contentSourceRoot);
+        }
+        return descriptor;
+      }
+    });
   }
 
   private void loadDefaultWildcardPatterns() {
@@ -195,6 +203,14 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     }
   }
 
+  public ExcludedEntriesConfiguration getExcludedEntriesConfiguration() {
+    return myExcludedEntriesConfiguration;
+  }
+
+  public boolean isExcludedFromCompilation(final VirtualFile virtualFile) {
+    return myExcludedEntriesConfiguration.isExcluded(virtualFile);
+  }
+
   private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
     final Pattern pattern = compilePattern(convertToRegexp(wildcardPattern));
     if (pattern != null) {
@@ -247,48 +263,19 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     return false;
   }
 
-  public ExcludeEntryDescription[] getExcludeEntryDescriptions() {
-    return myExcludeEntryDescriptions.toArray(new ExcludeEntryDescription[myExcludeEntryDescriptions.size()]);
-  }
-
-  public void addExcludeEntryDescription(ExcludeEntryDescription description) {
-    myExcludeEntryDescriptions.add(description);
-  }
-
-  public void removeAllExcludeEntryDescriptions() {
-    myExcludeEntryDescriptions.clear();
-  }
-
   // property names
   private static final @NonNls String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
   private static final @NonNls String RESOURCE_EXTENSIONS = "resourceExtensions";
   private static final @NonNls String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
   private static final @NonNls String ENTRY = "entry";
   private static final @NonNls String NAME = "name";
-  private static final @NonNls String FILE = "file";
-  private static final @NonNls String DIRECTORY = "directory";
-  private static final @NonNls String URL = "url";
-  private static final @NonNls String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
 
     Element node = parentNode.getChild(EXCLUDE_FROM_COMPILE);
     if (node != null) {
-      for (final Object o : node.getChildren()) {
-        Element element = (Element)o;
-        String url = element.getAttributeValue(URL);
-        if (url == null) continue;
-        if (FILE.equals(element.getName())) {
-          ExcludeEntryDescription excludeEntryDescription = new ExcludeEntryDescription(url, false, true);
-          myExcludeEntryDescriptions.add(excludeEntryDescription);
-        }
-        if (DIRECTORY.equals(element.getName())) {
-          boolean includeSubdirectories = Boolean.parseBoolean(element.getAttributeValue(INCLUDE_SUBDIRECTORIES));
-          ExcludeEntryDescription excludeEntryDescription = new ExcludeEntryDescription(url, includeSubdirectories, false);
-          myExcludeEntryDescriptions.add(excludeEntryDescription);
-        }
-      }
+      myExcludedEntriesConfiguration.readExternal(node);
     }
 
     try {
@@ -326,21 +313,9 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
 
-    if(myExcludeEntryDescriptions.size() > 0) {
+    if(myExcludedEntriesConfiguration.getExcludeEntryDescriptions().length > 0) {
       Element newChild = new Element(EXCLUDE_FROM_COMPILE);
-      for (final ExcludeEntryDescription description : myExcludeEntryDescriptions) {
-        if (description.isFile()) {
-          Element entry = new Element(FILE);
-          entry.setAttribute(URL, description.getUrl());
-          newChild.addContent(entry);
-        }
-        else {
-          Element entry = new Element(DIRECTORY);
-          entry.setAttribute(URL, description.getUrl());
-          entry.setAttribute(INCLUDE_SUBDIRECTORIES, Boolean.toString(description.isIncludeSubdirectories()));
-          newChild.addContent(entry);
-        }
-      }
+      myExcludedEntriesConfiguration.writeExternal(newChild);
       parentNode.addContent(newChild);
     }
 
@@ -368,36 +343,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     return project.getComponent(CompilerConfiguration.class);
   }
 
-  public boolean isExcludedFromCompilation(VirtualFile virtualFile) {
-    for (final ExcludeEntryDescription entryDescription : myExcludeEntryDescriptions) {
-      VirtualFile descriptionFile = entryDescription.getVirtualFile();
-      if (descriptionFile == null) {
-        continue;
-      }
-      if (entryDescription.isFile()) {
-        if (descriptionFile.equals(virtualFile)) {
-          return true;
-        }
-      }
-      else {
-        if (entryDescription.isIncludeSubdirectories()) {
-          if (VfsUtil.isAncestor(descriptionFile, virtualFile, false)) {
-            return true;
-          }
-        }
-        else {
-          if (virtualFile.isDirectory()) {
-            continue;
-          }
-          if (descriptionFile.equals(virtualFile.getParent())) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
+  @NotNull @NonNls
   public String getComponentName() {
     return "CompilerConfiguration";
   }
