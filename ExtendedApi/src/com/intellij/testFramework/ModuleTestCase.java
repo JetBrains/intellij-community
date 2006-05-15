@@ -10,11 +10,16 @@ import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import org.jdom.JDOMException;
 
 public abstract class ModuleTestCase extends IdeaTestCase {
   protected final Collection<Module> myModulesToDispose = new ArrayList<Module>();
@@ -84,6 +89,13 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     myModulesToDispose.add(module);
     return module;
   }
+
+  public Module loadModule(final String modulePath, Project project) throws InvalidDataException,
+                                                                            IOException,
+                                                                            JDOMException {
+    return loadModule(new File(modulePath));
+  }
+
 
   protected ModuleImpl loadAllModulesUnder(VirtualFile rootDir) throws Exception {
     ModuleImpl module = null;
