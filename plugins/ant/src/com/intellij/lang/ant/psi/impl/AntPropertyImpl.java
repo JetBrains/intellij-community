@@ -18,15 +18,18 @@ import java.io.File;
 
 public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
+  private AntElement propHolder;
+
   public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
-    AntElement propHolder = parent;
+    propHolder = parent;
     if (propHolder instanceof AntCall) {
       propHolder = propHolder.getAntProject();
     }
     if (getName() != null) {
       propHolder.setProperty(getName(), this);
-    } else if (getFileName() != null) {
+    }
+    else if (getFileName() != null) {
       final PropertiesFile file = getPropertiesFile();
       if (file != null) {
         for (Property prop : file.getProperties()) {
@@ -44,12 +47,14 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
         builder.append(getName());
         builder.append(" = ");
         builder.append(getValue());
-      } else {
+      }
+      else {
         final String propFile = getFileName();
         if (propFile != null) {
           builder.append("file: ");
           builder.append(propFile);
-        } else {
+        }
+        else {
           builder.append(getSourceElement().getName());
         }
       }
@@ -100,11 +105,16 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     final String name = getFileName();
     if (name == null) return null;
     final PsiFile psiFile = findFileByName(name);
-    return (psiFile instanceof PropertiesFile) ? (PropertiesFile) psiFile : null;
+    return (psiFile instanceof PropertiesFile) ? (PropertiesFile)psiFile : null;
   }
 
   public void setPropertiesFile(final String name) throws IncorrectOperationException {
     getSourceElement().setAttribute("file", name);
     subtreeChanged();
+  }
+
+  public void clearCaches() {
+    super.clearCaches();
+    propHolder.clearCaches();
   }
 }

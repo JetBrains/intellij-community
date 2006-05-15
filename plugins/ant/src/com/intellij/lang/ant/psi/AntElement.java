@@ -21,6 +21,8 @@ public interface AntElement extends PsiNamedElement {
 
   void subtreeChanged();
 
+  void clearCaches();
+
   @Nullable
   PsiFile findFileByName(final String name);
 

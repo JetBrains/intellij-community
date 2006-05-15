@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 
 public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBase {
@@ -18,7 +19,11 @@ public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBa
     if (attr == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    int offsetInPosition = attr.getValueElement().getTextRange().getStartOffset() - target.getTextRange().getStartOffset() + 1;
+    final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
+    if (xmlAttributeValue == null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - target.getTextRange().getStartOffset() + 1;
     final String str = attr.getValue();
     final String[] targets = str.split(",");
     final int length = targets.length;

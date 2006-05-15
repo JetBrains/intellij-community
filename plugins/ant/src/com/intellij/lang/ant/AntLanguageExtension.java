@@ -16,8 +16,8 @@ public class AntLanguageExtension implements LanguageExtension {
     final XmlDocument document = xmlFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();
-      if (tag != null && "project".equals(tag.getName()) &&
-          tag.getContext() instanceof XmlDocument && tag.getAttributeValue("default") != null) {
+      if (tag != null && "project".equals(tag.getName()) && tag.getContext()instanceof XmlDocument &&
+          tag.getAttributeValue("default") != null) {
         return true;
       }
     }
@@ -29,6 +29,7 @@ public class AntLanguageExtension implements LanguageExtension {
   }
 
   public boolean isAffectedByChange(final XmlChange xmlChange) {
-    return true;
+    xmlChange.accept(AntSupport.getChangeVisitor());
+    return false;
   }
 }
