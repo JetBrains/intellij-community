@@ -364,12 +364,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         }
       };
 
-      if (!ApplicationManager.getApplication().isUnitTestMode()){
-        LaterInvocator.invokeLater(askReloadRunnable);
-      }
-      else{
+      //if (!ApplicationManager.getApplication().isUnitTestMode()){
+      //  LaterInvocator.invokeLater(askReloadRunnable);
+      //}
+      //else{
         askReloadRunnable.run();
-      }
+      //}
     }
     else{
       reloadFromDisk(document);
