@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -125,10 +126,11 @@ public class MethodMayBeStaticInspection extends MethodInspection{
             if(TestUtils.isJUnitTestMethod(method)){
                 return;
             }
-            final PsiMethod[] superMethods = method.findDeepestSuperMethods();
-            if(superMethods.length > 0){
+
+            if (SuperMethodsSearch.search(method, null, true, false).findFirst() != null) {
                 return;
             }
+
             if(MethodUtils.isOverridden(method)){
                 return;
             }
