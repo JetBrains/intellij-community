@@ -20,8 +20,9 @@ import com.intellij.openapi.util.TextRange;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.List;
+import java.nio.CharBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CharArrayUtil {
   public static void getChars(CharSequence src, char[] dst, int dstOffset) {
@@ -45,11 +46,25 @@ public class CharArrayUtil {
     if (seq instanceof CharArrayCharSequence) {
       return ((CharArrayCharSequence)seq).getChars();
     }
+
+    if (seq instanceof CharBuffer) {
+      final CharBuffer buffer = (CharBuffer)seq;
+      if (buffer.hasArray() && buffer.arrayOffset() == 0 && buffer.length() == seq.length()) {
+        return buffer.array();
+      }
+      else {
+        char[] chars = new char[seq.length()];
+        buffer.get(chars);
+        return chars;
+      }
+    }
+
     if (seq instanceof StringBuffer) {
       char[] chars = new char[seq.length()];
       ((StringBuffer)seq).getChars(0, seq.length(), chars, 0);
       return chars;
     }
+
     if (seq instanceof String) {
       char[] chars = new char[seq.length()];
       ((String)seq).getChars(0, seq.length(), chars, 0);
