@@ -116,7 +116,8 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
   }
 
   protected void updateComponent() {
-    if (!getDomElement().isValid()) return;
+    final DomElement domElement = getDomElement();
+    if (domElement == null || !domElement.isValid()) return;
 
     final EditorTextField textField = getEditorTextField(getComponent());
     final Project project = getProject();
