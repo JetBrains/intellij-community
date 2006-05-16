@@ -18,52 +18,52 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class AddTypeCastFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix");
   private final PsiType myType;
-  private final PsiElement myElement;
+  private final PsiExpression myExpression;
 
-  public AddTypeCastFix(PsiType type, PsiElement element) {
+  public AddTypeCastFix(PsiType type, PsiExpression expression) {
     myType = type;
-    myElement = element;
+    myExpression = expression;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("add.typecast.text", myType.getCanonicalText());
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.typecast.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return myType.isValid() && myElement.isValid() && myElement.getManager().isInProject(myElement);
+    return myType.isValid() && myExpression.isValid() && myExpression.getManager().isInProject(myExpression);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-    addTypeCast(project, myElement, myType);
+    addTypeCast(project, myExpression, myType);
   }
 
-  static void addTypeCast(Project project, PsiElement origElement, PsiType type) {
+  private static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
     try {
-      PsiTypeCastExpression typeCast = createCastExpression(origElement, project, type);
+      PsiTypeCastExpression typeCast = createCastExpression(originalExpression, project, type);
 
-      origElement.replace(typeCast);
+      originalExpression.replace(typeCast);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
 
-  static PsiTypeCastExpression createCastExpression(PsiElement origElement, Project project, PsiType type) throws IncorrectOperationException {
+  static PsiTypeCastExpression createCastExpression(PsiExpression originalExpression, Project project, PsiType type) throws IncorrectOperationException {
     // remove nested casts
-    PsiElement element = origElement;
-    if (element instanceof PsiExpression) {
-      element = PsiUtil.deparenthesizeExpression((PsiExpression)element);
-    }
-    PsiElementFactory factory = origElement.getManager().getElementFactory();
+    PsiElement element = PsiUtil.deparenthesizeExpression(originalExpression);
+    PsiElementFactory factory = originalExpression.getManager().getElementFactory();
 
     PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText("(Type)value", null);
     typeCast = (PsiTypeCastExpression)CodeStyleManager.getInstance(project).reformat(typeCast);

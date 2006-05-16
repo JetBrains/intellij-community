@@ -1832,7 +1832,9 @@ public class HighlightUtil {
     if (!TypeConversionUtil.isAssignable(throwable, type)) {
       HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(throwable, type, context.getTextRange());
       if (addCastIntention && TypeConversionUtil.areTypesConvertible(type, throwable)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new AddTypeCastFix(throwable, context));
+        if (context instanceof PsiExpression) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, new AddTypeCastFix(throwable, (PsiExpression)context));
+        }
       }
       return highlightInfo;
     }

@@ -27,7 +27,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-public class CastMethodParametersFix extends AddTypeCastFix implements IntentionAction {
+import org.jetbrains.annotations.NotNull;
+
+public class CastMethodParametersFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CastMethodParametersFix");
 
   private final PsiExpressionList myArgList;
@@ -35,12 +37,12 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
   private final PsiType myToType;
 
   private CastMethodParametersFix(PsiExpressionList list, int i, PsiType toType) {
-    super(null, null);
     myArgList = list;
     myIndex = i;
     myToType = toType instanceof PsiEllipsisType ? ((PsiEllipsisType) toType).toArrayType() : toType;
   }
 
+  @NotNull
   public String getText() {
     if (myArgList.getExpressions().length == 1) {
       return QuickFixBundle.message("cast.single.parameter.text", HighlightUtil.formatType(myToType));
@@ -49,6 +51,7 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
     return QuickFixBundle.message("cast.parameter.text", myIndex + 1, HighlightUtil.formatType(myToType));
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.typecast.family");
   }
@@ -67,7 +70,13 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     PsiExpression expression = myArgList.getExpressions()[myIndex];
 
-    addTypeCast(project, expression, myToType);
+    try {
+      PsiTypeCastExpression typeCast = AddTypeCastFix.createCastExpression(expression, project, myToType);
+      expression.replace(typeCast);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   public static void registerCastActions(CandidateInfo[] candidates, PsiCall call, PsiJavaCodeReferenceElement methodRef, HighlightInfo highlightInfo) {
@@ -121,7 +130,7 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
           // strict compare since even widening cast may help
           if (Comparing.equal(exprType, parameterType)) continue;
           PsiCall newCall = (PsiCall) call.copy();
-          PsiTypeCastExpression castExpression = createCastExpression(expression, methodRef.getProject(), parameterType);
+          PsiTypeCastExpression castExpression = AddTypeCastFix.createCastExpression(expression, methodRef.getProject(), parameterType);
           newCall.getArgumentList().getExpressions()[i].replace(castExpression);
           JavaResolveResult resolveResult = newCall.resolveMethodGenerics();
           if (resolveResult.getElement() != null && resolveResult.isValidResult()) {
