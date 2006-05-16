@@ -133,11 +133,10 @@
     <group id="J2EEGenerateGroup">
       <action id="CreatePersistenceUnit" class="com.intellij.javaee.persistence.view.CreatePersistenceUnitAction" icon="/nodes/persistenceUnit.png"/>
       <action id="CreateEntityListener" class="com.intellij.javaee.persistence.view.actions.CreateEntityListenerAction" icon="/nodes/entityListener.png"/>
-      <!--
-      <action id="CreatePersistentEntity" class="com.intellij.javaee.persistence.view.actions.CreateEntityListenerAction" icon="/nodes/entityListener.png"/>
-      <action id="CreateMappedSuperclass" class="com.intellij.javaee.persistence.view.actions.CreateEntityListenerAction" icon="/nodes/entityListener.png"/>
-      <action id="CreateEmbeddable" class="com.intellij.javaee.persistence.view.actions.CreateEntityListenerAction" icon="/nodes/entityListener.png"/>
-      -->
+
+      <action id="CreatePersistentEntity" class="com.intellij.javaee.persistence.view.actions.CreatePersistentEntity" icon="/nodes/persistentEntity.png"/>
+      <action id="CreateMappedSuperclass" class="com.intellij.javaee.persistence.view.actions.CreateMappedSuperclass" icon="/nodes/mappedSuperclass.png"/>
+      <action id="CreateEmbeddable" class="com.intellij.javaee.persistence.view.actions.CreateEmbeddable" icon="/nodes/embeddable.png"/>
 
       <action id="CreateSessionBean" class="com.intellij.javaee.module.view.ejb.actions.CreateSessionBeanAction" icon="/nodes/ejbSession.png"/>
       <action id="CreateContainerManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateCMPEntityBeanAction" icon="/nodes/ejbEntity.png"/>
