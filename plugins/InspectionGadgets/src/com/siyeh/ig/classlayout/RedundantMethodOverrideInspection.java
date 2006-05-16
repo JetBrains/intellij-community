@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Bas Leijdekkers
+ * Copyright 2005-2006 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,19 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class RedundantMethodOverrideInspection extends MethodInspection {
 
@@ -41,7 +45,7 @@ public class RedundantMethodOverrideInspection extends MethodInspection {
                 "redundant.method.override.display.name");
     }
 
-    @Nullable
+    @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "redundant.method.override.problem.descriptor");
@@ -85,11 +89,14 @@ public class RedundantMethodOverrideInspection extends MethodInspection {
             if (method.getNameIdentifier() == null) {
                 return;
             }
-            final PsiMethod[] superMethods = method.findSuperMethods(false);
-            if (superMethods.length == 0) {
+            final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
+                    SuperMethodsSearch.search(method, null, true, false);
+            final MethodSignatureBackedByPsiMethod signature =
+                    superMethodQuery.findFirst();
+            if (signature == null) {
                 return;
             }
-            final PsiMethod superMethod = superMethods[0];
+            final PsiMethod superMethod = signature.getMethod();
             final PsiCodeBlock superBody = superMethod.getBody();
             if (superBody == null) {
                 return;

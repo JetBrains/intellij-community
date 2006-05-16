@@ -17,6 +17,9 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.util.Query;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
@@ -73,8 +76,9 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
             if (method.getNameIdentifier() == null) {
                 return;
             }
-            final PsiMethod[] superMethods = method.findSuperMethods();
-            if(superMethods.length != 0){
+            final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
+                    SuperMethodsSearch.search(method, null, true, false);
+            if(superMethodQuery.findFirst() != null){
                 return;
             }
             PsiClass ancestorClass = aClass.getSuperClass();
