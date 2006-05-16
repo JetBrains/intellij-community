@@ -32,6 +32,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -162,6 +163,7 @@ public class HintManager implements ApplicationComponent {
     myTooltipController = new TooltipController();
   }
 
+  @NotNull
   public String getComponentName() {
     return "HintManager";
   }
@@ -172,7 +174,7 @@ public class HintManager implements ApplicationComponent {
     for (int i = 0; i < myHintsStack.size(); i++) {
       HintInfo info = myHintsStack.get(i);
       if (info.hint instanceof LightweightHint && (info.flags & UPDATE_BY_SCROLLING) != 0) {
-        updateScrollableHintPosition(e, (LightweightHint)info.hint, (info.flags & HIDE_IF_OUT_OF_EDITOR) != 0);
+        updateScrollableHintPosition(e, info.hint, (info.flags & HIDE_IF_OUT_OF_EDITOR) != 0);
       }
     }
   }
@@ -701,7 +703,7 @@ public class HintManager implements ApplicationComponent {
 
     public void execute(Editor editor, DataContext dataContext) {
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-      if (project == null || !HintManager.getInstance().hideHints(HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY, true, false)) {
+      if (project == null || !getInstance().hideHints(HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY, true, false)) {
         myOriginalHandler.execute(editor, dataContext);
       }
     }
@@ -710,7 +712,7 @@ public class HintManager implements ApplicationComponent {
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
 
       if (project != null) {
-        HintManager hintManager = HintManager.getInstance();
+        HintManager hintManager = getInstance();
         for (int i = hintManager.myHintsStack.size() - 1; i >= 0; i--) {
           final HintInfo info = hintManager.myHintsStack.get(i);
           if (!info.hint.isVisible()) {

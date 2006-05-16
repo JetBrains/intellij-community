@@ -20,11 +20,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class HighlightManagerImpl extends HighlightManager implements ProjectComponent {
 
@@ -66,10 +65,10 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
         Document document = event.getDocument();
         Editor[] editors = EditorFactory.getInstance().getEditors(document);
         for (Editor editor : editors) {
-          ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<RangeHighlighter>();
           Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
           if (map == null) return;
 
+          ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<RangeHighlighter>();
           for (RangeHighlighter highlighter : map.keySet()) {
             HighlightInfo info = map.get(highlighter);
             if (!info.editor.getDocument().equals(document)) continue;
@@ -144,9 +143,9 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
                                       TextAttributes attributes, boolean hideByTextChange,
                                       Collection<RangeHighlighter> outHighlighters) {
     if (occurrences.length == 0) return;
-    int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
+    int flags = HIDE_BY_ESCAPE;
     if (hideByTextChange) {
-      flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
+      flags |= HIDE_BY_TEXT_CHANGE;
     }
     Color scrollmarkColor = getScrollMarkColor(attributes);
 
@@ -164,9 +163,9 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
                                               TextAttributes attributes, boolean hideByTextChange,
                                               Collection<RangeHighlighter> outHighlighters) {
     if (elements.length == 0) return;
-    int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
+    int flags = HIDE_BY_ESCAPE;
     if (hideByTextChange) {
-      flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
+      flags |= HIDE_BY_TEXT_CHANGE;
     }
     Color scrollmarkColor = getScrollMarkColor(attributes);
 
@@ -198,9 +197,9 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
                                 TextAttributes attributes,
                                 boolean hideByTextChange,
                                 Collection<RangeHighlighter> highlighters) {
-    int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
+    int flags = HIDE_BY_ESCAPE;
     if (hideByTextChange) {
-      flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
+      flags |= HIDE_BY_TEXT_CHANGE;
     }
 
     Color scrollmarkColor = getScrollMarkColor(attributes);
@@ -212,9 +211,9 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
                                       TextAttributes attributes, boolean hideByTextChange,
                                       Collection<RangeHighlighter> outHighlighters) {
     if (elements.length == 0) return;
-    int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
+    int flags = HIDE_BY_ESCAPE;
     if (hideByTextChange) {
-      flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
+      flags |= HIDE_BY_TEXT_CHANGE;
     }
 
     Color scrollmarkColor = getScrollMarkColor(attributes);
@@ -234,12 +233,11 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
   }
 
   public boolean hideHighlights(Editor editor, int mask) {
-    ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<RangeHighlighter>();
-
     Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
     if (map == null) return false;
 
     boolean done = false;
+    ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<RangeHighlighter>();
     for (RangeHighlighter highlighter : map.keySet()) {
       HighlightInfo info = map.get(highlighter);
       if (!info.editor.equals(editor)) continue;
