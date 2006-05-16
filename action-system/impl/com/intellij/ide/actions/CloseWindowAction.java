@@ -15,7 +15,7 @@ public class CloseWindowAction extends AnAction{
     setEnabledInModalContext(true);
   }
 
-  private Window getWindow(){
+  private static Window getWindow(){
     Window focusedWindow=KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     if(!(focusedWindow instanceof Dialog) && !(focusedWindow instanceof Frame)){
       return null;
