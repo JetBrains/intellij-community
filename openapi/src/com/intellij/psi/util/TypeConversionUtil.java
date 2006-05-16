@@ -967,19 +967,22 @@ public class TypeConversionUtil {
     return PRIMITIVE_WRAPPER_TYPES.contains(typeName);
   }
   public static boolean isPrimitiveWrapper(final PsiType type) {
-     if (type==null) return false;
-     return isPrimitiveWrapper(type.getCanonicalText());
-   }
+    return type != null && isPrimitiveWrapper(type.getCanonicalText());
+  }
 
 
-  public static PsiClassType typeParameterErasure(final PsiTypeParameter typeParameter) {
+  private static PsiType typeParameterErasure(final PsiTypeParameter typeParameter, final PsiSubstitutor beforeSubstitutor) {
     final PsiClassType[] extendsList = typeParameter.getExtendsList().getReferencedTypes();
     if (extendsList.length > 0) {
       final PsiClass psiClass = extendsList[0].resolve();
       if (psiClass instanceof PsiTypeParameter) {
         Set<PsiClass> visited = new HashSet<PsiClass>();
         visited.add(psiClass);
-        return typeParameterErasureInner((PsiTypeParameter)psiClass, visited);
+        final PsiTypeParameter boundTypeParameter = (PsiTypeParameter)psiClass;
+        if (beforeSubstitutor.getSubstitutionMap().containsKey(boundTypeParameter)) {
+          return erasure(beforeSubstitutor.substitute(boundTypeParameter));
+        }
+        return typeParameterErasureInner(boundTypeParameter, visited);
       }
       else if (psiClass != null) {
         return typeParameter.getManager().getElementFactory().createType(psiClass);
@@ -1006,6 +1009,10 @@ public class TypeConversionUtil {
   }
 
   public static PsiType erasure(PsiType type) {
+    return erasure(type, PsiSubstitutor.EMPTY);
+  }
+
+  public static PsiType erasure(PsiType type, final PsiSubstitutor beforeSubstitutor) {
     if (type == null) return null;
     return type.accept(new PsiTypeVisitor<PsiType>() {
       public PsiType visitClassType(PsiClassType classType) {
@@ -1014,7 +1021,7 @@ public class TypeConversionUtil {
           return classType.rawType();
         }
         else {
-          return typeParameterErasure((PsiTypeParameter)aClass);
+          return typeParameterErasure((PsiTypeParameter)aClass, beforeSubstitutor);
         }
       }
 
