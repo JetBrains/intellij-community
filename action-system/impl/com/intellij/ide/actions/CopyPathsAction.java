@@ -20,7 +20,7 @@ public class CopyPathsAction extends AnAction {
     CopyPasteManager.getInstance().setContents(new StringSelection(getPaths(vfa)));
   }
 
-  private String getPaths(VirtualFile[] vfa) {
+  private static String getPaths(VirtualFile[] vfa) {
     final StringBuffer buf = new StringBuffer(vfa.length * 64);
     for (int idx = 0; idx < vfa.length; idx++) {
       if (idx > 0) {
@@ -40,7 +40,7 @@ public class CopyPathsAction extends AnAction {
                          : IdeBundle.message("action.copy.paths"));
   }
 
-  private VirtualFile[] getFiles(AnActionEvent e) {
+  private static VirtualFile[] getFiles(AnActionEvent e) {
     return (VirtualFile[])e.getDataContext().getData(DataConstants.VIRTUAL_FILE_ARRAY);
   }
 
