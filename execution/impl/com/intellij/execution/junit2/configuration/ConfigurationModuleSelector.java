@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.exclude.SortedComboBoxModel;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.CollectUtil;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,15 +46,14 @@ public class ConfigurationModuleSelector {
   public void reset(final ModuleBasedConfiguration configuration) {
     final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     final List<Module> list = new ArrayList<Module>();
-    for (int i = 0; i < modules.length; i++) {
-      final Module module = modules[i];
+    for (final Module module : modules) {
       if (isModuleAccepted(module)) list.add(module);
     }
     setModules(list);
     myModules.setSelectedItem(configuration.getConfigurationModule().getModuleName());
   }
 
-  public boolean isModuleAccepted(final Module module) {
+  public static boolean isModuleAccepted(final Module module) {
     return ArrayUtil.find(new ModuleType[]{ModuleType.JAVA, ModuleType.WEB, ModuleType.EJB}, module.getModuleType()) != -1;
   }
 
@@ -70,11 +69,11 @@ public class ConfigurationModuleSelector {
 
   private void setModules(final Collection<Module> modules) {
     myModules.clear();
-    myModules.addAll(CollectUtil.COLLECT.toList(modules.iterator(), MODULE_NAME));
+    myModules.addAll(ContainerUtil.map(modules, MODULE_NAME));
   }
 
-  private static final Convertor<Module, String> MODULE_NAME = new Convertor<Module, String>() {
-    public String convert(final Module module) {
+  private static final Function<Module, String> MODULE_NAME = new Function<Module, String>() {
+    public String fun(final Module module) {
       return module.getName();
     }
   };

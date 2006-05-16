@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -114,9 +112,7 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
       PsiFile containingFile = originalElement.getContainingFile();
       AntConfiguration instance = AntConfiguration.getInstance(originalElement.getProject());
 
-      for(Iterator<BuildFile> i = instance.getBuildFiles(); i.hasNext();) {
-        BuildFile buildFile = i.next();
-
+      for (BuildFile buildFile : instance.getBuildFiles()) {
         if (buildFile.getXmlFile().equals(containingFile)) {
           AntInstallation installation = BuildFile.ANT_INSTALLATION.get(buildFile.getAllOptions());
 
@@ -154,13 +150,11 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
 
             if (helpFile != null) {
               final File helpFile1 = helpFile;
-              VirtualFile fileByIoFile = ApplicationManager.getApplication().runReadAction(
-                new Computable<VirtualFile>() {
-                  public VirtualFile compute() {
-                    return LocalFileSystem.getInstance().findFileByIoFile(helpFile1);
-                  }
+              VirtualFile fileByIoFile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+                public VirtualFile compute() {
+                  return LocalFileSystem.getInstance().findFileByIoFile(helpFile1);
                 }
-              );
+              });
 
               if (fileByIoFile != null) {
                 try {

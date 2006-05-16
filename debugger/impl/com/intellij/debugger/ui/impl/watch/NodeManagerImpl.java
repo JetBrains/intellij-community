@@ -11,8 +11,8 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.CollectUtil;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.event.Event;
 
 import java.util.Collections;
@@ -68,8 +68,8 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     deriveHistoryTree(descriptorTree, context);
 
     List<Pair<Breakpoint, Event>> eventDescriptors = DebuggerUtilsEx.getEventDescriptors(context.getSuspendContext());
-    myBreakpoints = CollectUtil.COLLECT.toList(eventDescriptors, new Convertor<Pair<Breakpoint, Event>, Breakpoint>() {
-      public Breakpoint convert(Pair<Breakpoint, Event> o) {
+    myBreakpoints = ContainerUtil.map(eventDescriptors, new Function<Pair<Breakpoint, Event>, Breakpoint>() {
+      public Breakpoint fun(Pair<Breakpoint, Event> o) {
         return o.getFirst();
       }
     });

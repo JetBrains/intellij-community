@@ -324,4 +324,20 @@ public class ContainerUtil {
       return collection.toArray(array);
     }
   }
+
+  public static <T,V> List<V> map(Iterable<? extends T> iterable, Function<T, V> mapping) {
+    List<V> result = new ArrayList<V>();
+    for (T t : iterable) {
+      result.add(mapping.fun(t));
+    }
+    return result;
+  }
+
+  public static <T,V> List<V> map(T[] arr, Function<T, V> mapping) {
+    List<V> result = new ArrayList<V>();
+    for (T t : arr) {
+      result.add(mapping.fun(t));
+    }
+    return result;
+  }
 }

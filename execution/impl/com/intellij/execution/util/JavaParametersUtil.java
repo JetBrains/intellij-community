@@ -14,9 +14,9 @@ import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.CollectUtil;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.util.ArrayList;
@@ -150,15 +150,15 @@ public class JavaParametersUtil {
   private static final CommandLineEntry JDK_ENTRY = new CommandLineEntry() {
       public void addPath(final JavaParameters parameters, final ProjectJdk jdk) {
         parameters.setJdk(jdk);
-        final ArrayList<String> jdkPaths = CollectUtil.COLLECT.toList(jdk.getRootProvider().getUrls(OrderRootType.CLASSES_AND_OUTPUT),
+        final List<String> jdkPaths = ContainerUtil.map(jdk.getRootProvider().getUrls(OrderRootType.CLASSES_AND_OUTPUT),
                                                                        URL_TO_LOCAL_PATH);
         for (final String jdkPath : jdkPaths) {
           parameters.getClassPath().add(jdkPath);
         }
       }
     };
-    public static final Convertor<String, String> URL_TO_LOCAL_PATH = new Convertor<String, String>() {
-      public String convert(final String url) {
+    public static final Function<String, String> URL_TO_LOCAL_PATH = new Function<String, String>() {
+      public String fun(final String url) {
         return PathUtil.toPresentableUrl(url);
       }
     };
