@@ -6,7 +6,6 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.classParsing.GenericMethodSignature;
 import com.intellij.compiler.classParsing.SignatureParsingException;
-import com.intellij.compiler.make.BoundsParser;
 import com.intellij.compiler.make.MakeUtil;
 import junit.framework.TestCase;
 
@@ -22,6 +21,7 @@ public class ParsingTest extends TestCase{
     }
   }
 
+  /*
   public void testParseClassGenericSignature() {
     try {
       final String[] bounds = BoundsParser.getBounds("<Super:Ljava/lang/Object;Sub:Ljava/lang/Object;>Lcom/intellij/ide/DataAccessor<TSub;>;");
@@ -32,6 +32,7 @@ public class ParsingTest extends TestCase{
       e.printStackTrace();
     }
   }
+  */
 
   public void testParseObjectType() {
     String parsed = null;
