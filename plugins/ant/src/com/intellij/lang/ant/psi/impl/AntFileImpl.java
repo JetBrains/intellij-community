@@ -38,7 +38,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
    * Map of class names to task definitions.
    */
   private Map<String, AntTypeDefinition> myTypeDefinitions;
-  private AntTypeDefinition[] myTypeDefinitionArrays;
+  private AntTypeDefinition[] myTypeDefinitionArray;
   private AntTypeDefinition myTargetDefinition;
 
 
@@ -151,9 +151,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @NotNull
   public AntTypeDefinition[] getBaseTypeDefinitions() {
-    if (myTypeDefinitionArrays != null) return myTypeDefinitionArrays;
+    if (myTypeDefinitionArray != null) return myTypeDefinitionArray;
     getBaseTypeDefinition(null);
-    return myTypeDefinitionArrays = myTypeDefinitions.values().toArray(new AntTypeDefinition[myTypeDefinitions.size()]);
+    return myTypeDefinitionArray = myTypeDefinitions.values().toArray(new AntTypeDefinition[myTypeDefinitions.size()]);
   }
 
   @Nullable
@@ -190,7 +190,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   public void registerCustomType(final AntTypeDefinition definition) {
-    myTypeDefinitionArrays = null;
+    myTypeDefinitionArray = null;
     myTypeDefinitions.put(definition.getClassName(), definition);
   }
 
@@ -200,9 +200,28 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     while (types.hasMoreElements()) {
       final String typeName = (String)types.nextElement();
       final Class typeClass = (Class)ht.get(typeName);
-      AntTypeDefinition def = createTypeDefinition(new AntTypeId(typeName, null), typeClass, isTask);
+      AntTypeDefinition def = createTypeDefinition(new AntTypeId(typeName), typeClass, isTask);
       if (def != null) {
         myTypeDefinitions.put(def.getClassName(), def);
+        /**
+         * some types are defined only as nested elements, project doesn't return their classes
+         * these elements can exist only in context of another element and are defined as subclasses of its class
+         * so we should manually update our type definitions map with such elements
+         */
+        final IntrospectionHelper helper = getHelperExceptionSafe(typeClass);
+        if (helper != null) {
+          final Enumeration nestedEnum = helper.getNestedElements();
+          while (nestedEnum.hasMoreElements()) {
+            final String nestedElement = (String)nestedEnum.nextElement();
+            final Class clazz = (Class)helper.getNestedElementMap().get(nestedElement);
+            if (myTypeDefinitions.get(clazz.getName()) == null) {
+              AntTypeDefinition nestedDef = createTypeDefinition(new AntTypeId(nestedElement), clazz, false);
+              if (nestedDef != null) {
+                myTypeDefinitions.put(nestedDef.getClassName(), nestedDef);
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -215,17 +234,15 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     projectAttrs.put("basedir", AntAttributeType.STRING);
     final HashMap<AntTypeId, String> projectElements = new HashMap<AntTypeId, String>();
     for (AntTypeDefinition def : getBaseTypeDefinitions()) {
-      if (def.isTask()) {
-        projectElements.put(def.getTypeId(), def.getClassName());
-      }
+      projectElements.put(def.getTypeId(), def.getClassName());
     }
     final AntTypeDefinition def = getTargetDefinition();
     projectElements.put(def.getTypeId(), def.getClassName());
     return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs, projectElements);
   }
 
-  static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class taskClass, final boolean isTask) {
-    final IntrospectionHelper helper = getHelperExceptionSafe(taskClass);
+  static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class typeClass, final boolean isTask) {
+    final IntrospectionHelper helper = getHelperExceptionSafe(typeClass);
     if (helper == null) return null;
     final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
     final Enumeration attrEnum = helper.getAttributes();
@@ -249,7 +266,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
       nestedDefinitions.put(new AntTypeId(nestedElement), className);
     }
-    return new AntTypeDefinitionImpl(id, taskClass.getName(), isTask, attributes, nestedDefinitions);
+    return new AntTypeDefinitionImpl(id, typeClass.getName(), isTask, attributes, nestedDefinitions);
   }
 
   private static IntrospectionHelper getHelperExceptionSafe(Class c) {

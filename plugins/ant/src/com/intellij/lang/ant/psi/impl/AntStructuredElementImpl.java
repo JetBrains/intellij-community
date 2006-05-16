@@ -37,9 +37,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     this(parent, sourceElement);
     myDefinition = definition;
-    final AntTypeId id = new AntTypeId(getSourceElement().getName(), null);
+    final AntTypeId id = new AntTypeId(getSourceElement().getName());
     if (definition != null && !definition.getTypeId().equals(id)) {
-      myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl) myDefinition);
+      myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)myDefinition);
       myDefinition.setTypeId(id);
       myDefinitionCloned = true;
     }
@@ -47,7 +47,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   @NotNull
   public XmlTag getSourceElement() {
-    return (XmlTag) super.getSourceElement();
+    return (XmlTag)super.getSourceElement();
   }
 
   public String toString() {
@@ -77,10 +77,12 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     if (getNameElement() != ourNull) {
       getNameElement().setName(name);
       subtreeChanged();
-    } else if (getIdElement() != ourNull) {
+    }
+    else if (getIdElement() != ourNull) {
       getIdElement().setName(name);
       subtreeChanged();
-    } else {
+    }
+    else {
       super.setName(name);
     }
     return this;
@@ -105,7 +107,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public void registerCustomType(final AntTypeDefinition def) {
     if (myDefinition != null) {
       if (!myDefinitionCloned) {
-        myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl) myDefinition);
+        myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)myDefinition);
         myDefinitionCloned = true;
       }
       myDefinition.registerNestedType(def.getTypeId(), def.getClassName());
@@ -128,7 +130,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         return null;
       }
       if (parent instanceof AntStructuredElement) {
-        AntStructuredElementImpl se = (AntStructuredElementImpl) parent;
+        AntStructuredElementImpl se = (AntStructuredElementImpl)parent;
         if (se.myReferencedElements != null) {
           final AntElement refse = se.myReferencedElements.get(refid);
           if (refse != null) {
@@ -178,8 +180,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
     for (final PsiElement element : getSourceElement().getChildren()) {
       if (element instanceof XmlElement) {
-        final AntElement antElement =
-            AntElementFactory.createAntElement(this, (XmlElement) element);
+        final AntElement antElement = AntElementFactory.createAntElement(this, (XmlElement)element);
         if (antElement != null) {
           children.add(antElement);
           if (antElement instanceof AntStructuredElement) {
@@ -199,7 +200,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       if (parent instanceof AntStructuredElement) {
         final XmlAttribute idAttr = getSourceElement().getAttribute("id", null);
         if (idAttr != null) {
-          AntStructuredElement se = (AntStructuredElement) parent;
+          AntStructuredElement se = (AntStructuredElement)parent;
           myIdElement = new AntNameElementImpl(this, idAttr.getValueElement());
           se.registerRefId(myIdElement.getName(), this);
         }

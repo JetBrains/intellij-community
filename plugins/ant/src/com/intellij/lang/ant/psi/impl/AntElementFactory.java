@@ -31,12 +31,12 @@ public class AntElementFactory {
     instantiate();
     if (element instanceof XmlComment) return new AntCommentImpl(parent, element);
     if (!(element instanceof XmlTag)) return null;
-    XmlTag tag = (XmlTag) element;
+    XmlTag tag = (XmlTag)element;
     AntTypeDefinition typeDef = null;
-    final AntTypeId id = new AntTypeId(tag.getName(), null);
+    final AntTypeId id = new AntTypeId(tag.getName());
     final AntFile file = parent.getAntFile();
     if (parent instanceof AntStructuredElement) {
-      final AntTypeDefinition parentDef = ((AntStructuredElement) parent).getTypeDefinition();
+      final AntTypeDefinition parentDef = ((AntStructuredElement)parent).getTypeDefinition();
       if (parentDef != null) {
         final String className = parentDef.getNestedClassName(id);
         if (className != null) {

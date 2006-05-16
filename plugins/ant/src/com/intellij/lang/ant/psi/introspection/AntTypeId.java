@@ -20,7 +20,10 @@ public class AntTypeId {
   }
 
   public boolean equals(Object obj) {
-    return obj instanceof AntTypeId && myId.equals(((AntTypeId) obj).myId);
+    if (!(obj instanceof AntTypeId)) return false;
+    AntTypeId right = (AntTypeId)obj;
+    return myId.getFirst().equals(right.myId.getFirst()) &&
+           (myId.getSecond() == null || right.myId.getSecond() == null || myId.getSecond().equals(right.myId.getSecond()));
   }
 
   @NonNls
