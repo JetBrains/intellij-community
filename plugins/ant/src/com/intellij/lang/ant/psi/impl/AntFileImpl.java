@@ -18,7 +18,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
@@ -62,7 +61,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public PsiElement[] getChildren() {
     if (myChildren == null) {
       final AntProject project = getAntProject();
-      myChildren = (myPrologElement == null) ?  new PsiElement[]{project} : new PsiElement[] {myPrologElement, project};
+      myChildren = (myPrologElement == null) ? new PsiElement[]{project} : new PsiElement[]{myPrologElement, project};
     }
     return myChildren;
   }
@@ -113,13 +112,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     assert tag != null;
     final int projectStart = tag.getTextRange().getStartOffset();
     if (projectStart > 0) {
-      try {
-        myPrologElement = new AntElementImpl(
-          this, getManager().getElementFactory().createDisplayText(baseFile.getText().substring(0, projectStart)));
-      }
-      catch (IncorrectOperationException e) {
-        myPrologElement = null;
-      }
+      myPrologElement = new AntOuterProjectElement(this, 0, baseFile.getText().substring(0, projectStart));
     }
     myProject = new AntProjectImpl(this, tag, createProjectDefinition());
     ((AntProjectImpl)myProject).loadPredefinedProperties(myAntProject);

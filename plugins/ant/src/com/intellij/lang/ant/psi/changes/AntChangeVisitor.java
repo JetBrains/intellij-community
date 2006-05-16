@@ -3,6 +3,7 @@ package com.intellij.lang.ant.psi.changes;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.impl.AntOuterProjectElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
@@ -74,7 +75,8 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     final AntFile antFile = (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
     if (antFile == null) return null;
     AntElement antElement = (AntElement)antFile.findElementAt(textRange.getStartOffset());
-    while (!(antElement instanceof AntFile) && antElement.getTextLength() < textRange.getLength()) {
+    while (!(antElement instanceof AntFile) &&
+           (antElement.getTextLength() < textRange.getLength() || antElement instanceof AntOuterProjectElement)) {
       antElement = antElement.getAntParent();
     }
     return antElement;
