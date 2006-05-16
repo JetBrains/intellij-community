@@ -11,8 +11,8 @@ import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -56,9 +56,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
   private final Map<PsiParameter, Boolean> myParameterIsReassigned = new THashMap<PsiParameter, Boolean>();
 
-  private final Map<String, PsiClass> mySingleImportedClasses = new THashMap<String, PsiClass>();
-  private final Map<String, PsiElement> mySingleImportedFields = new THashMap<String, PsiElement>();
-  private final Map<MethodSignature, PsiElement> mySingleImportedMethods = new THashMap<MethodSignature, PsiElement>();
+  private final Map<String, Pair<PsiImportStatement,PsiClass>> mySingleImportedClasses = new THashMap<String, Pair<PsiImportStatement,PsiClass>>();
+  private final Map<String, Pair<PsiImportStaticReferenceElement,PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement,PsiField>>();
+  private final Map<MethodSignature, Pair<PsiImportStaticReferenceElement,PsiMethod>> mySingleImportedMethods = new THashMap<MethodSignature, Pair<PsiImportStaticReferenceElement, PsiMethod>>();
   private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
 
   @NotNull
@@ -678,7 +678,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitImportStaticReferenceElement(PsiImportStaticReferenceElement ref) {
-    //check single-static-import statement
     String refName = ref.getReferenceName();
     JavaResolveResult[] results = ref.multiResolve(false);
 
@@ -697,26 +696,32 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         }
         @NonNls String messageKey = null;
         if (element instanceof PsiClass) {
-          PsiClass aClass = mySingleImportedClasses.get(refName);
-          if (aClass != null && !manager.areElementsEquivalent(aClass, element)) {
+          Pair<PsiImportStatement, PsiClass> imported = mySingleImportedClasses.get(refName);
+          PsiClass aClass = imported == null ? null : imported.getSecond();
+          PsiImportStatement statement = PsiTreeUtil.getParentOfType(ref, PsiImportStatement.class);
+
+          if (aClass != null && !manager.areElementsEquivalent(aClass, element) && !manager.areElementsEquivalent(statement, imported.getFirst())) {
             messageKey = "class.is.already.defined.in.single.type.import";
           }
-          mySingleImportedClasses.put(refName, (PsiClass)element);
+          mySingleImportedClasses.put(refName, Pair.create(statement, (PsiClass)element));
         }
         else if (element instanceof PsiField) {
-          PsiField field = (PsiField)mySingleImportedFields.get(refName);
-          if (field != null && !manager.areElementsEquivalent(field, element)) {
+          Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
+          PsiField field = imported == null ? null : imported.getSecond();
+
+          if (field != null && !manager.areElementsEquivalent(field, element) && !manager.areElementsEquivalent(ref, imported.getFirst())) {
             messageKey = "field.is.already.defined.in.single.type.import";
           }
-          mySingleImportedFields.put(refName, element);
+          mySingleImportedFields.put(refName, Pair.create(ref, (PsiField)element));
         }
         else if (element instanceof PsiMethod) {
           MethodSignature signature = ((PsiMethod)element).getSignature(PsiSubstitutor.EMPTY);
-          PsiMethod method = (PsiMethod)mySingleImportedMethods.get(signature);
-          if (method != null && !manager.areElementsEquivalent(method, element)) {
+          Pair<PsiImportStaticReferenceElement, PsiMethod> imported = mySingleImportedMethods.get(signature);
+          PsiMethod method = imported == null ? null : imported.getSecond();
+          if (method != null && !manager.areElementsEquivalent(method, element) && !manager.areElementsEquivalent(imported.getFirst(), ref)) {
             messageKey = "method.is.already.defined.in.single.type.import";
           }
-          mySingleImportedMethods.put(signature, element);
+          mySingleImportedMethods.put(signature, Pair.create(ref, (PsiMethod)element));
         }
 
         if (messageKey != null) {

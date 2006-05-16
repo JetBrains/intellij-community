@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -1771,17 +1772,18 @@ public class HighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkSingleImportClassConflict(PsiImportStatement statement, Map<String, PsiClass> singleImportedClasses) {
+  public static HighlightInfo checkSingleImportClassConflict(PsiImportStatement statement, Map<String, Pair<PsiImportStatement,PsiClass>> singleImportedClasses) {
     if (statement.isOnDemand()) return null;
     PsiElement element = statement.resolve();
     if (element instanceof PsiClass) {
       String name = ((PsiClass)element).getName();
-      PsiClass importedClass = singleImportedClasses.get(name);
+      Pair<PsiImportStatement, PsiClass> imported = singleImportedClasses.get(name);
+      PsiClass importedClass = imported == null ? null : imported.getSecond();
       if (importedClass != null && !element.getManager().areElementsEquivalent(importedClass, element)) {
         String description = JavaErrorMessages.message("single.import.class.conflict", formatClass(importedClass));
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
       }
-      singleImportedClasses.put(name, (PsiClass)element);
+      singleImportedClasses.put(name, Pair.create(statement, (PsiClass)element));
     }
     return null;
   }
