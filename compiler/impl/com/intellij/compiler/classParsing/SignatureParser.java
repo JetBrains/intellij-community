@@ -39,7 +39,8 @@ public class SignatureParser {
     parseIdentifier(it, buf);
     parseClassBound(it, buf);
     final char current = it.current();
-    while (current == ':') { 
+    //while (current == ':') {
+    if (current != CharacterIterator.DONE && current != '>') {
       parseInterfaceBound(it, buf);
     }
   }
