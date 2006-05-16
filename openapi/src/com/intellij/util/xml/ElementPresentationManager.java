@@ -16,13 +16,14 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import net.sf.cglib.proxy.Factory;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
@@ -105,7 +106,16 @@ public class ElementPresentationManager {
   }
 
   private static String getDefaultTypeName(final Class aClass) {
-    return StringUtil.capitalizeWords(StringUtil.join(NameUtil.nameToWords(aClass.getSimpleName()),  " "), true);
+    String simpleName = aClass.getSimpleName();
+    final int i = simpleName.indexOf('$');
+    if (i >= 0) {
+      if (Factory.class.isAssignableFrom(aClass)) {
+        simpleName = simpleName.substring(0, i);
+      } else {
+        simpleName = simpleName.substring(i + 1);
+      }
+    }
+    return StringUtil.capitalizeWords(StringUtil.join(NameUtil.nameToWords(simpleName),  " "), true);
   }
 
   private static <T> T getFromClassMap(Map<Class,T> map, Class value) {

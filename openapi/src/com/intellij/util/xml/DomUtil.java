@@ -5,16 +5,14 @@ package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
@@ -256,4 +254,20 @@ public class DomUtil {
     }
   }
 
+  public static List<Method> getFixedPath(DomElement element) {
+    assert element.isValid();
+    final LinkedList<Method> methods = new LinkedList<Method>();
+    while (true) {
+      final DomElement parent = element.getParent();
+      if (parent instanceof DomFileElement) {
+        break;
+      }
+      final String xmlElementName = element.getXmlElementName();
+      final DomFixedChildDescription description = parent.getGenericInfo().getFixedChildDescription(xmlElementName);
+      assert description != null : parent.getXmlElementName() + " " + xmlElementName;
+      methods.addFirst(description.getGetterMethod(description.getValues(parent).indexOf(element)));
+      element = element.getParent();
+    }
+    return methods;
+  }
 }

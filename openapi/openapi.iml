@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="execution-openapi" exported="" />
     <orderEntry type="module" module-name="action-system-openapi" exported="" />
     <orderEntry type="module" module-name="ui-openapi" exported="" />
+    <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

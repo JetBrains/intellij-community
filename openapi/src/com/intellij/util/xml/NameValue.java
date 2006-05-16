@@ -24,5 +24,5 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface NameValue {
-  Class<? extends ScopeProvider> scopeProvider() default ParentScopeProvider.class;
+  Class<? extends ScopeProvider> value() default ParentScopeProvider.class;
 }

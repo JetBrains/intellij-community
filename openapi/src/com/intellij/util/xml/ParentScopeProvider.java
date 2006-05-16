@@ -16,18 +16,11 @@
  */
 package com.intellij.util.xml;
 
-import org.jetbrains.annotations.Nullable;
-
 /**
  * @author peter
  */
 public class ParentScopeProvider implements ScopeProvider{
   public DomElement getParentWhereUnique(DomElement element) {
     return element.getParent();
-  }
-
-  @Nullable
-  public String getScopeName(final DomElement element) {
-    return null;
   }
 }
