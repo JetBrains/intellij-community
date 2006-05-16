@@ -79,23 +79,27 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     SimpleNode node = view.getTree().getSelectedNode();
     if (node instanceof BaseDomElementNode) {
       if (((BaseDomElementNode)node).getConsolidatedChildrenDescriptions().size() > 0) {
-        return ((BaseDomElementNode)node).getDomElement(); 
+        return ((BaseDomElementNode)node).getDomElement();
       }
     }
     final DomElementsGroupNode groupNode = getDomElementsGroupNode(view);
 
-    return groupNode.getDomElement();
+    return groupNode == null ? null : groupNode.getDomElement();
   }
 
- protected String getActionText(final AnActionEvent e) {
-   String text = "Add";
-   if (e.getPresentation().isEnabled()) {
-      final DomElementsGroupNode selectedNode = getDomElementsGroupNode(getTreeView(e));
-      final Type type = selectedNode.getChildDescription().getType();
-      text += " " + ElementPresentationManager.getTypeName(DomUtil.getRawType(type));
-    }
-    return text;
+  protected JComponent getComponent(AnActionEvent e) {
+    return getTreeView(e);
   }
+
+  protected String getActionText(final AnActionEvent e) {
+    String text = "Add";
+    if (e.getPresentation().isEnabled()) {
+       final DomElementsGroupNode selectedNode = getDomElementsGroupNode(getTreeView(e));
+       final Type type = selectedNode.getChildDescription().getType();
+       text += " " + ElementPresentationManager.getTypeName(DomUtil.getRawType(type));
+     }
+     return text;
+   }
 
   private DomElementsGroupNode getDomElementsGroupNode(final DomModelTreeView treeView) {
     SimpleNode simpleNode = treeView.getTree().getSelectedNode();

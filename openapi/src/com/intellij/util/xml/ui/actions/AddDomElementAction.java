@@ -13,11 +13,17 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import javax.swing.*;
 import java.util.List;
 import java.util.ArrayList;
+import java.awt.event.KeyEvent;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: Sergey.Vasiliev
  */
 public abstract class AddDomElementAction extends ActionGroup {
+
+  private final static ShortcutSet shortcutSet = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0));
+
   public AddDomElementAction() {
     super(ApplicationBundle.message("action.add"), false);
   }
@@ -78,18 +84,22 @@ public abstract class AddDomElementAction extends ActionGroup {
     for (DomCollectionChildDescription description: descriptions) {
       final ClassChooser chooser = ClassChooserManager.getClassChooser(DomUtil.getRawType(description.getType()));
       for (Class clazz: chooser.getChooserClasses()) {
+        String name = ElementPresentationManager.getTypeName(clazz);
         AnAction action = createAddingAction(e,
-                                             ElementPresentationManager.getTypeName(clazz),
+                                             ApplicationBundle.message("action.add") + " " + name,
                                              ElementPresentationManager.getIcon(clazz),
                                              clazz,
                                              description);
         actions.add(action);
       }
     }
+    if (actions.size() == 1) {
+//      actions.get(0).registerCustomShortcutSet(shortcutSet, getComponent(e));
+    }
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  abstract protected AnAction createAddingAction(final AnActionEvent e,
+  protected abstract AnAction createAddingAction(final AnActionEvent e,
                                                  final String name,
                                                  final Icon icon,
                                                  final Class s,
@@ -97,6 +107,8 @@ public abstract class AddDomElementAction extends ActionGroup {
 
   protected abstract DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e);
 
+  @Nullable
   protected abstract DomElement getParentDomElement(final AnActionEvent e);
 
+  protected abstract JComponent getComponent(AnActionEvent e);
 }
