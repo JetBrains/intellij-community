@@ -25,7 +25,7 @@ public class CloseEditorAction extends AnAction {
     else {
       file = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
     }
-    if (window != null && file != null) {
+    if (file != null) {
       editorManager.closeFile(file, window);
     }
   }
