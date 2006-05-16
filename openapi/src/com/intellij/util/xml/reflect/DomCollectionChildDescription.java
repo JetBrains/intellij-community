@@ -11,6 +11,9 @@ import java.lang.reflect.Method;
  * @author peter
  */
 public interface DomCollectionChildDescription extends DomChildrenDescription {
+
+  DomCollectionChildDescription[] EMPTY_ARRAY = new DomCollectionChildDescription[0];
+  
   Method getGetterMethod();
   Method getIndexedAdderMethod();
   Method getAdderMethod();

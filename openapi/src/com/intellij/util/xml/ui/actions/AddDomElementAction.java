@@ -4,34 +4,29 @@
 
 package com.intellij.util.xml.ui.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.xml.ui.DomCollectionPanel;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * User: Sergey.Vasiliev
  */
-public abstract class AddDomElementAction<T extends DomElement> extends AnAction {
+public abstract class AddDomElementAction extends ActionGroup {
   public AddDomElementAction() {
-    super(ApplicationBundle.message("action.add"), null, DomCollectionPanel.ADD_ICON);
+    super(ApplicationBundle.message("action.add"), false);
   }
 
   public void update(AnActionEvent e) {
     if (! isEnabled(e)) return;
 
     boolean enabled = false;
-    final AnAction[] actions = createAdditionActions(e);
+    final AnAction[] actions = getChildren(e);
     for (final AnAction action : actions) {
       action.update(e);
       if (e.getPresentation().isEnabled()) {
@@ -52,7 +47,7 @@ public abstract class AddDomElementAction<T extends DomElement> extends AnAction
   protected boolean isEnabled(final AnActionEvent e) {
     return true;
   }
-
+/*
   public void actionPerformed(AnActionEvent e) {
     final AnAction[] actions = createAdditionActions(e);
     if (actions.length > 1) {
@@ -72,24 +67,36 @@ public abstract class AddDomElementAction<T extends DomElement> extends AnAction
       actions[0].actionPerformed(e);
     }
   }
-
+*/
   protected void showPopup(final ListPopup groupPopup, final AnActionEvent e) {
     groupPopup.showUnderneathOf(e.getInputEvent().getComponent());
   }
 
-  protected AnAction[] createAdditionActions(final AnActionEvent e) {
-    final ClassChooser chooser = ClassChooserManager.getClassChooser(DomUtil.getRawType(getDomCollectionChildDescription(e).getType()));
-    return ContainerUtil.map2Array(chooser.getChooserClasses(), AnAction.class, new Function<Class, AnAction>() {
-      public AnAction fun(final Class s) {
-        return createDefaultAction(e, ElementPresentationManager.getTypeName(s), ElementPresentationManager.getIcon(s), s);
+  public AnAction[] getChildren(final AnActionEvent e) {
+    DomCollectionChildDescription[] descriptions = getDomCollectionChildDescriptions(e);
+    List<AnAction> actions = new ArrayList<AnAction>();
+    for (DomCollectionChildDescription description: descriptions) {
+      final ClassChooser chooser = ClassChooserManager.getClassChooser(DomUtil.getRawType(description.getType()));
+      for (Class clazz: chooser.getChooserClasses()) {
+        AnAction action = createAddingAction(e,
+                                             ElementPresentationManager.getTypeName(clazz),
+                                             ElementPresentationManager.getIcon(clazz),
+                                             clazz,
+                                             description);
+        actions.add(action);
       }
-    });
+    }
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  abstract protected DefaultAddAction createDefaultAction(final AnActionEvent e, final String name, final Icon icon, final Class s);
+  abstract protected AnAction createAddingAction(final AnActionEvent e,
+                                                 final String name,
+                                                 final Icon icon,
+                                                 final Class s,
+                                                 final DomCollectionChildDescription description);
 
-  protected abstract DomCollectionChildDescription getDomCollectionChildDescription(final AnActionEvent e);
+  protected abstract DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e);
 
-  protected abstract T getParentDomElement(final AnActionEvent e);
+  protected abstract DomElement getParentDomElement(final AnActionEvent e);
 
 }

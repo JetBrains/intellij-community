@@ -14,6 +14,7 @@ import com.intellij.util.xml.ui.actions.AddDomElementAction;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.tree.DomElementsGroupNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
+import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 
 import javax.swing.*;
@@ -60,15 +61,27 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     }
   }
 
-  protected DomCollectionChildDescription getDomCollectionChildDescription(final AnActionEvent e) {
+  protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
     final DomModelTreeView view = getTreeView(e);
+
+    SimpleNode node = view.getTree().getSelectedNode();
+    if (node instanceof BaseDomElementNode) {
+      return ((BaseDomElementNode)node).getConsolidatedChildrenDescriptions().toArray(DomCollectionChildDescription.EMPTY_ARRAY);
+    }
+
     final DomElementsGroupNode groupNode = getDomElementsGroupNode(view);
 
-    return groupNode.getChildDescription();
+    return new DomCollectionChildDescription[] { groupNode.getChildDescription()};
   }
 
   protected DomElement getParentDomElement(final AnActionEvent e) {
     final DomModelTreeView view = getTreeView(e);
+    SimpleNode node = view.getTree().getSelectedNode();
+    if (node instanceof BaseDomElementNode) {
+      if (((BaseDomElementNode)node).getConsolidatedChildrenDescriptions().size() > 0) {
+        return ((BaseDomElementNode)node).getDomElement(); 
+      }
+    }
     final DomElementsGroupNode groupNode = getDomElementsGroupNode(view);
 
     return groupNode.getDomElement();
@@ -95,10 +108,14 @@ public class AddElementInCollectionAction extends AddDomElementAction {
   }
 
 
-  protected DefaultAddAction createDefaultAction(final AnActionEvent e, final String name, final Icon icon, final Class s) {
+  protected DefaultAddAction createAddingAction(final AnActionEvent e,
+                                                final String name,
+                                                final Icon icon,
+                                                final Class s,
+                                                final DomCollectionChildDescription description) {
+
     return new DefaultAddAction(name, "", icon) {
       // we need this properties, don't remove it (shared dataContext assertion)
-      private DomCollectionChildDescription myDescription = AddElementInCollectionAction.this.getDomCollectionChildDescription(e);
       private DomElement  myParent = AddElementInCollectionAction.this.getParentDomElement(e);
       private DomModelTreeView myView = getTreeView(e);
 
@@ -107,7 +124,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
       }
 
       protected DomCollectionChildDescription getDomCollectionChildDescription() {
-        return myDescription;
+        return description;
       }
 
       protected DomElement getParentDomElement() {

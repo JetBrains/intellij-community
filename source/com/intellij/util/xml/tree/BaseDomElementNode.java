@@ -20,7 +20,7 @@ import java.lang.reflect.Type;
 
 
 public class BaseDomElementNode extends AbstractDomElementNode {
-  public static final Key<Comparator> COMPARATOR_KEY = Key.create("COMPARATOR_KEY");
+  public static final Key<Comparator<AbstractDomElementNode>> COMPARATOR_KEY = Key.create("COMPARATOR_KEY");
   public static final Key<List<Class>> CONSOLIDATED_NODES_KEY = Key.create("CONSOLIDATED_NODES_KEY");
   public static final Key<List<Class>> FOLDER_NODES_KEY = Key.create("FOLDER_NODES_KEY");
 
@@ -84,6 +84,17 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     }
 
     return childrenNodes;
+  }
+
+  public List<DomCollectionChildDescription> getConsolidatedChildrenDescriptions() {
+    final List<DomCollectionChildDescription> collectionChildrenDescriptions = myDomElement.getGenericInfo().getCollectionChildrenDescriptions();
+    final List<DomCollectionChildDescription> consolidated = new ArrayList<DomCollectionChildDescription>();
+    for (DomCollectionChildDescription description : collectionChildrenDescriptions) {
+        if (isMarkedType(description.getType(), CONSOLIDATED_NODES_KEY)) {
+          consolidated.add(description);
+      }
+    }
+    return consolidated;
   }
 
   public Object[] getEqualityObjects() {
