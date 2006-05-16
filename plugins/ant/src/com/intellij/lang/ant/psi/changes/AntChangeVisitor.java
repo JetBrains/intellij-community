@@ -19,9 +19,10 @@ public class AntChangeVisitor implements XmlChangeVisitor {
   }
 
   public void visitDocumentChanged(final XmlDocumentChanged xmlDocumentChanged) {
-    final AntElement element = getAntParent(xmlDocumentChanged.getDocument());
-    if (element != null) {
-      element.clearCaches();
+    final AntFile antFile =
+      (AntFile)xmlDocumentChanged.getDocument().getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
+    if (antFile != null) {
+      antFile.clearCaches();
     }
   }
 
