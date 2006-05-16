@@ -73,7 +73,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     if (myTargets != null) return myTargets;
     final List<AntTarget> targets = new ArrayList<AntTarget>();
     for (final AntElement child : getChildren()) {
-      if (child instanceof AntTarget) targets.add((AntTarget) child);
+      if (child instanceof AntTarget) targets.add((AntTarget)child);
     }
     return myTargets = targets.toArray(new AntTarget[targets.size()]);
   }
@@ -82,9 +82,9 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   public AntTarget getDefaultTarget() {
     final PsiReference[] references = getReferences();
     for (PsiReference ref : references) {
-      final GenericReference reference = (GenericReference) ref;
+      final GenericReference reference = (GenericReference)ref;
       if (reference.getType().isAssignableTo(ReferenceType.ANT_TARGET)) {
-        return (AntTarget) reference.resolve();
+        return (AntTarget)reference.resolve();
       }
     }
     return null;
@@ -127,24 +127,24 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     builder.append("<project name=\"fake\">");
     try {
       while (props.hasMoreElements()) {
-        final String name = (String) props.nextElement();
-        final String value = (String) ht.get(name);
+        final String name = (String)props.nextElement();
+        final String value = (String)ht.get(name);
         builder.append("<property name=\"");
         builder.append(name);
         builder.append("\" value=\"");
         builder.append(value);
         builder.append("\"/>");
       }
-      final String basedir = getBaseDir();
-      if (basedir != null) {
-        builder.append("<property name=\"basedir\" value=\"");
-        builder.append(basedir);
-        builder.append("\"/>");
+      String basedir = getBaseDir();
+      if (basedir == null) {
+        basedir = ".";
       }
+      builder.append("<property name=\"basedir\" value=\"");
+      builder.append(basedir);
+      builder.append("\"/>");
       builder.append("</project>");
       final PsiElementFactory elementFactory = getManager().getElementFactory();
-      final XmlFile fakeFile = (XmlFile)
-          elementFactory.createFileFromText("dummy.xml", builder.toString());
+      final XmlFile fakeFile = (XmlFile)elementFactory.createFileFromText("dummy.xml", builder.toString());
       final XmlDocument document = fakeFile.getDocument();
       if (document == null) return;
       final XmlTag rootTag = document.getRootTag();
