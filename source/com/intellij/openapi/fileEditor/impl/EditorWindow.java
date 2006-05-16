@@ -305,7 +305,7 @@ public class EditorWindow {
     }
     else if (myPanel.getComponentCount() != 0) {
       final Component component = myPanel.getComponent(0);
-      comp = (component instanceof TComp) ? (TComp)component : null;
+      comp = component instanceof TComp ? (TComp)component : null;
     }
     else {
       return null;

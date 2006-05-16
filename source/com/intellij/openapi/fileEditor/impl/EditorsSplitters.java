@@ -190,8 +190,7 @@ public final class EditorsSplitters extends JPanel {
           final List<Element> children = leaf.getChildren("file");
           VirtualFile currentFile = null;
           for (final Element file : children) {
-            final HistoryEntry entry;
-            entry = new HistoryEntry(getManager().myProject, file.getChild(HistoryEntry.TAG));
+            final HistoryEntry entry = new HistoryEntry(getManager().myProject, file.getChild(HistoryEntry.TAG));
             getManager().openFileImpl3(window, entry.myFile, false, entry);
             if (getManager().isFileOpen(entry.myFile)) {
               window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue("pinned")).booleanValue());
