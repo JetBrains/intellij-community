@@ -25,15 +25,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
 public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private AntProject myProject;
   private AntElement myPrologElement;
+  private AntElement myEpilogueElement;
   private PsiElement[] myChildren;
   private Project myAntProject;
   /**
@@ -61,7 +59,15 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public PsiElement[] getChildren() {
     if (myChildren == null) {
       final AntProject project = getAntProject();
-      myChildren = (myPrologElement == null) ? new PsiElement[]{project} : new PsiElement[]{myPrologElement, project};
+      final ArrayList<PsiElement> children = new ArrayList<PsiElement>(3);
+      if (myPrologElement != null) {
+        children.add(myPrologElement);
+      }
+      children.add(project);
+      if (myEpilogueElement != null) {
+        children.add(myEpilogueElement);
+      }
+      myChildren = children.toArray(new PsiElement[children.size()]);
     }
     return myChildren;
   }
@@ -82,8 +88,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   public void clearCaches() {
     myChildren = null;
-    myProject = null;
     myPrologElement = null;
+    myProject = null;
+    myEpilogueElement = null;
   }
 
   public void subtreeChanged() {
@@ -110,9 +117,14 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     assert document != null;
     final XmlTag tag = document.getRootTag();
     assert tag != null;
+    final String fileText = baseFile.getText();
     final int projectStart = tag.getTextRange().getStartOffset();
     if (projectStart > 0) {
-      myPrologElement = new AntOuterProjectElement(this, 0, baseFile.getText().substring(0, projectStart));
+      myPrologElement = new AntOuterProjectElement(this, 0, fileText.substring(0, projectStart));
+    }
+    final int projectEnd = tag.getTextRange().getEndOffset();
+    if (projectEnd < fileText.length()) {
+      myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.substring(projectEnd));
     }
     myProject = new AntProjectImpl(this, tag, createProjectDefinition());
     ((AntProjectImpl)myProject).loadPredefinedProperties(myAntProject);
