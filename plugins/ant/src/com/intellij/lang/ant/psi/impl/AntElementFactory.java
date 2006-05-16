@@ -10,10 +10,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import org.apache.tools.ant.Target;
-import org.apache.tools.ant.taskdefs.CallTarget;
-import org.apache.tools.ant.taskdefs.Property;
-import org.apache.tools.ant.taskdefs.Taskdef;
-import org.apache.tools.ant.taskdefs.Typedef;
+import org.apache.tools.ant.taskdefs.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -67,11 +64,13 @@ public class AntElementFactory {
   private static void instantiate() {
     if (ourAntTypeToKnownAntElementCreatorMap == null) {
       ourAntTypeToKnownAntElementCreatorMap = new HashMap<String, AntElementCreator>();
-      ourAntTypeToKnownAntElementCreatorMap.put(Target.class.getName(), new AntElementCreator() {
+      final AntElementCreator targetCreator = new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
           return new AntTargetImpl(parent, tag);
         }
-      });
+      };
+      ourAntTypeToKnownAntElementCreatorMap.put(Target.class.getName(), targetCreator);
+      ourAntTypeToKnownAntElementCreatorMap.put(Ant.TargetElement.class.getName(), targetCreator);
       ourAntTypeToKnownAntElementCreatorMap.put(Property.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
           return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Property.class.getName()));
