@@ -93,7 +93,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-    items = (LookupItem[])items.clone();
+    items = items.clone();
     if (!settings.SHOW_SIGNATURES_IN_LOOKUPS){
       items = filterEqualSignatures(items);
     }
