@@ -73,22 +73,32 @@ public class AntElementFactory {
       ourAntTypeToKnownAntElementCreatorMap.put(Ant.TargetElement.class.getName(), targetCreator);
       ourAntTypeToKnownAntElementCreatorMap.put(Property.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Property.class.getName()));
+          return new AntPropertyImpl(parent, tag,
+                                     parent.getAntFile().getBaseTypeDefinition(Property.class.getName()));
         }
       });
       ourAntTypeToKnownAntElementCreatorMap.put(CallTarget.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntCallImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(CallTarget.class.getName()));
+          return new AntCallImpl(parent, tag,
+                                 parent.getAntFile().getBaseTypeDefinition(CallTarget.class.getName()));
         }
       });
       ourAntTypeToKnownAntElementCreatorMap.put(Taskdef.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntTypeDefImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Taskdef.class.getName()));
+          return new AntTypeDefImpl(parent, tag,
+                                    parent.getAntFile().getBaseTypeDefinition(Taskdef.class.getName()));
         }
       });
       ourAntTypeToKnownAntElementCreatorMap.put(Typedef.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntTypeDefImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Typedef.class.getName()));
+          return new AntTypeDefImpl(parent, tag,
+                                    parent.getAntFile().getBaseTypeDefinition(Typedef.class.getName()));
+        }
+      });
+      ourAntTypeToKnownAntElementCreatorMap.put(MacroDef.class.getName(), new AntElementCreator() {
+        public AntElement create(final AntElement parent, final XmlTag tag) {
+          return new AntMacroDefImpl(parent, tag,
+                                     parent.getAntFile().getBaseTypeDefinition(MacroDef.class.getName()));
         }
       });
     }

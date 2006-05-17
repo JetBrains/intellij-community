@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
+import org.apache.tools.ant.taskdefs.Parallel;
 import org.apache.tools.ant.taskdefs.Sequential;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -154,7 +155,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public AntTypeDefinition[] getBaseTypeDefinitions() {
     if (myTypeDefinitionArray != null) return myTypeDefinitionArray;
     getBaseTypeDefinition(null);
-    return myTypeDefinitionArray = myTypeDefinitions.values().toArray(new AntTypeDefinition[myTypeDefinitions.size()]);
+    return myTypeDefinitionArray =
+      myTypeDefinitions.values().toArray(new AntTypeDefinition[myTypeDefinitions.size()]);
   }
 
   @Nullable
@@ -163,15 +165,20 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
     myAntProject = new Project();
     myAntProject.init();
-    // first, create task definitons without nested elements
+
+    // first, create task definitons
     updateTypeDefinitions(myAntProject.getTaskDefinitions(), true);
-    // second, create definitions for data types
+    // second, create definitions of data types
     updateTypeDefinitions(myAntProject.getDataTypeDefinitions(), false);
-    AntTypeDefinition sequentialDef = myTypeDefinitions.get(Sequential.class.getName());
+
+    // sequential and parallel can have all tasks as nested elements
+    final AntTypeDefinition sequentialDef = myTypeDefinitions.get(Sequential.class.getName());
     if (sequentialDef != null) {
-      for (AntTypeDefinition def : myTypeDefinitions.values()) {
-        sequentialDef.registerNestedType(def.getTypeId(), def.getClassName());
-      }
+      setNestedElementsAsAllTasks(sequentialDef);
+    }
+    final AntTypeDefinition parallelDef = myTypeDefinitions.get(Parallel.class.getName());
+    if (parallelDef != null) {
+      setNestedElementsAsAllTasks(parallelDef);
     }
     return myTypeDefinitions.get(className);
   }
@@ -190,7 +197,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       for (AntTypeDefinition def : getBaseTypeDefinitions()) {
         targetElements.put(def.getTypeId(), def.getClassName());
       }
-      myTargetDefinition = new AntTypeDefinitionImpl(new AntTypeId("target"), Target.class.getName(), false, targetAttrs, targetElements);
+      myTargetDefinition = new AntTypeDefinitionImpl(new AntTypeId("target"), Target.class.getName(), false,
+                                                     targetAttrs, targetElements);
       registerCustomType(myTargetDefinition);
     }
     return myTargetDefinition;
@@ -233,6 +241,14 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
   }
 
+  private void setNestedElementsAsAllTasks(final AntTypeDefinition definition) {
+    for (AntTypeDefinition def : myTypeDefinitions.values()) {
+      if (def.isTask()) {
+        definition.registerNestedType(def.getTypeId(), def.getClassName());
+      }
+    }
+  }
+
   private AntTypeDefinition createProjectDefinition() {
     getBaseTypeDefinition(null);
     @NonNls final HashMap<String, AntAttributeType> projectAttrs = new HashMap<String, AntAttributeType>();
@@ -245,10 +261,13 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
     final AntTypeDefinition def = getTargetDefinition();
     projectElements.put(def.getTypeId(), def.getClassName());
-    return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs, projectElements);
+    return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs,
+                                     projectElements);
   }
 
-  static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class typeClass, final boolean isTask) {
+  static AntTypeDefinition createTypeDefinition(final AntTypeId id,
+                                                final Class typeClass,
+                                                final boolean isTask) {
     final IntrospectionHelper helper = getHelperExceptionSafe(typeClass);
     if (helper == null) return null;
     final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();

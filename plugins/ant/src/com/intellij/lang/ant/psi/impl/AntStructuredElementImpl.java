@@ -7,6 +7,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -34,7 +35,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     getNameElement();
   }
 
-  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntStructuredElementImpl(final AntElement parent,
+                                  final XmlElement sourceElement,
+                                  final AntTypeDefinition definition) {
     this(parent, sourceElement);
     myDefinition = definition;
     final AntTypeId id = new AntTypeId(getSourceElement().getName());
@@ -193,16 +196,19 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   @NotNull
-  private AntElement getIdElement() {
+  protected AntElement getIdElement() {
     if (myIdElement == null) {
       myIdElement = ourNull;
       AntElement parent = getAntParent();
       if (parent instanceof AntStructuredElement) {
         final XmlAttribute idAttr = getSourceElement().getAttribute("id", null);
         if (idAttr != null) {
-          AntStructuredElement se = (AntStructuredElement)parent;
-          myIdElement = new AntNameElementImpl(this, idAttr.getValueElement());
-          se.registerRefId(myIdElement.getName(), this);
+          final XmlAttributeValue valueElement = idAttr.getValueElement();
+          if (valueElement != null) {
+            myIdElement = new AntNameElementImpl(this, valueElement);
+            AntStructuredElement se = (AntStructuredElement)parent;
+            se.registerRefId(myIdElement.getName(), this);
+          }
         }
       }
     }
@@ -210,12 +216,15 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   @NotNull
-  private AntElement getNameElement() {
+  protected AntElement getNameElement() {
     if (myNameElement == null) {
       myNameElement = ourNull;
       XmlAttribute nameAttr = getSourceElement().getAttribute("name", null);
       if (nameAttr != null) {
-        myNameElement = new AntNameElementImpl(this, nameAttr.getValueElement());
+        final XmlAttributeValue valueElement = nameAttr.getValueElement();
+        if (valueElement != null) {
+          myNameElement = new AntNameElementImpl(this, valueElement);
+        }
       }
     }
     return myNameElement;

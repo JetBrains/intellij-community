@@ -17,11 +17,19 @@ class AntNameElementImpl extends AntElementImpl {
   }
 
   public String getName() {
-    return ((XmlAttribute) getSourceElement().getParent()).getValue();
+    XmlElement element = getSourceElement();
+    if (element == null) {
+      element = null;
+    }
+    PsiElement parent = element.getParent();
+    if (parent == null) {
+      parent = null;
+    }
+    return ((XmlAttribute)parent).getValue();
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {
-    ((XmlAttribute) getSourceElement().getParent()).setValue(name);
+    ((XmlAttribute)getSourceElement().getParent()).setValue(name);
     subtreeChanged();
     return this;
   }

@@ -13,8 +13,8 @@ import java.util.Map;
 public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
   private AntTypeId myTypeId;
-  private final String myClassName;
-  private final boolean myIsTask;
+  private String myClassName;
+  private boolean myIsTask;
   /**
    * Attribute names to their types.
    */
@@ -81,5 +81,13 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
   public void registerNestedType(final AntTypeId id, String taskClassName) {
     myNestedClassNames.put(id, taskClassName);
+  }
+
+  public void setIsTask(final boolean isTask) {
+    myIsTask = isTask;
+  }
+
+  public void setClassName(final String className) {
+    myClassName = className;
   }
 }
