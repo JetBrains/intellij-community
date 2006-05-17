@@ -15,16 +15,15 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Set;
 
 public class PsiTreeUtil {
   private static final Key<Integer> INDEX = Key.create("PsiTreeUtil.copyElements.INDEX");
@@ -159,12 +158,18 @@ public class PsiTreeUtil {
 
   @Nullable
   public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict) {
+    return getParentOfType(element, aClass, strict, !PsiDirectory.class.isAssignableFrom(aClass));
+  }
+
+  @Nullable
+  public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict, boolean fileLevel) {
     if (element == null) return null;
     if (strict) {
       element = element.getParent();
     }
 
     while (element != null && !instanceOf(aClass, element)) {
+      if (fileLevel && element instanceof PsiFile) return null;
       element = element.getParent();
     }
 
