@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
@@ -21,7 +20,6 @@ import java.util.Set;
  */
 
 public class PsiMultiReference implements PsiPolyVariantReference {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference");
   private final PsiReference[] myReferences;
   private final PsiElement myElement;
 
