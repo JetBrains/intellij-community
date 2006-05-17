@@ -57,8 +57,8 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                                         PsiClass base,
                                                         boolean acceptsSelf,
                                                         boolean acceptInner,
-                                                        Condition<PsiClass> addtionalCondition) {
-    return new TreeClassChooserDialog(title, myProject, scope, new TreeClassChooserDialog.InheritanceClassFilterImpl(base, acceptsSelf, acceptInner, addtionalCondition), null);
+                                                        Condition<? super PsiClass> additionalCondition) {
+    return new TreeClassChooserDialog(title, myProject, scope, new TreeClassChooserDialog.InheritanceClassFilterImpl(base, acceptsSelf, acceptInner, additionalCondition), null);
   }
 
   @NotNull
@@ -86,6 +86,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   }
 
+  @NotNull
   public String getComponentName() {
     return "com.intellij.ide.util.TreeClassFactoryImpl";
   }

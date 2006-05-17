@@ -356,10 +356,10 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     private final PsiClass myBase;
     private final boolean myAcceptsSelf;
     private final boolean myAcceptsInner;
-    private final Condition<PsiClass> myAddtionalCondition;
+    private final Condition<? super PsiClass> myAddtionalCondition;
 
     public InheritanceClassFilterImpl(PsiClass base, boolean acceptsSelf, boolean acceptInner,
-                                      Condition<PsiClass> addtionalCondition
+                                      Condition<? super PsiClass> addtionalCondition
                                   ) {
       myAcceptsSelf = acceptsSelf;
       myAcceptsInner = acceptInner;
