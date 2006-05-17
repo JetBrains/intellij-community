@@ -46,7 +46,8 @@ public class DomResolveConverter<T extends DomElement> implements ResolvingConve
   public final T fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
     final DomElement[] result = new DomElement[]{null};
-    context.getInvocationElement().getRoot().acceptChildren(new DomElementVisitor() {
+    final DomElement scope = getResolvingScope(context);
+    scope.acceptChildren(new DomElementVisitor() {
       public void visitDomElement(DomElement element) {
         if (result[0] != null) return;
         if (myClass.isInstance(element) && s.equals(element.getGenericInfo().getElementName(element))) {
@@ -59,6 +60,11 @@ public class DomResolveConverter<T extends DomElement> implements ResolvingConve
     return (T) result[0];
   }
 
+  private static DomElement getResolvingScope(final ConvertContext context) {
+    final DomElement invocationElement = context.getInvocationElement();
+    return invocationElement.getManager().getResolvingScope((GenericDomValue)invocationElement);
+  }
+
   public final String toString(final T t, final ConvertContext context) {
     if (t == null) return null;
     return t.getGenericInfo().getElementName(t);
@@ -66,7 +72,7 @@ public class DomResolveConverter<T extends DomElement> implements ResolvingConve
 
   public Collection<T> getVariants(final ConvertContext context) {
     final List<T> result = new ArrayList<T>();
-    context.getInvocationElement().getRoot().acceptChildren(new DomElementVisitor() {
+    getResolvingScope(context).acceptChildren(new DomElementVisitor() {
       public void visitDomElement(DomElement element) {
         if (myClass.isInstance(element)) {
           result.add((T)element);

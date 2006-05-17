@@ -31,7 +31,7 @@ public class ConvertContextImpl implements ConvertContext {
   }
 
   public final DomElement getInvocationElement() {
-    return myHandler.findCallerProxy(myMethod);
+    return myHandler.getProxy();
   }
 
   public final PsiClass findClass(String name) {

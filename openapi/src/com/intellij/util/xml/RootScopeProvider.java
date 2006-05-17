@@ -12,25 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package com.intellij.util.containers;
-
-import org.jetbrains.annotations.NotNull;
+package com.intellij.util.xml;
 
 /**
  * @author peter
  */
-public class InstanceMap<T> extends FactoryMap<Class<? extends T>,T>{
-  @NotNull
-  protected T create(final Class<? extends T> key) {
-    try {
-      return key.newInstance();
-    }
-    catch (InstantiationException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
+public class RootScopeProvider implements ScopeProvider{
+  public static final RootScopeProvider ROOT_SCOPE_PROVIDER = new RootScopeProvider();
+
+  public DomElement getScope(DomElement element) {
+    return element.getRoot();
   }
 }

@@ -3,7 +3,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,8 +21,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public class ModelMerger {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ModelMerger");
+public class ModelMergerImpl implements ModelMerger {
   private final WeakArrayHashMap myMergedMap = new WeakArrayHashMap();
 
   public static class ImplementationProcessor<T> implements Processor<T> {
@@ -129,7 +127,7 @@ public class ModelMerger {
     }
   }
 
-  private Set<Class> getCommonClasses(final Object... implementations) {
+  private static Set<Class> getCommonClasses(final Object... implementations) {
     final HashSet<Class> set = new HashSet<Class>();
     if (implementations.length > 0) {
       final ArrayList<Class> list = new ArrayList<Class>();

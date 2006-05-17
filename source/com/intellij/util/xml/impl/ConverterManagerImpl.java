@@ -5,7 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.InstanceMap;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,20 +18,7 @@ import java.util.Map;
  * @author peter
  */
 class ConverterManagerImpl implements ConverterManager {
-  private final FactoryMap<Class<? extends Converter>,Converter> myConverterInstances = new FactoryMap<Class<? extends Converter>, Converter>() {
-    @NotNull
-    protected Converter create(final Class<? extends Converter> key) {
-      try {
-        return key.newInstance();
-      }
-      catch (InstantiationException e) {
-        throw new RuntimeException(e);
-      }
-      catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  };
+  private final InstanceMap<Converter> myConverterInstances = new InstanceMap<Converter>();
   private final Map<Class,Converter> mySimpleConverters = new HashMap<Class, Converter>();
 
   ConverterManagerImpl() {
@@ -64,14 +51,8 @@ class ConverterManagerImpl implements ConverterManager {
       return genericConverter;
     }
     final Converter converter = getConverter(aClass);
-    //if (converter != null) {
-    //  return converter;
-    //}
     assert converter != null : "No converter specified: String<->" + aClass.getName();
     return converter;
-
-    //assert genericConverter != null: "No converter specified: String<->" + aClass.getName();
-    //return genericConverter;
   }
 
   @NotNull

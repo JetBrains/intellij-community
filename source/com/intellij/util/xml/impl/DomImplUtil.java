@@ -4,11 +4,9 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -39,22 +37,11 @@ public class DomImplUtil {
   }
 
   static void tryInvoke(final DomElementVisitor visitor, @NonNls final String name, final Class aClass, DomElement proxy) throws NoSuchMethodException {
-    try {
-      final Method method = visitor.getClass().getMethod(name, aClass);
-      method.setAccessible(true);
-      method.invoke(visitor, proxy);
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)cause;
-      }
-      LOG.error(cause);
-    }
+    final Method method = visitor.getClass().getMethod(name, aClass);
+    method.setAccessible(true);
+    DomUtil.invokeMethod(method, visitor, proxy);
   }
+
 
   public static boolean isTagValueGetter(final Method method) {
     if (!isGetter(method)) {

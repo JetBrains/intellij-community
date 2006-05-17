@@ -26,10 +26,10 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.InstanceMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
@@ -52,16 +52,19 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private static final Key<DomNameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
+  private static final Key<DomFileDescription> CACHED_FILE_DESCRIPTION = Key.create("CachedFileDescription");
+
+  private static final InstanceMap<ScopeProvider> ourScopeProviders = new InstanceMap<ScopeProvider>();
+  private static final Map<Type, GenericInfoImpl> ourMethodsMaps = new HashMap<Type, GenericInfoImpl>();
 
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
 
 
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
-  private static final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
   private final Map<Pair<Type, Type>, InvocationCache> myInvocationCaches = new HashMap<Pair<Type, Type>, InvocationCache>();
   private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private final List<Function<DomElement, Collection<PsiElement>>> myPsiElementProviders = new ArrayList<Function<DomElement, Collection<PsiElement>>>();
-  private final Set<Consumer<XmlFile>> myFileLoaders = new HashSet<Consumer<XmlFile>>();
+  private final Set<DomFileDescription> myFileLoaders = new HashSet<DomFileDescription>();
   private final Map<XmlFile,Object> myNonDomFiles = new WeakHashMap<XmlFile, Object>();
   private static final InvocationStack ourInvocationStack = new InvocationStack();
 
@@ -95,6 +98,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(XmlAttributeValue.class, myGenericValueReferenceProvider);
   }
 
+  public static DomManagerImpl getDomManager(Project project) {
+    return project.getComponent(DomManagerImpl.class);
+  }
+
   public static InvocationStack getInvocationStack() {
     return ourInvocationStack;
   }
@@ -119,21 +126,29 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     myGenericValueReferenceProvider.addReferenceProviderForClass(clazz, psiReferenceFactory);
   }
 
+  public ModelMerger createModelMerger() {
+    return new ModelMergerImpl();
+  }
+
   protected final void fireEvent(DomEvent event) {
     myListeners.getMulticaster().eventOccured(event);
   }
 
+  public static ScopeProvider getScopeProvider(Class<? extends ScopeProvider> aClass) {
+    return ourScopeProviders.get(aClass);
+  }
+
   public final GenericInfoImpl getGenericInfo(final Type type) {
-    GenericInfoImpl genericInfoImpl = myMethodsMaps.get(type);
+    GenericInfoImpl genericInfoImpl = ourMethodsMaps.get(type);
     if (genericInfoImpl == null) {
       if (type instanceof Class) {
         genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)type, this);
-        myMethodsMaps.put(type, genericInfoImpl);
+        ourMethodsMaps.put(type, genericInfoImpl);
       }
       else if (type instanceof ParameterizedType) {
         ParameterizedType parameterizedType = (ParameterizedType)type;
         genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)parameterizedType.getRawType(), this);
-        myMethodsMaps.put(type, genericInfoImpl);
+        ourMethodsMaps.put(type, genericInfoImpl);
       }
       else {
         assert false : "Type not supported " + type;
@@ -257,6 +272,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return xmlElement.getUserData(CACHED_HANDLER);
   }
 
+  @NotNull
   @NonNls
   public final String getComponentName() {
     return getClass().getName();
@@ -349,13 +365,13 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
           return getFileElement(xmlFile, aClass, rootTagName).getRootHandler();
         }
 
-        for (final Consumer<XmlFile> fileLoader : myFileLoaders) {
-          fileLoader.consume(xmlFile);
+        for (final DomFileDescription description : myFileLoaders) {
+          if (description.isMyFile(xmlFile)) {
+            return getFileElement(xmlFile, description.getRootElementClass(), description.getRootTagName()).getRootHandler();
+          }
         }
-        element = getCachedElement(xmlFile);
-        if (element == null) {
-          myNonDomFiles.put(xmlFile, new Object());
-        }
+
+        myNonDomFiles.put(xmlFile, new Object());
       }
 
       if (element != null) {
@@ -388,12 +404,35 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return AdvancedProxy.createProxy((Class<? extends T>)initial.getClass().getSuperclass(), intf.toArray(new Class[intf.size()]), handler, Collections.<JavaMethodSignature>emptySet());
   }
 
-  public void registerFileLoader(Consumer<XmlFile> consumer) {
-    myFileLoaders.add(consumer);
+  public void registerFileDescription(DomFileDescription description) {
+    myFileLoaders.add(description);
   }
 
-  public void unregisterFileLoader(Consumer<XmlFile> consumer) {
-    myFileLoaders.remove(consumer);
+  @Nullable
+  private DomFileDescription findFileDescription(DomElement element) {
+    XmlFile file = element.getRoot().getFile();
+    final DomFileDescription description = file.getUserData(CACHED_FILE_DESCRIPTION);
+    if (description != null) {
+      return description;
+    }
+
+    for (final DomFileDescription fileDescription : myFileLoaders) {
+      if (fileDescription.isMyFile(file)) {
+        file.putUserData(CACHED_FILE_DESCRIPTION, fileDescription);
+        return fileDescription;
+      }
+    }
+    return null;
+  }
+
+  public final DomElement getResolvingScope(GenericDomValue element) {
+    final DomFileDescription description = findFileDescription(element);
+    return description == null ? element.getRoot() : description.getResolveScope(element);
+  }
+
+  public final DomElement getIdentityScope(DomElement element) {
+    final DomFileDescription description = findFileDescription(element);
+    return description == null ? element.getParent() : description.getIdentityScope(element);
   }
 
 }

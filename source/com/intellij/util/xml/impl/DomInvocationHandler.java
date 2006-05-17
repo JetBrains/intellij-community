@@ -290,9 +290,9 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   protected final DomElement findCallerProxy(Method method) {
-    final DomElement element = ModelMerger.getImplementation(myManager.getInvocationStack().findDeepestInvocation(method, new Condition() {
+    final DomElement element = ModelMergerImpl.getImplementation(myManager.getInvocationStack().findDeepestInvocation(method, new Condition() {
       public boolean value(final Object object) {
-        return ModelMerger.getImplementation(object, DomElement.class) == null;
+        return ModelMergerImpl.getImplementation(object, DomElement.class) == null;
       }
     }), DomElement.class);
     return element == null ? getProxy() : element;
@@ -303,7 +303,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final void acceptChildren(DomElementVisitor visitor) {
-    final DomElement element = ModelMerger.getImplementation(findCallerProxy(ACCEPT_CHILDREN_METHOD), DomElement.class);
+    final DomElement element = ModelMergerImpl.getImplementation(findCallerProxy(ACCEPT_CHILDREN_METHOD), DomElement.class);
     final List<DomChildrenDescription> list = getGenericInfo().getChildrenDescriptions();
     for (final DomChildrenDescription description : list) {
       final List<? extends DomElement> values = description.getValues(element);

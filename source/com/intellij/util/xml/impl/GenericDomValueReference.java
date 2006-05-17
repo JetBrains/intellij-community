@@ -85,8 +85,8 @@ public class GenericDomValueReference<T> extends GenericReference {
     if (o instanceof DomElement) {
       return ((DomElement)o).getXmlTag();
     }
-    if (o instanceof ModelMerger.MergedObject) {
-      final List<T> list = ((ModelMerger.MergedObject<T>)o).getImplementations();
+    if (o instanceof ModelMergerImpl.MergedObject) {
+      final List<T> list = ((ModelMergerImpl.MergedObject<T>)o).getImplementations();
       for (final T o1 : list) {
         final PsiElement psiElement = resolveInner(o1);
         if (psiElement != null) {

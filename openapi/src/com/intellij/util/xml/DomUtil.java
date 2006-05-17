@@ -6,7 +6,8 @@ package com.intellij.util.xml;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.openapi.util.text.StringUtil;import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,22 @@ import java.util.*;
 public class DomUtil {
 
   private DomUtil() {
+  }
+
+  public static Object invokeMethod(final Method method, final Object object, final Object... args) {
+    try {
+      return method.invoke(object, args);
+    }
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+    catch (InvocationTargetException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)cause;
+      }
+      throw new RuntimeException(e);
+    }
   }
 
   public static Class getGenericValueType(Type type) {
@@ -254,6 +271,7 @@ public class DomUtil {
     }
   }
 
+  @Nullable
   public static List<Method> getFixedPath(DomElement element) {
     assert element.isValid();
     final LinkedList<Method> methods = new LinkedList<Method>();
@@ -263,8 +281,13 @@ public class DomUtil {
         break;
       }
       final String xmlElementName = element.getXmlElementName();
-      final DomFixedChildDescription description = parent.getGenericInfo().getFixedChildDescription(xmlElementName);
-      assert description != null : parent.getXmlElementName() + " " + xmlElementName;
+      final DomGenericInfo genericInfo = parent.getGenericInfo();
+
+      final DomFixedChildDescription description = genericInfo.getFixedChildDescription(xmlElementName);
+      if (description == null) {
+        return null;
+      }
+
       methods.addFirst(description.getGetterMethod(description.getValues(parent).indexOf(element)));
       element = element.getParent();
     }

@@ -596,6 +596,10 @@ public class GenericInfoImpl implements DomGenericInfo {
   @Nullable
   public DomFixedChildDescription getFixedChildDescription(String tagName) {
     buildMethodMaps();
+    if (!isFixedChild(tagName)) {
+      return null;
+    }
+
     final Method[] getterMethods = getFixedChildrenGetterMethods(tagName);
     assert getterMethods.length > 0 : tagName + " " + myClass;
     return new FixedChildDescriptionImpl(tagName, getterMethods[0].getGenericReturnType(), getFixedChildrenCount(tagName), getterMethods,

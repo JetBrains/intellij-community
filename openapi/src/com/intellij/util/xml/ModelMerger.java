@@ -12,25 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package com.intellij.util.containers;
+package com.intellij.util.xml;
 
-import org.jetbrains.annotations.NotNull;
+import java.util.Collection;
 
 /**
  * @author peter
  */
-public class InstanceMap<T> extends FactoryMap<Class<? extends T>,T>{
-  @NotNull
-  protected T create(final Class<? extends T> key) {
-    try {
-      return key.newInstance();
-    }
-    catch (InstantiationException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-  }
+public interface ModelMerger {
+  <T> T mergeModels(Class<? extends T> aClass, T... implementations);
+
+  <T> T mergeModels(Class<? extends T> aClass, Collection<? extends T> implementations);
 }

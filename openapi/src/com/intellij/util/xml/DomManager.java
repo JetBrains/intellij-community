@@ -3,16 +3,15 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NonNls;
@@ -68,10 +67,15 @@ public abstract class DomManager implements ProjectComponent {
    */
   public abstract <T extends DomElement> T createStableValue(Factory<T> provider);
 
-  public abstract void registerFileLoader(Consumer<XmlFile> consumer);
-  public abstract void unregisterFileLoader(Consumer<XmlFile> consumer);
+  public abstract void registerFileDescription(DomFileDescription description);
 
   public abstract ConverterManager getConverterManager();
 
   public abstract void addPsiReferenceFactoryForClass(Class clazz, PsiReferenceFactory psiReferenceFactory);
+
+  public abstract ModelMerger createModelMerger();
+
+  public abstract DomElement getResolvingScope(GenericDomValue element);
+
+  public abstract DomElement getIdentityScope(DomElement element);
 }

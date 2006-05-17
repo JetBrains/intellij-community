@@ -20,7 +20,7 @@ package com.intellij.util.xml;
  * @author peter
  */
 public class ParentScopeProvider implements ScopeProvider{
-  public DomElement getParentWhereUnique(DomElement element) {
+  public DomElement getScope(DomElement element) {
     return element.getParent();
   }
 }
