@@ -61,6 +61,7 @@ public interface PsiSearchHelper {
    *                    inheritors and so on are included in the results).
    * @return the array of inheritor classes.
    */
+  @NotNull
   PsiClass[] findInheritors(PsiClass aClass, SearchScope searchScope, boolean checkDeep);
 
   /**
