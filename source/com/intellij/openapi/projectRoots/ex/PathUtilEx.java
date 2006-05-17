@@ -9,15 +9,11 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.rt.compiler.JavacRunner;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
-import com.intellij.util.containers.CollectUtil;
-import com.intellij.util.containers.ComparatorUtil;
-import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.Function;
+import com.intellij.util.containers.*;
+import static com.intellij.util.containers.ContainerUtil.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 import org.jetbrains.annotations.NonNls;
 
@@ -28,8 +24,8 @@ import org.jetbrains.annotations.NonNls;
 public class PathUtilEx {
   @NonNls private static final String IDEA_PREPEND_RTJAR = "idea.prepend.rtjar";
 
-  private static final Convertor<Module, ProjectJdk> MODULE_JDK = new Convertor<Module, ProjectJdk>() {
-    public ProjectJdk convert(Module module) {
+  private static final Function<Module, ProjectJdk> MODULE_JDK = new Function<Module, ProjectJdk>() {
+    public ProjectJdk fun(Module module) {
       return ModuleRootManager.getInstance(module).getJdk();
     }
   };
@@ -67,8 +63,8 @@ public class PathUtilEx {
   }
 
   public static ProjectJdk chooseJdk(Collection<Module> modules) {
-    ArrayList<ProjectJdk> jdks = CollectUtil.SKIP_NULLS.toList(FilteringIterator.skipNulls(modules.iterator()), MODULE_JDK);
-    if (jdks.size() == 0) {
+    List<ProjectJdk> jdks = skipNulls(map(skipNulls(modules), MODULE_JDK)); 
+    if (jdks.isEmpty()) {
       return null;
     }
     Collections.sort(jdks, ComparatorUtil.compareBy(JDK_VERSION, String.CASE_INSENSITIVE_ORDER));

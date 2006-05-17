@@ -23,10 +23,10 @@ public class Conditions {
   private Conditions() {}
 
   public static <T> Condition<T> alwaysTrue() {
-    return TRUE;
+    return (Condition<T>)TRUE;
   }
   public static <T> Condition<T> alwaysFalse() {
-    return FALSE;
+    return (Condition<T>)FALSE;
   }
 
   public static <T> Condition<T> not(Condition<T> c) {
@@ -77,12 +77,12 @@ public class Conditions {
     }
   }
 
-  public static Condition TRUE = new Condition() {
+  public static Condition<Object> TRUE = new Condition<Object>() {
     public boolean value(final Object object) {
       return true;
     }
   };
-  public static Condition FALSE = new Condition() {
+  public static Condition<Object> FALSE = new Condition<Object>() {
     public boolean value(final Object object) {
       return false;
     }
