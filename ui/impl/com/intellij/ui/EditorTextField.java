@@ -266,9 +266,12 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
   public void removeNotify() {
     super.removeNotify();
-    LOG.assertTrue(myEditor != null);
-    releaseEditor(myEditor);
-    myEditor = null;
+    if (myEditor != null) {
+      // Theoretically this condition is always true but under some Linux VMs it seems removeNotify is called twice
+      // or called for components addNotify haven't been called for.
+      releaseEditor(myEditor);
+      myEditor = null;
+    }
   }
 
   public void setFont(Font font) {
