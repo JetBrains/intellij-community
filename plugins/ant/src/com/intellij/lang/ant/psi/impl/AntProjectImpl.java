@@ -5,6 +5,7 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
@@ -28,7 +29,9 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private AntTarget[] myTargets;
   private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
 
-  public AntProjectImpl(final AntFileImpl parent, final XmlTag tag, final AntTypeDefinition projectDefinition) {
+  public AntProjectImpl(final AntFileImpl parent,
+                        final XmlTag tag,
+                        final AntTypeDefinition projectDefinition) {
     super(parent, tag);
     myDefinition = projectDefinition;
   }
@@ -142,6 +145,12 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       builder.append("<property name=\"basedir\" value=\"");
       builder.append(basedir);
       builder.append("\"/>");
+      final VirtualFile file = getContainingFile().getVirtualFile();
+      if (file != null) {
+        builder.append("<property name=\"ant.file\" value=\"");
+        builder.append(file.getPath());
+        builder.append("\"/>");
+      }
       builder.append("</project>");
       final PsiElementFactory elementFactory = getManager().getElementFactory();
       final XmlFile fakeFile = (XmlFile)elementFactory.createFileFromText("dummy.xml", builder.toString());
