@@ -38,9 +38,7 @@ public class SignatureParser {
   public void parseFormalTypeParameter(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
     parseIdentifier(it, buf);
     parseClassBound(it, buf);
-    final char current = it.current();
-    //while (current == ':') {
-    if (current != CharacterIterator.DONE && current != '>') {
+    while (it.current() == ':') {
       parseInterfaceBound(it, buf);
     }
   }
