@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -12,6 +13,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.VirtualFileDelegate;
+import com.intellij.openapi.editor.impl.EditorDelegate;
+import com.intellij.openapi.editor.impl.DocumentRange;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -33,15 +39,12 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
-import com.intellij.openapi.Disposable;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiTreeChangeAdapter;
-import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.psi.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.codeInsight.TargetElementUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -418,22 +421,21 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
 //-------------------------------------- Open File ----------------------------------------
 
-  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file, final boolean focusEditor) {
+  @NotNull public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file, final boolean focusEditor) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
     assertThread();
-
     return openFileImpl(file, focusEditor, null);
   }
 
-  public Pair<FileEditor[], FileEditorProvider[]> openFileImpl(final VirtualFile file,
+  @NotNull private Pair<FileEditor[], FileEditorProvider[]> openFileImpl(final VirtualFile file,
                                                                final boolean focusEditor,
                                                                final HistoryEntry entry) {
     return openFileImpl2(mySplitters.getOrCreateCurrentWindow(file), file, focusEditor, entry);
   }
 
-  public Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(final EditorWindow window,
+  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(final EditorWindow window,
                                                                 final VirtualFile file,
                                                                 final boolean focusEditor,
                                                                 final HistoryEntry entry) {
@@ -455,10 +457,10 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * @param entry map between FileEditorProvider and FileEditorState. If this parameter
    *              is not <code>null</code> then it's used to restore state for the newly created
    */
-  Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window,
-                                                                   final VirtualFile file,
-                                                                   final boolean focusEditor,
-                                                                   final HistoryEntry entry) {
+  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window,
+                                                         final VirtualFile file,
+                                                         final boolean focusEditor,
+                                                         final HistoryEntry entry) {
     LOG.assertTrue(file != null);
 
     // Open file
@@ -530,7 +532,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         if (state == null && !open) {
           // We have to try to get state from the history only in case
           // if editor is not opened. Otherwise history enty might have a state
-          // no in sych with the current editor state.
+          // out of sync with the current editor state.
           state = editorHistoryManager.getState(file, provider);
         }
         if (state != null) {
@@ -670,11 +672,18 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   @NotNull
   public java.util.List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
     assertThread();
+    if (descriptor.getFile() instanceof VirtualFileDelegate) {
+      VirtualFileDelegate delegate = (VirtualFileDelegate)descriptor.getFile();
+      int offset = delegate.getWindowRange().getStartOffset();
+      OpenFileDescriptor realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), descriptor.getOffset() + offset);
+      return openEditor(realDescriptor, focusEditor);
+    }
 
     final java.util.List<FileEditor> result = new ArrayList<FileEditor>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        final FileEditor[] editors = openFile(descriptor.getFile(), focusEditor);
+        VirtualFile file = descriptor.getFile();
+        final FileEditor[] editors = openFile(file, focusEditor);
         result.addAll(Arrays.asList(editors));
 
         for (final FileEditor editor : editors) {
@@ -684,7 +693,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
           final Editor _editor = ((TextEditor)editor).getEditor();
 
-// Move myEditor caret to the specified location.
+          // Move myEditor caret to the specified location.
           if (descriptor.getOffset() >= 0) {
             _editor.getCaretModel().moveToOffset(Math.min(descriptor.getOffset(), _editor.getDocument().getTextLength()));
             _editor.getSelectionModel().removeSelection();
@@ -997,6 +1006,27 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   public boolean isFocusingBlocked() {
     return myDoNotTransferFocus;
+  }
+
+  public static Editor getEditorForInjectedLanguage(final Editor editor, PsiFile file) {
+    if (editor == null) return null;
+    if (file == null) return editor;
+
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement element = file.findElementAt(offset);
+    PsiLanguageInjectionHost injectionHost = TargetElementUtil.findInjectionHost(element);
+    Pair<PsiElement,TextRange> injectedPsi = injectionHost == null ? null : injectionHost.getInjectedPsi();
+    if (injectedPsi == null) {
+      return editor;
+    }
+    TextRange injtextRange = injectionHost.getTextRange();
+    injtextRange = injtextRange.cutOut(injectedPsi.getSecond());
+
+    //DocumentRange document = new DocumentRange((DocumentEx)editor.getDocument(), injtextRange);
+    PsiFile injectedFile = injectedPsi.getFirst().getContainingFile();
+    Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
+
+    return new EditorDelegate((DocumentRange)document, (EditorImpl)editor, injectedFile);
   }
 
 //================== Listeners =====================

@@ -7,8 +7,8 @@ import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.text.CharArrayUtil;
 
 import java.beans.PropertyChangeListener;
@@ -16,7 +16,7 @@ import java.beans.PropertyChangeListener;
 /**
  * @author Alexey
  */
-public class DocumentRange implements DocumentEx {
+public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   private final DocumentEx myDelegate;
   private TextRange myRange;
 
@@ -26,15 +26,15 @@ public class DocumentRange implements DocumentEx {
   }
 
   public int getLineCount() {
-    return myDelegate.getLineNumber(myRange.getEndOffset()) - myDelegate.getLineNumber(myRange.getStartOffset());
+    return myDelegate.getLineNumber(myRange.getEndOffset()) - myDelegate.getLineNumber(myRange.getStartOffset()) + 1;
   }
 
   public int getLineStartOffset(int line) {
-    return myDelegate.getLineStartOffset(line + myDelegate.getLineNumber(myRange.getStartOffset())) - myRange.getStartOffset();
+    return 0;
   }
 
   public int getLineEndOffset(int line) {
-    return myDelegate.getLineEndOffset(line + myDelegate.getLineNumber(myRange.getEndOffset())) - myRange.getEndOffset();
+    return myRange.getLength();
   }
 
   public String getText() {
@@ -157,14 +157,6 @@ public class DocumentRange implements DocumentEx {
     return myDelegate.createRangeMarker(textRange);
   }
 
-  public <T> T getUserData(final Key<T> key) {
-    return myDelegate.getUserData(key);
-  }
-
-  public <T> void putUserData(final Key<T> key, final T value) {
-    myDelegate.putUserData(key, value);
-  }
-
   public void stripTrailingSpaces(final boolean inChangedLinesOnly) {
     myDelegate.stripTrailingSpaces(inChangedLinesOnly);
   }
@@ -215,5 +207,9 @@ public class DocumentRange implements DocumentEx {
 
   public TextRange getTextRange() {
     return myRange;
+  }
+
+  public DocumentEx getDelegate() {
+    return myDelegate;
   }
 }

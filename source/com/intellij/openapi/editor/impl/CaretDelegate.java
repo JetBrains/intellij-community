@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.util.TextRange;
 
@@ -12,11 +13,13 @@ import com.intellij.openapi.util.TextRange;
 public class CaretDelegate implements CaretModel {
   private final CaretModel myDelegate;
   private TextRange myRange;
+  private final EditorEx myEditorDelegate;
 
 
-  public CaretDelegate(CaretModel delegate, final TextRange range) {
+  public CaretDelegate(CaretModel delegate, final TextRange range, EditorEx editorDelegate) {
     myDelegate = delegate;
     myRange = range;
+    myEditorDelegate = editorDelegate;
   }
 
   public void moveCaretRelatively(final int columnShift,
@@ -28,11 +31,17 @@ public class CaretDelegate implements CaretModel {
   }
 
   public void moveToLogicalPosition(final LogicalPosition pos) {
-    myDelegate.moveToLogicalPosition(pos);
+    int rangeLine = myEditorDelegate.getDocument().getLineNumber(myRange.getStartOffset());
+    LogicalPosition newPos = new LogicalPosition(pos.line + rangeLine, pos.column + myRange.getStartOffset() -
+                                                                       myEditorDelegate.getDocument().getLineStartOffset(rangeLine));
+    myDelegate.moveToLogicalPosition(newPos);
   }
 
   public void moveToVisualPosition(final VisualPosition pos) {
-    myDelegate.moveToVisualPosition(pos);
+    int rangeLine = myEditorDelegate.getDocument().getLineNumber(myRange.getStartOffset());
+    VisualPosition newPos = new VisualPosition(pos.line + rangeLine, pos.column + myRange.getStartOffset() -
+                                                                       myEditorDelegate.getDocument().getLineStartOffset(rangeLine));
+    myDelegate.moveToVisualPosition(newPos);
   }
 
   public void moveToOffset(final int offset) {
@@ -40,11 +49,12 @@ public class CaretDelegate implements CaretModel {
   }
 
   public LogicalPosition getLogicalPosition() {
-    return myDelegate.getLogicalPosition();
+    return new LogicalPosition(0, Math.max(0,myDelegate.getOffset() - myRange.getStartOffset()));
   }
 
   public VisualPosition getVisualPosition() {
-    return myDelegate.getVisualPosition();
+    LogicalPosition logicalPosition = getLogicalPosition();
+    return new VisualPosition(logicalPosition.line, logicalPosition.column);
   }
 
   public int getOffset() {

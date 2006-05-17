@@ -9,9 +9,11 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorDelegate;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -33,7 +35,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
 
   protected Editor myEditor;
   protected PsiFile myFile;
-  private VirtualFile myVFile;
+  protected VirtualFile myVFile;
 
   private static final String CARET_MARKER = "<caret>";
   private static final String SELECTION_START_MARKER = "<selection>";
@@ -115,6 +117,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     setupFileEditorAndDocument(fileName, newFileText);
     setupCaret(caretMarker, newFileText);
     setupSelection(selStartMarker, selEndMarker);
+    setupEditorForInjectedLangugae();
   }
 
   private void setupSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker) {
@@ -134,7 +137,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     }
   }
 
-  private Editor createEditor(VirtualFile file) {
+  private static Editor createEditor(VirtualFile file) {
     return FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
   }
 
@@ -148,6 +151,14 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     assertNotNull("Can't create PsiFile for '" + fileName + "'. Unknown file type most probably.", myFile);
     assertTrue(myFile.isPhysical());
     myEditor = createEditor(myVFile);
+  }
+
+  private void setupEditorForInjectedLangugae() {
+    Editor editor = FileEditorManagerImpl.getEditorForInjectedLanguage(myEditor, myFile);
+    if (editor instanceof EditorDelegate) {
+      myFile = ((EditorDelegate)editor).getInjectedFile();
+      myEditor = editor;
+    }
   }
 
   private void deleteVFile() {
@@ -167,8 +178,8 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   protected void tearDown() throws Exception {
     FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (int i = 0; i < openFiles.length; i++) {
-      editorManager.closeFile(openFiles[i]);
+    for (VirtualFile openFile : openFiles) {
+      editorManager.closeFile(openFile);
     }
     deleteVFile();
     myEditor = null;

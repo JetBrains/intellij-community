@@ -13,8 +13,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 
@@ -214,9 +214,7 @@ public class TargetElementUtil {
 
   private static PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
     PsiReference ref = findReference(editor, offset);
-    if (ref == null) {
-      return null;
-    }
+    if (ref == null) return null;
     PsiManager manager = file.getManager();
 
     final PsiElement referenceElement = ref.getElement();
@@ -230,6 +228,7 @@ public class TargetElementUtil {
 
     if (refElement == null) {
       DaemonCodeAnalyzer.getInstance(manager.getProject()).updateVisibleHighlighters(editor);
+      return null;
     }
     else {
       if ((flags & NEW_AS_CONSTRUCTOR) != 0) {
@@ -249,8 +248,6 @@ public class TargetElementUtil {
       }
       return refElement;
     }
-
-    return null;
   }
 
   private static PsiElement getLookupItem(Lookup activeLookup) {

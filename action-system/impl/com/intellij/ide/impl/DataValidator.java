@@ -7,12 +7,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
 
 import java.lang.reflect.Array;
+import java.util.Map;
 
 public abstract class DataValidator <T> {
 
   Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataValidator");
 
-  private static final HashMap<String, DataValidator> ourValidators = new HashMap<String, DataValidator>();
+  private static final Map<String, DataValidator> ourValidators = new HashMap<String, DataValidator>();
   private static final DataValidator<VirtualFile> VIRTUAL_FILE_VALIDATOR = new DataValidator<VirtualFile>() {
     public VirtualFile findInvalid(VirtualFile file) {
       return file.isValid() ? null : file;

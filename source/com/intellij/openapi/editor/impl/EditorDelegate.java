@@ -10,14 +10,13 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.ex.EditorHighlighter;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,10 +30,16 @@ import java.beans.PropertyChangeListener;
 public class EditorDelegate implements EditorEx {
   private final DocumentRange myDocument;
   private final EditorImpl myDelegate;
+  private final PsiFile myInjectedFile;
 
-  public EditorDelegate(DocumentRange document, final EditorImpl delegate) {
+  public EditorDelegate(DocumentRange document, final EditorImpl delegate, PsiFile injectedFile) {
     myDocument = document;
     myDelegate = delegate;
+    myInjectedFile = injectedFile;
+  }
+
+  public PsiFile getInjectedFile() {
+    return myInjectedFile;
   }
 
   public boolean isViewer() {
@@ -58,7 +63,7 @@ public class EditorDelegate implements EditorEx {
   }
 
   public MarkupModel getMarkupModel() {
-    return myDelegate.getMarkupModel();
+    return new MarkupModelDelegate(myDelegate, myDocument);
   }
 
   public FoldingModel getFoldingModel() {
@@ -66,7 +71,7 @@ public class EditorDelegate implements EditorEx {
   }
 
   public CaretModel getCaretModel() {
-    return new CaretDelegate(myDelegate.getCaretModel(), myDocument.getTextRange()) ;
+    return new CaretDelegate(myDelegate.getCaretModel(), myDocument.getTextRange(), myDelegate);
   }
 
   public ScrollingModel getScrollingModel() {
@@ -126,31 +131,41 @@ public class EditorDelegate implements EditorEx {
   }
 
   public VisualPosition xyToVisualPosition(final Point p) {
-    return myDelegate.xyToVisualPosition(p);
+    VisualPosition windowPosition = myDelegate.offsetToVisualPosition(myDocument.getTextRange().getStartOffset());
+    VisualPosition pos = myDelegate.xyToVisualPosition(p);
+    return new VisualPosition(pos.line - windowPosition.line, pos.column - windowPosition.column);
   }
 
   public VisualPosition offsetToVisualPosition(final int offset) {
-    return myDelegate.offsetToVisualPosition(offset);
+    VisualPosition windowPosition = myDelegate.offsetToVisualPosition(myDocument.getTextRange().getStartOffset());
+    VisualPosition pos = myDelegate.offsetToVisualPosition(offset + myDocument.getTextRange().getStartOffset());
+    return new VisualPosition(pos.line - windowPosition.line, pos.column - windowPosition.column);
   }
 
   public LogicalPosition offsetToLogicalPosition(final int offset) {
-    return myDelegate.offsetToLogicalPosition(offset);
+    LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
+    LogicalPosition pos = myDelegate.offsetToLogicalPosition(offset + myDocument.getTextRange().getStartOffset());
+    return new LogicalPosition(pos.line - windowPosition.line, pos.column - windowPosition.column);
   }
 
   public LogicalPosition xyToLogicalPosition(final Point p) {
-    return myDelegate.xyToLogicalPosition(p);
+    LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
+    LogicalPosition pos = myDelegate.xyToLogicalPosition(p);
+    return new LogicalPosition(pos.line - windowPosition.line, pos.column - windowPosition.column);
   }
 
   public Point logicalPositionToXY(final LogicalPosition pos) {
-    return myDelegate.logicalPositionToXY(pos);
+    LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
+    return myDelegate.logicalPositionToXY(new LogicalPosition(pos.line + windowPosition.line, pos.column + windowPosition.column));
   }
 
-  public Point visualPositionToXY(final VisualPosition visible) {
-    return myDelegate.visualPositionToXY(visible);
+  public Point visualPositionToXY(final VisualPosition pos) {
+    VisualPosition windowPosition = myDelegate.offsetToVisualPosition(myDocument.getTextRange().getStartOffset());
+    return myDelegate.visualPositionToXY(new VisualPosition(pos.line + windowPosition.line, pos.column + windowPosition.column));
   }
 
   public void repaint(final int startOffset, final int endOffset) {
-    myDelegate.repaint(startOffset, endOffset);
+    myDelegate.repaint(startOffset+myDocument.getTextRange().getStartOffset(), endOffset + myDocument.getTextRange().getEndOffset());
   }
 
   public Document getDocument() {
@@ -210,7 +225,9 @@ public class EditorDelegate implements EditorEx {
   }
 
   public int logicalPositionToOffset(final LogicalPosition pos) {
-    return myDelegate.logicalPositionToOffset(pos);
+    LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
+    LogicalPosition newPosition = new LogicalPosition(pos.line + windowPosition.line, pos.column + windowPosition.column);
+    return myDelegate.logicalPositionToOffset(newPosition) - myDocument.getTextRange().getStartOffset();
   }
 
   public void setLastColumnNumber(final int val) {
@@ -221,12 +238,18 @@ public class EditorDelegate implements EditorEx {
     return myDelegate.getLastColumnNumber();
   }
 
-  public VisualPosition logicalToVisualPosition(final LogicalPosition logicalPos) {
-    return myDelegate.logicalToVisualPosition(logicalPos);
+  public VisualPosition logicalToVisualPosition(final LogicalPosition pos) {
+    LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
+    LogicalPosition newPosition = new LogicalPosition(pos.line + windowPosition.line, pos.column + windowPosition.column);
+    VisualPosition res = myDelegate.logicalToVisualPosition(newPosition);
+    return new VisualPosition(res.line - windowPosition.line, res.column - windowPosition.column);
   }
 
-  public LogicalPosition visualToLogicalPosition(final VisualPosition visiblePos) {
-    return myDelegate.visualToLogicalPosition(visiblePos);
+  public LogicalPosition visualToLogicalPosition(final VisualPosition pos) {
+    VisualPosition windowPosition = myDelegate.offsetToVisualPosition(myDocument.getTextRange().getStartOffset());
+    VisualPosition newPosition = new VisualPosition(pos.line + windowPosition.line, pos.column + windowPosition.column);
+    LogicalPosition res = myDelegate.visualToLogicalPosition(newPosition);
+    return new LogicalPosition(res.line - windowPosition.line, res.column - windowPosition.column);
   }
 
   public DataContext getDataContext() {
@@ -319,5 +342,25 @@ public class EditorDelegate implements EditorEx {
 
   public <T> void putUserData(final Key<T> key, final T value) {
     myDelegate.putUserData(key, value);
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final EditorDelegate that = (EditorDelegate)o;
+
+    if (myDelegate != null ? !myDelegate.equals(that.myDelegate) : that.myDelegate != null) return false;
+    if (!Comparing.equal(myDocument.getTextRange(), that.myDocument.getTextRange())) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myDocument.getTextRange().getStartOffset();
+  }
+
+  public Editor getDelegate() {
+    return myDelegate;
   }
 }

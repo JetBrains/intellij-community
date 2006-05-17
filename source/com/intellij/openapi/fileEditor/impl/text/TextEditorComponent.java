@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -27,8 +28,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EditorPopupHandler;
@@ -266,6 +266,10 @@ final class TextEditorComponent extends JPanel implements DataProvider{
   }
 
   public Object getData(final String dataId) {
+    if (dataId.equals(DataConstants.EDITOR)) {
+      PsiFile psiFile = (PsiFile)getData(DataConstants.PSI_FILE);
+      return FileEditorManagerImpl.getEditorForInjectedLanguage(myEditor, psiFile);
+    }
     if (DataConstants.PSI_ELEMENT.equals(dataId)){
       final Editor editor=getEditor();
       final PsiFile psiFile = (PsiFile)getData(DataConstants.PSI_FILE);
@@ -281,7 +285,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
                                             TargetElementUtil.NEW_AS_CONSTRUCTOR |
                                             TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
     }
-    else if (DataConstants.LANGUAGE.equals(dataId)) {
+    if (DataConstants.LANGUAGE.equals(dataId)) {
       final Editor editor = getEditor();
       final PsiFile psiFile = (PsiFile)getData(DataConstants.PSI_FILE);
       if (psiFile == null) {
@@ -289,13 +293,13 @@ final class TextEditorComponent extends JPanel implements DataProvider{
       }
       return PsiUtil.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
     }
-    else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
+    if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
       return myFile.isValid()? myFile : null;  // fix for SCR 40329
     }
-    else if (DataConstants.PSI_FILE.equals(dataId)) {
+    if (DataConstants.PSI_FILE.equals(dataId)) {
       return myFile.isValid()? PsiManager.getInstance(myProject).findFile(myFile) : null; // fix for SCR 40329
     }
-    else if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
+    if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
       /*
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
       LOG.assertTrue(psiFile != null);
@@ -317,9 +321,8 @@ final class TextEditorComponent extends JPanel implements DataProvider{
       // [dsl] in Editor we do not have any specific target psi element
       // we only guess
       return null;
-    }else{
-      return null;
     }
+    return null;
   }
 
 

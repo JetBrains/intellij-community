@@ -2,7 +2,6 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +47,9 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,7 +58,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
-  private static final Key<WeakReference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
+  private static final Key<Reference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
 
   private Set<Document> myUnsavedDocuments = new HashSet<Document>();
@@ -138,7 +139,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public Document getCachedDocument(VirtualFile file) {
-    WeakReference<Document> reference = file.getUserData(DOCUMENT_KEY);
+    Reference<Document> reference = file.getUserData(DOCUMENT_KEY);
     Document document = reference != null ? reference.get() : null;
 
     if (document != null && isFileBecameBinary(file)){
@@ -150,7 +151,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return document;
   }
 
-  private boolean isFileBecameBinary(VirtualFile file) {
+  public static void registerDocument(final Document document, VirtualFile virtualFile) {
+    virtualFile.putUserData(DOCUMENT_KEY, new SoftReference<Document>(document) {
+      public Document get() {
+        return document;
+      }
+    });
+    document.putUserData(FILE_KEY, virtualFile);
+  }
+
+  private static boolean isFileBecameBinary(VirtualFile file) {
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
     return fileType.isBinary() && !fileType.equals(StdFileTypes.CLASS);
   }

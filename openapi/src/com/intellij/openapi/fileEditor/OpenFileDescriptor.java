@@ -62,7 +62,7 @@ public class OpenFileDescriptor implements Navigatable {
     myOffset = offset;
     if (offset >= 0) {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
-      myRangeMarker = (document != null && offset <= document.getTextLength())? document.createRangeMarker(offset, offset) : null;
+      myRangeMarker = document != null && offset <= document.getTextLength() ? document.createRangeMarker(offset, offset) : null;
     }
     else {
       myRangeMarker = null;
@@ -75,7 +75,7 @@ public class OpenFileDescriptor implements Navigatable {
   }
 
   public int getOffset() {
-    return (myRangeMarker != null && myRangeMarker.isValid())? myRangeMarker.getStartOffset() : myOffset;
+    return myRangeMarker != null && myRangeMarker.isValid() ? myRangeMarker.getStartOffset() : myOffset;
   }
 
 
