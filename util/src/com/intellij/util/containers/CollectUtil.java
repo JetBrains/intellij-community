@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * @deprecated use {@link ContainerUtil}
+ */
+@Deprecated
 public abstract class CollectUtil<E> {
   public abstract <T extends E> HashSet<T> toSet(Iterator<T> iterator);
 
