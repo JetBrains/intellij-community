@@ -284,6 +284,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   public Problem convertToProblem(final VirtualFile virtualFile, final int line, final int column, final String[] message) {
+    if (virtualFile == null) return null;
     HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>(){
       public HighlightInfo compute() {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, getTextRange(virtualFile, line, column), StringUtil.join(message, "\n"));
