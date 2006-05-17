@@ -52,11 +52,10 @@ abstract class NamedObjectProviderBinding implements ProviderBinding {
 
   public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<PsiReferenceProvider> list) {
     if (!myClass.isInstance(position)) return;
-    
-    addMatchingProviders(position, myProvidersWithoutNames,list);
+
+    int initialListSize = list.size();
 
     String name = getName(position);
-
     if (name != null) {
       List<Pair<PsiReferenceProvider,ElementFilter>> psiReferenceProviders = myNamesToProvidersMap.get(name);
 
@@ -70,6 +69,12 @@ abstract class NamedObjectProviderBinding implements ProviderBinding {
         addMatchingProviders(position, psiReferenceProviders, list);
       }
     }
+
+    if (list.size() == initialListSize) {
+      // no specific provider found; trying to find "common" providers...
+      addMatchingProviders(position, myProvidersWithoutNames,list);
+    }
+
   }
 
   abstract protected String getName(final PsiElement position);
