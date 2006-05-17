@@ -21,7 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Represents a virtual file system.
@@ -33,8 +34,7 @@ public abstract class VirtualFileSystem {
   protected VirtualFileSystem() {
   }
 
-  private final ArrayList<VirtualFileListener> myFileListeners = new ArrayList<VirtualFileListener>();
-  private VirtualFileListener[] myCachedFileListeners = new VirtualFileListener[0];
+  private final List<VirtualFileListener> myFileListeners = new CopyOnWriteArrayList<VirtualFileListener>();
 
   /**
    * Gets the protocol for this file system. Protocols should differ for all file systems.
@@ -110,7 +110,6 @@ public abstract class VirtualFileSystem {
   public void addVirtualFileListener(VirtualFileListener listener) {
     synchronized (myFileListeners) {
       myFileListeners.add(listener);
-      myCachedFileListeners = null;
     }
   }
 
@@ -122,17 +121,15 @@ public abstract class VirtualFileSystem {
   public void removeVirtualFileListener(VirtualFileListener listener) {
     synchronized (myFileListeners) {
       myFileListeners.remove(listener);
-      myCachedFileListeners = null;
     }
   }
 
   protected void firePropertyChanged(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    VirtualFileListener[] listeners = getListeners();
-    if (listeners.length > 0) {
+    if (!myFileListeners.isEmpty()) {
       VirtualFilePropertyEvent event = new VirtualFilePropertyEvent(requestor, file, propertyName, oldValue, newValue);
-      for (VirtualFileListener listener : listeners) {
+      for (VirtualFileListener listener : myFileListeners) {
         listener.propertyChanged(event);
       }
     }
@@ -141,10 +138,9 @@ public abstract class VirtualFileSystem {
   protected void fireContentsChanged(Object requestor, VirtualFile file, long oldModificationStamp) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    VirtualFileListener[] listeners = getListeners();
-    if (listeners.length > 0) {
+    if (!myFileListeners.isEmpty()) {
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getParent(), oldModificationStamp, file.getModificationStamp());
-      for (VirtualFileListener listener : listeners) {
+      for (VirtualFileListener listener : myFileListeners) {
         listener.contentsChanged(event);
       }
     }
@@ -153,10 +149,9 @@ public abstract class VirtualFileSystem {
   protected void fireFileCreated(Object requestor, VirtualFile file) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    VirtualFileListener[] listeners = getListeners();
-    if (listeners.length > 0) {
+    if (!myFileListeners.isEmpty()) {
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.isDirectory(), file.getParent());
-      for (VirtualFileListener listener : listeners) {
+      for (VirtualFileListener listener : myFileListeners) {
         listener.fileCreated(event);
       }
     }
@@ -165,10 +160,9 @@ public abstract class VirtualFileSystem {
   protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, boolean isDirectory, VirtualFile parent) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    VirtualFileListener[] listeners = getListeners();
-    if (listeners.length > 0) {
+    if (!myFileListeners.isEmpty()) {
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, fileName, isDirectory, parent);
-      for (VirtualFileListener listener : listeners) {
+      for (VirtualFileListener listener : myFileListeners) {
         listener.fileDeleted(event);
       }
     }
@@ -177,10 +171,9 @@ public abstract class VirtualFileSystem {
   protected void fireFileMoved(Object requestor, VirtualFile file, VirtualFile oldParent) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    VirtualFileListener[] listeners = getListeners();
-    if (listeners.length > 0) {
+    if (!myFileListeners.isEmpty()) {
       VirtualFileMoveEvent event = new VirtualFileMoveEvent(requestor, file, oldParent, file.getParent());
-      for (VirtualFileListener listener : listeners) {
+      for (VirtualFileListener listener : myFileListeners) {
         listener.fileMoved(event);
       }
     }
@@ -189,10 +182,9 @@ public abstract class VirtualFileSystem {
   protected void fireBeforePropertyChange(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    VirtualFileListener[] listeners = getListeners();
-    if (listeners.length > 0) {
+    if (!myFileListeners.isEmpty()) {
       VirtualFilePropertyEvent event = new VirtualFilePropertyEvent(requestor, file, propertyName, oldValue, newValue);
-      for (VirtualFileListener listener : listeners) {
+      for (VirtualFileListener listener : myFileListeners) {
         listener.beforePropertyChange(event);
       }
     }
@@ -201,10 +193,9 @@ public abstract class VirtualFileSystem {
   protected void fireBeforeContentsChange(Object requestor, VirtualFile file) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    VirtualFileListener[] listeners = getListeners();
-    if (listeners.length > 0) {
+    if (!myFileListeners.isEmpty()) {
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), false, file.getParent());
-      for (VirtualFileListener listener : listeners) {
+      for (VirtualFileListener listener : myFileListeners) {
         listener.beforeContentsChange(event);
       }
     }
@@ -213,10 +204,9 @@ public abstract class VirtualFileSystem {
   protected void fireBeforeFileDeletion(Object requestor, VirtualFile file) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    VirtualFileListener[] listeners = getListeners();
-    if (listeners.length > 0) {
+    if (!myFileListeners.isEmpty()) {
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.isDirectory(), file.getParent());
-      for (VirtualFileListener listener : listeners) {
+      for (VirtualFileListener listener : myFileListeners) {
         listener.beforeFileDeletion(event);
       }
     }
@@ -225,26 +215,12 @@ public abstract class VirtualFileSystem {
   protected void fireBeforeFileMovement(Object requestor, VirtualFile file, VirtualFile newParent) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    VirtualFileListener[] listeners = getListeners();
-    if (listeners.length > 0) {
+    if (!myFileListeners.isEmpty()) {
       VirtualFileMoveEvent event = new VirtualFileMoveEvent(requestor, file, file.getParent(), newParent);
-      for (VirtualFileListener listener : listeners) {
+      for (VirtualFileListener listener : myFileListeners) {
         listener.beforeFileMovement(event);
       }
     }
-  }
-
-  private VirtualFileListener[] getListeners() {
-    VirtualFileListener[] result = myCachedFileListeners;
-    if (result == null) {
-      synchronized (myFileListeners) {
-        result = myCachedFileListeners;
-        if (result == null) {
-          result = myCachedFileListeners = myFileListeners.toArray(new VirtualFileListener[myFileListeners.size()]);
-        }
-      }
-    }
-    return result;
   }
 
   /**
