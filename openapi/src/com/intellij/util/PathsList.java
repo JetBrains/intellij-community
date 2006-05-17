@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
+import static com.intellij.util.containers.ContainerUtil.*;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -36,27 +37,27 @@ public class PathsList  {
 
   private static final EmptyIterator<String> ADD_NOTHING = new EmptyIterator<String>();
 
-  private static final Convertor<String, VirtualFile> PATH_TO_LOCAL_VFILE = new Convertor<String, VirtualFile>() {
-    public VirtualFile convert(String path) {
+  private static final Function<String, VirtualFile> PATH_TO_LOCAL_VFILE = new Function<String, VirtualFile>() {
+    public VirtualFile fun(String path) {
       return LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/'));
     }
   };
 
-  private static final Convertor<VirtualFile, String> LOCAL_PATH =
-    new Convertor<VirtualFile, String>() {
-      public String convert(VirtualFile file) {
+  private static final Function<VirtualFile, String> LOCAL_PATH =
+    new Function<VirtualFile, String>() {
+      public String fun(VirtualFile file) {
         return PathUtil.getLocalPath(file);
       }
     };
 
-  private static final Convertor<String,VirtualFile> PATH_TO_DIR =
-    new Convertor<String, VirtualFile>() {
-      public VirtualFile convert(String s) {
+  private static final Function<String,VirtualFile> PATH_TO_DIR =
+    new Function<String, VirtualFile>() {
+      public VirtualFile fun(String s) {
         final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(s);
         if (StdFileTypes.ARCHIVE.equals(fileType)) {
           return JarFileSystem.getInstance().findFileByPath(s + JarFileSystem.JAR_SEPARATOR);
         }
-        return PATH_TO_LOCAL_VFILE.convert(s);
+        return PATH_TO_LOCAL_VFILE.fun(s);
       }
     };
 
@@ -65,7 +66,7 @@ public class PathsList  {
   }
 
   public void add(VirtualFile file) {
-    add(LOCAL_PATH.convert(file));
+    add(LOCAL_PATH.fun(file));
   }
 
   public void addFirst(@NonNls String path) {
@@ -98,13 +99,10 @@ public class PathsList  {
         return (String)tokenizer.nextElement();
       }
     };
-    return FilteringIterator.create(ContainerUtil.iterate(en), new Condition<String>() {
+    return FilteringIterator.create(iterate(en), new Condition<String>() {
       public boolean value(String element) {
         element = element.trim();
-        if (element.length() == 0) {
-          return false;
-        }
-        return !myPathSet.contains(element);
+        return element.length() != 0 && !myPathSet.contains(element);
       }
     });
   }
@@ -121,8 +119,7 @@ public class PathsList  {
     final StringBuffer buffer = new StringBuffer();
     String separator = "";
     final List<String> classPath = getPathList();
-    for (Iterator iterator = classPath.iterator(); iterator.hasNext();) {
-      String path = (String) iterator.next();
+    for (final String path : classPath) {
       buffer.append(separator);
       buffer.append(path);
       separator = File.pathSeparator;
@@ -141,26 +138,24 @@ public class PathsList  {
    * @return {@link VirtualFile}s on local file system (returns jars as files).
    */
   public List<VirtualFile> getVirtualFiles() {
-    return CollectUtil.SKIP_NULLS.toList(getPathList().iterator(), PATH_TO_LOCAL_VFILE);
+    return skipNulls(map(getPathList(), PATH_TO_LOCAL_VFILE));
   }
 
   /**
    * @return The same as {@link #getVirtualFiles()} but returns jars as {@link JarFileSystem} roots.
    */
   public List<VirtualFile> getRootDirs() {
-    return CollectUtil.SKIP_NULLS.toList(getPathList().iterator(), PATH_TO_DIR);
+    return skipNulls(map(getPathList(), PATH_TO_DIR));
   }
 
   public void addAll(List<String> allClasspath) {
-    for (Iterator<String> iterator = allClasspath.iterator(); iterator.hasNext();) {
-      String path = iterator.next();
+    for (String path : allClasspath) {
       add(path);
     }
   }
 
   public void addAllFiles(List<File> classpathList) {
-    for (Iterator<File> iterator = classpathList.iterator(); iterator.hasNext();) {
-      File file = iterator.next();
+    for (File file : classpathList) {
       add(PathUtil.getCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
     }
   }

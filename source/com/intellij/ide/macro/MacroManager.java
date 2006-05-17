@@ -19,6 +19,9 @@ import com.intellij.util.containers.HashMap;
 
 import java.io.File;
 import java.util.Iterator;
+import java.util.Collection;
+
+import org.jetbrains.annotations.NotNull;
 
 public final class MacroManager implements ApplicationComponent {
   private final HashMap<String, Macro> myMacrosMap = new HashMap<String, Macro>();
@@ -82,20 +85,18 @@ public final class MacroManager implements ApplicationComponent {
     myMacrosMap.put(macro.getName(), macro);
   }
 
-  public Iterator<Macro> getMacros() {
-    return myMacrosMap.values().iterator();
+  public Collection<Macro> getMacros() {
+    return myMacrosMap.values();
   }
 
   public void cacheMacrosPreview(DataContext dataContext) {
     dataContext = getCorrectContext(dataContext);
-    Iterator<Macro> macros = getMacros();
-    while (macros.hasNext()) {
-      Macro macro = macros.next();
+    for (Macro macro : getMacros()) {
       macro.cachePreview(dataContext);
     }
   }
 
-  private DataContext getCorrectContext(DataContext dataContext) {
+  private static DataContext getCorrectContext(DataContext dataContext) {
     if (dataContext.getData(DataConstants.FILE_EDITOR) != null) return dataContext;
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) return dataContext;
@@ -111,7 +112,7 @@ public final class MacroManager implements ApplicationComponent {
    * Expands all macros that are found in the <code>str</code>.
    */
   public String expandMacrosInString(String str, boolean firstQueueExpand, DataContext dataContext) throws Macro.ExecutionCancelledException {
-    return expandMacroSet(str, firstQueueExpand, dataContext, getMacros());
+    return expandMacroSet(str, firstQueueExpand, dataContext, getMacros().iterator());
   }
 
   private String expandMacroSet(String str,
@@ -140,7 +141,7 @@ public final class MacroManager implements ApplicationComponent {
 
   public String expandSilentMarcos(String str, boolean firstQueueExpand, DataContext dataContext) throws Macro.ExecutionCancelledException {
     return expandMacroSet(str, firstQueueExpand, dataContext,
-                          ConvertingIterator.create(getMacros(), new Convertor<Macro, Macro>() {
+                          ConvertingIterator.create(getMacros().iterator(), new Convertor<Macro, Macro>() {
                             public Macro convert(Macro macro) {
                               if (macro instanceof PromptMacro)
                                 return new Macro.Silent(macro, "");
@@ -149,6 +150,7 @@ public final class MacroManager implements ApplicationComponent {
                           }));
   }
 
+  @NotNull
   public String getComponentName() {
     return "MacroManager";
   }

@@ -20,4 +20,10 @@ package com.intellij.openapi.util;
  */
 public interface Condition<T> {
   boolean value(T object);
+
+  Condition<Object> NOT_NULL = new Condition<Object>() {
+    public boolean value(final Object object) {
+      return object != null;
+    }
+  };
 }

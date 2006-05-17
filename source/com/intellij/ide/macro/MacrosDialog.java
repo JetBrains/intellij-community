@@ -8,7 +8,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.CollectUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -19,7 +18,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 
 public final class MacrosDialog extends DialogWrapper {
   private final DefaultListModel myMacrosModel;
@@ -55,11 +53,11 @@ public final class MacrosDialog extends DialogWrapper {
   protected void init() {
     super.init();
 
-    ArrayList<Macro> macros = CollectUtil.COLLECT.toList(MacroManager.getInstance().getMacros());
-    Collections.sort(macros, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        String name1 = ((Macro)o1).getName();
-        String name2 = ((Macro)o2).getName();
+    java.util.List<Macro> macros = new ArrayList<Macro>(MacroManager.getInstance().getMacros());
+    Collections.sort(macros, new Comparator<Macro>() {
+      public int compare(Macro macro1, Macro macro2) {
+        String name1 = macro1.getName();
+        String name2 = macro2.getName();
         if (!StringUtil.startsWithChar(name1, '/')) {
           name1 = ZERO + name1;
         }
@@ -70,8 +68,7 @@ public final class MacrosDialog extends DialogWrapper {
       }
       private final String ZERO = new String(new char[] {0});
     });
-    for (Iterator<Macro> iterator = macros.iterator(); iterator.hasNext();) {
-      Macro macro = iterator.next();
+    for (Macro macro : macros) {
       myMacrosModel.addElement(new MacroWrapper(macro));
     }
 

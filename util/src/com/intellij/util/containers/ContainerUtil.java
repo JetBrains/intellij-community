@@ -209,7 +209,7 @@ public class ContainerUtil {
     return map2List(collection, mapper).toArray(to);
   }
 
-  public static <T> List<T> findAll(Collection<? extends T> collection, Condition<T> condition) {
+  public static <T> List<T> findAll(Collection<? extends T> collection, Condition<? super T> condition) {
     final ArrayList<T> result = new ArrayList<T>();
     for (final T t : collection) {
       if (condition.value(t)) {
@@ -217,6 +217,10 @@ public class ContainerUtil {
       }
     }
     return result;
+  }
+
+  public static <T> List<T> skipNulls (Collection<? extends T> collection) {
+    return findAll(collection, Condition.NOT_NULL);
   }
 
   public static <T,V> List<V> findAll(Collection<? extends T> collection, Class<V> instanceOf) {

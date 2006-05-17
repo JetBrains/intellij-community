@@ -6,20 +6,20 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.Function;
 
 abstract class BaseDiffAction extends AnAction {
-  protected static final Convertor<PsiElement, PsiElement> SOURCE_ELEMENT = new Convertor<PsiElement, PsiElement>() {
-    public PsiElement convert(PsiElement psiElement) {
+  protected static final Function<PsiElement, PsiElement> SOURCE_ELEMENT = new Function<PsiElement, PsiElement>() {
+    public PsiElement fun(PsiElement psiElement) {
       if (psiElement == null || !psiElement.isValid()) return null;
       PsiElement navigationElement = psiElement.getNavigationElement();
       if (navigationElement != null) psiElement = navigationElement;
@@ -33,8 +33,8 @@ abstract class BaseDiffAction extends AnAction {
     DataAccessor.createArrayConvertor(DataAccessor.PSI_ELEMENT_ARRAY, SOURCE_ELEMENT, PsiElement.class);
 
   protected static final DataAccessor<PsiElement> PRIMARY_SOURCE =
-    DataAccessor.createConvertor(PRIMARY_SOURCES, new Convertor<PsiElement[], PsiElement>() {
-      public PsiElement convert(PsiElement[] psiElements) {
+    DataAccessor.createConvertor(PRIMARY_SOURCES, new Function<PsiElement[], PsiElement>() {
+      public PsiElement fun(PsiElement[] psiElements) {
         return psiElements.length == 1 ? psiElements[0] : null;
       }
     });

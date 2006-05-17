@@ -5,18 +5,19 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
-import com.intellij.util.containers.CollectUtil;
+import com.intellij.util.Function;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.skipNulls;
 import com.intellij.util.containers.Convertor;
-import com.intellij.ide.IdeBundle;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
+import java.util.List;
 
 public abstract class DataAccessor<T> {
   public static final DataAccessor<Project> PROJECT = new SimpleDataAccessor<Project>(DataConstants.PROJECT);
@@ -98,19 +99,19 @@ public abstract class DataAccessor<T> {
   }
 
   public static <T, Original> DataAccessor<T> createConvertor(final DataAccessor<Original> original,
-                                                              final Convertor<Original, T> convertor) {
+                                                              final Function<Original, T> convertor) {
     return new DataAccessor<T>(){
       public T getImpl(DataContext dataContext) throws NoDataException {
-        return convertor.convert(original.getNotNull(dataContext));
+        return convertor.fun(original.getNotNull(dataContext));
       }
     };
   }
 
-  public static <T, Original> DataAccessor/*<T[]>*/ createArrayConvertor(final DataAccessor/*<Original[]>*/ original, final Convertor<Original, T> convertor, final Class<T> aClass) {
-    return new DataAccessor/*<T[]>*/() {
-      public Object /*T[]*/ getImpl(DataContext dataContext) throws NoDataException {
-        ArrayList<T> converted = CollectUtil.SKIP_NULLS.toList((Object[])original.getNotNull(dataContext), convertor);
-        return converted.toArray((Object[]/*T[]*/)Array.newInstance(aClass, converted.size()));
+  public static <T, Original> DataAccessor<T[]> createArrayConvertor(final DataAccessor<Original[]> original, final Function<Original, T> convertor, final Class<T> aClass) {
+    return new DataAccessor<T[]>() {
+      public T[] getImpl(DataContext dataContext) throws NoDataException {
+        List<T> converted = skipNulls(map(original.getNotNull(dataContext), convertor));
+        return converted.toArray((T[])Array.newInstance(aClass, converted.size()));
       }
     };
   }
