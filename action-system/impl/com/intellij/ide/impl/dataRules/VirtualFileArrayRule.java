@@ -2,7 +2,6 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -33,16 +32,16 @@ public class VirtualFileArrayRule implements GetDataRule {
     }
 
     Module[] selectedModules = (Module[])dataProvider.getData(DataConstants.MODULE_CONTEXT_ARRAY);
-    if ((selectedModules != null) && (selectedModules.length > 0)) {
+    if (selectedModules != null && selectedModules.length > 0) {
       return getFilesFromModules(selectedModules);
     }
 
     Module selectedModule = (Module)dataProvider.getData(DataConstants.MODULE_CONTEXT);
-    if ((selectedModule != null)) {
+    if (selectedModule != null) {
       return ModuleRootManager.getInstance(selectedModule).getContentRoots();
     }
 
-    PsiElement[] psiElements = (PsiElement[])dataProvider.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
+    PsiElement[] psiElements = (PsiElement[])dataProvider.getData(DataConstants.PSI_ELEMENT_ARRAY);
     if (psiElements != null && psiElements.length != 0) {
       return getFilesFromPsiElements(psiElements);
     }
@@ -75,12 +74,11 @@ public class VirtualFileArrayRule implements GetDataRule {
     return null;
   }
 
-  private VirtualFile[] getFilesFromUsages(Usage[] usages, UsageTarget[] usageTargets) {
+  private static VirtualFile[] getFilesFromUsages(Usage[] usages, UsageTarget[] usageTargets) {
     Set<VirtualFile> result = new HashSet<VirtualFile>();
 
     if (usages != null) {
-      for (int i = 0; i < usages.length; i++) {
-        Usage usage = usages[i];
+      for (Usage usage : usages) {
         if (!usage.isValid()) continue;
         if (usage instanceof UsageInFile) {
           UsageInFile usageInFile = (UsageInFile)usage;
@@ -95,8 +93,7 @@ public class VirtualFileArrayRule implements GetDataRule {
     }
 
     if (usageTargets != null) {
-      for (int i = 0; i < usageTargets.length; i++) {
-        UsageTarget usageTarget = usageTargets[i];
+      for (UsageTarget usageTarget : usageTargets) {
         if (!usageTarget.isValid()) continue;
         VirtualFile[] files = usageTarget.getFiles();
         if (files != null) {
@@ -108,7 +105,7 @@ public class VirtualFileArrayRule implements GetDataRule {
     return result.toArray(new VirtualFile[result.size()]);
   }
 
-  private Object getFilesFromPsiElement(PsiElement elem) {
+  private static Object getFilesFromPsiElement(PsiElement elem) {
     if (elem instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)elem).getVirtualFile();
       return virtualFile != null ? new VirtualFile[]{virtualFile} : null;
@@ -122,10 +119,9 @@ public class VirtualFileArrayRule implements GetDataRule {
     }
   }
 
-  private Object getFilesFromPsiElements(PsiElement[] psiElements) {
+  private static Object getFilesFromPsiElements(PsiElement[] psiElements) {
     HashSet<VirtualFile> files = new HashSet<VirtualFile>();
-    for (int i = 0; i < psiElements.length; i++) {
-      PsiElement elem = psiElements[i];
+    for (PsiElement elem : psiElements) {
       if (elem instanceof PsiDirectory) {
         files.add(((PsiDirectory)elem).getVirtualFile());
       }
@@ -137,8 +133,8 @@ public class VirtualFileArrayRule implements GetDataRule {
       }
       else if (elem instanceof PsiPackage) {
         PsiDirectory[] dirs = ((PsiPackage)elem).getDirectories();
-        for (int j = 0; j < dirs.length; j++) {
-          files.add(dirs[j].getVirtualFile());
+        for (PsiDirectory dir : dirs) {
+          files.add(dir.getVirtualFile());
         }
       }
       else {
@@ -156,10 +152,9 @@ public class VirtualFileArrayRule implements GetDataRule {
     return result;
   }
 
-  private Object getFilesFromModules(Module[] selectedModules) {
+  private static Object getFilesFromModules(Module[] selectedModules) {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (int i = 0; i < selectedModules.length; i++) {
-      Module selectedModule = selectedModules[i];
+    for (Module selectedModule : selectedModules) {
       result.addAll(Arrays.asList(ModuleRootManager.getInstance(selectedModule).getContentRoots()));
     }
     return result.toArray(new VirtualFile[result.size()]);

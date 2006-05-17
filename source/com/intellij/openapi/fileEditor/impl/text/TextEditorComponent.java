@@ -258,8 +258,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     boolean isWritable = editor.getDocument().isWritable();
     statusBar.setStatusEnabled(isWritable);
     statusBar.setWriteStatus(!isWritable);
-    statusBar.setPosition(
-      (editor.getCaretModel().getLogicalPosition().line + 1) +
+    statusBar.setPosition(editor.getCaretModel().getLogicalPosition().line + 1 +
       ":" + (editor.getCaretModel().getLogicalPosition().column + 1)
     );
     statusBar.updateEditorHighlightingStatus(false);
@@ -267,37 +266,32 @@ final class TextEditorComponent extends JPanel implements DataProvider{
 
   public Object getData(final String dataId) {
     if (dataId.equals(DataConstants.EDITOR)) {
-      PsiFile psiFile = (PsiFile)getData(DataConstants.PSI_FILE);
-      return FileEditorManagerImpl.getEditorForInjectedLanguage(myEditor, psiFile);
+      return getOutsideVisibleEditor();
     }
     if (DataConstants.PSI_ELEMENT.equals(dataId)){
-      final Editor editor=getEditor();
-      final PsiFile psiFile = (PsiFile)getData(DataConstants.PSI_FILE);
-      if (psiFile == null) {
-        return null;
-      }
+      final PsiFile psiFile = getPsiFile();
+      if (psiFile == null) return null;
+      final Editor editor = getOutsideVisibleEditor();
 
       return TargetElementUtil.findTargetElement(editor,
-                                            TargetElementUtil.THROW_STATEMENT_ACCEPTED | 
+                                            TargetElementUtil.THROW_STATEMENT_ACCEPTED |
                                             TargetElementUtil.THROWS_ACCEPTED |
-                                            TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | 
+                                            TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                             TargetElementUtil.NEW_AS_CONSTRUCTOR |
                                             TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
     }
     if (DataConstants.LANGUAGE.equals(dataId)) {
-      final Editor editor = getEditor();
-      final PsiFile psiFile = (PsiFile)getData(DataConstants.PSI_FILE);
-      if (psiFile == null) {
-        return null;
-      }
+      final Editor editor = getOutsideVisibleEditor();
+      final PsiFile psiFile = getPsiFile();
+      if (psiFile == null) return null;
       return PsiUtil.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
     }
     if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
       return myFile.isValid()? myFile : null;  // fix for SCR 40329
     }
     if (DataConstants.PSI_FILE.equals(dataId)) {
-      return myFile.isValid()? PsiManager.getInstance(myProject).findFile(myFile) : null; // fix for SCR 40329
+      return getPsiFile();
     }
     if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
       /*
@@ -323,6 +317,15 @@ final class TextEditorComponent extends JPanel implements DataProvider{
       return null;
     }
     return null;
+  }
+
+  private Editor getOutsideVisibleEditor() {
+    PsiFile psiFile = getPsiFile();
+    return FileEditorManagerImpl.getEditorForInjectedLanguage(myEditor, psiFile);
+  }
+
+  private PsiFile getPsiFile() {
+    return myFile.isValid()? PsiManager.getInstance(myProject).findFile(myFile) : null; // fix for SCR 40329
   }
 
 
