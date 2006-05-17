@@ -182,10 +182,10 @@ public class HighlightInfo {
     this.type = type;
     this.startOffset = startOffset;
     this.endOffset = endOffset;
-    this.fixStartOffset = startOffset;
-    this.fixEndOffset = endOffset;
+    fixStartOffset = startOffset;
+    fixEndOffset = endOffset;
     this.description = description;
-    this.severity = type.getSeverity(null);
+    severity = type.getSeverity(null);
     this.toolTip = toolTip;
     LOG.assertTrue(startOffset >= 0);
     LOG.assertTrue(startOffset <= endOffset);
@@ -200,7 +200,7 @@ public class HighlightInfo {
                        HighlightSeverity severity,
                        boolean afterEndOfLine,
                        boolean needsUpdateOnTyping) {
-    this.forcedTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributesKey);
+    forcedTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributesKey);
     this.type = type;
     this.startOffset = startOffset;
     this.endOffset = endOffset;
@@ -208,7 +208,7 @@ public class HighlightInfo {
     this.toolTip = toolTip;
     this.severity = severity;
     isAfterEndOfLine = afterEndOfLine;
-    myNeedsUpdateOnTyping = Boolean.valueOf(needsUpdateOnTyping);
+    myNeedsUpdateOnTyping = needsUpdateOnTyping;
   }
 
   public boolean equals(Object obj) {

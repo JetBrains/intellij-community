@@ -23,6 +23,6 @@ public class CastConstructorParametersFix {
     for (int i = 0; i < candidates.length; i++) {
       candidates[i] = new CandidateInfo(methods[i], resolved.getSubstitutor());
     }
-    CastMethodParametersFix.registerCastActions(candidates, constructorCall, ctrRef, highlightInfo);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, ctrRef, highlightInfo);
   }
 }

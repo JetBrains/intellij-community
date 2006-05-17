@@ -446,7 +446,7 @@ public class HighlightMethodUtil {
     }
 
     MethodCandidateInfo[] candidates = candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
-    CastMethodParametersFix.registerCastActions(candidates, methodCall, methodCall.getMethodExpression(), highlightInfo);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, methodCall.getMethodExpression(), highlightInfo);
     WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), highlightInfo);
     ChangeParameterClassFix.registerQuickFixActions(methodCall, list, highlightInfo);
     return highlightInfo;
@@ -461,7 +461,8 @@ public class HighlightMethodUtil {
     QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreateConstructorFromThisAction(methodCall), null, null);
     QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreatePropertyFromUsageAction(methodCall), null, null);
     CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
-    CastMethodParametersFix.registerCastActions(methodCandidates, methodCall, methodCall.getMethodExpression(), highlightInfo);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, methodCall.getMethodExpression(), highlightInfo);
+    AddTypeArgumentsFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, methodCall.getMethodExpression(), highlightInfo);
     registerMethodAccessLevelIntentions(methodCandidates, methodCall, list, highlightInfo);
     ChangeMethodSignatureFromUsageFix.registerIntentions(methodCandidates, list, highlightInfo, range);
     WrapExpressionFix.registerWrapAction(methodCandidates, list.getExpressions(), highlightInfo);
