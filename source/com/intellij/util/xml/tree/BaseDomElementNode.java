@@ -48,8 +48,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     if (!element.isValid()) return NO_CHILDREN;
 
     List<SimpleNode> children = new ArrayList<SimpleNode>();
-    List<DomFixedChildDescription> descriptions = element.getGenericInfo().getFixedChildrenDescriptions();
-    for (DomFixedChildDescription description : descriptions) {
+    for (DomFixedChildDescription description : element.getGenericInfo().getFixedChildrenDescriptions()) {
       final List<? extends DomElement> values = description.getStableValues(element);
       if (shouldBeShown(description.getType())) {
         if (DomUtil.isGenericValueType(description.getType())) {
@@ -64,8 +63,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       }
     }
 
-    final List<DomCollectionChildDescription> collectionChildrenDescriptions = element.getGenericInfo().getCollectionChildrenDescriptions();
-    for (DomCollectionChildDescription description : collectionChildrenDescriptions) {
+    for (DomCollectionChildDescription description : element.getGenericInfo().getCollectionChildrenDescriptions()) {
       if (shouldBeShown(description.getType())) {
         DomElementsGroupNode groupNode = new DomElementsGroupNode(element, description);
         if (isMarkedType(description.getType(), CONSOLIDATED_NODES_KEY)) {
@@ -87,9 +85,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   }
 
   public List<DomCollectionChildDescription> getConsolidatedChildrenDescriptions() {
-    final List<DomCollectionChildDescription> collectionChildrenDescriptions = myDomElement.getGenericInfo().getCollectionChildrenDescriptions();
     final List<DomCollectionChildDescription> consolidated = new ArrayList<DomCollectionChildDescription>();
-    for (DomCollectionChildDescription description : collectionChildrenDescriptions) {
+    for (DomCollectionChildDescription description : myDomElement.getGenericInfo().getCollectionChildrenDescriptions()) {
         if (isMarkedType(description.getType(), CONSOLIDATED_NODES_KEY)) {
           consolidated.add(description);
       }

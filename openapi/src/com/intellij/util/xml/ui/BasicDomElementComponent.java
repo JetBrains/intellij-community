@@ -41,8 +41,7 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
   protected final void bindProperties(final DomElement domElement) {
     if (domElement == null) return;
 
-    final java.util.List<DomChildrenDescription> childrenDescriptions = domElement.getGenericInfo().getChildrenDescriptions();
-    for (final DomChildrenDescription description : childrenDescriptions) {
+    for (final DomChildrenDescription description : domElement.getGenericInfo().getChildrenDescriptions()) {
       final JComponent boundComponent = getBoundComponent(description);
       if (boundComponent != null) {
         if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {

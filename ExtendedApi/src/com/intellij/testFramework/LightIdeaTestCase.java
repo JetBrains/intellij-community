@@ -33,10 +33,12 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -80,6 +82,7 @@ import java.util.Map;
   private static VirtualFile ourSourceRoot;
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
+  protected Disposable myTestRootDisposable;
 
   private Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
   private Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new HashMap<String, LocalInspectionToolWrapper>();
@@ -236,6 +239,10 @@ import java.util.Map;
 
   protected void setUp() throws Exception {
     super.setUp();
+    myTestRootDisposable = new Disposable() {
+      public void dispose() {
+      }
+    };
     initApplication(this);
     doSetup(getProjectJDK(), configureLocalInspectionTools(), myAvailableTools, myAvailableLocalTools);
   }
@@ -316,6 +323,8 @@ import java.util.Map;
 
   protected void tearDown() throws Exception {
     super.tearDown();
+    Disposer.dispose(myTestRootDisposable);
+    myTestRootDisposable = null;
     doTearDown();
   }
 

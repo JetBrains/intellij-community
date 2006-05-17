@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -565,8 +566,8 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @NotNull
-  public List<DomChildrenDescription> getChildrenDescriptions() {
-    final ArrayList<DomChildrenDescription> result = new ArrayList<DomChildrenDescription>();
+  public List<DomChildDescriptionImpl> getChildrenDescriptions() {
+    final ArrayList<DomChildDescriptionImpl> result = new ArrayList<DomChildDescriptionImpl>();
     result.addAll(getAttributeChildrenDescriptions());
     result.addAll(getFixedChildrenDescriptions());
     result.addAll(getCollectionChildrenDescriptions());
@@ -574,9 +575,9 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @NotNull
-  public List<DomFixedChildDescription> getFixedChildrenDescriptions() {
+  public List<FixedChildDescriptionImpl> getFixedChildrenDescriptions() {
     buildMethodMaps();
-    final ArrayList<DomFixedChildDescription> result = new ArrayList<DomFixedChildDescription>();
+    final ArrayList<FixedChildDescriptionImpl> result = new ArrayList<FixedChildDescriptionImpl>();
     for (String s : myFixedChildrenCounts.keySet()) {
       result.add(getFixedChildDescription(s));
     }
@@ -584,9 +585,9 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @NotNull
-  public List<DomCollectionChildDescription> getCollectionChildrenDescriptions() {
+  public List<CollectionChildDescriptionImpl> getCollectionChildrenDescriptions() {
     buildMethodMaps();
-    final ArrayList<DomCollectionChildDescription> result = new ArrayList<DomCollectionChildDescription>();
+    final ArrayList<CollectionChildDescriptionImpl> result = new ArrayList<CollectionChildDescriptionImpl>();
     for (String s : myCollectionChildrenClasses.keySet()) {
       result.add(getCollectionChildDescription(s));
     }
@@ -594,7 +595,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @Nullable
-  public DomFixedChildDescription getFixedChildDescription(String tagName) {
+  public FixedChildDescriptionImpl getFixedChildDescription(String tagName) {
     buildMethodMaps();
     if (!isFixedChild(tagName)) {
       return null;
@@ -615,7 +616,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @Nullable
-  public DomCollectionChildDescription getCollectionChildDescription(String tagName) {
+  public CollectionChildDescriptionImpl getCollectionChildDescription(String tagName) {
     buildMethodMaps();
     final Method getter = findGetterMethod(myCollectionChildrenGetterMethods, tagName);
     return new CollectionChildDescriptionImpl(tagName, getCollectionChildrenType(tagName), getCollectionAddMethod(tagName),
@@ -642,8 +643,9 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @NotNull
-  public List<DomAttributeChildDescription> getAttributeChildrenDescriptions() {
-    final ArrayList<DomAttributeChildDescription> result = new ArrayList<DomAttributeChildDescription>();
+  public List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
+    buildMethodMaps();
+    final ArrayList<AttributeChildDescriptionImpl> result = new ArrayList<AttributeChildDescriptionImpl>();
     for (Map.Entry<JavaMethodSignature, String> entry : myAttributeChildrenMethods.entrySet()) {
       final Method getter = entry.getKey().findMethod(myClass);
       result.add(new AttributeChildDescriptionImpl(entry.getValue(), getter, isRequired(getter)));
@@ -672,5 +674,46 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   public static boolean isDomElement(final Type type) {
     return type != null && DomElement.class.isAssignableFrom(DomUtil.getRawType(type));
+  }
+
+  public final Set<String> getReferenceTagNames() {
+    final HashSet<String> set = new HashSet<String>();
+    addReferenceElementNames(new Condition<Class>() {
+      public boolean value(final Class object) {
+        return GenericValue.class.isAssignableFrom(object) && !GenericAttributeValue.class.isAssignableFrom(object);
+      }
+    }, set);
+    return set;
+  }
+
+  public final Set<String> getReferenceAttributeNames() {
+    final HashSet<String> set = new HashSet<String>();
+    addReferenceElementNames(new Condition<Class>() {
+      public boolean value(final Class object) {
+        return GenericAttributeValue.class.isAssignableFrom(object);
+      }
+    }, set);
+    return set;
+  }
+
+
+  private void addReferenceElementNames(final Condition<Class> condition, final HashSet<String> set) {
+    Class[] classes = getConcreteInterfaceVariants();
+    if (classes.length == 1 && classes[0].equals(myClass)) {
+      for (final DomChildDescriptionImpl description : getChildrenDescriptions()) {
+        final Type type = description.getType();
+        if (condition.value(DomUtil.getRawType(type))) {
+          if (!String.class.equals(DomUtil.getGenericValueType(type))) {
+            set.add(description.getXmlElementName());
+          }
+        } else {
+          description.getChildGenericInfo(myDomManager.getProject()).addReferenceElementNames(condition, set);
+        }
+      }
+    } else {
+      for (final Class aClass : classes) {
+        myDomManager.getGenericInfo(aClass).addReferenceElementNames(condition, set);
+      }
+    }
   }
 }

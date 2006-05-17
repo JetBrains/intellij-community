@@ -19,16 +19,16 @@ public interface DomGenericInfo {
   String getElementName(DomElement element);
 
   @NotNull
-  List<DomChildrenDescription> getChildrenDescriptions();
+  List<? extends DomChildrenDescription> getChildrenDescriptions();
 
   @NotNull
-  List<DomFixedChildDescription> getFixedChildrenDescriptions();
+  List<? extends DomFixedChildDescription> getFixedChildrenDescriptions();
 
   @NotNull
-  List<DomCollectionChildDescription> getCollectionChildrenDescriptions();
+  List<? extends DomCollectionChildDescription> getCollectionChildrenDescriptions();
 
   @NotNull
-  List<DomAttributeChildDescription> getAttributeChildrenDescriptions();
+  List<? extends DomAttributeChildDescription> getAttributeChildrenDescriptions();
 
   @Nullable
   DomChildrenDescription getChildDescription(@NonNls String tagName);

@@ -35,9 +35,9 @@ public abstract class DomManager implements ProjectComponent {
   @NotNull
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, @NonNls String rootTagName);
 
-  public abstract void addDomEventListener(DomEventAdapter listener);
+  public abstract void addDomEventListener(DomEventListener listener);
 
-  public abstract void addDomEventListener(DomEventAdapter listener, Disposable parentDisposable);
+  public abstract void addDomEventListener(DomEventListener listener, Disposable parentDisposable);
 
   public abstract void removeDomEventListener(DomEventAdapter listener);
 

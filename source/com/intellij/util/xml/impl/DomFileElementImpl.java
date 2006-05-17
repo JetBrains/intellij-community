@@ -101,7 +101,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private final Class<T> myRootElementClass;
   private final String myRootTagName;
   private final DomManagerImpl myManager;
-  private DomInvocationHandler myRootHandler;
+  private DomRootInvocationHandler myRootHandler;
   private Map<Key,Object> myUserData = new HashMap<Key, Object>();
 
   protected DomFileElementImpl(final XmlFile file,
@@ -189,7 +189,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return (T)getRootHandler().getProxy();
   }
 
-  protected final DomInvocationHandler getRootHandler() {
+  protected final DomRootInvocationHandler getRootHandler() {
     synchronized (PsiLock.LOCK) {
       if (myRootHandler == null) {
         final XmlTag tag = getRootTag();

@@ -4,6 +4,8 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +30,15 @@ public class ClassChooserManager {
         return new Class[]{aClass};
       }
     };
+  }
+
+  public static <T extends DomElement> void registerClassChooser(final Class<T> aClass, final ClassChooser<T> classChooser, Disposable parentDisposable) {
+    registerClassChooser(aClass, classChooser);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        unregisterClassChooser(aClass);
+      }
+    });
   }
 
   public static <T extends DomElement> void registerClassChooser(final Class<T> aClass, final ClassChooser<T> classChooser) {
