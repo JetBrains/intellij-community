@@ -265,7 +265,7 @@ public class AsmCodeGenerator {
       }
 
       Method method = Method.getMethod("void " + SETUP_METHOD_NAME + " ()");
-      GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PRIVATE, method, null, null, cv);
+      GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC, method, null, null, cv);
       if (haveCustomCreateComponents && myHaveCreateComponentsMethod) {
         generator.visitVarInsn(Opcodes.ALOAD, 0);
         generator.visitMethodInsn(Opcodes.INVOKESPECIAL, myClassName, CREATE_COMPONENTS_METHOD_NAME, "()V");
@@ -282,7 +282,7 @@ public class AsmCodeGenerator {
     private void buildGetRootComponenMethod() {
       final Type componentType = Type.getType(JComponent.class);
       final Method method = new Method(GET_ROOT_COMPONENT_METHOD_NAME, componentType, new Type[0]);
-      GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PUBLIC, method, null, null, cv);
+      GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PUBLIC | Opcodes.ACC_SYNTHETIC, method, null, null, cv);
 
       final LwComponent topComponent = (LwComponent)myRootContainer.getComponent(0);
       final String binding = topComponent.getBinding();
