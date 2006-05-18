@@ -4,11 +4,13 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionEvent;import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
@@ -18,6 +20,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.ui.actions.DefaultAddAction;
+import com.intellij.util.xml.ui.actions.AddDomElementAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,13 +34,59 @@ import java.util.List;
  */
 public class DomCollectionControl<T extends DomElement> implements DomUIControl {
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
-  private DomCollectionPanel myCollectionPanel;
+  private DomTableView myCollectionPanel;
 
   private final List<T> myData = new ArrayList<T>();
   private final DomElement myParentDomElement;
   private final DomCollectionChildDescription myChildDescription;
   private ColumnInfo<T, ?>[] myColumnInfos;
   private boolean myEditable = false;
+  private AnAction myAddAction = new AddDomElementAction() {
+    protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
+      return new DomCollectionChildDescription[] {getChildDescription()};
+    }
+
+    protected DomElement getParentDomElement(final AnActionEvent e) {
+      return getDomElement();
+    }
+
+    protected JComponent getComponent(AnActionEvent e) {
+      return DomCollectionControl.this.getComponent();
+    }
+
+    protected DefaultAddAction createAddingAction(final AnActionEvent e,
+                                                  final String name,
+                                                  final Icon icon,
+                                                  final Class s,
+                                                  final DomCollectionChildDescription description) {
+      return createDefaultAction(name, icon, s);
+    }
+
+  };
+
+  private AnAction myEditAction = new AnAction(ApplicationBundle.message("action.edit"), null, EDIT_ICON) {
+    public void actionPerformed(AnActionEvent e) {
+      doEdit();
+    }
+
+    public void update(AnActionEvent e) {
+      e.getPresentation().setVisible(isEditable());
+      e.getPresentation().setEnabled(DomCollectionControl.this.getComponent().getTable().getSelectedRowCount() == 1);
+    }
+  };
+  private AnAction myRemoveAction = new AnAction(ApplicationBundle.message("action.remove"), null, REMOVE_ICON) {
+    public void actionPerformed(AnActionEvent e) {
+      doRemove();
+    }
+
+    public void update(AnActionEvent e) {
+      final JTable table = DomCollectionControl.this.getComponent().getTable();
+      e.getPresentation().setEnabled(table != null && table.getSelectedRowCount() > 0);
+    }
+  };
+  public static final Icon ADD_ICON = IconLoader.getIcon("/general/add.png");
+  public static final Icon EDIT_ICON = IconLoader.getIcon("/actions/editSource.png");
+  public static final Icon REMOVE_ICON = IconLoader.getIcon("/general/remove.png");
 
   public DomCollectionControl(DomElement parentElement,
                               DomCollectionChildDescription description,
@@ -70,9 +119,9 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
   }
 
   public void bind(JComponent component) {
-    assert component instanceof DomCollectionPanel;
+    assert component instanceof DomTableView;
 
-    initialize((DomCollectionPanel)component);
+    initialize((DomTableView)component);
   }
 
   public void addCommitListener(CommitListener listener) {
@@ -102,17 +151,36 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     myCollectionPanel.getTable().setRowSelectionInterval(index, index);
   }
 
-  protected void initialize(final DomCollectionPanel boundComponent) {
+  @Nullable
+  protected String getHelpId() {
+    return null;
+  }
+
+  @Nullable
+  protected String getEmptyPaneText() {
+    return null;
+  }
+
+  protected void initialize(final DomTableView boundComponent) {
     if (boundComponent == null) {
-      myCollectionPanel = new DomCollectionPanel();
+      myCollectionPanel = new DomTableView(getProject(), getHelpId(), getEmptyPaneText());
     }
     else {
       myCollectionPanel = boundComponent;
     }
-    myCollectionPanel.setControl(this);
+    myCollectionPanel.setToolbarActions(myAddAction, myEditAction, myRemoveAction);
+    myCollectionPanel.installPopup(createPopupActionGroup());
     myCollectionPanel.initializeTable();
     myCollectionPanel.setColumnInfos(createColumnInfos(myParentDomElement));
     reset();
+  }
+
+  protected DefaultActionGroup createPopupActionGroup() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(myAddAction);
+    group.add(myEditAction);
+    group.add(myRemoveAction);
+    return group;
   }
 
   protected ColumnInfo[] createColumnInfos(DomElement parent) {
@@ -202,7 +270,7 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
     return myParentDomElement.getManager().getProject();
   }
 
-  public JComponent getComponent() {
+  public DomTableView getComponent() {
     if (myCollectionPanel == null) initialize(null);
 
     return myCollectionPanel;

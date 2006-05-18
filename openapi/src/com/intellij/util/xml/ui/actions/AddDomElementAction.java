@@ -8,14 +8,14 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.ui.DomCollectionControl;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.ArrayList;
 import java.awt.event.KeyEvent;
-
-import org.jetbrains.annotations.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Sergey.Vasiliev
@@ -42,6 +42,7 @@ public abstract class AddDomElementAction extends ActionGroup {
     e.getPresentation().setEnabled(enabled);
 
     e.getPresentation().setText(getActionText(e) + (actions.length > 1 ? "..." : ""));
+    e.getPresentation().setIcon(DomCollectionControl.ADD_ICON);
 
     super.update(e);
   }

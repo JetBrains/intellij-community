@@ -4,9 +4,7 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -14,22 +12,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.ToolTipHandlerProvider;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UIUtil;import com.intellij.ide.actions.CommonActionsFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.*;import javax.swing.border.MatteBorder;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
+import javax.swing.event.TableModelListener;import javax.swing.event.ListSelectionListener;import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -39,7 +35,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class DomTableView extends JPanel {
+public class DomTableView extends JPanel implements DataProvider{
   @NonNls private static final String TREE = "Tree";
   @NonNls private static final String EMPTY_PANE = "EmptyPane";
   private final ListTableModel myTableModel = new MyListTableModel();
@@ -75,19 +71,15 @@ public abstract class DomTableView extends JPanel {
   private final String myEmptyPaneText;
   private final JPanel myInnerPanel;
   private EmptyPane myEmptyPane;
+  private final Project myProject;
 
-  protected TableCellRenderer getTableCellRenderer(final int row, final int column, final TableCellRenderer superRenderer, final Object value) {
-    final ColumnInfo columnInfo = (getTableModel()).getColumnInfos()[column];
-
-    return columnInfo.getCustomizedRenderer(value, new StripeTableCellRenderer(superRenderer));
+  public DomTableView(final Project project) {
+    this(project, null, null);
   }
 
-  protected DomTableView() {
-    this(null, null);
-  }
-
-  protected DomTableView(final String emptyPaneText, final String helpID) {
+  public DomTableView(final Project project, final String emptyPaneText, final String helpID) {
     super(new BorderLayout());
+    myProject = project;
     myTableModel.setSortable(false);
 
     myEmptyPaneText = emptyPaneText;
@@ -126,9 +118,42 @@ public abstract class DomTableView extends JPanel {
     ToolTipManager.sharedInstance().registerComponent(myTable);
   }
 
+  protected TableCellRenderer getTableCellRenderer(final int row, final int column, final TableCellRenderer superRenderer, final Object value) {
+    final ColumnInfo columnInfo = (getTableModel()).getColumnInfos()[column];
+
+    return columnInfo.getCustomizedRenderer(value, new StripeTableCellRenderer(superRenderer));
+  }
+
   protected final void installPopup(final DefaultActionGroup group) {
     PopupHandler.installPopupHandler(myTable, group, ActionPlaces.J2EE_ATTRIBUTES_VIEW_POPUP, ActionManager.getInstance());
   }
+
+  public final void setToolbarActions(final AnAction... actions) {
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    for (final AnAction action : actions) {
+      actionGroup.add(action);
+    }
+    if (getHelpId() != null) {
+      actionGroup.add(Separator.getInstance());
+      actionGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(getHelpId()));
+    }
+
+    final ActionManager actionManager = ActionManager.getInstance();
+    final ToolbarPosition position = getToolbarPosition();
+    final ActionToolbar myActionToolbar = actionManager.createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, actionGroup, position == ToolbarPosition.TOP || position == ToolbarPosition.BOTTOM);
+    final JComponent toolbarComponent = myActionToolbar.getComponent();
+    final MatteBorder matteBorder = BorderFactory.createMatteBorder(0, 0, position == ToolbarPosition.TOP ? 1 : 0, 0, Color.darkGray);
+    toolbarComponent.setBorder(BorderFactory.createCompoundBorder(matteBorder, toolbarComponent.getBorder()));
+
+    getTable().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        myActionToolbar.updateActionsImmediately();
+      }
+    });
+
+    add(toolbarComponent, position.getPosition());
+  }
+
 
   protected final void setErrorMessages(String[] messages) {
     final boolean empty = messages.length == 0;
@@ -225,8 +250,6 @@ public abstract class DomTableView extends JPanel {
   protected void tuneTable(JTable table) {
   }
 
-  protected abstract Project getProject();
-
   protected boolean allowMultipleRowsSelection() {
     return true;
   }
@@ -242,9 +265,13 @@ public abstract class DomTableView extends JPanel {
   @Nullable
   public Object getData(String dataId) {
     if (DataConstantsEx.HELP_ID.equals(dataId)) {
-      return myHelpID;
+      return getHelpId();
     }
     return null;
+  }
+
+  protected final String getHelpId() {
+    return myHelpID;
   }
 
   private class MyListTableModel extends ListTableModel {
@@ -255,12 +282,36 @@ public abstract class DomTableView extends JPanel {
     public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
       final Object oldValue = getValueAt(rowIndex, columnIndex);
       if (!Comparing.equal(oldValue, aValue)) {
-        new WriteCommandAction(getProject()) {
+        new WriteCommandAction(myProject) {
           protected void run(final Result result) throws Throwable {
             MyListTableModel.super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex);
           }
         }.execute();
       }
+    }
+  }
+
+  protected void dispose() {
+  }
+
+  protected ToolbarPosition getToolbarPosition() {
+    return ToolbarPosition.TOP;
+  }
+
+  protected static enum ToolbarPosition {
+    TOP(BorderLayout.NORTH),
+    LEFT(BorderLayout.WEST),
+    RIGHT(BorderLayout.EAST),
+    BOTTOM(BorderLayout.SOUTH);
+
+    private final String myPosition;
+
+    private ToolbarPosition(final String position) {
+      myPosition = position;
+    }
+
+    public String getPosition() {
+      return myPosition;
     }
   }
 }
