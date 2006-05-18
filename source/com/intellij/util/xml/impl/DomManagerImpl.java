@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -29,6 +30,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.InstanceMap;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.ui.DomUIFactory;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import net.sf.cglib.core.CodeGenerationException;
@@ -459,6 +461,41 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public final DomElement getIdentityScope(DomElement element) {
     final DomFileDescription description = findFileDescription(element);
     return description == null ? element.getParent() : description.getIdentityScope(element);
+  }
+
+  @NotNull
+  private <T> ResolvingConverter<T> getResolvingConverter(GenericDomValue<T> reference) {
+    try {
+      final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(reference);
+      final Converter converter = handler.getScalarConverter(DomUIFactory.GET_VALUE_METHOD, true);
+      if (converter instanceof ResolvingConverter) {
+        return (ResolvingConverter<T>)converter;
+      }
+      return ResolvingConverter.EMPTY_CONVERTER;
+    }
+    catch (Throwable e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof ProcessCanceledException) {
+        throw(ProcessCanceledException)cause;
+      }
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  public final Collection<String> getPossibleTargetNames(GenericDomValue reference) {
+    final ResolvingConverter converter = getResolvingConverter(reference);
+    final ConvertContextImpl context = new ConvertContextImpl(getDomInvocationHandler(reference), DomUIFactory.GET_VALUE_METHOD);
+    return ContainerUtil.map2List(converter.getVariants(context), new Function<Object, String>() {
+      public String fun(final Object s) {
+        return converter.toString(s, context);
+      }
+    });
+  }
+
+  @NotNull
+  public <T> Collection<T> getPossibleTargets(GenericDomValue<T> reference) {
+    return getResolvingConverter(reference).getVariants(new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(reference), DomUIFactory.GET_VALUE_METHOD));
   }
 
   private class MyElementFilter implements ElementFilter {

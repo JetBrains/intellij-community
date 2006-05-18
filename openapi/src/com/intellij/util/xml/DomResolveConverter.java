@@ -71,10 +71,12 @@ public class DomResolveConverter<T extends DomElement> implements ResolvingConve
   }
 
   public Collection<T> getVariants(final ConvertContext context) {
+    final DomElement reference = context.getInvocationElement();
+    final Class<T> aClass = myClass;
     final List<T> result = new ArrayList<T>();
-    getResolvingScope(context).acceptChildren(new DomElementVisitor() {
+    reference.getManager().getResolvingScope((GenericDomValue)reference).acceptChildren(new DomElementVisitor() {
       public void visitDomElement(DomElement element) {
-        if (myClass.isInstance(element)) {
+        if (aClass.isInstance(element)) {
           result.add((T)element);
         }
         element.acceptChildren(this);

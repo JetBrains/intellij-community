@@ -4,22 +4,24 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.javaee.J2EEBundle;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
-import com.intellij.util.xml.ui.DomUIFactory;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.ModelMergerImpl;
 
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * author: lesya
@@ -146,25 +148,7 @@ public class GenericDomValueReference<T> extends GenericReference {
   }
 
   public Object[] getVariants() {
-    try {
-      final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(myGenericValue);
-      final Converter converter = handler.getScalarConverter(DomUIFactory.GET_VALUE_METHOD, true);
-      if (converter instanceof ResolvingConverter) {
-        final ConvertContextImpl convertContext = new ConvertContextImpl(handler, DomUIFactory.GET_VALUE_METHOD);
-        final Collection variants = ((ResolvingConverter)converter).getVariants(convertContext);
-        return ContainerUtil.map2Array(variants, String.class, new Function() {
-          public Object fun(final Object s) {
-            return converter.toString(s, convertContext);
-          }
-        });
-      }
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (InstantiationException e) {
-      LOG.error(e);
-    }
-    return super.getVariants();
+    final Collection<String> strings = myGenericValue.getManager().getPossibleTargetNames(myGenericValue);
+    return strings.isEmpty() ? super.getVariants() : strings.toArray(new String[strings.size()]);
   }
 }

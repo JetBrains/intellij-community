@@ -59,14 +59,18 @@ public abstract class DomUIFactory implements ApplicationComponent {
 
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element, boolean commitOnEveryChange) {
     final DomStringWrapper stringWrapper = new DomStringWrapper(element);
-    if (PsiClass.class.isAssignableFrom(DomUtil.getRawType(type))) {
+    final Class rawType = DomUtil.getRawType(type);
+    if (PsiClass.class.isAssignableFrom(rawType)) {
       return getDomUIFactory().createPsiClassControl(stringWrapper, commitOnEveryChange);
     }
     if (type.equals(PsiType.class)) {
       return getDomUIFactory().createPsiTypeControl(stringWrapper, commitOnEveryChange);
     }
-    if (type instanceof Class && Enum.class.isAssignableFrom((Class)type)) {
-      return new ComboControl(stringWrapper, (Class)type);
+    if (type instanceof Class && Enum.class.isAssignableFrom(rawType)) {
+      return new ComboControl(stringWrapper, rawType);
+    }
+    if (DomElement.class.isAssignableFrom(rawType)) {
+      return new ComboControl(element);
     }
 
     final DomFixedWrapper wrapper = new DomFixedWrapper(element);

@@ -18,23 +18,23 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Pair;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author peter
  */
 public class ComboTableCellEditor extends DefaultCellEditor {
   private final boolean myNullable;
-  private final Factory<List<String>> myDataFactory;
-  private Set<String> myData;
-  private static final String EMPTY = " ";
+  private final Factory<List<Pair<String, Icon>>> myDataFactory;
+  private Map<String, Icon> myData;
+  private static final Pair<String,Icon> EMPTY = Pair.create(" ", null);
 
-  public ComboTableCellEditor(Factory<List<String>> dataFactory, final boolean nullable) {
+  public ComboTableCellEditor(Factory<List<Pair<String, Icon>>> dataFactory, final boolean nullable) {
     super(new JComboBox());
     myDataFactory = dataFactory;
     myNullable = nullable;
@@ -42,7 +42,7 @@ public class ComboTableCellEditor extends DefaultCellEditor {
     JComboBox comboBox = (JComboBox)editorComponent;
     ComboControl.initComboBox(comboBox, new Condition<String>() {
       public boolean value(final String object) {
-        return myData != null && (myData.contains(object) || myNullable && EMPTY.equals(object));
+        return myData != null && myData.containsKey(object) || myNullable && EMPTY.first == object;
       }
     });
   }
@@ -52,26 +52,29 @@ public class ComboTableCellEditor extends DefaultCellEditor {
   }
 
   public Object getCellEditorValue() {
-    final String cellEditorValue = (String)super.getCellEditorValue();
-    return EMPTY.equals(cellEditorValue) ? null : cellEditorValue;
+    final Pair<String,Icon> cellEditorValue = (Pair<String,Icon>)super.getCellEditorValue();
+    return EMPTY == cellEditorValue || null == cellEditorValue ? null : cellEditorValue.first;
   }
 
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-    final List<String> list = myDataFactory.create();
-    myData = new HashSet<String>(list);
-    String string = (String) value;
-    JComboBox comboBox = (JComboBox)editorComponent;
+    final List<Pair<String, Icon>> list = myDataFactory.create();
+    myData = new HashMap<String,Icon>();
+
+    final Pair<String,Icon> pairValue = (Pair<String,Icon>) value;
+    final String string = pairValue == null ? null : pairValue.first;
+    final JComboBox comboBox = (JComboBox)editorComponent;
     comboBox.removeAllItems();
     if (myNullable) {
       comboBox.addItem(EMPTY);
     }
-    for (final String s : list) {
-      comboBox.addItem(s);
+    for (final Pair<String, Icon> pair : list) {
+      myData.put(pair.first, pair.second);
+      comboBox.addItem(pair);
     }
     super.getTableCellEditorComponent(table, value, isSelected, row, column);
-    if (!myData.contains(string)) {
+    if (!myData.containsKey(string)) {
       comboBox.setEditable(true);
-      comboBox.setSelectedItem(string);
+      comboBox.setSelectedItem(pairValue);
       comboBox.setEditable(false);
     }
     return comboBox;
