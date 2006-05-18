@@ -35,8 +35,11 @@ public class CastMethodArgumentFix extends FixMethodArgumentAction {
     }
 
     protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
-      if (!toType.isConvertibleFrom(expression.getType())) return null;
       return AddTypeCastFix.createCastExpression(expression, expression.getProject(), toType);
+    }
+
+    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType) {
+      return parameterType.isConvertibleFrom(exprType);
     }
   }
 

@@ -70,6 +70,11 @@ public class AddTypeArgumentsFix extends FixMethodArgumentAction {
 
       return null;
     }
+
+    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType) {
+      return !(exprType instanceof PsiPrimitiveType) &&
+             !(parameterType instanceof PsiPrimitiveType);
+    }
   }
 
   public static ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();
