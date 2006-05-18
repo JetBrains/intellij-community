@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 
@@ -30,11 +31,12 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   }
 
   public int getLineStartOffset(int line) {
-    return 0;
+    return Math.max(0, myDelegate.getLineStartOffset(myDelegate.getLineNumber(myRange.getStartOffset()) + line) - myRange.getStartOffset());
   }
 
   public int getLineEndOffset(int line) {
-    return myRange.getLength();
+    int myLineInParent = myDelegate.getLineNumber(myRange.getStartOffset()) + line;
+    return Math.min(myRange.getEndOffset(), myDelegate.getLineEndOffset(myLineInParent)) - myRange.getStartOffset();
   }
 
   public String getText() {
@@ -104,6 +106,7 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
     return myDelegate.getMarkupModel();
   }
 
+  @NotNull
   public MarkupModel getMarkupModel(final Project project) {
     return myDelegate.getMarkupModel(project);
   }

@@ -1,25 +1,13 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.PsiParser;
-import com.intellij.lang.impl.PsiBuilderImpl;
-import com.intellij.openapi.editor.impl.VirtualFileDelegate;
-import com.intellij.openapi.editor.impl.DocumentRange;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -413,36 +401,13 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
 
   @Nullable
   public Pair<PsiElement,TextRange> getInjectedPsi() {
-    final Language language = getManager().getInjectedLanguage(this);
-    if (language == null) return null;
-
-    final Project project = getProject();
-    final ParserDefinition parserDefinition = language.getParserDefinition();
-    if (parserDefinition == null) return null;
-
-    final PsiParser parser = parserDefinition.createParser(project);
-    final IElementType root = parserDefinition.getFileNodeType();
-
     Object value = getValue();
     if (!(value instanceof String)) return null;
     String text = (String)value;
     TextRange insideQuotes = new TextRange(1, text.length()+1);
-    final PsiBuilderImpl builder = new PsiBuilderImpl(language, project, null, text);
-    final ASTNode parsedNode = parser.parse(root, builder);
-    if (parsedNode instanceof FileElement) {
-      parsedNode.putUserData(MANAGER_KEY, getManager());
-      TextRange documentWindow = getTextRange().cutOut(insideQuotes);
-      DocumentEx document = (DocumentEx)PsiDocumentManager.getInstance(project).getDocument(getContainingFile());
-      DocumentRange documentRange = new DocumentRange(document, documentWindow);
-      final VirtualFile virtualFile = new VirtualFileDelegate(getContainingFile().getVirtualFile(), documentWindow, language, text);
-      PsiFile psiFile = parserDefinition.createFile(new SingleRootFileViewProvider(getManager(), virtualFile));
-      FileDocumentManagerImpl.registerDocument(documentRange, virtualFile);
-      SrcRepositoryPsiElement repositoryPsiElement = (SrcRepositoryPsiElement)psiFile;
-      ((FileElement)parsedNode).setPsiElement(repositoryPsiElement);
-      repositoryPsiElement.setTreeElement(parsedNode);
-    }
 
-    return Pair.create(parsedNode.getPsi(), insideQuotes);
+    return InjectedLanguageUtil.createInjectedPsiFile(this, text, insideQuotes);
   }
+
 }
 

@@ -1019,10 +1019,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     if (injectedPsi == null) {
       return editor;
     }
-    TextRange injtextRange = injectionHost.getTextRange();
-    injtextRange = injtextRange.cutOut(injectedPsi.getSecond());
-
-    //DocumentRange document = new DocumentRange((DocumentEx)editor.getDocument(), injtextRange);
     PsiFile injectedFile = injectedPsi.getFirst().getContainingFile();
     Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
 

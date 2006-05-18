@@ -49,7 +49,9 @@ public class CaretDelegate implements CaretModel {
   }
 
   public LogicalPosition getLogicalPosition() {
-    return new LogicalPosition(0, Math.max(0,myDelegate.getOffset() - myRange.getStartOffset()));
+    int rangeLine = myEditorDelegate.getDocument().getLineNumber(myRange.getStartOffset());
+    int line = myEditorDelegate.getDocument().getLineNumber(myDelegate.getOffset()) - rangeLine;
+    return new LogicalPosition(line, Math.max(0,myDelegate.getOffset() - myRange.getStartOffset()));
   }
 
   public VisualPosition getVisualPosition() {

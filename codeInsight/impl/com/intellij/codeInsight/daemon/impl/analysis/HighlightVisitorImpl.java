@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +154,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
       final Language injectedLanguage = element.getManager().getInjectedLanguage(injectionHost);
       if (injectedLanguage != null) {
-
         Pair<PsiElement,TextRange> injectedInfo = injectionHost.getInjectedPsi();
         if (injectedInfo != null) {
           VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
@@ -951,5 +951,10 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     List<HighlightInfo> result = myXmlVisitor.getResult();
     myHolder.addAll(result);
     myXmlVisitor.clearResult();
+  }
+
+  public void visitXmlText(XmlText text) {
+    super.visitXmlText(text);
+    visitElement(text);
   }
 }

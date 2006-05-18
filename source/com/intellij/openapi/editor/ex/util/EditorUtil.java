@@ -18,9 +18,8 @@ public class EditorUtil {
     LogicalPosition logStart = editor.visualToLogicalPosition(visStart);
     int lastLogLine = logStart.line;
     while (lastLogLine < editor.getDocument().getLineCount() - 1) {
-      VisualPosition tryVisible;
       logStart = new LogicalPosition(logStart.line + 1, logStart.column);
-      tryVisible = editor.logicalToVisualPosition(logStart);
+      VisualPosition tryVisible = editor.logicalToVisualPosition(logStart);
       if (tryVisible.line != visStart.line) break;
       lastLogLine = logStart.line;
     }
@@ -79,7 +78,7 @@ public class EditorUtil {
       int offset = start;
       for (; offset < end && offset + shift < start + columnNumber; offset++) {
         if (text.charAt(offset) == '\t') {
-          shift += (getTabLength(offset + shift - start, tabSize) - 1);
+          shift += getTabLength(offset + shift - start, tabSize) - 1;
         }
       }
       if (offset + shift > start + columnNumber) {
@@ -147,7 +146,7 @@ public class EditorUtil {
         char c = text.charAt(i);
         LOG.assertTrue(c != '\n' && c != '\r');
         if (c == '\t') {
-          shift += (getTabLength(i + shift - start, tabSize) - 1);
+          shift += getTabLength(i + shift - start, tabSize) - 1;
         }
       }
       return offset - start + shift;

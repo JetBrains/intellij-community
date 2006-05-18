@@ -2,7 +2,9 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -10,7 +12,8 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.XmlTextChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
@@ -18,6 +21,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlTagTextUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public class XmlTextImpl extends XmlElementImpl implements XmlText {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTextImpl");
   private String myDisplayText = null;
 
   public XmlTextImpl() {
@@ -61,14 +64,14 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
         child = cdata.getFirstChildNode();
       }
       else if (elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
-        buffer.append(getChar(child.getText()));
+        buffer.append(getCharFromEntityRef(child.getText()));
       }
       else if (elementType == XmlTokenType.XML_WHITE_SPACE
                || elementType == XmlTokenType.XML_DATA_CHARACTERS
                || elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
         buffer.append(child.getText());
       }
-      else if (elementType == ElementType.ERROR_ELEMENT) {
+      else if (elementType == JavaElementType.ERROR_ELEMENT) {
         buffer.append(child.getText());
       }
 
@@ -103,7 +106,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     return myDisplayText = buffer.toString();
   }
 
-  private char getChar(@NonNls String text) {
+  private static char getCharFromEntityRef(@NonNls String text) {
     //LOG.assertTrue(text.startsWith("&#") && text.endsWith(";"));
     if (text.charAt(1) != '#') {
       text = text.substring(1, text.length() - 1);
@@ -111,7 +114,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     }
     text = text.substring(2, text.length() - 1);
     int code;
-    if (text.startsWith("x")) {
+    if (StringUtil.startsWithChar(text,'x')) {
       text = text.substring(1);
       code = Integer.parseInt(text, 16);
     }
@@ -133,7 +136,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     else gapIndex = -1;
 
     if(gapIndex < 0) return physicalIndex;
-    final int shift = (myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex]);
+    final int shift = myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex];
     return Math.max(myGapDisplayStarts[gapIndex], physicalIndex - shift);
   }
 
@@ -149,7 +152,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     else gapIndex = -1;
 
     if(gapIndex < 0) return displayIndex;
-    final int shift = (myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex]);
+    final int shift = myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex];
     return displayIndex + shift;
   }
 
@@ -240,5 +243,13 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     myDisplayText = null;
     myGapDisplayStarts = null;
     myGapPhysicalStarts = null;
+  }
+
+  @Nullable
+  public Pair<PsiElement,TextRange> getInjectedPsi() {
+    String text = getValue();
+    TextRange range = new TextRange(0, getTextLength());
+
+    return InjectedLanguageUtil.createInjectedPsiFile(this, text, range);
   }
 }
