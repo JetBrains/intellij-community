@@ -16,6 +16,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   private AntTypeId myTypeId;
   private String myClassName;
   private boolean myIsTask;
+  private PsiElement myDefiningElement;
   /**
    * Attribute names to their types.
    */
@@ -24,7 +25,6 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
    * Task ids to their class names.
    */
   private final Map<AntTypeId, String> myNestedClassNames;
-  private final PsiElement myDefiningElement;
 
   public AntTypeDefinitionImpl(final AntTypeDefinitionImpl base) {
     this(base.getTypeId(), base.getClassName(), base.isTask(),
@@ -95,6 +95,10 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
   public PsiElement getDefiningElement() {
     return myDefiningElement;
+  }
+
+  public void setDefiningElement(final PsiElement element) {
+    myDefiningElement = element;
   }
 
   public void setIsTask(final boolean isTask) {

@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
+import com.intellij.lang.ant.psi.AntMacroDef;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -27,14 +28,27 @@ public class AntElementNameReference extends AntGenericReference {
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final AntStructuredElement element = getElement();
-    if (element instanceof AntTask) {
+    if (!(element instanceof AntTask)) {
+      final AntTypeDefinition typeDef = element.getTypeDefinition();
+      if (typeDef != null) {
+        final AntStructuredElement definingElement = (AntStructuredElement)typeDef.getDefiningElement();
+        if (definingElement != null && definingElement.getParent()instanceof AntMacroDef &&
+            "element".equals(definingElement.getSourceElement().getName())) {
+          // renaming macrodef's nested element
+          element.getSourceElement().setName(newElementName);
+        }
+      }
+    }
+    else {
       AntTask task = (AntTask)element;
       if (task.isMacroDefined()) {
         final XmlAttribute attr = getAttribute();
         if (attr == null) {
+          // renaming macrodef itself
           task.getSourceElement().setName(newElementName);
         }
         else {
+          // renaming macrodef's attribute
           attr.setName(newElementName);
         }
       }
@@ -54,7 +68,8 @@ public class AntElementNameReference extends AntGenericReference {
     final AntTypeDefinition elementDef = element.getTypeDefinition();
     if (elementDef != null) {
       if (!(element instanceof AntTask)) {
-        return findClass(elementDef, element);
+        final PsiElement nestedMacroElement = elementDef.getDefiningElement();
+        return (nestedMacroElement == null) ? findClass(elementDef, element) : nestedMacroElement;
       }
       AntTask task = (AntTask)element;
       if (task.isMacroDefined()) {

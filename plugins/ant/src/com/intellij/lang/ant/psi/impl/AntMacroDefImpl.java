@@ -56,6 +56,7 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
             nestedElementDef.setTypeId(typeId);
             nestedElementDef.setIsTask(false);
             nestedElementDef.setClassName(thisClassName + '.' + name);
+            nestedElementDef.setDefiningElement(child);
             seParent.registerCustomType(nestedElementDef);
             nestedElements.put(typeId, nestedElementDef.getClassName());
           }
@@ -73,7 +74,7 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
     try {
       builder.append(ANT_MACRODEF_NAME);
       builder.append("[");
-      builder.append(getSourceElement().getName());
+      builder.append(getName());
       builder.append("]");
       return builder.toString();
     }
