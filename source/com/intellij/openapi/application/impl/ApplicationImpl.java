@@ -385,7 +385,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
       }, ApplicationBundle.message("command.exit"), null);
       if (!canClose[0]) break;
-      Disposer.dispose(project);
     }
 
     if (canClose[0]) {

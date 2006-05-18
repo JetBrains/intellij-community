@@ -559,8 +559,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       FileDocumentManager.getInstance().saveAllDocuments();
       project.save();
 
-      myOpenProjects.remove(project);
-      fireProjectClosed(project);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          myOpenProjects.remove(project);
+          fireProjectClosed(project);
+
+          Disposer.dispose(project);
+        }
+      });
 
       ApplicationManagerEx.getApplicationEx().saveSettings();
     }
