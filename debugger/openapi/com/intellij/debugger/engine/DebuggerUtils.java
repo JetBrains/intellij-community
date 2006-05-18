@@ -26,6 +26,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -369,4 +371,8 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
   public abstract PsiElement getContextElement(final StackFrameContext context);
 
   public abstract PsiClass chooseClassDialog(String title, Project project);
+
+  public static boolean supportsJVMDebugging(FileType type) {
+    return type instanceof LanguageFileType && ((LanguageFileType)type).isJVMDebuggingSupported();
+  }
 }

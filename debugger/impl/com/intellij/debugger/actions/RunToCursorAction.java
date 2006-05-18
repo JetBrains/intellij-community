@@ -6,13 +6,13 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -52,11 +52,12 @@ public class RunToCursorAction extends AnAction {
       } else {
         final VirtualFile virtualFile = file.getVirtualFile();
         FileType fileType = virtualFile != null ? fileTypeManager.getFileTypeByFile(virtualFile) : null;
-        if (StdFileTypes.JAVA != fileType && StdFileTypes.JSP != fileType && StdFileTypes.JSPX != fileType) {
-          enabled = false;
-        } else {
+        if (DebuggerUtils.supportsJVMDebugging(fileType)) {
           DebuggerSession debuggerSession = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();
           enabled = debuggerSession != null && debuggerSession.isPaused();
+        }
+        else {
+          enabled = false;
         }
       }
     }

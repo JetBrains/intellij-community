@@ -31,15 +31,14 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ide.IdeBundle;
-
-import javax.swing.*;
-
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class JavaFileType extends LanguageFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "java";
@@ -67,5 +66,9 @@ public class JavaFileType extends LanguageFileType {
 
   public Icon getIcon() {
     return ICON;
+  }
+
+  public boolean isJVMDebuggingSupported() {
+    return true;
   }
 }

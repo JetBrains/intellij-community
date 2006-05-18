@@ -1,18 +1,16 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
-import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
+import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -51,8 +49,7 @@ public class ToggleLineBreakpointAction extends AnAction {
       final Document document = editor.getDocument();
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (file != null) {
-        FileType fileType = file.getFileType();
-        if (StdFileTypes.JAVA == fileType || StdFileTypes.JSP  == fileType || StdFileTypes.JSPX == fileType) {
+        if (DebuggerUtils.supportsJVMDebugging(file.getFileType())) {
           final Editor editor1 = editor;
           return new PlaceInDocument() {
             public Document getDocument() {

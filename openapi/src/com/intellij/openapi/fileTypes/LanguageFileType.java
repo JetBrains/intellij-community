@@ -85,4 +85,8 @@ public abstract class LanguageFileType implements FileType{
   public String getCharset(VirtualFile file) {
     return null;
   }
+
+  public boolean isJVMDebuggingSupported() {
+    return false;
+  }
 }

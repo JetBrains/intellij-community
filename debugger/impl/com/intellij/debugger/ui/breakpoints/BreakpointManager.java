@@ -10,6 +10,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
@@ -31,8 +32,6 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -185,9 +184,7 @@ public class BreakpointManager implements JDOMExternalizable {
         }
         final Document document = editor.getDocument();
         final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        final FileType fileType = psiFile.getFileType();
-        final boolean isAcceptableFile = StdFileTypes.JAVA == fileType || StdFileTypes.JSP == fileType || StdFileTypes.JSPX == fileType;
-        if (!isAcceptableFile) {
+        if (!DebuggerUtils.supportsJVMDebugging(psiFile.getFileType())) {
           return null;
         }
         PsiDocumentManager.getInstance(myProject).commitDocument(document);
