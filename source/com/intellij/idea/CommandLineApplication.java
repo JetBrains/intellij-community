@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import java.awt.*;
 import java.util.Enumeration;
 
-public abstract class CommandLineApplication {
+public class CommandLineApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.CommandLineApplication");
   protected static CommandLineApplication ourInstance = null;
 
@@ -40,7 +40,7 @@ public abstract class CommandLineApplication {
   protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, String componentsDescriptor, @NonNls String appName) {
     LOG.assertTrue(ourInstance == null, "Only one instance allowed.");
     ourInstance = this;
-    ApplicationManagerEx.createApplication(componentsDescriptor, isInternal, isUnitTestMode, appName);
+    ApplicationManagerEx.createApplication(componentsDescriptor, isInternal, isUnitTestMode, true, appName);
   }
 
   public Object getData(String dataId) {
@@ -48,8 +48,7 @@ public abstract class CommandLineApplication {
   }
 
   public static class MyDataManagerImpl extends DataManagerImpl {
-    public MyDataManagerImpl() {}
-
+    
     public DataContext getDataContext() {
       return new DataContext() {
         public Object getData(String dataId) {

@@ -25,6 +25,7 @@ import javax.swing.*;
 import java.io.IOException;
 
 
+@SuppressWarnings({"CallToPrintStackTrace"})
 public class IdeaApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
@@ -39,8 +40,15 @@ public class IdeaApplication {
     LOG.assertTrue(ourInstance == null);
     ourInstance = this;
     myArgs = args;
-    boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY));
-    ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, "idea");
+    boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
+    @NonNls final String inspectAppCode = "inspect";
+    @NonNls final String diffAppCode = "diff";
+    final boolean isHeadless = Comparing.strEqual(myArgs[0], inspectAppCode) || Comparing.strEqual(myArgs[0], diffAppCode);
+    if (isHeadless){
+      new CommandLineApplication(isInternal, false, "componentSets/IdeaComponents");
+    } else {
+      ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, false, "idea");
+    }
 
     myStarter = getStarter();
     myStarter.premain(args);
@@ -53,8 +61,8 @@ public class IdeaApplication {
 
       final Object[] starters = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER).getExtensions();
       String key = myArgs[0];
-      for (int i = 0; i < starters.length; i++) {
-        ApplicationStarter starter = (ApplicationStarter)starters[i];
+      for (Object o : starters) {
+        ApplicationStarter starter = (ApplicationStarter)o;
         if (Comparing.equal(starter.getCommandName(), key)) return starter;
       }
     }

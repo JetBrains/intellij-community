@@ -61,6 +61,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final List<ApplicationListener> myListeners = new CopyOnWriteArrayList<ApplicationListener>();
 
   private boolean myTestModeFlag = false;
+  private boolean myHeadlessMode = false;
 
   private String myComponentsDescriptor;
 
@@ -86,7 +87,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @NonNls private static final String XML_EXTENSION = ".xml";
   private List<Runnable> myPostprocessActions = new ArrayList<Runnable>();
 
-  public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, String appName) {
+  public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, boolean isHeadless, String appName) {
     myStartTime = System.currentTimeMillis();
     myName = appName;
     ApplicationManagerEx.setApplication(this);
@@ -111,6 +112,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myComponentsDescriptor = componentsDescriptor;
     myIsInternal = isInternal;
     myTestModeFlag = isUnitTestMode;
+    myHeadlessMode = isHeadless;
 
     loadApplicationComponents();
 
@@ -185,7 +187,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public boolean isHeadlessEnvironment() {
-    return myTestModeFlag;
+    return myHeadlessMode;
   }
 
   public IdeaPluginDescriptor getPlugin(PluginId id) {
@@ -732,7 +734,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void assertReadAccessAllowed() {
-    if (myTestModeFlag) return;
+    if (myTestModeFlag || myHeadlessMode) return;
     if (!isReadAccessAllowed()) {
       LOG.error(
         "Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
@@ -806,7 +808,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void assertIsDispatchThread(String message) {
-    if (myTestModeFlag) return;
+    if (myTestModeFlag || myHeadlessMode) return;
     final Thread currentThread = Thread.currentThread();
     if (ourDispatchThread == currentThread) return;
 
