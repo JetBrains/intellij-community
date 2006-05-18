@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -127,6 +128,12 @@ public class CompletionProcessor extends BaseScopeProcessor
   private void add(CompletionElement element){
     if(myResultNames.add(element.getUniqueId())){
       myResults.add(element);
+    }
+  }
+
+  public void setCompletionElements(@NotNull Object[] elements) {
+    for (Object element: elements) {
+      myResults.add(new CompletionElement(null, element, null));
     }
   }
 

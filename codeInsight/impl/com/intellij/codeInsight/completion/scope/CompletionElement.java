@@ -12,10 +12,10 @@ import com.intellij.psi.util.PsiUtil;
  */
 public class CompletionElement{
   private final PsiType myQualifier;
-  private final PsiElement myElement;
+  private final Object myElement;
   private final PsiSubstitutor mySubstitutor;
 
-  public CompletionElement(PsiType qualifier, PsiElement element, PsiSubstitutor substitutor){
+  public CompletionElement(PsiType qualifier, Object element, PsiSubstitutor substitutor){
     myElement = element;
     myQualifier = qualifier;
     mySubstitutor = substitutor;
@@ -25,7 +25,7 @@ public class CompletionElement{
     return mySubstitutor;
   }
 
-  public PsiElement getElement(){
+  public Object getElement(){
     return myElement;
   }
 
@@ -40,8 +40,8 @@ public class CompletionElement{
     else if(myElement instanceof PsiMethod){
       return ((PsiMethod)myElement).getSignature(mySubstitutor);
     }
-    else if(myElement != null){
-      name = PsiUtil.getName(myElement);
+    else if(myElement instanceof PsiElement){
+      name = PsiUtil.getName((PsiElement)myElement);
     }
     else{
       name = "";

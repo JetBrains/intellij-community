@@ -31,7 +31,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
         knownTopLevelPackages.add(((PsiPackage)pack).getName());
       }
     }
-    final List<ReferenceSet.JavaReference> results = new ArrayList<ReferenceSet.JavaReference>();
+    final List<PsiReference> results = new ArrayList<PsiReference>();
 
     final Matcher matcher = PATTERN.matcher(str);
 
@@ -45,6 +45,6 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
         }.getAllReferences()));
       }
     }
-    return results.toArray(new GenericReference[results.size()]);
+    return results.toArray(new PsiReference[results.size()]);
   }
 }

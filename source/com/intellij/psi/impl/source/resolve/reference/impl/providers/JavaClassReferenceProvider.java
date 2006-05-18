@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.JavaClassReferenceQuickFixProvider;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
+import com.intellij.codeInsight.completion.scope.CompletionProcessor;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
@@ -32,10 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -56,11 +55,13 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME =
     new CustomizationKey<Boolean>(PsiBundle.message("qualified.resolve.class.reference.provider.option"));
 
+  public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<String[]>("EXTEND_CLASS_NAMES");
 
-  @Nullable private final String[] myExtendClassNames;
+
 
   public JavaClassReferenceProvider(String[] extendClassNames) {
-    myExtendClassNames = extendClassNames;
+    myOptions = new HashMap<CustomizationKey, Object>();
+    EXTEND_CLASS_NAMES.putValue(myOptions, extendClassNames);
   }
 
   public JavaClassReferenceProvider(String extendClassName) {
@@ -68,7 +69,6 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   public JavaClassReferenceProvider() {
-    this((String[])null);
   }
 
   @NotNull
@@ -157,7 +157,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   protected class ReferenceSet {
     private final @Nullable Map<CustomizationKey, Object> options = myOptions;
-    private JavaReference[] myReferences;
+    private PsiReference[] myReferences;
     private PsiElement myElement;
     private final int myStartInElement;
     private final ReferenceType myType;
@@ -210,11 +210,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       reparse(text, element, false);
     }
 
-    private JavaReference getReference(int index) {
+    private PsiReference getReference(int index) {
       return myReferences[index];
     }
 
-    protected JavaReference[] getAllReferences() {
+    protected PsiReference[] getAllReferences() {
       return myReferences;
     }
 
@@ -246,6 +246,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       }
 
       public void processVariants(final PsiScopeProcessor processor) {
+
+        if (processor instanceof CompletionProcessor && EXTEND_CLASS_NAMES.getValue(myOptions) != null) {
+          ((CompletionProcessor)processor).setCompletionElements(getVariants());
+          return;
+        }
         PsiScopeProcessor processorToUse = processor;
 
         if (myInStaticImport) {
@@ -361,7 +366,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
           context = myElement.getManager().findPackage("");
         }
         if (context instanceof PsiPackage) {
-          if (myExtendClassNames != null) {
+          if (EXTEND_CLASS_NAMES.getValue(myOptions) != null) {
             return getSubclassVariants((PsiPackage)context);
           }
           return processPackage((PsiPackage)context);
@@ -467,9 +472,8 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       @NotNull
       protected Object[] getSubclassVariants(PsiPackage context) {
         HashSet<Object> lookups = new HashSet<Object>();
-        assert myExtendClassNames != null;
         GlobalSearchScope scope = GlobalSearchScope.packageScope(context, true);
-        for (String extendClassName : myExtendClassNames) {
+        for (String extendClassName : EXTEND_CLASS_NAMES.getValue(myOptions)) {
           PsiClass extendClass = context.getManager().findClass(extendClassName, scope);
           if (extendClass != null) {
             PsiClass[] result = context.getManager().getSearchHelper().findInheritors(extendClass, scope, true);
@@ -498,7 +502,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
           }
 
           public String getPresentation() {
-            return clazz.getQualifiedName();
+            return clazz.getName();
           }
         };
         LookupItem item = new LookupItem(value, clazz.getQualifiedName());
@@ -506,6 +510,8 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         return item;
       }
     }
+
+
 
     protected boolean isSoft() {
       return false;
