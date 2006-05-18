@@ -24,6 +24,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -166,13 +167,15 @@ public class ProjectUtil {
 
   /**
    * @param project cannot be null
-   */ 
+   */
   public static boolean closeProject(Project project) {
     if (project == null) {
       throw new IllegalArgumentException("project cannot be null");
     }
 
-    return ProjectManagerEx.getInstanceEx().closeProject(project);
+    if (!ProjectManagerEx.getInstanceEx().closeProject(project)) return false;
+    Disposer.dispose(project);
+    return true;
   }
 
   public static Project openProject(final String path, Project projectToClose, boolean forceOpenInNewFrame) {
