@@ -232,7 +232,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
    * Same as checkResultByFile but text is provided directly.
    * @param fileText
    */
-  protected void checkResultByText(String fileText) {
+  protected void checkResultByText(@NonNls String fileText) {
     checkResultByText(null, fileText, false);
   }
 
