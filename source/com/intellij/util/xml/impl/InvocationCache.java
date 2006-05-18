@@ -5,11 +5,10 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.JavaMethodSignature;
-import com.intellij.util.xml.StableElement;
+import com.intellij.util.xml.*;
+import com.intellij.util.xml.ui.DomUIFactory;
 import com.intellij.pom.Navigatable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -43,6 +42,20 @@ public class InvocationCache {
             }
           }
           return null;
+        }
+      });
+      ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericDomValue.class.getMethod("getConverter")), new Invocation() {
+        public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+          try {
+            return handler.getScalarConverter(DomUIFactory.GET_VALUE_METHOD, true);
+          }
+          catch (Throwable e) {
+            final Throwable cause = e.getCause();
+            if (cause instanceof ProcessCanceledException) {
+              throw(ProcessCanceledException)cause;
+            }
+            throw new RuntimeException(e);
+          }
         }
       });
     }
