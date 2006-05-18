@@ -44,7 +44,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final Map<VirtualFile, Collection<Problem>> myProblems = new THashMap<VirtualFile, Collection<Problem>>();
   private final CopyOnWriteArrayList<VirtualFile> myCheckingQueue = new CopyOnWriteArrayList<VirtualFile>();
-  private final static Alarm myHighlightingAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
+  private final Alarm myHighlightingAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
   private final Runnable myRehighlightRequest = new Runnable() {
     public void run() {
       ApplicationManager.getApplication().runReadAction(new Runnable(){
