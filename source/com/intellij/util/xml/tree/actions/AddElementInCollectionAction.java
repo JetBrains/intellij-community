@@ -91,6 +91,10 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     return getTreeView(e);
   }
 
+  protected boolean showAsPopup() {
+    return false;
+  }
+
   protected String getActionText(final AnActionEvent e) {
     String text = "Add";
     if (e.getPresentation().isEnabled()) {
@@ -118,7 +122,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
                                                 final Class s,
                                                 final DomCollectionChildDescription description) {
 
-    return new DefaultAddAction(name, "", icon) {
+    return new DefaultAddAction(name, name, icon) {
       // we need this properties, don't remove it (shared dataContext assertion)
       private DomElement  myParent = AddElementInCollectionAction.this.getParentDomElement(e);
       private DomModelTreeView myView = getTreeView(e);

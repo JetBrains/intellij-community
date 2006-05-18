@@ -310,7 +310,7 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
   }
 
   protected DefaultAddAction createDefaultAction(final String name, final Icon icon, final Class s) {
-    return new ControlAddAction(name, "", icon) {
+    return new ControlAddAction(name, name, icon) {
       protected Class getElementClass() {
         return s;
       }

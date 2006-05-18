@@ -6,10 +6,11 @@ package com.intellij.util.xml.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.ui.DomCollectionControl;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.ui.DomCollectionControl;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,7 +30,7 @@ public abstract class AddDomElementAction extends ActionGroup {
   }
 
   public void update(AnActionEvent e) {
-    if (! isEnabled(e)) return;
+    if (!isEnabled(e)) return;
 
     boolean enabled = false;
     final AnAction[] actions = getChildren(e);
@@ -54,48 +55,41 @@ public abstract class AddDomElementAction extends ActionGroup {
   protected boolean isEnabled(final AnActionEvent e) {
     return true;
   }
-/*
-  public void actionPerformed(AnActionEvent e) {
-    final AnAction[] actions = createAdditionActions(e);
-    if (actions.length > 1) {
-      final DefaultActionGroup group = new DefaultActionGroup();
-      for (final AnAction action : actions) {
-        group.add(action);
-      }
 
-      final DataContext dataContext = e.getDataContext();
-      final ListPopup groupPopup =
-        JBPopupFactory.getInstance().createActionGroupPopup(null,//J2EEBundle.message("label.menu.title.add.activation.config.property"),
-                                                            group, dataContext, JBPopupFactory.ActionSelectionAid.NUMBERING, true);
-
-      showPopup(groupPopup, e);
-    }
-    else {
-      actions[0].actionPerformed(e);
-    }
-  }
-*/
   protected void showPopup(final ListPopup groupPopup, final AnActionEvent e) {
     groupPopup.showUnderneathOf(e.getInputEvent().getComponent());
   }
 
   public AnAction[] getChildren(final AnActionEvent e) {
     DomCollectionChildDescription[] descriptions = getDomCollectionChildDescriptions(e);
-    List<AnAction> actions = new ArrayList<AnAction>();
-    for (DomCollectionChildDescription description: descriptions) {
+    final List<AnAction> actions = new ArrayList<AnAction>();
+    for (DomCollectionChildDescription description : descriptions) {
       final ClassChooser chooser = ClassChooserManager.getClassChooser(DomUtil.getRawType(description.getType()));
-      for (Class clazz: chooser.getChooserClasses()) {
+      for (Class clazz : chooser.getChooserClasses()) {
         String name = ElementPresentationManager.getTypeName(clazz);
-        AnAction action = createAddingAction(e,
-                                             ApplicationBundle.message("action.add") + " " + name,
-                                             ElementPresentationManager.getIcon(clazz),
-                                             clazz,
-                                             description);
+        Icon icon = null;
+        if (!showAsPopup() || descriptions.length == 1) {
+          if (descriptions.length > 1) {
+            icon = ElementPresentationManager.getIconForClass(clazz);
+          }
+          if (icon == null) {
+            icon = DomCollectionControl.ADD_ICON;
+          }
+        }
+        AnAction action = createAddingAction(e, ApplicationBundle.message("action.add") + " " + name, icon, clazz, description);
         actions.add(action);
       }
     }
-    if (actions.size() == 1) {
-//      actions.get(0).registerCustomShortcutSet(shortcutSet, getComponent(e));
+    if (actions.size() > 1 && showAsPopup()) {
+      ActionGroup group = new ActionGroup() {
+        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+          return actions.toArray(AnAction.EMPTY_ARRAY);
+        }
+      };
+      return new AnAction[] { new ShowPopupAction(group) };
+    }
+    if (actions.size() > 1) {
+      actions.add(Separator.getInstance());
     }
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
@@ -112,4 +106,27 @@ public abstract class AddDomElementAction extends ActionGroup {
   protected abstract DomElement getParentDomElement(final AnActionEvent e);
 
   protected abstract JComponent getComponent(AnActionEvent e);
+
+  protected boolean showAsPopup() {
+    return true;
+  }
+
+  protected class ShowPopupAction extends AnAction {
+    protected final ActionGroup myGroup;
+
+    protected ShowPopupAction(ActionGroup group) {
+      super(ApplicationBundle.message("action.add"), null, DomCollectionControl.ADD_ICON);
+      myGroup = group;
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final ListPopup groupPopup =
+        JBPopupFactory.getInstance().createActionGroupPopup(null,//J2EEBundle.message("label.menu.title.add.activation.config.property"),
+                                                            myGroup,
+                                                            e.getDataContext(),
+                                                            JBPopupFactory.ActionSelectionAid.NUMBERING, true);
+
+      showPopup(groupPopup, e);
+    }
+  }
 }
