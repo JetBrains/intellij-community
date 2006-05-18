@@ -42,7 +42,7 @@ public class InjectedLanguageUtil {
       DocumentRange documentRange = new DocumentRange(document, documentWindow);
       final VirtualFile virtualFile = new VirtualFileDelegate(host.getContainingFile().getVirtualFile(), documentWindow, language, text);
       PsiFile psiFile = parserDefinition.createFile(new SingleRootFileViewProvider(host.getManager(), virtualFile));
-      psiFile.putUserData(ResolveUtil.INJECTED_AT_FILE, psiFile);
+      psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, host);
       FileDocumentManagerImpl.registerDocument(documentRange, virtualFile);
       SrcRepositoryPsiElement repositoryPsiElement = (SrcRepositoryPsiElement)psiFile;
       ((FileElement)parsedNode).setPsiElement(repositoryPsiElement);
