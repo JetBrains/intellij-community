@@ -1854,6 +1854,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
   public Dimension getPreferredSize() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return new Dimension(1,1);
     Dimension draft = getSizeWithoutCaret();
     int caretX = visualPositionToXY(getCaretModel().getVisualPosition()).x;
     draft.width = Math.max(caretX, draft.width) + mySettings.getAdditionalColumnsCount() * getSpaceWidth(Font.PLAIN);
