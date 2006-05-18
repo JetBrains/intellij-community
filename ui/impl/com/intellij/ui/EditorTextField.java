@@ -1,6 +1,8 @@
 package com.intellij.ui;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -27,7 +29,7 @@ import java.util.ArrayList;
 /**
  * @author max
  */
-public class EditorTextField extends JPanel implements DocumentListener, TextComponent {
+public class EditorTextField extends JPanel implements DocumentListener, TextComponent, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
 
@@ -434,5 +436,15 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
   public Editor getEditor() {
     return myEditor;
+  }
+
+  public Object getData(String dataId) {
+    if (myEditor != null && myEditor.isRendererMode()) return null;
+
+    if (DataConstants.EDITOR.equals(dataId)) {
+      return myEditor;
+    }
+
+    return null;
   }
 }
