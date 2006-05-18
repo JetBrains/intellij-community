@@ -11,6 +11,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 
@@ -87,6 +88,10 @@ public class AntTargetReference extends AntGenericReference {
   }
 
   private int getAttributeValueStartOffset() {
-    return getAttribute().getValueElement().getTextRange().getStartOffset() + 1;
+    final XmlAttribute attr = getAttribute();
+    final XmlAttributeValue valueElement = attr.getValueElement();
+    return (valueElement == null)
+           ? attr.getTextRange().getEndOffset() + 1
+           : valueElement.getTextRange().getStartOffset() + 1;
   }
 }

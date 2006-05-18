@@ -1,11 +1,10 @@
 package com.intellij.lang.ant.psi;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-public interface AntProperty extends AntTask, PsiNamedElement {
+public interface AntProperty extends AntTask {
 
   AntProperty[] EMPTY_ARRAY = new AntProperty[0];
 

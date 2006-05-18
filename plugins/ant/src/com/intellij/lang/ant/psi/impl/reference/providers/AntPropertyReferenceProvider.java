@@ -6,10 +6,8 @@ import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +19,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
-    AntStructuredElement antElement = (AntStructuredElement) element;
+    AntStructuredElement antElement = (AntStructuredElement)element;
     final XmlAttribute[] attributes = antElement.getSourceElement().getAttributes();
     if (attributes.length > 0) {
       List<PsiReference> refs = new ArrayList<PsiReference>();
@@ -35,11 +33,14 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  private void getAttributeReferences(final AntElement element, final XmlAttribute attr, final List<PsiReference> refs) {
+  private void getAttributeReferences(final AntElement element,
+                                      final XmlAttribute attr,
+                                      final List<PsiReference> refs) {
     final String value = attr.getValue();
     final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
     if (xmlAttributeValue != null) {
-      final int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1;
+      final int offsetInPosition =
+        xmlAttributeValue.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1;
       int startIndex;
       int endIndex = -1;
       while ((startIndex = value.indexOf("${", endIndex + 1)) > endIndex) {
@@ -48,8 +49,8 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
         if (endIndex < 0) break;
         if (endIndex > startIndex) {
           final String propName = value.substring(startIndex, endIndex);
-          refs.add(new AntPropertyReference(this, element, propName,
-              new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
+          refs.add(new AntPropertyReference(this, element, propName, new TextRange(
+            offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
         }
       }
     }
@@ -61,23 +62,10 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+  public PsiReference[] getReferencesByString(String str,
+                                              PsiElement position,
+                                              ReferenceType type,
+                                              int offsetInPosition) {
     return getReferencesByElement(position);
-  }
-
-  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-    handleElementUp(processor, (AntElement) position);
-  }
-
-  private static void handleElementUp(PsiScopeProcessor processor, AntElement element) {
-    element = element.getAntParent();
-    if (element != null) {
-      for (PsiElement property : element.getProperties()) {
-        if (!processor.execute(property, PsiSubstitutor.EMPTY)) {
-          return;
-        }
-      }
-      handleElementUp(processor, element);
-    }
   }
 }

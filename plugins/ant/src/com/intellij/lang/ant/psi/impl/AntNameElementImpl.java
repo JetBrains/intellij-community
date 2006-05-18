@@ -17,13 +17,9 @@ class AntNameElementImpl extends AntElementImpl {
   }
 
   public String getName() {
-    XmlElement element = getSourceElement();
-    if (element == null) {
-      element = null;
-    }
-    PsiElement parent = element.getParent();
+    PsiElement parent = getSourceElement().getParent();
     if (parent == null) {
-      parent = null;
+      return null;
     }
     return ((XmlAttribute)parent).getValue();
   }

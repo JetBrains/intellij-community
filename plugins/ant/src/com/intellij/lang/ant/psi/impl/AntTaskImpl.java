@@ -9,7 +9,9 @@ import org.jetbrains.annotations.NonNls;
 
 public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
 
-  public AntTaskImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntTaskImpl(final AntElement parent,
+                     final XmlElement sourceElement,
+                     final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
   }
 
@@ -24,5 +26,9 @@ public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
+  }
+
+  public boolean isMacroDefined() {
+    return myDefinition != null && myDefinition.getClassName().startsWith(AntMacroDefImpl.ANT_MACRODEF_NAME);
   }
 }

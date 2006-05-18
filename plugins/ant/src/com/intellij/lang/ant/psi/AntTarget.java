@@ -1,10 +1,9 @@
 package com.intellij.lang.ant.psi;
 
-import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface AntTarget extends AntStructuredElement, PsiNamedElement {
+public interface AntTarget extends AntStructuredElement {
 
   @Nullable
   String getDescription();

@@ -15,7 +15,9 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 
-public class AntMacroDefImpl extends AntStructuredElementImpl implements AntMacroDef {
+public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
+
+  @NonNls public static final String ANT_MACRODEF_NAME = "AntMacroDef";
 
   private final AntTypeDefinition myMacroDefinition;
 
@@ -62,14 +64,15 @@ public class AntMacroDefImpl extends AntStructuredElementImpl implements AntMacr
     }
     final String name = getName();
     myMacroDefinition =
-      new AntTypeDefinitionImpl(new AntTypeId(name), thisClassName, true, attributes, nestedElements);
+      new AntTypeDefinitionImpl(new AntTypeId(name), thisClassName, true, attributes, nestedElements, this);
     seParent.registerCustomType(myMacroDefinition);
   }
 
   public String toString() {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append("AntMacroDef[");
+      builder.append(ANT_MACRODEF_NAME);
+      builder.append("[");
       builder.append(getSourceElement().getName());
       builder.append("]");
       return builder.toString();

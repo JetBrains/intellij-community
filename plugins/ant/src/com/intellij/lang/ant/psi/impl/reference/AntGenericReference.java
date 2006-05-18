@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -28,6 +29,23 @@ public abstract class AntGenericReference extends GenericReference {
     myText = str;
     myTextRange = textRange;
     myAttribute = attribute;
+  }
+
+  protected AntGenericReference(final GenericReferenceProvider provider,
+                                final AntStructuredElement antElement,
+                                final XmlAttribute attr) {
+    super(provider);
+    myAntElement = antElement;
+    myText = (attr == null) ? antElement.getSourceElement().getName() : attr.getName();
+    int startInElement =
+      (attr == null) ? 1 : attr.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset();
+    myTextRange = new TextRange(startInElement, myText.length() + startInElement);
+    myAttribute = attr;
+  }
+
+  protected AntGenericReference(final GenericReferenceProvider provider,
+                                final AntStructuredElement antElement) {
+    this(provider, antElement, null);
   }
 
   public AntElement getElement() {

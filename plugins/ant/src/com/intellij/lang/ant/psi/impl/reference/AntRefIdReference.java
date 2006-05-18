@@ -2,7 +2,6 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -35,7 +34,7 @@ public class AntRefIdReference extends AntGenericReference {
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     if (element instanceof AntStructuredElement) {
-      final PsiNamedElement psiNamedElement = (PsiNamedElement) element;
+      final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       return handleElementRename(psiNamedElement.getName());
     }
     throw new IncorrectOperationException("Can bind only to ant structured elements.");
@@ -46,13 +45,12 @@ public class AntRefIdReference extends AntGenericReference {
   }
 
   public PsiElement resolve() {
-    final AntStructuredElement element = (AntStructuredElement) getElement();
+    final AntStructuredElement element = (AntStructuredElement)getElement();
     return element.getElementByRefId(getCanonicalText());
   }
 
   public Object[] getVariants() {
-    final AntProject project = getElement().getAntProject();
-    return getVariants(project);
+    return getVariants(getElement().getAntProject());
   }
 
   private static String[] getVariants(AntStructuredElement element) {
@@ -60,7 +58,7 @@ public class AntRefIdReference extends AntGenericReference {
     appendSet(variants, element.getRefIds());
     for (PsiElement child : element.getChildren()) {
       if (child instanceof AntStructuredElement) {
-        appendSet(variants, getVariants((AntStructuredElement) child));
+        appendSet(variants, getVariants((AntStructuredElement)child));
       }
     }
     return variants.toArray(new String[variants.size()]);

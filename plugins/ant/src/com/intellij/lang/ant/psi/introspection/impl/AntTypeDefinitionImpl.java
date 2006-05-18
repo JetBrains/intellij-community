@@ -3,6 +3,7 @@ package com.intellij.lang.ant.psi.introspection.impl;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,13 +24,12 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
    * Task ids to their class names.
    */
   private final Map<AntTypeId, String> myNestedClassNames;
+  private final PsiElement myDefiningElement;
 
   public AntTypeDefinitionImpl(final AntTypeDefinitionImpl base) {
-    myTypeId = base.getTypeId();
-    myClassName = base.getClassName();
-    myIsTask = base.isTask();
-    myAttributes = new HashMap<String, AntAttributeType>(base.myAttributes);
-    myNestedClassNames = new HashMap<AntTypeId, String>(base.myNestedClassNames);
+    this(base.getTypeId(), base.getClassName(), base.isTask(),
+         new HashMap<String, AntAttributeType>(base.myAttributes),
+         new HashMap<AntTypeId, String>(base.myNestedClassNames));
   }
 
   public AntTypeDefinitionImpl(final AntTypeId id,
@@ -37,12 +37,22 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
                                final boolean isTask,
                                @NonNls @NotNull final Map<String, AntAttributeType> attributes,
                                final Map<AntTypeId, String> nestedElements) {
+    this(id, className, isTask, attributes, nestedElements, null);
+  }
+
+  public AntTypeDefinitionImpl(final AntTypeId id,
+                               final String className,
+                               final boolean isTask,
+                               @NonNls @NotNull final Map<String, AntAttributeType> attributes,
+                               final Map<AntTypeId, String> nestedElements,
+                               final PsiElement definingElement) {
     myTypeId = id;
     myClassName = className;
     myIsTask = isTask;
     attributes.put("id", AntAttributeType.STRING);
     myAttributes = attributes;
     myNestedClassNames = nestedElements;
+    myDefiningElement = definingElement;
   }
 
   public AntTypeId getTypeId() {
@@ -81,6 +91,10 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
   public void registerNestedType(final AntTypeId id, String taskClassName) {
     myNestedClassNames.put(id, taskClassName);
+  }
+
+  public PsiElement getDefiningElement() {
+    return myDefiningElement;
   }
 
   public void setIsTask(final boolean isTask) {
