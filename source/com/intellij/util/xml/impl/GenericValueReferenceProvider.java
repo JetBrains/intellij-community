@@ -16,6 +16,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.javaee.web.PsiReferenceConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +79,11 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     else {
       if (element.getXmlTag().getValue().getTextElements().length == 0) return null;
       psiElement = element.getXmlElement();
+    }
+
+    Converter converter = ((GenericDomValue)element).getConverter();
+    if (converter instanceof PsiReferenceConverter) {
+      return ((PsiReferenceConverter)converter).createReferences(psiElement);
     }
 
     GenericDomValue domElement = (GenericDomValue) element;

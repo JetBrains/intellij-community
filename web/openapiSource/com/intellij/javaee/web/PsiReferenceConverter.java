@@ -6,19 +6,18 @@ package com.intellij.javaee.web;
 
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
-public interface PsiReferenceConverter<T> {
+public interface PsiReferenceConverter {
 
   /**
    *
-   * @param source
    * @param psiElement
-   * @return null if the converter cannot get any references
+   * @return empty array if the converter cannot get any references
    */
-  @Nullable
-  PsiReference[] createReferences(T source, PsiElement psiElement);
+  @NotNull
+  PsiReference[] createReferences(PsiElement psiElement);
 }

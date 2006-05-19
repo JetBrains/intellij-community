@@ -13,6 +13,9 @@ import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,19 +39,25 @@ public class FileReferenceSet {
   private String myPathString;
   private final boolean myAllowEmptyFileReferenceAtEnd;
 
-  public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile,PsiElement>>
-    DEFAULT_PATH_EVALUATOR_OPTION = new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile,PsiElement>>(
-    PsiBundle.message("default.path.evaluator.option")
-  );
+  public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiElement>> DEFAULT_PATH_EVALUATOR_OPTION =
+    new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiElement>>(PsiBundle.message("default.path.evaluator.option"));
 
   private final @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
+
+  @Nullable
+  public static FileReferenceSet createSet(PsiElement element, PsiReferenceProvider provider, boolean isCaseSensitive) {
+
+    FileReferenceInfo info = new FileReferenceInfo(element);
+    return info.isValid() ? new FileReferenceSet(info.getText(), element, info.getOffset(), ReferenceType.FILE_TYPE, provider, isCaseSensitive) : null;
+  }
+
 
   public FileReferenceSet(String str,
                           PsiElement element,
                           int startInElement,
                           ReferenceType type,
                           PsiReferenceProvider provider,
-                          final boolean isCaseSensitive){
+                          final boolean isCaseSensitive) {
     this(str, element, startInElement, type, provider, isCaseSensitive, true);
   }
 
@@ -58,7 +67,7 @@ public class FileReferenceSet {
                           ReferenceType type,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive,
-                          boolean allowEmptyFileReferenceAtEnd){
+                          boolean allowEmptyFileReferenceAtEnd) {
     myType = type;
     myElement = element;
     myStartInElement = startInElement;
@@ -85,7 +94,7 @@ public class FileReferenceSet {
 
   public void setCaseSensitive(final boolean caseSensitive) {
     myCaseSensitive = caseSensitive;
-    for(FileReference ref:myReferences) {
+    for (FileReference ref : myReferences) {
       ref.clearResolveCaches();
     }
   }
@@ -98,14 +107,14 @@ public class FileReferenceSet {
     return myProvider;
   }
 
-  protected void reparse(String str){
+  protected void reparse(String str) {
     final List<FileReference> referencesList = new ArrayList<FileReference>();
     int currentSlash = -1;
-    while(currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == ' ') currentSlash++;
+    while (currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == ' ') currentSlash++;
     if (currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == SEPARATOR) currentSlash++;
     int index = 0;
 
-    while(true){
+    while (true) {
       final int nextSlash = str.indexOf(SEPARATOR, currentSlash + 1);
       final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + 1, nextSlash) : str.substring(currentSlash + 1);
       if (subreferenceText.length() > 0 || myAllowEmptyFileReferenceAtEnd) { // ? check at end
@@ -127,22 +136,23 @@ public class FileReferenceSet {
     myReferences = references;
   }
 
-  public FileReference getReference(int index){
+  public FileReference getReference(int index) {
     return myReferences[index];
   }
 
-  public FileReference[] getAllReferences(){
+  @NotNull
+  public FileReference[] getAllReferences() {
     return myReferences;
   }
 
-  ReferenceType getType(int index){
-    if(index != myReferences.length - 1){
-      return new ReferenceType(new int[] {myType.getPrimitives()[0], ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.DIRECTORY});
+  ReferenceType getType(int index) {
+    if (index != myReferences.length - 1) {
+      return new ReferenceType(new int[]{myType.getPrimitives()[0], ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.DIRECTORY});
     }
     return myType;
   }
 
-  protected boolean isSoft(){
+  protected boolean isSoft() {
     return false;
   }
 
@@ -157,13 +167,11 @@ public class FileReferenceSet {
     if (!file.isPhysical()) file = file.getOriginalFile();
     if (file == null) return Collections.emptyList();
     if (myOptions != null) {
-      final Function<PsiFile,PsiElement> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
+      final Function<PsiFile, PsiElement> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
 
       if (value != null) {
         final PsiElement result = value.fun(file);
-        return result == null ?
-           Collections.<PsiElement>emptyList() :
-           Collections.singleton(result);
+        return result == null ? Collections.<PsiElement>emptyList() : Collections.singleton(result);
       }
     }
 
@@ -186,14 +194,10 @@ public class FileReferenceSet {
       }
     }
 
-    return result == null ?
-           Collections.<PsiElement>emptyList() :
-           Collections.singleton(result);
+    return result == null ? Collections.<PsiElement>emptyList() : Collections.singleton(result);
   }
 
-  public static PsiElement getAbsoluteTopLevelDirLocation(final WebModuleProperties properties,
-                                                           final Project project,
-                                                           final PsiFile file) {
+  public static PsiElement getAbsoluteTopLevelDirLocation(final WebModuleProperties properties, final Project project, final PsiFile file) {
     PsiElement result = null;
 
     if (properties != null) {
@@ -212,7 +216,51 @@ public class FileReferenceSet {
     return result;
   }
 
-  protected PsiScopeProcessor createProcessor(final List result, ReferenceType type) throws ProcessorRegistry.IncompatibleReferenceTypeException {
+  protected PsiScopeProcessor createProcessor(final List result, ReferenceType type)
+    throws ProcessorRegistry.IncompatibleReferenceTypeException {
     return ProcessorRegistry.getProcessorByType(type, result, null);
   }
+
+  public static class FileReferenceInfo {
+
+    private String text;
+    private int offset;
+
+    FileReferenceInfo(PsiElement element) {
+
+      if (element instanceof XmlAttributeValue) {
+        text = ((XmlAttributeValue)element).getValue();
+        offset = 1;
+      }
+      else if (element instanceof XmlTag) {
+        final XmlTag tag = ((XmlTag)element);
+        final XmlTagValue value = tag.getValue();
+        final String s = value.getText();
+        text = s.trim();
+        offset = value.getTextRange().getStartOffset() + s.indexOf(text) - element.getTextOffset();
+      }
+      else {
+        text = null;
+      }
+      if (text != null) {
+        int paramOffset = text.indexOf('?');
+        if (paramOffset >= 0) {
+          text = text.substring(0, paramOffset);
+        }
+      }
+    }
+
+    public int getOffset() {
+      return offset;
+    }
+
+    public String getText() {
+      return text;
+    }
+
+    public boolean isValid() {
+      return text != null;
+    }
+  }
+
 }
