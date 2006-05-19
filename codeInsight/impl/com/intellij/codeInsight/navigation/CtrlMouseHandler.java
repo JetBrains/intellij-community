@@ -33,6 +33,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,7 +119,8 @@ public class CtrlMouseHandler implements ProjectComponent {
 
       int modifiers = mouseEvent.getModifiers();
 
-      if ((!isControlMask(modifiers) && !isControlShiftMask(modifiers)) || offset >= selStart && offset < selEnd) {
+      if (!isControlMask(modifiers) && !isControlShiftMask(modifiers)
+          || offset >= selStart && offset < selEnd) {
         disposeHighlighter();
         myTooltipProvider = null;
         return;
@@ -140,6 +142,7 @@ public class CtrlMouseHandler implements ProjectComponent {
     myProject = project;
   }
 
+  @NotNull
   public String getComponentName() {
     return "CtrlMouseHandler";
   }
@@ -162,12 +165,12 @@ public class CtrlMouseHandler implements ProjectComponent {
   }
 
   private static boolean isControlMask(int modifiers) {
-    int mask = SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK;
+    int mask = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
     return modifiers == mask;
   }
 
   private static boolean isControlShiftMask(int modifiers) {
-    int mask = (SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK) | KeyEvent.SHIFT_MASK;
+    int mask = (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK;
     return modifiers == mask;
   }
 
@@ -198,7 +201,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       if (element instanceof PsiFile) {
         return generateFileInfo((PsiFile) element);
       } else if (element instanceof PsiAntElement) {
-        return generateAttributeValueInfo(((PsiAntElement) element));
+        return generateAttributeValueInfo((PsiAntElement)element);
       } else {
         return null;
       }
@@ -244,23 +247,23 @@ public class CtrlMouseHandler implements ProjectComponent {
     PsiElement targetElement;
     if (browseType) {
       targetElement = GotoTypeDeclarationAction.findSymbolType(editor, offset);
-    } else {
+    }
+    else {
       PsiReference ref = TargetElementUtil.findReference(editor, offset);
       if (ref != null) {
         PsiElement resolvedElement;
 
         if (ref instanceof PsiPolyVariantReference) {
           final ResolveResult[] psiElements = ((PsiPolyVariantReference)ref).multiResolve(false);
-          resolvedElement = (psiElements.length > 0)? psiElements[0].getElement() : null;
-        } else {
+          resolvedElement = psiElements.length > 0 ? psiElements[0].getElement() : null;
+        }
+        else {
           resolvedElement = ref.resolve();
         }
 
         if (resolvedElement != null) {
           PsiElement e = ref.getElement();
-          return new Info(resolvedElement,
-                          e,
-                          e.getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset(),
+          return new Info(resolvedElement, e, e.getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset(),
                           e.getTextRange().getStartOffset() + ref.getRangeInElement().getEndOffset());
         }
       }
@@ -369,11 +372,7 @@ public class CtrlMouseHandler implements ProjectComponent {
 
     private boolean targetNavigateable(final PsiElement targetElement) {
       PsiElement navElement = targetElement.getNavigationElement();
-      if (navElement instanceof Navigatable && ((Navigatable)navElement).canNavigate()) {
-          return true;
-      }
-
-      return false;
+      return navElement instanceof Navigatable && ((Navigatable)navElement).canNavigate();
     }
 
     private void installLinkHighlighter(Info info) {

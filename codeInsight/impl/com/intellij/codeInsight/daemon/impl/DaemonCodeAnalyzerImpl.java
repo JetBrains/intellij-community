@@ -158,6 +158,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myFileStatusMap = new FileStatusMap(myProject);
   }
 
+  @NotNull
   public String getComponentName() {
     return "DaemonCodeAnalyzer";
   }
@@ -848,7 +849,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return new EditorTracker(myProject);
   }
 
-  private class MyEditorMouseListener extends EditorMouseAdapter{
+  private static class MyEditorMouseListener extends EditorMouseAdapter{
 
     public void mouseExited(EditorMouseEvent e) {
       DaemonTooltipUtil.cancelTooltips();

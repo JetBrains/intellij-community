@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
@@ -77,7 +78,7 @@ public class EditorDelegate implements EditorEx {
 
   @NotNull
   public MarkupModel getMarkupModel() {
-    return new MarkupModelDelegate(myDelegate, myDocument);
+    return new MarkupModelDelegate((EditorMarkupModelImpl)myDelegate.getMarkupModel(), myDocument,this);
   }
 
   @NotNull
@@ -204,7 +205,34 @@ public class EditorDelegate implements EditorEx {
   }
 
   public void addEditorMouseListener(final EditorMouseListener listener) {
-    myDelegate.addEditorMouseListener(listener);
+    myDelegate.addEditorMouseListener(new EditorMouseListener() {
+      public void mousePressed(EditorMouseEvent e) {
+        listener.mousePressed(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+      }
+
+      public void mouseClicked(EditorMouseEvent e) {
+        listener.mouseClicked(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+      }
+
+      public void mouseReleased(EditorMouseEvent e) {
+        listener.mouseReleased(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+      }
+
+      public void mouseEntered(EditorMouseEvent e) {
+        listener.mouseEntered(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+      }
+
+      public void mouseExited(EditorMouseEvent e) {
+        listener.mouseExited(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+      }
+      public int hashCode() {
+        return listener.hashCode();
+      }
+
+      public boolean equals(Object obj) {
+        return obj == listener;
+      }
+    });
   }
 
   public void removeEditorMouseListener(final EditorMouseListener listener) {
@@ -212,7 +240,23 @@ public class EditorDelegate implements EditorEx {
   }
 
   public void addEditorMouseMotionListener(final EditorMouseMotionListener listener) {
-    myDelegate.addEditorMouseMotionListener(listener);
+    myDelegate.addEditorMouseMotionListener(new EditorMouseMotionListener() {
+      public void mouseMoved(EditorMouseEvent e) {
+        listener.mouseMoved(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+      }
+
+      public void mouseDragged(EditorMouseEvent e) {
+        listener.mouseDragged(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+      }
+
+      public int hashCode() {
+        return listener.hashCode();
+      }
+
+      public boolean equals(Object obj) {
+        return obj == listener;
+      }
+    });
   }
 
   public void removeEditorMouseMotionListener(final EditorMouseMotionListener listener) {

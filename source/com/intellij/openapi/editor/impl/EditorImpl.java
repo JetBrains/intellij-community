@@ -403,12 +403,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     myPanel.setLayout(new BorderLayout());
 
     myVerticalScrollBar = new MyScrollBar(JScrollBar.VERTICAL);
-    final MyScrollBar horizontalScrollBar = new MyScrollBar(JScrollBar.HORIZONTAL);
 
     myGutterComponent = new EditorGutterComponentImpl(this);
     myGutterComponent.setOpaque(true);
 
     myScrollPane.setVerticalScrollBar(myVerticalScrollBar);
+    final MyScrollBar horizontalScrollBar = new MyScrollBar(JScrollBar.HORIZONTAL);
     myScrollPane.setHorizontalScrollBar(horizontalScrollBar);
     myScrollPane.setViewportView(myEditorComponent);
     //myScrollPane.setBorder(null);
@@ -608,7 +608,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   public VisualPosition xyToVisualPosition(Point p) {
     int line = yPositionToVisibleLineNumber(p.y);
 
-    int x = 0;
     int offset = logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(line, 0)));
     int textLength = myDocument.getTextLength();
 
@@ -623,6 +622,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     int fontType = state.getMergedAttributes().getFontType();
     int spaceSize = getSpaceWidth(fontType);
 
+    int x = 0;
     outer:
         while (true) {
           if (offset >= textLength) break;
@@ -1039,7 +1039,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     BorderEffect borderEffect = new BorderEffect(this, g);
     borderEffect.paintHighlighters(getHighlighter());
     borderEffect.paintHighlighters(docMarkup.getAllHighlighters());
-    borderEffect.paintHighlighters((getMarkupModel()).getAllHighlighters());
+    borderEffect.paintHighlighters(getMarkupModel().getAllHighlighters());
     paintCaretCursor(g);
 
     paintComposedTextDecoration((Graphics2D)g);
@@ -1116,9 +1116,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     int startLineNumber = yPositionToVisibleLineNumber(clip.y);
     int endLineNumber = yPositionToVisibleLineNumber(clip.y + clip.height) + 1;
 
-    RangeHighlighter[] segmentHighlighters;
     final MarkupModel docMarkup = myDocument.getMarkupModel(myProject);
-    segmentHighlighters = docMarkup.getAllHighlighters();
+    RangeHighlighter[] segmentHighlighters = docMarkup.getAllHighlighters();
     for (RangeHighlighter segmentHighlighter : segmentHighlighters) {
       paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighter, startLineNumber, endLineNumber);
     }
@@ -1579,7 +1578,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
                          EffectType effectType, int fontType, Color fontColor) {
     if (start >= end) return position.x;
 
-    boolean isInClip = (getLineHeight() + position.y >= clip.y) && (position.y <= clip.y + clip.height);
+    boolean isInClip = getLineHeight() + position.y >= clip.y && position.y <= clip.y + clip.height;
 
     if (!isInClip) return position.x;
 
@@ -1590,7 +1589,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   private int drawString(Graphics g, String text, Point position, Rectangle clip, Color effectColor,
                          EffectType effectType, int fontType, Color fontColor) {
-    boolean isInClip = (getLineHeight() + position.y >= clip.y) && (position.y <= clip.y + clip.height);
+    boolean isInClip = getLineHeight() + position.y >= clip.y && position.y <= clip.y + clip.height;
 
     if (!isInClip) return position.x;
 
@@ -2439,13 +2438,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
     Rectangle rect = getScrollingModel().getVisibleArea();
 
-    int dx = 0;
     int x = e.getX();
 
     if (e.getSource() == myGutterComponent) {
       x = 0;
     }
 
+    int dx = 0;
     if (x < rect.x) {
       dx = x - rect.x;
     }
@@ -3398,8 +3397,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
     private void setInputMethodCaretPosition(InputMethodEvent e) {
       if (composedText != null) {
-        int dot;
-        dot = composedTextStart;
+        int dot = composedTextStart;
 
         TextHitInfo caretPos = e.getCaret();
         if (caretPos != null) {
@@ -3426,7 +3424,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     private void replaceInputMethodText(InputMethodEvent e) {
       int commitCount = e.getCommittedCharacterCount();
       AttributedCharacterIterator text = e.getText();
-      int composedTextIndex;
 
       // old composed text deletion
       final Document doc = getDocument();
@@ -3457,7 +3454,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
         // new composed text insertion
         if (!isViewer() && doc.isWritable()) {
-          composedTextIndex = text.getIndex();
+          int composedTextIndex = text.getIndex();
           if (composedTextIndex < text.getEndIndex()) {
             createComposedString(composedTextIndex, text);
 
@@ -3704,8 +3701,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
-                final int offset;
                 editor.getSelectionModel().removeSelection();
+                final int offset;
                 if (myDraggedRange != null) {
                   editor.getCaretModel().moveToOffset(caretOffset);
                   offset = caretOffset;
