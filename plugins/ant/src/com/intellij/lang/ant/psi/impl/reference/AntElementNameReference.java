@@ -11,6 +11,8 @@ import com.intellij.util.IncorrectOperationException;
 
 public class AntElementNameReference extends AntGenericReference {
 
+  private PsiElement myResolvedElement;
+
   public AntElementNameReference(final GenericReferenceProvider provider,
                                  final AntStructuredElement element) {
     super(provider, element);
@@ -28,15 +30,15 @@ public class AntElementNameReference extends AntGenericReference {
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final AntStructuredElement element = getElement();
+    final AntTypeDefinition typeDef = element.getTypeDefinition();
+    if (typeDef == null) return element;
+
     if (!(element instanceof AntTask)) {
-      final AntTypeDefinition typeDef = element.getTypeDefinition();
-      if (typeDef != null) {
-        final AntStructuredElement definingElement = (AntStructuredElement)typeDef.getDefiningElement();
-        if (definingElement != null && definingElement.getParent()instanceof AntMacroDef &&
-            "element".equals(definingElement.getSourceElement().getName())) {
-          // renaming macrodef's nested element
-          element.getSourceElement().setName(newElementName);
-        }
+      final AntStructuredElement definingElement = (AntStructuredElement)typeDef.getDefiningElement();
+      if (definingElement != null && definingElement.getParent()instanceof AntMacroDef &&
+          "element".equals(definingElement.getSourceElement().getName())) {
+        // renaming macrodef's nested element
+        element.getSourceElement().setName(newElementName);
       }
     }
     else {
@@ -48,11 +50,11 @@ public class AntElementNameReference extends AntGenericReference {
           task.getSourceElement().setName(newElementName);
         }
         else {
-          // renaming macrodef's attribute
           attr.setName(newElementName);
         }
       }
     }
+    element.subtreeChanged();
     return element;
   }
 
@@ -64,12 +66,14 @@ public class AntElementNameReference extends AntGenericReference {
   }
 
   public PsiElement resolve() {
+    if (myResolvedElement != null) return myResolvedElement;
     final AntStructuredElement element = getElement();
     final AntTypeDefinition elementDef = element.getTypeDefinition();
     if (elementDef != null) {
       if (!(element instanceof AntTask)) {
         final PsiElement nestedMacroElement = elementDef.getDefiningElement();
-        return (nestedMacroElement == null) ? findClass(elementDef, element) : nestedMacroElement;
+        return myResolvedElement =
+          (nestedMacroElement == null) ? findClass(elementDef, element) : nestedMacroElement;
       }
       AntTask task = (AntTask)element;
       if (task.isMacroDefined()) {
@@ -79,13 +83,13 @@ public class AntElementNameReference extends AntGenericReference {
           for (PsiElement child : macrodef.getChildren()) {
             if (child instanceof AntStructuredElement &&
                 attr.getName().equals(((AntStructuredElement)child).getName())) {
-              return child;
+              return myResolvedElement = child;
             }
           }
         }
-        return macrodef;
+        return myResolvedElement = macrodef;
       }
-      return findClass(elementDef, element);
+      return myResolvedElement = findClass(elementDef, element);
     }
     return null;
   }

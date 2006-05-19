@@ -101,6 +101,25 @@ public class AntElementFactory {
                                      parent.getAntFile().getBaseTypeDefinition(MacroDef.class.getName()));
         }
       });
+      ourAntTypeToKnownAntElementCreatorMap
+        .put(MacroDef.NestedSequential.class.getName(), new AntElementCreator() {
+          public AntElement create(final AntElement parent, final XmlTag tag) {
+            return new AntAllTasksContainerImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(
+              MacroDef.NestedSequential.class.getName()));
+          }
+        });
+      ourAntTypeToKnownAntElementCreatorMap.put(Sequential.class.getName(), new AntElementCreator() {
+        public AntElement create(final AntElement parent, final XmlTag tag) {
+          return new AntAllTasksContainerImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(
+            Sequential.class.getName()));
+        }
+      });
+      ourAntTypeToKnownAntElementCreatorMap.put(Parallel.class.getName(), new AntElementCreator() {
+        public AntElement create(final AntElement parent, final XmlTag tag) {
+          return new AntAllTasksContainerImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(
+            Parallel.class.getName()));
+        }
+      });
     }
   }
 

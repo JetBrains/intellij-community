@@ -21,8 +21,6 @@ import com.intellij.psi.xml.XmlTag;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
-import org.apache.tools.ant.taskdefs.Parallel;
-import org.apache.tools.ant.taskdefs.Sequential;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,15 +169,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     // second, create definitions of data types
     updateTypeDefinitions(myAntProject.getDataTypeDefinitions(), false);
 
-    // sequential and parallel can have all tasks as nested elements
-    final AntTypeDefinition sequentialDef = myTypeDefinitions.get(Sequential.class.getName());
-    if (sequentialDef != null) {
-      setNestedElementsAsAllTasks(sequentialDef);
-    }
-    final AntTypeDefinition parallelDef = myTypeDefinitions.get(Parallel.class.getName());
-    if (parallelDef != null) {
-      setNestedElementsAsAllTasks(parallelDef);
-    }
     return myTypeDefinitions.get(className);
   }
 
@@ -237,14 +226,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
             }
           }
         }
-      }
-    }
-  }
-
-  private void setNestedElementsAsAllTasks(final AntTypeDefinition definition) {
-    for (AntTypeDefinition def : myTypeDefinitions.values()) {
-      if (def.isTask()) {
-        definition.registerNestedType(def.getTypeId(), def.getClassName());
       }
     }
   }
