@@ -79,9 +79,4 @@ public abstract class DomManager implements ProjectComponent {
 
   public abstract DomElement getIdentityScope(DomElement element);
 
-  @NotNull
-  public abstract Collection<String> getPossibleTargetNames(GenericDomValue reference);
-
-  @NotNull
-  public abstract <T> Collection<T> getPossibleTargets(GenericDomValue<T> reference);
 }

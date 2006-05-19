@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
@@ -15,10 +16,9 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.ModelMergerImpl;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -148,7 +148,26 @@ public class GenericDomValueReference<T> extends GenericReference {
   }
 
   public Object[] getVariants() {
-    final Collection<String> strings = myGenericValue.getManager().getPossibleTargetNames(myGenericValue);
-    return strings.isEmpty() ? super.getVariants() : strings.toArray(new String[strings.size()]);
+    final Converter<T> converter = myGenericValue.getConverter();
+    if (converter instanceof ResolvingConverter) {
+      final ResolvingConverter<T> resolvingConverter = (ResolvingConverter<T>)converter;
+      final ConvertContext convertContext = new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(myGenericValue));
+      final Collection<T> variants = resolvingConverter.getVariants(convertContext);
+      if (!variants.isEmpty()) {
+        final Collection<String> strings = ContainerUtil.findAll(ContainerUtil.map(variants, new Function<T, String>() {
+          public String fun(final T s) {
+            return converter.toString(s, convertContext);
+          }
+        }), new Condition<String>() {
+          public boolean value(final String object) {
+            return object != null;
+          }
+        });
+        if (!strings.isEmpty()) {
+          return strings.toArray(new String[strings.size()]);
+        }
+      }
+    }
+    return super.getVariants();
   }
 }

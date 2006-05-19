@@ -8,18 +8,14 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.ElementPresentationManager;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.NamedEnumUtil;
+import com.intellij.util.xml.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author peter
@@ -59,14 +55,23 @@ public class ComboControl extends BaseControl<JComboBox, String> {
     myNullable = nullable;
   }
 
-  public ComboControl(final GenericDomValue reference) {
+  public ComboControl(final GenericDomValue<?> reference) {
     this(reference, new Factory<List<Pair<String, Icon>>>() {
       public List<Pair<String, Icon>> create() {
-        return ContainerUtil.map(reference.getManager().getPossibleTargets(reference), new Function<Object, Pair<String, Icon>>() {
-          public Pair<String, Icon> fun(final Object s) {
-            return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
-          }
-        });
+        final Converter converter = reference.getConverter();
+        if (converter instanceof ResolvingConverter) {
+          final ResolvingConverter<?> resolvingConverter = (ResolvingConverter)converter;
+          return ContainerUtil.map(resolvingConverter.getVariants(new AbstractConvertContext() {
+            public DomElement getInvocationElement() {
+              return reference;
+            }
+          }), new Function<Object, Pair<String, Icon>>() {
+            public Pair<String, Icon> fun(final Object s) {
+              return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
+            }
+          });
+        }
+        return Collections.emptyList();
       }
     });
   }
