@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -85,7 +86,13 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     final EditorTextField editorTextField = getEditorTextField(boundedComponent);
     editorTextField.setSupplementary(true);
     final PsiCodeFragment file = (PsiCodeFragment)PsiDocumentManager.getInstance(project).getPsiFile(editorTextField.getDocument());
-    file.addAnnotator(new Annotator() {
+    EditorTextFieldControlHighlighter.getEditorTextFieldControlHighlighter(project).addFile(file, new Factory<DomElement>() {
+      public DomElement create() {
+        return getDomElement();
+      }
+    });
+
+    final Annotator annotator = new Annotator() {
       public void annotate(PsiElement psiElement, AnnotationHolder holder) {
         final DomElement domElement = getDomElement();
         if (domElement == null || !domElement.isValid()) return;
@@ -93,7 +100,8 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
           holder.createErrorAnnotation(psiElement.getContainingFile(), problem.getDescriptionTemplate());
         }
       }
-    });
+    };
+    //file.addAnnotator(annotator);
     if (myCommitOnEveryChange) {
       editorTextField.getDocument().addDocumentListener(myListener);
     }

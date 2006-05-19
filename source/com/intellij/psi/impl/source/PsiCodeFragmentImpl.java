@@ -13,7 +13,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
@@ -22,19 +21,15 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.lang.annotation.Annotator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
-import java.util.Set;
-import java.util.HashSet;
 
 public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment {
-  private final Set<Annotator> myAnnotators = new HashSet<Annotator>();
-  private Annotator[] myCachedAnnotators;
   private PsiElement myContext;
   private boolean myPhysical;
   private PsiType myThisType;
@@ -96,23 +91,6 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
 
   public void setContext(PsiElement context) {
     myContext = context;
-  }
-
-  public final Annotator[] getAnnotators() {
-    if (myCachedAnnotators == null) {
-      myCachedAnnotators = myAnnotators.toArray(new Annotator[myAnnotators.size()]);
-    }
-    return myCachedAnnotators;
-  }
-
-  public final void addAnnotator(Annotator annotator) {
-    myAnnotators.add(annotator);
-    myCachedAnnotators = null;
-  }
-
-  public final void removeAnnotator(Annotator annotator) {
-    myAnnotators.remove(annotator);
-    myCachedAnnotators = null;
   }
 
   public PsiType getThisType() {

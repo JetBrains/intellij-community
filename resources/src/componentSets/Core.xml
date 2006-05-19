@@ -153,6 +153,21 @@
 
   <project-components>
     <component>
+      <interface-class>com.intellij.util.xml.DomManager</interface-class>
+      <implementation-class>com.intellij.util.xml.impl.DomManagerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.util.xml.DomElementsNavigationManager</interface-class>
+      <implementation-class>com.intellij.util.xml.impl.DomElementsNavigationManagerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.util.xml.ui.EditorTextFieldControlHighlighter</implementation-class>
+      <skipForDummyProject/>
+    </component>
+    <component>
       <interface-class>com.intellij.openapi.startup.StartupManager</interface-class>
       <implementation-class>com.intellij.ide.startup.impl.StartupManagerImpl</implementation-class>
     </component>

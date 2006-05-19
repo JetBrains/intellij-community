@@ -81,10 +81,9 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public DomManagerImpl(final PomModel pomModel,
                         final Project project,
                         final ReferenceProvidersRegistry registry,
-                        final PsiManager psiManager) {
+                        final PsiManager psiManager,
+                        final XmlAspect xmlAspect) {
     myProject = project;
-    final XmlAspect xmlAspect = pomModel.getModelAspect(XmlAspect.class);
-    assert xmlAspect != null;
     pomModel.addModelListener(new PomModelListener() {
       public synchronized void modelChanged(PomModelEvent event) {
         if (myChanging) return;

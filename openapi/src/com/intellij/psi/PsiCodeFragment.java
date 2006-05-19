@@ -23,12 +23,6 @@ import com.intellij.lang.annotation.Annotator;
  */
 public interface PsiCodeFragment extends PsiImportHolder {
 
-  Annotator[] getAnnotators();
-
-  void addAnnotator(Annotator annotator);
-
-  void removeAnnotator(Annotator annotator);
-
 
   /**
    * Returns the type corresponding to the <code>this</code> keyword in the code fragment.

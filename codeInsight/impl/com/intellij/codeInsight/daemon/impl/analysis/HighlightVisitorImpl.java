@@ -90,7 +90,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public boolean suitableForFile(PsiFile file) {
-    return true; 
+    return true;
   }
 
   public void visit(PsiElement element, HighlightInfoHolder holder) {
@@ -134,16 +134,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       myXmlVisitor.visitJspElement((OuterLanguageElement)element);
     }
 
-    final PsiFile psiFile = element.getContainingFile();
-    if (psiFile instanceof PsiCodeFragment) {
-      Annotator[] fileAnnotators = ((PsiCodeFragment)psiFile).getAnnotators();
-      if (fileAnnotators.length > 0) {
-        for (final Annotator annotator : fileAnnotators) {
-          annotator.annotate(element, myAnnotationHolder);
-        }
-        hasAnnotators = true;
-      }
-    }
     if (hasAnnotators) {
       convertAnnotationsToHighlightInfos();
     }
@@ -154,6 +144,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
       final Language injectedLanguage = element.getManager().getInjectedLanguage(injectionHost);
       if (injectedLanguage != null) {
+
         Pair<PsiElement,TextRange> injectedInfo = injectionHost.getInjectedPsi();
         if (injectedInfo != null) {
           VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
