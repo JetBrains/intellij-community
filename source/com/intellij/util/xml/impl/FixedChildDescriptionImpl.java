@@ -4,19 +4,21 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.util.xml.Required;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author peter
@@ -25,11 +27,9 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FixedChildDescriptionImpl");
   private final Method[] myGetterMethods;
   private final int myCount;
-  private final Required[] myRequired;
 
-  public FixedChildDescriptionImpl(final String tagName, final Type type, final int count, final Method[] getterMethods, Required[] required) {
+  public FixedChildDescriptionImpl(final String tagName, final Type type, final int count, final Method[] getterMethods) {
     super(tagName, type);
-    myRequired = required;
     assert getterMethods.length == count;
     myCount = count;
     myGetterMethods = getterMethods;
@@ -43,8 +43,9 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     DomManagerImpl.getDomInvocationHandler(parent).setFixedChildClass(getXmlElementName(), aClass);
   }
 
-  public Required getRequiredAnnotation(int index) {
-    return myRequired[index];
+  @Nullable
+  public <T extends Annotation> T getAnnotation(int index, Class<? extends T> annotationClass) {
+    return DomUtil.findAnnotationDFS(getGetterMethod(index), annotationClass);
   }
 
   public int getCount() {
@@ -76,6 +77,11 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
 
   public String getCommonPresentableName(DomNameStrategy strategy) {
     return StringUtil.capitalizeWords(strategy.splitIntoWords(getXmlElementName()), true);
+  }
+
+  @Nullable
+  public final <T extends Annotation> T getAnnotation(Class<? extends T> annotationClass) {
+    return getAnnotation(0, annotationClass);
   }
 
   public boolean equals(final Object o) {

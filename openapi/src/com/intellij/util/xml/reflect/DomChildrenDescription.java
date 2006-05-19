@@ -3,10 +3,12 @@
  */
 package com.intellij.util.xml.reflect;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.List;
 
@@ -22,4 +24,7 @@ public interface DomChildrenDescription {
   String getCommonPresentableName(DomElement parent);
   DomNameStrategy getDomNameStrategy(DomElement parent);
   DomGenericInfo getChildGenericInfo(Project project);
+
+  @Nullable
+  <T extends Annotation> T getAnnotation(Class<? extends T> annotationClass);
 }

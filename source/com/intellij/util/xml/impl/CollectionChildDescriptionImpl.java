@@ -3,16 +3,19 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
@@ -23,7 +26,6 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   private final Method myClassAdderMethod;
   private final Method myIndexedClassAdderMethod;
   private final Method myInvertedIndexedClassAdderMethod;
-  private final boolean myRequired;
 
   public CollectionChildDescriptionImpl(final String tagName,
                                         final Type type,
@@ -32,8 +34,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
                                         final Method getterMethod,
                                         final Method indexedAdderMethod,
                                         final Method indexedClassAdderMethod,
-                                        final Method invertedIndexedClassAdderMethod,
-                                        boolean required) {
+                                        final Method invertedIndexedClassAdderMethod) {
     super(tagName, type);
     myAdderMethod = adderMethod;
     myClassAdderMethod = classAdderMethod;
@@ -41,7 +42,6 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     myIndexedAdderMethod = indexedAdderMethod;
     myIndexedClassAdderMethod = indexedClassAdderMethod;
     myInvertedIndexedClassAdderMethod = invertedIndexedClassAdderMethod;
-    myRequired = required;
   }
 
   public Method getClassAdderMethod() {
@@ -54,10 +54,6 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
   public Method getInvertedIndexedClassAdderMethod() {
     return myInvertedIndexedClassAdderMethod;
-  }
-
-  public boolean isRequiredNotEmpty() {
-    return myRequired;
   }
 
   public Method getAdderMethod() {
@@ -118,6 +114,11 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
   public String getCommonPresentableName(DomNameStrategy strategy) {
     return StringUtil.capitalizeWords(StringUtil.pluralize(strategy.splitIntoWords(getXmlElementName())), true);
+  }
+
+  @Nullable
+  public <T extends Annotation> T getAnnotation(Class<? extends T> annotationClass) {
+    return DomUtil.findAnnotationDFS(getGetterMethod(), annotationClass);
   }
 
   public boolean equals(final Object o) {

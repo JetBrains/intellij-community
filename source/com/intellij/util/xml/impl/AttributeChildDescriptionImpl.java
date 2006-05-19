@@ -3,10 +3,12 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -17,9 +19,11 @@ import java.util.List;
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription {
   private final JavaMethodSignature myGetterMethod;
   private final Required myRequired;
+  private Class<?> myDeclaringClass;
 
   protected AttributeChildDescriptionImpl(final String attributeName, final Method getter, Required required) {
     super(attributeName, getter.getGenericReturnType());
+    myDeclaringClass = getter.getDeclaringClass();
     myGetterMethod = JavaMethodSignature.getSignature(getter);
     myRequired = required;
   }
@@ -34,8 +38,9 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     return myGetterMethod;
   }
 
-  public final Required getRequiredAnnotation() {
-    return myRequired;
+  @Nullable
+  public final <T extends Annotation> T getAnnotation(Class<? extends T> annotationClass) {
+    return getGetterMethod().findAnnotation(annotationClass, myDeclaringClass);
   }
 
   public List<? extends DomElement> getValues(DomElement parent) {

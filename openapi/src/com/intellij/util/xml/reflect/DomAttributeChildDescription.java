@@ -6,7 +6,6 @@ package com.intellij.util.xml.reflect;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.JavaMethodSignature;
-import com.intellij.util.xml.Required;
 
 /**
  * @author peter
@@ -16,5 +15,4 @@ public interface DomAttributeChildDescription<T> extends DomChildrenDescription{
 
   JavaMethodSignature getGetterMethod();
 
-  Required getRequiredAnnotation();
 }
