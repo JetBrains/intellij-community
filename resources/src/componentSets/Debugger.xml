@@ -59,7 +59,7 @@
     </component>
     <component>
       <interface-class>com.intellij.debugger.ui.HotSwapUI</interface-class>
-      <implementation-class>com.intellij.debugger.ui.HotSwapUI</implementation-class>      
+      <implementation-class>com.intellij.debugger.ui.HotSwapUIImpl</implementation-class>      
       <skipForDummyProject/>
     </component>
 
