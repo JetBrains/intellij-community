@@ -213,7 +213,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   }
 
   public JComponent getComponent() {
-    if (myEditor == null){
+    if (myEditor == null){                             
       myEditor = createEditor();
       requestFlushImmediately();
       add(myEditor.getComponent(), BorderLayout.CENTER);
