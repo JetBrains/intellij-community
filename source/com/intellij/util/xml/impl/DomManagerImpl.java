@@ -230,7 +230,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       });
     findImplementationClassDFS(concreteInterface, set);
     if (!set.isEmpty()) {
-      final Class<? extends DomElement> aClass = set.last();
+      final Class<? extends DomElement> aClass = set.first();
       myCachedImplementationClasses.put(concreteInterface, aClass);
       return aClass;
     }
@@ -240,15 +240,13 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return aClass1;
   }
 
-  private void findImplementationClassDFS(final Class<? extends DomElement> concreteInterface, SortedSet<Class<? extends DomElement>> results) {
+  private void findImplementationClassDFS(final Class concreteInterface, SortedSet<Class<? extends DomElement>> results) {
     Class<? extends DomElement> aClass = myImplementationClasses.get(concreteInterface);
     if (aClass != null) {
       results.add(aClass);
     }
-    else {
-      for (final Class aClass1 : concreteInterface.getInterfaces()) {
-        findImplementationClassDFS(aClass1, results);
-      }
+    for (final Class aClass1 : concreteInterface.getInterfaces()) {
+      findImplementationClassDFS(aClass1, results);
     }
   }
 
