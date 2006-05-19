@@ -14,8 +14,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -55,7 +55,13 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private ASTNode getPropertiesList() {
-    return getNode().findChildByType(PropertiesElementTypes.PROPERTIES_LIST);
+    final ASTNode childByType = getNode().findChildByType(PropertiesElementTypes.PROPERTIES_LIST);
+    if (childByType != null) return childByType;
+    final ASTNode[] nodes = getNode().getChildren(null);
+    if (nodes.length == 1 && nodes[0].getElementType() == PropertiesElementTypes.PROPERTIES_LIST) {
+      return nodes[0];
+    }
+    return null;
   }
 
   private void ensurePropertiesLoaded() {
