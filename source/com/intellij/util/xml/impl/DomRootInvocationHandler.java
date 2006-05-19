@@ -9,6 +9,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,6 +48,14 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
 
   public DomElement getParent() {
     return isValid() ? myParent : null;
+  }
+
+  public DomElement createStableCopy() {
+    return getManager().createStableValue(new Factory<DomElement>() {
+      public DomElement create() {
+        return myParent.getRootElement();
+      }
+    });
   }
 
   protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException {

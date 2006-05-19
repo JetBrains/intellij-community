@@ -88,6 +88,10 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
     return myCachedValue;
   }
 
+  public T getOldValue() {
+    return myOldValue;
+  }
+
   private boolean isNotValid(final T t) {
     return t == null || !t.isValid();
   }

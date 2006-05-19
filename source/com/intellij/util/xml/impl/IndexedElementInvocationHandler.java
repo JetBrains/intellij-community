@@ -4,11 +4,14 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.ClassChooserManager;
 import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import java.lang.reflect.Type;
 
@@ -91,4 +94,13 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     fireUndefinedEvent();
   }
 
+  public DomElement createStableCopy() {
+    final DomElement parentCopy = getParent().createStableCopy();
+    final DomFixedChildDescription description = parentCopy.getGenericInfo().getFixedChildDescription(getXmlElementName());
+    return getManager().createStableValue(new Factory<DomElement>() {
+      public DomElement create() {
+        return description.getValues(parentCopy).get(myIndex);
+      }
+    });
+  }
 }

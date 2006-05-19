@@ -175,6 +175,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return (DomInvocationHandler)handler;
   }
 
+  public static StableInvocationHandler getStableInvocationHandler(Object proxy) {
+    return (StableInvocationHandler)AdvancedProxy.getInvocationHandler(proxy);
+  }
+
   final DomElement createDomElement(final DomInvocationHandler handler) {
     synchronized (PsiLock.LOCK) {
       try {

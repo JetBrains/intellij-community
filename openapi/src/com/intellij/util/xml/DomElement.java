@@ -65,4 +65,6 @@ public interface DomElement {
 
   DomElement createMockCopy(final boolean physical);
 
+  DomElement createStableCopy();
+
 }

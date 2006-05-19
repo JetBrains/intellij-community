@@ -72,7 +72,14 @@ public class InvocationCache {
             return _equals(handler.getProxy(), args[0]);
           }
           private boolean _equals(final DomElement proxy, final Object o) {
-            return proxy == o || o instanceof StableElement && _equals(proxy, ((StableElement)o).getWrappedElement());
+            if (proxy == o) return true;
+            if (o == null) return false;
+
+            if (o instanceof StableElement) {
+              final StableInvocationHandler handler = DomManagerImpl.getStableInvocationHandler(o);
+              return _equals(proxy, handler.getWrappedElement()) || _equals(proxy, handler.getOldValue());
+            }
+            return false;
           }
 
         });

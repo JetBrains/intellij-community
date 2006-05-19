@@ -4,11 +4,14 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.events.ElementDefinedEvent;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -64,6 +67,16 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     finally {
       manager.setChanging(b);
     }
+  }
+
+  public DomElement createStableCopy() {
+    final DomElement parentCopy = getParent().createStableCopy();
+    final DomAttributeChildDescription description = parentCopy.getGenericInfo().getAttributeChildDescription(getXmlElementName());
+    return getManager().createStableValue(new Factory<DomElement>() {
+      public DomElement create() {
+        return description.getValues(parentCopy).get(0);
+      }
+    });
   }
 
   protected final void cacheInTag(final XmlTag tag) {
