@@ -218,7 +218,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     if (myCachedImplementationClasses.containsKey(concreteInterface)) {
       return myCachedImplementationClasses.get(concreteInterface);
     }
-    
+
     final TreeSet<Class<? extends DomElement>> set =
       new TreeSet<Class<? extends DomElement>>(new Comparator<Class<? extends DomElement>>() {
         public int compare(final Class<? extends DomElement> o1, final Class<? extends DomElement> o2) {
@@ -230,7 +230,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       });
     findImplementationClassDFS(concreteInterface, set);
     if (!set.isEmpty()) {
-      final Class<? extends DomElement> aClass = set.first();
+      final Class<? extends DomElement> aClass = set.last();
       myCachedImplementationClasses.put(concreteInterface, aClass);
       return aClass;
     }
@@ -479,6 +479,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public final DomElement getIdentityScope(DomElement element) {
     final DomFileDescription description = findFileDescription(element);
     return description == null ? element.getParent() : description.getIdentityScope(element);
+  }
+
+  public final void clearCaches() {
+    myCachedImplementationClasses.clear();
   }
 
   private class MyElementFilter implements ElementFilter {
