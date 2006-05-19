@@ -4,6 +4,8 @@ import com.intellij.lang.ant.psi.AntAllTasksContainer;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NonNls;
 
 public class AntAllTasksContainerImpl extends AntTaskImpl implements AntAllTasksContainer {
 
@@ -18,6 +20,19 @@ public class AntAllTasksContainerImpl extends AntTaskImpl implements AntAllTasks
           definition.registerNestedType(def.getTypeId(), def.getClassName());
         }
       }
+    }
+  }
+
+  public String toString() {
+    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append("AntAllTasksContainer[");
+      builder.append(getSourceElement().getName());
+      builder.append("]");
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
     }
   }
 }

@@ -52,4 +52,20 @@ public class AntParsingTest extends ParsingTestCase {
   public void testAntCallNestedTargets() throws Exception {
     doTest(true);
   }
+
+  public void testAntComments() throws Exception {
+    doTest(true);
+  }
+
+  public void testPrologEpilogue() throws Exception {
+    doTest(true);
+  }
+
+  public void testMacroDef() throws Exception {
+    doTest(true);
+  }
+
+  public void testSequentialParallel() throws Exception {
+    doTest(true);
+  }
 }
