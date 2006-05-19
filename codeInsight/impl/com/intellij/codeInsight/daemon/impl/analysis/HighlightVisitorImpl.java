@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -152,14 +153,20 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
           final Annotator languageAnnotator = injectedLanguage.getAnnotator();
           final int injectedPsiOffset = injectionHost.getTextRange().getStartOffset() + injectedInfo.second.getStartOffset();
           PsiElement injectedPsi = injectedInfo.first;
-
-          final SyntaxHighlighterAsAnnotator syntaxAnnotator = new SyntaxHighlighterAsAnnotator(syntaxHighlighter, injectedPsiOffset);
+          final AnnotationHolderImpl fixingAnnotationHolder = new AnnotationHolderImpl() {
+            protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
+              Annotation annotation = super.createAnnotation(range.shiftRight(injectedPsiOffset), severity, message);
+              myAnnotationHolder.add(annotation);
+              return annotation;
+            }
+          };
+          final SyntaxHighlighterAsAnnotator syntaxAnnotator = new SyntaxHighlighterAsAnnotator(syntaxHighlighter);
           PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
             public void visitElement(PsiElement element) {
               super.visitElement(element);
-              syntaxAnnotator.annotate(element, myAnnotationHolder);
+              syntaxAnnotator.annotate(element, fixingAnnotationHolder);
               if (languageAnnotator != null) {
-                languageAnnotator.annotate(element, myAnnotationHolder);
+                languageAnnotator.annotate(element, fixingAnnotationHolder);
               }
             }
 

@@ -86,66 +86,63 @@ public class ExpectedHighlightingData {
     Pattern p = Pattern.compile(pat, Pattern.DOTALL);
     for (; ;) {
       Matcher m = p.matcher(text);
-      if (m.matches()) {
-        int startOffset = m.start(1);
-        String marker = m.group(2);
-        final ExpectedHighlightingSet expectedHighlightingSet = highlightingTypes.get(marker);
+      if (!m.matches()) break;
+      int startOffset = m.start(1);
+      String marker = m.group(2);
+      final ExpectedHighlightingSet expectedHighlightingSet = highlightingTypes.get(marker);
 
-        String descr = m.group(3);
-        if (descr == null) {
-          // no descr means any string by default
-          descr = "*";
-        }
-        else if (descr.equals("null")) {
-          // explicit "null" descr
-          descr = null;
-        }
-
-        String typeString = m.group(4);
-        String closeTagMarker = m.group(5);
-        String rest = m.group(6);
-
-        String content;
-        int endOffset;
-        if (closeTagMarker == null) {
-          Pattern pat2 = Pattern.compile("(.*?)</" + marker + ">(.*)", Pattern.DOTALL);
-          final Matcher matcher2 = pat2.matcher(rest);
-          LOG.assertTrue(matcher2.matches());
-          content = matcher2.group(1);
-          endOffset = m.start(6) + matcher2.start(2);
-        }
-        else {
-          // <XXX/>
-          content = "";
-          endOffset = m.start(6);
-        }
-
-        document.replaceString(startOffset, endOffset, content);
-
-        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(expectedHighlightingSet.defaultErrorType, startOffset, startOffset + content.length(), descr);
-
-        HighlightInfoType type = null;
-
-        if (typeString != null) {
-          Field[] fields = HighlightInfoType.class.getFields();
-          for (Field field : fields) {
-            try {
-              if (field.getName().equals(typeString)) type = (HighlightInfoType)field.get(null);
-            }
-            catch (Exception e) {
-            }
-          }
-
-          if (type == null) LOG.assertTrue(false,"Wrong highlight type: " + typeString);
-        }
-
-        highlightInfo.type = type;
-        highlightInfo.isAfterEndOfLine = expectedHighlightingSet.endOfLine;
-        LOG.assertTrue(expectedHighlightingSet.enabled);
-        expectedHighlightingSet.infos.add(highlightInfo);
-      } else {
-        break;
+      @NonNls String descr = m.group(3);
+      if (descr == null) {
+        // no descr means any string by default
+        descr = "*";
       }
+      else if (descr.equals("null")) {
+        // explicit "null" descr
+        descr = null;
+      }
+
+      String typeString = m.group(4);
+      String closeTagMarker = m.group(5);
+      String rest = m.group(6);
+
+      String content;
+      int endOffset;
+      if (closeTagMarker == null) {
+        Pattern pat2 = Pattern.compile("(.*?)</" + marker + ">(.*)", Pattern.DOTALL);
+        final Matcher matcher2 = pat2.matcher(rest);
+        LOG.assertTrue(matcher2.matches());
+        content = matcher2.group(1);
+        endOffset = m.start(6) + matcher2.start(2);
+      }
+      else {
+        // <XXX/>
+        content = "";
+        endOffset = m.start(6);
+      }
+
+      document.replaceString(startOffset, endOffset, content);
+
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(expectedHighlightingSet.defaultErrorType, startOffset, startOffset + content.length(), descr);
+
+      HighlightInfoType type = null;
+
+      if (typeString != null) {
+        Field[] fields = HighlightInfoType.class.getFields();
+        for (Field field : fields) {
+          try {
+            if (field.getName().equals(typeString)) type = (HighlightInfoType)field.get(null);
+          }
+          catch (Exception e) {
+          }
+        }
+
+        if (type == null) LOG.assertTrue(false,"Wrong highlight type: " + typeString);
+      }
+
+      highlightInfo.type = type;
+      highlightInfo.isAfterEndOfLine = expectedHighlightingSet.endOfLine;
+      LOG.assertTrue(expectedHighlightingSet.enabled);
+      expectedHighlightingSet.infos.add(highlightInfo);
       text = document.getText();
     }
   }
