@@ -48,16 +48,27 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
           final PsiClass newClass = ((PsiField)otherElement).getContainingClass();
           final PsiClass oldClass = ((PsiField)currentElement).getContainingClass();
 
+          final PsiElement scope = currentResult.getCurrentFileResolveScope();
           if(newClass.isInheritor(oldClass, true)){
-            // current is better
-            conflicts.remove(currentResult);
-            currentResult = candidate;
-            continue;
+            if (!(scope instanceof PsiClass) || !((PsiClass)scope).isInheritorDeep(oldClass, newClass)) {
+              // candidate is better
+              conflicts.remove(currentResult);
+              currentResult = candidate;
+              continue;
+            }
+            else {
+              return null;
+            }
           }
           else if (oldClass.isInheritor(newClass, true)) {
-            // current is worse
-            conflicts.remove(candidate);
-            continue;
+            if (!(scope instanceof PsiClass) || !((PsiClass)scope).isInheritorDeep(newClass, oldClass)) {
+              // candidate is worse
+              conflicts.remove(candidate);
+              continue;
+            }
+            else {
+              return null;
+            }
           }
           else {
             if (!candidate.isAccessible()) {

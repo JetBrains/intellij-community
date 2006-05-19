@@ -311,6 +311,20 @@ public interface PsiClass
    * @return true if the class is an inheritor, false otherwise
    */
   boolean isInheritor(PsiClass baseClass, boolean checkDeep);
+
+  /**
+   * Checks if this class is a deep inheritor of the specified base class possibly bypassing a class
+   * when checking inheritance chain.
+   * Only java inheritance rules are considered.
+   * Note that {@link com.intellij.psi.search.searches.ClassInheritorsSearch}
+   *  may return classes that are inheritors in broader, e.g. in ejb sense, but not in java sense.
+   *
+   * @param baseClass the base class to check the inheritance.
+   *                  searched in the entire inheritance chain
+   * @param classToByPass class to bypass the inheratance check for
+   * @return true if the class is an inheritor, false otherwise
+   */
+  boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass);
                                                      
   /**
    * Returns the {@link com.intellij.pom.java.PomMemberOwner} representation of the class.

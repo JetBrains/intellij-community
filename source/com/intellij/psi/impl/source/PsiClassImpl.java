@@ -776,6 +776,10 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
+  public boolean isInheritorDeep(PsiClass baseClass, PsiClass classToByPass) {
+    return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
+  }
+
   @Nullable
   public PomMemberOwner getPom() {
     //TODO:

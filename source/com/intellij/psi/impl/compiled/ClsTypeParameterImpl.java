@@ -140,6 +140,10 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return getParent().getParent();
   }
 
+  public boolean isInheritorDeep(PsiClass baseClass, PsiClass classToByPass) {
+    return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
+  }
+
   public boolean isInheritor(PsiClass baseClass, boolean checkDeep) {
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
