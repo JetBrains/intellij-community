@@ -584,14 +584,18 @@ public class MatchingVisitor extends PsiElementVisitor {
              ( ( var.getParent() instanceof PsiClass && ((PsiClass)var.getParent()).isInterface()) ||
                match(var.getModifierList(),var2.getModifierList())
              ) &&
-               match(var.getTypeElement(),var2.getTypeElement()) &&
-               (match(var.getInitializer(),var2.getInitializer()) || isTypedInitializer) &&
-               validateArrayDimensions(var.getType(), var2.getType());
+             match(var.getTypeElement(),var2.getTypeElement()) &&
+             validateArrayDimensions(var.getType(), var2.getType());
 
-    if (result && isTypedInitializer) {
-      result = ( var2.getInitializer()!=null ||
+    if (result) {
+      // Check initializer
+      final PsiExpression var2Initializer = var2.getInitializer();
+
+      result = match(var.getInitializer(), var2Initializer) ||
+               ( isTypedInitializer &&
+                 var2Initializer == null &&
                  allowsAbsenceOfMatch(var.getInitializer())
-      );
+               );
     }
 
     if (result && isTypedVar) {

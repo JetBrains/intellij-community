@@ -15,12 +15,12 @@ import java.util.List;
  * Time: 5:07:33 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LiteralWithSubstituionHandler extends Handler {
+public class LiteralWithSubstitutionHandler extends Handler {
   private String matchExpression;
   private Matcher matcher;
   private List<SubstitutionHandler> handlers;
 
-  public LiteralWithSubstituionHandler(String _matchedExpression,List<SubstitutionHandler> _handlers) {
+  public LiteralWithSubstitutionHandler(String _matchedExpression,List<SubstitutionHandler> _handlers) {
     matchExpression = _matchedExpression;
     handlers = _handlers;
   }
@@ -35,7 +35,7 @@ public class LiteralWithSubstituionHandler extends Handler {
     }
 
     while (matcher.find()) {
-      for(int i=0;i<handlers.size();++i) {
+      for (int i = 0; i < handlers.size(); ++i) {
         SubstitutionHandler handler = handlers.get(i);
 
         if (!handler.handle(matchedNode,offset + matcher.start(i+1), offset + matcher.end(i+1),context)) {

@@ -321,7 +321,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
 
     if (handlers!=null) {
-      return (hasLiteralContent)?(Handler)new LiteralWithSubstituionHandler(
+      return (hasLiteralContent)?(Handler)new LiteralWithSubstitutionHandler(
         buf.toString(),
         handlers
       ):

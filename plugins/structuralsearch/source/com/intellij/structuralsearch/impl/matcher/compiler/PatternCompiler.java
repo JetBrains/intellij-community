@@ -9,12 +9,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
@@ -25,10 +25,11 @@ import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Compiles the handlers for usability
@@ -74,25 +75,8 @@ public class PatternCompiler {
                              new CompiledPattern.XmlCompiledPattern();
 
     try {
-      context.pattern = result;
-      context.options = options;
-      context.project = project;
-
+      context.init(result, options,project, options.getScope() instanceof GlobalSearchScope);
       Template template = TemplateManager.getInstance(project).createTemplate("","",options.getSearchPattern());
-      context.findMatchingFiles = options.getScope() instanceof GlobalSearchScope;
-
-      if (context.findMatchingFiles) {
-        context.helper = PsiManager.getInstance(project).getSearchHelper();
-        context.scanRequest = 0;
-
-        if (context.filesToScan==null) {
-          context.filesToScan = new THashMap<PsiFile,PsiFile>(TObjectHashingStrategy.CANONICAL);
-          context.filesToScan2 = new THashMap<PsiFile,PsiFile>(TObjectHashingStrategy.CANONICAL);
-          context.scanned = new HashMap<String,String>();
-          context.scannedComments = new HashMap<String,String>();
-          context.scannedLiterals = new HashMap<String,String>();
-        }
-      }
 
       int segmentsCount = template.getSegmentsCount();
       String text = template.getTemplateText();
@@ -252,7 +236,6 @@ public class PatternCompiler {
         final List<PsiFile> filesToScan = new ArrayList<PsiFile>(set.size());
         final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
 
-        //@todo we may not need this!
         for (final PsiFile file : set) {
           if (!scope.contains(file.getVirtualFile())) {
             continue;
@@ -261,20 +244,15 @@ public class PatternCompiler {
           filesToScan.add(file);
         }
 
+        if (filesToScan.size() == 0) {
+          throw new MalformedPatternException(SSRBundle.message("ssr.will.not.find.anything"));
+        }
         result.setScope(
           new LocalSearchScope( filesToScan.toArray(new PsiElement[filesToScan.size()]) )
         );
-        context.filesToScan.clear();
-        context.filesToScan2.clear();
-        context.scanned.clear();
-        context.scannedComments.clear();
-        context.scannedLiterals.clear();
-        context.helper = null;
       }
     } finally {
-      context.project = null;
-      context.pattern = null;
-      context.options = null;
+      context.clear();
     }
 
     return result;

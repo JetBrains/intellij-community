@@ -600,6 +600,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
               isReplaceDialog(),
               getFileTypeByString((String)fileTypes.getSelectedItem())
             ).show();
+            initiateValidation();
             CompletionTextField.setCurrentProject(null);
           }
         }
@@ -774,7 +775,11 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       Matcher.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
     }
     catch (MalformedPatternException ex) {
-      reportMessage("this.pattern.is.malformed.message", searchCriteriaEdit, ex.getMessage());
+      reportMessage(
+        "this.pattern.is.malformed.message",
+        searchCriteriaEdit,
+        ex.getMessage() != null ? ex.getMessage():""
+      );
       result = false;
     }
     catch (UnsupportedPatternException ex) {
