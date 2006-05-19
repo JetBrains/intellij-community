@@ -9,6 +9,8 @@ import javax.swing.*;
 
 /**
  * @author peter
+ * 
+ * @see DomUIFactory
  */
 public interface DomUIControl extends CommittablePanel {
 
