@@ -62,6 +62,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private final Map<Pair<Type, Type>, InvocationCache> myInvocationCaches = new HashMap<Pair<Type, Type>, InvocationCache>();
   private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses =
     new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+  private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myCachedImplementationClasses =
+    new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private final List<Function<DomElement, Collection<PsiElement>>> myPsiElementProviders =
     new ArrayList<Function<DomElement, Collection<PsiElement>>>();
   private final Set<DomFileDescription> myFileDescriptions = new HashSet<DomFileDescription>();
@@ -213,26 +215,41 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   @Nullable
   Class<? extends DomElement> getImplementation(final Class<? extends DomElement> concreteInterface) {
-    final Class<? extends DomElement> registeredImplementation = findImplementationClassDFS(concreteInterface);
-    if (registeredImplementation != null) {
-      return registeredImplementation;
+    if (myCachedImplementationClasses.containsKey(concreteInterface)) {
+      return myCachedImplementationClasses.get(concreteInterface);
     }
-    final Implementation implementation = DomUtil.findAnnotationDFS(concreteInterface, Implementation.class);
-    return implementation == null ? null : implementation.value();
-  }
-
-  private Class<? extends DomElement> findImplementationClassDFS(final Class<? extends DomElement> concreteInterface) {
-    Class<? extends DomElement> aClass = myImplementationClasses.get(concreteInterface);
-    if (aClass != null) {
+    
+    final TreeSet<Class<? extends DomElement>> set =
+      new TreeSet<Class<? extends DomElement>>(new Comparator<Class<? extends DomElement>>() {
+        public int compare(final Class<? extends DomElement> o1, final Class<? extends DomElement> o2) {
+          if (o1.isAssignableFrom(o2)) return 1;
+          if (o2.isAssignableFrom(o1)) return -1;
+          if (o1.equals(o2)) return 0;
+          throw new AssertionError("Incompatible implementation classes: " + o1 + " & " + o2);
+        }
+      });
+    findImplementationClassDFS(concreteInterface, set);
+    if (!set.isEmpty()) {
+      final Class<? extends DomElement> aClass = set.first();
+      myCachedImplementationClasses.put(concreteInterface, aClass);
       return aClass;
     }
-    for (final Class aClass1 : concreteInterface.getInterfaces()) {
-      aClass = findImplementationClassDFS(aClass1);
-      if (aClass != null) {
-        return aClass;
+    final Implementation implementation = DomUtil.findAnnotationDFS(concreteInterface, Implementation.class);
+    final Class<? extends DomElement> aClass1 = implementation == null ? null : implementation.value();
+    myCachedImplementationClasses.put(concreteInterface, aClass1);
+    return aClass1;
+  }
+
+  private void findImplementationClassDFS(final Class<? extends DomElement> concreteInterface, SortedSet<Class<? extends DomElement>> results) {
+    Class<? extends DomElement> aClass = myImplementationClasses.get(concreteInterface);
+    if (aClass != null) {
+      results.add(aClass);
+    }
+    else {
+      for (final Class aClass1 : concreteInterface.getInterfaces()) {
+        findImplementationClassDFS(aClass1, results);
       }
     }
-    return null;
   }
 
   public final Project getProject() {
