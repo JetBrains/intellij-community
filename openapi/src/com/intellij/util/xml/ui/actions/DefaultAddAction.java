@@ -9,10 +9,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.xml.XmlTag;
 
 import javax.swing.*;
 
@@ -58,23 +60,19 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
       public void run() {
         if (beforeAddition()) {
           final DomElement parent = getParentDomElement();
-          final int[] index = new int[]{-1};
-          final DomCollectionChildDescription[] description = new DomCollectionChildDescription[]{null};
           final DomManager domManager = parent.getManager();
           final ClassChooser[] oldChooser = new ClassChooser[]{null};
           final Class[] aClass = new Class[]{null};
-          final String[] name = new String[]{null};
-          new WriteCommandAction(domManager.getProject()) {
-            protected void run(Result result) throws Throwable {
+          final T result = new WriteCommandAction<T>(domManager.getProject()) {
+            protected void run(Result<T> result) throws Throwable {
               final T t = doAdd();
-              name[0] = t.getXmlElementName();
-              description[0] = parent.getGenericInfo().getCollectionChildDescription(name[0]);
-              index[0] = description[0].getValues(parent).indexOf(t);
-              aClass[0] = DomUtil.getRawType(description[0].getType());
+              aClass[0] = DomUtil.getRawType(parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType());
               oldChooser[0] = ClassChooserManager.getClassChooser(aClass[0]);
+              final SmartPsiElementPointer pointer =
+                SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(t.getXmlTag());
               ClassChooserManager.registerClassChooser(aClass[0], new ClassChooser() {
                 public Class<? extends T> chooseClass(final XmlTag tag) {
-                  if (tag == getParentDomElement().getXmlTag().findSubTags(name[0])[index[0]]) {
+                  if (tag == pointer.getElement()) {
                     return getElementClass();
                   }
                   return oldChooser[0].chooseClass(tag);
@@ -88,10 +86,11 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
                   return oldChooser[0].getChooserClasses();
                 }
               });
+              result.setResult((T)t.createStableCopy());
             }
-          }.execute();
+          }.execute().getResultObject();
           ClassChooserManager.registerClassChooser(aClass[0], oldChooser[0]);
-          afterAddition(e, description[0].getValues(getParentDomElement()).get(index[0]));
+          afterAddition(e, ((StableElement)result).getWrappedElement());
         }
       }
     });

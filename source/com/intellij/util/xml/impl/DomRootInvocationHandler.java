@@ -50,10 +50,10 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     return isValid() ? myParent : null;
   }
 
-  public DomElement createStableCopy() {
-    return getManager().createStableValue(new Factory<DomElement>() {
-      public DomElement create() {
-        return myParent.getRootElement();
+  public <T extends DomElement> T createStableCopy() {
+    return getManager().createStableValue(new Factory<T>() {
+      public T create() {
+        return (T)myParent.getRootElement();
       }
     });
   }

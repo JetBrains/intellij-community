@@ -36,18 +36,18 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
     getManager().fireEvent(new CollectionElementRemovedEvent(getProxy(), parent, getXmlElementName()));
   }
 
-  public DomElement createStableCopy() {
+  public <T extends DomElement> T createStableCopy() {
     final DomElement parent = getParent();
     final DomElement parentCopy = parent.createStableCopy();
     final String tagName = getXmlElementName();
     final int index = Arrays.asList(parent.getXmlTag().findSubTags(tagName)).indexOf(getXmlTag());
-    return getManager().createStableValue(new Factory<DomElement>() {
-      public DomElement create() {
+    return getManager().createStableValue(new Factory<T>() {
+      public T create() {
         final XmlTag[] subTags = parentCopy.getXmlTag().findSubTags(tagName);
         if (subTags.length <= index) {
           return null;
         }
-        return getManager().getDomElement(subTags[index]);
+        return (T)getManager().getDomElement(subTags[index]);
       }
     });
   }

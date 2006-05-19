@@ -69,12 +69,12 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     }
   }
 
-  public DomElement createStableCopy() {
+  public <T extends DomElement> T createStableCopy() {
     final DomElement parentCopy = getParent().createStableCopy();
     final DomAttributeChildDescription description = parentCopy.getGenericInfo().getAttributeChildDescription(getXmlElementName());
-    return getManager().createStableValue(new Factory<DomElement>() {
-      public DomElement create() {
-        return description.getValues(parentCopy).get(0);
+    return getManager().createStableValue(new Factory<T>() {
+      public T create() {
+        return (T)description.getValues(parentCopy).get(0);
       }
     });
   }

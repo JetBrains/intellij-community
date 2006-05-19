@@ -94,12 +94,12 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     fireUndefinedEvent();
   }
 
-  public DomElement createStableCopy() {
+  public <T extends DomElement> T createStableCopy() {
     final DomElement parentCopy = getParent().createStableCopy();
     final DomFixedChildDescription description = parentCopy.getGenericInfo().getFixedChildDescription(getXmlElementName());
-    return getManager().createStableValue(new Factory<DomElement>() {
-      public DomElement create() {
-        return description.getValues(parentCopy).get(myIndex);
+    return getManager().createStableValue(new Factory<T>() {
+      public T create() {
+        return (T)description.getValues(parentCopy).get(myIndex);
       }
     });
   }

@@ -63,8 +63,8 @@ public interface DomElement {
 
   void copyFrom(DomElement other);
 
-  DomElement createMockCopy(final boolean physical);
+  <T extends DomElement> T createMockCopy(final boolean physical);
 
-  DomElement createStableCopy();
+  <T extends DomElement> T createStableCopy();
 
 }
