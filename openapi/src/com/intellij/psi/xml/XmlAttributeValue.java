@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.xml;
 
+import com.intellij.psi.PsiLanguageInjectionHost;
+
 /**
  * @author Mike
  */
-public interface XmlAttributeValue extends XmlElement {
+public interface XmlAttributeValue extends XmlElement, PsiLanguageInjectionHost {
   String getValue();
 }

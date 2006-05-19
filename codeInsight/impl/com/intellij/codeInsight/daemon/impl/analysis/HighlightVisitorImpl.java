@@ -145,7 +145,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
       final Language injectedLanguage = element.getManager().getInjectedLanguage(injectionHost);
       if (injectedLanguage != null) {
-
         Pair<PsiElement,TextRange> injectedInfo = injectionHost.getInjectedPsi();
         if (injectedInfo != null) {
           VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
@@ -153,15 +152,15 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
           final Annotator languageAnnotator = injectedLanguage.getAnnotator();
           final int injectedPsiOffset = injectionHost.getTextRange().getStartOffset() + injectedInfo.second.getStartOffset();
           PsiElement injectedPsi = injectedInfo.first;
-          final AnnotationHolderImpl fixingAnnotationHolder = new AnnotationHolderImpl() {
-            protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-              Annotation annotation = super.createAnnotation(range.shiftRight(injectedPsiOffset), severity, message);
-              myAnnotationHolder.add(annotation);
-              return annotation;
-            }
-          };
           final SyntaxHighlighterAsAnnotator syntaxAnnotator = new SyntaxHighlighterAsAnnotator(syntaxHighlighter);
           PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
+            final AnnotationHolderImpl fixingAnnotationHolder = new AnnotationHolderImpl() {
+              protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
+                Annotation annotation = super.createAnnotation(range.shiftRight(injectedPsiOffset), severity, message);
+                myAnnotationHolder.add(annotation);
+                return annotation;
+              }
+            };
             public void visitElement(PsiElement element) {
               super.visitElement(element);
               syntaxAnnotator.annotate(element, fixingAnnotationHolder);
@@ -954,5 +953,10 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitXmlText(XmlText text) {
     super.visitXmlText(text);
     visitElement(text);
+  }
+
+  public void visitXmlAttributeValue(XmlAttributeValue value) {
+    super.visitXmlAttributeValue(value);
+    visitElement(value);
   }
 }

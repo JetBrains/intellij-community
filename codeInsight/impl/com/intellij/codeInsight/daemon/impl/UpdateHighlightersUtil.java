@@ -78,18 +78,17 @@ public class UpdateHighlightersUtil {
                                              Collection<HighlightInfo> highlights,
                                              int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    List<HighlightInfo> array = new ArrayList<HighlightInfo>();
 
     cleanFileLevelHighlights(project, document, group);
 
     HighlightInfo[] oldHighlights = DaemonCodeAnalyzerImpl.getHighlights(document, project);
 
+    List<HighlightInfo> array = new ArrayList<HighlightInfo>();
     if (oldHighlights != null) {
       for (HighlightInfo info : oldHighlights) {
         RangeHighlighter highlighter = info.highlighter;
-        boolean toRemove;
-        toRemove = !highlighter.isValid() ||
-                   info.group == group && startOffset <= highlighter.getStartOffset() && highlighter.getEndOffset() <= endOffset;
+        boolean toRemove = !highlighter.isValid() ||
+                           info.group == group && startOffset <= highlighter.getStartOffset() && highlighter.getEndOffset() <= endOffset;
 
         if (toRemove) {
           document.getMarkupModel(project).removeHighlighter(highlighter);
@@ -104,12 +103,12 @@ public class UpdateHighlightersUtil {
     }
 
     for (HighlightInfo info : highlights) {
-      int layer;
       int infoEndOffset = info.endOffset;
       int infoStartOffset = info.startOffset;
 
       if (infoStartOffset < startOffset || infoEndOffset > endOffset) continue;
       HighlightSeverity severity = info.getSeverity();
+      int layer;
       if (severity == HighlightSeverity.INFORMATION || severity == HighlightSeverity.INFO) {
         layer = HighlighterLayer.ADDITIONAL_SYNTAX;
       }
@@ -219,9 +218,8 @@ public class UpdateHighlightersUtil {
     if (oldMarkers != null) {
       for (LineMarkerInfo info : oldMarkers) {
         RangeHighlighter highlighter = info.highlighter;
-        boolean toRemove;
-        toRemove = !highlighter.isValid() || isLineMarkerInGroup(info.type, group) && startOffset <= highlighter.getStartOffset() &&
-                                             highlighter.getStartOffset() <= endOffset;
+        boolean toRemove = !highlighter.isValid() ||
+                           isLineMarkerInGroup(info.type, group) && startOffset <= highlighter.getStartOffset() && highlighter.getStartOffset() <= endOffset;
 
         if (toRemove) {
           document.getMarkupModel(project).removeHighlighter(highlighter);

@@ -17,12 +17,15 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.impl.PsiBuilderImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
  */
 public class InjectedLanguageUtil {
-  public static Pair<PsiElement, TextRange> createInjectedPsiFile(final PsiLanguageInjectionHost host, final String text, final TextRange range) {
+  @Nullable
+  public static Pair<PsiElement, TextRange> createInjectedPsiFile(@NotNull PsiLanguageInjectionHost host, @NotNull final String text, @NotNull final TextRange range) {
     final Language language = host.getManager().getInjectedLanguage(host);
     if (language == null) return null;
 
