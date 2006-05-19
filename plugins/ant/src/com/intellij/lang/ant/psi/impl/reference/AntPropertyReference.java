@@ -43,8 +43,7 @@ public class AntPropertyReference extends AntGenericReference {
     final AntElement parent = antElement.getAntParent();
     if (parent != null) {
       parent.setProperty(getCanonicalText(), element);
-      final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
-      return handleElementRename(psiNamedElement.getName());
+      return handleElementRename(((PsiNamedElement)element).getName());
     }
     return antElement;
   }
