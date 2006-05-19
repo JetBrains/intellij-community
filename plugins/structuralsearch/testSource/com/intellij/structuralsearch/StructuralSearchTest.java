@@ -556,18 +556,42 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       2,
       findMatchesCount(s9,s10_2)
     );
+  }
 
-    String s11 = "class A {\n" +
-                 "  void main(String[] argv);" +
-                 "}";
-    String s12 = "'t:[regex( *Object\\[\\] ) ] 't2";
+  public void testLiteral() {
+    String s = "class A {\n" +
+               "  static String a = 1;\n" +
+               "  static String s = \"aaa\";\n" +
+               "  static String s2;\n" +
+               "}";
+    String s2 = "static String '_FieldName = '_Init?:[!regex( \".*\" )];";
+    String s2_2 = "static String '_FieldName = '_Init:[!regex( \".*\" )];";
 
     assertEquals(
-      "Find array covariant types",
-      0,
-      findMatchesCount(s11,s12)
+      "Literal",
+      2,
+      findMatchesCount(s,s2)
+    );
+
+    assertEquals(
+      "Literal, 2",
+      1,
+      findMatchesCount(s,s2_2)
     );
   }
+
+  //public void testCovariantArraySearch() {
+  //  String s11 = "class A {\n" +
+  //               "  void main(String[] argv);" +
+  //               "}";
+  //  String s12 = "'t:[regex( *Object\\[\\] ) ] 't2";
+  //
+  //  assertEquals(
+  //    "Find array covariant types",
+  //    1,
+  //    findMatchesCount(s11,s12)
+  //  );
+  //}
 
   // @todo support back references (\1 in another reg exp or as fild member)
   //private static final String s1002 = " setSSS( instance.getSSS() ); " +
