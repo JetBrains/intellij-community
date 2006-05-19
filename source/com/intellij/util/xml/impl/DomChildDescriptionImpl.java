@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 
 import java.lang.reflect.Type;
@@ -30,14 +31,15 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
     return myTagName;
   }
 
-  public List<? extends DomElement> getStableValues(DomElement parent) {
+  public List<? extends DomElement> getStableValues(final DomElement parent) {
     final List<? extends DomElement> list = getValues(parent);
     final ArrayList<DomElement> result = new ArrayList<DomElement>(list.size());
+    final DomManager domManager = parent.getManager();
     for (int i = 0; i < list.size(); i++) {
       final int i1 = i;
-      result.add(parent.getManager().createStableValue(new Factory<DomElement>() {
+      result.add(domManager.createStableValue(new Factory<DomElement>() {
         public DomElement create() {
-          return list.get(i1);
+          return getValues(parent).get(i1);
         }
       }));
     }
