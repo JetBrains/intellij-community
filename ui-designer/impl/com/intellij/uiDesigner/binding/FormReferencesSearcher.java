@@ -40,7 +40,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     Module module = ProjectRootManager.getInstance(refElement.getProject()).getFileIndex().getModuleForFile(virtualFile);
     if (module == null) return true;
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(module);
-    final LocalSearchScope filterScope = (!p.isIgnoreAccessScope() && p.getScope() instanceof LocalSearchScope)
+    final LocalSearchScope filterScope = p.getScope() instanceof LocalSearchScope
                                          ? (LocalSearchScope) p.getScope()
                                          : null;
 
