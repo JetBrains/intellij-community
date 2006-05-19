@@ -13,6 +13,7 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.GenericAttributeValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +51,9 @@ public class DomElementsHighlightingUtil {
 
 
   private static PsiElement getPsiElement(final DomElement domElement) {
+    if (domElement instanceof GenericAttributeValue) {
+      return ((GenericAttributeValue)domElement).getXmlAttributeValue();
+    }
     if (domElement instanceof GenericValue && ((GenericValue)domElement).getStringValue() != null &&
         domElement.getXmlTag().getValue().getTextElements().length > 0) {
       return domElement.getXmlTag().getValue().getTextElements()[0];
