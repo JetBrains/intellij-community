@@ -33,7 +33,7 @@ XmlFile:PrologEpilogue.ant
           XmlToken:XML_ATTRIBUTE_VALUE_END_DELIMITER('"')
       XmlToken:XML_TAG_END('>')
       XmlText
-        PsiWhiteSpace('\n')
+        PsiWhiteSpace('\n  ')
       XmlTag:target
         XmlToken:XML_START_TAG_START('<')
         XmlToken:XML_NAME('target')
@@ -45,7 +45,6 @@ XmlFile:PrologEpilogue.ant
             XmlToken:XML_ATTRIBUTE_VALUE_START_DELIMITER('"')
             XmlToken:XML_ATTRIBUTE_VALUE_TOKEN('main')
             XmlToken:XML_ATTRIBUTE_VALUE_END_DELIMITER('"')
-        PsiWhiteSpace(' ')
         XmlToken:XML_EMPTY_ELEMENT_END('/>')
       XmlText
         PsiWhiteSpace('\n')
