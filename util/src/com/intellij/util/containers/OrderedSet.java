@@ -20,7 +20,6 @@ import gnu.trove.TObjectHashingStrategy;
 
 import java.util.*;
 
-@SuppressWarnings({"SuspiciousMethodCalls"})
 public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
   private THashSet<T> myHashSet;
   private ArrayList<T> myElements;
