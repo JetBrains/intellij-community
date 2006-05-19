@@ -265,7 +265,8 @@ public class MatcherImpl {
       HashSet<VirtualFile> visited = new HashSet<VirtualFile>(rootFiles.length);
       final VirtualFileFilter filter = new VirtualFileFilter() {
         public boolean accept(VirtualFile file) {
-          return scope.contains(file);
+          if(!file.isDirectory()) return scope.contains(file);
+          return true;
         }
       };
 
