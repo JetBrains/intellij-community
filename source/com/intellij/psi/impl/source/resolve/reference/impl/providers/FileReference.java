@@ -9,12 +9,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -93,14 +95,21 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
           resolved = ((WebDirectoryElement)context).getParentDirectory();
         }
         else {
-          WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
+          final PsiElement[] processingChildrenResult = new PsiElement[1];
 
-          for (WebDirectoryElement child : children) {
-            if (equalsTo(child)) {
-              resolved = child.isDirectory() ? child : child.getOriginalFile();
-              break;
+          final WebDirectoryElement dirContext = ((WebDirectoryElement)context);
+          dirContext.processChildren(new WebDirectoryElement.WebDirectoryProcessor() {
+            public boolean execute(final String name, boolean isDirectory) throws Exception {
+              if (equalsTo(name)) {
+                final WebDirectoryElement element = dirContext.createElement(name, isDirectory);
+                processingChildrenResult[0] = element.isDirectory() ? element:element.getOriginalFile();
+                return false;
+              }
+
+              return true;
             }
-          }
+          });
+          resolved = processingChildrenResult[0];
         }
       }
       else if (context instanceof PsiDirectory) {
@@ -111,16 +120,19 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
           resolved = ((PsiDirectory)context).getParentDirectory();
         }
         else {
-          PsiElement[] children = context.getChildren();
+          final PsiElement[] processingChildrenResult = new PsiElement[1];
 
-          for (PsiElement element : children) {
-            PsiFileSystemItem child = (PsiFileSystemItem)element;
+          ((PsiDirectoryImpl)context).processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
+            public boolean execute(final PsiFileSystemItem element) {
+              if (equalsTo(element.getName())) {
+                processingChildrenResult[0] = element;
+                return false;
+              }
 
-            if (equalsTo(child)) {
-              resolved = child;
-              break;
+              return true;
             }
-          }
+          });
+          resolved = processingChildrenResult[0];
         }
       }
       if (resolved != null) {
@@ -188,9 +200,9 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
 
-  private boolean equalsTo(final PsiFileSystemItem child) {
-    return myFileReferenceSet.isCaseSensitive() ? myText.equals(child.getName()) :
-           myText.compareToIgnoreCase(child.getName()) == 0;
+  private final boolean equalsTo(final String name) {
+    return myFileReferenceSet.isCaseSensitive() ? myText.equals(name) :
+           myText.compareToIgnoreCase(name) == 0;
   }
 
   public boolean isReferenceTo(PsiElement element) {

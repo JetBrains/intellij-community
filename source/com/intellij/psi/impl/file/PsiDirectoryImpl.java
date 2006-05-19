@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -212,26 +213,38 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return classes.toArray(new PsiClass[classes.size()]);
   }
 
-  @NotNull
-  public PsiElement[] getChildren() {
+  public void processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
     LOG.assertTrue(isValid());
 
-    VirtualFile[] files = myFile.getChildren();
-    ArrayList<PsiElement> children = new ArrayList<PsiElement>();
-    for (VirtualFile vFile : files) {
+    for (VirtualFile vFile : myFile.getChildren()) {
       if (vFile.isDirectory()) {
         PsiDirectory dir = myManager.findDirectory(vFile);
         if (dir != null) {
-          children.add(dir);
+          if(!processor.execute(dir)) return;
         }
       }
       else {
         PsiFile file = myManager.findFile(vFile);
         if (file != null) {
-          children.add(file);
+          if(!processor.execute(file)) return;
         }
       }
     }
+  }
+
+  @NotNull
+  public PsiElement[] getChildren() {
+    LOG.assertTrue(isValid());
+
+    VirtualFile[] files = myFile.getChildren();
+    final ArrayList<PsiElement> children = new ArrayList<PsiElement>(files.length);
+    processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
+      public boolean execute(final PsiFileSystemItem element) {
+        children.add(element);
+        return true;
+      }
+    });
+
     return children.toArray(PsiElement.EMPTY_ARRAY);
   }
 
