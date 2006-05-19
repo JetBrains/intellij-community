@@ -17,12 +17,10 @@ package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-
-import javax.swing.*;
-
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * Interface which should be implemented in order to draw icons in the gutter area and handle events
@@ -112,25 +110,19 @@ public abstract class GutterIconRenderer {
     return null;
   }
 
-  public static class Alignment {
-    public static final Alignment LEFT = new Alignment("LEFT", 1);
-    public static final Alignment RIGHT = new Alignment("RIGHT", 3);
-    public static final Alignment CENTER = new Alignment("CENTER", 2);
+  public enum Alignment {
+    LEFT(1),
+    RIGHT(3),
+    CENTER(2);
 
-    private final String myName;
     private int myWeight;
 
-    private Alignment(@NonNls String name, int weight) {
-      myName = name;
+    private Alignment(int weight) {
       myWeight = weight;
     }
 
     public int getWeight() {
       return myWeight;
-    }
-
-    public String toString() {
-      return myName;
     }
   }
 }
