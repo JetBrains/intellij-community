@@ -61,6 +61,7 @@ import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.text.MessageFormat;
@@ -187,20 +188,24 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       if (namespaceByPrefix.length() == 0) {
         final PsiFile containingFile = tag.getContainingFile();
-        if (!HighlightUtil.isRootInspected(containingFile)) return;
+        if (!HighlightUtil.shouldInspect(containingFile)) return;
 
         if (!"xml".equals(namespacePrefix) ) {
           boolean taglibDeclaration = containingFile.getFileType() == StdFileTypes.JSP;
+
+          ProgressManager progressManager = ProgressManager.getInstance();
 
           // check if there is invalid ns declaration
           if (taglibDeclaration) {
             final XmlTag[] directiveTags = PsiUtil.getJspFile(containingFile).getDirectiveTags(JspDirectiveKind.TAGLIB, false);
             for(XmlTag t:directiveTags) {
+              progressManager.checkCanceled();
               if (namespacePrefix.equals(t.getAttributeValue("prefix"))) return;
             }
           } else {
             @NonNls String nsDeclarationAttrName = null;
             for(XmlTag t = tag; t != null; t = t.getParentTag()) {
+              progressManager.checkCanceled();
               if (t.hasNamespaceDeclarations()) {
                 if (nsDeclarationAttrName == null) nsDeclarationAttrName = "xmlns:"+namespacePrefix;
                 if (t.getAttributeValue(nsDeclarationAttrName) != null) return;
@@ -266,10 +271,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     final String text = element.getErrorDescription();
     if (text != null && text.startsWith(XmlErrorMessages.message("unescaped.ampersand"))) {
       QuickFixAction.registerQuickFixAction(highlightInfo, new IntentionAction() {
+        @NotNull
         public String getText() {
           return XmlErrorMessages.message("escape.ampersand.quickfix");
         }
 
+        @NotNull
         public String getFamilyName() {
           return getText();
         }
@@ -302,10 +309,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       myName = name;
     }
 
+    @NotNull
     public String getText() {
       return myStart ? XmlErrorMessages.message("rename.start.tag.name.intention") : XmlErrorMessages.message("rename.end.tag.name.intention");
     }
 
+    @NotNull
     public String getFamilyName() {
       return getText();
     }
@@ -331,7 +340,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     boolean insideEndTag = false;
     XmlToken startTagNameToken = null;
 
+    ProgressManager progressManager = ProgressManager.getInstance();
     for (PsiElement child : children) {
+      progressManager.checkCanceled();
       if (child instanceof XmlToken) {
         final XmlToken xmlToken = (XmlToken)child;
         if (xmlToken.getTokenType() == XmlTokenType.XML_EMPTY_ELEMENT_END) return true;
@@ -696,7 +707,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
     XmlAttribute[] attributes = tag.getAttributes();
 
+    ProgressManager progressManager = ProgressManager.getInstance();
     for (XmlAttribute tagAttribute : attributes) {
+      progressManager.checkCanceled();
       if (attribute != tagAttribute && Comparing.strEqual(attribute.getName(), tagAttribute.getName())) {
         final String localName = attribute.getLocalName();
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
@@ -836,27 +849,30 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   private void checkReferences(PsiElement value, QuickFixProvider quickFixProvider) {
     PsiReference[] references = value.getReferences();
 
+    ProgressManager progressManager = ProgressManager.getInstance();
     for (final PsiReference reference : references) {
-      if (reference != null) {
-        if (!reference.isSoft()) {
-          if(hasBadResolve(reference)) {
-            String description = getErrorDescription(reference);
+      progressManager.checkCanceled();
+      if (reference == null) {
+        continue;
+      }
+      if (!reference.isSoft()) {
+        if(hasBadResolve(reference)) {
+          String description = getErrorDescription(reference);
 
-            HighlightInfo info = HighlightInfo.createHighlightInfo(
-              getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class)),
-              reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset(),
-              reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset(),
-              description
-            );
-            addToResults(info);
-            quickFixProvider.registerQuickfix(info, reference);
-            if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
-          }
+          HighlightInfo info = HighlightInfo.createHighlightInfo(
+            getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class)),
+            reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset(),
+            reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset(),
+            description
+          );
+          addToResults(info);
+          quickFixProvider.registerQuickfix(info, reference);
+          if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
         }
-        if(reference instanceof PsiJavaReference && myRefCountHolder != null){
-          final PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
-          myRefCountHolder.registerReference(psiJavaReference, psiJavaReference.advancedResolve(false));
-        }
+      }
+      if(reference instanceof PsiJavaReference && myRefCountHolder != null){
+        final PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
+        myRefCountHolder.registerReference(psiJavaReference, psiJavaReference.advancedResolve(false));
       }
     }
   }
@@ -1019,10 +1035,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       myAttribute = attribute;
     }
 
+    @NotNull
     public String getText() {
       return XmlErrorMessages.message("remove.attribute.quickfix.text", myLocalName);
     }
 
+    @NotNull
     public String getFamilyName() {
       return XmlErrorMessages.message("remove.attribute.quickfix.family");
     }
@@ -1062,10 +1080,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       myXmlToken = xmlToken;
     }
 
+    @NotNull
     public String getText() {
       return XmlErrorMessages.message("remove.extra.closing.tag.quickfix");
     }
 
+    @NotNull
     public String getFamilyName() {
       return XmlErrorMessages.message("remove.extra.closing.tag.quickfix");
     }
@@ -1106,6 +1126,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       myTaglibDeclaration = taglibDeclaration;
     }
 
+    @NotNull
     public String getText() {
       return XmlErrorMessages.message(
         myTaglibDeclaration ?
@@ -1114,6 +1135,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       );
     }
 
+    @NotNull
     public String getFamilyName() {
       return getText();
     }
@@ -1187,7 +1209,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
         for(String url:availableUrls) {
           if (pi != null) {
-            pi.setFraction(((double)i)/availableUrls.length);
+            pi.setFraction((double)i /availableUrls.length);
             pi.setText2(url);
             ++i;
           }

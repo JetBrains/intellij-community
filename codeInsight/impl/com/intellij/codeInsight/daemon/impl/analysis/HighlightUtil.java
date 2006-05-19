@@ -1984,7 +1984,7 @@ public class HighlightUtil {
   }
 
 
-  public static boolean isRootHighlighted(final PsiElement psiRoot) {
+  public static boolean shouldHighlight(final PsiElement psiRoot) {
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(psiRoot.getProject());
     if (component == null) return true;
 
@@ -2009,8 +2009,8 @@ public class HighlightUtil {
     }
   }
 
-  public static boolean isRootInspected(final PsiElement psiRoot) {
-    if (!isRootHighlighted(psiRoot)) return false;
+  public static boolean shouldInspect(final PsiElement psiRoot) {
+    if (!shouldHighlight(psiRoot)) return false;
     final Project project = psiRoot.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();

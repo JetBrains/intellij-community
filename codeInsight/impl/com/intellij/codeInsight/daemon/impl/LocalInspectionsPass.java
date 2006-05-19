@@ -75,8 +75,9 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     final Set<Language> relevantLanguages = fileViewProvider.getRelevantLanguages();
     for (Language language : relevantLanguages) {
       final PsiFile psiRoot = fileViewProvider.getPsi(language);
-      if(!HighlightUtil.isRootInspected(psiRoot)) continue;
-      inspectRoot(psiRoot, iManager);
+      if (HighlightUtil.shouldInspect(psiRoot)) {
+        inspectRoot(psiRoot, iManager);
+      }
     }
   }
 
@@ -173,8 +174,12 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
         if (!visitors.isEmpty()) {
           final List<PsiElement> elements = CodeInsightUtil.getElementsIntersectingRange(psiRoot, myStartOffset, myEndOffset);
-          for (PsiElement element : elements) {
-            for (Pair<LocalInspectionTool,PsiElementVisitor> visitor : visitors) {
+          //noinspection ForLoopReplaceableByForEach
+          for (int i = 0; i < elements.size(); i++) {
+            PsiElement element = elements.get(i);
+            //noinspection ForLoopReplaceableByForEach
+            for (int j = 0; j < visitors.size(); j++) {
+              Pair<LocalInspectionTool, PsiElementVisitor> visitor = visitors.get(j);
               element.accept(visitor.getSecond());
               appendDescriptors(holder.getResults(), visitor.getFirst());
             }
@@ -268,7 +273,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       //TODO
       PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement == null) continue;
-      String message = renderDescriptionMessage(descriptor);
+      @NonNls String message = renderDescriptionMessage(descriptor);
       final HighlightInfoType level = myLevels.get(i);
 
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());

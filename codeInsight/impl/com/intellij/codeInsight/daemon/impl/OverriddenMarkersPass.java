@@ -59,7 +59,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);
-      if (!HighlightUtil.isRootHighlighted(psiRoot)) continue;
+      if (!HighlightUtil.shouldHighlight(psiRoot)) continue;
       List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       myMarkers = collectLineMarkers(elements);
     }

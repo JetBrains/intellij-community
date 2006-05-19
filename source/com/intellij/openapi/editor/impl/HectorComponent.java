@@ -87,7 +87,7 @@ public class HectorComponent extends JPanel {
         }
       });
       final PsiFile psiRoot = viewProvider.getPsi(language);
-      slider.setValue(getValue(HighlightUtil.isRootHighlighted(psiRoot), HighlightUtil.isRootInspected(psiRoot)));
+      slider.setValue(getValue(HighlightUtil.shouldHighlight(psiRoot), HighlightUtil.shouldInspect(psiRoot)));
       mySliders.put(language, slider);
     }
 
@@ -240,7 +240,7 @@ public class HectorComponent extends JPanel {
     for (Language language : mySliders.keySet()) {
       JSlider slider = mySliders.get(language);
       final PsiFile root = viewProvider.getPsi(language);
-      if (getValue(HighlightUtil.isRootHighlighted(root), HighlightUtil.isRootInspected(root)) != slider.getValue()) {
+      if (getValue(HighlightUtil.shouldHighlight(root), HighlightUtil.shouldInspect(root)) != slider.getValue()) {
         return true;
       }
     }

@@ -148,7 +148,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);
-      if(!HighlightUtil.isRootHighlighted(psiRoot)) continue;
+      if(!HighlightUtil.shouldHighlight(psiRoot)) continue;
       List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       collectHighlights(elements, highlights);
     }

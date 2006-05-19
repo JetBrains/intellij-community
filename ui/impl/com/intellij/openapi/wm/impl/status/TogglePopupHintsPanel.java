@@ -90,7 +90,7 @@ public class TogglePopupHintsPanel extends JPanel {
 
   void updateStatus(boolean isClear, PsiFile file) {
     if (!isClear && isStateChangeable(file)) {
-      if (HighlightUtil.isRootInspected(file)) {
+      if (HighlightUtil.shouldInspect(file)) {
         myHectorLabel.setIcon(INSPECTIONS_ICON);
         String text = InspectionProjectProfileManager.getInstance(file.getProject()).getProfileName(file);
         if (text != null){

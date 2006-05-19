@@ -50,10 +50,10 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     ArrayList<String> noHighlightingRoots = new ArrayList<String>();
     final PsiFile[] roots = myFile.getPsiRoots();
     for (PsiFile file : roots) {
-      if (!HighlightUtil.isRootHighlighted(file)) {
+      if (!HighlightUtil.shouldHighlight(file)) {
         noHighlightingRoots.add(file.getLanguage().getID());
       }
-      else if (!HighlightUtil.isRootInspected(file)) {
+      else if (!HighlightUtil.shouldInspect(file)) {
         noInspectionRoots.add(file.getLanguage().getID());
       }
     }
