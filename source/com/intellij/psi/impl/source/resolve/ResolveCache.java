@@ -99,7 +99,7 @@ public class ResolveCache {
     return result;
   }
 
-  private boolean lockElement(PsiReference ref, boolean doLock) {
+  private static boolean lockElement(PsiReference ref, boolean doLock) {
     if (doLock) {
       synchronized (IS_BEING_RESOLVED_KEY) {
         PsiElement elt = ref.getElement();
@@ -119,7 +119,7 @@ public class ResolveCache {
     return true;
   }
 
-  private void unlockElement(PsiReference ref, boolean doLock) {
+  private static void unlockElement(PsiReference ref, boolean doLock) {
     if (doLock) {
       synchronized (IS_BEING_RESOLVED_KEY) {
         PsiElement elt = ref.getElement();
@@ -236,16 +236,18 @@ public class ResolveCache {
       manager.registerRunnableToRunOnChange(
         new Runnable() {
           public void run() {
-            //_pair.physicalMap = new WeakHashMap();
-            _pair.physicalMap.clear();
+            synchronized (PsiLock.LOCK) {
+              _pair.physicalMap.clear();
+            }
           }
         }
       );
       manager.registerRunnableToRunOnAnyChange(
         new Runnable() {
           public void run() {
-            //_pair.nonPhysicalMap = new WeakHashMap();
-            _pair.nonPhysicalMap.clear();
+            synchronized (PsiLock.LOCK) {
+              _pair.nonPhysicalMap.clear();
+            }
           }
         }
       );
