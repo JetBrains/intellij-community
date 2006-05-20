@@ -1,0 +1,14 @@
+<component>
+  <!-- <version name="IntelliJ IDEA" major="5" minor="0.2"/> -->
+  <version name="IntelliJ IDEA (Demetra)" />
+  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
+  <logo url="/idea_logo.png"/>
+  <about url="/idea_about.png"/>
+  <package code="TeamServer"/>
+  <names product="IDEA" fullname="IntelliJ IDEA"/>
+
+  <welcome-screen caption-url="/general/welcomeCaption.png" slogan-url="/general/developSlogan.png"/>
+
+  <update-urls check="http://www.jetbrains.com/updates/update.xml" download="http://www.jetbrains.com/idea/download/"/>
+  <eap-update-urls check="http://www.jetbrains.com/updates/eap-update.xml" download="http://www.intellij.net/eap/products/idea/download.jsp"/>
+</component>
