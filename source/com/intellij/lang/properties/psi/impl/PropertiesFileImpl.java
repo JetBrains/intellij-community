@@ -16,6 +16,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -32,6 +33,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
+  private static TokenSet outPropertiesListSet = TokenSet.create(PropertiesElementTypes.PROPERTIES_LIST);
   private Map<String,List<Property>> myPropertiesMap;
   private List<Property> myProperties;
 
@@ -55,13 +57,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private ASTNode getPropertiesList() {
-    final ASTNode childByType = getNode().findChildByType(PropertiesElementTypes.PROPERTIES_LIST);
-    if (childByType != null) return childByType;
-    final ASTNode[] nodes = getNode().getChildren(null);
-    if (nodes.length == 1 && nodes[0].getElementType() == PropertiesElementTypes.PROPERTIES_LIST) {
-      return nodes[0];
-    }
-    return null;
+    final ASTNode[] nodes = getNode().getChildren(outPropertiesListSet);
+    return nodes.length > 0 ? nodes[0]:null;
   }
 
   private void ensurePropertiesLoaded() {
