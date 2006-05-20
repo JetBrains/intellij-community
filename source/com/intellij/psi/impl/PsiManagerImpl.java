@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Comparing;
@@ -121,6 +122,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private PsiElementFinder[] myElementFinders;
 
   private List<LanguageInjector> myLanguageInjectors = new ArrayList<LanguageInjector>();
+  private ProgressManager myProgressManager;
 
   public PsiManagerImpl(Project project,
                         PsiManagerConfiguration psiManagerConfiguration,
@@ -206,6 +208,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
         }
       );
     }
+    myProgressManager = ProgressManager.getInstance();
   }
 
   @NotNull
@@ -415,6 +418,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public ResolveCache getResolveCache() {
+    myProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
     return myResolveCache;
   }
 
@@ -431,6 +435,8 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
+    myProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+
     for (PsiElementFinder finder : myElementFinders) {
       PsiClass aClass = finder.findClass(qualifiedName, scope);
       if (aClass != null) return aClass;
@@ -453,6 +459,8 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
+    myProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+
     if (element1 == element2) return true;
     if (element1 == null || element2 == null) {
       return false;

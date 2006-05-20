@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.*;
@@ -263,6 +264,9 @@ public class FileManagerImpl implements FileManager {
   }
 
   public GlobalSearchScope getResolveScope(PsiElement element) {
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    progressManager.checkCanceled();
+
     VirtualFile vFile;
     if (element instanceof PsiDirectory) {
       vFile = ((PsiDirectory)element).getVirtualFile();
@@ -297,6 +301,8 @@ public class FileManagerImpl implements FileManager {
 
       List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
       for (OrderEntry entry : orderEntries) {
+        progressManager.checkCanceled();
+
         if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
           Module ownerModule = entry.getOwnerModule();
           final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(ownerModule);
