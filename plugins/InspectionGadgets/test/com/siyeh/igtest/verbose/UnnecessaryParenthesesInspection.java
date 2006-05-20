@@ -28,7 +28,14 @@ public class UnnecessaryParenthesesInspection
         final int hash = ((this).hashCode());
         final int hash2 = (("x" + "y").hashCode());
         List list = new ArrayList();
-        (list.subList(1, 2)).get(0); 
+        (list.subList(1, 2)).get(0);
     }
 
+    public boolean testParenRedundancy(boolean a, boolean b, boolean c) {
+        return a || (b || c);
+    }
+
+    public int arg(int i,int j, int k) {
+        return i + (j + k);
+    }
 }

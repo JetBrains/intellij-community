@@ -144,7 +144,8 @@ public class ParenthesesUtils{
 
     private static int precedenceForBinaryOperator(@NotNull PsiJavaToken sign){
         final String operator = sign.getText();
-        return s_binaryOperatorPrecedence.get(operator);
+        final Integer precedence = s_binaryOperatorPrecedence.get(operator);
+        return precedence.intValue();
     }
 
     public static String removeParentheses(@Nullable PsiExpression expression){
@@ -264,10 +265,10 @@ public class ParenthesesUtils{
                         bodyBinaryExpression.getOperationSign();
                 final IElementType bodyOperator =
                         bodyBinaryOperationSign.getTokenType();
-                final PsiExpression lhs = parentBinaryExpression
-                        .getLOperand();
-                if(lhs.equals(parenthesizedExpression) && parentOperator
-                        .equals(bodyOperator)){
+                final PsiType parentType = parentBinaryExpression.getType();
+                final PsiType bodyType = body.getType();
+                if(parentType != null && parentType.equals(bodyType) &&
+                        parentOperator.equals(bodyOperator)) {
                     return removeParentheses(body);
                 } else{
                     return '(' + removeParentheses(body) + ')';

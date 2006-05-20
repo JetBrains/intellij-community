@@ -70,15 +70,16 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
     }
 
     protected static void replaceExpression(PsiExpression expression,
-                                            @NonNls String newExpression)
+                                            @NonNls String newExpressionText)
             throws IncorrectOperationException{
         final PsiManager psiManager = expression.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
-        final PsiExpression newExp =
-                factory.createExpressionFromText(newExpression, expression);
-        final PsiElement replacementExp = expression.replace(newExp);
+        final PsiExpression newExpression =
+                factory.createExpressionFromText(newExpressionText, expression);
+        final PsiElement replacementExpression =
+                expression.replace(newExpression);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
-        styleManager.reformat(replacementExp);
+        styleManager.reformat(replacementExpression);
     }
 
     protected static void replaceExpressionAndShorten(PsiExpression expression,

@@ -58,11 +58,12 @@ public class UnnecessaryParenthesesInspection extends ExpressionInspection {
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
-            final PsiExpression exp = (PsiExpression)descriptor.getPsiElement();
-            final String newExpression = ParenthesesUtils.removeParentheses(exp);
-            replaceExpression(exp, newExpression);
+            final PsiExpression expression =
+                    (PsiExpression)descriptor.getPsiElement();
+            final String newExpression =
+                    ParenthesesUtils.removeParentheses(expression);
+            replaceExpression(expression, newExpression);
         }
-
     }
 
     private static class UnnecessaryParenthesesVisitor
@@ -89,23 +90,30 @@ public class UnnecessaryParenthesesInspection extends ExpressionInspection {
             if (parentPrecedence == childPrecedence) {
                 if (parent instanceof PsiBinaryExpression &&
                         child instanceof PsiBinaryExpression) {
+                    final PsiBinaryExpression parentBinaryExpression =
+                            (PsiBinaryExpression)parent;
                     final PsiJavaToken parentSign =
-                            ((PsiBinaryExpression)parent).getOperationSign();
+                            parentBinaryExpression.getOperationSign();
                     final IElementType parentOperator =
                             parentSign.getTokenType();
+                    final PsiBinaryExpression childBinaryExpression =
+                            (PsiBinaryExpression)child;
                     final PsiJavaToken childSign =
-                            ((PsiBinaryExpression)child).getOperationSign();
+                            childBinaryExpression.getOperationSign();
                     final IElementType childOperator = childSign.getTokenType();
-                    final PsiBinaryExpression binaryExpression =
-                            (PsiBinaryExpression)parent;
-                    final PsiExpression lhs = binaryExpression.getLOperand();
-                    if (lhs.equals(expression) &&
-                            parentOperator.equals(childOperator)) {
+                    if (!parentOperator.equals(childOperator)) {
+                        return;
+                    }
+                    final PsiType parentType = parentBinaryExpression.getType();
+                    if (parentType == null) {
+                        return;
+                    }
+                    final PsiType childType = childBinaryExpression.getType();
+                    if (parentType.equals(childType)) {
                         registerError(expression);
                         return;
                     }
-                }
-                else {
+                } else {
                     registerError(expression);
                     return;
                 }
