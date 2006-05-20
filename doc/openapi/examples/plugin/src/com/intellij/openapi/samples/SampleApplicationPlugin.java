@@ -29,14 +29,14 @@ public class SampleApplicationPlugin implements ApplicationComponent {
    * other plugins only in this method.
    */
   public void initComponent() {
-    System.out.println("SampleApplicationPlugin: initComponent");
+    //System.out.println("SampleApplicationPlugin: initComponent");
   }
 
   /**
    * This method is called on plugin disposal.
    */
   public void disposeComponent() {
-    System.out.println("SampleApplicationPlugin: disposeComponent");
+    //System.out.println("SampleApplicationPlugin: disposeComponent");
   }
 
   /**
