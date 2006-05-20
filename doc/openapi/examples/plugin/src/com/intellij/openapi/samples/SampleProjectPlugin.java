@@ -28,14 +28,14 @@ public class SampleProjectPlugin implements ProjectComponent {
    * other plugins only in this method.
    */
   public void initComponent() {
-    System.out.println("SampleProjectPlugin: initComponent");
+    //System.out.println("SampleProjectPlugin: initComponent");
   }
 
   /**
    * This method is called on plugin disposal.
    */
   public void disposeComponent() {
-    System.out.println("SampleProjectPlugin: disposeComponent");
+    //System.out.println("SampleProjectPlugin: disposeComponent");
   }
 
   /**
