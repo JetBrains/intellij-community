@@ -29,6 +29,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   private final HashMap<Thread, ProgressIndicator> myThreadToIndicatorMap = new HashMap<Thread, ProgressIndicator>();
 
   private static volatile boolean ourNeedToCheckCancel = false;
+  private static volatile int ourLockedCheckCounter = 0;
   private List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
 
   public ProgressManagerImpl(Application application) {
@@ -59,7 +60,15 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
         }
         catch (ProcessCanceledException e) {
           if (!Thread.holdsLock(PsiLock.LOCK)) {
+            ourLockedCheckCounter = 0;
             progress.checkCanceled();
+          }
+          else {
+            ourLockedCheckCounter++;
+            if (ourLockedCheckCounter > 10) {
+              ourLockedCheckCounter = 0;
+              ourNeedToCheckCancel = true;
+            }
           }
         }
       }

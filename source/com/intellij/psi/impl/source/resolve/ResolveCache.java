@@ -8,16 +8,14 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.WeakHashMap;
 
 import java.lang.ref.Reference;
-import java.util.Set;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 public class ResolveCache {
   private static final Key<MapPair<PsiReference, SoftReference<ResolveResult[]>>> JAVA_RESOLVE_MAP = Key.create("ResolveCache.JAVA_RESOLVE_MAP");
   private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP = Key.create("ResolveCache.RESOLVE_MAP");
   private static final Key<MapPair<PsiReference, SoftReference<ResolveResult[]>>> JAVA_RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.JAVA_RESOLVE_MAP_INCOMPLETE");
   private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.RESOLVE_MAP_INCOMPLETE");
-  private static final Key<String> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
+  private static final Key<List<Thread>> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
   private static final Key<MapPair<PsiVariable, Object>> VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
 
   private static final Object NULL = Key.create("NULL");
@@ -76,37 +74,72 @@ public class ResolveCache {
                                        boolean incompleteCode) {
     ProgressManager.getInstance().checkCanceled();
 
-    synchronized (PsiLock.LOCK) {
-      // lock is necessary here because of needToPreventRecursion
-      boolean physical = ref.getElement().isPhysical();
-      final Reference<PsiElement> cached = getCachedResolve(ref, physical, incompleteCode);
-      if (cached != null) return cached.get();
+    boolean physical = ref.getElement().isPhysical();
+    final Reference<PsiElement> cached = getCachedResolve(ref, physical, incompleteCode);
+    if (cached != null) return cached.get();
 
-      if (incompleteCode) {
-        final PsiElement results = resolveWithCaching(ref, resolver, needToPreventRecursion, false);
-        if (results != null) {
-          setCachedResolve(ref, results, physical, true);
-          return results;
+    if (incompleteCode) {
+      final PsiElement results = resolveWithCaching(ref, resolver, needToPreventRecursion, false);
+      if (results != null) {
+        setCachedResolve(ref, results, physical, true);
+        return results;
+      }
+    }
+
+    if (!lockElement(ref, needToPreventRecursion)) return null;
+    PsiElement result = null;
+    try {
+      result = resolver.resolve(ref, incompleteCode);
+    }
+    finally{
+      unlockElement(ref, needToPreventRecursion);
+    }
+
+    setCachedResolve(ref, result, physical, incompleteCode);
+    return result;
+  }
+
+  private boolean lockElement(PsiReference ref, boolean doLock) {
+    if (doLock) {
+      synchronized (IS_BEING_RESOLVED_KEY) {
+        PsiElement elt = ref.getElement();
+
+        List<Thread> lockingThreads = elt.getUserData(IS_BEING_RESOLVED_KEY);
+        final Thread currentThread = Thread.currentThread();
+        if (lockingThreads == null) {
+          lockingThreads = new ArrayList<Thread>(1);
+          elt.putUserData(IS_BEING_RESOLVED_KEY, lockingThreads);
+        }
+        else {
+          if (lockingThreads.contains(currentThread)) return false;
+        }
+        lockingThreads.add(currentThread);
+      }
+    }
+    return true;
+  }
+
+  private void unlockElement(PsiReference ref, boolean doLock) {
+    if (doLock) {
+      synchronized (IS_BEING_RESOLVED_KEY) {
+        PsiElement elt = ref.getElement();
+
+        List<Thread> lockingThreads = elt.getUserData(IS_BEING_RESOLVED_KEY);
+        if (lockingThreads == null) return;
+        final Thread currentThread = Thread.currentThread();
+        lockingThreads.remove(currentThread);
+        if (lockingThreads.isEmpty()) {
+          elt.putUserData(IS_BEING_RESOLVED_KEY, null);
         }
       }
-      if (needToPreventRecursion) {
-        PsiElement element = ref.getElement();
-        if (element.getUserData(IS_BEING_RESOLVED_KEY) != null) return null;
-        element.putUserData(IS_BEING_RESOLVED_KEY, "");
-      }
-      final PsiElement result = resolver.resolve(ref, incompleteCode);
-      if (needToPreventRecursion) {
-        PsiElement element = ref.getElement();
-        element.putUserData(IS_BEING_RESOLVED_KEY, null);
-      }
-      setCachedResolve(ref, result, physical, incompleteCode);
-      return result;
     }
   }
 
   private void setCachedResolve(PsiReference ref, PsiElement results, boolean physical, boolean incompleteCode) {
-    int index = getIndex(physical, incompleteCode);
-    myResolveMaps[index].put(ref, new SoftReference<PsiElement>(results));
+    synchronized (PsiLock.LOCK) {
+      int index = getIndex(physical, incompleteCode);
+      myResolveMaps[index].put(ref, new SoftReference<PsiElement>(results));
+    }
   }
 
   //for Visual Fabrique
@@ -117,44 +150,42 @@ public class ResolveCache {
   }
 
   private Reference<PsiElement> getCachedResolve(PsiReference ref, boolean physical, boolean incompleteCode) {
-    int index = getIndex(physical, incompleteCode);
-    final Reference<PsiElement> reference = (Reference<PsiElement>)myResolveMaps[index].get(ref);
-    if(reference == null) return null;
-    return reference;
+    synchronized (PsiLock.LOCK) {
+      int index = getIndex(physical, incompleteCode);
+      final Reference<PsiElement> reference = (Reference<PsiElement>)myResolveMaps[index].get(ref);
+      if(reference == null) return null;
+      return reference;
+    }
   }
 
   public ResolveResult[] resolveWithCaching(PsiPolyVariantReference ref,
-                                                PolyVariantResolver resolver,
-                                                boolean needToPreventRecursion,
-                                                boolean incompleteCode) {
+                                            PolyVariantResolver resolver,
+                                            boolean needToPreventRecursion,
+                                            boolean incompleteCode) {
     ProgressManager.getInstance().checkCanceled();
 
-    synchronized (PsiLock.LOCK) {
-      // lock is necessary here because of needToPreventRecursion
-      boolean physical = ref.getElement().isPhysical();
-      final ResolveResult[] cached = getCachedPolyVariantResolve(ref, physical, incompleteCode);
-      if (cached != null) return cached;
+    boolean physical = ref.getElement().isPhysical();
+    final ResolveResult[] cached = getCachedPolyVariantResolve(ref, physical, incompleteCode);
+    if (cached != null) return cached;
 
-      if (incompleteCode) {
-        final ResolveResult[] results = resolveWithCaching(ref, resolver, needToPreventRecursion, false);
-        if (results != null && results.length > 0) {
-          setCachedPolyVariantResolve(ref, results, physical, true);
-          return results;
-        }
+    if (incompleteCode) {
+      final ResolveResult[] results = resolveWithCaching(ref, resolver, needToPreventRecursion, false);
+      if (results != null && results.length > 0) {
+        setCachedPolyVariantResolve(ref, results, physical, true);
+        return results;
       }
-      if (needToPreventRecursion) {
-        PsiElement element = ref.getElement();
-        if (element.getUserData(IS_BEING_RESOLVED_KEY) != null) return JavaResolveResult.EMPTY_ARRAY;
-        element.putUserData(IS_BEING_RESOLVED_KEY, "");
-      }
-      final ResolveResult[] result = resolver.resolve(ref, incompleteCode);
-      if (needToPreventRecursion) {
-        PsiElement element = ref.getElement();
-        element.putUserData(IS_BEING_RESOLVED_KEY, null);
-      }
-      setCachedPolyVariantResolve(ref, result, physical, incompleteCode);
-      return result;
     }
+
+    if (!lockElement(ref, needToPreventRecursion)) return JavaResolveResult.EMPTY_ARRAY;
+    ResolveResult[] result;
+    try {
+      result = resolver.resolve(ref, incompleteCode);
+    } finally {
+      unlockElement(ref, needToPreventRecursion);
+    }
+
+    setCachedPolyVariantResolve(ref, result, physical, incompleteCode);
+    return result;
   }
 
   private static int getIndex(boolean physical, boolean ic){
@@ -162,15 +193,19 @@ public class ResolveCache {
   }
 
   private void setCachedPolyVariantResolve(PsiReference ref, ResolveResult[] result, boolean physical, boolean incomplete){
-    int index = getIndex(physical, incomplete);
-    myPolyVariantResolveMaps[index].put(ref, new SoftReference<ResolveResult[]>(result));
+    synchronized (PsiLock.LOCK) {
+      int index = getIndex(physical, incomplete);
+      myPolyVariantResolveMaps[index].put(ref, new SoftReference<ResolveResult[]>(result));
+    }
   }
 
   private ResolveResult[] getCachedPolyVariantResolve(PsiReference ref, boolean physical, boolean ic){
-    int index = getIndex(physical, ic);
-    final Reference<ResolveResult[]> reference = (Reference<ResolveResult[]>)myPolyVariantResolveMaps[index].get(ref);
-    if(reference == null) return null;
-    return reference.get();
+    synchronized (PsiLock.LOCK) {
+      int index = getIndex(physical, ic);
+      final Reference<ResolveResult[]> reference = (Reference<ResolveResult[]>)myPolyVariantResolveMaps[index].get(ref);
+      if(reference == null) return null;
+      return reference.get();
+    }
   }
 
   public static interface ConstValueComputer{
