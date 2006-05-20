@@ -167,10 +167,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public boolean isSuppressed(PsiElement element, String id) {
-    if (element instanceof PsiDocCommentOwner) {
-      return !isToCheckMember((PsiDocCommentOwner)element, id);
-    }
-    return false;
+    return element instanceof PsiDocCommentOwner && !isToCheckMember((PsiDocCommentOwner)element, id);
   }
 
 
@@ -768,6 +765,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           catch (ProcessCanceledException e) {
             cleanup();
             throw e;
+          } catch (Exception e){
+            cleanup();
+            LOG.error(e);
           }
           finally {
             psiManager.finishBatchFilesProcessingMode();
@@ -831,7 +831,12 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             }
             final Set<InspectionTool> tools = localTools.get(profile.getName());
             for (InspectionTool tool : tools) {
-              ((LocalInspectionToolWrapper)tool).processFile(file, true, manager);
+              try {
+                ((LocalInspectionToolWrapper)tool).processFile(file, true, manager);
+              }
+              catch (Exception e) {
+                LOG.error(e);
+              }
               psiManager.dropResolveCaches();
             }
           }
@@ -846,12 +851,17 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
     for (Set<InspectionTool> tools : usedTools.values()) {
       for (InspectionTool tool : tools) {
-        if (tool.isGraphNeeded()) {
-          ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
+        try {
+          if (tool.isGraphNeeded()) {
+            ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
+          }
+          tool.runInspection(scope, manager);
+          if (tool.queryExternalUsagesRequests(manager)) {
+            needRepeatSearchRequest.add(tool);
+          }
         }
-        tool.runInspection(scope, manager);
-        if (tool.queryExternalUsagesRequests(manager)) {
-          needRepeatSearchRequest.add(tool);
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     }
