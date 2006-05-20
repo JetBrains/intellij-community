@@ -654,10 +654,12 @@ public class GenericsHighlightUtil {
     final int start = parameter.getTextRange().getStartOffset();
     final int end = expression.getTextRange().getEndOffset();
     final PsiType parameterType = parameter.getType();
-    final HighlightInfo highlightInfo = HighlightUtil.checkAssignability(parameterType, itemType, null, new TextRange(start, end));
+    HighlightInfo highlightInfo = HighlightUtil.checkAssignability(parameterType, itemType, null, new TextRange(start, end));
     if (highlightInfo != null) {
       String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
       QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(parameter, itemType), null, displayName);
+    } else {
+      highlightInfo = GenericsHighlightUtil.checkRawToGenericAssignment(parameterType, itemType, statement.getIterationParameter());
     }
     return highlightInfo;
   }

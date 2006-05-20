@@ -195,16 +195,20 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     }
 
     private PsiType substituteInternal(PsiType type) {
-      if (type == null) return null;
       return type.accept(this);
     }
 
     private boolean processClass(PsiClass resolve, PsiSubstitutor originalSubstitutor, final Map<PsiTypeParameter, PsiType> substMap) {
       final PsiTypeParameter[] params = resolve.getTypeParameters();
       for (final PsiTypeParameter param : params) {
-        final PsiType substituted = substituteInternal(originalSubstitutor.substitute(param));
-        if (substituted == null) return false;
-        substMap.put(param, substituted);
+        final PsiType original = originalSubstitutor.substitute(param);
+        if (original == null) {
+          substMap.put(param, null);
+        } else {
+          final PsiType substituted = substituteInternal(original);
+          if (substituted == null) return false;
+          substMap.put(param, substituted);
+        }
       }
       if (resolve.hasModifierProperty(PsiModifier.STATIC)) return true;
 
