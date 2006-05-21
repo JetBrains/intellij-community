@@ -1151,7 +1151,7 @@ public final class PsiUtil {
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) return ((PsiDirectory)element).getLanguageLevel();
     final PsiFile file = element.getContainingFile();
-    if (file == null || file instanceof PsiCompiledElement) return element.getManager().getEffectiveLanguageLevel();
+    if (file == null) return element.getManager().getEffectiveLanguageLevel();
     final LanguageLevel forcedLanguageLevel = file.getUserData(FILE_LANGUAGE_LEVEL_KEY);
     if (forcedLanguageLevel != null) return forcedLanguageLevel;
 
