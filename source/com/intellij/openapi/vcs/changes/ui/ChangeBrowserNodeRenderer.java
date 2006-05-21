@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -86,7 +85,7 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
       final FilePath path = (FilePath)object;
       append(ChangesListView.getRelativePath(ChangesListView.safeCastToFilePath(((ChangesBrowserNode)node.getParent()).getUserObject()), path),
              SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      if (path.isDirectory()) {
+      if (path.isDirectory() || !node.isLeaf()) {
         appendCount(node);
         setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
       }
@@ -116,9 +115,7 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
   }
 
   private FileStatus getChangeStatus(Change change) {
-    final VirtualFile vFile = ChangesUtil.getFilePath(change).getVirtualFile();
-    if (vFile == null) return FileStatus.DELETED;
-    return FileStatusManager.getInstance(myProject).getStatus(vFile);
+    return change.getFileStatus();
   }
 
   private Color getColor(final Change change) {

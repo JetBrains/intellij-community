@@ -3,11 +3,8 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
@@ -22,6 +19,7 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -32,6 +30,7 @@ public class ChangesTreeList extends JPanel {
   private Tree myTree;
   private JList myList;
   private Project myProject;
+  private final boolean myShowCheckboxes;
   private boolean myShowFlatten;
 
   private Collection<Change> myIncludedChanges;
@@ -42,8 +41,9 @@ public class ChangesTreeList extends JPanel {
   @NonNls private static final String ROOT = "root";
   private CardLayout myCards;
 
-  public ChangesTreeList(final Project project, Collection<Change> initiallyIncluded) {
+  public ChangesTreeList(final Project project, Collection<Change> initiallyIncluded, final boolean showCheckboxes) {
     myProject = project;
+    myShowCheckboxes = showCheckboxes;
     myIncludedChanges = new HashSet<Change>(initiallyIncluded);
 
     myCards = new CardLayout();
@@ -192,7 +192,7 @@ public class ChangesTreeList extends JPanel {
     final List<Change> sortedChanges = new ArrayList<Change>(changes);
     Collections.sort(sortedChanges, new Comparator<Change>() {
       public int compare(final Change o1, final Change o2) {
-        return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
+        return ChangesUtil.getFilePath(o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath(o2).getName());
       }
     });
 
@@ -209,44 +209,46 @@ public class ChangesTreeList extends JPanel {
       public void run() {
         TreeUtil.expandAll(myTree);
 
-        int listSelection = 0;
-        int count = 0;
-        for (Change change : changes) {
-          if (myIncludedChanges.contains(change)) {
-            listSelection = count;
-            break;
+        if (myIncludedChanges.size() > 0) {
+          int listSelection = 0;
+          int count = 0;
+          for (Change change : changes) {
+            if (myIncludedChanges.contains(change)) {
+              listSelection = count;
+              break;
+            }
+            count ++;
           }
-          count ++;
-        }
 
-        ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
-        Enumeration enumeration = root.depthFirstEnumeration();
+          ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
+          Enumeration enumeration = root.depthFirstEnumeration();
 
-        while (enumeration.hasMoreElements()) {
-          ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-          final NodeState state = getNodeStatus(node);
-          if (state == NodeState.CLEAR) {
-            myTree.collapsePath(new TreePath(node.getPath()));
+          while (enumeration.hasMoreElements()) {
+            ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+            final NodeState state = getNodeStatus(node);
+            if (state == NodeState.CLEAR) {
+              myTree.collapsePath(new TreePath(node.getPath()));
+            }
           }
-        }
 
-        enumeration = root.depthFirstEnumeration();
-        int scrollRow = 0;
-        while (enumeration.hasMoreElements()) {
-          ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-          final NodeState state = getNodeStatus(node);
-          if (state == NodeState.FULL && node.isLeaf()) {
-            scrollRow = myTree.getRowForPath(new TreePath(node.getPath()));
-            break;
+          enumeration = root.depthFirstEnumeration();
+          int scrollRow = 0;
+          while (enumeration.hasMoreElements()) {
+            ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+            final NodeState state = getNodeStatus(node);
+            if (state == NodeState.FULL && node.isLeaf()) {
+              scrollRow = myTree.getRowForPath(new TreePath(node.getPath()));
+              break;
+            }
           }
-        }
 
-        if (changes.size() > 0) {
-          myList.setSelectedIndex(listSelection);
-          myList.ensureIndexIsVisible(listSelection);
+          if (changes.size() > 0) {
+            myList.setSelectedIndex(listSelection);
+            myList.ensureIndexIsVisible(listSelection);
 
-          myTree.setSelectionRow(scrollRow);
-          TreeUtil.showRowCentered(myTree, scrollRow, false);
+            myTree.setSelectionRow(scrollRow);
+            TreeUtil.showRowCentered(myTree, scrollRow, false);
+          }
         }
       }
     });
@@ -355,7 +357,10 @@ public class ChangesTreeList extends JPanel {
       myCheckBox.setBackground(null);
       setBackground(null);
 
-      add(myCheckBox, BorderLayout.WEST);
+      if (myShowCheckboxes) {
+        add(myCheckBox, BorderLayout.WEST);
+      }
+
       add(myTextRenderer, BorderLayout.CENTER);
     }
 
@@ -367,14 +372,19 @@ public class ChangesTreeList extends JPanel {
                                                   int row,
                                                   boolean hasFocus) {
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-      ChangesBrowserNode node = (ChangesBrowserNode)value;
+      if (myShowCheckboxes) {
+        ChangesBrowserNode node = (ChangesBrowserNode)value;
 
-      NodeState state = getNodeStatus(node);
-      myCheckBox.setSelected(state != NodeState.CLEAR);
-      myCheckBox.setEnabled(state != NodeState.PARTIAL);
-      revalidate();
+        NodeState state = getNodeStatus(node);
+        myCheckBox.setSelected(state != NodeState.CLEAR);
+        myCheckBox.setEnabled(state != NodeState.PARTIAL);
+        revalidate();
 
-      return this;
+        return this;
+      }
+      else {
+        return myTextRenderer;
+      }
     }
   }
 
@@ -413,30 +423,35 @@ public class ChangesTreeList extends JPanel {
           final FilePath path = ChangesUtil.getFilePath(change);
           setIcon(path.getFileType().getIcon());
           append(path.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
-          append(" (" + path.getIOFile().getParentFile().getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          final File parentFile = path.getIOFile().getParentFile();
+          if (parentFile != null) {
+            append(" (" + parentFile.getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
         }
 
         private Color getColor(final Change change) {
-          final FilePath path = ChangesUtil.getFilePath(change);
-          final VirtualFile vFile = path.getVirtualFile();
-          if (vFile != null) {
-            return FileStatusManager.getInstance(myProject).getStatus(vFile).getColor();
-          }
-          return FileStatus.DELETED.getColor();
+          return change.getFileStatus().getColor();
         }
       };
 
       myCheckbox.setBackground(null);
       setBackground(null);
 
-      add(myCheckbox, BorderLayout.WEST);
+      if (myShowCheckboxes) {
+        add(myCheckbox, BorderLayout.WEST);
+      }
       add(myTextRenderer, BorderLayout.CENTER);
     }
 
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       myTextRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      myCheckbox.setSelected(myIncludedChanges.contains(value));
-      return this;
+      if (myShowCheckboxes) {
+        myCheckbox.setSelected(myIncludedChanges.contains(value));
+        return this;
+      }
+      else {
+        return myTextRenderer;
+      }
     }
   }
 }

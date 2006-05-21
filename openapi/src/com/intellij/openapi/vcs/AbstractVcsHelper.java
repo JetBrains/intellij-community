@@ -24,10 +24,12 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.Refreshable;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -91,8 +93,19 @@ public abstract class AbstractVcsHelper {
                                        final VcsFileRevision cvsVersionOn1,
                                        final File file);
 
+  public abstract void showChangesBrowser(List<CommittedChangeList> changelists);
+  public abstract void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title);
+
+  /**
+   * @deprecated Use {@link #showChangesBrowser(java.util.List<com.intellij.openapi.vcs.versionBrowser.CommittedChangeList>)} instead.
+   * @param versionsProvider
+   */
   public abstract void showChangesBrowser(VersionsProvider versionsProvider);
 
+  /**
+   * @deprecated Use {@link #showChangesBrowser(java.util.List<com.intellij.openapi.vcs.versionBrowser.CommittedChangeList>, String title )} instead.
+   * @param versionsProvider
+   */
   public abstract void showChangesBrowser(VersionsProvider versionsProvider, String browserTitle);
 
   @Nullable public abstract RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider);

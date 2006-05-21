@@ -37,6 +37,10 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
   private final JPanel myHeaderPanel;
 
+  public void setChangesToDisplay(final List<Change> changes) {
+    myViewer.setChangesToDisplay(changes);
+  }
+
   public interface SelectedListChangeListener extends EventListener{
     void selectedListChanged();
   }
@@ -52,7 +56,8 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
   public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes,
-                        final @Nullable ActionGroup additionalToolbarActions) {
+                        final @Nullable ActionGroup additionalToolbarActions, final boolean showChangelistChooser,
+                        final boolean capableOfExcludingChanges) {
     super(new BorderLayout());
 
     myProject = project;
@@ -71,7 +76,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       initalListSelection = changeLists.get(0);
     }
 
-    myViewer = new ChangesTreeList(myProject, changes);
+    myViewer = new ChangesTreeList(myProject, changes, capableOfExcludingChanges);
     myViewer.setDoubleClickHandler(new Runnable() {
       public void run() {
         showDiff();
@@ -86,7 +91,9 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     add(listPanel, BorderLayout.CENTER);
 
     myHeaderPanel = new JPanel(new BorderLayout());
-    myHeaderPanel.add(new ChangeListChooser(changeLists), BorderLayout.EAST);
+    if (showChangelistChooser) {
+      myHeaderPanel.add(new ChangeListChooser(changeLists), BorderLayout.EAST);
+    }
     myHeaderPanel.add(createToolbar(), BorderLayout.WEST);
     add(myHeaderPanel, BorderLayout.NORTH);
 

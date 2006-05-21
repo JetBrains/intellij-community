@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.MutableTreeNode;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -22,6 +23,11 @@ public class ChangesBrowserNode extends DefaultMutableTreeNode {
         userObject instanceof FilePath && !((FilePath)userObject).isDirectory()) {
       count = 1;
     }
+  }
+
+  public void insert(MutableTreeNode newChild, int childIndex) {
+    super.insert(newChild, childIndex);
+    count = -1;
   }
 
   public int getCount() {

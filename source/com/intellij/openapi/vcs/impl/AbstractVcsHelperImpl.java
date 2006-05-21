@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -34,20 +35,24 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.checkin.DifferenceType;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.history.CurrentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.Refreshable;
+import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
-import com.intellij.openapi.vcs.versionBrowser.ChangesBrowser;
-import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
-import com.intellij.openapi.vcs.versionBrowser.ShowRevisionChangesAction;
-import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
+import com.intellij.openapi.vcs.versionBrowser.*;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
+import com.intellij.openapi.vcs.versions.VersionRevisions;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -67,6 +72,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.treetable.TreeTable;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -138,6 +146,91 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   }
 
+
+  public List<Change> createChangeFromAbstractRevisions(final List<AbstractRevisions> revisions) {
+    List<Change> result = new ArrayList<Change>();
+    for (AbstractRevisions revision : revisions) {
+      final DifferenceType type = revision.getDifference();
+      final FileStatus status = convertDiffTypeToStatus(type);
+
+      if (type == DifferenceType.INSERTED) {
+        result.add(new Change(null, createAfterRevision(revision), status));
+      }
+      else if (type == DifferenceType.DELETED) {
+        result.add(new Change(createBeforeRevision(revision), null, status));
+      }
+      else if (type == DifferenceType.MODIFIED) {
+        result.add(new Change(createBeforeRevision(revision), createAfterRevision(revision), status));
+      }
+
+      result.addAll(createChangeFromAbstractRevisions(revision.getDirectories()));
+      result.addAll(createChangeFromAbstractRevisions(revision.getFiles()));
+    }
+
+    return result;
+  }
+
+  private static ContentRevision createBeforeRevision(final AbstractRevisions revisions) {
+    return new ContentRevision() {
+      @Nullable
+      public String getContent() {
+        if (revisions instanceof VersionRevisions) {
+          try {
+            return ((VersionRevisions)revisions).getFirstContent();
+          }
+          catch (VcsException e) {
+            return "";
+          }
+        }
+        return "";
+      }
+
+      @NotNull
+      public FilePath getFile() {
+        return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(revisions.getIOFile());
+      }
+
+      @NotNull
+      public VcsRevisionNumber getRevisionNumber() {
+        return VcsRevisionNumber.NULL;
+      }
+    };
+  }
+
+  private static ContentRevision createAfterRevision(final AbstractRevisions revisions) {
+    return new ContentRevision() {
+      @Nullable
+      public String getContent() {
+        if (revisions instanceof VersionRevisions) {
+          try {
+            return ((VersionRevisions)revisions).getSecondContent();
+          }
+          catch (VcsException e) {
+            return "";
+          }
+        }
+        return "";
+      }
+
+      @NotNull
+      public FilePath getFile() {
+        return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(revisions.getIOFile());
+      }
+
+      @NotNull
+      public VcsRevisionNumber getRevisionNumber() {
+        return VcsRevisionNumber.NULL;
+      }
+    };
+  }
+
+  private FileStatus convertDiffTypeToStatus(final DifferenceType type) {
+    if (type == DifferenceType.MODIFIED) return FileStatus.MODIFIED;
+    if (type == DifferenceType.INSERTED) return FileStatus.ADDED;
+    if (type == DifferenceType.DELETED) return FileStatus.DELETED;
+    return FileStatus.NOT_CHANGED;
+  }
+
   public void showErrors(final List<VcsException> abstractVcsExceptions, final String tabDisplayName) {
     LOG.assertTrue(tabDisplayName != null, "tabDisplayName should not be null");
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -173,7 +266,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
           if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
           errorTreeView.addMessage(getErrorCategory(exception), messages, exception.getVirtualFile(), -1, -1, null);
         }
-
+        
         ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
       }
     });
@@ -494,6 +587,18 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   }
 
+  public void showChangesBrowser(List<CommittedChangeList> changelists) {
+    new ChangesBrowserDialog(myProject, changelists).show();
+  }
+
+  public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
+    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists);
+    if (title != null) {
+      dlg.setTitle(title);
+    }
+    dlg.show();
+  }
+
   public RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider) {
     final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, versionsProvider, false);
     changesBrowser.show();
@@ -506,14 +611,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public void showChangesBrowser(VersionsProvider versionsProvider) {
-    new ChangesBrowser(myProject, versionsProvider, true).show();
+    showChangeBrowser(myProject, versionsProvider, null);
   }
 
   public void showChangesBrowser(VersionsProvider versionsProvider, String browserTitle) {
-    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, versionsProvider, true);
-    changesBrowser.setTitle(browserTitle);
-    changesBrowser.show();
-
+    showChangeBrowser(myProject, versionsProvider, browserTitle);
   }
 
   public void showRevisions(List<AbstractRevisions> revisions, final String title) {
@@ -718,6 +820,109 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     }
 
     public void selectionChanged(ContentManagerEvent event) {
+    }
+  }
+
+
+  private void showChangeBrowser(Project project, final VersionsProvider provider, @Nls String title) {
+    try {
+      final RefreshableOnComponent filterUI = provider.createFilterUI();
+      final boolean ok;
+      if (filterUI != null) {
+        final FilterDialog dlg = new FilterDialog(project, filterUI);
+        dlg.show();
+        ok = dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE;
+      }
+      else {
+        ok = true;
+      }
+
+      if (ok) {
+        final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
+        final List<RepositoryVersion> versions = new ArrayList<RepositoryVersion>();
+        final List<VcsException> exceptions = new ArrayList<VcsException>();
+        final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            try {
+              versions.addAll(provider.getFilteredVersions());
+            }
+            catch (VcsException e) {
+              exceptions.add(e);
+            }
+          }
+        }, "Searching for changes", true, project);
+
+        if (!done) return;
+
+        if (!exceptions.isEmpty()) {
+          Messages.showErrorDialog(project, "Problem accessing VCS" + exceptions.get(0).getMessage(), "Can't Show Changes");
+          return;
+        }
+
+        if (versions.isEmpty()) {
+          Messages.showInfoMessage(project, "No changes matching critera found", "No Changes Found");
+          return;
+        }
+
+        final List<CommittedChangeList> lists = new ArrayList<CommittedChangeList>();
+        for (RepositoryVersion version : versions) {
+          lists.add(createFromRepositoryVersion(version));
+        }
+
+        helper.showChangesBrowser(lists, title);
+      }
+    }
+    catch (VcsException e) {
+      Messages.showErrorDialog(project, "Cannot show changes: " + e.getMessage(), "Error Accessing Perforce");
+    }
+  }
+
+  private CommittedChangeList createFromRepositoryVersion(final RepositoryVersion version) throws VcsException {
+    final List<Change> changes = createChangeFromAbstractRevisions(version.getFileRevisions());
+
+    return new CommittedChangeList() {
+      public String getCommitterName() {
+        return version.getUser();
+      }
+
+      public Date getCommitDate() {
+        return version.getDate();
+      }
+
+      public Collection<Change> getChanges() {
+        return changes;
+      }
+
+      public String getName() {
+        return String.valueOf(version.getNumber());
+      }
+
+      public String getComment() {
+        return version.getDescription();
+      }
+    };
+  }
+
+  private static class FilterDialog extends DialogWrapper {
+    private RefreshableOnComponent myFilterUI;
+
+    public FilterDialog(Project project, final RefreshableOnComponent filterUI) {
+      super(project, true);
+      myFilterUI = filterUI;
+
+      myFilterUI.restoreState();
+      setTitle("Change Search Criteria");
+      init();
+    }
+
+    @Override
+    protected void doOKAction() {
+      super.doOKAction();
+      myFilterUI.saveState();
+    }
+
+    protected JComponent createCenterPanel() {
+      return myFilterUI.getComponent();
     }
   }
 }
