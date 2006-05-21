@@ -1,13 +1,19 @@
 package com.siyeh.ig.global;
 
-import com.siyeh.ig.BaseGlobalInspection;
-import com.intellij.openapi.util.Key;
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.*;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.BaseGlobalInspection;
+import com.siyeh.ig.psiutils.MethodInheritanceUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
     private static final Key<Boolean> ALWAYS_CONSTANT = Key.create("ALWAYS_CONSTANT");
@@ -16,105 +22,63 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
-    @Nullable
-    public RefGraphAnnotator getAnnotator(RefManager refManager) {
-        return new MethodIgnoredAnnotator();
-    }
-
-    public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, final GlobalInspectionContext globalContext) {
+    public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, GlobalInspectionContext globalContext) {
         if (!(refEntity instanceof RefMethod)) {
             return null;
         }
-        final RefMethod refMethod = (RefMethod) refEntity;
-        final Boolean alwaysConstant = refMethod.getUserData(ALWAYS_CONSTANT);
-        if (alwaysConstant == null || !alwaysConstant) {
+        if (globalContext.isSuppressed(refEntity, getShortName())) {
             return null;
         }
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(refMethod.getElement(), InspectionsBundle.message(
-                "method.return.always.constant.problem.descriptor"), (LocalQuickFix []) null,
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
-    }
-
-    public boolean queryExternalUsagesRequests(InspectionManager manager,
-                                               final GlobalInspectionContext globalContext,
-                                               final ProblemDescriptionsProcessor processor) {
-        final RefManager refManager = globalContext.getRefManager();
-        refManager.iterate(new RefVisitor() {
-            public void visitMethod(final RefMethod refMethod) {
-                if (processor.getDescriptions(refMethod) != null) { //suspicious method -> need to check external usages
-                    final GlobalInspectionContext.UsagesProcessor usagesProcessor =
-                            new GlobalInspectionContext.UsagesProcessor() {
-                        public boolean process(PsiReference psiReference) {
-                            final PsiElement psiReferenceExpression = psiReference.getElement();
-                            final PsiElement parent = psiReferenceExpression.getParent();
-                            if (parent instanceof PsiMethodCallExpression &&
-                                    !MethodReturnAlwaysConstantInspection.isIgnoredMethodCall((PsiMethodCallExpression) parent)) {
-                                processor.ignoreElement(refMethod);
-                            }
-                            return false;
-                        }
-                    };
-                    globalContext.enqueueMethodUsagesProcessor(refMethod, usagesProcessor);
-                }
-            }
-        });
-        return false;
-    }
-
-    private static boolean isIgnoredMethodCall(PsiMethodCallExpression methodExpression) {
-        final PsiElement parent = methodExpression.getParent();
-        return parent instanceof PsiExpressionStatement;
-    }
-
-    private static class MethodIgnoredAnnotator extends RefGraphAnnotator {
-        public void onInitialize(RefElement refElement) {
-            if (!(refElement instanceof RefMethod)) {
-                return;
-            }
-            final PsiElement element = refElement.getElement();
-            if (!(element instanceof PsiMethod)) {
-                return;
-            }
-            final PsiMethod method = (PsiMethod) element;
-            final PsiType returnType = method.getReturnType();
-            if (PsiType.VOID.equals(returnType)) {
-                return;
-            }
-            refElement.putUserData(MethodReturnAlwaysConstantInspection.ALWAYS_CONSTANT, true);
+        final RefMethod refMethod = (RefMethod) refEntity;
+        final Boolean alreadyProcessed = refMethod.getUserData(ALWAYS_CONSTANT);
+        if (alreadyProcessed != null && alreadyProcessed) {
+            return null;
         }
-
-        public void onMarkReferenced(RefElement refWhat,
-                                     RefElement refFrom,
-                                     boolean referencedFromClassInitializer) {
-            if (!(refWhat instanceof RefMethod)) {
-                return;
-            }
-            final RefMethod refMethod = (RefMethod) refWhat;
-            final PsiElement psiElement = refMethod.getElement();
-            if (!(psiElement instanceof PsiMethod)) {
-                return;
-            }
-            final PsiMethod psiMethod = (PsiMethod) psiElement;
-            final PsiType returnType = psiMethod.getReturnType();
-            if (returnType == null) {
-                return;
-            }
-            if (PsiType.VOID.equals(returnType)) {
-                return;
-            }
-            final PsiElement element = refFrom.getElement();
-            element.accept(new PsiRecursiveElementVisitor() {
-                public void visitMethodCallExpression(PsiMethodCallExpression call) {
-                    super.visitMethodCallExpression(call);
-                    final PsiReferenceExpression methodExpression = call.getMethodExpression();
-                    if (methodExpression.isReferenceTo(psiMethod)) {
-                        if (MethodReturnAlwaysConstantInspection.isIgnoredMethodCall(call)) {
-                            return;
-                        }
-                        refMethod.putUserData(MethodReturnAlwaysConstantInspection.ALWAYS_CONSTANT, false);
-                    }
-                }
-            });
+        if (!(refMethod.getElement()instanceof PsiMethod)) {
+            return null;
         }
+        final PsiMethod method = (PsiMethod) refMethod.getElement();
+        if (method.getBody() == null) {
+            return null;     //we'll catch it on another method
+        }
+        if (!alwaysReturnsConstant(method)) {
+            return null;
+        }
+        final Set<RefMethod> siblingMethods = MethodInheritanceUtils.calculateSiblingMethods(refMethod);
+        for (RefMethod siblingMethod : siblingMethods) {
+            final PsiMethod siblingPsiMethod = (PsiMethod) siblingMethod.getElement();
+            if (method.getBody() != null && !alwaysReturnsConstant(siblingPsiMethod)) {
+                return null;
+            }
+        }
+        final List<ProblemDescriptor> out = new ArrayList<ProblemDescriptor>();
+        for (RefMethod siblingMethod : siblingMethods) {
+            if (!globalContext.isSuppressed(siblingMethod, getShortName())) {
+                final PsiMethod siblingPsiMethod = (PsiMethod) siblingMethod.getElement();
+                out.add(manager.createProblemDescriptor(siblingPsiMethod, InspectionsBundle.message(
+                        "method.return.always.constant.problem.descriptor"), (LocalQuickFix[]) null,
+                                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+            }
+            siblingMethod.putUserData(ALWAYS_CONSTANT, true);
+        }
+        return out.toArray(new ProblemDescriptor[out.size()]);
+    }
+
+    private boolean alwaysReturnsConstant(PsiMethod method) {
+        final PsiCodeBlock body = method.getBody();
+        if (body == null) {
+            return false;
+        }
+        final PsiStatement[] statements = body.getStatements();
+        if (statements.length != 1) {
+            return false;
+        }
+        final PsiStatement statement = statements[0];
+        if (!(statement instanceof PsiReturnStatement)) {
+            return false;
+        }
+        final PsiReturnStatement returnStatement = (PsiReturnStatement) statement;
+        final PsiExpression value = returnStatement.getReturnValue();
+        return value != null && PsiUtil.isConstantExpression(value);
     }
 }

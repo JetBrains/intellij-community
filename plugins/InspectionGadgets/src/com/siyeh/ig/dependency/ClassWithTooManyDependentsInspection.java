@@ -48,7 +48,7 @@ public class ClassWithTooManyDependentsInspection extends BaseGlobalInspection {
             return null;
         }
         final String errorString =
-                InspectionGadgetsBundle.message("class.with.too.many.dependents.display.name", refEntity.getName(), numDependents, limit);
+                InspectionGadgetsBundle.message("class.with.too.many.dependents.problem.descriptor", refEntity.getName(), numDependents, limit);
 
         return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
 

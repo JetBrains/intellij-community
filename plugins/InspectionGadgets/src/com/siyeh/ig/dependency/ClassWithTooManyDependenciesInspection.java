@@ -38,9 +38,8 @@ public class ClassWithTooManyDependenciesInspection extends BaseGlobalInspection
                 super.visitClass(refClass);
                 final PsiClass aClass = refClass.getElement();
                 if (ClassUtils.isInnerClass(aClass)) {
-                    return ;
+                    return;
                 }
-
                 final Set<RefClass> dependencies =
                         DependencyUtils.calculateDependenciesForClass(refClass);
                 final int numDependencies = dependencies.size();

@@ -45,11 +45,11 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
         mutualDependents.retainAll(dependents);
 
         final int numMutualDependents = mutualDependents.size();
-        if (numMutualDependents == 0) {
+        if (numMutualDependents <=1) {
             return null;
         }
         final String errorString =
-                InspectionGadgetsBundle.message("cyclic.class.dependency.problem.descriptor", refEntity.getName(), numMutualDependents);
+                InspectionGadgetsBundle.message("cyclic.class.dependency.problem.descriptor", refEntity.getName(), numMutualDependents-1);
 
         return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
     }

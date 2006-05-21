@@ -41,12 +41,12 @@ public class CyclicPackageDependencyInspection extends BaseGlobalInspection {
         mutualDependents.retainAll(dependents);
 
         final int numMutualDependents = mutualDependents.size();
-        if (numMutualDependents == 0) {
+        if (numMutualDependents <=1) {
             return null;
         }
         final String packageName = refEntity.getName();
         final String errorString =
-                InspectionGadgetsBundle.message("cyclic.package.dependency.problem.descriptor", packageName, numMutualDependents);
+                InspectionGadgetsBundle.message("cyclic.package.dependency.problem.descriptor", packageName, numMutualDependents-1);
 
         return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
 

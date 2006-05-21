@@ -1,7 +1,6 @@
 package com.siyeh.ig.dependency;
 
 import com.siyeh.ig.BaseGlobalInspection;
-import com.siyeh.ig.global.InitializationDependencyUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;

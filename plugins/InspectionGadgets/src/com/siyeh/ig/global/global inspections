@@ -12,9 +12,11 @@ Method too small
 Incohesive class
 Incohesive package
 Incohesive module
-Class not dependent on its package
+Tangled class
+Tangled package
+Tangled module
 Class not dependent on its module
-Method always returns constant  (and thus may be an annotation)
+Method always returns constant (and thus may be an annotation)
 Method whose return value is always ignored
 Parameter may be interface
 Field may be interface
@@ -35,14 +37,17 @@ Method return always cast
 Subclass never accessed as superclass
 
 
-
+Class not dependent on its package
 Class with too many dependencies
 Class with too many dependents
-Class with too many transitive dependecies
-Class with too many transitive dependects
+Class with too many transitive dependencies
+Class with too many transitive dependets
 Cyclic class dependency
 Cyclic package dependency
 Package with too many classes
+Package with too few classes
+Module with too many classes
+Module with too few classes
 Package in multiple modules
 Package naming convention
 Top-level package name not domain

@@ -1,4 +1,4 @@
-package com.siyeh.ig.global;
+package com.siyeh.ig.dependency;
 
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.util.Key;
