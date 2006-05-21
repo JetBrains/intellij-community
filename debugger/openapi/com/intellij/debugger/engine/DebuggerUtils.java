@@ -75,7 +75,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
         ReferenceType refType = objRef.referenceType();
         if(refType instanceof ArrayType) {
           try {
-            refType = (ReferenceType)objRef.virtualMachine().classesByName("java.lang.Object").get(0);
+            refType = objRef.virtualMachine().classesByName("java.lang.Object").get(0);
           }
           catch (Exception e) {
             throw EvaluateExceptionUtil.createEvaluateException(
@@ -87,7 +87,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
           throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
 
-        StringReference stringReference = null;
+        StringReference stringReference;
         stringReference = (StringReference)evaluationContext.getDebugProcess().invokeMethod(
           evaluationContext, objRef,
           toStringMethod,
@@ -295,7 +295,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final PsiManager psiManager = PsiManager.getInstance(project);
     if (getArrayClass(className) != null) {
-      return psiManager.getElementFactory().getArrayClass();
+      return psiManager.getElementFactory().getArrayClass(psiManager.getEffectiveLanguageLevel());
     }
     if(project.isDefault()) {
       return null;

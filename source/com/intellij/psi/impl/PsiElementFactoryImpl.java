@@ -44,6 +44,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiElementFactoryImpl");
 
   private PsiClass ARRAY_CLASS;
+  private PsiClass ARRAY_CLASS15;
 
   private final PsiManagerImpl myManager;
   private static final Map<String, PsiPrimitiveType> ourPrimitiveTypesMap = new HashMap<String, PsiPrimitiveType>();
@@ -85,30 +86,30 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   @NotNull
-  public PsiClass getArrayClass() {
-    if (ARRAY_CLASS == null) {
-      try {
-        if (myManager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
-          ARRAY_CLASS = createClassFromText(
-            "public class __Array__{\n public final int length; \n public Object clone(){}\n}", null);
+  public PsiClass getArrayClass(LanguageLevel languageLevel) {
+    try {
+      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+        if (ARRAY_CLASS == null) {
+          ARRAY_CLASS = createClassFromText("public class __Array__{\n public final int length; \n public Object clone(){}\n}", null).getInnerClasses()[0];
         }
-        else {
-          ARRAY_CLASS = createClassFromText(
-            "public class __Array__<T>{\n public final int length; \n public T[] clone(){}\n}", null);
-        }
-        CodeStyleManager.getInstance(myManager.getProject()).reformat(ARRAY_CLASS);
-        ARRAY_CLASS = ARRAY_CLASS.getInnerClasses()[0];
+        return ARRAY_CLASS;
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
+      else {
+        if (ARRAY_CLASS15 == null) {
+          ARRAY_CLASS15 = createClassFromText("public class __Array__<T>{\n public final int length; \n public T[] clone(){}\n}", null).getInnerClasses()[0];
+        }
+        return ARRAY_CLASS15;
       }
     }
-    return ARRAY_CLASS;
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   @NotNull
-  public PsiClassType getArrayClassType(PsiType componentType) {
-    PsiClass arrayClass = getArrayClass();
+  public PsiClassType getArrayClassType(PsiType componentType, final LanguageLevel languageLevel) {
+    PsiClass arrayClass = getArrayClass(languageLevel);
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     PsiTypeParameter[] typeParameters = arrayClass.getTypeParameters();
     if (typeParameters.length == 1) {

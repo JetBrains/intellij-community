@@ -553,16 +553,17 @@ public interface PsiElementFactory {
    *
    * @return the array synthetic class.
    */
-  @NotNull PsiClass getArrayClass();
+  @NotNull PsiClass getArrayClass(LanguageLevel languageLevel);
 
   /**
    * Returns the class type for a synthetic Java class containing methods which
    * are defined on Java arrays with the specified element type.
    *
    * @param componentType the component type of the array for which the class type is returned.
+   * @param languageLevel
    * @return the class type the array synthetic class.
    */
-  @NotNull PsiClassType getArrayClassType(PsiType componentType);
+  @NotNull PsiClassType getArrayClassType(PsiType componentType, final LanguageLevel languageLevel);
 
   /**
    * Creates a type parameter from the specified text.

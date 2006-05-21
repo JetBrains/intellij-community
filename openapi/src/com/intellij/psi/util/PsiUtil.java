@@ -342,7 +342,8 @@ public final class PsiUtil {
             final PsiClassType parameterType = resolve.getManager().getElementFactory().createType((PsiTypeParameter) resolve);
             final PsiType superType = result.getSubstitutor().substitute(parameterType);
             if (superType instanceof PsiArrayType) {
-              return resolve.getManager().getElementFactory().getArrayClassType(((PsiArrayType)superType).getComponentType()).resolveGenerics();
+              LanguageLevel languageLevel = PsiUtil.getLanguageLevel(accessObject);
+              return resolve.getManager().getElementFactory().getArrayClassType(((PsiArrayType)superType).getComponentType(), languageLevel).resolveGenerics();
             }
             else if (superType instanceof PsiClassType) {
               final PsiClassType type = (PsiClassType)superType;

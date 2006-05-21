@@ -8,11 +8,13 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.pom.java.LanguageLevel;
 
 import java.util.ArrayList;
 
@@ -86,7 +88,8 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     if (member instanceof PsiField) {
       final PsiClass containingClass = ((PsiField) member).getContainingClass();
       final PsiManager manager = member.getManager();
-      if (manager.areElementsEquivalent(containingClass, manager.getElementFactory().getArrayClass())) {
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(member);
+      if (manager.areElementsEquivalent(containingClass, manager.getElementFactory().getArrayClass(languageLevel))) {
         return true;
       }
       return manager.areElementsEquivalent(containingClass, mySuper)

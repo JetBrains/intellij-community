@@ -13,7 +13,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
@@ -148,7 +150,8 @@ public class DebuggerTreeNodeExpression {
           }
         }
         else if(type instanceof PsiArrayType) {
-          if(thisClass == expressionWithThis.getManager().getElementFactory().getArrayClass()) {
+          LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expressionWithThis);
+          if(thisClass == expressionWithThis.getManager().getElementFactory().getArrayClass(languageLevel)) {
             castNeeded = false;
           }
         }

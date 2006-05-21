@@ -4,10 +4,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -463,15 +468,38 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       return getManager().getEffectiveLanguageLevel();
     }
     final Project project = getProject();
-    final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
+    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    final Module module = index.getModuleForFile(virtualFile);
     if (module != null) {
       return module.getEffectiveLanguageLevel();
     }
     else {
-      final PsiFile originalFile = getOriginalFile();
-      if (originalFile instanceof PsiJavaFile && originalFile != this) return ((PsiJavaFile)originalFile).getLanguageLevel();
+      final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
+      if (sourceRoot != null) {
+        String relativePath = VfsUtil.getRelativePath(virtualFile.getParent(), sourceRoot, '/');
+        LOG.assertTrue(relativePath != null);
+        final VirtualFile[] files = index.getOrderEntriesForFile(virtualFile).get(0).getFiles(OrderRootType.CLASSES);
+        for (VirtualFile rootFile : files) {
+          final VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
+          if (classFile != null) {
+            return getLanguageLevel(classFile);
+          }
+        }
+      }
     }
 
     return PsiManager.getInstance(project).getEffectiveLanguageLevel();
+  }
+
+  private LanguageLevel getLanguageLevel(final VirtualFile dirFile) {
+    final VirtualFile[] children = dirFile.getChildren();
+    final LanguageLevel defaultLanguageLevel = getManager().getEffectiveLanguageLevel();
+    for (VirtualFile child : children) {
+      if (StdFileTypes.CLASS.equals(child.getFileType())) {
+        return ClsFileImpl.getLanguageLevel(child, defaultLanguageLevel);
+      }
+    }
+
+    return defaultLanguageLevel;
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 
 public class PsiScopesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.util.PsiScopesUtil");
@@ -109,7 +110,8 @@ public class PsiScopesUtil {
         if(qualifier instanceof PsiExpression){
           type = ((PsiExpression)qualifier).getType();
           if (type instanceof PsiArrayType) {
-            final PsiClass arrayClass = factory.getArrayClass();
+            LanguageLevel languageLevel = PsiUtil.getLanguageLevel(qualifier);
+            final PsiClass arrayClass = factory.getArrayClass(languageLevel);
             target = arrayClass;
             final PsiTypeParameter[] arrayTypeParameters = arrayClass.getTypeParameters();
             if (arrayTypeParameters.length > 0) {
@@ -308,7 +310,9 @@ public class PsiScopesUtil {
       return processQualifierResult(qualifierResult, processor, call);
     }
     else if (type instanceof PsiArrayType) {
-      JavaResolveResult qualifierResult = manager.getElementFactory().getArrayClassType(((PsiArrayType)type).getComponentType()).resolveGenerics();
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
+      JavaResolveResult qualifierResult = manager.getElementFactory().getArrayClassType(((PsiArrayType)type).getComponentType(),
+                                                                                        languageLevel).resolveGenerics();
       return processQualifierResult(qualifierResult, processor, call);
     }
     else if (type instanceof PsiIntersectionType) {

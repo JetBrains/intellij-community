@@ -197,24 +197,24 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   }
 
   private LanguageLevel getLanguageLevelInner() {
+    return getLanguageLevel(getVirtualFile(), getManager().getEffectiveLanguageLevel());
+  }
+
+  public static LanguageLevel getLanguageLevel(VirtualFile vFile, LanguageLevel defaultLanguageLevel) {
     try {
-      final ClassFileData classFileData = new ClassFileData(getVirtualFile());
+      final ClassFileData classFileData = new ClassFileData(vFile);
       final BytePointer ptr = new BytePointer(classFileData.getData(), 6);
       final int majorVersion = ClsUtil.readU2(ptr);
-      return getLanguageLevelInner(majorVersion);
+      if (majorVersion < 48) return LanguageLevel.JDK_1_3;
+      if (majorVersion < 49) return LanguageLevel.JDK_1_4;
+      return LanguageLevel.JDK_1_5;
     }
     catch (ClsFormatException e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug(e);
       }
-      return getManager().getEffectiveLanguageLevel();
+      return defaultLanguageLevel;
     }
-  }
-
-  private static LanguageLevel getLanguageLevelInner(int majorClassFileVersion) {
-    if (majorClassFileVersion < 48) return LanguageLevel.JDK_1_3;
-    if (majorClassFileVersion < 49) return LanguageLevel.JDK_1_4;
-    return LanguageLevel.JDK_1_5;
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {

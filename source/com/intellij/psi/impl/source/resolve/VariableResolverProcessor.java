@@ -10,6 +10,7 @@ import com.intellij.psi.scope.conflictResolvers.JavaVariableConflictResolver;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
 import com.intellij.psi.scope.processor.PsiResolverProcessor;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.pom.java.LanguageLevel;
 
 import java.util.ArrayList;
 
@@ -47,8 +48,10 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
         final PsiManager manager = element.getManager();
         final PsiClassType type = manager.getElementFactory().createType((PsiTypeParameter) element);
         final PsiType accessType = accessClass.getSubstitutor().substitute(type);
-        if(accessType instanceof PsiArrayType)
-          myAccessClass = manager.getElementFactory().getArrayClass();
+        if(accessType instanceof PsiArrayType) {
+          LanguageLevel languageLevel = PsiUtil.getLanguageLevel(qualifier);
+          myAccessClass = manager.getElementFactory().getArrayClass(languageLevel);
+        }
         else if(accessType instanceof PsiClassType)
           myAccessClass = ((PsiClassType)accessType).resolve();
       }

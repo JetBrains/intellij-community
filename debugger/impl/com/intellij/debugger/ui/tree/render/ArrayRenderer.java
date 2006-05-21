@@ -20,7 +20,9 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ArrayType;
 import com.sun.jdi.Type;
@@ -177,9 +179,11 @@ public class ArrayRenderer extends NodeRendererImpl{
     LOG.assertTrue(node.getDescriptor() instanceof ArrayElementDescriptorImpl, node.getDescriptor().getClass().getName());
     ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)node.getDescriptor();
 
-    PsiElementFactory elementFactory = PsiManager.getInstance(node.getProject()).getElementFactory();
+    final PsiManager manager = PsiManager.getInstance(node.getProject());
+    PsiElementFactory elementFactory = manager.getElementFactory();
     try {
-      return elementFactory.createExpressionFromText("this[" + descriptor.getIndex() + "]", elementFactory.getArrayClass());
+      LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
+      return elementFactory.createExpressionFromText("this[" + descriptor.getIndex() + "]", elementFactory.getArrayClass(languageLevel));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
