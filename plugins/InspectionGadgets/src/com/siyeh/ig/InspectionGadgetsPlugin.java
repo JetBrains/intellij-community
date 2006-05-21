@@ -285,17 +285,40 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             registerThreadingInspections();
             registerVerboseInspections();
             registerVisibilityInspections();
+    //        m_inspectionClasses.add(MethodReturnAlwaysConstantInspection.class);
             m_inspectionClasses.add(BooleanMethodIsAlwaysInvertedInspection.class);
-           // m_inspectionClasses.add(ClassUnconnectedToPackageInspection.class);
-          //  m_inspectionClasses.add(MethodReturnAlwaysIgnoredInspection.class);
-          //  m_inspectionClasses.add(TestGlobalInspection.class);
+    //        registerPackagingInspections();
+     //       registerModularizationInspections();
+     //       registerDependencyInspections();
         }
         final int numInspections = m_inspectionClasses.size();
         final Class<? extends LocalInspectionTool>[] classArray =
                 new Class[numInspections];
         return m_inspectionClasses.toArray(classArray);
     }
+       /*
+    private void registerPackagingInspections() {
+        m_inspectionClasses.add(PackageInMultipleModulesInspection.class);
+        m_inspectionClasses.add(DisjointPackageInspection.class);
+        m_inspectionClasses.add(ClassUnconnectedToPackageInspection.class);
+        m_inspectionClasses.add(PackageWithTooManyClassesInspection.class);
+        m_inspectionClasses.add(PackageWithTooFewClassesInspection.class);
+    }
 
+    private void registerModularizationInspections() {
+        m_inspectionClasses.add(ModuleWithTooManyClassesInspection.class);
+        m_inspectionClasses.add(ModuleWithTooFewClassesInspection.class);
+    }
+
+    private void registerDependencyInspections() {
+        m_inspectionClasses.add(ClassWithTooManyDependenciesInspection.class);
+        m_inspectionClasses.add(ClassWithTooManyDependentsInspection.class);
+        m_inspectionClasses.add(ClassWithTooManyTransitiveDependenciesInspection.class);
+        m_inspectionClasses.add(ClassWithTooManyTransitiveDependentsInspection.class);
+        m_inspectionClasses.add(CyclicClassDependencyInspection.class);
+        m_inspectionClasses.add(CyclicPackageDependencyInspection.class);
+    }
+     */
     public void initComponent() {
     }
 
@@ -317,6 +340,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerSecurityInspections() {
+        m_inspectionClasses.add(DesignForExtensionInspection.class);
         m_inspectionClasses.add(DeserializableClassInSecureContextInspection.class);
         m_inspectionClasses.add(SerializableClassInSecureContextInspection.class);
         m_inspectionClasses.add(CloneableClassInSecureContextInspection.class);
@@ -399,6 +423,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CollectionAddedToSelfInspection.class);
         m_inspectionClasses.add(InstanceofIncompatibleInterfaceInspection.class);
         m_inspectionClasses.add(InstantiationOfUtilityClassInspection.class);
+        m_inspectionClasses.add(BadOddnessInspection.class);
         m_inspectionClasses.add(BigDecimalEqualsInspection.class);
         m_inspectionClasses.add(DivideByZeroInspection.class);
         m_inspectionClasses.add(NonReproducibleMathCallInspection.class);
@@ -454,10 +479,13 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CompareToUsesNonFinalVariableInspection.class);
         m_inspectionClasses.add(EqualsWhichDoesntCheckParameterClassInspection.class);
         m_inspectionClasses.add(NullArgumentToVariableArgMethodInspection.class);
+        m_inspectionClasses.add(PrimitiveArrayArgumentToVariableArgMethodInspection.class);
+        m_inspectionClasses.add(ReflectionForUnavailableAnnotationInspection.class);
         m_inspectionClasses.add(EnumSwitchStatementWhichMissesCasesInspection.class);
         m_inspectionClasses.add(PointlessIndexOfComparisonInspection.class);
         m_inspectionClasses.add(SuspiciousSystemArraycopyInspection.class);
         m_inspectionClasses.add(SuspiciousToArrayCallInspection.class);
+        m_inspectionClasses.add(ComparatorNotSerializableInspection.class);
     }
 
     private static boolean classExists(String className) {
@@ -730,6 +758,9 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(NonSerializableWithSerialVersionUIDFieldInspection.class);
         m_inspectionClasses.add(SerializableInnerClassHasSerialVersionUIDFieldInspection.class);
         m_inspectionClasses.add(SerializableInnerClassWithNonSerializableOuterClassInspection.class);
+        m_inspectionClasses.add(NonSerializableFieldInSerializableClassInspection.class);
+        m_inspectionClasses.add(NonSerializableObjectBoundToHttpSessionInspection.class);
+        m_inspectionClasses.add(NonSerializableObjectPassedToObjectStreamInspection.class);
     }
 
     private void registerThreadingInspections() {

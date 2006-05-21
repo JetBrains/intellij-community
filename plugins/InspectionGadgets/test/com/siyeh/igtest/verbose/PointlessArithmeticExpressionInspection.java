@@ -24,6 +24,42 @@ public class PointlessArithmeticExpressionInspection
         System.out.println(k);
         String string = "foo" + 0;
 
+        k = j%1;
+        System.out.println(k);
+               
+        if(k<=Integer.MAX_VALUE)
+        {
+
+        }
+        if(k>=Integer.MIN_VALUE)
+        {
+
+        }
+        if(k>Integer.MAX_VALUE)
+        {
+
+        }
+        if(k<Integer.MIN_VALUE)
+        {
+
+        }
+        if(Integer.MAX_VALUE >= k)
+        {
+
+        }
+        if(Integer.MIN_VALUE <= k)
+        {
+
+        }
+        if(Integer.MAX_VALUE < k)
+        {
+
+        }
+        if(Integer.MIN_VALUE > k)
+        {
+
+        }
+
 
 
     }
