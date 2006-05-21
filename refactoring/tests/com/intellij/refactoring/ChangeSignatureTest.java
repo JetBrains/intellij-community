@@ -110,7 +110,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     }, true);
   }
 
-  @Bombed(user = "lesya", day = 21, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
+  @Bombed(user = "lesya", day = 25, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
   public void testSCR40895() throws Exception {
     doTest(null, new ParameterInfo[] {
       new ParameterInfo(0, "y", PsiType.INT),

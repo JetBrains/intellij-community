@@ -173,7 +173,7 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     checkResultByFile("/refactoring/introduceParameter/after25.java");
   }
 
-  @Bombed(user = "lesya", day = 21, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
+  @Bombed(user = "lesya", day = 25, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
   public void testParameterJavaDoc2() throws Exception {
     configureByFile("/refactoring/introduceParameter/before26.java");
     perform(true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, "anObject", false, true);
