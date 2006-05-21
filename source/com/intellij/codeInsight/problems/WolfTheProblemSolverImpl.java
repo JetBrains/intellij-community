@@ -13,23 +13,18 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -44,18 +39,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final Map<VirtualFile, Collection<Problem>> myProblems = new THashMap<VirtualFile, Collection<Problem>>();
   private final CopyOnWriteArrayList<VirtualFile> myCheckingQueue = new CopyOnWriteArrayList<VirtualFile>();
-  private final Alarm myHighlightingAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
-  private final Runnable myRehighlightRequest = new Runnable() {
-    public void run() {
-      ApplicationManager.getApplication().runReadAction(new Runnable(){
-        public void run() {
-          startCheckingIfVincentSolvedProblemsYet();
-        }
-      });
-    }
-  };
+
   private final Project myProject;
-  private final ProgressIndicator myProgress;
   private final List<ProblemListener> myProblemListeners = new CopyOnWriteArrayList<ProblemListener>();
   private final ProblemListener fireProblemListeners = new ProblemListener() {
     public void problemsChanged(Collection<VirtualFile> added, Collection<VirtualFile> removed) {
@@ -65,20 +50,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   };
 
-  private boolean myDaemonStopped;
   private long myPsiModificationCount = -1000;
 
   public WolfTheProblemSolverImpl(Project project) {
     myProject = project;
-    myProgress = new ProgressIndicatorBase() {
-      public boolean isCanceled() {
-        return super.isCanceled() || myDaemonStopped || !myProject.isOpen();
-      }
-
-      public String toString() {
-        return "Progress: canceled="+isCanceled()+"; mycanceled="+myDaemonStopped;
-      }
-    };
   }
 
   public void projectOpened() {
@@ -102,19 +77,19 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   }
 
-  private void startCheckingIfVincentSolvedProblemsYet() {
+  public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress) {
     if (!myProject.isOpen()) return;
     long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
     if (psiModificationCount == myPsiModificationCount) return; //optimization
-    myDaemonStopped = false;
+
     try {
       for (VirtualFile virtualFile : myCheckingQueue) {
-        if (myProgress.isCanceled()) break;
+        if (progress.isCanceled()) break;
         if (virtualFile.isValid()) {
           // place the file to the end of queue to give all files a fair share
           myCheckingQueue.remove(virtualFile);
           myCheckingQueue.add(virtualFile);
-          orderVincentToCleanTheCar(virtualFile);
+          orderVincentToCleanTheCar(virtualFile, progress);
         }
         else {
           synchronized(myProblems) {
@@ -130,29 +105,31 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  private void orderVincentToCleanTheCar(final VirtualFile file) throws ProcessCanceledException {
+  private void orderVincentToCleanTheCar(final VirtualFile file, ProgressIndicator progressIndicator) throws ProcessCanceledException {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (willBeHighlightedAnyway(file)) return;
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile == null) return;
-    ProgressManager.getInstance().runProcess(new Runnable(){
-      public void run() {
-        if (!myProject.isOpen()) return;
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-        try {
-          if (statusBar != null) {
-            statusBar.setInfo("Checking '"+file.getPresentableUrl()+"'");
-          }
-          GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true);
-          pass.doCollectInformation(myProgress);
-        }
-        finally {
-          if (statusBar != null) {
-            statusBar.setInfo("");
-          }
-        }
+    if (!myProject.isOpen()) return;
+
+    GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true);
+    pass.doCollectInformation(progressIndicator);
+
+    /* TODO: Do we need this status bar indication?
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    try {
+      if (statusBar != null) {
+        statusBar.setInfo("Checking '"+file.getPresentableUrl()+"'");
       }
-    },myProgress);
+      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true);
+      pass.doCollectInformation(progressIndicator);
+    }
+    finally {
+      if (statusBar != null) {
+        statusBar.setInfo("");
+      }
+    }
+    */
   }
 
   private boolean willBeHighlightedAnyway(final VirtualFile file) {
@@ -166,13 +143,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       if (file == psiFile.getVirtualFile()) return true;
     }
     return false;
-  }
-
-  public void daemonStopped(final boolean toRestartAlarm) {
-    myDaemonStopped = true;
-    if (toRestartAlarm) {
-      restartHighlighting();
-    }
   }
 
   public boolean hasProblemFilesBeneath(final ProjectViewNode scope) {
@@ -226,11 +196,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   public void removeProblemListener(ProblemListener listener) {
     myProblemListeners.remove(listener);
-  }
-
-  private void restartHighlighting() {
-    myHighlightingAlarm.cancelAllRequests();
-    myHighlightingAlarm.addRequest(myRehighlightRequest, 200);
   }
 
   public boolean isProblemFile(VirtualFile virtualFile) {

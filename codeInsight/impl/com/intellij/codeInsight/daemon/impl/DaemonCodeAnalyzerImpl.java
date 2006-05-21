@@ -46,6 +46,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -453,10 +454,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
     }
     myUpdateProgress.cancel();
-    WolfTheProblemSolver instance = WolfTheProblemSolver.getInstance(myProject);
-    if (instance instanceof WolfTheProblemSolverImpl) {
-      ((WolfTheProblemSolverImpl)instance).daemonStopped(toRestartAlarm);
-    }
   }
 
   @Nullable
@@ -621,19 +618,21 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         final boolean wasRunning = myUpdateProgress.isRunning();
 
         myUpdateThreadSemaphore.up();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myDisposed) return;
+        if (editor != null) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              if (myDisposed) return;
 
-            if (!wasCanceled || wasRunning) {
-              if (daemonPass != null && editor.getComponent().isDisplayable()) {
-                daemonPass.applyInformationToEditor();
+              if (!wasCanceled || wasRunning) {
+                if (daemonPass != null && editor.getComponent().isDisplayable()) {
+                  daemonPass.applyInformationToEditor();
+                }
+                passesToPerform.remove(daemonPass);
+                updateHighlighters(editor, passesToPerform, postRunnable);
               }
-              passesToPerform.remove(daemonPass);
-              updateHighlighters(editor, passesToPerform, postRunnable);
             }
-          }
-        }, ModalityState.stateForComponent(editor.getComponent()));
+          }, ModalityState.stateForComponent(editor.getComponent()));
+        }
       }
     };
 
@@ -782,6 +781,24 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
+  private static class WolfPass implements HighlightingPass {
+    private Project myProject;
+
+    public WolfPass(final Project project) {
+      myProject = project;
+    }
+
+    public void collectInformation(ProgressIndicator progress) {
+      final WolfTheProblemSolver solver = WolfTheProblemSolver.getInstance(myProject);
+      if (solver instanceof WolfTheProblemSolverImpl) {
+        ((WolfTheProblemSolverImpl)solver).startCheckingIfVincentSolvedProblemsYet(progress);
+      }
+    }
+
+    public void applyInformationToEditor() {
+    }
+  }
+
   private Runnable createUpdateRunnable() {
     return new Runnable() {
       public void run() {
@@ -798,6 +815,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           return;
         }
 
+        class CallWolfRunnable implements Runnable {
+          public void run() {
+            updateHighlighters(null, new LinkedHashSet<HighlightingPass>(Arrays.asList(new WolfPass(myProject))), null);
+          }
+        }
+
         class UpdateEditorRunnable implements Runnable {
           private int editorIndex;
 
@@ -806,9 +829,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           }
 
           public void run() {
-            UpdateEditorRunnable postRunnable = editorIndex < activeEditors.length - 1
+            Runnable postRunnable = editorIndex < activeEditors.length - 1
                                                 ? new UpdateEditorRunnable(editorIndex + 1)
-                                                : null;
+                                                : new CallWolfRunnable();
+
             updateAll(activeEditors[editorIndex], postRunnable);
           }
         }
