@@ -17,23 +17,40 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * @author max
  */
 public class CommittedChangesBrowser extends JPanel {
-  private static ColumnInfo<? extends CommittedChangeList, Date> COL_DATE = new ColumnInfo<CommittedChangeList, Date>("Date") {
-    public Date valueOf(final CommittedChangeList item) {
-      return item.getCommitDate();
+  private static ColumnInfo<? extends CommittedChangeList, String> COL_DATE = new ColumnInfo<CommittedChangeList, String>("Date") {
+    public String valueOf(final CommittedChangeList item) {
+      return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM).format(item.getCommitDate());
+    }
+
+    public Comparator<CommittedChangeList> getComparator() {
+      return new Comparator<CommittedChangeList>() {
+        public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
+          return o1.getCommitDate().compareTo(o2.getCommitDate());
+        }
+      };
     }
   };
   private static ColumnInfo<CommittedChangeList, String> COL_NAME = new ColumnInfo<CommittedChangeList, String>("Committer") {
     public String valueOf(final CommittedChangeList item) {
       return item.getCommitterName();
+    }
+
+    public Comparator<CommittedChangeList> getComparator() {
+      return new Comparator<CommittedChangeList>() {
+        public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
+          return valueOf(o1).compareTo(valueOf(o2));
+        }
+      };
     }
   };
 
@@ -50,8 +67,12 @@ public class CommittedChangesBrowser extends JPanel {
     myChangeListsView = new TableView(myTableModel);
     myChangeListsView.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+    JPanel changesPanel = new JPanel(new BorderLayout());
+    changesPanel.add(new JScrollPane(myChangeListsView), BorderLayout.CENTER);
+    changesPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder("Changes"));
+
     JSplitPane splitter = new JSplitPane();
-    splitter.setLeftComponent(new JScrollPane(myChangeListsView));
+    splitter.setLeftComponent(changesPanel);
 
     myChangesView = new ChangesBrowser(project, changeLists, Collections.<Change>emptyList(), null, false, false);
     splitter.setRightComponent(myChangesView);
