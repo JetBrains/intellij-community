@@ -226,8 +226,25 @@ public class ParenthesesUtils{
         final PsiExpression qualifier =
                 referenceExpression.getQualifierExpression();
         if(qualifier != null){
-            return removeParentheses(qualifier) + '.' +
-                   referenceExpression.getReferenceName();
+            final PsiType[] typeParameters =
+                    referenceExpression.getTypeParameters();
+            if (typeParameters.length > 0) {
+                final StringBuilder result = new StringBuilder();
+                result.append(removeParentheses(qualifier));
+                result.append(".<");
+                result.append(typeParameters[0].getCanonicalText());
+                for (int i = 1; i < typeParameters.length; i++) {
+                    final PsiType typeParameter = typeParameters[i];
+                    result.append(',');
+                    result.append(typeParameter.getCanonicalText());
+                }
+                result.append('>');
+                result.append(referenceExpression.getReferenceName());
+                return result.toString();
+            } else {
+                return removeParentheses(qualifier) + '.' +
+                        referenceExpression.getReferenceName();
+            }
         } else{
             return referenceExpression.getText();
         }
