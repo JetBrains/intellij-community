@@ -95,23 +95,22 @@ class AnchorReference implements PsiReference {
     if (file != null) {
       CachedValue<Map<String, XmlTag>> value = file.getUserData(ourCachedIdsKey);
       if (value == null) {
-        final Map<String,XmlTag> resultMap = new HashMap<String, XmlTag>();
-
-        processXmlElements(
-          HtmlUtil.getRealXmlDocument(file.getDocument()).getRootTag(),
-          new PsiElementProcessor() {
-            public boolean execute(final PsiElement element) {
-              final String anchorValue = element instanceof XmlTag ? getAnchorValue((XmlTag)element):null;
-
-              if (anchorValue!=null) {
-                resultMap.put(anchorValue, (XmlTag)element);
-              }
-              return true;
-            }
-          }
-        );
         value = file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, XmlTag>>() {
           public Result<Map<String, XmlTag>> compute() {
+            final Map<String,XmlTag> resultMap = new HashMap<String, XmlTag>();
+            processXmlElements(
+              HtmlUtil.getRealXmlDocument(file.getDocument()).getRootTag(),
+              new PsiElementProcessor() {
+                public boolean execute(final PsiElement element) {
+                  final String anchorValue = element instanceof XmlTag ? getAnchorValue((XmlTag)element):null;
+
+                  if (anchorValue!=null) {
+                    resultMap.put(anchorValue, (XmlTag)element);
+                  }
+                  return true;
+                }
+              }
+            );
             return new Result<Map<String, XmlTag>>(resultMap, file);
           }
         }, false);
