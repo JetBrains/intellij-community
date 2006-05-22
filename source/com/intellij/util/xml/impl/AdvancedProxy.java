@@ -7,6 +7,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.xml.JavaMethodSignature;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import net.sf.cglib.proxy.AdvancedEnhancer;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Factory;
@@ -84,6 +85,9 @@ public class AdvancedProxy {
 
       ourFactories.put(key, factory);
       return (T)factory;
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       throw new RuntimeException(e);
