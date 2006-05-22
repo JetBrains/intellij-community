@@ -37,7 +37,7 @@ public class RemoveUnnecessaryParenthesesIntention extends Intention {
 			expression = (PsiExpression)expression.getParent();
 			assert expression != null;
 		}
-		final String newExpression =
+        final String newExpression =
 				ParenthesesUtils.removeParentheses(expression);
 		replaceExpression(newExpression, expression);
 	}

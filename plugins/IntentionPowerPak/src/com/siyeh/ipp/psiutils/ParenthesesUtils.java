@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.siyeh.ipp.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -79,12 +79,11 @@ public class ParenthesesUtils{
 
 	@Nullable
 	public static PsiExpression stripParentheses(
-			@NotNull PsiExpression expression){
+            @Nullable PsiExpression expression){
 		PsiExpression parenthesized = expression;
 		while(parenthesized instanceof PsiParenthesizedExpression){
 			final PsiParenthesizedExpression parenthesizedExpression =
 					(PsiParenthesizedExpression)parenthesized;
-
 			parenthesized = parenthesizedExpression.getExpression();
 		}
 		return parenthesized;
@@ -145,11 +144,12 @@ public class ParenthesesUtils{
 
 	private static int precedenceForBinaryOperator(@NotNull PsiJavaToken sign){
 		final String operator = sign.getText();
-		return s_binaryOperatorPrecedence.get(operator);
+        final Integer precedence = s_binaryOperatorPrecedence.get(operator);
+        return precedence.intValue();
 	}
 
 	public static String removeParentheses(@Nullable PsiExpression expression){
-		if (expression == null){
+        if (expression == null){
 			return "";
 		}
 		if(expression instanceof PsiMethodCallExpression){
@@ -265,10 +265,10 @@ public class ParenthesesUtils{
 						bodyBinaryExpression.getOperationSign();
 				final IElementType bodyOperator =
 						bodyBinaryOperationSign.getTokenType();
-				final PsiExpression lhs =
-						parentBinaryExpression.getLOperand();
-				if(lhs.equals(parenthesizedExpression) && parentOperator
-						.equals(bodyOperator)){
+                final PsiType parentType = parentBinaryExpression.getType();
+                final PsiType bodyType = body.getType();
+                if(parentType != null && parentType.equals(bodyType) &&
+                        parentOperator.equals(bodyOperator)){
 					return removeParentheses(body);
 				} else{
 					return '(' + removeParentheses(body) + ')';
@@ -420,14 +420,14 @@ public class ParenthesesUtils{
 		final int length = expressionText.length();
 		final StringBuffer out = new StringBuffer(length);
 		out.append(PsiKeyword.NEW + ' ');
-		final PsiType type = newExpression.getType();
-		final String text;
-		if (type == null) {
-			text = "";
-		} else {
-			final PsiType deepType = type.getDeepComponentType();
-			text = deepType.getPresentableText();
-		}
+        final PsiJavaCodeReferenceElement classReference =
+                newExpression.getClassReference();
+        final String text;
+        if(classReference == null){
+            text = "";
+        } else{
+            text = classReference.getText();
+        }
 		out.append(text);
 		if(strippedArgs != null){
 			out.append('(');
@@ -439,7 +439,8 @@ public class ParenthesesUtils{
 			}
 			out.append(')');
 		}
-		if(strippedDimensions.length > 0){
+        final PsiType type = newExpression.getType();
+        if(strippedDimensions.length > 0){
 			for(String strippedDimension : strippedDimensions){
 				out.append('[');
 				out.append(strippedDimension);

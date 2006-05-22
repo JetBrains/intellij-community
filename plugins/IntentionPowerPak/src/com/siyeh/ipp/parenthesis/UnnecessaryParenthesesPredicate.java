@@ -40,28 +40,29 @@ class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
 		if(body instanceof PsiParenthesizedExpression){
 			return true;
 		}
-		final int parentPrecendence = ParenthesesUtils.getPrecendence(
-				(PsiExpression) parent);
+		final int parentPrecendence =
+                ParenthesesUtils.getPrecendence((PsiExpression) parent);
 		final int childPrecendence = ParenthesesUtils.getPrecendence(body);
 		if(parentPrecendence > childPrecendence){
 			return true;
 		} else if(parentPrecendence == childPrecendence){
-
 			if(parent instanceof PsiBinaryExpression &&
 					body instanceof PsiBinaryExpression){
-				final PsiJavaToken parentSign =
-						((PsiBinaryExpression) parent).getOperationSign();
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) parent;
+                final PsiJavaToken parentSign =
+                        binaryExpression.getOperationSign();
 				final IElementType parentOperator = parentSign.getTokenType();
 				final PsiJavaToken childSign =
 						((PsiBinaryExpression) body).getOperationSign();
 				final IElementType childOperator = childSign.getTokenType();
-
-				final PsiBinaryExpression binaryExpression =
-						(PsiBinaryExpression) parent;
-				final PsiExpression lhs = binaryExpression.getLOperand();
-				return lhs.equals(expression) &&
-						parentOperator.equals(childOperator);
-			} else{
+                if(!parentOperator.equals(childOperator)){
+                    return false;
+                }
+                final PsiType parentType = binaryExpression.getType();
+                final PsiType bodyType = body.getType();
+                return parentType != null && parentType.equals(bodyType);
+            } else{
 				return false;
 			}
 		} else{
