@@ -220,12 +220,11 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
       myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
-          if (e.getNewLength() == 0) {
-            // string has beeen removed, move tokens down
+          if (e.getNewLength() == 0 && e.getOffset() == 0) {
+            // string has beeen removed from the beginning, move tokens down
             synchronized (LOCK) {
-              int offset = e.getOffset();
               int toRemoveLen = e.getOldLength();
-              int tIndex = findTokenInfoIndexByOffset(offset+toRemoveLen);
+              int tIndex = findTokenInfoIndexByOffset(toRemoveLen);
               ArrayList<TokenInfo> newTokens = new ArrayList<TokenInfo>(myTokens.subList(tIndex, myTokens.size()));
               for (TokenInfo token : newTokens) {
                 token.startOffset -= toRemoveLen;
