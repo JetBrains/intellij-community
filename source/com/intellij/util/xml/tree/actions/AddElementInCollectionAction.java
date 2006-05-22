@@ -92,7 +92,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
   }
 
   protected boolean showAsPopup() {
-    return false;
+    return true;
   }
 
   protected String getActionText(final AnActionEvent e) {
