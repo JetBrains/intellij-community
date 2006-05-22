@@ -21,6 +21,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -84,7 +86,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress) {
     if (!myProject.isOpen()) return;
-    long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
+    long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getOutOfCodeBlockModificationCount();
     if (psiModificationCount == myPsiModificationCount) return; //optimization
 
     try {
@@ -121,10 +123,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (psiFile == null) return;
     if (!myProject.isOpen()) return;
 
-    GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true);
-    pass.doCollectInformation(progressIndicator);
-
-    /* TODO: Do we need this status bar indication?
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     try {
       if (statusBar != null) {
@@ -138,7 +136,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         statusBar.setInfo("");
       }
     }
-    */
   }
 
   public boolean hasSyntaxErrors(final VirtualFile file) {
