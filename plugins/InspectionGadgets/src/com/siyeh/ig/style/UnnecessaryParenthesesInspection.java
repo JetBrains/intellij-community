@@ -60,9 +60,19 @@ public class UnnecessaryParenthesesInspection extends ExpressionInspection {
                 throws IncorrectOperationException {
             final PsiExpression expression =
                     (PsiExpression)descriptor.getPsiElement();
-            final String newExpression =
-                    ParenthesesUtils.removeParentheses(expression);
-            replaceExpression(expression, newExpression);
+            final PsiElement parent = expression.getParent();
+            if (parent instanceof PsiExpression) {
+                // the psi api will reinsert the parentheses we want to remove
+                // if the parent is an expression, this prevents that.
+                final PsiExpression parentExpression = (PsiExpression)parent;
+                final String newExpression =
+                        ParenthesesUtils.removeParentheses(parentExpression);
+                replaceExpression(parentExpression, newExpression);
+            } else {
+                final String newExpression =
+                        ParenthesesUtils.removeParentheses(expression);
+                replaceExpression(expression, newExpression);
+            }
         }
     }
 
