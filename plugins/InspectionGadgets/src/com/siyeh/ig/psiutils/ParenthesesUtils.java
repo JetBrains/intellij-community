@@ -420,13 +420,13 @@ public class ParenthesesUtils{
         final int length = expressionText.length();
         final StringBuffer out = new StringBuffer(length);
         out.append(PsiKeyword.NEW + ' ');
-        final PsiType type = newExpression.getType();
+        final PsiJavaCodeReferenceElement classReference =
+                newExpression.getClassReference();
         final String text;
-        if (type == null) {
+        if(classReference == null){
             text = "";
         } else {
-            final PsiType deepType = type.getDeepComponentType();
-            text = deepType.getPresentableText();
+            text = classReference.getText();
         }
         out.append(text);
         if(strippedArgs != null){
@@ -439,6 +439,7 @@ public class ParenthesesUtils{
             }
             out.append(')');
         }
+        final PsiType type = newExpression.getType();
         if(strippedDimensions.length > 0){
             for(String strippedDimension : strippedDimensions){
                 out.append('[');
