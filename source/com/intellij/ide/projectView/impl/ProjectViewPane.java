@@ -6,14 +6,13 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.impl.ProjectPaneSelectInTarget;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
-import com.intellij.ide.impl.ProjectPaneSelectInTarget;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.TreeViewUtil;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDirectory;
@@ -24,7 +23,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
-public final class ProjectViewPane extends AbstractProjectViewPSIPane implements ProjectComponent {
+public final class ProjectViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "ProjectPane";
   public static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
 

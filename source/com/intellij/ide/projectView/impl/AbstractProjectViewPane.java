@@ -151,7 +151,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   public Object getData(String dataId) {
-    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)){
+    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
       final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();
@@ -167,11 +167,12 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
       }
       if (navigatables.isEmpty()) {
         return null;
-      } else {
+      }
+      else {
         return navigatables.toArray(new Navigatable[navigatables.size()]);
       }
     }
-    if (myTreeStructure instanceof AbstractTreeStructureBase){
+    if (myTreeStructure instanceof AbstractTreeStructureBase) {
       final List<TreeStructureProvider> providers = ((AbstractTreeStructureBase)myTreeStructure).getProviders();
       if (providers != null) {
         final List<AbstractTreeNode> selectedNodes = getSelectedNodes();

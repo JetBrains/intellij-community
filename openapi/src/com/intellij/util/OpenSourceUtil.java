@@ -26,17 +26,16 @@ public class OpenSourceUtil {
   }
 
   public static void openSourcesFrom(DataContext context, boolean requestFocus) {
-    navigate(((Navigatable[])context.getData(DataConstants.NAVIGATABLE_ARRAY)), requestFocus);
+    navigate((Navigatable[])context.getData(DataConstants.NAVIGATABLE_ARRAY), requestFocus);
   }
 
   public static void openSourcesFrom(DataProvider context, boolean requestFocus) {
-    navigate(((Navigatable[])context.getData(DataConstants.NAVIGATABLE_ARRAY)), requestFocus);
+    navigate((Navigatable[])context.getData(DataConstants.NAVIGATABLE_ARRAY), requestFocus);
   }
 
   public static void navigate(final Navigatable[] navigatables, final boolean requestFocus) {
     if (navigatables != null) {
-      for (int i = 0; i < navigatables.length; i++) {
-        Navigatable navigatable = navigatables[i];
+      for (Navigatable navigatable : navigatables) {
         if (navigatable.canNavigateToSource()) {
           navigatable.navigate(requestFocus);
         }

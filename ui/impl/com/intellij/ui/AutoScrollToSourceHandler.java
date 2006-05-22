@@ -56,7 +56,7 @@ public abstract class AutoScrollToSourceHandler {
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2) return;
         final Object source = e.getSource();
-        final int index = jList.locationToIndex(SwingUtilities.convertPoint(source instanceof Component? ((Component)source) : null, e.getPoint(), jList));
+        final int index = jList.locationToIndex(SwingUtilities.convertPoint(source instanceof Component ? (Component)source : null, e.getPoint(), jList));
         if (index >= 0 && index < jList.getModel().getSize()) {
           onMouseClicked(jList);
         }
@@ -105,9 +105,13 @@ public abstract class AutoScrollToSourceHandler {
     DataContext dataContext=DataManager.getInstance().getDataContext(tree);
     final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
     if (vFile != null) {
-      // Attempt to navigate to the firtual file whoes file types is unknown will show a modal dialog
+      // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
       // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.
       if (FileTypeManager.getInstance().getFileTypeByFile(vFile) == StdFileTypes.UNKNOWN) return;
+    }
+    if (dataContext.getData(DataConstants.MODULE_CONTEXT) != null) {
+      // we are not going to open module properties dialog during autoscrolling
+      return;
     }
     OpenSourceUtil.openSourcesFrom(dataContext, false);
   }
