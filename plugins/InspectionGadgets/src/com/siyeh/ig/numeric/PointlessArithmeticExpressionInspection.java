@@ -189,7 +189,7 @@ public class PointlessArithmeticExpressionInspection
                 isPointless = comparisonExpressionIsPointless(lhs, rhs, tokenType);
                 if(isPointless)
                 {
-                    System.out.println("pointless comparison!");
+                    //System.out.println("pointless comparison!");
                 }
             } else {
                 isPointless = false;
@@ -243,7 +243,7 @@ public class PointlessArithmeticExpressionInspection
         }
 
         private boolean intComparisonIsPointless(PsiExpression lhs, PsiExpression rhs, IElementType comparison) {
-            System.out.println("comparison = " + comparison);
+            //System.out.println("comparison = " + comparison);
             if (isMaxInt(lhs) || isMinInt(rhs)) {
                 return JavaTokenType.GE.equals(comparison) || JavaTokenType.LT.equals(comparison);
             }
@@ -322,24 +322,24 @@ public class PointlessArithmeticExpressionInspection
     }
 
     private static boolean isMinInt(PsiExpression expression) {
-        System.out.println("PointlessArithmeticExpressionInspection.isMinInt");
+        //System.out.println("PointlessArithmeticExpressionInspection.isMinInt");
         final Integer value = (Integer)
                 ConstantExpressionUtil.computeCastTo(
                         expression, PsiType.INT);
-        System.out.println(value);
+        //System.out.println(value);
         final boolean returnVal = value != null && value == Integer.MIN_VALUE;
-        System.out.println(returnVal);
+        //System.out.println(returnVal);
         return returnVal;
     }
 
     private static boolean isMaxInt(PsiExpression expression) {
-        System.out.println("PointlessArithmeticExpressionInspection.isMaxInt");
+        //System.out.println("PointlessArithmeticExpressionInspection.isMaxInt");
         final Integer value = (Integer)
                 ConstantExpressionUtil.computeCastTo(
                         expression, PsiType.INT);
-        System.out.println(value);
+        //System.out.println(value);
         final boolean returnVal = value != null && value == Integer.MAX_VALUE;
-        System.out.println(returnVal);
+        //System.out.println(returnVal);
         return returnVal;
     }
 
