@@ -177,7 +177,7 @@ public class ExecutionRegistryImpl extends ExecutionRegistry {
     public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
     }
 
-    public void chechConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException {
+    public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException {
     }
 
     public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {

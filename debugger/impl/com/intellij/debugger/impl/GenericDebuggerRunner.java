@@ -115,7 +115,7 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     doPatch(javaParameters, settings);
   }
 
-  public void chechConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException {
+  public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException {
   }
 
   public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {

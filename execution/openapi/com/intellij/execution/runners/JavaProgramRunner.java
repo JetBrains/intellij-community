@@ -27,7 +27,7 @@ public interface JavaProgramRunner<Settings extends JDOMExternalizable> {
 
   void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException;
 
-  void chechConfiguration(RunnerSettings settings, ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException;
+  void checkConfiguration(RunnerSettings settings, ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException;
 
   void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult);
 

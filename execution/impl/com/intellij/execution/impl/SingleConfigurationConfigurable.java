@@ -96,7 +96,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         snapshot.setName(getNameText());
         snapshot.getConfiguration().checkConfiguration();
         for (JavaProgramRunner runner : ExecutionRegistry.getInstance().getRegisteredRunners()) {
-          runner.chechConfiguration(snapshot.getRunnerSettings(runner), snapshot.getConfigurationSettings(runner));
+          runner.checkConfiguration(snapshot.getRunnerSettings(runner), snapshot.getConfigurationSettings(runner));
         }
       }
       catch (RuntimeConfigurationException exception) {
