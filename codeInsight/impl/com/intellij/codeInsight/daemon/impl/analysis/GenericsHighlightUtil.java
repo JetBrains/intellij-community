@@ -461,7 +461,8 @@ public class GenericsHighlightUtil {
     PsiSubstitutor lSubstitutor = lResolveResult.getSubstitutor();
     PsiSubstitutor rSubstitutor = rResolveResult.getSubstitutor();
     if (lClass == null || rClass == null) return false;
-    if (lClass instanceof PsiTypeParameter && !lClass.equals(rClass)) return true;
+    if (lClass instanceof PsiTypeParameter &&
+        !InheritanceUtil.isInheritorOrSelf(rClass, lClass, true)) return true;
     PsiClass base;
     if (!lClass.getManager().areElementsEquivalent(lClass, rClass)) {
       if (lClass.isInheritor(rClass, true)) {

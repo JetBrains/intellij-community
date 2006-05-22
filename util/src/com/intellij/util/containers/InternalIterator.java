@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Condition;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -66,26 +68,24 @@ public interface InternalIterator<T>{
   }
 
   class Filtering<T> implements InternalIterator<T> {
-    private final com.intellij.openapi.util.Condition<T> myFilter;
+    private final Condition<T> myFilter;
     private final InternalIterator<T> myIterator;
 
-    public Filtering(InternalIterator<T> iterator, com.intellij.openapi.util.Condition<T> filter) {
+    public Filtering(InternalIterator<T> iterator, Condition<T> filter) {
       myIterator = iterator;
       myFilter = filter;
     }
 
     public boolean visit(T value) {
-      if (!myFilter.value(value)) return true;
-      return myIterator.visit(value);
+      return !myFilter.value(value) || myIterator.visit(value);
     }
 
-    public static <T> InternalIterator<T> create(InternalIterator<T> iterator, com.intellij.openapi.util.Condition<T> filter) {
+    public static <T> InternalIterator<T> create(InternalIterator<T> iterator, Condition<T> filter) {
       return new Filtering<T>(iterator, filter);
     }
 
     public static <T, V extends T> InternalIterator<T> createInstanceOf(InternalIterator<V> iterator, FilteringIterator.InstanceOf<V> filter) {
-      return new Filtering<T>((InternalIterator<T>)(InternalIterator)iterator,
-                              (com.intellij.openapi.util.Condition<T>)(com.intellij.openapi.util.Condition)filter);
+      return new Filtering<T>((InternalIterator<T>)iterator, filter);
     }
 
     public static <T> InternalIterator createInstanceOf(InternalIterator<T> iterator, Class<T> aClass) {
