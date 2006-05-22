@@ -196,11 +196,11 @@ public class ContainerUtil {
     return map2Array(array, Object.class, mapper);
   }
 
-  public static <T,V> V[] map2Array(T[] array, Class<V> aClass, Function<T,V> mapper) {
+  public static <T,V> V[] map2Array(T[] array, Class<? extends V> aClass, Function<T,V> mapper) {
     return map2Array(Arrays.asList(array), aClass, mapper);
   }
 
-  public static <T,V> V[] map2Array(Collection<? extends T> collection, Class<V> aClass, Function<T,V> mapper) {
+  public static <T,V> V[] map2Array(Collection<? extends T> collection, Class<? extends V> aClass, Function<T,V> mapper) {
     final List<V> list = map2List(collection, mapper);
     return list.toArray((V[])Array.newInstance(aClass, list.size()));
   }
