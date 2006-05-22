@@ -41,8 +41,11 @@ public abstract class AddDomElementAction extends AnAction {
       }
     }
     e.getPresentation().setEnabled(enabled);
-
-    e.getPresentation().setText(getActionText(e) + (actions.length > 1 ? "..." : ""));
+    if (actions.length == 1) {
+      e.getPresentation().setText(actions[0].getTemplatePresentation().getText());
+    } else {
+      e.getPresentation().setText(getActionText(e) + (actions.length > 1 ? "..." : ""));
+    }
     e.getPresentation().setIcon(DomCollectionControl.ADD_ICON);
 
     super.update(e);

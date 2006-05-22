@@ -4,21 +4,23 @@
 
 package com.intellij.util.xml.tree.actions;
 
-import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.ui.actions.DefaultAddAction;
-import com.intellij.util.xml.ui.actions.AddDomElementAction;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomElementsGroupNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
-import com.intellij.util.xml.tree.BaseDomElementNode;
-import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.xml.ui.actions.AddDomElementAction;
+import com.intellij.util.xml.ui.actions.DefaultAddAction;
 
 import javax.swing.*;
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
  * User: Sergey.Vasiliev
@@ -42,7 +44,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
   protected boolean isEnabled(final AnActionEvent e) {
     final DomModelTreeView treeView = getTreeView(e);
 
-    final boolean enabled = treeView != null && getDomElementsGroupNode(treeView) != null;
+    final boolean enabled = treeView != null;
     e.getPresentation().setEnabled(enabled);
 
     return enabled;
@@ -50,14 +52,16 @@ public class AddElementInCollectionAction extends AddDomElementAction {
 
 
   protected void showPopup(final ListPopup groupPopup, final AnActionEvent e) {
-    if(myTreeView == null) {
-      if(e.getPlace().equals(DomModelTreeView.DOM_MODEL_TREE_VIEW_POPUP)) {
-          groupPopup.showInCenterOf(getTreeView(e).getTree());
-      } else {
-          groupPopup.showInBestPositionFor(e.getDataContext());
+    if (myTreeView == null) {
+      if (e.getPlace().equals(DomModelTreeView.DOM_MODEL_TREE_VIEW_POPUP)) {
+        groupPopup.showInCenterOf(getTreeView(e).getTree());
       }
-    } else {
-        super.showPopup(groupPopup, e);
+      else {
+        groupPopup.showInBestPositionFor(e.getDataContext());
+      }
+    }
+    else {
+      super.showPopup(groupPopup, e);
     }
   }
 
@@ -66,12 +70,15 @@ public class AddElementInCollectionAction extends AddDomElementAction {
 
     SimpleNode node = view.getTree().getSelectedNode();
     if (node instanceof BaseDomElementNode) {
-      return ((BaseDomElementNode)node).getConsolidatedChildrenDescriptions().toArray(DomCollectionChildDescription.EMPTY_ARRAY);
+      List<DomCollectionChildDescription> consolidated = ((BaseDomElementNode)node).getConsolidatedChildrenDescriptions();
+      if (consolidated.size() > 0) {
+        return consolidated.toArray(DomCollectionChildDescription.EMPTY_ARRAY);
+      }
     }
 
     final DomElementsGroupNode groupNode = getDomElementsGroupNode(view);
 
-    return new DomCollectionChildDescription[] { groupNode.getChildDescription()};
+    return new DomCollectionChildDescription[]{groupNode.getChildDescription()};
   }
 
   protected DomElement getParentDomElement(final AnActionEvent e) {
@@ -96,16 +103,18 @@ public class AddElementInCollectionAction extends AddDomElementAction {
   }
 
   protected String getActionText(final AnActionEvent e) {
-    String text = "Add";
+    String text = ApplicationBundle.message("action.add");
     if (e.getPresentation().isEnabled()) {
-       final DomElementsGroupNode selectedNode = getDomElementsGroupNode(getTreeView(e));
-       final Type type = selectedNode.getChildDescription().getType();
-       text += " " + ElementPresentationManager.getTypeName(DomUtil.getRawType(type));
-     }
-     return text;
-   }
+      final DomElementsGroupNode selectedNode = getDomElementsGroupNode(getTreeView(e));
+      if (selectedNode != null) {
+        final Type type = selectedNode.getChildDescription().getType();
+        text += " " + ElementPresentationManager.getTypeName(DomUtil.getRawType(type));
+      }
+    }
+    return text;
+  }
 
-  private DomElementsGroupNode getDomElementsGroupNode(final DomModelTreeView treeView) {
+  private static DomElementsGroupNode getDomElementsGroupNode(final DomModelTreeView treeView) {
     SimpleNode simpleNode = treeView.getTree().getSelectedNode();
     while (simpleNode != null) {
       if (simpleNode instanceof DomElementsGroupNode) return (DomElementsGroupNode)simpleNode;
@@ -124,7 +133,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
 
     return new DefaultAddAction(name, name, icon) {
       // we need this properties, don't remove it (shared dataContext assertion)
-      private DomElement  myParent = AddElementInCollectionAction.this.getParentDomElement(e);
+      private DomElement myParent = AddElementInCollectionAction.this.getParentDomElement(e);
       private DomModelTreeView myView = getTreeView(e);
 
       protected Class getElementClass() {
