@@ -731,12 +731,12 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   @NotNull
-  public PsiClass createClassFromText(String text, PsiElement context) throws IncorrectOperationException {
-    @NonNls String fileText = "class _Dummy_ { " + text + " }";
+  public PsiClass createClassFromText(String body, PsiElement context) throws IncorrectOperationException {
+    @NonNls String fileText = "class _Dummy_ { " + body + " }";
     PsiJavaFile aFile = createDummyJavaFile(fileText);
     PsiClass[] classes = aFile.getClasses();
     if (classes.length != 1) {
-      throw new IncorrectOperationException("Incorrect class \"" + text + "\".");
+      throw new IncorrectOperationException("Incorrect class \"" + body + "\".");
     }
     return classes[0];
   }

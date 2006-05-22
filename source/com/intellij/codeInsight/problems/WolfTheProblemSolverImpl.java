@@ -37,7 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author cdr
  */
 public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
-  private final Map<VirtualFile, Collection<Problem>> myProblems = new THashMap<VirtualFile, Collection<Problem>>();
+  private final Map<VirtualFile,  ProblemFileInfo> myProblems = new THashMap<VirtualFile, ProblemFileInfo>();
   private final CopyOnWriteArrayList<VirtualFile> myCheckingQueue = new CopyOnWriteArrayList<VirtualFile>();
 
   private final Project myProject;
@@ -51,6 +51,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   };
 
   private long myPsiModificationCount = -1000;
+
+  private static class ProblemFileInfo {
+    Collection<Problem> problems = new SmartList<Problem>();
+    boolean hasSyntaxErrors;
+  }
 
   public WolfTheProblemSolverImpl(Project project) {
     myProject = project;
@@ -106,6 +111,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   private void orderVincentToCleanTheCar(final VirtualFile file, ProgressIndicator progressIndicator) throws ProcessCanceledException {
+    if (hasSyntaxErrors(file)) {
+      // it's no use anyway to try clean the file with syntax errors, only changing the file itself can help
+      return;
+    }
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (willBeHighlightedAnyway(file)) return;
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
@@ -130,6 +139,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
     }
     */
+  }
+
+  public boolean hasSyntaxErrors(final VirtualFile file) {
+    ProblemFileInfo info = myProblems.get(file);
+    return info != null && info.hasSyntaxErrors;
   }
 
   private boolean willBeHighlightedAnyway(final VirtualFile file) {
@@ -209,21 +223,21 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (virtualFile == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(virtualFile)) return;
 
     synchronized (myProblems) {
-      Collection<Problem> storedProblems = myProblems.get(virtualFile);
+      ProblemFileInfo storedProblems = myProblems.get(virtualFile);
       if (storedProblems == null) {
-        storedProblems = new SmartList<Problem>();
+        storedProblems = new ProblemFileInfo();
 
         myProblems.put(virtualFile, storedProblems);
         fireProblemListeners.problemsChanged(Collections.singletonList(virtualFile), Collections.<VirtualFile>emptyList());
       }
-      storedProblems.add(problem);
+      storedProblems.problems.add(problem);
       myCheckingQueue.addIfAbsent(virtualFile);
     }
   }
 
   public void clearProblems(@NotNull VirtualFile virtualFile) {
     synchronized (myProblems) {
-      Collection<Problem> old = myProblems.remove(virtualFile);
+      ProblemFileInfo old = myProblems.remove(virtualFile);
       if (old != null) {
         fireProblemListeners.problemsChanged(Collections.<VirtualFile>emptyList(), Collections.singletonList(virtualFile));
       }
@@ -245,7 +259,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         return HighlightInfo.createHighlightInfo(convertToHighlightInfoType(message), getTextRange(message), message.getMessage());
       }
     });
-    return new ProblemImpl(virtualFile, info);
+    return new ProblemImpl(virtualFile, info, false);
   }
 
   public Problem convertToProblem(final VirtualFile virtualFile, final int line, final int column, final String[] message) {
@@ -255,7 +269,30 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, getTextRange(virtualFile, line, column), StringUtil.join(message, "\n"));
       }
     });
-    return new ProblemImpl(virtualFile, info);
+    return new ProblemImpl(virtualFile, info, false);
+  }
+
+  public void reportProblems(final VirtualFile file, Collection<Problem> problems) {
+    if (problems.isEmpty()) {
+      clearProblems(file);
+      return;
+    }
+    synchronized (myProblems) {
+      boolean hasProblemsBefore = myProblems.remove(file) != null;
+      ProblemFileInfo storedProblems = new ProblemFileInfo();
+      myProblems.put(file, storedProblems);
+      for (Problem problem : problems) {
+        VirtualFile virtualFile = problem.getVirtualFile();
+        if (virtualFile == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(virtualFile)) continue;
+
+        storedProblems.problems.add(problem);
+        storedProblems.hasSyntaxErrors |= ((ProblemImpl)problem).isSyntaxOnly();
+        myCheckingQueue.addIfAbsent(virtualFile);
+      }
+      if (!hasProblemsBefore) {
+        fireProblemListeners.problemsChanged(Collections.singletonList(file), Collections.<VirtualFile>emptyList());
+      }
+    }
   }
 
   private static TextRange getTextRange(final VirtualFile virtualFile, final int line, final int column) {

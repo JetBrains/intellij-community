@@ -1,8 +1,8 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -36,14 +36,8 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     if (myEditor.isRendererMode()) return null;
 
     if (DataConstants.EDITOR.equals(dataId)) {
-      if (myEditor.getVirtualFile() == null) {
-        return myEditor;
-      }
-      else {
-        return null;
-      }
+      return myEditor.getVirtualFile() == null ? myEditor : null;
     }
-
     if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myEditor.getDeleteProvider();
     }

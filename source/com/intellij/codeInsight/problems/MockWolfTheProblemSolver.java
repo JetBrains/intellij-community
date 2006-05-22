@@ -10,6 +10,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * @author cdr
  */
@@ -32,16 +34,20 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
     return false;
   }
 
+  public boolean hasSyntaxErrors(final VirtualFile file) {
+    return myDelegate != null && myDelegate.hasSyntaxErrors(file);
+  }
+
   public boolean hasProblemFilesBeneath(Module scope) {
     return false;
   }
 
   public void addProblemListener(ProblemListener listener) {
-
+    if (myDelegate != null) myDelegate.addProblemListener(listener);
   }
 
   public void removeProblemListener(ProblemListener listener) {
-
+    if (myDelegate != null) myDelegate.removeProblemListener(listener);
   }
 
   public void projectOpened() {
@@ -80,5 +86,9 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
 
   public void setDelegate(final WolfTheProblemSolver delegate) {
     myDelegate = delegate;
+  }
+
+  public void reportProblems(final VirtualFile file, Collection<Problem> problems) {
+    if (myDelegate != null) myDelegate.reportProblems(file,problems);
   }
 }

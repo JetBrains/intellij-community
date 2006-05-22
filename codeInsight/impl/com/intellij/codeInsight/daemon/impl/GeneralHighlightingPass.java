@@ -8,8 +8,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.problems.ProblemImpl;
-import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.problems.Problem;
 import com.intellij.javaee.ejb.role.EjbImplMethodRole;
 import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.intellij.javaee.ejb.role.EjbRolesUtil;
@@ -30,6 +28,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
@@ -59,6 +59,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   private Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
+  private boolean myHasErrorElement;
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
@@ -168,25 +169,15 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     if (!PsiManager.getInstance(myProject).isInProject(myFile)) return; // do not report problems in libraries
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
     VirtualFile file = myFile.getVirtualFile();
+
     List<Problem> problems = new SmartList<Problem>();
-    try {
-      for (HighlightInfo info : infos) {
-        if (info.getSeverity() == HighlightSeverity.ERROR) {
-          Problem problem = new ProblemImpl(file, info);
-          problems.add(problem);
-        }
+    for (HighlightInfo info : infos) {
+      if (info.getSeverity() == HighlightSeverity.ERROR) {
+        Problem problem = new ProblemImpl(file, info, myHasErrorElement);
+        problems.add(problem);
       }
     }
-    finally {
-      if (problems.isEmpty()) {
-        wolf.clearProblems(file);
-      }
-      else {
-        for (Problem problem : problems) {
-          wolf.weHaveGotProblem(problem);
-        }
-      }
-    }
+    wolf.reportProblems(file, problems);
   }
 
   private void addHighlights(Collection<HighlightInfo> result, Collection<HighlightInfo> highlights) {
@@ -266,6 +257,9 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
             continue;
           }
 
+          if (element instanceof PsiErrorElement) {
+            myHasErrorElement = true;
+          }
           try {
             holder.setWritable(true);
             holder.clear();

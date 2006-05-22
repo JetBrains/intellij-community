@@ -33,6 +33,10 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
   public abstract Problem convertToProblem(CompilerMessage message);
   public abstract Problem convertToProblem(VirtualFile virtualFile, int line, int column, String[] message);
 
+  public abstract void reportProblems(final VirtualFile file, Collection<Problem> problems);
+
+  public abstract boolean hasSyntaxErrors(final VirtualFile file);
+
   public interface ProblemListener {
     void problemsChanged(Collection<VirtualFile> added, Collection<VirtualFile> removed);
   }
