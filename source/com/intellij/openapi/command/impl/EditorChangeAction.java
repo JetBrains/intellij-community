@@ -77,10 +77,6 @@ class EditorChangeAction implements UndoableAction {
   }
 
   public DocumentReference[] getAffectedDocuments() {
-    if (myDocumentFile instanceof LightVirtualFile) {
-      return DocumentReference.EMPTY_ARRAY;
-    }
-
     final DocumentReference ref = myDocument != null
                                   ? DocumentReferenceByDocument.createDocumentReference(myDocument)
                                   : new DocumentReferenceByVirtualFile(myDocumentFile);

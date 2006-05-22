@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 
 import java.util.*;
 
@@ -56,21 +58,19 @@ class CommandMerger {
     if (isUndoTransparent) myHasUndoTransparents = true;
     myCurrentActions.add(action);
     myAffectedDocuments.addAll(Arrays.asList(action.getAffectedDocuments()));
-    myIsComplex |= action.isComplex() || affectsMultipleDocs();
+    myIsComplex |= action.isComplex() || affectsMultiplePhysicalDocs();
   }
 
-  private boolean affectsMultipleDocs() {
+  private boolean affectsMultiplePhysicalDocs() {
     if (myAffectedDocuments.size() < 2) return false;
     int count = 0;
     for (DocumentReference docRef : myAffectedDocuments) {
-      if (docRef.getFile() != null) {
-        count++;
-      }
-      else {
-        Document doc = docRef.getDocument();
-        if (doc != null && doc.getUserData(FragmentContent.FRAGMENT_COPY) == Boolean.TRUE) continue;
-        count++;
-      }
+      VirtualFile file = docRef.getFile();
+      if (file instanceof LightVirtualFile) continue;
+
+      Document doc = docRef.getDocument();
+      if (doc != null && doc.getUserData(FragmentContent.FRAGMENT_COPY) == Boolean.TRUE) continue;
+      count++;
     }
 
     return count > 1;
