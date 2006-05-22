@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +48,7 @@ public class ShowDiffAction extends AnAction {
     List<? extends AnAction> createActions(Change change);
   }
 
-  public static void showDiffForChange(final Change[] changes, final int index, final Project project, AdditionalToolbarActionsFactory actionsFactory) {
+  public static void showDiffForChange(final Change[] changes, final int index, final Project project, @Nullable AdditionalToolbarActionsFactory actionsFactory) {
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
 
     final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, actionsFactory);
@@ -92,9 +93,11 @@ public class ShowDiffAction extends AnAction {
           toolbar.addSeparator();
           toolbar.addAction(new ShowPrevChangeAction(changes, index, project, actionsFactory));
           toolbar.addAction(new ShowNextChangeAction(changes, index, project, actionsFactory));
-          toolbar.addSeparator();
-          for (AnAction action : actionsFactory.createActions(change)) {
-            toolbar.addAction(action);
+          if (actionsFactory != null) {
+            toolbar.addSeparator();
+            for (AnAction action : actionsFactory.createActions(change)) {
+              toolbar.addAction(action);
+            }
           }
         }
       });

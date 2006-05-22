@@ -36,6 +36,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   @Nullable private final ActionGroup myAdditionalToolbarActions;
   private EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
   private final JPanel myHeaderPanel;
+  private boolean myReadOnly;
 
   public void setChangesToDisplay(final List<Change> changes) {
     myViewer.setChangesToDisplay(changes);
@@ -63,6 +64,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     myProject = project;
     myAdditionalToolbarActions = additionalToolbarActions;
     myAllChanges = new ArrayList<Change>();
+    myReadOnly = !showChangelistChooser;
 
     ChangeList initalListSelection = null;
     for (ChangeList list : changeLists) {
@@ -172,10 +174,10 @@ public class ChangesBrowser extends JPanel implements DataProvider {
 
     int indexInSelection = Arrays.asList(changes).indexOf(leadSelection);
     if (indexInSelection >= 0) {
-      ShowDiffAction.showDiffForChange(changes, indexInSelection, myProject, new DiffToolbarActionsFactory());
+      ShowDiffAction.showDiffForChange(changes, indexInSelection, myProject, !myReadOnly ? new DiffToolbarActionsFactory() : null);
     }
     else {
-      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, new DiffToolbarActionsFactory());
+      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, !myReadOnly ? new DiffToolbarActionsFactory() : null);
     }
   }
 
@@ -241,26 +243,28 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       }
     };
 
-    final MoveChangesToAnotherListAction moveAction = new MoveChangesToAnotherListAction() {
-      public void actionPerformed(AnActionEvent e) {
-        super.actionPerformed(e);
-        rebuildList();
-      }
-    };
-
     diffAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
       myViewer);
+    toolBarGroup.add(diffAction);
 
-    moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
+    if (!myReadOnly) {
+      final MoveChangesToAnotherListAction moveAction = new MoveChangesToAnotherListAction() {
+        public void actionPerformed(AnActionEvent e) {
+          super.actionPerformed(e);
+          rebuildList();
+        }
+      };
+
+      moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
+      toolBarGroup.add(moveAction);
+    }
 
     ToggleShowDirectoriesAction directoriesAction = new ToggleShowDirectoriesAction();
     directoriesAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
       myViewer);
 
-    toolBarGroup.add(diffAction);
-    toolBarGroup.add(moveAction);
     toolBarGroup.add(directoriesAction);
 
     if (myAdditionalToolbarActions != null) {
