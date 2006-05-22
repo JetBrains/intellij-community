@@ -39,7 +39,8 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
       final int i1 = i;
       result.add(domManager.createStableValue(new Factory<DomElement>() {
         public DomElement create() {
-          return getValues(parent).get(i1);
+          final List<? extends DomElement> domElements = getValues(parent);
+          return domElements.size() > i1 ? domElements.get(i1) : null;
         }
       }));
     }
