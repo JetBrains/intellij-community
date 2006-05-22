@@ -6,10 +6,7 @@ import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.actions.RunContextAction;
 import com.intellij.execution.actions.RunnerAction;
-import com.intellij.execution.configurations.ConfigurationInfoProvider;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.runners.RunnerInfo;
@@ -177,7 +174,13 @@ public class ExecutionRegistryImpl extends ExecutionRegistry {
       return null;
     }
 
-    public void patch(JavaParameters javaParameters, RunnerSettings settings) throws ExecutionException {
+    public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
+    }
+
+    public void chechConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException {
+    }
+
+    public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {
     }
 
     public AnAction[] createActions(ExecutionResult executionResult) {

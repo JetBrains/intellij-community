@@ -17,10 +17,7 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.configurations.ConfigurationInfoProvider;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -28,7 +25,11 @@ import com.intellij.openapi.util.JDOMExternalizable;
 public interface JavaProgramRunner<Settings extends JDOMExternalizable> {
   Settings createConfigurationData(ConfigurationInfoProvider settingsProvider);
 
-  void patch(JavaParameters javaParameters, RunnerSettings settings) throws ExecutionException;
+  void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException;
+
+  void chechConfiguration(RunnerSettings settings, ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException;
+
+  void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult);
 
   AnAction[] createActions(ExecutionResult executionResult);
 

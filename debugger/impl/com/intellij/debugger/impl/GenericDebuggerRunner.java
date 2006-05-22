@@ -90,7 +90,7 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     return contentDescriptor != null ? contentDescriptor : null;
   }
 
-  private RemoteConnection createRemoteDebugConnection(RemoteState connection, final RunnerSettings settings) {
+  private static RemoteConnection createRemoteDebugConnection(RemoteState connection, final RunnerSettings settings) {
     final RemoteConnection remoteConnection = connection.getRemoteConnection();
 
     GenericDebuggerRunnerSettings debuggerRunnerSettings = ((GenericDebuggerRunnerSettings)settings.getData());
@@ -111,11 +111,17 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     return new GenericDebuggerRunnerSettings();
   }
 
-  public void patch(JavaParameters javaParameters, RunnerSettings settings) throws ExecutionException {
+  public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
     doPatch(javaParameters, settings);
   }
 
-  private RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings) throws ExecutionException {
+  public void chechConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException {
+  }
+
+  public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {
+  }
+
+  private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings) throws ExecutionException {
     final GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings.getData());
     return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings, false);
   }

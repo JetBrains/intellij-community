@@ -2,6 +2,8 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.ExecutionRegistry;
+import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -93,6 +95,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         RunnerAndConfigurationSettings snapshot = getSnapshot();
         snapshot.setName(getNameText());
         snapshot.getConfiguration().checkConfiguration();
+        for (JavaProgramRunner runner : ExecutionRegistry.getInstance().getRegisteredRunners()) {
+          runner.chechConfiguration(snapshot.getRunnerSettings(runner), snapshot.getConfigurationSettings(runner));
+        }
       }
       catch (RuntimeConfigurationException exception) {
         myLastValidationResult = exception != null ? new ValidationResult(exception.getLocalizedMessage(),
