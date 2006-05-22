@@ -50,7 +50,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
 
     if (!refMethod.isReturnValueUsed()) {
       return new ProblemDescriptor[]{
-        manager.createProblemDescriptor(refMethod.getElement(), InspectionsBundle.message("inspection.unused.return.value.problem.descriptor"),
+        manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), InspectionsBundle.message("inspection.unused.return.value.problem.descriptor"),
                                         getFix(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 

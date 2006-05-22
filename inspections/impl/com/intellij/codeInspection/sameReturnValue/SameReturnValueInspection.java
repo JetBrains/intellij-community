@@ -54,7 +54,7 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
         message = InspectionsBundle.message("inspection.same.return.value.problem.descriptor2", "<code>" + returnValue + "</code>");
       }
 
-      return new ProblemDescriptor[] {manager.createProblemDescriptor(refMethod.getElement(), message, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+      return new ProblemDescriptor[] {manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 
     return null;

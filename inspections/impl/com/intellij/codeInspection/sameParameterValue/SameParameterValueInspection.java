@@ -47,7 +47,7 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
       String value = refParameter.getActualValueIfSame();
       if (value != null) {
         if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
-        problems.add(manager.createProblemDescriptor(refMethod.getElement(), InspectionsBundle.message(
+        problems.add(manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), InspectionsBundle.message(
           "inspection.same.parameter.problem.descriptor", "<code>" + refParameter.getName() + "</code>", "<code>" + value + "</code>"),
                                                      (LocalQuickFix [])null,
                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING));

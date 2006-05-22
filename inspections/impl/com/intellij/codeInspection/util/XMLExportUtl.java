@@ -13,6 +13,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -21,8 +22,12 @@ import org.jdom.Element;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class XMLExportUtl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.util.XMLExportUtl");
-  public static Element createElement(RefEntity refEntity, Element parentNode, int actualLine, final TextRange range) {
+    private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.util.XMLExportUtl");
+
+    private XMLExportUtl() {
+    }
+
+    public static Element createElement(RefEntity refEntity, Element parentNode, int actualLine, final TextRange range) {
     if (refEntity instanceof RefImplicitConstructor) {
       return createElement(refEntity.getOwner(), parentNode, actualLine, range);
     }
@@ -36,7 +41,9 @@ public class XMLExportUtl {
 
       Element fileElement = new Element(InspectionsBundle.message("inspection.export.results.file"));
       Element lineElement = new Element(InspectionsBundle.message("inspection.export.results.line"));
-      fileElement.addContent(psiFile.getVirtualFile().getUrl());
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      LOG.assertTrue(virtualFile != null);
+      fileElement.addContent(virtualFile.getUrl());
 
       if (actualLine == -1) {
         Document document = PsiDocumentManager.getInstance(refElement.getRefManager().getProject()).getDocument(psiFile);
@@ -49,7 +56,10 @@ public class XMLExportUtl {
       problem.addContent(lineElement);
 
       final Element rangeElement = new Element("text_range");
-      final TextRange textRange = range != null ? range : psiElement.getTextRange();
+      final PsiElement navigationElement = psiElement.getNavigationElement();
+      final TextRange textRange = range != null
+                                  ? range
+                                  : (navigationElement != null ? navigationElement.getTextRange() : psiElement.getTextRange());
       rangeElement.setAttribute("start", String.valueOf(textRange.getStartOffset()));
       rangeElement.setAttribute("end", String.valueOf(textRange.getEndOffset()));
       problem.addContent(rangeElement);

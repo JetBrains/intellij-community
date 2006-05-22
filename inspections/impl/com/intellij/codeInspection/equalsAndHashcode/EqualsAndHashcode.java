@@ -5,9 +5,12 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -17,9 +20,7 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
 
   private PsiMethod myHashCode;
   private PsiMethod myEquals;
-
-  public EqualsAndHashcode() {
-  }
+  private static final Logger LOG = Logger.getInstance(EqualsAndHashcode.class.getName());
 
   public void initialize(GlobalInspectionContextImpl context) {
     super.initialize(context);
@@ -27,16 +28,15 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
     myEquals = null;
     PsiManager psiManager = PsiManager.getInstance(getContext().getProject());
     PsiClass psiObjectClass = psiManager.findClass("java.lang.Object");
+    LOG.assertTrue(psiObjectClass != null);
     PsiMethod[] methods = psiObjectClass.getMethods();
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
+    for (PsiMethod method : methods) {
       @NonNls final String name = method.getName();
       if ("equals".equals(name)) {
-        myEquals = method;
-      } else
-        if ("hashCode".equals(name)) {
+          myEquals = method;
+      } else if ("hashCode".equals(name)) {
           myHashCode = method;
-        }
+      }
     }
   }
 
@@ -46,7 +46,9 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
     scope.accept(new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
         if (file instanceof PsiJavaFile) {
-          getContext().incrementJobDoneAmount(JOB_DESCRIPTOR, file.getVirtualFile().getPresentableUrl());
+          final VirtualFile virtualFile = file.getVirtualFile();
+          LOG.assertTrue(virtualFile != null);
+          getContext().incrementJobDoneAmount(JOB_DESCRIPTOR, virtualFile.getPresentableUrl());
           super.visitFile(file);
         }
       }
@@ -58,18 +60,18 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
         boolean hasEquals = false;
         boolean hasHashCode = false;
         PsiMethod[] methods = aClass.getMethods();
-        for (int i = 0; i < methods.length; i++) {
-          PsiMethod method = methods[i];
-          if (MethodSignatureUtil.areSignaturesEqual(method,  myEquals)) {
-            hasEquals = true;
-          } else if (MethodSignatureUtil.areSignaturesEqual(method, myHashCode)) {
-            hasHashCode = true;
-          }
+        for (PsiMethod method : methods) {
+           if (MethodSignatureUtil.areSignaturesEqual(method, myEquals)) {
+              hasEquals = true;
+           } else if (MethodSignatureUtil.areSignaturesEqual(method, myHashCode)) {
+              hasHashCode = true;
+           }
         }
 
-        if (hasEquals != hasHashCode) {
-          addProblemElement(getContext().getRefManager().getReference(aClass),
-                            new ProblemDescriptor[]{manager.createProblemDescriptor(aClass,
+          if (hasEquals != hasHashCode) {
+            PsiIdentifier identifier = aClass.getNameIdentifier();
+            addProblemElement(getContext().getRefManager().getReference(aClass),
+                            new ProblemDescriptor[]{manager.createProblemDescriptor(identifier != null ? identifier : aClass,
                                                                                     hasEquals
                                                                                     ? InspectionsBundle.message("inspection.equals.hashcode.only.one.defined.problem.descriptor", "<code>equals()</code>", "<code>hashCode()</code>")
                                                                                     : InspectionsBundle.message("inspection.equals.hashcode.only.one.defined.problem.descriptor", "<code>hashCode()</code>", "<code>equals()</code>"),
@@ -80,6 +82,7 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
     });
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
     return new JobDescriptor[] {JOB_DESCRIPTOR};
   }
