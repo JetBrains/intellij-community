@@ -33,4 +33,12 @@ public interface AntElement extends PsiNamedElement {
 
   @NotNull
   PsiElement[] getProperties();
+
+  /**
+   * Does the same as findElementAt() but without rebuilding cleared PSI.
+   *
+   * @param offset
+   * @return
+   */
+  AntElement lightFindElementAt(int offset);
 }

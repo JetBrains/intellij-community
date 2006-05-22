@@ -27,7 +27,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private AntElement myNameElement;
   private Map<String, AntElement> myReferencedElements = null;
   private int myLastFoundElementOffset = -1;
-  private PsiElement myLastFoundElement;
+  private AntElement myLastFoundElement;
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(parent, sourceElement);
@@ -97,7 +97,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
     final PsiElement foundElement = super.findElementAt(offset);
     if (foundElement != null) {
-      myLastFoundElement = foundElement;
+      myLastFoundElement = (AntElement)foundElement;
       myLastFoundElementOffset = offset;
     }
     return foundElement;
@@ -159,6 +159,14 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     myNameElement = null;
     myLastFoundElementOffset = -1;
     myLastFoundElement = null;
+  }
+
+
+  public AntElement lightFindElementAt(int offset) {
+    if (offset == myLastFoundElementOffset) {
+      return myLastFoundElement;
+    }
+    return super.lightFindElementAt(offset);
   }
 
   public int getTextOffset() {

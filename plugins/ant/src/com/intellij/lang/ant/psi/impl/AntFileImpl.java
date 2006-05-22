@@ -11,6 +11,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -147,6 +148,13 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NotNull
   public PsiElement[] getProperties() {
     return PsiElement.EMPTY_ARRAY;
+  }
+
+  public AntElement lightFindElementAt(int offset) {
+    if (myProject == null) return this;
+    final TextRange projectRange = myProject.getTextRange();
+    if (offset < projectRange.getStartOffset() || offset >= projectRange.getEndOffset()) return this;
+    return myProject.lightFindElementAt(offset);
   }
 
   @NotNull

@@ -158,7 +158,6 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       if (document == null) return;
       final XmlTag rootTag = document.getRootTag();
       if (rootTag == null) return;
-      getAntFile().getBaseTypeDefinition(Property.class.getName());
       AntTypeDefinition propertyDef = getAntFile().getBaseTypeDefinition(Property.class.getName());
       AntProject fakeProject = new AntProjectImpl(null, rootTag, myDefinition);
       for (XmlTag tag : rootTag.getSubTags()) {

@@ -56,7 +56,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
 
   @NotNull
   public XmlElement getSourceElement() {
-    return (XmlElement) super.getSourceElement();
+    return (XmlElement)super.getSourceElement();
   }
 
   public String toString() {
@@ -81,7 +81,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public AntProject getAntProject() {
-    return (AntProject) ((this instanceof AntProject) ? this : PsiTreeUtil.getParentOfType(this, AntProject.class));
+    return (AntProject)((this instanceof AntProject)
+                        ? this
+                        : PsiTreeUtil.getParentOfType(this, AntProject.class));
   }
 
   public AntFile getAntFile() {
@@ -167,7 +169,8 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     vFile = vFile.getParent();
     if (vFile == null) return null;
     final File file = new File(vFile.getPath(), name);
-    vFile = LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
+    vFile =
+      LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
     if (vFile == null) return null;
     return antFile.getViewProvider().getManager().findFile(vFile);
   }
@@ -196,11 +199,25 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return myPropertiesArray;
   }
 
+  public AntElement lightFindElementAt(int offset) {
+    if (myChildren == null) return this;
+    final int offsetInFile = offset + getTextRange().getStartOffset();
+    for (final AntElement element : getChildren()) {
+      final TextRange textRange = element.getTextRange();
+      if (textRange.contains(offsetInFile)) {
+        return element.lightFindElementAt(offsetInFile - textRange.getStartOffset());
+      }
+    }
+    return getTextRange().contains(offsetInFile) ? this : null;
+  }
+
   public PsiElement findElementAt(int offset) {
     final int offsetInFile = offset + getTextRange().getStartOffset();
     for (final AntElement element : getChildren()) {
       final TextRange textRange = element.getTextRange();
-      if (textRange.contains(offsetInFile)) return element.findElementAt(offsetInFile - textRange.getStartOffset());
+      if (textRange.contains(offsetInFile)) {
+        return element.findElementAt(offsetInFile - textRange.getStartOffset());
+      }
     }
     return getTextRange().contains(offsetInFile) ? this : null;
   }
@@ -234,7 +251,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   protected AntElement clone() {
-    final AntElementImpl element = (AntElementImpl) super.clone();
+    final AntElementImpl element = (AntElementImpl)super.clone();
     element.clearCaches();
     return element;
   }
