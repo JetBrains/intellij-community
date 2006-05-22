@@ -17,29 +17,41 @@
 package com.intellij.util.xml;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
+import java.util.ArrayList;
+
+import com.intellij.psi.xml.XmlFile;
 
 /**
  * @author peter
  */
-public abstract class MergingFileDescription<T extends DomElement> extends DomFileDescription{
+public abstract class MergingFileDescription<T extends DomElement> extends DomFileDescription<T>{
   private ModelMerger myMerger;
 
   protected MergingFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName) {
     super(rootElementClass, rootTagName);
   }
 
-  protected abstract Collection<T> getRootsToMerge(DomElement element);
+  @NotNull
+  protected abstract Collection<XmlFile> getFilesToMerge(DomElement element);
 
   public DomElement getResolveScope(GenericDomValue reference) {
     return getMergedRoot(reference);
   }
 
   protected final DomElement getMergedRoot(DomElement element) {
-    final Collection<T> roots = getRootsToMerge(element);
+    final Collection<XmlFile> files = getFilesToMerge(element);
+
+    ArrayList<T> roots = new ArrayList<T>(files.size());
+    for (XmlFile file: files) {
+      T root = element.getManager().getFileElement(file, myRootElementClass, myRootTagName).getRootElement();
+      roots.add(root);
+    }
+
     if (roots.size() == 1) {
       return roots.iterator().next();
     }

@@ -17,21 +17,23 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
  */
-public abstract class DomFileDescription {
-  private final Class<? extends DomElement> myRootElementClass;
-  private final String myRootTagName;
+public abstract class DomFileDescription<T> {
+  protected final Class<T> myRootElementClass;
+  protected final String myRootTagName;
 
-  protected DomFileDescription(final Class<? extends DomElement> rootElementClass, @NonNls final String rootTagName) {
+  protected DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName) {
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
   }
 
-  public final Class<? extends DomElement> getRootElementClass() {
+  public final Class<T> getRootElementClass() {
     return myRootElementClass;
   }
 
@@ -39,7 +41,16 @@ public abstract class DomFileDescription {
     return myRootTagName;
   }
 
-  public abstract boolean isMyFile(XmlFile file);
+  public boolean isMyFile(XmlFile file) {
+    XmlDocument doc = file.getDocument();
+    if (doc != null) {
+      XmlTag rootTag = doc.getRootTag();
+      if (rootTag != null && rootTag.getName().equals(myRootTagName)) {
+        return true;
+      }
+    }
+    return false;    
+  }
 
   public DomElement getResolveScope(GenericDomValue reference) {
     return reference.getRoot();
