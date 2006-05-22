@@ -79,7 +79,8 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
   private boolean isUnderContent(final VirtualFile file) {
-    final Module module = getValue().getModule();
+    PackageElement element = getValue();
+    final Module module = element == null ? null : element.getModule();
     if (module == null) {
       return PackageUtil.projectContainsFile(getProject(), file, isLibraryElement());
     }
