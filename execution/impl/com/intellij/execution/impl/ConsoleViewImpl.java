@@ -213,18 +213,19 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   }
 
   public JComponent getComponent() {
-    if (myEditor == null){                             
+    if (myEditor == null){
       myEditor = createEditor();
       requestFlushImmediately();
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
       myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
-          if (e.getNewLength() == 0 && e.getOffset() == 0) {
-            // string has beeen removed from the beginning, move tokens down
+          if (e.getNewLength() == 0) {
+            // string has beeen removed, move tokens down
             synchronized (LOCK) {
+              int offset = e.getOffset();
               int toRemoveLen = e.getOldLength();
-              int tIndex = findTokenInfoIndexByOffset(toRemoveLen);
+              int tIndex = findTokenInfoIndexByOffset(offset+toRemoveLen);
               ArrayList<TokenInfo> newTokens = new ArrayList<TokenInfo>(myTokens.subList(tIndex, myTokens.size()));
               for (TokenInfo token : newTokens) {
                 token.startOffset -= toRemoveLen;
@@ -497,6 +498,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   }
 
   private HyperlinkInfo getHyperlinkInfoByPoint(final Point p){
+    if (myState == ConsoleState.NOT_STARTED) return null;
     final LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(p.x, p.y));
     return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
   }
