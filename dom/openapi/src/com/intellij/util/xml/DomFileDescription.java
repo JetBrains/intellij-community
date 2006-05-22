@@ -49,7 +49,7 @@ public abstract class DomFileDescription<T> {
         return true;
       }
     }
-    return false;    
+    return false;
   }
 
   public DomElement getResolveScope(GenericDomValue reference) {

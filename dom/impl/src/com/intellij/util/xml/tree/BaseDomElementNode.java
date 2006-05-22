@@ -18,8 +18,6 @@ import java.util.*;
 import java.util.List;
 import java.lang.reflect.Type;
 
-import org.jetbrains.annotations.NotNull;
-
 
 public class BaseDomElementNode extends AbstractDomElementNode {
   public static final Key<Comparator<AbstractDomElementNode>> COMPARATOR_KEY = Key.create("COMPARATOR_KEY");
@@ -86,7 +84,6 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     return childrenNodes;
   }
 
-  @NotNull
   public List<DomCollectionChildDescription> getConsolidatedChildrenDescriptions() {
     final List<DomCollectionChildDescription> consolidated = new ArrayList<DomCollectionChildDescription>();
     for (DomCollectionChildDescription description : myDomElement.getGenericInfo().getCollectionChildrenDescriptions()) {

@@ -9,41 +9,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="util" exported="" />
-    <orderEntry type="module" module-name="appcore-api" exported="" />
-    <orderEntry type="module" module-name="idea_rt" />
-    <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="library" name="JDOM" level="project" />
-    <orderEntry type="module" module-name="forms_rt" />
-    <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="library" name="Jasper2" level="project" />
-    <orderEntry type="module" module-name="pom" exported="" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/picocontainer.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module" module-name="extensions" exported="" />
-    <orderEntry type="library" name="XmlRPC" level="project" />
-    <orderEntry type="module" module-name="Annotations" exported="" />
-    <orderEntry type="module" module-name="icons" />
-    <orderEntry type="module" module-name="resources_eng" />
-    <orderEntry type="module" module-name="codeInsight-openapi" exported="" />
-    <orderEntry type="module" module-name="inspections-openapi" exported="" />
-    <orderEntry type="module" module-name="refactoring-openapi" exported="" />
-    <orderEntry type="module" module-name="compiler-openapi" exported="" />
-    <orderEntry type="module" module-name="execution-openapi" exported="" />
-    <orderEntry type="module" module-name="action-system-openapi" exported="" />
-    <orderEntry type="module" module-name="ui-openapi" exported="" />
+    <orderEntry type="module" module-name="openapi" exported="" />
+    <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
     <Base>
-      <setting name="state" value="0" />
+      <setting name="state" value="1" />
     </Base>
     <LanguageOptions name="$TEMPLATE$">
       <option name="templateOptions">
@@ -58,7 +30,7 @@
           <option name="filler" value=" " />
         </value>
       </option>
-      <option name="notice" value="Copyright 2000-&amp;#36;{today.year} JetBrains s.r.o.&#10;&#10;Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);&#10;you may not use this file except in compliance with the License.&#10;You may obtain a copy of the License at&#10;&#10;http://www.apache.org/licenses/LICENSE-2.0&#10;&#10;Unless required by applicable law or agreed to in writing, software&#10;distributed under the License is distributed on an &quot;AS IS&quot; BASIS,&#10;WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.&#10;See the License for the specific language governing permissions and&#10;limitations under the License.&#10;" />
+      <option name="notice" value="Copyright (c) 2000-&amp;#36;{today.year} JetBrains s.r.o. All Rights Reserved." />
       <option name="keyword" value="Copyright" />
       <option name="fileTypeOverride" value="4" />
       <option name="relativeBefore" value="true" />
@@ -121,7 +93,7 @@
           <option name="filler" value=" " />
         </value>
       </option>
-      <option name="notice" value="/*&#10; * Copyright 2000-2005 JetBrains s.r.o.&#10; * &#10; * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);&#10; * you may not use this file except in compliance with the License.&#10; * You may obtain a copy of the License at&#10; * &#10; * http://www.apache.org/licenses/LICENSE-2.0&#10; * &#10; * Unless required by applicable law or agreed to in writing, software&#10; * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,&#10; * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.&#10; * See the License for the specific language governing permissions and&#10; * limitations under the License.&#10; */" />
+      <option name="notice" value="/*&#10; * Copyright (c) 2000-05 JetBrains s.r.o. All  Rights Reserved.&#10; *&#10; * Redistribution and use in source and binary forms, with or without&#10; * modification, are permitted provided that the following conditions&#10; * are met:&#10; *&#10; * -Redistributions of source code must retain the above copyright&#10; *  notice, this list of conditions and the following disclaimer.&#10; *&#10; * -Redistribution in binary form must reproduct the above copyright&#10; *  notice, this list of conditions and the following disclaimer in&#10; *  the documentation and/or other materials provided with the distribution.&#10; *&#10; * Neither the name of JetBrains or IntelliJ IDEA&#10; * may be used to endorse or promote products derived from this software&#10; * without specific prior written permission.&#10; *&#10; * This software is provided &quot;AS IS,&quot; without a warranty of any kind. ALL&#10; * EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING&#10; * ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE&#10; * OR NON-INFRINGEMENT, ARE HEREBY EXCLUDED. JETBRAINS AND ITS LICENSORS SHALL NOT&#10; * BE LIABLE FOR ANY DAMAGES OR LIABILITIES SUFFERED BY LICENSEE AS A RESULT&#10; * OF OR RELATING TO USE, MODIFICATION OR DISTRIBUTION OF THE SOFTWARE OR ITS&#10; * DERIVATIVES. IN NO EVENT WILL JETBRAINS OR ITS LICENSORS BE LIABLE FOR ANY LOST&#10; * REVENUE, PROFIT OR DATA, OR FOR DIRECT, INDIRECT, SPECIAL, CONSEQUENTIAL,&#10; * INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER CAUSED AND REGARDLESS OF THE THEORY&#10; * OF LIABILITY, ARISING OUT OF THE USE OF OR INABILITY TO USE SOFTWARE, EVEN&#10; * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.&#10; *&#10; */" />
       <option name="keyword" value="Copyright" />
       <option name="fileTypeOverride" value="2" />
       <option name="relativeBefore" value="true" />

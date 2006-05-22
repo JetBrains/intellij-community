@@ -4,9 +4,8 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.javaee.J2EEBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
@@ -15,8 +14,8 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 
@@ -27,7 +26,6 @@ import java.util.List;
  * author: lesya
  */
 public class GenericDomValueReference<T> extends GenericReference {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.GenericDomValueReference");
   private final GenericDomValue<T> myGenericValue;
   private final XmlElement myContextElement;
   private final TextRange myTextRange;

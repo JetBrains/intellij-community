@@ -16,15 +16,14 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.ArrayList;
-
-import com.intellij.psi.xml.XmlFile;
 
 /**
  * @author peter
