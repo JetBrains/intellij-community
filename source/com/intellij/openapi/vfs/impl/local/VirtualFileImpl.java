@@ -360,7 +360,7 @@ public class VirtualFileImpl extends VirtualFile {
     return getPhysicalFile().lastModified();
   }
 
-  public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
+  void refresh(final boolean asynchronous, final boolean recursive, final boolean noFileWatcher, final Runnable postRunnable) {
     if (!asynchronous) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
@@ -373,6 +373,10 @@ public class VirtualFileImpl extends VirtualFile {
 
     final Runnable runnable = new Runnable() {
       public void run() {
+        final ProgressIndicator indicator = ourFileSystem.getManager().getRefreshIndicator();
+        indicator.start();
+        indicator.setText(VfsBundle.message("file.synchronize.progress"));
+
         ourFileSystem.getManager().beforeRefreshStart(asynchronous, modalityState, postRunnable);
 
         PhysicalFile physicalFile = getPhysicalFile();
@@ -391,8 +395,10 @@ public class VirtualFileImpl extends VirtualFile {
           ourFileSystem.getManager().addEventToFireByRefresh(runnable, asynchronous, modalityState);
         }
         else {
-          ourFileSystem.refresh(VirtualFileImpl.this, recursive, true, modalityState, asynchronous, false);
+          ourFileSystem.refresh(VirtualFileImpl.this, recursive, true, modalityState, asynchronous, false, noFileWatcher);
         }
+
+        indicator.stop();
       }
     };
 
@@ -407,13 +413,7 @@ public class VirtualFileImpl extends VirtualFile {
         public void run() {
           LOG.info("Executing request:" + this);
 
-          final ProgressIndicator indicator = ourFileSystem.getManager().getRefreshIndicator();
-          indicator.start();
-          indicator.setText(VfsBundle.message("file.synchronize.progress"));
-
           ApplicationManager.getApplication().runReadAction(runnable);
-
-          indicator.stop();
 
           endTask.run();
         }
@@ -425,6 +425,10 @@ public class VirtualFileImpl extends VirtualFile {
       runnable.run();
       endTask.run();
     }
+  }
+
+  public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
+    refresh(asynchronous, recursive, false, postRunnable);
   }
 
   public boolean nameEquals(String name) {

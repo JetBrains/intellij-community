@@ -424,7 +424,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
               getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
             }
             else {
-              refresh(rootFile, recursively, false, modalityState, asynchronous, true);
+              refresh(rootFile, recursively, false, modalityState, asynchronous, true, false);
             }
           } else {
             final String fileSystemPath = request.getFileSystemRootPath();
@@ -451,7 +451,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
               getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
 
             } else {
-              refresh(file, true, false, modalityState, asynchronous, false);
+              refresh(file, true, false, modalityState, asynchronous, false, false);
             }
           } else {
             final String vfsPath = entry.getKey();
@@ -573,8 +573,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                boolean storeStatus,
                ModalityState modalityState,
                boolean asynchronous,
-               final boolean isRoot) {
-    if (!FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh syncronously by means of file watcher.
+               final boolean isRoot,
+               final boolean noWatcher) {
+    if (noWatcher || !FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh syncronously by means of file watcher.
       ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
       if (!recursive && isRoot && ((VirtualFileImpl)file).areChildrenCached()) {
         final VirtualFile[] children = file.getChildren();
@@ -630,7 +631,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                 !((VirtualFileImpl)child).getPhysicalFile().exists()) {
               continue; // should be already handled above (see SCR6145)
             }
-            refresh(child, recursive, false, modalityState, asynchronous, false);
+            refresh(child, recursive, false, modalityState, asynchronous, false, false);
           }
         }
       }
@@ -859,6 +860,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     synchronized (LOCK) {
       final WatchRequestImpl result = new WatchRequestImpl(rootPath, toWatchRecursively);
       myRootsToWatch.add(result);
+      final VirtualFile existingFile = findFileByPath(result.getRootPath(), false, false);
+      if (existingFile != null) synchronizeFiles(existingFile);
       setUpFileWatcher();
       return result;
     }
@@ -868,18 +871,30 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   public Set<WatchRequest> addRootsToWatch(final Collection<String> rootPaths, final boolean toWatchRecursively) {
     LOG.assertTrue(rootPaths != null);
     Set<WatchRequest> result = new HashSet<WatchRequest>();
+    Set<VirtualFile> filesToSynchronize = new HashSet<VirtualFile>();
     synchronized (LOCK) {
       for (String rootPath : rootPaths) {
         LOG.assertTrue(rootPath != null);
         final WatchRequestImpl request = new WatchRequestImpl(rootPath, toWatchRecursively);
+        final VirtualFile existingFile = findFileByPath(request.getRootPath(), false, false);
+        if (existingFile != null) filesToSynchronize.add(existingFile);
         result.add(request);
       }
 
       myRootsToWatch.addAll(result);
       setUpFileWatcher();
+      if (!filesToSynchronize.isEmpty()) {
+        synchronizeFiles(filesToSynchronize.toArray(new VirtualFile[filesToSynchronize.size()]));
+      }
     }
 
     return result;
+  }
+
+  private static void synchronizeFiles(final VirtualFile... files) {
+    for (final VirtualFile file : files) {
+      ((VirtualFileImpl)file).refresh(true, true, true, null);
+    }
   }
 
   public void removeWatchedRoot(final WatchRequest watchRequest) {
