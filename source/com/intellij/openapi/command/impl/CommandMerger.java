@@ -58,7 +58,7 @@ class CommandMerger {
     if (isUndoTransparent) myHasUndoTransparents = true;
     myCurrentActions.add(action);
     myAffectedDocuments.addAll(Arrays.asList(action.getAffectedDocuments()));
-    myIsComplex |= action.isComplex() || affectsMultiplePhysicalDocs();
+    myIsComplex |= action.isComplex() || !isUndoTransparent && affectsMultiplePhysicalDocs();
   }
 
   private boolean affectsMultiplePhysicalDocs() {
@@ -90,7 +90,7 @@ class CommandMerger {
   private boolean shouldMerge(Object groupId, CommandMerger nextCommandToMerge) {
     if (myOnlyUndoTransparents && myHasUndoTransparents ||
         nextCommandToMerge.myOnlyUndoTransparents && nextCommandToMerge.myHasUndoTransparents) {
-      return true;
+      return myAffectedDocuments.equals(nextCommandToMerge.myAffectedDocuments);
     }
     if (myIsComplex || nextCommandToMerge.isComplex()) return false;
 
