@@ -92,7 +92,7 @@ public class JavaParametersUtil {
     for (Module module : modules) {
       orders.add(getClassPath(module, false));
     }
-    return (List<CommandLineEntry>)OrdersMerger.mergeOrder(orders, TObjectHashingStrategy.CANONICAL);
+    return OrdersMerger.mergeOrder(orders, (TObjectHashingStrategy<CommandLineEntry>)TObjectHashingStrategy.CANONICAL);
   }
 
   private static ArrayList<CommandLineEntry> getClassPath(final Module module, final boolean withDependencies) {
