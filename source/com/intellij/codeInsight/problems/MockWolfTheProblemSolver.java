@@ -51,11 +51,11 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   public void projectOpened() {
-
+    if (myDelegate != null) myDelegate.projectOpened();
   }
 
   public void projectClosed() {
-
+    if (myDelegate != null) myDelegate.projectClosed();
   }
 
   @NonNls

@@ -53,21 +53,54 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   };
 
   private long myPsiModificationCount = -1000;
+  private final PsiTreeChangeListener myChangeListener;
 
   private static class ProblemFileInfo {
     Collection<Problem> problems = new SmartList<Problem>();
     boolean hasSyntaxErrors;
   }
 
-  public WolfTheProblemSolverImpl(Project project) {
+  public WolfTheProblemSolverImpl(Project project, PsiManager psiManager) {
     myProject = project;
+    myChangeListener = new PsiTreeChangeAdapter() {
+      public void childAdded(PsiTreeChangeEvent event) {
+        childrenChanged(event);
+      }
+
+      public void childRemoved(PsiTreeChangeEvent event) {
+        childrenChanged(event);
+      }
+
+      public void childReplaced(PsiTreeChangeEvent event) {
+        childrenChanged(event);
+      }
+
+      public void childMoved(PsiTreeChangeEvent event) {
+        childrenChanged(event);
+      }
+
+      public void propertyChanged(PsiTreeChangeEvent event) {
+        childrenChanged(event);
+      }
+
+      public void childrenChanged(PsiTreeChangeEvent event) {
+        PsiFile file = event.getFile();
+        if (file == null) return;
+        VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile == null) return;
+        ProblemFileInfo info = myProblems.get(virtualFile);
+        if (info == null) return;
+        info.hasSyntaxErrors = false;
+      }
+    };
+    psiManager.addPsiTreeChangeListener(myChangeListener);
   }
 
   public void projectOpened() {
   }
 
   public void projectClosed() {
-
+    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myChangeListener);
   }
 
   @NotNull

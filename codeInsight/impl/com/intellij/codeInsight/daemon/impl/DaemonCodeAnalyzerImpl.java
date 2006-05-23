@@ -403,20 +403,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (fileType == StdFileTypes.GUI_DESIGNER_FORM){
       return true;
     }
-    if (file instanceof PsiPlainTextFile) {
-      return fileType instanceof CustomFileType; // To enable T.O.D.O. highlighting
-    }
-    return true;
+    // To enable T.O.D.O. highlighting
+    return !(file instanceof PsiPlainTextFile) || fileType instanceof CustomFileType;
   }
 
   public boolean isImportHintsEnabled(PsiFile file) {
-    if (!isAutohintsAvailable(file)) return false;
-    return !myDisabledHintsFiles.contains(file.getVirtualFile());
+    return isAutohintsAvailable(file) && !myDisabledHintsFiles.contains(file.getVirtualFile());
   }
 
   public boolean isAutohintsAvailable(PsiFile file) {
-    if (!isHighlightingAvailable(file)) return false;
-    return !(file instanceof PsiCompiledElement);
+    return isHighlightingAvailable(file) && !(file instanceof PsiCompiledElement);
   }
 
   public void restart() {
@@ -601,7 +597,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myLastIntentionHint;
   }
 
-  private void updateHighlighters(final FileEditor editor, final Set<HighlightingPass> passesToPerform, final Runnable postRunnable) {
+  private void updateHighlighters(final FileEditor editor, final Set<? extends HighlightingPass> passesToPerform, final Runnable postRunnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myUpdateProgress.isRunning()) return;
@@ -817,7 +813,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
         class CallWolfRunnable implements Runnable {
           public void run() {
-            updateHighlighters(null, new LinkedHashSet<HighlightingPass>(Arrays.asList(new WolfPass(myProject))), null);
+            updateHighlighters(null, Collections.singleton(new WolfPass(myProject)), null);
           }
         }
 
