@@ -14,6 +14,7 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import java.lang.reflect.Type;
+import java.lang.annotation.Annotation;
 
 /**
  * @author peter
@@ -48,7 +49,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     parent.createFixedChildrenTags(getXmlElementName(), myIndex);
     final XmlTag newTag = (XmlTag)parent.getXmlTag().add(tag);
     if (getParentHandler().getFixedChildrenClass(tag.getName()) != null) {
-      final Type type = getParentHandler().getGenericInfo().getFixedChildDescription(getXmlElementName()).getType();
+      final Type type = getChildDescription().getType();
       ClassChooserManager.getClassChooser(DomUtil.getRawType(type)).distinguishTag(newTag, DomUtil.getRawType(getDomElementType()));
     }
     return newTag;
@@ -94,13 +95,21 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     fireUndefinedEvent();
   }
 
-  public <T extends DomElement> T createStableCopy() {
+  public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    return getChildDescription().getAnnotation(myIndex, annotationClass);
+  }
+
+  public final <T extends DomElement> T createStableCopy() {
+    final DomFixedChildDescription description = getChildDescription();
     final DomElement parentCopy = getParent().createStableCopy();
-    final DomFixedChildDescription description = parentCopy.getGenericInfo().getFixedChildDescription(getXmlElementName());
     return getManager().createStableValue(new Factory<T>() {
       public T create() {
         return (T)description.getValues(parentCopy).get(myIndex);
       }
     });
+  }
+
+  private FixedChildDescriptionImpl getChildDescription() {
+    return getParentHandler().getGenericInfo().getFixedChildDescription(getXmlElementName());
   }
 }

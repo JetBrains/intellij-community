@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.lang.annotation.Annotation;
 
 /**
  * @author peter
@@ -71,12 +72,16 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
 
   public <T extends DomElement> T createStableCopy() {
     final DomElement parentCopy = getParent().createStableCopy();
-    final DomAttributeChildDescription description = parentCopy.getGenericInfo().getAttributeChildDescription(getXmlElementName());
+    final DomAttributeChildDescription description = getChildDescription();
     return getManager().createStableValue(new Factory<T>() {
       public T create() {
         return (T)description.getValues(parentCopy).get(0);
       }
     });
+  }
+
+  private AttributeChildDescriptionImpl getChildDescription() {
+    return getParentHandler().getGenericInfo().getAttributeChildDescription(getXmlElementName());
   }
 
   protected final void cacheInTag(final XmlTag tag) {
@@ -114,6 +119,10 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
       }
       fireUndefinedEvent();
     }
+  }
+
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    return getChildDescription().getAnnotation(annotationClass);
   }
 
   @Nullable

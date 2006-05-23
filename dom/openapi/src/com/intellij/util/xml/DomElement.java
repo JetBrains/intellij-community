@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.lang.annotation.Annotation;
 
 /**
  * @author peter
@@ -20,6 +21,9 @@ public interface DomElement {
 
   DomElement[] EMPTY_ARRAY = new DomElement[0];
   
+  @Nullable
+  <T extends Annotation> T getAnnotation(Class<T> annotationClass);
+
   @Nullable
   XmlTag getXmlTag();
 

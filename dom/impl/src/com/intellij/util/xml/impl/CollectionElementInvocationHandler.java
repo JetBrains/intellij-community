@@ -9,8 +9,10 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.events.CollectionElementRemovedEvent;
 import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.lang.annotation.Annotation;
 import java.util.Arrays;
 
 /**
@@ -34,6 +36,11 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
     detach(true);
     deleteTag(tag);
     getManager().fireEvent(new CollectionElementRemovedEvent(getProxy(), parent, getXmlElementName()));
+  }
+
+  @Nullable
+  public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    return getParentHandler().getGenericInfo().getCollectionChildDescription(getXmlElementName()).getAnnotation(annotationClass);
   }
 
   public <T extends DomElement> T createStableCopy() {

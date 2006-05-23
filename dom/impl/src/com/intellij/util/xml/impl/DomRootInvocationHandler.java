@@ -11,6 +11,9 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.annotation.Annotation;
 
 /**
  * @author peter
@@ -40,6 +43,11 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  @Nullable
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    return null;
   }
 
   public DomFileElementImpl getRoot() {

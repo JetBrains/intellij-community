@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.lang.annotation.Annotation;
 import java.util.*;
 
 /**
@@ -213,6 +214,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   public String toString() {
     return "File " + myFile.toString();
+  }
+
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    return null;
   }
 
   public final XmlTag getXmlTag() {
