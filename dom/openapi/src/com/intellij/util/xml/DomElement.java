@@ -18,6 +18,8 @@ import java.lang.reflect.Type;
  */
 public interface DomElement {
 
+  DomElement[] EMPTY_ARRAY = new DomElement[0];
+  
   @Nullable
   XmlTag getXmlTag();
 

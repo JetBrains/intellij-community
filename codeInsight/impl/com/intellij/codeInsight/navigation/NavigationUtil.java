@@ -7,13 +7,19 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
+import java.awt.event.MouseEvent;
 
 /**
  * @author ven
  */
 public final class NavigationUtil {
+
+  private NavigationUtil() {
+  }
+
   public static JBPopup getPsiElementPopup(PsiElement[] elements, String title) {
     PsiElementListCellRenderer renderer = new GotoSymbolCellRenderer();
     return getPsiElementPopup(elements, renderer, title);
@@ -42,5 +48,9 @@ public final class NavigationUtil {
       setTitle(title).
       setItemChoosenCallback(runnable).
       createPopup();
+  }
+
+  public static void showPsiElementPopup(PsiElement[] elements, String title, MouseEvent event) {
+    getPsiElementPopup(elements, title).show(new RelativePoint(event));
   }
 }

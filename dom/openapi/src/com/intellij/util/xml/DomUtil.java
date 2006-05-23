@@ -190,12 +190,23 @@ public class DomUtil {
   @NotNull
   public static List<XmlTag> getElementTags(@NotNull Collection<? extends DomElement> list) {
     ArrayList<XmlTag> result = new ArrayList<XmlTag>(list.size());
-    if (list.size() > 0) {
-      for (DomElement element: list) {
-        XmlTag tag = element.getXmlTag();
-        if (tag != null) {
-          result.add(tag);
-        }
+    for (DomElement element: list) {
+      XmlTag tag = element.getXmlTag();
+      if (tag != null) {
+        result.add(tag);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  public static XmlTag[] getElementTags(@NotNull DomElement[] list) {
+    XmlTag[] result = new XmlTag[list.length];
+    int i = 0;
+    for (DomElement element: list) {
+      XmlTag tag = element.getXmlTag();
+      if (tag != null) {
+        result[i++] = tag;
       }
     }
     return result;
