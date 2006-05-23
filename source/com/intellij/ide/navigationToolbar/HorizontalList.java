@@ -139,7 +139,7 @@ public class HorizontalList extends JPanel {
         }
       }
     };
-    registerKeyboardAction(dblClickAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
+
     registerKeyboardAction(dblClickAction, KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), JComponent.WHEN_FOCUSED);
 
     registerKeyboardAction(new AbstractAction() {
