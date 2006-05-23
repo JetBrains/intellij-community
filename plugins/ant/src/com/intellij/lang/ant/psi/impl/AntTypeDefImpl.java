@@ -20,46 +20,15 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.AntTypeDefImpl");
   private AntTypeDefinition myNewDefinition;
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public AntTypeDefImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntTypeDefImpl(final AntElement parent,
+                        final XmlElement sourceElement,
+                        final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
     final String classname = getClassName();
     if (classname == null) return;
-    final String classpath = getClassPath();
-    ClassLoader loader = null;
-    if (classpath != null) {
-      try {
-        loader = new URLClassLoader(new URL[]{new URL("file://" + classpath)}, getClass().getClassLoader());
-      }
-      catch (MalformedURLException e) {
-        LOG.error(e);
-      }
-    } else {
-      myNewDefinition = getAntFile().getBaseTypeDefinition(classname);
-      if (myNewDefinition != null) return;
-    }
-    Class clazz;
-    try {
-      if (loader == null) {
-        clazz = Class.forName(classname);
-      } else {
-        clazz = loader.loadClass(classname);
-      }
-    }
-    catch (ClassNotFoundException e) {
-      clazz = null;
-    }
-    final String name = getDefinedName();
-    final String uri = getUri();
-    AntTypeId id = (uri == null) ? new AntTypeId(name) : new AntTypeId(name, uri);
-    if (clazz == null) {
-      myNewDefinition = null;
-    } else {
-      myNewDefinition = AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
-      final AntStructuredElement se = PsiTreeUtil.getParentOfType(this, AntStructuredElementImpl.class);
-      if (se != null) {
-        se.registerCustomType(myNewDefinition);
-      }
+    myNewDefinition = getAntFile().getBaseTypeDefinition(classname);
+    if (myNewDefinition == null) {
+      loadClass(classname);
     }
   }
 
@@ -110,5 +79,48 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
   public AntTypeDefinition getDefinition() {
     return myNewDefinition;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private void loadClass(final String classname) {
+    final String classpath = getClassPath();
+    ClassLoader loader = null;
+    if (classpath != null) {
+      try {
+        loader = new URLClassLoader(new URL[]{new URL("file://" + classpath)}, getClass().getClassLoader());
+      }
+      catch (MalformedURLException e) {
+        LOG.error(e);
+      }
+    }
+    else {
+      myNewDefinition = getAntFile().getBaseTypeDefinition(classname);
+      if (myNewDefinition != null) return;
+    }
+    Class clazz;
+    try {
+      if (loader == null) {
+        clazz = Class.forName(classname);
+      }
+      else {
+        clazz = loader.loadClass(classname);
+      }
+    }
+    catch (ClassNotFoundException e) {
+      clazz = null;
+    }
+    final String name = getDefinedName();
+    final String uri = getUri();
+    AntTypeId id = (uri == null) ? new AntTypeId(name) : new AntTypeId(name, uri);
+    if (clazz == null) {
+      myNewDefinition = null;
+    }
+    else {
+      myNewDefinition = AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
+      final AntStructuredElement se = PsiTreeUtil.getParentOfType(this, AntStructuredElementImpl.class);
+      if (se != null) {
+        se.registerCustomType(myNewDefinition);
+      }
+    }
   }
 }
