@@ -15,6 +15,7 @@ import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.*;
@@ -178,7 +179,7 @@ public class CompletionVariant {
     }
   }
 
-  private LookupItem addLookupItem(Set<LookupItem> set, CompletionVariantItem element, Object completion, String prefix){
+  private LookupItem addLookupItem(Set<LookupItem> set, CompletionVariantItem element, @NotNull Object completion, String prefix){
     LookupItem ret = LookupItemUtil.objectToLookupItem(completion);
     if(ret == null) return null;
 
@@ -237,8 +238,7 @@ public class CompletionVariant {
   }
 
   public void addKeywords(PsiElementFactory factory, Set<LookupItem> set, CompletionContext context, PsiElement position){
-    for (final Object aMyCompletionsList : myCompletionsList) {
-      final CompletionVariantItem ce = (CompletionVariantItem)aMyCompletionsList;
+    for (final CompletionVariantItem ce : myCompletionsList) {
       final Object comp = ce.myCompletion;
       if (comp instanceof OffsetDependant) {
         ((OffsetDependant)comp).setOffset(context.startOffset);
