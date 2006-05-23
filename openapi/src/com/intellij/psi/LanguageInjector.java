@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Describes logic for injecting language inside hosting PSI element.
- * E.g. "inject XSLT language into all XML attributes named 'path' that sit inside XML tag prefixed with 'xsl:'"
+ * E.g. "inject XPath language into all XML attributes named 'select' that sit inside XML tag prefixed with 'xsl:'"
  * @see com.intellij.psi.PsiLanguageInjectionHost
  * @see com.intellij.psi.PsiManager#registerLanguageInjector(LanguageInjector)
  * @see com.intellij.psi.PsiManager#unregisterLanguageInjector(LanguageInjector)

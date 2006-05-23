@@ -5,12 +5,13 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
@@ -28,14 +29,19 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Alexey
  */
 public class EditorDelegate implements EditorEx {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorDelegate");
   private final DocumentRange myDocument;
   private final EditorImpl myDelegate;
   private final PsiFile myInjectedFile;
+  private List<EditorMouseMotionListener> myMouseMotionListenerWrappers = new CopyOnWriteArrayList<EditorMouseMotionListener>();
+  private List<EditorMouseListener> myMouseListenerWrappers = new CopyOnWriteArrayList<EditorMouseListener>();
 
   public EditorDelegate(DocumentRange document, final EditorImpl delegate, PsiFile injectedFile) {
     myDocument = document;
@@ -205,7 +211,7 @@ public class EditorDelegate implements EditorEx {
   }
 
   public void addEditorMouseListener(final EditorMouseListener listener) {
-    myDelegate.addEditorMouseListener(new EditorMouseListener() {
+    EditorMouseListener wrapper = new EditorMouseListener() {
       public void mousePressed(EditorMouseEvent e) {
         listener.mousePressed(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
       }
@@ -225,22 +231,33 @@ public class EditorDelegate implements EditorEx {
       public void mouseExited(EditorMouseEvent e) {
         listener.mouseExited(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
       }
+
       public int hashCode() {
         return listener.hashCode();
       }
 
       public boolean equals(Object obj) {
-        return obj == listener;
+        return obj == listener || obj == this;
       }
-    });
+    };
+    myMouseListenerWrappers.add(wrapper);
+    myDelegate.addEditorMouseListener(wrapper);
   }
 
   public void removeEditorMouseListener(final EditorMouseListener listener) {
-    myDelegate.removeEditorMouseListener(listener);
+    for (int i = 0; i < myMouseListenerWrappers.size(); i++) {
+      EditorMouseListener wrapper = myMouseListenerWrappers.get(i);
+      if (wrapper.equals(listener)) {
+        myMouseListenerWrappers.remove(i);
+        myDelegate.removeEditorMouseListener(wrapper);
+        return;
+      }
+    }
+    LOG.error("Listener not found");
   }
 
   public void addEditorMouseMotionListener(final EditorMouseMotionListener listener) {
-    myDelegate.addEditorMouseMotionListener(new EditorMouseMotionListener() {
+    EditorMouseMotionListener wrapper = new EditorMouseMotionListener() {
       public void mouseMoved(EditorMouseEvent e) {
         listener.mouseMoved(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
       }
@@ -254,13 +271,23 @@ public class EditorDelegate implements EditorEx {
       }
 
       public boolean equals(Object obj) {
-        return obj == listener;
+        return obj == listener || obj == this;
       }
-    });
+    };
+    myMouseMotionListenerWrappers.add(wrapper);
+    myDelegate.addEditorMouseMotionListener(wrapper);
   }
 
   public void removeEditorMouseMotionListener(final EditorMouseMotionListener listener) {
-    myDelegate.removeEditorMouseMotionListener(listener);
+    for (int i = 0; i < myMouseMotionListenerWrappers.size(); i++) {
+      EditorMouseMotionListener wrapper = myMouseMotionListenerWrappers.get(i);
+      if (wrapper.equals(listener)) {
+        myMouseMotionListenerWrappers.remove(i);
+        myDelegate.removeEditorMouseMotionListener(wrapper);
+        return;
+      }
+    }
+    LOG.error("Listener not found");
   }
 
   public boolean isDisposed() {
