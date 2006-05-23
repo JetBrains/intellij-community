@@ -7,28 +7,33 @@ package com.intellij.openapi.command;
 import com.intellij.openapi.application.BaseActionRunnable;
 import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.SmartList;
 
 import javax.swing.*;
 import java.awt.*;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
+  private final String myName;
+  private final String myGroupID;
+  private final Project myProject;
+  private final PsiFile[] myPsiFiles;
 
-  private String myName;
-  private String myGroupID;
-  private Project myProject;
-
-  protected WriteCommandAction(Project project) {
-    this(project, "Undefined");
+  protected WriteCommandAction(Project project, PsiFile... files) {
+    this(project, "Undefined", files);
   }
 
-  protected WriteCommandAction(Project project, String commandName) {
-    this(project, commandName, null);
+  protected WriteCommandAction(Project project, String commandName, PsiFile... files) {
+    this(project, commandName, null, files);
   }
 
-  protected WriteCommandAction(final Project project, final String name, final String groupID) {
+  protected WriteCommandAction(final Project project, final String name, final String groupID, PsiFile... files) {
     myName = name;
     myGroupID = groupID;
     myProject = project;
+    myPsiFiles = files;
   }
 
   public final Project getProject() {
@@ -45,6 +50,21 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
+
+    if (myPsiFiles.length > 0) {
+      java.util.List<VirtualFile> list = new SmartList<VirtualFile>();
+      for (final PsiFile psiFile : myPsiFiles) {
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
+        if (virtualFile != null) {
+          list.add(virtualFile);
+        }
+      }
+      if (!list.isEmpty()) {
+        if (ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(list.toArray(new VirtualFile[list.size()])).hasReadonlyFiles()) {
+          return result;
+        }
+      }
+    }
 
     if (canWriteNow()) {
       return executeCommand(result);

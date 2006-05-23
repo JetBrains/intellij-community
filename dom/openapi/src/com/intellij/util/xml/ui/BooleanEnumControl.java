@@ -36,6 +36,7 @@ public class BooleanEnumControl extends BaseControl<JCheckBox, String> {
       public void actionPerformed(ActionEvent e) {
         myUndefined = false;
         commit();
+        reset();
       }
     });
     return checkBox;

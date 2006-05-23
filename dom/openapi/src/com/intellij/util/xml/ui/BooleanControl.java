@@ -24,6 +24,7 @@ public class BooleanControl extends BaseControl<JCheckBox, Boolean> {
       public void actionPerformed(ActionEvent e) {
         myUndefined = false;
         commit();
+        reset();
       }
     });
     return checkBox;

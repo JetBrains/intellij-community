@@ -28,6 +28,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
   private final ActionListener myCommitListener = new ActionListener() {
     public void actionPerformed(ActionEvent e) {
       commit();
+      reset();
     }
   };
 
