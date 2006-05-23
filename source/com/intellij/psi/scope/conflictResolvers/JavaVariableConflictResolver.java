@@ -29,13 +29,13 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
 
       final PsiElement currentElement = currentResult.getElement();
       if(currentElement instanceof PsiField){
-        for(int i = 1; i < uncheckedResult.length; i++){
+        for (int i = 1; i < uncheckedResult.length; i++) {
           final CandidateInfo candidate = uncheckedResult[i];
           final PsiElement otherElement = candidate.getElement();
-          if(otherElement == null) continue;
+          if (otherElement == null) continue;
 
           if (!(otherElement instanceof PsiField)) {
-            if(otherElement instanceof PsiLocalVariable) {
+            if (otherElement instanceof PsiLocalVariable) {
               return candidate;
             }
             else {
@@ -49,15 +49,12 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
           final PsiClass oldClass = ((PsiField)currentElement).getContainingClass();
 
           final PsiElement scope = currentResult.getCurrentFileResolveScope();
-          if(newClass.isInheritor(oldClass, true)){
+          if (newClass.isInheritor(oldClass, true)) {
             if (!(scope instanceof PsiClass) || !((PsiClass)scope).isInheritorDeep(oldClass, newClass)) {
               // candidate is better
               conflicts.remove(currentResult);
               currentResult = candidate;
               continue;
-            }
-            else {
-              return null;
             }
           }
           else if (oldClass.isInheritor(newClass, true)) {
@@ -66,29 +63,25 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
               conflicts.remove(candidate);
               continue;
             }
-            else {
-              return null;
-            }
           }
-          else {
-            if (!candidate.isAccessible()) {
-              conflicts.remove(candidate);
-              continue;
-            }
-            if (!currentResult.isAccessible()) {
-              conflicts.remove(currentResult);
-              currentResult = candidate;
-              continue;
-            }
 
-            //This test should go last
-            if (otherElement == currentElement && candidate.getSubstitutor().equals(currentResult.getSubstitutor())) {
-              conflicts.remove(candidate);
-              continue;
-            }
-
-            return null;
+          if (!candidate.isAccessible()) {
+            conflicts.remove(candidate);
+            continue;
           }
+          if (!currentResult.isAccessible()) {
+            conflicts.remove(currentResult);
+            currentResult = candidate;
+            continue;
+          }
+
+          //This test should go last
+          if (otherElement == currentElement && candidate.getSubstitutor().equals(currentResult.getSubstitutor())) {
+            conflicts.remove(candidate);
+            continue;
+          }
+
+          return null;
         }
       }
       return currentResult;
