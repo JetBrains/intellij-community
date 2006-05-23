@@ -57,7 +57,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   @NotNull
-  public PsiElement[] getChildren() {
+  public synchronized PsiElement[] getChildren() {
     if (myChildren == null) {
       final AntProject project = getAntProject();
       final ArrayList<PsiElement> children = new ArrayList<PsiElement>(3);
@@ -87,7 +87,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return "AntFile[" + getName() + "]";
   }
 
-  public void clearCaches() {
+  public synchronized void clearCaches() {
     myChildren = null;
     myPrologElement = null;
     myProject = null;
@@ -111,7 +111,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return this;
   }
 
-  public AntProject getAntProject() {
+  public synchronized AntProject getAntProject() {
     if (myProject != null) return myProject;
     final XmlFile baseFile = getSourceElement();
     final XmlDocument document = baseFile.getDocument();
@@ -150,7 +150,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  public AntElement lightFindElementAt(int offset) {
+  public synchronized AntElement lightFindElementAt(int offset) {
     if (myProject == null) return this;
     final TextRange projectRange = myProject.getTextRange();
     if (offset < projectRange.getStartOffset() || offset >= projectRange.getEndOffset()) return this;
@@ -158,7 +158,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   @NotNull
-  public AntTypeDefinition[] getBaseTypeDefinitions() {
+  public synchronized AntTypeDefinition[] getBaseTypeDefinitions() {
     final int defCount = myTypeDefinitions.size();
     if (myTypeDefinitionArray == null || myTypeDefinitionArray.length != defCount) {
       getBaseTypeDefinition(null);
@@ -182,7 +182,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   @NotNull
-  public AntTypeDefinition getTargetDefinition() {
+  public synchronized AntTypeDefinition getTargetDefinition() {
     getBaseTypeDefinition(null);
     if (myTargetDefinition == null) {
       @NonNls final HashMap<String, AntAttributeType> targetAttrs = new HashMap<String, AntAttributeType>();
@@ -202,7 +202,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return myTargetDefinition;
   }
 
-  public void registerCustomType(final AntTypeDefinition definition) {
+  public synchronized void registerCustomType(final AntTypeDefinition definition) {
     myTypeDefinitionArray = null;
     myTypeDefinitions.put(definition.getClassName(), definition);
   }

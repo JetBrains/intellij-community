@@ -27,7 +27,7 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
                          final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
 
-    if (getNameElement() == ourNull) {
+    if (!hasNameElement()) {
       myMacroDefinition = null;
       return;
     }

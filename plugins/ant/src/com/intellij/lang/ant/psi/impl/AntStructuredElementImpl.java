@@ -67,21 +67,21 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public String getName() {
-    if (getNameElement() != ourNull) {
+    if (hasNameElement()) {
       return getNameElement().getName();
     }
-    if (getIdElement() != ourNull) {
+    if (hasIdElement()) {
       return getIdElement().getName();
     }
     return super.getName();
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {
-    if (getNameElement() != ourNull) {
+    if (hasNameElement()) {
       getNameElement().setName(name);
       subtreeChanged();
     }
-    else if (getIdElement() != ourNull) {
+    else if (hasIdElement()) {
       getIdElement().setName(name);
       subtreeChanged();
     }
@@ -152,6 +152,22 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return myReferencedElements.keySet().toArray(new String[myReferencedElements.size()]);
   }
 
+  public boolean hasNameElement() {
+    return !isNameElement(ourNull);
+  }
+
+  public boolean hasIdElement() {
+    return !isIdElement(ourNull);
+  }
+
+  public boolean isNameElement(PsiElement element) {
+    return getNameElement() == element;
+  }
+
+  public boolean isIdElement(PsiElement element) {
+    return getIdElement() == element;
+  }
+
   public void clearCaches() {
     super.clearCaches();
     myReferencedElements = null;
@@ -170,10 +186,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public int getTextOffset() {
-    if (getNameElement() != ourNull) {
+    if (hasNameElement()) {
       return getNameElement().getTextOffset();
     }
-    if (getIdElement() != ourNull) {
+    if (hasIdElement()) {
       return getIdElement().getTextOffset();
     }
     return super.getTextOffset();
@@ -181,13 +197,11 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   protected AntElement[] getChildrenInner() {
     final List<AntElement> children = new ArrayList<AntElement>();
-    AntElement idElement = getIdElement();
-    if (idElement != ourNull) {
-      children.add(idElement);
+    if (hasIdElement()) {
+      children.add(getIdElement());
     }
-    AntElement nameElement = getNameElement();
-    if (nameElement != ourNull) {
-      children.add(nameElement);
+    if (hasNameElement()) {
+      children.add(getNameElement());
     }
     for (final PsiElement element : getSourceElement().getChildren()) {
       if (element instanceof XmlElement) {

@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi;
 
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,4 +23,12 @@ public interface AntStructuredElement extends AntElement {
 
   @NotNull
   String[] getRefIds();
+
+  boolean hasNameElement();
+
+  boolean hasIdElement();
+
+  boolean isNameElement(PsiElement element);
+
+  boolean isIdElement(PsiElement element);
 }

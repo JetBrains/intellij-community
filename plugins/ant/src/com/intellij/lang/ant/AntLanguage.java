@@ -5,7 +5,9 @@ import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.ant.psi.usages.AntUsagesProvider;
 import com.intellij.lang.ant.validation.AntAnnotator;
+import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -19,6 +21,7 @@ public class AntLanguage extends Language {
   private AntParserDefinition myParserDefinition;
   private AntAnnotator myAnnotator;
   private NamesValidator myNamesValidator;
+  private AntUsagesProvider myUsagesProvider;
 
   public AntLanguage() {
     super("ANT", "text/xml");
@@ -49,6 +52,7 @@ public class AntLanguage extends Language {
         public boolean isKeyword(String name, Project project) {
           return false;
         }
+
         public boolean isIdentifier(String name, Project project) {
           return true;
         }
@@ -60,5 +64,13 @@ public class AntLanguage extends Language {
   @Nullable
   public Commenter getCommenter() {
     return myXmlLanguage.getCommenter();
+  }
+
+  @NotNull
+  public FindUsagesProvider getFindUsagesProvider() {
+    if (myUsagesProvider == null) {
+      myUsagesProvider = new AntUsagesProvider();
+    }
+    return myUsagesProvider;
   }
 }
