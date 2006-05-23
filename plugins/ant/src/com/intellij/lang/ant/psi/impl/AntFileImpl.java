@@ -159,24 +159,25 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @NotNull
   public AntTypeDefinition[] getBaseTypeDefinitions() {
-    if (myTypeDefinitionArray != null) return myTypeDefinitionArray;
-    getBaseTypeDefinition(null);
-    return myTypeDefinitionArray =
-      myTypeDefinitions.values().toArray(new AntTypeDefinition[myTypeDefinitions.size()]);
+    final int defCount = myTypeDefinitions.size();
+    if (myTypeDefinitionArray == null || myTypeDefinitionArray.length != defCount) {
+      getBaseTypeDefinition(null);
+      myTypeDefinitionArray = myTypeDefinitions.values().toArray(new AntTypeDefinition[defCount]);
+    }
+    return myTypeDefinitionArray;
   }
 
   @Nullable
-  public AntTypeDefinition getBaseTypeDefinition(final String className) {
-    if (myTypeDefinitions != null) return myTypeDefinitions.get(className);
-    myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
-    myAntProject = new Project();
-    myAntProject.init();
-
-    // first, create task definitons
-    updateTypeDefinitions(myAntProject.getTaskDefinitions(), true);
-    // second, create definitions of data types
-    updateTypeDefinitions(myAntProject.getDataTypeDefinitions(), false);
-
+  public synchronized AntTypeDefinition getBaseTypeDefinition(final String className) {
+    if (myTypeDefinitions == null) {
+      myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
+      myAntProject = new Project();
+      myAntProject.init();
+      // first, create task definitons
+      updateTypeDefinitions(myAntProject.getTaskDefinitions(), true);
+      // second, create definitions of data types
+      updateTypeDefinitions(myAntProject.getDataTypeDefinitions(), false);
+    }
     return myTypeDefinitions.get(className);
   }
 
