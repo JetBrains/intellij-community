@@ -59,7 +59,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   private Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
-  private boolean myHasErrorElement;
+  protected boolean myHasErrorElement;
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
@@ -165,10 +165,9 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private void reportFoundProblems(final Collection<HighlightInfo> infos) {
+    VirtualFile file = myFile.getVirtualFile();
     if (!myFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
     if (!PsiManager.getInstance(myProject).isInProject(myFile)) return; // do not report problems in libraries
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    VirtualFile file = myFile.getVirtualFile();
 
     List<Problem> problems = new SmartList<Problem>();
     for (HighlightInfo info : infos) {
@@ -177,6 +176,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         problems.add(problem);
       }
     }
+    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
     wolf.reportProblems(file, problems);
   }
 
@@ -244,45 +244,39 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       if (visitor.suitableForFile(myFile)) visitors.add(visitor);
     }
 
-    final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
+    final HighlightInfoHolder holder = createInfoHolder();
+    for (PsiElement element : elements) {
+      ProgressManager.getInstance().checkCanceled();
 
-    final HighlightInfoHolder holder = new HighlightInfoHolder(myFile, filters);
-    //PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
-    //  public void run() {
-        for (PsiElement element : elements) {
-          ProgressManager.getInstance().checkCanceled();
+      if (element != myFile && skipParentsSet.contains(element)) {
+        skipParentsSet.add(element.getParent());
+        continue;
+      }
 
-          if (element != myFile && skipParentsSet.contains(element)) {
-            skipParentsSet.add(element.getParent());
-            continue;
-          }
-
-          if (element instanceof PsiErrorElement) {
-            myHasErrorElement = true;
-          }
-          try {
-            holder.setWritable(true);
-            holder.clear();
-            for (HighlightVisitor visitor : visitors) {
-              visitor.visit(element, holder);
-            }
-          }
-          finally {
-            holder.setWritable(false);
-          }
-
-          //noinspection ForLoopReplaceableByForEach
-          for (int i=0; i<holder.size(); i++) {
-            HighlightInfo info = holder.get(i);
-            // have to filter out already obtained highlights
-            if (!gotHighlights.add(info)) continue;
-            if (info.getSeverity() == HighlightSeverity.ERROR) {
-              skipParentsSet.add(element.getParent());
-            }
-          }
+      if (element instanceof PsiErrorElement) {
+        myHasErrorElement = true;
+      }
+      try {
+        holder.setWritable(true);
+        holder.clear();
+        for (HighlightVisitor visitor : visitors) {
+          visitor.visit(element, holder);
         }
-      //}
-    //});
+      }
+      finally {
+        holder.setWritable(false);
+      }
+
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < holder.size(); i++) {
+        HighlightInfo info = holder.get(i);
+        // have to filter out already obtained highlights
+        if (!gotHighlights.add(info)) continue;
+        if (info.getSeverity() == HighlightSeverity.ERROR) {
+          skipParentsSet.add(element.getParent());
+        }
+      }
+    }
 
     //if (LOG.isDebugEnabled()) {
       //if(maxVisitElement != null){
@@ -293,6 +287,11 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     //}
 
     return gotHighlights;
+  }
+
+  protected HighlightInfoHolder createInfoHolder() {
+    final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
+    return new HighlightInfoHolder(myFile, filters);
   }
 
   private Collection<HighlightInfo> collectTextHighlights() {

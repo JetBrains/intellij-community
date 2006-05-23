@@ -3,6 +3,7 @@ package com.intellij.codeInsight.problems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.problems.Problem;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author cdr
@@ -24,5 +25,10 @@ public class ProblemImpl implements Problem {
 
   public boolean isSyntaxOnly() {
     return isSyntax;
+  }
+
+  @NonNls
+  public String toString() {
+    return "Problem: " + highlightInfo;
   }
 }

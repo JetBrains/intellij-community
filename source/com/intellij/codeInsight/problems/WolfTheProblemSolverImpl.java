@@ -3,6 +3,8 @@ package com.intellij.codeInsight.problems;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +30,7 @@ import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.util.SmartList;
+import com.intellij.lang.annotation.HighlightSeverity;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,16 +87,20 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
 
       public void childrenChanged(PsiTreeChangeEvent event) {
-        PsiFile file = event.getFile();
-        if (file == null) return;
-        VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) return;
-        ProblemFileInfo info = myProblems.get(virtualFile);
-        if (info == null) return;
-        info.hasSyntaxErrors = false;
+        clearSyntaxErrorFlag(event);
       }
     };
     psiManager.addPsiTreeChangeListener(myChangeListener);
+  }
+
+  private void clearSyntaxErrorFlag(final PsiTreeChangeEvent event) {
+    PsiFile file = event.getFile();
+    if (file == null) return;
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return;
+    ProblemFileInfo info = myProblems.get(virtualFile);
+    if (info == null) return;
+    info.hasSyntaxErrors = false;
   }
 
   public void projectOpened() {
@@ -145,6 +152,16 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
+  private static class HaveGotErrorException extends RuntimeException {
+    private final HighlightInfo myHighlightInfo;
+    private final boolean myHasErrorElement;
+
+    public HaveGotErrorException(HighlightInfo info, final boolean hasErrorElement) {
+      myHighlightInfo = info;
+      myHasErrorElement = hasErrorElement;
+    }
+  }
+
   private void orderVincentToCleanTheCar(final VirtualFile file, ProgressIndicator progressIndicator) throws ProcessCanceledException {
     if (hasSyntaxErrors(file)) {
       // it's no use anyway to try clean the file with syntax errors, only changing the file itself can help
@@ -161,8 +178,25 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       if (statusBar != null) {
         statusBar.setInfo("Checking '"+file.getPresentableUrl()+"'");
       }
-      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true);
+
+      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true){
+        protected HighlightInfoHolder createInfoHolder() {
+          final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
+          return new HighlightInfoHolder(psiFile, filters){
+            public boolean add(HighlightInfo info) {
+              if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
+                throw new HaveGotErrorException(info, myHasErrorElement);
+              }
+              return super.add(info);
+            }
+          };
+        }
+      };
       pass.doCollectInformation(progressIndicator);
+    }
+    catch (HaveGotErrorException e) {
+      ProblemImpl problem = new ProblemImpl(file, e.myHighlightInfo, e.myHasErrorElement);
+      reportProblems(file, Collections.<Problem>singleton(problem));
     }
     finally {
       if (statusBar != null) {
@@ -213,7 +247,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         if (scope instanceof PsiDirectory) {
           final PsiDirectory directory = (PsiDirectory)scope;
           return VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false);
-        } else if (scope instanceof PsiPackage){
+        }
+        else if (scope instanceof PsiPackage) {
           final PsiDirectory[] psiDirectories = ((PsiPackage)scope).getDirectories();
           for (PsiDirectory directory : psiDirectories) {
             if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
@@ -307,17 +342,15 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       clearProblems(file);
       return;
     }
+    if (file == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(file)) return;
     synchronized (myProblems) {
       boolean hasProblemsBefore = myProblems.remove(file) != null;
       ProblemFileInfo storedProblems = new ProblemFileInfo();
       myProblems.put(file, storedProblems);
       for (Problem problem : problems) {
-        VirtualFile virtualFile = problem.getVirtualFile();
-        if (virtualFile == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(virtualFile)) continue;
-
         storedProblems.problems.add(problem);
         storedProblems.hasSyntaxErrors |= ((ProblemImpl)problem).isSyntaxOnly();
-        myCheckingQueue.addIfAbsent(virtualFile);
+        myCheckingQueue.addIfAbsent(file);
       }
       if (!hasProblemsBefore) {
         fireProblemListeners.problemsChanged(Collections.singletonList(file), Collections.<VirtualFile>emptyList());
