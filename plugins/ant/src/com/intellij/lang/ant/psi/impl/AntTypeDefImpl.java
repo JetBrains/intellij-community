@@ -93,10 +93,6 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         LOG.error(e);
       }
     }
-    else {
-      myNewDefinition = getAntFile().getBaseTypeDefinition(classname);
-      if (myNewDefinition != null) return;
-    }
     Class clazz;
     try {
       if (loader == null) {
