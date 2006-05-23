@@ -81,6 +81,9 @@ public abstract class DomUIFactory implements ApplicationComponent {
       return getDomUIFactory().createTextControl(wrapper, commitOnEveryChange);
     }
 
+    final BaseControl customControl = getDomUIFactory().createCustomControl(type, new DomStringWrapper(element), commitOnEveryChange);
+    if (customControl != null) return customControl;
+
     throw new IllegalArgumentException("Not supported: " + type);
   }
 
@@ -103,6 +106,8 @@ public abstract class DomUIFactory implements ApplicationComponent {
   public abstract BaseControl createPsiTypeControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
   public abstract BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
+
+  public abstract BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
   public static BaseControl createTextControl(GenericDomValue value, final boolean commitOnEveryChange) {
     return getDomUIFactory().createTextControl(new DomStringWrapper(value), commitOnEveryChange);

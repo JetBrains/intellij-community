@@ -10,12 +10,15 @@ import com.intellij.psi.PsiClass;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.javaee.web.WebPath;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
+import java.lang.reflect.Type;
 
 /**
  * @author peter
@@ -65,6 +68,14 @@ public class DomUIFactoryImpl extends DomUIFactory {
         }
       }
     };
+  }
+
+  public BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
+    // todo registry for custom controls
+    if (WebPath.class.isAssignableFrom(DomUtil.getRawType(type))) {
+      return new WebPathControl(wrapper, commitOnEveryChange);
+    }
+    return null;
   }
 
   public BaseControl createPsiClassControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
