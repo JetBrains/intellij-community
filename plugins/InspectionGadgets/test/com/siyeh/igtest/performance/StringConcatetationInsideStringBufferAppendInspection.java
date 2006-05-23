@@ -21,4 +21,15 @@ public class StringConcatetationInsideStringBufferAppendInspection
         new StringBuffer().append("This is number " + (i+1));
         return new StringBuilder().append(i + i + " a '" + "b").toString();
     }
+
+    static void foo() {
+        int a = 10;
+        StringBuilder sb = new StringBuilder();
+        sb.append("c" + (10 + a));
+        System.out.println("sb.toString() = " + sb.toString());
+    }
+
+    public static void main(String[] args) {
+        foo();
+    }
 }

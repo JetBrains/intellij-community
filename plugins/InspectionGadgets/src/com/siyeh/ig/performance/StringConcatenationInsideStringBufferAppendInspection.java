@@ -146,12 +146,17 @@ public class StringConcatenationInsideStringBufferAppendInspection
                     assert rhs != null;
                     if (!PsiUtil.isConstantExpression(rhs)){
                         findConcatenationComponents(lhs, out, useStringValueOf);
-                        findConcatenationComponents(rhs, out,useStringValueOf);
+                        findConcatenationComponents(rhs, out, useStringValueOf);
                         return;
                     }
                     final StringBuffer builder =
                             new StringBuffer(rhs.getText());
-                    while (lhs instanceof PsiBinaryExpression){
+                    while (lhs instanceof PsiBinaryExpression) {
+                        final PsiType lhsType = lhs.getType();
+                        if (lhsType == null ||
+                                !lhsType.equalsToText("java.lang.String")) {
+                            break;
+                        }
                         binaryExpression = (PsiBinaryExpression)lhs;
                         rhs = binaryExpression.getROperand();
                         assert rhs != null;
@@ -172,13 +177,7 @@ public class StringConcatenationInsideStringBufferAppendInspection
                         findConcatenationComponents(lhs, out, useStringValueOf);
                         out.add(builder.toString());
                     }
-                } else{
-                    if (useStringValueOf && type != null &&
-                            !type.equalsToText("java.lang.String")){
-                        out.add("String.valueOf(" + concatenation.getText() + ')');
-                    } else{
-                        out.add(concatenation.getText());
-                    }
+                    return;
                 }
             } else if(concatenation instanceof PsiParenthesizedExpression){
                 final PsiParenthesizedExpression parenthesizedExpression =
@@ -188,13 +187,13 @@ public class StringConcatenationInsideStringBufferAppendInspection
                 if (expression != null){
                     out.add(expression.getText());
                 }
+                return;
+            }
+            if (useStringValueOf && type != null &&
+                    !type.equalsToText("java.lang.String")){
+                out.add("String.valueOf(" + concatenation.getText() + ')');
             } else{
-                if (useStringValueOf && type != null &&
-                        !type.equalsToText("java.lang.String")){
-                    out.add("String.valueOf(" + concatenation.getText() + ')');
-                } else{
-                    out.add(concatenation.getText());
-                }
+                out.add(concatenation.getText());
             }
         }
     }
@@ -212,13 +211,13 @@ public class StringConcatenationInsideStringBufferAppendInspection
             if(!"append".equals(methodName)){
                 return;
             }
-            final PsiExpressionList argList = expression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            if(args.length != 1){
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if(arguments.length != 1){
                 return;
             }
-            final PsiExpression arg = args[0];
-            if(!isConcatenation(arg)){
+            final PsiExpression argument = arguments[0];
+            if(!isConcatenation(argument)){
                 return;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -249,14 +248,14 @@ public class StringConcatenationInsideStringBufferAppendInspection
             registerMethodCallError(expression, containingClass);
         }
 
-        private static boolean isConcatenation(PsiExpression arg){
-            if(!(arg instanceof PsiBinaryExpression)){
+        private static boolean isConcatenation(PsiExpression expression){
+            if(!(expression instanceof PsiBinaryExpression)){
                 return false;
             }
-            if (PsiUtil.isConstantExpression(arg)){
+            if (PsiUtil.isConstantExpression(expression)){
                return false;
             }
-            final PsiType type = arg.getType();
+            final PsiType type = expression.getType();
             if(type == null){
                 return false;
             }
