@@ -373,10 +373,6 @@ public class VirtualFileImpl extends VirtualFile {
 
     final Runnable runnable = new Runnable() {
       public void run() {
-        final ProgressIndicator indicator = ourFileSystem.getManager().getRefreshIndicator();
-        indicator.start();
-        indicator.setText(VfsBundle.message("file.synchronize.progress"));
-
         ourFileSystem.getManager().beforeRefreshStart(asynchronous, modalityState, postRunnable);
 
         PhysicalFile physicalFile = getPhysicalFile();
@@ -398,7 +394,6 @@ public class VirtualFileImpl extends VirtualFile {
           ourFileSystem.refresh(VirtualFileImpl.this, recursive, true, modalityState, asynchronous, false, noFileWatcher);
         }
 
-        indicator.stop();
       }
     };
 
@@ -413,7 +408,14 @@ public class VirtualFileImpl extends VirtualFile {
         public void run() {
           LOG.info("Executing request:" + this);
 
+          final ProgressIndicator indicator = ourFileSystem.getManager().getRefreshIndicator(asynchronous);
+          indicator.start();
+          indicator.setText(VfsBundle.message("file.synchronize.progress"));
+
           ApplicationManager.getApplication().runReadAction(runnable);
+
+          indicator.stop();
+
 
           endTask.run();
         }

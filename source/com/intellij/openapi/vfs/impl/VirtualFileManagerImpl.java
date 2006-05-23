@@ -34,6 +34,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   private PendingEventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster = PendingEventDispatcher.create(ModificationAttemptListener.class);
 
   private ProgressIndicator myRefreshIndicator = new StatusBarProgress();
+  private ProgressIndicator myAsyncRefreshIndicator = new StatusBarProgress();
 
   private ArrayList<FileContentProvider> myContentProviders = new ArrayList<FileContentProvider>();
   private PendingEventDispatcher<VirtualFileListener> myContentProvidersDispatcher = PendingEventDispatcher.create(VirtualFileListener.class);
@@ -70,8 +71,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   @NotNull
-  public ProgressIndicator getRefreshIndicator() {
-    return myRefreshIndicator;
+  public ProgressIndicator getRefreshIndicator(final boolean asynchronous) {
+    return asynchronous ? myAsyncRefreshIndicator : myRefreshIndicator;
   }
 
   private void registerFileSystem(VirtualFileSystem fileSystem) {

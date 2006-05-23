@@ -11,8 +11,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class VirtualFileManagerEx extends VirtualFileManager {
+  /**
+   * @param asynchronous whether this indicator wiol be used by async refresh
+   */
   @NotNull
-  public abstract ProgressIndicator getRefreshIndicator();
+  public abstract ProgressIndicator getRefreshIndicator(final boolean asynchronous);
 
   public abstract void beforeRefreshStart(boolean asynchronous, ModalityState modalityState, Runnable postAction);
   public abstract void afterRefreshFinish(boolean asynchronous, ModalityState modalityState);
