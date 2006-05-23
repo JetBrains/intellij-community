@@ -11,6 +11,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntry type="library" name="CGLIB" level="project" />
+    <orderEntry type="module" module-name="treeStructure" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

@@ -1,12 +1,12 @@
 package com.intellij.util.xml.tree;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
@@ -17,8 +17,8 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventAdapter;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -155,7 +155,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
   protected ActionGroup getPopupActions() {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    group.add(ActionManagerEx.getInstance().getAction("DomElementsTreeView.TreePopup"));
+    group.add(ActionManager.getInstance().getAction("DomElementsTreeView.TreePopup"));
     group.addSeparator();
 
     group.add(new ExpandAllAction(myTree));

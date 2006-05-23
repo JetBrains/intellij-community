@@ -3,15 +3,11 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakArrayHashMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
@@ -23,31 +19,6 @@ import java.util.*;
  */
 public class ModelMergerImpl implements ModelMerger {
   private final WeakArrayHashMap myMergedMap = new WeakArrayHashMap();
-
-  public static class ImplementationProcessor<T> implements Processor<T> {
-    private final Processor<T> myProcessor;
-    private final boolean myProcessMerged;
-
-    public ImplementationProcessor(Processor<T> processor, final boolean processMerged) {
-      myProcessor = processor;
-      myProcessMerged = processMerged;
-    }
-
-    public boolean process(final T t) {
-      final boolean merged = t instanceof MergedObject;
-      if ((!merged || myProcessMerged) && !myProcessor.process(t)) {
-        return false;
-      }
-      if (merged && !ContainerUtil.process(((MergedObject<T>)t).getImplementations(), this)) {
-        return false;
-      }
-      return true;
-    }
-  }
-
-  public interface MergedObject<V> {
-    List<V> getImplementations();
-  }
 
   public <T> T mergeModels(final Class<? extends T> aClass, final T... implementations) {
     final Object o = myMergedMap.get(implementations);
@@ -84,39 +55,6 @@ public class ModelMergerImpl implements ModelMerger {
     final T t = AdvancedProxy.createProxy(handler, aClass, commonClasses.toArray(new Class[commonClasses.size()]));
     myMergedMap.put(implementations, t);
     return t;
-  }
-
-  @Nullable
-  public static <T, V> V getImplementation(final T element, final Class<V> clazz) {
-    if (element == null) return null;
-    CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>() {
-      public boolean process(final T t) {
-        return !clazz.isAssignableFrom(t.getClass()) || super.process(t);
-      }
-    };
-    new ImplementationProcessor<T>(processor, true).process(element);
-    return (V)processor.getFoundValue();
-  }
-
-  @NotNull
-  public static <T> List<T> getFilteredImplementations(final T element) {
-    final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(new ArrayList<T>());
-    new ImplementationProcessor<T>(processor, false).process(element);
-    return (List<T>)processor.getResults();
-  }
-
-  @NotNull
-  public static <T> List<T> getImplementations(T element) {
-    if (element instanceof MergedObject) {
-      final MergedObject<T> mergedObject = (MergedObject<T>)element;
-      return mergedObject.getImplementations();
-    }
-    else if (element != null) {
-      return Collections.singletonList(element);
-    }
-    else {
-      return Collections.emptyList();
-    }
   }
 
   private static void addAllInterfaces(Class aClass, List<Class> list) {
