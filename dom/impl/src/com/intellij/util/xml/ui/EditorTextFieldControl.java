@@ -57,6 +57,10 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
 
   protected abstract EditorTextField getEditorTextField(T component);
 
+  public final EditorTextField getEditorTextField() {
+    return getEditorTextField(getComponent());
+  }
+
   protected void doReset() {
     if (myCommitOnEveryChange) {
       final EditorTextField textField = getEditorTextField(getComponent());
