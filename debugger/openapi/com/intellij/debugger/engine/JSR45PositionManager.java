@@ -1,17 +1,6 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
  */
 package com.intellij.debugger.engine;
 
@@ -25,53 +14,62 @@ import com.intellij.javaee.deployment.JspDeploymentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.Location;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @author Eugene Zhuravlev
+ *         Date: May 23, 2006
+ */
 public abstract class JSR45PositionManager implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.JSR45PositionManager");
-  private final DebugProcess      myDebugProcess;
-  private final Module[] myScope;
-  private final JspDeploymentManager myHelper;
-  private final String            JSP_PATTERN;
-  private Matcher myJspPatternMatcher;
-  protected static final @NonNls String JSP_STRATUM = "JSP";
+  protected final DebugProcess      myDebugProcess;
+  protected final Module[] myScope;
+  private final String myStratumId;
+  protected final JspDeploymentManager myHelper;
+  protected final String GENERATED_CLASS_PATTERN;
+  protected Matcher myJspPatternMatcher;
+  private final Set<LanguageFileType> myFileTypes;
 
-  /**
-   * @deprecated
-   * Use JSR45PositionManager(DebugProcess debugProcess, Module[] scopeModules) and explicitly specify WebModules to be used when searching for sources
-   */
-  public JSR45PositionManager(DebugProcess debugProcess) {
-    this(debugProcess, ModuleManager.getInstance(debugProcess.getProject()).getModules());
-  }
-
-  public JSR45PositionManager(DebugProcess debugProcess, Module[] scopeModules) {
+  public JSR45PositionManager(DebugProcess debugProcess, Module[] scopeModules, final String stratumId, final LanguageFileType[] acceptedFileTypes) {
     myDebugProcess = debugProcess;
     myScope = scopeModules;
+    myStratumId = stratumId;
+    myFileTypes = Collections.unmodifiableSet(new HashSet<LanguageFileType>(Arrays.asList(acceptedFileTypes)));
     myHelper =  ApplicationManager.getApplication().getComponent(JspDeploymentManager.class);
-    String jsp_pattern = getJSPClassesPackage();
-    if(jsp_pattern.equals("")) {
-      jsp_pattern = getJSPClassesNamePattern();
+    String generatedClassPattern = getGeneratedClassesPackage();
+    if(generatedClassPattern.equals("")) {
+      generatedClassPattern = getGeneratedClassesNamePattern();
     }
     else {
-      jsp_pattern = jsp_pattern + "." + getJSPClassesNamePattern();
+      generatedClassPattern = generatedClassPattern + "." + getGeneratedClassesNamePattern();
     }
+    GENERATED_CLASS_PATTERN = generatedClassPattern;
+    myJspPatternMatcher = Pattern.compile(generatedClassPattern.replaceAll("\\*", ".*")).matcher("");
+  }
 
-    JSP_PATTERN = jsp_pattern;
-    myJspPatternMatcher = Pattern.compile(jsp_pattern.replaceAll("\\*", ".*")).matcher("");
+  @NonNls
+  protected abstract String getGeneratedClassesPackage();
+
+  protected String getGeneratedClassesNamePattern() {
+    return "*";
+  }
+
+  public final String getStratumId() {
+    return myStratumId;
   }
 
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
@@ -97,18 +95,15 @@ public abstract class JSR45PositionManager implements PositionManager {
   }
 
   protected String getRelativeSourcePathByLocation(final Location location) throws AbsentInformationException {
-    return getRelativePath(location.sourcePath(JSP_STRATUM));
+    return getRelativePath(location.sourcePath(myStratumId));
   }
 
   protected int getLineNumber(final Location location) {
-    return location.lineNumber(JSP_STRATUM);
+    return location.lineNumber(myStratumId);
   }
 
   public List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException {
-    final FileType fileType = classPosition.getFile().getFileType();
-    if(fileType != StdFileTypes.JSP && fileType != StdFileTypes.JSPX) {
-      throw new NoDataException();
-    }
+    checkSourcePositionFileType(classPosition);
 
     final List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().allClasses();
 
@@ -127,6 +122,13 @@ public abstract class JSR45PositionManager implements PositionManager {
     return result;
   }
 
+  private void checkSourcePositionFileType(final SourcePosition classPosition) throws NoDataException {
+    final FileType fileType = classPosition.getFile().getFileType();
+    if(!myFileTypes.contains(fileType)) {
+      throw new NoDataException();
+    }
+  }
+
   public List<Location> locationsOfLine(final ReferenceType type, final SourcePosition position) throws NoDataException {
     List<Location> locations = locationsOfClassAt(type, position);
     return locations != null ? locations : Collections.<Location>emptyList();
@@ -134,10 +136,7 @@ public abstract class JSR45PositionManager implements PositionManager {
   }
 
   private List<Location> locationsOfClassAt(final ReferenceType type, final SourcePosition position) throws NoDataException {
-    final FileType fileType = position.getFile().getFileType();
-    if(fileType != StdFileTypes.JSP && fileType != StdFileTypes.JSPX) {
-      throw new NoDataException();
-    }
+    checkSourcePositionFileType(position);
 
     return ApplicationManager.getApplication().runReadAction(new Computable<List<Location>>() {
       public List<Location> compute() {
@@ -164,7 +163,7 @@ public abstract class JSR45PositionManager implements PositionManager {
       // Finds exact server file name (from available in type)
       // This is needed because some servers (e.g. WebSphere) put not exact file name such as 'A.jsp  '
       private String getJspSourceName(final String name, final ReferenceType type) throws AbsentInformationException {
-        for(String sourceNameFromType:type.sourceNames(JSP_STRATUM)) {
+        for(String sourceNameFromType: type.sourceNames(myStratumId)) {
           if (sourceNameFromType.indexOf(name) >= 0) {
             return sourceNameFromType;
           }
@@ -175,7 +174,7 @@ public abstract class JSR45PositionManager implements PositionManager {
   }
 
   protected List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
-    final List<String> paths = type.sourcePaths(JSP_STRATUM);
+    final List<String> paths = type.sourcePaths(myStratumId);
     final ArrayList<String> relativePaths = new ArrayList<String>();
     for (String path : paths) {
       relativePaths.add(getRelativePath(path));
@@ -185,21 +184,18 @@ public abstract class JSR45PositionManager implements PositionManager {
 
   protected List<Location> getLocationsOfLine(final ReferenceType type, final String fileName,
                                               final String relativePath, final int lineNumber) throws AbsentInformationException {
-    return type.locationsOfLine(JSP_STRATUM, fileName, lineNumber);
+    return type.locationsOfLine(myStratumId, fileName, lineNumber);
   }
 
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position)
     throws NoDataException {
-    final FileType fileType = position.getFile().getFileType();
-    if(fileType != StdFileTypes.JSP && fileType != StdFileTypes.JSPX) {
-      throw new NoDataException();
-    }
+    checkSourcePositionFileType(position);
 
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(new ClassPrepareRequestor() {
       public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
         onClassPrepare(debuggerProcess, referenceType, position, requestor);
       }
-    }, JSP_PATTERN);
+    }, GENERATED_CLASS_PATTERN);
   }
 
   protected void onClassPrepare(final DebugProcess debuggerProcess, final ReferenceType referenceType,
@@ -217,7 +213,7 @@ public abstract class JSR45PositionManager implements PositionManager {
 
     if (jspPath != null) {
       jspPath = jspPath.trim();
-      String jspClassesPackage = getJSPClassesPackage();
+      String jspClassesPackage = getGeneratedClassesPackage();
       final String prefix = jspClassesPackage.replace('.', File.separatorChar);
 
       if (jspPath.startsWith(prefix)) {
@@ -228,9 +224,4 @@ public abstract class JSR45PositionManager implements PositionManager {
     return jspPath;
   }
 
-  @NonNls protected abstract String getJSPClassesPackage();
-
-  protected String getJSPClassesNamePattern() {
-    return "*";
-  }
 }
