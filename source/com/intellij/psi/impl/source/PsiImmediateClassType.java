@@ -1,17 +1,15 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.impl.EmptySubstitutorImpl;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -195,9 +193,7 @@ public class PsiImmediateClassType extends PsiClassType {
   }
 
   public boolean isValid() {
-    if (!myClass.isValid()) return false;
-    if (mySubstitutor instanceof EmptySubstitutorImpl) return true;
-    return mySubstitutor.isValid();
+    return myClass.isValid() && mySubstitutor.isValid();
   }
 
   public boolean equalsToText(String text) {
