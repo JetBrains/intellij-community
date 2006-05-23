@@ -121,8 +121,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitElement(PsiElement element) {
     Language lang = element.getLanguage();
-    List<Annotator> annotators = lang.getAnnotators();
     boolean hasAnnotators = highlightInjectedPsi(element);
+    List<Annotator> annotators = lang.getAnnotators();
 
     if (annotators.size() > 0) {
       //noinspection ForLoopReplaceableByForEach

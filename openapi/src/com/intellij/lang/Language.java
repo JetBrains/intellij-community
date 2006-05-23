@@ -264,7 +264,7 @@ public abstract class Language {
     myLastAnnotator = annotator;
     int injectCount = myInjectedAnnotators == null ? 0 : myInjectedAnnotators.size();
     if (annotator == null && injectCount == 0) {
-        myCachedAnnotators = Annotator.EMPTY_LIST;
+      myCachedAnnotators = Annotator.EMPTY_LIST;
     }
     else {
       myCachedAnnotators = new ArrayList<Annotator>();
@@ -274,7 +274,6 @@ public abstract class Language {
       if (myInjectedAnnotators != null) {
         myCachedAnnotators.addAll(myInjectedAnnotators);
       }
-
     }
     return myCachedAnnotators;
   }
