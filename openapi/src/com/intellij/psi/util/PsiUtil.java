@@ -774,17 +774,21 @@ public final class PsiUtil {
   }
 
   public static boolean isApplicable(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {
-    PsiExpression[] args = argList == null ? PsiExpression.EMPTY_ARRAY : argList.getExpressions();
+    PsiExpression[] args = argList.getExpressions();
     final PsiParameter[] parms = method.getParameterList().getParameters();
 
-    if (!method.isVarArgs() || (argList != null && getLanguageLevel(argList).compareTo(LanguageLevel.JDK_1_5) < 0)) {
+    final LanguageLevel languageLevel = getLanguageLevel(argList);
+    if (!method.isVarArgs() || languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
       if (args.length != parms.length) return false;
 
       for (int i = 0; i < args.length; i++) {
         final PsiExpression arg = args[i];
         final PsiType type = arg.getType();
         if (type == null) return false; //?
-        final PsiType parmType = parms[i].getType();
+        PsiType parmType = parms[i].getType();
+        if (parmType instanceof PsiClassType) {
+          parmType = ((PsiClassType)parmType).setLanguageLevel(languageLevel);
+        }
         final PsiType substitutedParmType = substitutorForMethod.substituteAndCapture(parmType);
         if (!TypeConversionUtil.isAssignable(substitutedParmType, type)) {
           return false;
