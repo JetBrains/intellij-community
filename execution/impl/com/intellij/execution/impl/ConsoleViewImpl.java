@@ -497,7 +497,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   }
 
   private HyperlinkInfo getHyperlinkInfoByPoint(final Point p){
-    if (myState == ConsoleState.NOT_STARTED) return null;
+    if (myEditor == null) return null;
     final LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(p.x, p.y));
     return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
   }
