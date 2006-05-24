@@ -456,67 +456,62 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private void addRootsToWatch() {
-    LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
-    myRootsToWatch.clear();
-
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    Set<String> contentRoots = new HashSet<String>();
+    Set<String> rootPaths = new HashSet<String>();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final String[] contentRootUrls = moduleRootManager.getContentRootUrls();
       for (String url : contentRootUrls) {
-        contentRoots.add(VfsUtil.urlToPath(url));
+        rootPaths.add(VfsUtil.urlToPath(url));
       }
 
       final String compilerOutputPath = VfsUtil.urlToPath(moduleRootManager.getCompilerOutputPathUrl());
       if (compilerOutputPath.length() > 0) {
-        contentRoots.add(compilerOutputPath);
+        rootPaths.add(compilerOutputPath);
       }
       final String compilerOutputPathForTests = VfsUtil.urlToPath(moduleRootManager.getCompilerOutputPathForTestsUrl());
       if (compilerOutputPathForTests.length() > 0) {
-        contentRoots.add(compilerOutputPathForTests);
+        rootPaths.add(compilerOutputPathForTests);
       }
 
-      contentRoots.add(module.getModuleFilePath());
+      rootPaths.add(module.getModuleFilePath());
     }
 
     final String projectFile = myProject.getProjectFilePath();
     if (projectFile != null) {
-      contentRoots.add(projectFile);
+      rootPaths.add(projectFile);
       // No need to add workspace file separately since they're definetely on same directory with ipr.
     }
 
-    myRootsToWatch.addAll(LocalFileSystem.getInstance().addRootsToWatch(contentRoots, true));
-
-
-    Set<String> libraryRoots = new HashSet<String>();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       for (OrderEntry entry : orderEntries) {
         if (entry instanceof LibraryOrderEntry) {
           final Library library = ((LibraryOrderEntry)entry).getLibrary();
-          libraryRoots.addAll(getRootsToTrack(library, OrderRootType.CLASSES));
-          libraryRoots.addAll(getRootsToTrack(library, OrderRootType.SOURCES));
-          libraryRoots.addAll(getRootsToTrack(library, OrderRootType.JAVADOC));
+          rootPaths.addAll(getRootsToTrack(library, OrderRootType.CLASSES));
+          rootPaths.addAll(getRootsToTrack(library, OrderRootType.SOURCES));
+          rootPaths.addAll(getRootsToTrack(library, OrderRootType.JAVADOC));
         }
       }
     }
 
-    myRootsToWatch.addAll(LocalFileSystem.getInstance().addRootsToWatch(libraryRoots, false));
-
-    Set<String> explodedDirs = new HashSet<String>();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final String explodedDirectory = moduleRootManager.getExplodedDirectoryUrl();
       if (explodedDirectory != null) {
-        explodedDirs.add(VfsUtil.urlToPath(explodedDirectory));
+        rootPaths.add(VfsUtil.urlToPath(explodedDirectory));
       }
     }
-    myRootsToWatch.addAll(LocalFileSystem.getInstance().addRootsToWatch(explodedDirs, true));
+
+    final Set<LocalFileSystem.WatchRequest> newRootsToWatch = LocalFileSystem.getInstance().addRootsToWatch(rootPaths, true);
+
+    //remove old requests after adding new ones, helps avoiding unnecessary synchronizations
+    LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
+    myRootsToWatch = newRootsToWatch;
   }
 
-  private Collection<String> getRootsToTrack(final Library library, final OrderRootType rootType) {
+  private static Collection<String> getRootsToTrack(final Library library, final OrderRootType rootType) {
     List<String> result = new ArrayList<String>();
     if (library != null) {
       final String[] urls = library.getUrls(rootType);

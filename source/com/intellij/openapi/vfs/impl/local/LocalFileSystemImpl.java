@@ -872,12 +872,19 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     LOG.assertTrue(rootPaths != null);
     Set<WatchRequest> result = new HashSet<WatchRequest>();
     Set<VirtualFile> filesToSynchronize = new HashSet<VirtualFile>();
+    Set<String> oldPaths = new HashSet<String>();
+    for (WatchRequest request : myRootsToWatch) {
+      oldPaths.add(request.getRootPath());
+    }
+
     synchronized (LOCK) {
       for (String rootPath : rootPaths) {
         LOG.assertTrue(rootPath != null);
         final WatchRequestImpl request = new WatchRequestImpl(rootPath, toWatchRecursively);
-        final VirtualFile existingFile = findFileByPath(request.getRootPath(), false, false);
-        if (existingFile != null) filesToSynchronize.add(existingFile);
+        if (!oldPaths.contains(request.getRootPath())) {
+          final VirtualFile existingFile = findFileByPath(request.getRootPath(), false, false);
+          if (existingFile != null) filesToSynchronize.add(existingFile);
+        }
         result.add(request);
       }
 
