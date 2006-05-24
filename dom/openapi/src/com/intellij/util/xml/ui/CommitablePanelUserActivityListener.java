@@ -27,6 +27,7 @@ import com.intellij.openapi.Disposable;
 public class CommitablePanelUserActivityListener implements UserActivityListener, Disposable {
   private final Committable myPanel;
   private final Alarm myAlarm = new Alarm();
+  private boolean myApplying;
 
   public CommitablePanelUserActivityListener() {
     this(null);
@@ -37,10 +38,17 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
   }
 
   final public void stateChanged() {
+    if (myApplying) return;
     cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        applyChanges();
+        myApplying = true;
+        try {
+          applyChanges();
+        }
+        finally {
+          myApplying = false;
+        }
       }
     }, 239);
   }

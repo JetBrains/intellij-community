@@ -609,7 +609,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   public CollectionChildDescriptionImpl getCollectionChildDescription(String tagName) {
     buildMethodMaps();
     final Method getter = findGetterMethod(myCollectionChildrenGetterMethods, tagName);
-    return new CollectionChildDescriptionImpl(tagName, getCollectionChildrenType(tagName), getCollectionAddMethod(tagName),
+    return getter == null ? null : new CollectionChildDescriptionImpl(tagName, getCollectionChildrenType(tagName), getCollectionAddMethod(tagName),
                                               getCollectionAddMethod(tagName, Class.class), getter,
                                               getCollectionAddMethod(tagName, int.class),
                                               getCollectionAddMethod(tagName, Class.class, int.class),

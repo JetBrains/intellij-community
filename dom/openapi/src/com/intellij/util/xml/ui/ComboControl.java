@@ -82,7 +82,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
       public List<Pair<String, Icon>> create() {
         return ContainerUtil.map2List(aClass.getEnumConstants(), new Function<Enum, Pair<String, Icon>>() {
           public Pair<String, Icon> fun(final Enum s) {
-            return Pair.create(NamedEnumUtil.getEnumValueByElement(s), null);
+            return Pair.create(NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s));
           }
         });
       }
