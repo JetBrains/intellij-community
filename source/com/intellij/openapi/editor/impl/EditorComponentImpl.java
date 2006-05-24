@@ -1,9 +1,8 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 
@@ -36,18 +35,19 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     if (myEditor.isRendererMode()) return null;
 
     if (DataConstants.EDITOR.equals(dataId)) {
+      // for 'big' editors return null to allow injected editors (see com.intellij.openapi.fileEditor.impl.text.TextEditorComponent.getOutsideVisibleEditor())
       return myEditor.getVirtualFile() == null ? myEditor : null;
     }
-    if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myEditor.getDeleteProvider();
     }
-    if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+    if (DataConstants.CUT_PROVIDER.equals(dataId)) {
       return myEditor.getCutProvider();
     }
-    if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+    if (DataConstants.COPY_PROVIDER.equals(dataId)) {
       return myEditor.getCopyProvider();
     }
-    if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+    if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
       return myEditor.getPasteProvider();
     }
 
