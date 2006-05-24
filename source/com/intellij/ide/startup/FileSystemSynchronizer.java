@@ -12,6 +12,8 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author max
  */
@@ -24,7 +26,7 @@ public class FileSystemSynchronizer {
 
   private boolean myIsCancelable = false;
 
-  public void registerCacheUpdater(CacheUpdater cacheUpdater) {
+  public void registerCacheUpdater(@NotNull CacheUpdater cacheUpdater) {
     myUpdaters.add(cacheUpdater);
   }
 

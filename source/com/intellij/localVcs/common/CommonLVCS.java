@@ -565,8 +565,10 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private synchronized void synchronizeRoots() {
     myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refresh.files.on.startup")) {
       public void updatingDone() {
-        super.updatingDone();
-        CommonLVCS.this.myRefreshRootsOperation = null;
+        synchronized (CommonLVCS.this) {
+          super.updatingDone();
+          CommonLVCS.this.myRefreshRootsOperation = null;
+        }
       }
 
       public void canceled() {
@@ -648,8 +650,10 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
     myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refreshing.roots")) {
       public void updatingDone() {
-        super.updatingDone();
-        CommonLVCS.this.myRefreshRootsOperation = null;
+        synchronized (CommonLVCS.this) {
+          super.updatingDone();
+          CommonLVCS.this.myRefreshRootsOperation = null;
+        }
       }
 
       public void canceled() {
