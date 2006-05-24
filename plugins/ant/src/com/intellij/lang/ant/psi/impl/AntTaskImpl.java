@@ -15,6 +15,13 @@ public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
     super(parent, sourceElement, definition);
   }
 
+  public AntTaskImpl(final AntElement parent,
+                     final XmlElement sourceElement,
+                     final AntTypeDefinition definition,
+                     @NonNls final String nameElementAttribute) {
+    super(parent, sourceElement, definition, nameElementAttribute);
+  }
+
   public String toString() {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {

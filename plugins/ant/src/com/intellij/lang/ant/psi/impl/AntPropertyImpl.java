@@ -20,8 +20,11 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   private AntElement propHolder;
 
-  public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
-    super(parent, sourceElement, definition);
+  public AntPropertyImpl(final AntElement parent,
+                         final XmlElement sourceElement,
+                         final AntTypeDefinition definition,
+                         @NonNls final String nameElementAttribute) {
+    super(parent, sourceElement, definition, nameElementAttribute);
     propHolder = parent;
     if (propHolder instanceof AntCall) {
       propHolder = propHolder.getAntProject();
@@ -37,6 +40,12 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
         }
       }
     }
+  }
+
+  public AntPropertyImpl(final AntElement parent,
+                         final XmlElement sourceElement,
+                         final AntTypeDefinition definition) {
+    this(parent, sourceElement, definition, "name");
   }
 
   public String toString() {
@@ -69,7 +78,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   @Nullable
   public String getValue() {
     final XmlTag sourceElement = getSourceElement();
-    if (sourceElement.getAttributeValue("name") != null) {
+    if (sourceElement.getAttributeValue(getNameElementAttribute()) != null) {
       String value = sourceElement.getAttributeValue("value");
       if (value != null) {
         return value;
@@ -88,7 +97,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   public void setValue(final String value) throws IncorrectOperationException {
     final XmlTag sourceElement = getSourceElement();
-    if (sourceElement.getAttribute("name", null) == null) {
+    if (sourceElement.getAttribute(getNameElementAttribute(), null) == null) {
       throw new IncorrectOperationException("Can't set value of an unnamed property");
     }
     sourceElement.setAttribute("value", value);

@@ -68,4 +68,20 @@ public class AntParsingTest extends ParsingTestCase {
   public void testSequentialParallel() throws Exception {
     doTest(true);
   }
+
+  public void testAvailable() throws Exception {
+    doTest(true);
+  }
+
+  public void testChecksum() throws Exception {
+    doTest(true);
+  }
+
+  public void testCondition() throws Exception {
+    doTest(true);
+  }
+
+  public void testUptodate() throws Exception {
+    doTest(true);
+  }
 }

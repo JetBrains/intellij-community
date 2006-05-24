@@ -50,7 +50,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   }
 
   public String getDefinedName() {
-    return getSourceElement().getAttributeValue("name");
+    return getSourceElement().getAttributeValue(getNameElementAttribute());
   }
 
   public String getClassName() {

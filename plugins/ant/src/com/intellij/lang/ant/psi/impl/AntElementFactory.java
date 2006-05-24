@@ -77,6 +77,34 @@ public class AntElementFactory {
                                      parent.getAntFile().getBaseTypeDefinition(Property.class.getName()));
         }
       });
+      ourAntTypeToKnownAntElementCreatorMap.put(Available.class.getName(), new AntElementCreator() {
+        public AntElement create(final AntElement parent, final XmlTag tag) {
+          return new AntPropertyImpl(parent, tag,
+                                     parent.getAntFile().getBaseTypeDefinition(Available.class.getName()),
+                                     "property");
+        }
+      });
+      ourAntTypeToKnownAntElementCreatorMap.put(Checksum.class.getName(), new AntElementCreator() {
+        public AntElement create(final AntElement parent, final XmlTag tag) {
+          return new AntPropertyImpl(parent, tag,
+                                     parent.getAntFile().getBaseTypeDefinition(Checksum.class.getName()),
+                                     "property");
+        }
+      });
+      ourAntTypeToKnownAntElementCreatorMap.put(ConditionTask.class.getName(), new AntElementCreator() {
+        public AntElement create(final AntElement parent, final XmlTag tag) {
+          return new AntPropertyImpl(parent, tag,
+                                     parent.getAntFile().getBaseTypeDefinition(ConditionTask.class.getName()),
+                                     "property");
+        }
+      });
+      ourAntTypeToKnownAntElementCreatorMap.put(UpToDate.class.getName(), new AntElementCreator() {
+        public AntElement create(final AntElement parent, final XmlTag tag) {
+          return new AntPropertyImpl(parent, tag,
+                                     parent.getAntFile().getBaseTypeDefinition(UpToDate.class.getName()),
+                                     "property");
+        }
+      });
       ourAntTypeToKnownAntElementCreatorMap.put(CallTarget.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
           return new AntCallImpl(parent, tag,

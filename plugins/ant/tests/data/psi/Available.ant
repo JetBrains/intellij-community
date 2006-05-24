@@ -1,0 +1,4 @@
+<project default="A">
+  <available property="prop"/>
+  <target name="A"/>
+</project>

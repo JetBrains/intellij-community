@@ -1,0 +1,4 @@
+<project default="A">
+  <uptodate property="prop"/>
+  <target name="A"/>
+</project>

@@ -25,20 +25,29 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private boolean myDefinitionCloned = false;
   private AntElement myIdElement;
   private AntElement myNameElement;
+  @NonNls private String myNameElementAttribute;
   private Map<String, AntElement> myReferencedElements = null;
   private int myLastFoundElementOffset = -1;
   private AntElement myLastFoundElement;
 
-  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement) {
+  public AntStructuredElementImpl(final AntElement parent,
+                                  final XmlElement sourceElement,
+                                  @NonNls final String nameElementAttribute) {
     super(parent, sourceElement);
+    myNameElementAttribute = nameElementAttribute;
     getIdElement();
     getNameElement();
   }
 
+  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement) {
+    this(parent, sourceElement, "name");
+  }
+
   public AntStructuredElementImpl(final AntElement parent,
                                   final XmlElement sourceElement,
-                                  final AntTypeDefinition definition) {
-    this(parent, sourceElement);
+                                  final AntTypeDefinition definition,
+                                  @NonNls final String nameElementAttribute) {
+    this(parent, sourceElement, nameElementAttribute);
     myDefinition = definition;
     final AntTypeId id = new AntTypeId(getSourceElement().getName());
     if (definition != null && !definition.getTypeId().equals(id)) {
@@ -46,6 +55,12 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       myDefinition.setTypeId(id);
       myDefinitionCloned = true;
     }
+  }
+
+  public AntStructuredElementImpl(final AntElement parent,
+                                  final XmlElement sourceElement,
+                                  final AntTypeDefinition definition) {
+    this(parent, sourceElement, definition, "name");
   }
 
   @NotNull
@@ -241,7 +256,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   protected AntElement getNameElement() {
     if (myNameElement == null) {
       myNameElement = ourNull;
-      XmlAttribute nameAttr = getSourceElement().getAttribute("name", null);
+      XmlAttribute nameAttr = getSourceElement().getAttribute(myNameElementAttribute, null);
       if (nameAttr != null) {
         final XmlAttributeValue valueElement = nameAttr.getValueElement();
         if (valueElement != null) {
@@ -250,5 +265,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       }
     }
     return myNameElement;
+  }
+
+  @NonNls
+  protected String getNameElementAttribute() {
+    return myNameElementAttribute;
   }
 }
