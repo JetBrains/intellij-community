@@ -100,7 +100,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(JAVAEE_NS + "web-facesconfig_1_2.xsd","web-facesconfig_1_2.xsd");
 
     addInternalResource(PERSISTENCE_NS,"persistence.xsd");
-    addInternalResource(PERSISTENCE_ORM_NS,"orm-1_0.xsd");
+    addInternalResource(PERSISTENCE_ORM_NS,"orm_1_0.xsd");
 
 
     // Plugins DTDs // stathik
