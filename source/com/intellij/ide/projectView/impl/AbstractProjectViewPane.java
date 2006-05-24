@@ -5,7 +5,6 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.treeView.*;
@@ -21,17 +20,18 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +46,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   // subId->Tree state; key may be null
   private final Map<String,TreeState> myReadTreeState = new HashMap<String, TreeState>();
   private String mySubId;
+  @NonNls private static final String ELEMENT_SUBPANE = "subPane";
+  @NonNls private static final String ATTRIBUTE_SUBID = "subId";
 
   protected AbstractProjectViewPane(Project project) {
     myProject = project;
@@ -173,16 +175,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
       }
     }
     if (myTreeStructure instanceof AbstractTreeStructureBase) {
-      final List<TreeStructureProvider> providers = ((AbstractTreeStructureBase)myTreeStructure).getProviders();
-      if (providers != null) {
-        final List<AbstractTreeNode> selectedNodes = getSelectedNodes();
-        for (TreeStructureProvider treeStructureProvider : providers) {
-          final Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
-          if (fromProvider != null) {
-            return fromProvider;
-          }
-        }
-      }
+      return ((AbstractTreeStructureBase) myTreeStructure).getDataFromProviders(getSelectedNodes(), dataId);
     }
     return null;
   }
@@ -283,9 +276,9 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    List<Element> subPanes = element.getChildren("subPane");
+    List<Element> subPanes = element.getChildren(ELEMENT_SUBPANE);
     for (Element subPane : subPanes) {
-      String subId = subPane.getAttributeValue("subId");
+      String subId = subPane.getAttributeValue(ATTRIBUTE_SUBID);
       TreeState treeState = new TreeState();
       treeState.readExternal(subPane);
       myReadTreeState.put(subId, treeState);
@@ -296,9 +289,9 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     saveExpandedPaths();
     for (String subId : myReadTreeState.keySet()) {
       TreeState treeState = myReadTreeState.get(subId);
-      Element subPane = new Element("subPane");
+      Element subPane = new Element(ELEMENT_SUBPANE);
       if (subId != null) {
-        subPane.setAttribute("subId", subId);
+        subPane.setAttribute(ATTRIBUTE_SUBID, subId);
       }
       treeState.writeExternal(subPane);
       element.addContent(subPane);

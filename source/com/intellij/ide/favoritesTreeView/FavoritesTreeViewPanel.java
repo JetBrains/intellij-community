@@ -3,7 +3,6 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.ide.*;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.projectView.impl.nodes.Form;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
@@ -40,7 +39,8 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GraphicsEnvironment;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
@@ -332,10 +332,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[selectedElements.size()]);
     }
-    if (DataConstantsEx.GUI_DESIGNER_FORM_ARRAY.equals(dataId)) {
-      final List<Form> selectedElements = getSelectedElements(Form.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new Form[selectedElements.size()]);
-    }
     if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)) {
       final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[selectedElements.size()]);
@@ -357,6 +353,14 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     }
     if (FAVORITES_LIST_NAME.equals(dataId)) {
       return myListName;
+    }
+    FavoritesTreeNodeDescriptor[] descriptors = getSelectedNodeDescriptors();
+    if (descriptors.length > 0) {
+      List<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+      for(FavoritesTreeNodeDescriptor descriptor: descriptors) {
+        nodes.add(descriptor.getElement());
+      }
+      return myFavoritesTreeStructure.getDataFromProviders(nodes, dataId);
     }
     return null;
   }

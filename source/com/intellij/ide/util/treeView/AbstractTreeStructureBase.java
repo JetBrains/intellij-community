@@ -54,4 +54,17 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
 
   @Nullable
   public abstract List<TreeStructureProvider> getProviders();
+
+  public Object getDataFromProviders(final List<AbstractTreeNode> selectedNodes, final String dataId) {
+    final List<TreeStructureProvider> providers = getProviders();
+    if (providers != null) {
+      for (TreeStructureProvider treeStructureProvider : providers) {
+        final Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
+        if (fromProvider != null) {
+          return fromProvider;
+        }
+      }
+    }
+    return null;
+  }
 }

@@ -1,10 +1,13 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+
+import java.util.Collections;
 
 /**
  * User: anna
@@ -30,9 +33,9 @@ public class SendToFavoritesAction extends AnAction{
 
   public void doSend(final FavoritesManager favoritesManager, final FavoritesTreeNodeDescriptor[] roots, final String listName) {
     for (FavoritesTreeNodeDescriptor root : roots) {
-      Object element = root.getElement().getValue();
-      favoritesManager.addRoots(toName, null, element);
-      favoritesManager.removeRoot(listName, element);
+      final AbstractTreeNode rootElement = root.getElement();
+      favoritesManager.removeRoot(listName, rootElement.getValue());
+      favoritesManager.addRoots(toName, Collections.singletonList(rootElement));
     }
   }
 

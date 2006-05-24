@@ -9,13 +9,12 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 
 public class FormMergerTreeStructureProvider implements TreeStructureProvider, ProjectComponent{
   private final Project myProject;
@@ -62,11 +61,20 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
     return result;
   }
 
-  public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
+  public Object getData(Collection<AbstractTreeNode> selected, String dataId) {
+    if (dataId.equals(DataConstantsEx.GUI_DESIGNER_FORM_ARRAY)) {
+      List<Form> result = new ArrayList<Form>();
+      for(AbstractTreeNode node: selected) {
+        if (node.getValue() instanceof Form) {
+          result.add((Form) node.getValue());
+        }
+      }
+      return result.toArray(new Form[result.size()]);
+    }
     return null;
   }
 
-  private Collection<PsiFile> convertToFiles(Collection<AbstractTreeNode> formNodes) {
+  private static Collection<PsiFile> convertToFiles(Collection<AbstractTreeNode> formNodes) {
     ArrayList<PsiFile> psiFiles = new ArrayList<PsiFile>();
     for (AbstractTreeNode treeNode : formNodes) {
       psiFiles.add((PsiFile)treeNode.getValue());
@@ -74,7 +82,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
     return psiFiles;
   }
 
-  private Collection<AbstractTreeNode> findFormsIn(Collection<AbstractTreeNode> children, PsiFile[] forms) {
+  private static Collection<AbstractTreeNode> findFormsIn(Collection<AbstractTreeNode> children, PsiFile[] forms) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     HashSet<PsiFile> psiFiles = new HashSet<PsiFile>(Arrays.asList(forms));
     for (final AbstractTreeNode aChildren : children) {
@@ -94,6 +102,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
   public void disposeComponent() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "FormNodesProvider";
   }
