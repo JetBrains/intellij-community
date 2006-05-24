@@ -11,7 +11,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
@@ -64,8 +63,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
           final DomManager domManager = parent.getManager();
           final ClassChooser[] oldChooser = new ClassChooser[]{null};
           final Class[] aClass = new Class[]{null};
-          PsiFile file = parent.getXmlTag().getContainingFile();
-          final T result = new WriteCommandAction<T>(domManager.getProject(), file) {
+          final T result = new WriteCommandAction<T>(domManager.getProject(), parent.getRoot().getFile()) {
             protected void run(Result<T> result) throws Throwable {
               final T t = doAdd();
               aClass[0] = DomUtil.getRawType(parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType());

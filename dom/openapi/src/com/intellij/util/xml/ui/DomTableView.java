@@ -4,6 +4,7 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.ide.actions.CommonActionsFactory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.Result;
@@ -14,15 +15,19 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Icons;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;import com.intellij.ide.actions.CommonActionsFactory;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;import javax.swing.border.MatteBorder;
+import javax.swing.*;
+import javax.swing.border.MatteBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;import javax.swing.event.ListSelectionListener;import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -38,7 +43,7 @@ import java.util.List;
 public class DomTableView extends JPanel implements DataProvider{
   @NonNls private static final String TREE = "Tree";
   @NonNls private static final String EMPTY_PANE = "EmptyPane";
-  private final ListTableModel myTableModel = new MyListTableModel();
+  private final ListTableModel<DomElement> myTableModel = new MyListTableModel();
   private final TableView myTable = new TableView() {
     public boolean editCellAt(final int row, final int column, final EventObject e) {
       final boolean b = super.editCellAt(row, column, e);
@@ -177,12 +182,12 @@ public class DomTableView extends JPanel implements DataProvider{
     adjustColumnWidths();
   }
 
-  public final void setItems(List items) {
+  public final void setItems(List<? extends DomElement> items) {
     if (myTable.isEditing()) {
       myTable.getCellEditor().cancelCellEditing();
     }
     final int row = myTable.getSelectedRow();
-    myTableModel.setItems(new ArrayList(items));
+    myTableModel.setItems(new ArrayList<DomElement>(items));
     if (row >= 0 && row < myTableModel.getRowCount()) {
       myTable.getSelectionModel().setSelectionInterval(row, row);
     }
@@ -274,7 +279,7 @@ public class DomTableView extends JPanel implements DataProvider{
     return myHelpID;
   }
 
-  private class MyListTableModel extends ListTableModel {
+  private class MyListTableModel extends ListTableModel<DomElement> {
     public MyListTableModel() {
       super(ColumnInfo.EMPTY_ARRAY);
     }
@@ -282,7 +287,7 @@ public class DomTableView extends JPanel implements DataProvider{
     public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
       final Object oldValue = getValueAt(rowIndex, columnIndex);
       if (!Comparing.equal(oldValue, aValue)) {
-        new WriteCommandAction(myProject) {
+        new WriteCommandAction(myProject, getItems().get(rowIndex).getRoot().getFile()) {
           protected void run(final Result result) throws Throwable {
             MyListTableModel.super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex);
           }
