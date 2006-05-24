@@ -969,10 +969,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
         return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[selectedElements.size()]);
       }
-      if (DataConstantsEx.GUI_DESIGNER_FORM_ARRAY.equals(dataId)){
-        final List<Form> selectedElements = getSelectedElements(Form.class);
-        return selectedElements.isEmpty() ? null : selectedElements.toArray(new Form[selectedElements.size()]);
-      }
       if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)){
         final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
         return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[selectedElements.size()]);
