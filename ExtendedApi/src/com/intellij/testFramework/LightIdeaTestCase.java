@@ -11,6 +11,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,13 +33,12 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -111,7 +111,7 @@ import java.util.Map;
     return ourPsiManager;
   }
 
-  static void initApplication(final DataProvider dataProvider) throws Exception {
+  public static void initApplication(final DataProvider dataProvider) throws Exception {
     ourApplication = IdeaTestApplication.getInstance();
     ourApplication.setDataProvider(dataProvider);
   }
@@ -247,7 +247,7 @@ import java.util.Map;
     doSetup(getProjectJDK(), configureLocalInspectionTools(), myAvailableTools, myAvailableLocalTools);
   }
 
-  static void doSetup(final ProjectJdk projectJDK,
+  public static void doSetup(final ProjectJdk projectJDK,
                       final LocalInspectionTool[] localInspectionTools,
                       final Map<String, LocalInspectionTool> availableToolsMap,
                       final Map<String, LocalInspectionToolWrapper> availableLocalTools) throws Exception {
@@ -346,7 +346,7 @@ import java.util.Map;
     }
   }
 
-  static void doTearDown() throws Exception {
+  public static void doTearDown() throws Exception {
     doPostponedFormatting(ourProject);
 
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
@@ -505,5 +505,9 @@ import java.util.Map;
 
   protected Document getDocument(final PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
+  }
+
+  static {
+    System.setProperty("jbdt.test.fixture", "com.intellij.designer.dt.IJTestFixture");
   }
 }
