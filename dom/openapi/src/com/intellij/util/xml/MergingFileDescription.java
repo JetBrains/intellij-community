@@ -38,7 +38,10 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
   @NotNull
   protected abstract Collection<XmlFile> getFilesToMerge(DomElement element);
 
-  public DomElement getResolveScope(GenericDomValue reference) {
+  public DomElement getResolveScope(GenericDomValue<?> reference) {
+    final DomElement annotation = getScopeFromAnnotation(reference);
+    if (annotation != null) return annotation;
+
     return getMergedRoot(reference);
   }
 
@@ -62,6 +65,9 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
   }
 
   public DomElement getIdentityScope(DomElement element) {
+    final DomElement annotation = getScopeFromAnnotation(element);
+    if (annotation != null) return annotation;
+
     final List<Method> methods = DomUtil.getFixedPath(element.getParent());
     if (methods == null) return super.getIdentityScope(element);
 

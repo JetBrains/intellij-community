@@ -16,15 +16,18 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.InstanceMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public abstract class DomFileDescription<T> {
+  private final InstanceMap<ScopeProvider> myScopeProviders = new InstanceMap<ScopeProvider>();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
 
@@ -52,12 +55,27 @@ public abstract class DomFileDescription<T> {
     return false;
   }
 
-  public DomElement getResolveScope(GenericDomValue reference) {
+  public DomElement getResolveScope(GenericDomValue<?> reference) {
+    final DomElement annotation = getScopeFromAnnotation(reference);
+    if (annotation != null) return annotation;
+
     return reference.getRoot();
   }
 
   public DomElement getIdentityScope(DomElement element) {
+    final DomElement annotation = getScopeFromAnnotation(element);
+    if (annotation != null) return annotation;
+
     return element.getParent();
+  }
+
+  @Nullable
+  protected final DomElement getScopeFromAnnotation(final DomElement element) {
+    final Scope scope = element.getAnnotation(Scope.class);
+    if (scope != null) {
+      return myScopeProviders.get(scope.value()).getScope(element);
+    }
+    return null;
   }
 
 }
