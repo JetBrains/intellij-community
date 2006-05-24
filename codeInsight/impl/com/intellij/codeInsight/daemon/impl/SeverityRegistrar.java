@@ -14,6 +14,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.*;
@@ -31,6 +32,7 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
   @NonNls private static final String WARNING = "warning";
   @NonNls private static final String COLOR = "color";
   @NonNls private static final String INFORMATION = "information";
+  @NonNls private static final String SERVER = "server";
 
   public static SeverityRegistrar getInstance(){
     return ApplicationManager.getApplication().getComponent(SeverityRegistrar.class);
@@ -63,6 +65,9 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     }
     if (severity == HighlightSeverity.INFORMATION){
       return (HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.INFORMATION;
+    }
+    if (severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING){
+      return (HighlightInfoType.HighlightInfoTypeImpl) HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER;
     }
     final HighlightInfoType.HighlightInfoTypeImpl infoType = ourMap.get(severity);
     return (HighlightInfoType.HighlightInfoTypeImpl)(infoType != null ? infoType : HighlightInfoType.WARNING);
@@ -102,6 +107,11 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     if (info != null){
       HighlightSeverity.INFO.readExternal(info);
     }
+
+    final Element server = element.getChild(SERVER);
+    if (server != null){
+      HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING.readExternal(server);
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -126,8 +136,13 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     Element infoSeverity = new Element(INFORMATION);
     HighlightSeverity.INFO.writeExternal(infoSeverity);
     element.addContent(infoSeverity);
+
+    Element serverSeverity = new Element(SERVER);
+    HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING.writeExternal(serverSeverity);
+    element.addContent(serverSeverity);
   }
 
+  @NotNull
   @NonNls
   public String getComponentName() {
     return "SeverityRegistrar";
@@ -150,7 +165,7 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
       if (index == i) return severity;
       index++;
     }
-    return null; 
+    return null;
   }
 
   private static TreeSet<HighlightSeverity> createCurrentSeveritiesSet() {
@@ -158,6 +173,7 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     set.add(HighlightSeverity.ERROR);
     set.add(HighlightSeverity.WARNING);
     set.add(HighlightSeverity.INFO);
+    set.add(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
     set.addAll(ourMap.keySet());
     return set;
   }
@@ -173,6 +189,10 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     if (severity == HighlightSeverity.INFO){
       return CodeInsightColors.INFO_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor();
     }
+    if (severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING){
+      return CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING.getDefaultAttributes().getErrorStripeColor();
+    }
+
     return ourRendererColors.get(severity);
   }
 
