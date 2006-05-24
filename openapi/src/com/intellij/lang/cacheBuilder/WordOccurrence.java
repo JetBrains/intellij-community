@@ -67,6 +67,8 @@ public class WordOccurrence {
     public static final Kind COMMENTS = new Kind("COMMENTS");
     /** Kind for words encountered in literals (particularly string literals). */
     public static final Kind LITERALS = new Kind("LITERALS");
+    /** Kind for words encountered in languages different from the main language of the file. */
+    public static final Kind FOREIGN_LANGUAGE = new Kind("FOREIGN_LANGUAGE");
 
     private String myName;
 

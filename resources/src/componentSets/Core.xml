@@ -146,6 +146,10 @@
     <component>
       <implementation-class>com.intellij.ide.OpenFileXmlRpcHandler</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.lang.cacheBuilder.CacheBuilderRegistry</interface-class>
+      <implementation-class>com.intellij.lang.cacheBuilder.CacheBuilderRegistryImpl</implementation-class>
+    </component>
   </application-components>
 
 

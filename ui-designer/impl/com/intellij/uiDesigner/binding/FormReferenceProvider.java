@@ -52,7 +52,7 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
   public void projectClosed() {
   }
 
-  @NonNls
+  @NotNull @NonNls
   public String getComponentName() {
     return "FormReferenceProvider";
   }

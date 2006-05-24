@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -18,6 +19,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 
@@ -40,7 +42,7 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
     // dependency ensures that we get created after FileTypeManager and StdFileTypes.JAVA already exists
   }
 
-  @NonNls
+  @NotNull @NonNls
   public String getComponentName() {
     return "FormClassAnnotator";
   }
@@ -49,6 +51,7 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
     StdFileTypes.JAVA.getLanguage().injectAnnotator(this);
     myRefSearcher = new FormReferencesSearcher();
     ReferencesSearch.INSTANCE.registerExecutor(myRefSearcher);
+    CacheBuilderRegistry.getInstance().registerCacheBuilder(StdFileTypes.GUI_DESIGNER_FORM, new FormWordsScanner());
   }
 
   public void disposeComponent() {

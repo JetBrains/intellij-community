@@ -6,6 +6,7 @@ import com.intellij.ide.startup.FileContent;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -30,12 +31,6 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.compiler.AlienFormFileException;
-import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
-import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.TIntIntHashMap;
@@ -213,48 +208,6 @@ public class IdTableBuilding {
     }
   }
 
-  static class FormFileIdCacheBuilder extends TextIdCacheBuilder {
-    public void build(char[] chars,
-                      int length,
-                      final TIntIntHashMap wordsTable,
-                      IndexPattern[] todoPatterns,
-                      int[] todoCounts,
-                      final PsiManager manager) {
-      super.build(chars, length, wordsTable, todoPatterns, todoCounts, manager);
-
-      try {
-        LwRootContainer container = Utils.getRootContainer(new String(chars, 0, length),
-                                                           null/*no need component classes*/);
-        String className = container.getClassToBind();
-        if (className != null) {
-          addClassAndPackagesNames(className, wordsTable);
-        }
-
-        FormEditingUtil.iterate(container,
-                                new FormEditingUtil.ComponentVisitor() {
-                                  public boolean visit(IComponent iComponent) {
-                                    String componentClassName = iComponent.getComponentClassName();
-                                    addClassAndPackagesNames(componentClassName, wordsTable);
-                                    final String binding = iComponent.getBinding();
-                                    if (binding != null) {
-                                      IdCacheUtil.addOccurrence(wordsTable, binding, UsageSearchContext.IN_FOREIGN_LANGUAGES);
-                                    }
-                                    return true;
-                                  }
-                                });
-      }
-      catch(AlienFormFileException ex) {
-        // ignore
-      }
-      catch(UnexpectedFormElementException ex) {
-        // ignore
-      }
-      catch (Exception e) {
-        LOG.error("Error indexing form file", e);
-      }
-    }
-  }
-
   private static final HashMap<FileType,IdCacheBuilder> cacheBuilders = new HashMap<FileType, IdCacheBuilder>();
 
   public static void registerCacheBuilder(FileType fileType,IdCacheBuilder idCacheBuilder) {
@@ -270,7 +223,6 @@ public class IdTableBuilding {
     registerCacheBuilder(StdFileTypes.XHTML,new XHtmlIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.JSPX,new JspxIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
-    registerCacheBuilder(StdFileTypes.GUI_DESIGNER_FORM,new FormFileIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.PROPERTIES, new PropertiesIdCacheBuilder());
 
     registerCacheBuilder(StdFileTypes.IDEA_MODULE, new EmptyBuilder());
@@ -282,6 +234,11 @@ public class IdTableBuilding {
     final IdCacheBuilder idCacheBuilder = cacheBuilders.get(fileType);
 
     if (idCacheBuilder != null) return idCacheBuilder;
+
+    final WordsScanner customWordsScanner = CacheBuilderRegistry.getInstance().getCacheBuilder(fileType);
+    if (customWordsScanner != null) {
+      return new WordsScannerIdCacheBuilderAdapter(customWordsScanner, null, null);
+    }
 
     final SyntaxHighlighter highlighter = fileType.getHighlighter(project, virtualFile);
     final Lexer highlightingLexer = highlighter != null ? highlighter.getHighlightingLexer() : null;
@@ -338,6 +295,7 @@ public class IdTableBuilding {
           if (kind == WordOccurrence.Kind.CODE) return UsageSearchContext.IN_CODE;
           if (kind == WordOccurrence.Kind.COMMENTS) return UsageSearchContext.IN_COMMENTS;
           if (kind == WordOccurrence.Kind.LITERALS) return UsageSearchContext.IN_STRINGS;
+          if (kind == WordOccurrence.Kind.FOREIGN_LANGUAGE) return UsageSearchContext.IN_FOREIGN_LANGUAGES;
           return 0;
         }
       });
@@ -431,16 +389,6 @@ public class IdTableBuilding {
     };
 
     return new Result(runnable, wordsTable, todoCounts);
-  }
-
-  private static void addClassAndPackagesNames(String qName, final TIntIntHashMap wordsTable) {
-    IdCacheUtil.addOccurrence(wordsTable,qName, UsageSearchContext.IN_FOREIGN_LANGUAGES);
-    int idx = qName.lastIndexOf('.');
-    while (idx > 0) {
-      qName = qName.substring(0, idx);
-      IdCacheUtil.addOccurrence(wordsTable, qName, UsageSearchContext.IN_FOREIGN_LANGUAGES);
-      idx = qName.lastIndexOf('.');
-    }
   }
 
   private static final FilterLexer.Filter TOKEN_FILTER = new FilterLexer.Filter() {
