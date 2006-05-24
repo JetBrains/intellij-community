@@ -73,7 +73,7 @@ public class DeleteAction extends EditorAction {
     }
   }
 
-  private static void deleteCharAtCaret(Editor editor) {
+  public static void deleteCharAtCaret(Editor editor) {
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
     int afterLineEnd = EditorModificationUtil.calcAfterLineEnd(editor);
     Document document = editor.getDocument();

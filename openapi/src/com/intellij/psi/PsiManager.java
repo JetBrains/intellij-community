@@ -19,6 +19,8 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -371,18 +373,6 @@ public abstract class PsiManager implements UserDataHolder {
 
   public abstract void unregisterLanguageInjector(@NotNull LanguageInjector injector);
 
-  @NotNull
-  public abstract List<LanguageInjector> getLanguageInjectors();
-
   @Nullable
-  public Language getInjectedLanguage(PsiLanguageInjectionHost host) {
-    for (LanguageInjector injector : getLanguageInjectors()) {
-      Language injectedLanguage = injector.getLanguageToInject(host);
-      if (injectedLanguage != null) {
-        return injectedLanguage;
-      }
-    }
-
-    return null;
-  }
+  public abstract List<Pair<Language,TextRange>> getInjectedLanguages(PsiLanguageInjectionHost host);
 }

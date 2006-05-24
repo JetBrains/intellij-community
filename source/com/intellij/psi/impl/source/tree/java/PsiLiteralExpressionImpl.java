@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression {
   private static final @NonNls String QUOT = "&quot;";
   private static final @NonNls String HEXPREFIX = "0x";
@@ -400,13 +402,11 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   }
 
   @Nullable
-  public Pair<PsiElement,TextRange> getInjectedPsi() {
+  public List<Pair<PsiElement,TextRange>> getInjectedPsi() {
     Object value = getValue();
     if (!(value instanceof String)) return null;
-    String text = (String)value;
-    TextRange insideQuotes = new TextRange(1, text.length()+1);
 
-    return InjectedLanguageUtil.getInjectedPsiFile(this, text, insideQuotes);
+    return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 
 }

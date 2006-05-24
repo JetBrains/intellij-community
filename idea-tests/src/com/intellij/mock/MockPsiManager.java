@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -223,6 +225,11 @@ public class MockPsiManager extends PsiManager {
   }
 
   public PsiConstantEvaluationHelper getConstantEvaluationHelper() {
+    return null;
+  }
+
+  @Nullable
+  public List<Pair<Language,TextRange>> getInjectedLanguages(PsiLanguageInjectionHost host) {
     return null;
   }
 }

@@ -1,6 +1,8 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -13,7 +15,10 @@ import org.jetbrains.annotations.Nullable;
 public interface LanguageInjector {
   /**
    * @param host PSI element inside which your language will be injected
-   * @return language that should be injected in this particular place, or null if there is no any.
+   * @return null if this place is not appropriate for injection, or pair of language and TextRange of injected PSI.<br>
+   * For example, you might want to <code>return new Pair&lt;Language,TextRange&gt;(myLanguage, new TextRange(1,host.getTextLength()-1))</code>
+   * to inject your language in string literal inside quotes.
    */
-  @Nullable Language getLanguageToInject(PsiLanguageInjectionHost host);
+  @Nullable
+  Pair<Language, TextRange> getLanguageToInject(PsiLanguageInjectionHost host);
 }

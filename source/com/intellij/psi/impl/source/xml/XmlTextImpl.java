@@ -246,10 +246,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
   }
 
   @Nullable
-  public Pair<PsiElement,TextRange> getInjectedPsi() {
-    String text = getValue();
-    TextRange range = new TextRange(0, getTextLength());
-
-    return InjectedLanguageUtil.getInjectedPsiFile(this, text, range);
+  public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
+    return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 }

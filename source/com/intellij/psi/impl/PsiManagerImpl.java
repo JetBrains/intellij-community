@@ -18,9 +18,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -56,7 +54,9 @@ import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -325,11 +325,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     PostprocessReformattingAspect.getInstance(getProject()).postponeFormattingInside(runnable);
   }
 
-  @NotNull
-  public List<LanguageInjector> getLanguageInjectors() {
-    return Collections.unmodifiableList(myLanguageInjectors);
-  }
-
   public boolean arePackagesTheSame(PsiElement element1, PsiElement element2) {
     PsiFile file1 = ResolveUtil.getContextFile(element1);
     PsiFile file2 = ResolveUtil.getContextFile(element2);
@@ -484,8 +479,8 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
         if (qName1 != qName2) return false;
 
         if (element1 instanceof PsiTypeParameter && element2 instanceof PsiTypeParameter) {
-          PsiTypeParameter p1 = ((PsiTypeParameter)element1);
-          PsiTypeParameter p2 = ((PsiTypeParameter)element2);
+          PsiTypeParameter p1 = (PsiTypeParameter)element1;
+          PsiTypeParameter p2 = (PsiTypeParameter)element2;
 
           return p1.getIndex() == p2.getIndex() &&
                  areElementsEquivalent(p1.getOwner(), p2.getOwner());
@@ -1085,6 +1080,22 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     }
 
     return result.toArray(new PsiPackage[result.size()]);
+  }
+
+  @Nullable
+  public List<Pair<Language, TextRange>> getInjectedLanguages(PsiLanguageInjectionHost host) {
+    List<Pair<Language, TextRange>> result = null;
+    for (LanguageInjector injector : myLanguageInjectors) {
+      Pair<Language,TextRange> injected = injector.getLanguageToInject(host);
+      if (injected != null) {
+        if (result == null) {
+          result = new SmartList<Pair<Language, TextRange>>();
+        }
+        result.add(injected);
+      }
+    }
+
+    return result;
   }
 
   private class MyExternalResourceListener implements ExternalResourceListener {

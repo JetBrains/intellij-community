@@ -11,6 +11,8 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiteralExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsLiteralExpressionImpl");
 
@@ -73,7 +75,7 @@ public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiter
     visitor.visitLiteralExpression(this);
   }
 
-  public Pair<PsiElement,TextRange> getInjectedPsi() {
+  public List<Pair<PsiElement,TextRange>> getInjectedPsi() {
     return null;
   }
 }

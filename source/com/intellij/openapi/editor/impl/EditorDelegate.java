@@ -56,6 +56,10 @@ public class EditorDelegate implements EditorEx {
     int offsetInInjected = myDelegate.logicalPositionToOffset(pos) - myDocument.getTextRange().getStartOffset();
     return offsetToLogicalPosition(offsetInInjected);
   }
+  public VisualPosition parentToInjected(VisualPosition pos) {
+    LogicalPosition logical = parentToInjected(myDelegate.visualToLogicalPosition(pos));
+    return logicalToVisualPosition(logical);
+  }
   public LogicalPosition injectedToParent(LogicalPosition pos) {
     int offsetInParent = logicalPositionToOffset(pos) + myDocument.getTextRange().getStartOffset();
     return myDelegate.offsetToLogicalPosition(offsetInParent);
@@ -158,42 +162,42 @@ public class EditorDelegate implements EditorEx {
 
   @NotNull
   public VisualPosition xyToVisualPosition(final Point p) {
-    VisualPosition windowPosition = myDelegate.offsetToVisualPosition(myDocument.getTextRange().getStartOffset());
-    VisualPosition pos = myDelegate.xyToVisualPosition(p);
-    return new VisualPosition(pos.line - windowPosition.line, pos.column - windowPosition.column);
+    return logicalToVisualPosition(xyToLogicalPosition(p));
   }
 
   @NotNull
   public VisualPosition offsetToVisualPosition(final int offset) {
-    VisualPosition windowPosition = myDelegate.offsetToVisualPosition(myDocument.getTextRange().getStartOffset());
-    VisualPosition pos = myDelegate.offsetToVisualPosition(offset + myDocument.getTextRange().getStartOffset());
-    return new VisualPosition(pos.line - windowPosition.line, pos.column - windowPosition.column);
+    return logicalToVisualPosition(offsetToLogicalPosition(offset));
   }
 
   @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset) {
+    int lineStartOffset = myDocument.getLineStartOffset(myDocument.getLineNumber(offset));
+
     LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
     LogicalPosition pos = myDelegate.offsetToLogicalPosition(offset + myDocument.getTextRange().getStartOffset());
-    return new LogicalPosition(pos.line - windowPosition.line, pos.column - windowPosition.column);
+    return new LogicalPosition(pos.line - windowPosition.line, offset - lineStartOffset);
   }
 
   @NotNull
   public LogicalPosition xyToLogicalPosition(final Point p) {
     LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
     LogicalPosition pos = myDelegate.xyToLogicalPosition(p);
-    return new LogicalPosition(pos.line - windowPosition.line, pos.column - windowPosition.column);
+    int myOffset = logicalPositionToOffset(parentToInjected(pos));
+
+    int lineStartOffset = myDocument.getLineStartOffset(myDocument.getLineNumber(myOffset));
+
+    return new LogicalPosition(pos.line - windowPosition.line, myOffset - lineStartOffset);
   }
 
   @NotNull
   public Point logicalPositionToXY(final LogicalPosition pos) {
-    LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
-    return myDelegate.logicalPositionToXY(new LogicalPosition(pos.line + windowPosition.line, pos.column + windowPosition.column));
+    return myDelegate.logicalPositionToXY(injectedToParent(pos));
   }
 
   @NotNull
   public Point visualPositionToXY(final VisualPosition pos) {
-    VisualPosition windowPosition = myDelegate.offsetToVisualPosition(myDocument.getTextRange().getStartOffset());
-    return myDelegate.visualPositionToXY(new VisualPosition(pos.line + windowPosition.line, pos.column + windowPosition.column));
+    return logicalPositionToXY(visualToLogicalPosition(pos));
   }
 
   public void repaint(final int startOffset, final int endOffset) {

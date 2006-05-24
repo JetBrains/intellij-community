@@ -141,48 +141,48 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   private boolean highlightInjectedPsi(final PsiElement element) {
-    if (element instanceof PsiLanguageInjectionHost) {
-      PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
-      final Language injectedLanguage = element.getManager().getInjectedLanguage(injectionHost);
-      if (injectedLanguage != null) {
-        Pair<PsiElement,TextRange> injectedInfo = injectionHost.getInjectedPsi();
-        if (injectedInfo != null) {
-          VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
-          SyntaxHighlighter syntaxHighlighter = injectedLanguage.getSyntaxHighlighter(element.getProject(), virtualFile);
-          final Annotator languageAnnotator = injectedLanguage.getAnnotator();
-          final int injectedPsiOffset = injectionHost.getTextRange().getStartOffset() + injectedInfo.second.getStartOffset();
-          PsiElement injectedPsi = injectedInfo.first;
-          final SyntaxHighlighterAsAnnotator syntaxAnnotator = new SyntaxHighlighterAsAnnotator(syntaxHighlighter);
-          PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-            final AnnotationHolderImpl fixingAnnotationHolder = new AnnotationHolderImpl() {
-              protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-                Annotation annotation = super.createAnnotation(range.shiftRight(injectedPsiOffset), severity, message);
-                myAnnotationHolder.add(annotation);
-                return annotation;
-              }
-            };
-            public void visitElement(PsiElement element) {
-              super.visitElement(element);
-              syntaxAnnotator.annotate(element, fixingAnnotationHolder);
-              if (languageAnnotator != null) {
-                languageAnnotator.annotate(element, fixingAnnotationHolder);
-              }
-            }
-
-            public void visitErrorElement(PsiErrorElement element) {
-              HighlightInfo info = createErrorElementInfo(element);
-              HighlightInfo fixed = new HighlightInfo(HighlightInfoType.ERROR, info.startOffset + injectedPsiOffset,
-                                                      info.endOffset + injectedPsiOffset, info.description, info.toolTip);
-              myHolder.add(fixed);
-            }
-          };
-
-          injectedPsi.accept(visitor);
-          return true;
-        }
-      }
+    if (!(element instanceof PsiLanguageInjectionHost)) {
+      return false;
     }
-    return false;
+    PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
+    List<Pair<PsiElement, TextRange>> injected = injectionHost.getInjectedPsi();
+    if (injected == null) return false;
+    for (Pair<PsiElement, TextRange> pair : injected) {
+      PsiElement injectedPsi = pair.getFirst();
+      TextRange range = pair.getSecond();
+      Language injectedLanguage = injectedPsi.getLanguage();
+      VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+      SyntaxHighlighter syntaxHighlighter = injectedLanguage.getSyntaxHighlighter(element.getProject(), virtualFile);
+      final Annotator languageAnnotator = injectedLanguage.getAnnotator();
+      final int injectedPsiOffset = injectionHost.getTextRange().getStartOffset() + range.getStartOffset();
+      final SyntaxHighlighterAsAnnotator syntaxAnnotator = new SyntaxHighlighterAsAnnotator(syntaxHighlighter);
+      PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
+        final AnnotationHolderImpl fixingAnnotationHolder = new AnnotationHolderImpl() {
+          protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
+            Annotation annotation = super.createAnnotation(range.shiftRight(injectedPsiOffset), severity, message);
+            myAnnotationHolder.add(annotation);
+            return annotation;
+          }
+        };
+        public void visitElement(PsiElement element) {
+          super.visitElement(element);
+          syntaxAnnotator.annotate(element, fixingAnnotationHolder);
+          if (languageAnnotator != null) {
+            languageAnnotator.annotate(element, fixingAnnotationHolder);
+          }
+        }
+
+        public void visitErrorElement(PsiErrorElement element) {
+          HighlightInfo info = createErrorElementInfo(element);
+          HighlightInfo fixed = new HighlightInfo(HighlightInfoType.ERROR, info.startOffset + injectedPsiOffset,
+                                                  info.endOffset + injectedPsiOffset, info.description, info.toolTip);
+          myHolder.add(fixed);
+        }
+      };
+
+      injectedPsi.accept(visitor);
+    }
+    return true;
   }
 
   private void convertAnnotationsToHighlightInfos() {
