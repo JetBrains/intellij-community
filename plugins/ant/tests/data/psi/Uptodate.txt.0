@@ -27,7 +27,6 @@ XmlFile:Uptodate.ant
             XmlToken:XML_ATTRIBUTE_VALUE_START_DELIMITER('"')
             XmlToken:XML_ATTRIBUTE_VALUE_TOKEN('prop')
             XmlToken:XML_ATTRIBUTE_VALUE_END_DELIMITER('"')
-        PsiWhiteSpace(' ')
         XmlToken:XML_EMPTY_ELEMENT_END('/>')
       XmlText
         PsiWhiteSpace('\n  ')
