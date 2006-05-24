@@ -165,7 +165,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
       try {
         if (abstractUrl instanceof FormUrl) {
           final PsiManager psiManager = PsiManager.getInstance(myProject);
-          result.add(FormNode.constructFormNode(psiManager, (PsiClass)path[0], myProject, this));
+          result.add(FormNode.constructFormNode((PsiClass)path[0], myProject, this));
         }
         else {
           String className = pair.getSecond();

@@ -1,23 +1,21 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
-
-import org.jetbrains.annotations.NotNull;
 
 public class FormNode extends ProjectViewNode<Form>{
   private final Collection<AbstractTreeNode> myChildren;
@@ -37,8 +35,8 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   public boolean contains(VirtualFile file) {
-    for (Iterator<AbstractTreeNode> iterator = myChildren.iterator(); iterator.hasNext();) {
-      ProjectViewNode treeNode = (ProjectViewNode)iterator.next();
+    for (final AbstractTreeNode aMyChildren : myChildren) {
+      ProjectViewNode treeNode = (ProjectViewNode)aMyChildren;
       if (treeNode.contains(file)) return true;
     }
     return false;
@@ -69,14 +67,10 @@ public class FormNode extends ProjectViewNode<Form>{
     return IdeBundle.message("tooltip.ui.designer.form");
   }
 
-  public static AbstractTreeNode constructFormNode(final PsiManager psiManager,
-                                                   final PsiClass classToBind,
-                                                   final Project project,
-                                                   final ViewSettings settings) {
-    final PsiFile[] formsBoundToClass = psiManager.getSearchHelper().findFormsBoundToClass(classToBind.getQualifiedName());
+  public static AbstractTreeNode constructFormNode(final PsiClass classToBind, final Project project, final ViewSettings settings) {
+    final PsiFile[] formsBoundToClass = PsiManager.getInstance(project).getSearchHelper().findFormsBoundToClass(classToBind.getQualifiedName());
     final HashSet<AbstractTreeNode> children = new HashSet<AbstractTreeNode>();
-    for (int i = 0; i < formsBoundToClass.length; i++) {
-      PsiFile formBoundToClass = formsBoundToClass[i];
+    for (PsiFile formBoundToClass : formsBoundToClass) {
       children.add(new PsiFileNode(project, formBoundToClass, settings));
     }
     children.add(new ClassTreeNode(project, classToBind, settings));

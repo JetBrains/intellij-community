@@ -1,10 +1,15 @@
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+
+import java.util.Collection;
 
 /**
  * User: anna
@@ -18,9 +23,13 @@ class AddToNewFavoritesListAction extends AnAction {
 
  public void actionPerformed(AnActionEvent e) {
    final DataContext dataContext = e.getDataContext();
-   final String newName = AddNewFavoritesListAction.doAddNewFavoritesList((Project)dataContext.getData(DataConstants.PROJECT));
-   if (newName != null) {
-     new AddToFavoritesAction(newName).actionPerformed(e);
+   Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+   Collection<AbstractTreeNode> nodesToAdd = AddToFavoritesAction.getNodesToAdd(dataContext, true);
+   if (nodesToAdd != null) {
+     final String newName = AddNewFavoritesListAction.doAddNewFavoritesList((Project)dataContext.getData(DataConstants.PROJECT));
+     if (newName != null) {
+       FavoritesManager.getInstance(project).addRoots(newName, nodesToAdd);
+     }
    }
  }
 
@@ -31,10 +40,7 @@ class AddToNewFavoritesListAction extends AnAction {
       e.getPresentation().setEnabled(false);
     }
     else {
-      e.getPresentation().setEnabled(AddToFavoritesAction.createNodes(dataContext, e.getPlace().equals(ActionPlaces.J2EE_VIEW_POPUP) ||
-                                                                                   e.getPlace().equals(ActionPlaces.STRUCTURE_VIEW_POPUP) ||
-                                                                                   e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP), ViewSettings.DEFAULT) != null);
+      e.getPresentation().setEnabled(AddToFavoritesAction.canCreateNodes(dataContext, e));
     }
-
   }
 }

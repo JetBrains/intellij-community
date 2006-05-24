@@ -94,9 +94,13 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   public synchronized boolean addRoots(@NotNull String name, Module moduleContext, @NotNull Object elements) {
-    List<Pair<AbstractUrl, String>> list = getFavoritesListRootUrls(name);
     Collection<AbstractTreeNode> nodes = AddToFavoritesAction.createNodes(myProject, moduleContext, elements, true, ViewSettings.DEFAULT);
     if (nodes.isEmpty()) return false;
+    return addRoots(name, nodes);
+  }
+
+  public boolean addRoots(final String name, final Collection<AbstractTreeNode> nodes) {
+    List<Pair<AbstractUrl, String>> list = getFavoritesListRootUrls(name);
     for (AbstractTreeNode node : nodes) {
       String className = node.getClass().getName();
       Object value = node.getValue();

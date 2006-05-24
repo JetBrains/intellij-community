@@ -15,6 +15,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.projectView.ResourceBundleNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -26,10 +27,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.compiler.Utils;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * User: anna
@@ -47,15 +49,38 @@ public class AddToFavoritesAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
+
+    Collection<AbstractTreeNode> nodesToAdd = getNodesToAdd(dataContext, true);
+
+    if (nodesToAdd != null && !nodesToAdd.isEmpty()) {
+      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      FavoritesManager.getInstance(project).addRoots(myFavoritesListName, nodesToAdd);
+    }
+  }
+
+  public static Collection<AbstractTreeNode> getNodesToAdd(final DataContext dataContext, final boolean inProjectView) {
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
 
-    if (project == null) return;
+    if (project == null) return null;
+
     Module moduleContext = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
 
-    Object elements = collectSelectedElements(dataContext);
-    if (elements == null) return;
+    Collection<AbstractTreeNode> nodesToAdd = null;
+    FavoriteNodeProvider[] providers = ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class);
+    for(FavoriteNodeProvider provider: providers) {
+      nodesToAdd = provider.getFavoriteNodes(dataContext, ViewSettings.DEFAULT);
+      if (nodesToAdd != null) {
+        break;
+      }
+    }
 
-    FavoritesManager.getInstance(project).addRoots(myFavoritesListName, moduleContext, elements);
+    if (nodesToAdd == null) {
+      Object elements = collectSelectedElements(dataContext);
+      if (elements != null) {
+        nodesToAdd = createNodes(project, moduleContext, elements, inProjectView, ViewSettings.DEFAULT);
+      }
+    }
+    return nodesToAdd;
   }
 
   public void update(AnActionEvent e) {
@@ -65,33 +90,19 @@ public class AddToFavoritesAction extends AnAction {
       e.getPresentation().setEnabled(false);
     }
     else {
-      e.getPresentation().setEnabled(createNodes(dataContext, e.getPlace().equals(ActionPlaces.J2EE_VIEW_POPUP) ||
-                                                              e.getPlace().equals(ActionPlaces.STRUCTURE_VIEW_POPUP) ||
-                                                              e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) != null);
+      e.getPresentation().setEnabled(canCreateNodes(dataContext, e));
     }
   }
 
-  @Nullable
-  private static AbstractTreeNode[] createNodes(DataContext dataContext, boolean inProjectView) {
-    final ViewSettings favoritesConfig = ViewSettings.DEFAULT;
-    return createNodes(dataContext, inProjectView, favoritesConfig);
+  public static boolean canCreateNodes(final DataContext dataContext, final AnActionEvent e) {
+    final boolean inProjectView = e.getPlace().equals(ActionPlaces.J2EE_VIEW_POPUP) ||
+                                  e.getPlace().equals(ActionPlaces.STRUCTURE_VIEW_POPUP) ||
+                                  e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP);
+    return getNodesToAdd(dataContext, inProjectView) != null;
   }
 
   static Object retrieveData(Object object, Object data) {
     return object == null ? data : object;
-  }
-  public static
-  @Nullable
-  AbstractTreeNode[] createNodes(DataContext dataContext, boolean inProjectView, ViewSettings favoritesConfig) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    if (project == null) return null;
-    Module moduleContext = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
-
-    Object elements = collectSelectedElements(dataContext);
-    if (elements == null) return null;
-
-    Collection<AbstractTreeNode> treeNodes = createNodes(project, moduleContext, elements, inProjectView, favoritesConfig);
-    return treeNodes.size() == 0 ? null : treeNodes.toArray(new AbstractTreeNode[treeNodes.size()]);
   }
 
   private static Object collectSelectedElements(final DataContext dataContext) {
@@ -101,7 +112,6 @@ public class AddToFavoritesAction extends AnAction {
     elements = retrieveData(elements, dataContext.getData(DataConstants.PSI_FILE));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.VIRTUAL_FILE));
-    elements = retrieveData(elements, dataContext.getData(DataConstantsEx.GUI_DESIGNER_FORM_ARRAY));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.MODULE_GROUP_ARRAY));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.MODULE));
@@ -189,7 +199,7 @@ public class AddToFavoritesAction extends AnAction {
         }
         final PsiClass classToBind = psiManager.findClass(className, GlobalSearchScope.allScope(project));
         if (classToBind != null) {
-          result.add(FormNode.constructFormNode(psiManager, classToBind, project, favoritesConfig));
+          result.add(FormNode.constructFormNode(classToBind, project, favoritesConfig));
         }
         else {
           addPsiElementNode(formFile, project, result, favoritesConfig, moduleContext);
@@ -202,23 +212,6 @@ public class AddToFavoritesAction extends AnAction {
                           result,
                           favoritesConfig,
                           moduleContext);
-      }
-      return result;
-    }
-
-    //on form nodes
-    if (object instanceof Form[]) {
-      Set<PsiClass> bindClasses = new HashSet<PsiClass>();
-      for (Form form : (Form[])object) {
-        final PsiClass classToBind = form.getClassToBind();
-        if (classToBind != null) {
-          if (bindClasses.contains(classToBind)) continue;
-          bindClasses.add(classToBind);
-          result.add(FormNode.constructFormNode(psiManager, classToBind, project, favoritesConfig));
-        }
-        else {
-          //can't be on FormNodes
-        }
       }
       return result;
     }
