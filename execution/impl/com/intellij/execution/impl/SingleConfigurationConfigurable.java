@@ -1,11 +1,13 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.ExecutionRegistry;
-import com.intellij.execution.runners.JavaProgramRunner;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -23,6 +25,8 @@ import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -96,7 +100,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         snapshot.setName(getNameText());
         snapshot.getConfiguration().checkConfiguration();
         for (JavaProgramRunner runner : ExecutionRegistry.getInstance().getRegisteredRunners()) {
-          runner.checkConfiguration(snapshot.getRunnerSettings(runner), snapshot.getConfigurationSettings(runner));
+          checkConfiguration(runner, snapshot);
         }
       }
       catch (RuntimeConfigurationException exception) {
@@ -107,9 +111,38 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       catch (ConfigurationException e) {
         myLastValidationResult = new ValidationResult(e.getLocalizedMessage(), ExecutionBundle.message("invalid.data.dialog.title"), null);
       }
+      catch (Throwable throwable) {
+        // Skip. Caused by calling outdated method through reflection.
+      }
+
       myValidationResultValid = true;
     }
     return myLastValidationResult;
+  }
+
+  private static void checkConfiguration(final JavaProgramRunner runner, final RunnerAndConfigurationSettings snapshot) throws Throwable {
+    final RunnerSettings runnerSettings = snapshot.getRunnerSettings(runner);
+    final ConfigurationPerRunnerSettings configurationSettings = snapshot.getConfigurationSettings(runner);
+    try {
+      runner.checkConfiguration(runnerSettings, configurationSettings);
+    }
+    catch (AbstractMethodError e) {
+      try {
+        //noinspection HardCodedStringLiteral
+        final Method meth =
+          runner.getClass().getDeclaredMethod("chechConfiguration", RunnerSettings.class, ConfigurationPerRunnerSettings.class);
+        meth.invoke(runner, runnerSettings, configurationSettings);
+      }
+      catch (IllegalAccessException e1) {
+        // Skip
+      }
+      catch (NoSuchMethodException e1) {
+        // Skip
+      }
+      catch (InvocationTargetException e1) {
+        throw e1.getTargetException();
+      }
+    }
   }
 
   public final void disposeUIResources() {
