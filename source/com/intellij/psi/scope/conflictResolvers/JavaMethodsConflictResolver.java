@@ -7,7 +7,9 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.java.LanguageLevel;
 
 import java.util.List;
 import java.util.Iterator;
@@ -289,6 +291,14 @@ outer:
 
   private Boolean isLessBoxing(PsiType argType, PsiType type1, PsiType type2) {
     if (argType == null) return null;
+    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(myArgumentsList);
+    if (type1 instanceof PsiClassType) {
+      type1 = ((PsiClassType)type1).setLanguageLevel(languageLevel);
+    }
+    if (type2 instanceof PsiClassType) {
+      type2 = ((PsiClassType)type2).setLanguageLevel(languageLevel);
+    }
+
     final boolean boxing1 = TypeConversionUtil.boxingConversionApplicable(type1, argType);
     final boolean boxing2 = TypeConversionUtil.boxingConversionApplicable(type2, argType);
     if (boxing1 == boxing2) return null;
