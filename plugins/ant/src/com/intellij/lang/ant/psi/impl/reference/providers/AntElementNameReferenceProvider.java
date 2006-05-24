@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,23 +23,26 @@ public class AntElementNameReferenceProvider extends GenericReferenceProvider {
     }
     final AntElementNameReference nameReference =
       new AntElementNameReference(this, (AntStructuredElement)element);
-    if (!(element instanceof AntTask)) {
-      return new PsiReference[]{nameReference};
+    if (element instanceof AntTask) {
+      final AntTask task = (AntTask)element;
+      if (!task.isMacroDefined()) {
+        return PsiReference.EMPTY_ARRAY;
+      }
+      final XmlAttribute[] attrs = task.getSourceElement().getAttributes();
+      if (attrs.length == 0) {
+        return new PsiReference[]{nameReference};
+      }
+      List<PsiReference> result = new ArrayList<PsiReference>(attrs.length + 1);
+      result.add(nameReference);
+      for (XmlAttribute attr : attrs) {
+        result.add(new AntElementNameReference(this, task, attr));
+      }
+      return result.toArray(new PsiReference[result.size()]);
     }
-    AntTask task = (AntTask)element;
-    if (!task.isMacroDefined()) {
-      return new PsiReference[]{nameReference};
-    }
-    final XmlAttribute[] attrs = task.getSourceElement().getAttributes();
-    if (attrs.length == 0) {
-      return new PsiReference[]{nameReference};
-    }
-    List<PsiReference> result = new ArrayList<PsiReference>(attrs.length + 1);
-    result.add(nameReference);
-    for (XmlAttribute attr : attrs) {
-      result.add(new AntElementNameReference(this, task, attr));
-    }
-    return result.toArray(new PsiReference[result.size()]);
+    final AntTask task = PsiTreeUtil.getParentOfType(element, AntTask.class);
+    return (task == null || !task.isMacroDefined())
+           ? PsiReference.EMPTY_ARRAY
+           : new PsiReference[]{nameReference};
   }
 
   @NotNull
