@@ -42,7 +42,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private AntTypeDefinition[] myTypeDefinitionArray;
   private AntTypeDefinition myTargetDefinition;
 
-
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
   }
@@ -205,6 +204,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public synchronized void registerCustomType(final AntTypeDefinition definition) {
     myTypeDefinitionArray = null;
     myTypeDefinitions.put(definition.getClassName(), definition);
+    if (myTargetDefinition != null && myTargetDefinition != definition) {
+      myTargetDefinition = null;
+    }
   }
 
   private void updateTypeDefinitions(final Hashtable ht, final boolean isTask) {
