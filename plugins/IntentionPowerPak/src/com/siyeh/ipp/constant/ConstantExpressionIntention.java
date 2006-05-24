@@ -28,32 +28,35 @@ import org.jetbrains.annotations.NonNls;
 
 public class ConstantExpressionIntention extends Intention {
 
+    @NotNull
+    protected PsiElementPredicate getElementPredicate() {
+        return new ConstantExpressionPredicate();
+    }
 
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
-    return new ConstantExpressionPredicate();
-  }
-
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiExpression expression =
-      (PsiExpression)element;
-    final PsiManager psiManager = expression.getManager();
-    final PsiConstantEvaluationHelper helper =
-      psiManager.getConstantEvaluationHelper();
-    final Object value = helper.computeConstantExpression(expression);
-    @NonNls final String newExpression;
-    if (value instanceof String) {
-      newExpression = '\"' + StringUtil
-        .escapeStringCharacters((String)value) +
-                                               '\"';
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiExpression expression =
+                (PsiExpression)element;
+        final PsiManager psiManager = expression.getManager();
+        final PsiConstantEvaluationHelper helper =
+                psiManager.getConstantEvaluationHelper();
+        final Object value = helper.computeConstantExpression(expression);
+        @NonNls final String newExpression;
+        if (value instanceof String) {
+            final String string = (String)value;
+            newExpression =
+                    '"' + StringUtil.escapeStringCharacters(string) + '"';
+        } else if (value instanceof Character) {
+            newExpression =
+                    '\'' + StringUtil.escapeStringCharacters(value.toString()) +
+                            '\'';
+        } else if (value instanceof Long) {
+            newExpression = value.toString() + 'L';
+        } else if (value == null) {
+            newExpression = "null";
+        } else {
+            newExpression = String.valueOf(value);
+        }
+        replaceExpression(newExpression, expression);
     }
-    else if (value == null) {
-      newExpression = "null";
-    }
-    else {
-      newExpression = String.valueOf(value);
-    }
-    replaceExpression(newExpression, expression);
-  }
 }

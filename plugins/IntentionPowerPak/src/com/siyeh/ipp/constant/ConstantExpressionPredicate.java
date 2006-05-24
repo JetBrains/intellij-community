@@ -18,7 +18,6 @@ package com.siyeh.ipp.constant;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ConstantExpressionPredicate implements PsiElementPredicate{
 
@@ -26,10 +25,6 @@ class ConstantExpressionPredicate implements PsiElementPredicate{
         if(!(element instanceof PsiExpression)){
             return false;
         }
-	    // should be unneeded, disabled for performance
-        //if(ErrorUtil.containsError(element)){
-        //    return false;
-        //}
         if(element instanceof PsiLiteralExpression ||
                 element instanceof PsiClassObjectAccessExpression){
 	        return false;
