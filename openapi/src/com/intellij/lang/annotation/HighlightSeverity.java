@@ -40,6 +40,13 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
 
 
   /**
+   * The severity level for errors or warnings obtained from server.
+   */
+  public static final HighlightSeverity GENERIC_SERVER_ERROR_OR_WARNING = new HighlightSeverity("SERVER_SEVERITY", 0);
+
+
+
+  /**
    * The standard severity level for 'weak' :) warning annotations.
    */
   public static final HighlightSeverity INFO = new HighlightSeverity("INFO", 100);
