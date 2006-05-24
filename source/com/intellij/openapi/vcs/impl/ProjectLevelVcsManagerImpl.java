@@ -120,6 +120,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls protected static final String IGNORE_CHANGEMARKERS_KEY = "idea.ignore.changemarkers";
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
 
+  private final Object TRACKERS_LOCK = new Object();
+
   public ProjectLevelVcsManagerImpl(Project project) {
     this(project, new AbstractVcs[0]);
   }
@@ -332,8 +334,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myProject;
   }
 
-  public synchronized void setLineStatusTracker(Document document, LineStatusTracker tracker) {
-    myLineStatusTrackers.put(document, tracker);
+  public void setLineStatusTracker(Document document, LineStatusTracker tracker) {
+    synchronized (TRACKERS_LOCK) {
+      myLineStatusTrackers.put(document, tracker);
+    }
   }
 
   public LineStatusTracker getLineStatusTracker(Document document) {
@@ -362,32 +366,36 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myContentManager;
   }
 
-  private synchronized void resetTracker(final VirtualFile virtualFile) {
-    if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) return;
-    final LvcsFile lvcsFile = LocalVcs.getInstance(getProject()).findFile(virtualFile.getPath());
-    if (lvcsFile == null) return;
+  private void resetTracker(final VirtualFile virtualFile) {
+    synchronized (TRACKERS_LOCK) {
+      if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) return;
+      final LvcsFile lvcsFile = LocalVcs.getInstance(getProject()).findFile(virtualFile.getPath());
+      if (lvcsFile == null) return;
 
-    final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-    if (document == null) return;
+      final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+      if (document == null) return;
 
-    final LineStatusTracker tracker = myLineStatusTrackers.get(document);
-    if (tracker != null) {
-      resetTracker(tracker);
-    }
-    else {
-      if (Arrays.asList(FileEditorManager.getInstance(getProject()).getOpenFiles()).contains(virtualFile)) {
-        installTracker(virtualFile, document);
+      final LineStatusTracker tracker = myLineStatusTrackers.get(document);
+      if (tracker != null) {
+        resetTracker(tracker);
+      }
+      else {
+        if (Arrays.asList(FileEditorManager.getInstance(getProject()).getOpenFiles()).contains(virtualFile)) {
+          installTracker(virtualFile, document);
+        }
       }
     }
   }
 
-  private synchronized boolean releaseTracker(Document document) {
-    releaseUpdateAlarms(document);
-    if (myLineStatusTrackers == null) return false;
-    if (!myLineStatusTrackers.containsKey(document)) return false;
-    LineStatusTracker tracker = myLineStatusTrackers.remove(document);
-    tracker.release();
-    return true;
+  private boolean releaseTracker(Document document) {
+    synchronized (TRACKERS_LOCK) {
+      releaseUpdateAlarms(document);
+      if (myLineStatusTrackers == null) return false;
+      if (!myLineStatusTrackers.containsKey(document)) return false;
+      LineStatusTracker tracker = myLineStatusTrackers.remove(document);
+      tracker.release();
+      return true;
+    }
   }
 
   private void releaseUpdateAlarms(final Document document) {
@@ -400,23 +408,25 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
   }
 
-  public synchronized void resetTracker(final LineStatusTracker tracker) {
-    if (tracker != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (myIsDisposed) return;
-          if (releaseTracker(tracker.getDocument())) {
-            installTracker(tracker.getVirtualFile(), tracker.getDocument());
+  public void resetTracker(final LineStatusTracker tracker) {
+    synchronized (TRACKERS_LOCK) {
+      if (tracker != null) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (myIsDisposed) return;
+            if (releaseTracker(tracker.getDocument())) {
+              installTracker(tracker.getVirtualFile(), tracker.getDocument());
+            }
           }
-        }
-      });
+        });
+      }
     }
   }
 
   private class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
       if (myIsDisposed) return;
-      synchronized (this) {
+      synchronized (TRACKERS_LOCK) {
         List<LineStatusTracker> trackers = new ArrayList<LineStatusTracker>(myLineStatusTrackers.values());
         for (LineStatusTracker tracker : trackers) {
           resetTracker(tracker);
@@ -456,66 +466,68 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
   }
 
-  private synchronized void installTracker(final VirtualFile virtualFile, final Document document) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (virtualFile == null) return;
+  private void installTracker(final VirtualFile virtualFile, final Document document) {
+    synchronized (TRACKERS_LOCK) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      if (virtualFile == null) return;
 
-    if (myLineStatusTrackers.containsKey(document)) return;
+      if (myLineStatusTrackers.containsKey(document)) return;
 
-    final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
-    if (status == FileStatus.NOT_CHANGED ||
-        status == FileStatus.ADDED ||
-        status == FileStatus.UNKNOWN) return;
+      final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
+      if (status == FileStatus.NOT_CHANGED ||
+          status == FileStatus.ADDED ||
+          status == FileStatus.UNKNOWN) return;
 
-    AbstractVcs activeVcs = getVcsFor(virtualFile);
+      AbstractVcs activeVcs = getVcsFor(virtualFile);
 
-    if (activeVcs == null) return;
+      if (activeVcs == null) return;
 
-    if (!(virtualFile.getFileSystem() instanceof LocalFileSystem)) return;
+      if (!(virtualFile.getFileSystem() instanceof LocalFileSystem)) return;
 
-    final UpToDateRevisionProvider upToDateRevisionProvider = activeVcs.getUpToDateRevisionProvider();
-    if (upToDateRevisionProvider == null) return;
-    if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) return;
+      final UpToDateRevisionProvider upToDateRevisionProvider = activeVcs.getUpToDateRevisionProvider();
+      if (upToDateRevisionProvider == null) return;
+      if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) return;
 
-    final Alarm alarm;
+      final Alarm alarm;
 
-    if (myLineStatusUpdateAlarms.containsKey(document)) {
-      alarm = myLineStatusUpdateAlarms.get(document);
-      alarm.cancelAllRequests();
-    }
-    else {
-      alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-      myLineStatusUpdateAlarms.put(document, alarm);
-    }
+      if (myLineStatusUpdateAlarms.containsKey(document)) {
+        alarm = myLineStatusUpdateAlarms.get(document);
+        alarm.cancelAllRequests();
+      }
+      else {
+        alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+        myLineStatusUpdateAlarms.put(document, alarm);
+      }
 
-    final LineStatusTracker tracker = createTrackerForDocument(document);
+      final LineStatusTracker tracker = createTrackerForDocument(document);
 
-    alarm.addRequest(new Runnable() {
-      public void run() {
-        try {
-          alarm.cancelAllRequests();
-          if (!virtualFile.isValid()) return;
-          final String lastUpToDateContent = getBaseVersionContent(virtualFile);
-          if (lastUpToDateContent == null) return;
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (!myProject.isDisposed()) {
-                synchronized (this) {
-                  ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                    public void run() {
-                      tracker.initialize(lastUpToDateContent);
-                    }
-                  });
+      alarm.addRequest(new Runnable() {
+        public void run() {
+          try {
+            alarm.cancelAllRequests();
+            if (!virtualFile.isValid()) return;
+            final String lastUpToDateContent = getBaseVersionContent(virtualFile);
+            if (lastUpToDateContent == null) return;
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                if (!myProject.isDisposed()) {
+                  synchronized (TRACKERS_LOCK) {
+                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                      public void run() {
+                        tracker.initialize(lastUpToDateContent);
+                      }
+                    });
+                  }
                 }
               }
-            }
-          });
+            });
+          }
+          finally {
+            myLineStatusUpdateAlarms.remove(document);
+          }
         }
-        finally {
-          myLineStatusUpdateAlarms.remove(document);
-        }
-      }
-    }, 10);
+      }, 10);
+    }
 
   }
 
