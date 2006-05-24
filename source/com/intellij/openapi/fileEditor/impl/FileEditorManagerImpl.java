@@ -1008,24 +1008,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return myDoNotTransferFocus;
   }
 
-  public static Editor getEditorForInjectedLanguage(final Editor editor, PsiFile file) {
-    if (editor == null) return null;
-    if (file == null) return editor;
-
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-    PsiLanguageInjectionHost injectionHost = TargetElementUtil.findInjectionHost(element);
-    Pair<PsiElement,TextRange> injectedPsi = injectionHost == null ? null : injectionHost.getInjectedPsi();
-    if (injectedPsi == null) {
-      return editor;
-    }
-    PsiFile injectedFile = injectedPsi.getFirst().getContainingFile();
-    Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
-
-    return new EditorDelegate((DocumentRange)document, (EditorImpl)editor, injectedFile);
-  }
-
-//================== Listeners =====================
+  //================== Listeners =====================
 
   /**
    * Closes deleted files. Closes file which are in the deleted directories.

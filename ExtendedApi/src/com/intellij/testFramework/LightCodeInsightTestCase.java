@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.impl.EditorDelegate;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -22,6 +21,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.InjectedLanguageUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -154,7 +154,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   }
 
   private void setupEditorForInjectedLangugae() {
-    Editor editor = FileEditorManagerImpl.getEditorForInjectedLanguage(myEditor, myFile);
+    Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
     if (editor instanceof EditorDelegate) {
       myFile = ((EditorDelegate)editor).getInjectedFile();
       myEditor = editor;

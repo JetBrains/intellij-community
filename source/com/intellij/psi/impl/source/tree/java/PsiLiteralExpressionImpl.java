@@ -406,7 +406,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     String text = (String)value;
     TextRange insideQuotes = new TextRange(1, text.length()+1);
 
-    return InjectedLanguageUtil.createInjectedPsiFile(this, text, insideQuotes);
+    return InjectedLanguageUtil.getInjectedPsiFile(this, text, insideQuotes);
   }
 
 }

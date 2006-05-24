@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -29,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EditorPopupHandler;
@@ -321,7 +321,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
 
   private Editor getOutsideVisibleEditor() {
     PsiFile psiFile = getPsiFile();
-    return FileEditorManagerImpl.getEditorForInjectedLanguage(myEditor, psiFile);
+    return InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, psiFile);
   }
 
   private PsiFile getPsiFile() {

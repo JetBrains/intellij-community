@@ -250,6 +250,6 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     String text = getValue();
     TextRange range = new TextRange(0, getTextLength());
 
-    return InjectedLanguageUtil.createInjectedPsiFile(this, text, range);
+    return InjectedLanguageUtil.getInjectedPsiFile(this, text, range);
   }
 }

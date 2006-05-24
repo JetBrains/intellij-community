@@ -66,6 +66,6 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
       insideQuotes = new TextRange(insideQuotes.getStartOffset(), children[children.length-2].getTextRange().getEndOffset() - getTextRange().getStartOffset());
     }
 
-    return InjectedLanguageUtil.createInjectedPsiFile(this, getValue(), insideQuotes);
+    return InjectedLanguageUtil.getInjectedPsiFile(this, getValue(), insideQuotes);
   }
 }
