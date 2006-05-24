@@ -672,7 +672,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       public boolean value(final Class object) {
         return GenericValue.class.isAssignableFrom(object) && !GenericAttributeValue.class.isAssignableFrom(object);
       }
-    }, set);
+    }, set, new HashSet<GenericInfoImpl>());
     return set;
   }
 
@@ -682,12 +682,13 @@ public class GenericInfoImpl implements DomGenericInfo {
       public boolean value(final Class object) {
         return GenericAttributeValue.class.isAssignableFrom(object);
       }
-    }, set);
+    }, set, new HashSet<GenericInfoImpl>());
     return set;
   }
 
 
-  private void addReferenceElementNames(final Condition<Class> condition, final HashSet<String> set) {
+  private void addReferenceElementNames(final Condition<Class> condition, final HashSet<String> set, final HashSet<GenericInfoImpl> visited) {
+    visited.add(this);
     Class[] classes = getConcreteInterfaceVariants();
     if (classes.length == 1 && classes[0].equals(myClass)) {
       for (final DomChildDescriptionImpl description : getChildrenDescriptions()) {
@@ -697,12 +698,18 @@ public class GenericInfoImpl implements DomGenericInfo {
             set.add(description.getXmlElementName());
           }
         } else {
-          description.getChildGenericInfo(myDomManager.getProject()).addReferenceElementNames(condition, set);
+          final GenericInfoImpl childGenericInfo = description.getChildGenericInfo(myDomManager.getProject());
+          if (!visited.contains(childGenericInfo)) {
+            childGenericInfo.addReferenceElementNames(condition, set, visited);
+          }
         }
       }
     } else {
       for (final Class aClass : classes) {
-        myDomManager.getGenericInfo(aClass).addReferenceElementNames(condition, set);
+        final GenericInfoImpl info = myDomManager.getGenericInfo(aClass);
+        if (!visited.contains(info)) {
+          info.addReferenceElementNames(condition, set, visited);
+        }
       }
     }
   }
