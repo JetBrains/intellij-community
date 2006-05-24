@@ -17,6 +17,7 @@
 package com.intellij.util.xml;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Should be stateless, since its instances are cached.
@@ -29,6 +30,6 @@ public interface ScopeProvider {
    * For uniqueness checking should return element, whose direct children names will be compared. Basically it's parameter element's parent: ParentScopeProvider.
    * For resolving should return element, whose all children will be searched  
    */
-  @NotNull DomElement getScope(@NotNull DomElement element);
+  @Nullable DomElement getScope(@NotNull DomElement element);
 
 }

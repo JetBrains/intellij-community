@@ -16,6 +16,8 @@
  */
 package com.intellij.util.xml;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,10 +55,12 @@ public interface ResolvingConverter<T> extends Converter<T> {
       return t == null? null:t.toString();
     }
 
+    @NotNull
     public Collection<Boolean> getVariants(final ConvertContext context) {
       return Arrays.asList(Boolean.FALSE, Boolean.TRUE);
     }
   };
 
+  @NotNull
   Collection<T> getVariants(final ConvertContext context);
 }

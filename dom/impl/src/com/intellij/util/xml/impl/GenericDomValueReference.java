@@ -4,7 +4,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.javaee.J2EEBundle;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -14,13 +13,14 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
+import com.intellij.codeInsight.lookup.LookupValueFactory;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * author: lesya
@@ -151,21 +151,18 @@ public class GenericDomValueReference<T> extends GenericReference {
       final ResolvingConverter<T> resolvingConverter = (ResolvingConverter<T>)converter;
       final ConvertContext convertContext = new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(myGenericValue));
       final Collection<T> variants = resolvingConverter.getVariants(convertContext);
-      if (!variants.isEmpty()) {
-        final Collection<String> strings = ContainerUtil.findAll(ContainerUtil.map(variants, new Function<T, String>() {
-          public String fun(final T s) {
-            return converter.toString(s, convertContext);
-          }
-        }), new Condition<String>() {
-          public boolean value(final String object) {
-            return object != null;
-          }
-        });
-        if (!strings.isEmpty()) {
-          return strings.toArray(new String[strings.size()]);
+      ArrayList<Object> result = new ArrayList<Object>(variants.size());
+      for (T variant: variants) {
+        String name = converter.toString(variant, convertContext);
+        if (name != null) {
+          Icon icon = ElementPresentationManager.getIcon(variant);
+          Object value = LookupValueFactory.createLookupValue(name, icon);
+          result.add(value);
         }
       }
+      return result.toArray();
     }
     return super.getVariants();
   }
+
 }
