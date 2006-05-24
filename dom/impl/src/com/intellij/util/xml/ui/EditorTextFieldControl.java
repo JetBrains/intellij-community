@@ -22,6 +22,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
 
@@ -57,8 +58,15 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
 
   protected abstract EditorTextField getEditorTextField(T component);
 
-  public final EditorTextField getEditorTextField() {
-    return getEditorTextField(getComponent());
+  public void setEditorTextFieldBorder(Border border) {
+    T component = getComponent();
+    component.setBorder(null);
+    EditorTextField field = getEditorTextField(component);
+    Editor editor = field.getEditor();
+    if (editor != null) {
+      editor.getComponent().setBorder(border);
+      editor.getContentComponent().setBorder(border);
+    }
   }
 
   protected void doReset() {

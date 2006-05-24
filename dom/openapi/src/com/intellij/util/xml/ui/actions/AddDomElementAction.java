@@ -12,6 +12,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.ui.DomCollectionControl;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -83,6 +84,7 @@ public abstract class AddDomElementAction extends AnAction {
     groupPopup.showUnderneathOf(e.getInputEvent().getComponent());
   }
 
+  @NotNull
   public AnAction[] getChildren(final AnActionEvent e) {
     DomCollectionChildDescription[] descriptions = getDomCollectionChildDescriptions(e);
     final List<AnAction> actions = new ArrayList<AnAction>();
@@ -129,6 +131,7 @@ public abstract class AddDomElementAction extends AnAction {
                                                  final Class s,
                                                  final DomCollectionChildDescription description);
 
+  @NotNull
   protected abstract DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e);
 
   @Nullable

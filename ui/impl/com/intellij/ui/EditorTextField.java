@@ -26,6 +26,8 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author max
  */
@@ -290,13 +292,13 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     EditorEx editor;
     if (!myIsViewer) {
       editor = myProject != null
-                            ? (EditorEx)factory.createEditor(myDocument, myProject)
-                            : (EditorEx)factory.createEditor(myDocument);
+               ? (EditorEx)factory.createEditor(myDocument, myProject)
+               : (EditorEx)factory.createEditor(myDocument);
     }
     else {
       editor = myProject != null
-                            ? (EditorEx)factory.createViewer(myDocument, myProject)
-                            : (EditorEx)factory.createViewer(myDocument);
+               ? (EditorEx)factory.createViewer(myDocument, myProject)
+               : (EditorEx)factory.createViewer(myDocument);
     }
 
     final EditorSettings settings = editor.getSettings();
@@ -368,7 +370,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   private Color getBackgroundColor(boolean enabled){
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
     return enabled ? UIUtil.getActiveTextColor()
-    : UIUtil.getInactiveTextColor();
+           : UIUtil.getInactiveTextColor();
   }
 
   public Dimension getPreferredSize() {
@@ -434,6 +436,13 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     }
   }
 
+  /**
+   *
+   * @return null if the editor is not initialized (e.g. if the field is not added to a container)
+   * @see #createEditor()
+   * @see #addNotify()
+   */
+  @Nullable
   public Editor getEditor() {
     return myEditor;
   }

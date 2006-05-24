@@ -22,6 +22,9 @@ import javax.swing.*;
 import java.lang.reflect.Type;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * User: Sergey.Vasiliev
  */
@@ -65,6 +68,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     }
   }
 
+  @NotNull
   protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
     final DomModelTreeView view = getTreeView(e);
 
@@ -78,7 +82,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
 
     final DomElementsGroupNode groupNode = getDomElementsGroupNode(view);
 
-    return new DomCollectionChildDescription[]{groupNode.getChildDescription()};
+    return groupNode == null ? DomCollectionChildDescription.EMPTY_ARRAY : new DomCollectionChildDescription[]{groupNode.getChildDescription()};
   }
 
   protected DomElement getParentDomElement(final AnActionEvent e) {
@@ -114,6 +118,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     return text;
   }
 
+  @Nullable
   private static DomElementsGroupNode getDomElementsGroupNode(final DomModelTreeView treeView) {
     SimpleNode simpleNode = treeView.getTree().getSelectedNode();
     while (simpleNode != null) {
