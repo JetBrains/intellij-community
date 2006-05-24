@@ -18,9 +18,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
+import java.util.*;
 
 /**
  * author: lesya
@@ -75,8 +73,15 @@ abstract class UndoOrRedo {
   }
 
   public void execute() {
-    if (containsAnotherChanges() || containsNonUndoableActions()) {
-      reportCannotUndo();
+    Set<DocumentReference> otherAffected = new HashSet<DocumentReference>();
+    if (containsAnotherChanges(otherAffected)) {
+      //otherAffected.removeAll(myUndoableGroup.getAffectedDocuments());
+      reportCannotUndo(CommonBundle.message("cannot.undo.error.other.affected.files.changed.message"), otherAffected);
+      return;
+    }
+
+    if (containsNonUndoableActions()) {
+      reportCannotUndo(CommonBundle.message("cannot.undo.error.contains.nonundoable.changes.message"), myUndoableGroup.getAffectedDocuments());
       return;
     }
 
@@ -194,22 +199,38 @@ abstract class UndoOrRedo {
     }
   }
 
-  private void reportCannotUndo() {
+  private void reportCannotUndo(final String message, final Collection<DocumentReference> problemFiles) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException("Files changed");
     }
 
-    Messages.showMessageDialog(myManager.getProject(), CommonBundle.message("cannot.undo.error.message"), CommonBundle.message("undo.dialog.title"),
-                               Messages.getErrorIcon());
+    new CannotUndoReportDialog(myManager.getProject(), message, problemFiles).show();
+
+    //Messages.showMessageDialog(myManager.getProject(), message, title, Messages.getErrorIcon());
   }
 
-  private boolean containsAnotherChanges() {
+  private boolean containsAnotherChanges(Set<DocumentReference> affected) {
+    boolean otherDocsHaveSomethingOnTheirStacks = false;
     for (LinkedList<UndoableGroup> linkedList : getStacks()) {
       if (linkedList.isEmpty()) continue;
-      if (!linkedList.getLast().equals(myUndoableGroup)) return true;
+      final UndoableGroup last = linkedList.getLast();
+      if (!last.equals(myUndoableGroup)) {
+        otherDocsHaveSomethingOnTheirStacks = true;
+        affected.addAll(last.getAffectedDocuments());
+      }
     }
-    return (myUndoableGroup.isComplex() && !getStackHolder().getGlobalStack().getLast().equals(myUndoableGroup));
 
+    if (otherDocsHaveSomethingOnTheirStacks) return true;
+
+    if (myUndoableGroup.isComplex()) {
+      final UndoableGroup lastGlobal = getStackHolder().getGlobalStack().getLast();
+      if (!lastGlobal.equals(myUndoableGroup)) {
+        affected.addAll(lastGlobal.getAffectedDocuments());
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private Collection<LinkedList<UndoableGroup>> getStacks() {
