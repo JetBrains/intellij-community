@@ -6,6 +6,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import org.jetbrains.annotations.Nullable;
 
 
 public class RunResult<T> extends Result<T> {
@@ -39,6 +40,7 @@ public class RunResult<T> extends Result<T> {
     return this;
   }
 
+  @Nullable
   public T getResultObject() {
     return myResult;
   }
