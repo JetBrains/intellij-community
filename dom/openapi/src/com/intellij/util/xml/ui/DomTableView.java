@@ -43,7 +43,7 @@ import java.util.List;
 public class DomTableView extends JPanel implements DataProvider{
   @NonNls private static final String TREE = "Tree";
   @NonNls private static final String EMPTY_PANE = "EmptyPane";
-  private final ListTableModel<DomElement> myTableModel = new MyListTableModel();
+  private final ListTableModel myTableModel = new MyListTableModel();
   private final TableView myTable = new TableView() {
     public boolean editCellAt(final int row, final int column, final EventObject e) {
       final boolean b = super.editCellAt(row, column, e);
@@ -182,12 +182,12 @@ public class DomTableView extends JPanel implements DataProvider{
     adjustColumnWidths();
   }
 
-  public final void setItems(List<? extends DomElement> items) {
+  public final void setItems(List items) {
     if (myTable.isEditing()) {
       myTable.getCellEditor().cancelCellEditing();
     }
     final int row = myTable.getSelectedRow();
-    myTableModel.setItems(new ArrayList<DomElement>(items));
+    myTableModel.setItems(new ArrayList(items));
     if (row >= 0 && row < myTableModel.getRowCount()) {
       myTable.getSelectionModel().setSelectionInterval(row, row);
     }
@@ -279,7 +279,7 @@ public class DomTableView extends JPanel implements DataProvider{
     return myHelpID;
   }
 
-  private class MyListTableModel extends ListTableModel<DomElement> {
+  private class MyListTableModel extends ListTableModel {
     public MyListTableModel() {
       super(ColumnInfo.EMPTY_ARRAY);
     }
@@ -287,7 +287,7 @@ public class DomTableView extends JPanel implements DataProvider{
     public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
       final Object oldValue = getValueAt(rowIndex, columnIndex);
       if (!Comparing.equal(oldValue, aValue)) {
-        new WriteCommandAction(myProject, getItems().get(rowIndex).getRoot().getFile()) {
+        new WriteCommandAction(myProject, ((DomElement)getItems().get(rowIndex)).getRoot().getFile()) {
           protected void run(final Result result) throws Throwable {
             MyListTableModel.super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex);
           }
