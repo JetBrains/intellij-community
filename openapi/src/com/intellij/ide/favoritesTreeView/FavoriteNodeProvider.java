@@ -52,4 +52,13 @@ public interface FavoriteNodeProvider {
    * @return the weight, or -1 if <code>element</code> is not an element supported by this provider.
    */
   int getElementWeight(final Object element);
+
+  /**
+   * Returns the location text (grey text in parentheses) to display in the Favorites view for the specified element.
+   *
+   * @param element the element for which the location is requested.
+   * @return the location text, or -1 if <code>element</code> is not an element supported by this provider.
+   */
+  @Nullable
+  String getElementLocation(final Object element);
 }

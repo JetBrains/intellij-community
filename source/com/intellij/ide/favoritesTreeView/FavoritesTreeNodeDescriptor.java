@@ -1,16 +1,16 @@
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.projectView.impl.nodes.Form;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
-import com.intellij.navigation.ItemPresentation;
 
 /**
  * User: anna
@@ -65,9 +65,6 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
       final Module module = packageElement.getModule();
       return (module != null ? (module.getName() + ":") : "") + packageElement.getPackage().getQualifiedName();
     }
-    if (nodeElement instanceof Form){
-      return ((Form)nodeElement).getName();
-    }
     if (nodeElement instanceof LibraryGroupElement){
       return ((LibraryGroupElement)nodeElement).getModule().getName();
     }
@@ -75,6 +72,11 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
       final NamedLibraryElement namedLibraryElement = ((NamedLibraryElement)nodeElement);
       final LibraryGroupElement parent = namedLibraryElement.getParent();
       return parent.getModule().getName() + ":" + namedLibraryElement.getOrderEntry().getPresentableName();
+    }
+    final FavoriteNodeProvider[] nodeProviders = ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class);
+    for(FavoriteNodeProvider provider: nodeProviders) {
+      String location = provider.getElementLocation(nodeElement);
+      if (location != null) return location;
     }
     return null;
   }

@@ -92,6 +92,21 @@ public class UIDesignerFavoriteNodeProvider implements ApplicationComponent, Fav
     return -1;
   }
 
+  @Nullable
+  public String getElementLocation(final Object element) {
+    if (element instanceof Form) {
+      final PsiFile[] psiFiles = ((Form)element).getFormFiles();
+      VirtualFile vFile = null;
+      if (psiFiles.length > 0) {
+        vFile = psiFiles [0].getVirtualFile();
+      }
+      if (vFile != null) {
+        return vFile.getPresentableUrl();
+      }
+    }
+    return null;
+  }
+
   @NonNls @NotNull
   public String getComponentName() {
     return "UIDesignerFavoriteNodeProvider";
