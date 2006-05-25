@@ -1,5 +1,6 @@
 package com.intellij.openapi.command.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -10,10 +11,9 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -99,7 +99,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
       fireCommandStarted();
       command.run();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.error(e);
     }
     finally {
@@ -216,7 +216,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
       try {
         listener.commandStarted(event);
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         LOG.error(e);
       }
     }
@@ -229,7 +229,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
       try {
         listener.beforeCommandFinished(event);
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         LOG.error(e);
       }
     }
@@ -242,7 +242,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
       try {
         listener.commandFinished(event);
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         LOG.error(e);
       }
     }
@@ -253,7 +253,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
       try {
         listener.undoTransparentActionStarted();
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         LOG.error(e);
       }
     }
@@ -264,7 +264,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
       try {
         listener.undoTransparentActionFinished();
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         LOG.error(e);
       }
     }
