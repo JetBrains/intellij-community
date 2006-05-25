@@ -25,6 +25,7 @@ import com.intellij.util.cls.ClsUtil;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -38,7 +39,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   private final FileViewProvider myViewProvider;
   private LanguageLevel myLanguageLevel = null;
 
-  private ClsFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider, boolean forDecompiling) {
+  private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(manager, -2);
     myIsForDecompiling = forDecompiling;
     myViewProvider = viewProvider;
@@ -50,8 +51,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
 
 
   public boolean isContentsLoaded() {
-    if (myClass == null) return false;
-    return myClass.isContentsLoaded();
+    return myClass != null && myClass.isContentsLoaded();
   }
 
   public void unloadContent() {
@@ -326,6 +326,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     visitor.visitJavaFile(this);
   }
 
+  @NonNls
   public String toString() {
     return "PsiFile:" + getName();
   }
@@ -344,6 +345,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return new PsiFile[]{this};
   }
 
+  @NotNull
   public FileViewProvider getViewProvider() {
     return myViewProvider;
   }

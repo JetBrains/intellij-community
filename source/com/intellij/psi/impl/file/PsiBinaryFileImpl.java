@@ -12,6 +12,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -182,8 +183,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   public boolean isValid() {
     if (isCopy()) return true; // "dummy" file
-    if (!getVirtualFile().isValid()) return false;
-    return myManager.getFileManager().findFile(getVirtualFile()) == this;
+    return getVirtualFile().isValid() && myManager.getFileManager().findFile(getVirtualFile()) == this;
   }
 
   public boolean isWritable() {
@@ -198,6 +198,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return null;
   }
 
+  @NonNls
   public String toString() {
     return "PsiBinaryFile:" + getName();
   }
@@ -212,6 +213,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return new PsiFile[]{this};
   }
 
+  @NotNull
   public FileViewProvider getViewProvider() {
     return myViewProvider;
   }

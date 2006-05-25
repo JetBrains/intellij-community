@@ -116,6 +116,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
     return canNavigate();
   }
 
+  @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);

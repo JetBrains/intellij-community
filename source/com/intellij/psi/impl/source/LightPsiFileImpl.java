@@ -17,7 +17,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -171,6 +170,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return myLanguage;
   }
 
+  @NotNull
   public FileViewProvider getViewProvider() {
     return myViewProvider;
   }
@@ -179,6 +179,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return myManager;
   }
 
+  @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);

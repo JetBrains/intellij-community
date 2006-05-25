@@ -298,6 +298,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return myContentElementType.getLanguage();
   }
 
+  @NotNull
   public FileViewProvider getViewProvider() {
     return myViewProvider;
   }
