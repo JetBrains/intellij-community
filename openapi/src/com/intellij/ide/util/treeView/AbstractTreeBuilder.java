@@ -482,7 +482,7 @@ public abstract class AbstractTreeBuilder {
       }
       childDescr.setIndex(index.intValue());
     }
-    if (newElement != null && changes) {
+    if (index != null && changes) {
       updateNodeImageAndPosition(childNode);
     }
     if (!oldElement.equals(newElement)) {
