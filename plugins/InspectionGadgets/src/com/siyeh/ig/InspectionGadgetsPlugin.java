@@ -67,6 +67,10 @@ import com.siyeh.ig.style.*;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.visibility.*;
+import com.siyeh.ig.packaging.*;
+import com.siyeh.ig.dependency.*;
+import com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection;
+import com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -287,16 +291,16 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             registerVisibilityInspections();
     //        m_inspectionClasses.add(MethodReturnAlwaysConstantInspection.class);
             m_inspectionClasses.add(BooleanMethodIsAlwaysInvertedInspection.class);
-    //        registerPackagingInspections();
-     //       registerModularizationInspections();
-     //       registerDependencyInspections();
+     //       registerPackagingInspections();
+    //        registerModularizationInspections();
+    //        registerDependencyInspections();
         }
         final int numInspections = m_inspectionClasses.size();
         final Class<? extends LocalInspectionTool>[] classArray =
                 new Class[numInspections];
         return m_inspectionClasses.toArray(classArray);
     }
-       /*
+
     private void registerPackagingInspections() {
         m_inspectionClasses.add(PackageInMultipleModulesInspection.class);
         m_inspectionClasses.add(DisjointPackageInspection.class);
@@ -318,7 +322,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CyclicClassDependencyInspection.class);
         m_inspectionClasses.add(CyclicPackageDependencyInspection.class);
     }
-     */
+
     public void initComponent() {
     }
 
