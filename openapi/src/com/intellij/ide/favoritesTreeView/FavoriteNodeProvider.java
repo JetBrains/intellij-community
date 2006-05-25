@@ -44,4 +44,12 @@ public interface FavoriteNodeProvider {
    * @return true if the file is contained, false if not or if <code>element</code> is not an element supported by this provider.
    */
   boolean elementContainsFile(final Object element, final VirtualFile vFile);
+
+  /**
+   * Returns the weight of the specified project view node element to use when sorting the favorites list.
+   *
+   * @param element the element for which the weight is requested.
+   * @return the weight, or -1 if <code>element</code> is not an element supported by this provider.
+   */
+  int getElementWeight(final Object element);
 }

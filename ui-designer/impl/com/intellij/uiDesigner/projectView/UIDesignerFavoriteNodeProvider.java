@@ -87,6 +87,11 @@ public class UIDesignerFavoriteNodeProvider implements ApplicationComponent, Fav
     return false;
   }
 
+  public int getElementWeight(final Object element) {
+    if (element instanceof Form) return 9;
+    return -1;
+  }
+
   @NonNls @NotNull
   public String getComponentName() {
     return "UIDesignerFavoriteNodeProvider";

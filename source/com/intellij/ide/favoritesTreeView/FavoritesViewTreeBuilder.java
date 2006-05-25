@@ -9,13 +9,13 @@ import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
-import com.intellij.ide.projectView.impl.nodes.Form;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -51,6 +51,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
                                   final String name) {
     super(project, tree, treeModel, treeStructure, null);
     myListName = name;
+    final FavoriteNodeProvider[] nodeProviders = ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class);
     setNodeDescriptorComparator(new Comparator<NodeDescriptor>(){
       private int getWeight(NodeDescriptor descriptor) {
         FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)descriptor;
@@ -82,14 +83,15 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         if (value instanceof PsiElement){
           return 8;
         }
-        if (value instanceof Form){
-          return 9;
-        }
         if (value instanceof LibraryGroupElement){
           return 10;
         }
         if (value instanceof NamedLibraryElement){
           return 11;
+        }
+        for(FavoriteNodeProvider provider: nodeProviders) {
+          int weight = provider.getElementWeight(value);
+          if (weight != -1) return weight;
         }
         return 12;
       }
