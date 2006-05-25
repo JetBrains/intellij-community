@@ -51,6 +51,7 @@ public class ElementPresentationManager {
   public static void unregisterIconProvider(Function<Object, Icon> function) { ourIconProviders.remove(function); }
 
   public static void registerTypeName(Class aClass, String typeName) { ourTypeNames.put(aClass, typeName); }
+  public static void registerIcon(Class aClass, Icon icon) { registerIcons(aClass, icon); }
   public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
 
   public static String getElementName(Object element) {
