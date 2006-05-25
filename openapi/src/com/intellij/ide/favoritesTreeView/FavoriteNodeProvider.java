@@ -61,4 +61,12 @@ public interface FavoriteNodeProvider {
    */
   @Nullable
   String getElementLocation(final Object element);
+
+  /**
+   * Checks if the specified element is invalid and needs to be removed from the tree.
+   *
+   * @param element the element to check.
+   * @return true if the element is invalid, false if the element is valid or not supported by this provider.
+   */
+  boolean isInvalidElement(Object element);
 }

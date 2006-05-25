@@ -107,6 +107,13 @@ public class UIDesignerFavoriteNodeProvider implements ApplicationComponent, Fav
     return null;
   }
 
+  public boolean isInvalidElement(Object element) {
+    if (element instanceof Form) {
+      return !((Form) element).isValid();
+    }
+    return false;
+  }
+
   @NonNls @NotNull
   public String getComponentName() {
     return "UIDesignerFavoriteNodeProvider";

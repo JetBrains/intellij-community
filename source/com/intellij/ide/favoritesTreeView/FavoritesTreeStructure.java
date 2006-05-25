@@ -6,12 +6,12 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.projectView.impl.ProjectTreeStructure;
-import com.intellij.ide.projectView.impl.nodes.Form;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -84,18 +84,6 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
         if (val instanceof SmartPsiElementPointer && ((SmartPsiElementPointer)val).getElement() == null) {
           continue;
         }
-        if (val instanceof Form) {
-          final Collection<AbstractTreeNode> children = abstractTreeNode.getChildren();
-          boolean toContinue = false;
-          for (AbstractTreeNode node : children) {
-            final Object value = node.getValue();
-            if (!(value instanceof PsiElement) || !((PsiElement)value).isValid()) {
-              toContinue = true;
-              break;
-            }
-          }
-          if (toContinue) continue;
-        }
         if (val instanceof ResourceBundle) {
           ResourceBundle resourceBundle = (ResourceBundle)val;
           List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(myProject);
@@ -104,6 +92,16 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
             continue;
           }
         }
+
+        boolean isInvalid = false;
+        for(FavoriteNodeProvider nodeProvider: ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class)) {
+          if (nodeProvider.isInvalidElement(val)) {
+            isInvalid = true;
+            break;
+          }
+        }
+        if (isInvalid) continue;
+
         result.add(abstractTreeNode);
       }
       //myFavoritesRoots = result;

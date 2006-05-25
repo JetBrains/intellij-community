@@ -71,6 +71,7 @@ public class Form implements Navigatable{
   }
 
   public boolean isValid() {
+    if (myFormFiles.size() == 0) return false;    
     for (PsiFile psiFile : myFormFiles) {
       if (!psiFile.isValid()) {
         return false;
