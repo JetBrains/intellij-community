@@ -43,13 +43,13 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   private static Date weekAgo;
 
   public static final String [] COLUMNS = {
-    " ",
+    // this is a fake naming just for simplifying code for rendering table header
+    "I",
     IdeBundle.message("column.plugins.name"),
     IdeBundle.message("column.plugins.downloads"),
     IdeBundle.message("column.plugins.date"),
     IdeBundle.message("column.plugins.category")
   };
-  public static final int [] PREFERRED_WIDTH = {30, 200, 70, 80, 80, 80, 80, 80, 80};
 
   private int columnIdx;
   private SortableProvider mySortableProvider;

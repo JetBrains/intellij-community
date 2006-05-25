@@ -6,6 +6,7 @@ import com.intellij.util.ui.SortableColumnModel;
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -16,33 +17,13 @@ import java.awt.event.MouseEvent;
  * Time: 4:19:20 PM
  * To change this template use Options | File Templates.
  */
-public class PluginTable extends JTable {
+public class PluginTable extends JTable
+{
   public PluginTable(final PluginTableModel model)
   {
     super(model);
 
-    JTableHeader tableHeader = getTableHeader();
-    tableHeader.setDefaultRenderer(new TableHeaderRenderer (model));
-    tableHeader.addMouseListener(new MouseAdapter () {
-      public void mouseClicked(MouseEvent e) {
-        int column = getTableHeader().getColumnModel().getColumnIndexAtX(e.getX());
-
-        if (model.sortableProvider.getSortColumn() == column) {
-          if (model.sortableProvider.getSortOrder() == SortableColumnModel.SORT_DESCENDING)
-            model.sortableProvider.setSortOrder(SortableColumnModel.SORT_ASCENDING);
-          else
-            model.sortableProvider.setSortOrder(SortableColumnModel.SORT_DESCENDING);
-        } else {
-          model.sortableProvider.setSortOrder(SortableColumnModel.SORT_ASCENDING);
-          model.sortableProvider.setSortColumn(column);
-        }
-
-        model.sortByColumn (column);
-
-        getTableHeader().updateUI();
-      }
-    });
-    tableHeader.setReorderingAllowed(false);
+    initializeHeader( model );
 
     for (int i = 0; i < model.getColumnCount(); i++) {
       TableColumn column = getColumnModel().getColumn(i);
@@ -62,10 +43,41 @@ public class PluginTable extends JTable {
 
     //  Date:
     column = getColumnModel().getColumn( 3 );
-    column.setMaxWidth( 80 );
+    column.setMaxWidth( 95 );
 
-    setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    setShowGrid(false);
+    setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
+    setShowGrid( false );
+  }
+
+  private void initializeHeader( final PluginTableModel model )
+  {
+    JTableHeader header = getTableHeader();
+    header.setDefaultRenderer(new PluginTableHeaderRenderer( model ));
+
+    header.addMouseListener(new MouseAdapter () {
+      public void mouseClicked(MouseEvent e) {
+        int column = getTableHeader().getColumnModel().getColumnIndexAtX(e.getX());
+
+        if (model.sortableProvider.getSortColumn() == column) {
+          if (model.sortableProvider.getSortOrder() == SortableColumnModel.SORT_DESCENDING)
+            model.sortableProvider.setSortOrder(SortableColumnModel.SORT_ASCENDING);
+          else
+            model.sortableProvider.setSortOrder(SortableColumnModel.SORT_DESCENDING);
+        } else {
+          model.sortableProvider.setSortOrder(SortableColumnModel.SORT_ASCENDING);
+          model.sortableProvider.setSortColumn(column);
+        }
+
+        model.sortByColumn (column);
+
+        getTableHeader().updateUI();
+      }
+    });
+    header.setReorderingAllowed(false);
+  }
+
+  public Object [] getElements () {
+    return ((PluginTableModel)getModel()).view.toArray();
   }
 
   public IdeaPluginDescriptor getObjectAt (int row) {
@@ -73,14 +85,43 @@ public class PluginTable extends JTable {
   }
 
   public IdeaPluginDescriptor getSelectedObject () {
-    IdeaPluginDescriptor o = null;
-    if (getSelectedRowCount() > 0) {
-      o = getObjectAt(getSelectedRow());
+    IdeaPluginDescriptor selected = null;
+    if( getSelectedRowCount() > 0 ) {
+      selected = getObjectAt( getSelectedRow() );
     }
-    return o;
+    return selected;
   }
 
-  public Object [] getElements () {
-    return ((PluginTableModel)getModel()).view.toArray();
+  public IdeaPluginDescriptor[] getSelectedObjects ()
+  {
+    IdeaPluginDescriptor[] selection = null;
+    if( getSelectedRowCount() > 0 )
+    {
+      int[] poses = getSelectedRows();
+      selection = new IdeaPluginDescriptor[ poses.length ];
+      for( int i = 0; i < poses.length; i++ )
+      {
+        selection[ i ] = getObjectAt( poses[ i ] );
+      }
+    }
+    return selection;
+  }
+
+  private static class PluginTableHeaderRenderer extends TableHeaderRenderer
+  {
+    public PluginTableHeaderRenderer( final PluginTableModel model )
+    {
+      super( model );
+    }
+    public Component getTableCellRendererComponent( JTable table, Object value,
+                                                    boolean isSelected, boolean hasFocus,
+                                                    int row, int column)
+    {
+      super.getTableCellRendererComponent( table, value, isSelected, hasFocus,  row, column );
+
+      JTableHeader header = table.getTableHeader();
+      myLabel.setForeground( (column == 0) ? header.getBackground() : header.getForeground() );
+      return this;
+    }
   }
 }

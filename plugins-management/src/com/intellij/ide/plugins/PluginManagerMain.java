@@ -2,24 +2,24 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.net.HTTPProxySettingsDialog;
-import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -35,7 +35,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 import java.util.zip.ZipException;
@@ -49,7 +48,7 @@ import java.util.zip.ZipException;
  */
 public class PluginManagerMain
 {
-  private static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
+  public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
   @NonNls public static final String TEXT_PREFIX = "<html><body style=\"font-family: Arial; font-size: 12pt;\">";
   @NonNls public static final String TEXT_SUFIX = "</body></html>";
@@ -58,6 +57,7 @@ public class PluginManagerMain
   @NonNls public static final String HTML_SUFIX = "</a></body></html>";
 
   public static final String NOT_SPECIFIED = IdeBundle.message("plugin.status.not.specified");
+  private boolean requireShutdown = false;
 
   private JPanel myToolbarPanel;
   private JPanel main;
@@ -78,8 +78,6 @@ public class PluginManagerMain
   private PluginTable pluginTable;
   private ArrayList<IdeaPluginDescriptor> pluginsList;
 
-  private boolean requireShutdown = false;
-
   private ActionToolbar toolbar;
   private DefaultActionGroup actionGroup;
   private PluginsTableModel genericModel;
@@ -94,6 +92,7 @@ public class PluginManagerMain
 
     installedScrollPane.getViewport().setBackground(pluginTable.getBackground());
     installedScrollPane.getViewport().setView(pluginTable);
+
     pluginTable.getSelectionModel().addListSelectionListener(
       new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e)
@@ -184,6 +183,16 @@ public class PluginManagerMain
     });
   }
 
+  public void setRequireShutdown( boolean val )
+  {
+    requireShutdown = val;
+  }
+
+  public ArrayList<IdeaPluginDescriptorImpl> getDependentList( IdeaPluginDescriptorImpl pluginDescriptor )
+  {
+    return genericModel.dependent( pluginDescriptor );
+  }
+
   private void loadAvailablePlugins( boolean checkLocal )
   {
     ArrayList<IdeaPluginDescriptor> list;
@@ -267,203 +276,84 @@ public class PluginManagerMain
     myProgressBar.setIndeterminate( what );
   }
 
-    private ActionGroup getActionGroup ()
+  private ActionGroup getActionGroup ()
+  {
+    if( actionGroup == null )
     {
-      if (actionGroup == null)
-      {
-        actionGroup = new DefaultActionGroup();
+      actionGroup = new DefaultActionGroup();
+      actionGroup.add( new ActionInstallPlugin( this, pluginTable ) );
+      actionGroup.add( new ActionUninstallPlugin( this, pluginTable ) );
+    }
+    return actionGroup;
+  }
 
-        final String installTitle = IdeBundle.message("action.download.and.install.plugin");
-        final String updateMessage = IdeBundle.message("action.update.plugin");
+  public JPanel getMainPanel() {
+    return main;
+  }
 
-        AnAction installPluginAction = new AnAction( installTitle, installTitle, IconLoader.getIcon("/actions/install.png"))
-        {
-          public void update(AnActionEvent e)
-          {
-              Presentation presentation = e.getPresentation();
-              boolean enabled = false;
-              Object pluginObject = pluginTable.getSelectedObject();
-
-              if (pluginObject instanceof PluginNode)
-              {
-                int status = PluginManagerColumnInfo.getRealNodeState((PluginNode)pluginObject);
-                enabled = (status != PluginNode.STATUS_DOWNLOADED);
-                presentation.setText( installTitle );
-              }
-              else
-              if (pluginObject instanceof IdeaPluginDescriptorImpl )
-              {
-                presentation.setText(updateMessage);
-                presentation.setDescription(updateMessage);
-                PluginId id = ((IdeaPluginDescriptorImpl)pluginObject).getPluginId();
-                enabled = PluginsTableModel.hasNewerVersion( id );
-              }
-
-            presentation.setEnabled(enabled);
-          }
-
-          public void actionPerformed(AnActionEvent e) {
-            do {
-              try {
-                final Object selectedObject = pluginTable.getSelectedObject();
-                final boolean isUpdate = (selectedObject instanceof IdeaPluginDescriptorImpl);
-
-                PluginNode pluginNode = null;
-                if (selectedObject instanceof PluginNode)
-                {
-                  pluginNode = (PluginNode)selectedObject;
-                }
-                else
-                if (selectedObject instanceof IdeaPluginDescriptorImpl)
-                {
-                  final IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)selectedObject;
-                  pluginNode = new PluginNode(pluginDescriptor.getPluginId());
-                  pluginNode.setName(pluginDescriptor.getName());
-                  pluginNode.setDepends(Arrays.asList(pluginDescriptor.getDependentPluginIds()));
-                  pluginNode.setSize("-1");
-                }
-
-                final String message = isUpdate ? updateMessage : installTitle;
-                if (Messages.showYesNoDialog(main,
-                                             (isUpdate ? IdeBundle.message("prompt.update.plugin", pluginNode.getName()) :
-                                              IdeBundle.message("prompt.download.and.install.plugin", pluginNode.getName()) ),
-                                             message,
-                                             Messages.getQuestionIcon()) == 0) {
-                  if (downloadPlugin(pluginNode)) {
-                    requireShutdown = true;
-                    pluginTable.updateUI();
-                  }
-                }
-                break;
-              }
-              catch (IOException e1) {
-                if (!IOExceptionDialog.showErrorDialog(e1, installTitle, IdeBundle.message("error.plugin.download.failed"))) {
-                  break;
-                }
-                else {
-                  LOG.error(e1);
-                }
-              }
-            }
-            while (true);
-          }
-        };
-        actionGroup.add(installPluginAction);
-
-        AnAction  uninstallPluginAction = new AnAction(IdeBundle.message("action.uninstall.plugin"),
-                                                       IdeBundle.message("action.uninstall.plugin"),
-                                                       IconLoader.getIcon("/actions/uninstall.png")) {
-          public void update(AnActionEvent e)
-          {
-            Presentation presentation = e.getPresentation();
-            Object descr = pluginTable.getSelectedObject();
-            boolean enabled = (descr instanceof IdeaPluginDescriptorImpl) && !((IdeaPluginDescriptorImpl)descr).isDeleted();
-            presentation.setEnabled(enabled);
-          }
-
-          public void actionPerformed(AnActionEvent e)
-          {
-            String  message;
-            IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl) pluginTable.getSelectedObject();
-
-            //  Get the list of plugins which depend on this one. If this list is
-            //  not empty - issue warning instead of simple prompt.
-            ArrayList<IdeaPluginDescriptorImpl> dependant = genericModel.dependent( pluginDescriptor );
-            if( dependant.size() == 0 )
-              message = IdeBundle.message( "prompt.uninstall.plugin", pluginDescriptor.getName() );
-            else
-              message = MessageFormat.format(IdeBundle.message("several.plugins.depend.on.0.continue.to.remove"), pluginDescriptor.getName());
-
-            if( Messages.showYesNoDialog( main, message, IdeBundle.message( "title.plugin.uninstall" ), Messages.getQuestionIcon()) == 0 )
-            {
-              PluginId pluginId = pluginDescriptor.getPluginId();
-              pluginDescriptor.setDeleted( true );
-
-              try {
-                PluginInstaller.prepareToUninstall( pluginId );
-
-                requireShutdown = true;
-                pluginTable.updateUI();
-              }
-              catch (IOException e1) {
-                LOG.equals(e1);
-              }
-            }
-          }
-        };
-        actionGroup.add(uninstallPluginAction);
+  public static boolean downloadPlugins (final List <PluginNode> plugins) throws IOException {
+    final boolean[] result = new boolean[ 1 ];
+    try {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable () {
+        public void run() {
+          result[ 0 ] = PluginInstaller.prepareToInstall( plugins );
+        }
+      }, IdeBundle.message("progress.download.plugins"), true, null);
+    } catch (RuntimeException e) {
+      if (e.getCause() != null && e.getCause() instanceof IOException) {
+        throw (IOException)e.getCause();
       }
-
-      return actionGroup;
-    }
-
-    public JPanel getMainPanel() {
-      return main;
-    }
-
-    private static boolean downloadPlugins (final List <PluginNode> plugins) throws IOException {
-      final boolean[] result = new boolean[1];
-      try {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable () {
-          public void run() {
-            result[0] = PluginInstaller.prepareToInstall(plugins);
-          }
-        }, IdeBundle.message("progress.download.plugins"), true, null);
-      } catch (RuntimeException e) {
-        if (e.getCause() != null && e.getCause() instanceof IOException) {
-          throw (IOException)e.getCause();
-        }
-        else {
-          throw e;
-        }
+      else {
+        throw e;
       }
-      return result[0];
     }
+    return result[0];
+  }
 
-    private static boolean downloadPlugin (final PluginNode pluginNode) throws IOException {
-      final boolean[] result = new boolean[1];
-      try {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable () {
-          public void run() {
-            ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+  public static boolean downloadPlugin (final PluginNode pluginNode) throws IOException
+  {
+    final boolean[] result = new boolean[1];
+    try {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable () {
+        public void run() {
+          ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
-            pi.setText(pluginNode.getName());
+          pi.setText(pluginNode.getName());
 
-            try {
-              result[0] = PluginInstaller.prepareToInstall(pluginNode);
-            } catch (ZipException e) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  Messages.showErrorDialog(IdeBundle.message("error.plugin.zip.problems", pluginNode.getName()),
-                                           IdeBundle.message("title.installing.plugin"));
+          try {
+            result[0] = PluginInstaller.prepareToInstall(pluginNode);
+          } catch (ZipException e) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                Messages.showErrorDialog(IdeBundle.message("error.plugin.zip.problems", pluginNode.getName()),
+                                         IdeBundle.message("title.installing.plugin"));
 
-                }
-              });
-            } catch (IOException e) {
-              throw new RuntimeException (e);
-            }
+              }
+            });
+          } catch (IOException e) {
+            throw new RuntimeException (e);
           }
-        }, IdeBundle.message("progress.download.plugin", pluginNode.getName()), true, null);
-      } catch (RuntimeException e) {
-        if (e.getCause() != null && e.getCause() instanceof IOException) {
-          throw (IOException)e.getCause();
         }
-        else {
-          throw e;
-        }
+      }, IdeBundle.message("progress.download.plugin", pluginNode.getName()), true, null);
+    } catch (RuntimeException e) {
+      if (e.getCause() != null && e.getCause() instanceof IOException) {
+        throw (IOException)e.getCause();
       }
-
-      return result[0];
+      else {
+        throw e;
+      }
     }
 
-    public boolean isRequireShutdown() {
-      return requireShutdown;
-    }
+    return result[0];
+  }
 
-    public void ignoreChanges() {
-      requireShutdown = false;
-    }
+  public boolean isRequireShutdown() {
+    return requireShutdown;
+  }
 
+  public void ignoreChanges() {
+    requireShutdown = false;
+  }
 
     private class PluginsToUpdateChooser extends DialogWrapper{
       private Set<PluginNode> myPluginsToUpdate;
@@ -509,6 +399,7 @@ public class PluginManagerMain
         return panel;
       }
     }
+
   private static void setTextValue( String val, JEditorPane pane)
   {
       if( val != null )
