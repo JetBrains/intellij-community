@@ -10,6 +10,8 @@ import com.intellij.compiler.make.BoundsParser;
 import com.intellij.compiler.make.MakeUtil;
 import junit.framework.TestCase;
 
+import java.text.StringCharacterIterator;
+
 public class ParsingTest extends TestCase{
 
   public void testParseMethodGenericSignature() {
@@ -26,6 +28,42 @@ public class ParsingTest extends TestCase{
     try {
       final String[] bounds = BoundsParser.getBounds("<Super:Ljava/lang/Object;Sub:Ljava/lang/Object;>Lcom/intellij/ide/DataAccessor<TSub;>;");
       assertTrue(bounds != null);
+    }
+    catch (SignatureParsingException e) {
+      assertTrue("NOT PARSED:" + e.getMessage(), false);
+      e.printStackTrace();
+    }
+  }
+
+  public void testParseClassGenericSignature2() {
+    try {
+      final BoundsParser parser = new BoundsParser();
+      parser.parseClassSignature(new StringCharacterIterator("Lcom/intellij/util/containers/Queue<TT;>.QueueState;"), new StringBuffer());
+      assertTrue(true);
+    }
+    catch (SignatureParsingException e) {
+      assertTrue("NOT PARSED:" + e.getMessage(), false);
+      e.printStackTrace();
+    }
+  }
+
+  public void testParseClassGenericSignature3() {
+    try {
+      final BoundsParser parser = new BoundsParser();
+      parser.parseClassSignature(new StringCharacterIterator("Lcom/intellij/util/xml/ui/DomCollectionControl<Lcom/intellij/javaee/model/xml/SecurityRole;>.ControlAddAction;"), new StringBuffer());
+      assertTrue(true);
+    }
+    catch (SignatureParsingException e) {
+      assertTrue("NOT PARSED:" + e.getMessage(), false);
+      e.printStackTrace();
+    }
+  }
+
+  public void testParseClassGenericSignature4() {
+    try {
+      final BoundsParser parser = new BoundsParser();
+      parser.parseClassSignature(new StringCharacterIterator("Ljava/lang/Object;Lcom/intellij/util/SpinAllocator<Lcom/intellij/util/io/RandomAccessPagedDataInput;>.IDisposer<Lcom/intellij/util/io/RandomAccessPagedDataInput;>;"), new StringBuffer());
+      assertTrue(true);
     }
     catch (SignatureParsingException e) {
       assertTrue("NOT PARSED:" + e.getMessage(), false);
