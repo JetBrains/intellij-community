@@ -60,8 +60,7 @@ public class ComboTableCellEditor extends DefaultCellEditor {
     final List<Pair<String, Icon>> list = myDataFactory.create();
     myData = new HashMap<String,Icon>();
 
-    final Pair<String,Icon> pairValue = (Pair<String,Icon>) value;
-    final String string = pairValue == null ? null : pairValue.first;
+    final String string = (String) value;
     final JComboBox comboBox = (JComboBox)editorComponent;
     comboBox.removeAllItems();
     if (myNullable) {
@@ -74,7 +73,7 @@ public class ComboTableCellEditor extends DefaultCellEditor {
     super.getTableCellEditorComponent(table, value, isSelected, row, column);
     if (!myData.containsKey(string)) {
       comboBox.setEditable(true);
-      comboBox.setSelectedItem(pairValue);
+      comboBox.setSelectedItem(Pair.create(value, myData.get(value)));
       comboBox.setEditable(false);
     }
     return comboBox;
