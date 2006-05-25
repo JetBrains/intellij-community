@@ -16,6 +16,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
+import com.intellij.util.JavaeeIcons;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
@@ -47,13 +48,13 @@ public class IconUtilEx {
       return getIcon((Module)object, flags);
     }
     else if (object instanceof EnterpriseBean) {
-      return Icons.EJB_ICON;
+      return JavaeeIcons.EJB_ICON;
     }
     else if (object instanceof CmpField) {
-      return Icons.EJB_CMP_FIELD_ICON;
+      return JavaeeIcons.EJB_CMP_FIELD_ICON;
     }
     else if (object instanceof CmrField) {
-      return Icons.EJB_CMP_FIELD_ICON;
+      return JavaeeIcons.EJB_CMP_FIELD_ICON;
     }
     else {
       throw new IllegalArgumentException("Wrong object type");

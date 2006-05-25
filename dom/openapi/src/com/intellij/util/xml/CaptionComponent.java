@@ -37,14 +37,20 @@ public class CaptionComponent extends JPanel implements Committable {
   private boolean myBordered = true;
 
   public CaptionComponent() {
-    updateBorder();
-    setLayout(new BorderLayout());
-    add(myRootPanel, BorderLayout.CENTER);
+    this(null);
   }
 
   public CaptionComponent(String text) {
-    this();
+    this(text, null);
+  }
+
+  public CaptionComponent(String text, Icon icon) {
+    super(new BorderLayout());
+    updateBorder();
+    add(myRootPanel, BorderLayout.CENTER);
+
     setText(text);
+    setIcon(icon);
   }
 
   private void updateBorder() {

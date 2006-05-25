@@ -48,6 +48,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
+import com.intellij.util.JavaeeIcons;
 
 import javax.swing.*;
 import java.util.*;
@@ -314,8 +315,8 @@ public class PackageUtil {
       data.setClosedIcon(addReadMark(Icons.PACKAGE_ICON, isWritable));
     }
     else if (isWebRoot(psiDirectory)) {
-      data.setOpenIcon(addReadMark(Icons.WEB_FOLDER_OPEN, isWritable));
-      data.setClosedIcon(addReadMark(Icons.WEB_FOLDER_CLOSED, isWritable));
+      data.setOpenIcon(addReadMark(JavaeeIcons.WEB_FOLDER_OPEN, isWritable));
+      data.setClosedIcon(addReadMark(JavaeeIcons.WEB_FOLDER_CLOSED, isWritable));
     }
     else {
       data.setOpenIcon(addReadMark(TREE_OPEN_ICON, isWritable));

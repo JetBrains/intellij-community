@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -24,6 +23,8 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import net.sf.cglib.proxy.Factory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
@@ -34,9 +35,8 @@ import java.util.*;
  * @author peter
  */
 public class ElementPresentationManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ElementPresentationManager");
   private static final Map<Class, String> ourTypeNames = new HashMap<Class, String>();
-  private static final Map<Class, Icon> ourIcons = new HashMap<Class, Icon>();
+  private static final Map<Class, Icon[]> ourIcons = new HashMap<Class, Icon[]>();
 
   private static final List<Function<Object, String>> ourNameProviders = new ArrayList<Function<Object, String>>();
   private static final List<Function<Class, String>> ourTypeProviders = new ArrayList<Function<Class, String>>();
@@ -51,7 +51,7 @@ public class ElementPresentationManager {
   public static void unregisterIconProvider(Function<Object, Icon> function) { ourIconProviders.remove(function); }
 
   public static void registerTypeName(Class aClass, String typeName) { ourTypeNames.put(aClass, typeName); }
-  public static void registerIcon(Class aClass, Icon icon) { ourIcons.put(aClass, icon); }
+  public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
 
   public static String getElementName(Object element) {
     for (final Function<Object, String> function : ourNameProviders) {
@@ -138,17 +138,64 @@ public class ElementPresentationManager {
   }
 
   public static Icon getIcon(Object o) {
+    return getFirst(getIcons(o));
+  }
+
+  @Nullable
+  private static <T> T getFirst(@Nullable final T[] array) {
+    return array == null || array.length == 0 ? null : array[0];
+  }
+
+  @Nullable
+  public static Icon getLargeIcon(@Nullable Icon[] icons) {
+    if (icons == null || icons.length == 0) return null;
+    Icon largest = icons[0];
+    for (int i = 1; i < icons.length; i++) {
+      Icon icon = icons[i];
+      if (icon.getIconWidth() > largest.getIconWidth()) {
+        largest = icon;
+      }
+    }
+    return largest;
+  }
+
+
+  @Nullable
+  public static Icon getSmallIcon(@Nullable Icon[] icons) {
+    if (icons == null || icons.length == 0) return null;
+    Icon smallest = icons[0];
+    for (int i = 1; i < icons.length; i++) {
+      Icon icon = icons[i];
+      if (icon.getIconWidth() < smallest.getIconWidth()) {
+        smallest = icon;
+      }
+    }
+    return smallest;
+  }
+
+  @NotNull
+  public static Icon[] getIcons(Object o) {
+    List<Icon> result = new ArrayList<Icon>();
     for (final Function<Object, Icon> function : ourIconProviders) {
       final Icon icon = function.fun(o);
       if (icon != null) {
-        return icon;
+        result.add(icon);
       }
     }
-    return getFromClassMap(ourIcons, o.getClass());
+    final Icon[] icons = getFromClassMap(ourIcons, o.getClass());
+    if (icons != null) {
+      result.addAll(Arrays.asList(icons));
+    }
+    return result.toArray(new Icon[result.size()]);
   }
 
   public static Icon getIconForClass(Class clazz) {
-    return ourIcons.get(clazz);    
+    return getFirst(getIconsForClass(clazz));
+  }
+
+  @Nullable
+  public static Icon[] getIconsForClass(final Class clazz) {
+    return ourIcons.get(clazz);
   }
 
   public static Method findNameValueMethod(final Class<? extends Object> aClass) {
