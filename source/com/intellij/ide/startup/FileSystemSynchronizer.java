@@ -54,8 +54,7 @@ public class FileSystemSynchronizer {
       updateFiles();
     }
     catch (ProcessCanceledException e) {
-      for (Iterator<CacheUpdater> iterator = myUpdaters.iterator(); iterator.hasNext();) {
-        CacheUpdater updater = iterator.next();
+      for (CacheUpdater updater : myUpdaters) {
         if (updater != null) {
           updater.canceled();
         }
@@ -198,8 +197,7 @@ public class FileSystemSynchronizer {
   }
 
   private void updatingDone() {
-    for (int i = 0; i < myUpdaters.size(); i++) {
-      CacheUpdater updater = myUpdaters.get(i);
+    for (CacheUpdater updater : myUpdaters) {
       try {
         if (updater != null) updater.updatingDone();
       }

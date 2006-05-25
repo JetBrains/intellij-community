@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.*;
@@ -169,6 +170,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public void beforeRootsChange(ModuleRootEvent event) {
   }
 
+  @NotNull
   @NonNls
   public String getComponentName() {
     return "LocalVcs";
@@ -193,7 +195,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   private synchronized void runSynchronizationUsing(StructureSyncOperation realOperation) {
-    runSyncOperation(realOperation);
+    new LvcsRootSynchronizer(this, myTracker, realOperation).syncProjectRoots();
   }
 
   public long getPurgingPeriod() {
@@ -223,11 +225,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   public boolean isEnabled() {
     return myConfiguration.LOCAL_VCS_ENABLED;
-  }
-
-  private synchronized void runSyncOperation(StructureSyncOperation operation) {
-    LvcsRootSynchronizer sync = new LvcsRootSynchronizer(this, myTracker, operation);
-    sync.syncProjectRoots();
   }
 
   private synchronized VirtualFile[] calculateRoots() {
@@ -342,12 +339,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   private synchronized void contentRequestedFor(VirtualFile file) {
-    if (myRefreshRootsOperation != null) {
-      myRefreshRootsOperation.contentRequestedFor(file);
-    }
-    else {
-      myTracker.contentRequestedFor(file);
-    }
+    myRefreshRootsOperation.contentRequestedFor(file);
+    myTracker.contentRequestedFor(file);
   }
 
   public synchronized LocalVcsUserActivitiesRegistry getLocalVcsUserActivitiesRegistry() {
@@ -546,8 +539,11 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     getVirtualFileManager().registerFileContentProvider(this);
     myFileTypeManager.addFileTypeListener(myFileTypeListener);
     ProjectRootManager.getInstance(myProject).addModuleRootListener(this);
+
+    myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refreshing.roots"));
+
+    ProjectRootManagerEx.getInstanceEx(myProject).registerChangeUpdater(myRefreshRootsOperation);
     getVirtualFileManager().registerRefreshUpdater(myTracker.getRefreshUpdater());
-    ProjectRootManagerEx.getInstanceEx(myProject).registerChangeUpdater(myTracker.getRefreshUpdater());
   }
 
   public synchronized void unregisterAll() {
@@ -559,11 +555,11 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
     ProjectRootManager.getInstance(myProject).removeModuleRootListener(this);
     getVirtualFileManager().unregisterRefreshUpdater(myTracker.getRefreshUpdater());
-    ProjectRootManagerEx.getInstanceEx(myProject).unregisterChangeUpdater(myTracker.getRefreshUpdater());
+    ProjectRootManagerEx.getInstanceEx(myProject).unregisterChangeUpdater(myRefreshRootsOperation);
   }
 
   private synchronized void synchronizeRoots() {
-    myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refresh.files.on.startup")) {
+    /*myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refresh.files.on.startup")) {
       public void updatingDone() {
         synchronized (CommonLVCS.this) {
           super.updatingDone();
@@ -576,7 +572,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
       }
     };
 
-    myRefreshRootsOperation.setLvcsAction(startExternalChangesAction());
+    myRefreshRootsOperation.setLvcsAction(startExternalChangesAction());*/
     runSynchronizationUsing(myRefreshRootsOperation);
 
     StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
@@ -605,6 +601,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
       myImplementation.addLabel(LocalVcsBundle.message("local.vcs.label.name.project.opened"), "");
     }
     myTracker = new LvcsFileTracker(this);
+    registerAll();
+
     if (sync) {
       resynchronizeRoots();
       setCanProvideContents(true);
@@ -612,7 +610,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     else {
       synchronizeRoots();
     }
-    registerAll();
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
       fileStatusManager.fileStatusesChanged();
@@ -645,24 +642,12 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public synchronized void rootsChanged(ModuleRootEvent event) {
     refreshRoots();
     if (myTracker.isRefreshInProgress()) return;
-    if (myRefreshRootsOperation != null) {
+    if (myRefreshRootsOperation.isUpdating()) {
       LOG.assertTrue(false, myRefreshRootsOperation.toString());
     }
-    myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refreshing.roots")) {
-      public void updatingDone() {
-        synchronized (CommonLVCS.this) {
-          super.updatingDone();
-          CommonLVCS.this.myRefreshRootsOperation = null;
-        }
-      }
 
-      public void canceled() {
-        LOG.assertTrue(false);
-      }
-    };
     myRefreshRootsOperation.setLvcsAction(startExternalChangesAction());
     runSynchronizationUsing(myRefreshRootsOperation);
-    myTracker.getRefreshUpdater().setOriginal(myRefreshRootsOperation);
   }
 
   public void initComponent() {
