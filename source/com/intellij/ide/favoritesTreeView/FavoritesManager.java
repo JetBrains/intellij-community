@@ -195,7 +195,6 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     ourAbstractUrlProviders.add(new PackageUrl(null, null));
 
     ourAbstractUrlProviders.add(new ModuleGroupUrl(null));
-    ourAbstractUrlProviders.add(new FormUrl(null, null));
     ourAbstractUrlProviders.add(new ResourceBundleUrl(null));
 
 
@@ -214,6 +213,13 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     final String type = element.getAttributeValue(ATTRIBUTE_TYPE);
     final String urlValue = element.getAttributeValue(ATTRIBUTE_URL);
     final String moduleName = element.getAttributeValue(ATTRIBUTE_MODULE);
+
+    for(FavoriteNodeProvider nodeProvider: ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class)) {
+      if (nodeProvider.getFavoriteTypeId().equals(type)) {
+        return new AbstractUrlFavoriteAdapter(urlValue, moduleName, nodeProvider);
+      }
+    }
+
     for (AbstractUrl urlProvider : ourAbstractUrlProviders) {
       AbstractUrl url = urlProvider.createUrl(type, moduleName, urlValue);
       if (url != null) return url;
@@ -234,6 +240,14 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   private static @Nullable AbstractUrl createUrlByElement(Object element) {
     if (element instanceof SmartPsiElementPointer) element = ((SmartPsiElementPointer)element).getElement();
+                                                                                                                                               
+    for(FavoriteNodeProvider nodeProvider: ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class)) {
+      String url = nodeProvider.getElementUrl(element);
+      if (url != null) {
+        return new AbstractUrlFavoriteAdapter(url, nodeProvider.getElementModuleName(element), nodeProvider);
+      }
+    }
+
     for (AbstractUrl urlProvider : ourAbstractUrlProviders) {
       AbstractUrl url = urlProvider.createUrlByElement(element);
       if (url != null) return url;

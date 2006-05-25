@@ -1,4 +1,4 @@
-package com.intellij.ide.projectView.impl.nodes;
+package com.intellij.uiDesigner.projectView;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -71,7 +71,7 @@ public class Form implements Navigatable{
   }
 
   public boolean isValid() {
-    if (myFormFiles.size() == 0) return false;    
+    if (myFormFiles.size() == 0) return false;
     for (PsiFile psiFile : myFormFiles) {
       if (!psiFile.isValid()) {
         return false;

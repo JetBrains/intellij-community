@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.projectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.Form;
+import com.intellij.uiDesigner.projectView.Form;
 import com.intellij.uiDesigner.projectView.FormNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.components.ProjectComponent;

@@ -6,7 +6,7 @@ package com.intellij.uiDesigner.projectView;
 
 import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.Form;
+import com.intellij.uiDesigner.projectView.Form;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -17,6 +17,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -112,6 +114,36 @@ public class UIDesignerFavoriteNodeProvider implements ApplicationComponent, Fav
       return !((Form) element).isValid();
     }
     return false;
+  }
+
+  @NotNull @NonNls
+  public String getFavoriteTypeId() {
+    return "form";
+  }
+
+  @Nullable @NonNls
+  public String getElementUrl(Object element) {
+    if (element instanceof Form) {
+      Form form = (Form)element;
+      return form.getClassToBind().getQualifiedName();
+    }
+    return null;
+  }
+
+  public String getElementModuleName(final Object element) {
+    if (element instanceof Form) {
+      Form form = (Form)element;
+      final Module module = ModuleUtil.findModuleForPsiElement(form.getClassToBind());
+      return module != null ? module.getName() : null;
+    }
+    return null;
+  }
+
+  public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final PsiClass classToBind = psiManager.findClass(url, GlobalSearchScope.allScope(project));
+    if (classToBind == null) return null;
+    return new Object[] { new Form(classToBind) };
   }
 
   @NonNls @NotNull
