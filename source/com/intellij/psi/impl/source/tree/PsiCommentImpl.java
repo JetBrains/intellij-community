@@ -1,13 +1,15 @@
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
-public class PsiCommentImpl extends LeafPsiElement implements PsiComment, JavaTokenType, PsiJavaToken {
+import java.util.List;
+
+public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiJavaToken, PsiLanguageInjectionHost {
   public PsiCommentImpl(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     super(type, buffer, startOffset, endOffset, lexerState, table);
   }
@@ -22,5 +24,10 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, JavaTo
 
   public String toString(){
     return "PsiComment(" + getElementType().toString() + ")";
+  }
+
+  @Nullable
+  public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
+    return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 }
