@@ -19,6 +19,12 @@ import java.util.HashSet;
 
 public class FormNode extends ProjectViewNode<Form>{
   private final Collection<AbstractTreeNode> myChildren;
+
+  public FormNode(Project project, Object value, ViewSettings viewSettings) {
+    super(project, (Form) value,  viewSettings);
+    myChildren = getChildren(project, (Form) value, viewSettings);
+  }
+
   public FormNode(Project project, Form value, ViewSettings viewSettings,
                   Collection<AbstractTreeNode> children) {
     super(project, value, viewSettings);
@@ -69,11 +75,17 @@ public class FormNode extends ProjectViewNode<Form>{
 
   public static AbstractTreeNode constructFormNode(final PsiClass classToBind, final Project project, final ViewSettings settings) {
     final PsiFile[] formsBoundToClass = PsiManager.getInstance(project).getSearchHelper().findFormsBoundToClass(classToBind.getQualifiedName());
+    final Form form = new Form(classToBind, Arrays.asList(formsBoundToClass));
+    final Collection<AbstractTreeNode> children = getChildren(project, form, settings);
+    return new FormNode(project, form, settings, children);
+  }
+
+  private static Collection<AbstractTreeNode> getChildren(final Project project, final Form form, final ViewSettings settings) {
     final HashSet<AbstractTreeNode> children = new HashSet<AbstractTreeNode>();
-    for (PsiFile formBoundToClass : formsBoundToClass) {
+    for (PsiFile formBoundToClass : form.getFormFiles()) {
       children.add(new PsiFileNode(project, formBoundToClass, settings));
     }
-    children.add(new ClassTreeNode(project, classToBind, settings));
-    return new FormNode(project, new Form(classToBind, Arrays.asList(formsBoundToClass)), settings, children);
+    children.add(new ClassTreeNode(project, form.getClassToBind(), settings));
+    return children;
   }
 }

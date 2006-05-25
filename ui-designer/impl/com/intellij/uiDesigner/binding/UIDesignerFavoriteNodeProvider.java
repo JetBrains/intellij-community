@@ -5,24 +5,25 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.Form;
 import com.intellij.ide.projectView.impl.nodes.FormNode;
-import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author yole
@@ -47,6 +48,14 @@ public class UIDesignerFavoriteNodeProvider implements ApplicationComponent, Fav
       }
     }
     return null;
+  }
+
+  public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
+    if (element instanceof Form){
+      Form form = (Form) element;
+      return form.containsFile(vFile);
+    }
+    return false;
   }
 
   @NonNls @NotNull

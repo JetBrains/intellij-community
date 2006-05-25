@@ -5,10 +5,8 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractUrl;
-import com.intellij.ide.projectView.impl.FormUrl;
 import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.ide.projectView.impl.nodes.Form;
-import com.intellij.ide.projectView.impl.nodes.FormNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -16,9 +14,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -163,16 +159,10 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
         continue;
       }
       try {
-        if (abstractUrl instanceof FormUrl) {
-          final PsiManager psiManager = PsiManager.getInstance(myProject);
-          result.add(FormNode.constructFormNode((PsiClass)path[0], myProject, this));
-        }
-        else {
-          String className = pair.getSecond();
-          Class<? extends AbstractTreeNode> nodeClass = (Class<? extends AbstractTreeNode>)Class.forName(className);
-          AbstractTreeNode node = ProjectViewNode.createTreeNode(nodeClass, myProject, path[path.length - 1], this);
-          result.add(node);
-        }
+        String className = pair.getSecond();
+        Class<? extends AbstractTreeNode> nodeClass = (Class<? extends AbstractTreeNode>)Class.forName(className);
+        AbstractTreeNode node = ProjectViewNode.createTreeNode(nodeClass, myProject, path[path.length - 1], this);
+        result.add(node);
       }
       catch (Exception e) {
       }

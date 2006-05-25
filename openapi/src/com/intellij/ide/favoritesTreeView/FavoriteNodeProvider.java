@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
 
@@ -33,4 +34,14 @@ import java.util.Collection;
 public interface FavoriteNodeProvider {
   @Nullable
   Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings);
+
+  /**
+   * Checks if the specified project view node element (the value of {@link AbstractTreeNode}) contains
+   * the specified virtual file as one of its children.
+   *
+   * @param element the value element of a project view node.
+   * @param vFile   the file to check.
+   * @return true if the file is contained, false if not or if <code>element</code> is not an element supported by this provider.
+   */
+  boolean elementContainsFile(final Object element, final VirtualFile vFile);
 }

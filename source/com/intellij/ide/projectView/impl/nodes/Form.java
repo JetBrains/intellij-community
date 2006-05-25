@@ -3,10 +3,10 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 
 public class Form implements Navigatable{
   private final Collection<PsiFile> myFormFiles;
@@ -38,34 +38,34 @@ public class Form implements Navigatable{
     return myClassToBind;
   }
 
+  public PsiFile[] getFormFiles() {
+    return myFormFiles.toArray(new PsiFile[myFormFiles.size()]);
+  }
+
   public void navigate(boolean requestFocus) {
-    for (Iterator<PsiFile> iterator = myFormFiles.iterator(); iterator.hasNext();) {
-      PsiFile psiFile = iterator.next();
-      if (psiFile instanceof Navigatable && ((Navigatable)psiFile).canNavigate()) {
-          ((Navigatable)psiFile).navigate(requestFocus);
+    for (PsiFile psiFile : myFormFiles) {
+      if (psiFile != null && psiFile.canNavigate()) {
+        psiFile.navigate(requestFocus);
       }
     }
   }
 
   public boolean canNavigateToSource() {
-    for (Iterator<PsiFile> iterator = myFormFiles.iterator(); iterator.hasNext();) {
-      PsiFile psiFile = iterator.next();
-      if (psiFile instanceof Navigatable && ((Navigatable)psiFile).canNavigateToSource()) return true;
+    for (PsiFile psiFile : myFormFiles) {
+      if (psiFile != null && psiFile.canNavigateToSource()) return true;
     }
     return false;
   }
 
   public boolean canNavigate() {
-    for (Iterator<PsiFile> iterator = myFormFiles.iterator(); iterator.hasNext();) {
-      PsiFile psiFile = iterator.next();
-      if (psiFile instanceof Navigatable && ((Navigatable)psiFile).canNavigate()) return true;
+    for (PsiFile psiFile : myFormFiles) {
+      if (psiFile != null && psiFile.canNavigate()) return true;
     }
     return false;
   }
 
   public boolean isValid() {
-    for (Iterator<PsiFile> iterator = myFormFiles.iterator(); iterator.hasNext();) {
-      PsiFile psiFile = iterator.next();
+    for (PsiFile psiFile : myFormFiles) {
       if (!psiFile.isValid()) {
         return false;
       }
@@ -75,5 +75,19 @@ public class Form implements Navigatable{
     }
     return true;
   }
-}
 
+  public boolean containsFile(final VirtualFile vFile) {
+    final PsiFile classFile = myClassToBind.getContainingFile();
+    final VirtualFile classVFile = classFile == null ? null : classFile.getVirtualFile();
+    if (classVFile != null && classVFile.equals(vFile)) {
+      return true;
+    }
+    for (PsiFile psiFile : myFormFiles) {
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null && virtualFile.equals(vFile)) {
+        return true;
+      }
+    }
+    return false;
+  }
+}

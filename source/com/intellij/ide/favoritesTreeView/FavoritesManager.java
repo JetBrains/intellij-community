@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -155,6 +156,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "FavoritesManager";
   }
@@ -261,6 +263,9 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
         return true;
       }
     };
+
+    FavoriteNodeProvider[] providers = ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class);
+
     List<Pair<AbstractUrl, String>> urls = getFavoritesListRootUrls(name);
     for (Pair<AbstractUrl, String> pair : urls) {
       AbstractUrl abstractUrl = pair.getFirst();
@@ -318,16 +323,6 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
           return true;
         }
       }
-      if (element instanceof Form){
-        Form form = (Form) element;
-        PsiFile[] forms = form.getClassToBind().getManager().getSearchHelper().findFormsBoundToClass(form.getClassToBind().getQualifiedName());
-        for (PsiFile psiFile : forms) {
-          final VirtualFile virtualFile = psiFile.getVirtualFile();
-          if (virtualFile != null && virtualFile.equals(vFile)) {
-            return true;
-          }
-        }
-      }
       if (element instanceof ModuleGroup){
         ModuleGroup group = (ModuleGroup) element;
         final Module[] modules = group.modulesInGroup(myProject, true);
@@ -346,6 +341,13 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
           }
         }
       }
+
+      for(FavoriteNodeProvider provider: providers) {
+        if (provider.elementContainsFile(element, vFile)) {
+          return true;
+        }
+      }
+
       if (!find.isEmpty()){
         return true;
       }
