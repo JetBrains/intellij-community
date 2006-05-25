@@ -20,8 +20,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -122,7 +122,9 @@ public class CopyReferenceAction extends AnAction {
   }
 
   private static void insert(final String fqn, final PsiNamedElement element, final Editor editor) {
-    final PsiFile file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(editor.getDocument());
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(editor.getProject());
+    documentManager.commitDocument(editor.getDocument());
+    final PsiFile file = documentManager.getPsiFile(editor.getDocument());
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     final Project project = editor.getProject();
@@ -131,6 +133,7 @@ public class CopyReferenceAction extends AnAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
+              EditorModificationUtil.deleteSelectedText(editor);
               doInsert(fqn, element, editor, project);
             }
             catch (IncorrectOperationException e1) {
@@ -211,15 +214,6 @@ public class CopyReferenceAction extends AnAction {
       PsiNamedElement element = CopyReferenceAction.fqnToElement(project, fqn);
       insert(fqn, element, editor);
 
-      if (editor.getSelectionModel().hasSelection()) {
-        ApplicationManager.getApplication().runWriteAction(
-          new Runnable() {
-            public void run() {
-              EditorModificationUtil.deleteSelectedText(editor);
-            }
-          }
-        );
-      }
     }
 
     public boolean isPastePossible(DataContext dataContext) {
