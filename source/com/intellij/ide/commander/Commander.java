@@ -304,6 +304,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     final CommanderPanel panel = new CommanderPanel(myProject, this);
     final ProjectAbstractTreeStructureBase treeStructure = createProjectTreeStructure();
     panel.setBuilder(new ProjectListBuilder(myProject, panel, treeStructure, AlphaComparator.INSTANCE, true));
+    panel.setProjectTreeStructure(treeStructure);
 
     final FocusAdapter focusListener = new FocusAdapter() {
       public void focusGained(final FocusEvent e) {

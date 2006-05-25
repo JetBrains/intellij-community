@@ -5,6 +5,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.nodes.Form;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
@@ -40,6 +41,7 @@ import javax.swing.border.BevelBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * @author Eugene Belyaev
@@ -67,6 +69,7 @@ public class CommanderPanel extends JPanel {
   private static final String ACTION_DRILL_DOWN = "DrillDown";
   @NonNls
   private static final String ACTION_GO_UP = "GoUp";
+  private ProjectAbstractTreeStructureBase myProjectTreeStructure;
 
   public CommanderPanel(final Project project, final Commander commander) {
     super(new BorderLayout());
@@ -336,8 +339,8 @@ public class CommanderPanel extends JPanel {
     final int[] indices = myList.getSelectedIndices();
 
     final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-    for (int i = 0; i < indices.length; i++) {
-      final PsiElement element = getSelectedElement(indices[i]);
+    for (int index : indices) {
+      final PsiElement element = getSelectedElement(index);
       if (element != null) {
         elements.add(element);
       }
@@ -457,6 +460,11 @@ public class CommanderPanel extends JPanel {
     } else if (DataConstantsEx.NAMED_LIBRARY_ARRAY.equals(dataId)){
       return selectedValue instanceof NamedLibraryElement ? new NamedLibraryElement[]{(NamedLibraryElement)selectedValue} : null;
     }
+
+    if (myProjectTreeStructure != null) {
+      return myProjectTreeStructure.getDataFromProviders(Collections.singletonList(getSelectedNode()), dataId);
+    }
+
     return null;
   }
 
@@ -466,8 +474,8 @@ public class CommanderPanel extends JPanel {
     if (indices == null || indices.length == 0) return null;
 
     final ArrayList<Navigatable> elements = new ArrayList<Navigatable>();
-    for (int i = 0; i < indices.length; i++) {
-      final Object element = myModel.getElementAt(indices[i]);
+    for (int index : indices) {
+      final Object element = myModel.getElementAt(index);
       if (element instanceof AbstractTreeNode) {
         elements.add((Navigatable)element);
       }
@@ -482,8 +490,7 @@ public class CommanderPanel extends JPanel {
       return null;
     }
     final java.util.List<PsiElement> validElements = new ArrayList<PsiElement>(elements.length);
-    for (int idx = 0; idx < elements.length; idx++) {
-      final PsiElement element = elements[idx];
+    for (final PsiElement element : elements) {
       if (element.isValid()) {
         validElements.add(element);
       }
@@ -493,6 +500,10 @@ public class CommanderPanel extends JPanel {
 
   protected final Navigatable createEditSourceDescriptor() {
     return EditSourceUtil.getDescriptor(getSelectedElement());
+  }
+
+  public void setProjectTreeStructure(final ProjectAbstractTreeStructureBase projectTreeStructure) {
+    myProjectTreeStructure = projectTreeStructure;
   }
 
   private static final class MyTitleLabel extends JLabel {
@@ -534,14 +545,13 @@ public class CommanderPanel extends JPanel {
 
   private final class MyIdeView implements IdeView {
     public void selectElement(final PsiElement element) {
-      final PsiElement psiElement = element;
-      final boolean isDirectory = psiElement instanceof PsiDirectory;
+      final boolean isDirectory = element instanceof PsiDirectory;
       if (!isDirectory) {
-        EditorHelper.openInEditor(psiElement);
+        EditorHelper.openInEditor(element);
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            myBuilder.selectElement(psiElement, PsiUtil.getVirtualFile(psiElement));
+            myBuilder.selectElement(element, PsiUtil.getVirtualFile(element));
             if (!isDirectory) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                         public void run() {
