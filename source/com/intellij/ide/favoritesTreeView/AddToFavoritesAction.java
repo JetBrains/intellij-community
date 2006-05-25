@@ -17,16 +17,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.uiDesigner.compiler.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -185,34 +180,12 @@ public class AddToFavoritesAction extends AnAction {
     //on form in editor
     if (object instanceof VirtualFile) {
       final VirtualFile vFile = (VirtualFile)object;
-      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(vFile);
-      if (StdFileTypes.GUI_DESIGNER_FORM.equals(fileType)) {
-        final PsiFile formFile = psiManager.findFile(vFile);
-        if (formFile == null) return result;
-        String text = formFile.getText();
-        String className;
-        try {
-          className = Utils.getBoundClassName(text);
-        }
-        catch (Exception e) {
-          return result;
-        }
-        final PsiClass classToBind = psiManager.findClass(className, GlobalSearchScope.allScope(project));
-        if (classToBind != null) {
-          result.add(FormNode.constructFormNode(classToBind, project, favoritesConfig));
-        }
-        else {
-          addPsiElementNode(formFile, project, result, favoritesConfig, moduleContext);
-        }
-      }
-      else {
-        final PsiFile psiFile = psiManager.findFile(vFile);
-        addPsiElementNode(psiFile,
-                          project,
-                          result,
-                          favoritesConfig,
-                          moduleContext);
-      }
+      final PsiFile psiFile = psiManager.findFile(vFile);
+      addPsiElementNode(psiFile,
+                        project,
+                        result,
+                        favoritesConfig,
+                        moduleContext);
       return result;
     }
 

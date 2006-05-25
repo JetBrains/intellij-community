@@ -1,16 +1,22 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
 public class Form implements Navigatable{
   private final Collection<PsiFile> myFormFiles;
   private final PsiClass myClassToBind;
+
+  public Form(PsiClass classToBind) {
+    myClassToBind = classToBind;
+    myFormFiles = Arrays.asList(classToBind.getManager().getSearchHelper().findFormsBoundToClass(classToBind.getQualifiedName()));
+  }
 
   public Form(PsiClass classToBind, Collection<PsiFile> formFiles) {
     myClassToBind = classToBind;

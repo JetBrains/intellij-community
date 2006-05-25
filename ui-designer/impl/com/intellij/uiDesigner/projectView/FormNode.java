@@ -1,19 +1,20 @@
-package com.intellij.ide.projectView.impl.nodes;
+package com.intellij.uiDesigner.projectView;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.Form;
+import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
+import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -74,8 +75,7 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   public static AbstractTreeNode constructFormNode(final PsiClass classToBind, final Project project, final ViewSettings settings) {
-    final PsiFile[] formsBoundToClass = PsiManager.getInstance(project).getSearchHelper().findFormsBoundToClass(classToBind.getQualifiedName());
-    final Form form = new Form(classToBind, Arrays.asList(formsBoundToClass));
+    final Form form = new Form(classToBind);
     final Collection<AbstractTreeNode> children = getChildren(project, form, settings);
     return new FormNode(project, form, settings, children);
   }
