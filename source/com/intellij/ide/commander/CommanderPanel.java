@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
-import com.intellij.ide.projectView.impl.nodes.Form;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -453,8 +452,6 @@ public class CommanderPanel extends JPanel {
       return selectedValue instanceof Module ? selectedValue : null;
     } else if (DataConstantsEx.MODULE_GROUP_ARRAY.equals(dataId)){
       return selectedValue instanceof ModuleGroup ? new ModuleGroup[]{(ModuleGroup)selectedValue} : null;
-    } else if (DataConstantsEx.GUI_DESIGNER_FORM_ARRAY.equals(dataId)){
-      return selectedValue instanceof Form ? new Form[]{(Form)selectedValue} : null;
     } else if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)){
       return selectedValue instanceof LibraryGroupElement ? new LibraryGroupElement[] {(LibraryGroupElement)selectedValue} : null;
     } else if (DataConstantsEx.NAMED_LIBRARY_ARRAY.equals(dataId)){
