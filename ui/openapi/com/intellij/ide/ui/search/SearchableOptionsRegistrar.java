@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * User: anna
@@ -45,11 +44,11 @@ public abstract class SearchableOptionsRegistrar{
 
   public abstract boolean isStopWord(String word);
 
-  public abstract String getSynonym(final String option, @NotNull final SearchableConfigurable configurable);
+  public abstract Set<String> getSynonym(final String option, @NotNull final SearchableConfigurable configurable);
 
   public abstract Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable);
 
-  public abstract Map<String, TreeSet<OptionDescription>> findPossibleExtension(@NotNull String prefix, final Project project);
+  public abstract Map<String, Set<String>> findPossibleExtension(@NotNull String prefix, final Project project);
 
 
   public abstract Set<String> getProcessedWordsWithoutStemming(@NotNull String text);

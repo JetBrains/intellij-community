@@ -115,8 +115,9 @@ public class SearchUtil {
 
   private static void processUILabel(@NonNls final String title, final Set<OptionDescription> configurableOptions, String path) {
     final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(title);
+    @NonNls final String regex = "[\\W&&[^\\p{Punct}\\p{Blank}]]";
     for (String option : words) {
-      configurableOptions.add(new OptionDescription(option, HTML_PATTERN.matcher(title).replaceAll(" ").replaceAll("[\\W&&[^\\p{Punct}\\p{Blank}]]", " "), path));
+      configurableOptions.add(new OptionDescription(option, HTML_PATTERN.matcher(title).replaceAll(" ").replaceAll(regex, " "), path));
     }
   }
 
@@ -311,15 +312,16 @@ public class SearchUtil {
     }
     final String filter = searchField.getText();
     if (filter == null || filter.length() == 0) return;
-    final Map<String, TreeSet<OptionDescription>> hints = optionsRegistrar.findPossibleExtension(filter, project);
+    final Map<String, Set<String>> hints = optionsRegistrar.findPossibleExtension(filter, project);
     final DefaultListModel model = new DefaultListModel();
     final JList list = new JList(model);
     for (String groupName : hints.keySet()) {
       model.addElement(groupName);
-      final TreeSet<OptionDescription> descriptions = hints.get(groupName);
+      final Set<String> descriptions = hints.get(groupName);
       if (descriptions != null) {
-        for (OptionDescription description : descriptions) {
-          model.addElement(description);
+        for (String hit : descriptions) {
+          if (hit == null) continue;
+          model.addElement(new OptionDescription(hit));
         }
       }
     }

@@ -8,6 +8,7 @@ import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.ProjectCodeStyleConfigurable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -16,7 +17,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.cache.impl.repositoryCache.StringInterner;
 import com.intellij.util.ResourceUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -29,15 +33,26 @@ import java.util.*;
  * Date: 07-Feb-2006
  */
 public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  implements ApplicationComponent {
-  private Map<String, Set<String>> myOption2HelpId = new HashMap<String, Set<String>>();
-  private Set<OptionDescription> myHints = new TreeSet<OptionDescription>();
-  private Map<Pair<String,String>, Set<String>> myHelpIdWithOption2Path = new HashMap<Pair<String, String>, Set<String>>();
+
+  private Map<String, Set<OptionDescription>> myStorage = new THashMap<String, Set<OptionDescription>>(1500, 0.9f);
+  private Map<String, String> myId2Name = new THashMap<String, String>(20, 0.9f);
+
   private Set<String> myStopWords = new HashSet<String>();
-  private Map<Pair<String,String>, String> myHighlightSynonym2Option = new HashMap<Pair<String, String>, String>();
+  private Map<Pair<String,String>, Set<String>> myHighlightOption2Synonym = new THashMap<Pair<String, String>, Set<String>>();
+
+  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
+  private StringInterner myIdentifierTable = new StringInterner();
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl");
+  public static final int LOAD_FACTOR = 20;
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public SearchableOptionsRegistrarImpl() {
     try {
+      //stop words
+      final String text = ResourceUtil.loadText(ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt"));
+      final String[] stopWords = text.split("[\\W]");
+      myStopWords.addAll(Arrays.asList(stopWords));
+
       //index
       Document document =
         JDOMUtil.loadDocument(ResourceUtil.getResource(SearchableOptionsRegistrar.class, "/search/", "searchableOptions.xml"));
@@ -70,7 +85,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
           Element synonymElement = (Element)o1;
           final String synonym = synonymElement.getTextNormalize();
           if (synonym != null) {
-            putOptionWithHelpId(synonym, id, groupName, null, null);
+            Set<String> words = getProcessedWords(synonym);
+            for (String word : words) {
+              putOptionWithHelpId(word, id, groupName, synonym, null);
+            }
           }
         }
         final List options = configurable.getChildren("option");
@@ -82,42 +100,48 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
             Element synonymElement = (Element)o2;
             final String synonym = synonymElement.getTextNormalize();
             if (synonym != null) {
-              putOptionWithHelpId(synonym, id, groupName, null, null);
-              myHighlightSynonym2Option.put(Pair.create(synonym, id), option);
+              Set<String> words = getProcessedWords(synonym);
+              for (String word : words) {
+                putOptionWithHelpId(word, id, groupName, synonym, null);
+              }
+              final Pair<String, String> key = Pair.create(option, id);
+              Set<String> foundSynonyms = myHighlightOption2Synonym.get(key);
+              if (foundSynonyms == null){
+                foundSynonyms = new THashSet<String>();
+                myHighlightOption2Synonym.put(key, foundSynonyms);
+              }
+              foundSynonyms.add(synonym);
             }
           }
         }
       }
 
-      //stop words
-      final String text = ResourceUtil.loadText(ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt"));
-      final String[] words = text.split("[\\W]");
-      myStopWords.addAll(Arrays.asList(words));
+
     }
     catch (Exception e) {
-      //do nothing
+      LOG.error(e);
     }
   }
 
   private void putOptionWithHelpId(String option, final String id, final String groupName, String hit, final String path) {
+    if (myStopWords.contains(option)) return;
     option = PorterStemmerUtil.stem(option);
     if (option == null) return;
-    final OptionDescription description = new OptionDescription(option, hit, path);
-    description.setGroupName(groupName);
-    myHints.add(description);
-    Set<String> helpIds = myOption2HelpId.get(option);
-    if (helpIds == null) {
-      helpIds = new HashSet<String>();
-      myOption2HelpId.put(option, helpIds);
+    if (myStopWords.contains(option)) return;
+    if (!myId2Name.containsKey(id) && groupName != null){
+      myId2Name.put(myIdentifierTable.intern(id), myIdentifierTable.intern(groupName));
     }
-    helpIds.add(id);
 
-    Set<String> paths = myHelpIdWithOption2Path.get(Pair.create(id, option));
-    if (paths == null) {
-      paths = new HashSet<String>();
-      myHelpIdWithOption2Path.put(Pair.create(id, option), paths);
+    Set<OptionDescription> configs = myStorage.get(option);
+    if (configs == null){
+      configs = new THashSet<OptionDescription>(3, 0.9f);
+      myStorage.put(option, configs);
     }
-    paths.add(path);
+
+    configs.add(new OptionDescription(null,
+                                      myIdentifierTable.intern(id),
+                                      hit != null ? myIdentifierTable.intern(hit) : null,
+                                      path != null ? myIdentifierTable.intern(path) : null));
   }
 
   @NotNull
@@ -126,12 +150,16 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
     Set<Configurable> result = new HashSet<Configurable>();
     Set<String> helpIds = null;
     for (String opt : options) {
-      final Set<String> optionIds = myOption2HelpId.get(opt);
+      final Set<OptionDescription> optionIds = myStorage.get(opt);
       if (optionIds == null) return result;
-      if (helpIds == null){
-        helpIds = optionIds;
+      final Set<String> ids = new HashSet<String>();
+      for (OptionDescription id : optionIds) {
+        ids.add(id.getConfigurableId());
       }
-      helpIds.retainAll(optionIds);
+      if (helpIds == null){
+        helpIds = ids;
+      }
+      helpIds.retainAll(ids);
     }
     if (helpIds != null) {
       for (ConfigurableGroup configurableGroup : configurables) {
@@ -153,8 +181,14 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
     Set<String> path = null;
     final Set<String> words = getProcessedWords(option);
     for (String word : words) {
-      final Set<String> paths = myHelpIdWithOption2Path.get(Pair.create(configurable.getId(), word));
-      if (paths == null) return null;
+      Set<OptionDescription> configs = myStorage.get(word);
+      if (configs == null) return null;
+      final Set<String> paths = new HashSet<String>();
+      for (OptionDescription config : configs) {
+        if (Comparing.strEqual(config.getConfigurableId(), configurable.getId())){
+          paths.add(config.getPath());
+        }
+      }
       if (path == null){
         path = paths;
       }
@@ -167,48 +201,44 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
     return myStopWords.contains(word);
   }
 
-  public String getSynonym(final String option, final SearchableConfigurable configurable) {
-    return myHighlightSynonym2Option.get(Pair.create(option, configurable.getId()));
+  public Set<String> getSynonym(final String option, final SearchableConfigurable configurable) {
+    return myHighlightOption2Synonym.get(Pair.create(option, configurable.getId()));
   }
 
-  public Map<String, TreeSet<OptionDescription>> findPossibleExtension(String prefix, final Project project) {
+  public Map<String, Set<String>> findPossibleExtension(String prefix, final Project project) {
     final boolean perProject = CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS;
-    final Map<String, TreeSet<OptionDescription>> result = new TreeMap<String, TreeSet<OptionDescription>>();
+    final Map<String, Set<String>> result = new THashMap<String, Set<String>>();
+    int count = 0;
     final Set<String> prefixes = getProcessedWords(prefix);
     for (String opt : prefixes) {
-      Set<String> hints = new HashSet<String>();
-      for (OptionDescription description : myHints) {
-        if (description != null) {
-          final String hit = description.getHit();
-          if (hit != null) {
-            final Set<String> words = getProcessedWords(hit);
-            for (String word : words) {
-              if (word.startsWith(opt)){
-                String groupName = description.getGroupName();
-                if (perProject) {
-                  if (Comparing.strEqual(groupName, ApplicationBundle.message("title.global.code.style"))){
-                    groupName = ApplicationBundle.message("title.project.code.style");
-                  }
-                } else {
-                  if (Comparing.strEqual(groupName, ApplicationBundle.message("title.project.code.style"))){
-                    groupName = ApplicationBundle.message("title.global.code.style");
-                  }
-                }
-                TreeSet<OptionDescription> descriptions = result.get(groupName);
-                if (descriptions == null){
-                  descriptions = new TreeSet<OptionDescription>();
-                  result.put(groupName, descriptions);
-                }
-                if (!hints.contains(hit.toLowerCase())){
-                  descriptions.add(description);
-                }
-                hints.add(hit.toLowerCase());
-                break;
+      for (String option : myStorage.keySet()) {
+        if (option.startsWith(opt)){
+          Set<OptionDescription> configs = myStorage.get(option);
+          if (configs == null) continue;
+          for (OptionDescription description: configs) {
+            String groupName = myId2Name.get(description.getConfigurableId());
+            if (perProject) {
+              if (Comparing.strEqual(groupName, ApplicationBundle.message("title.global.code.style"))){
+                groupName = ApplicationBundle.message("title.project.code.style");
+              }
+            } else {
+              if (Comparing.strEqual(groupName, ApplicationBundle.message("title.project.code.style"))){
+                groupName = ApplicationBundle.message("title.global.code.style");
               }
             }
+            Set<String> foundHits = result.get(groupName);
+            if (foundHits == null){
+              foundHits = new THashSet<String>();
+              result.put(groupName, foundHits);
+            }
+            foundHits.add(description.getHit());
+            count++;
           }
         }
       }
+    }
+    if (count > LOAD_FACTOR){
+      result.clear();
     }
     return result;
   }
@@ -217,6 +247,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
     putOptionWithHelpId(option, configurable.getId(), configurable.getDisplayName(), hit, path);
   }
 
+  @NotNull
   @NonNls
   public String getComponentName() {
     return "SearchableOptionsRegistrar";
@@ -260,9 +291,9 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
   public Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable){
     final Set<String> result = new HashSet<String>(options);
     for (String option : options) {
-      final String synonym = getSynonym(option, configurable);
-      if (synonym != null) {
-        result.add(synonym);
+      final Set<String> synonyms = getSynonym(option, configurable);
+      if (synonyms != null) {
+        result.addAll(synonyms);
       } else {
         result.add(option);
       }

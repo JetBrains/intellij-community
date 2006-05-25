@@ -7,6 +7,7 @@ across
 actual
 actually
 adj
+add
 after
 afterwards
 against
@@ -59,13 +60,16 @@ can
 can't
 cannot
 cant
+class
 co
 co.
+condition
 could
 couldn't
 crap
 currently
 d
+delete
 did
 didn't
 directly
@@ -81,6 +85,7 @@ e
 e.g.
 each
 eg
+edit
 eight
 eighty
 either
@@ -99,6 +104,7 @@ except
 f
 far
 few
+field
 fifty
 finding
 five
@@ -113,6 +119,7 @@ from
 further
 g
 getting
+global
 go
 going
 gone
@@ -178,6 +185,8 @@ let
 let's
 like
 likely
+line
+local
 look
 ltd
 m
@@ -190,6 +199,7 @@ maybe
 meantime
 meanwhile
 meeting
+method
 might
 million
 miss
@@ -209,6 +219,7 @@ need
 needs
 neither
 nevertheless
+new
 nine
 ninety
 no
@@ -257,6 +268,7 @@ rather
 really
 reason
 recently
+remove
 rest
 rid
 rotten
@@ -361,6 +373,7 @@ unlike
 unlikely
 until
 up
+update
 upon
 us
 v
