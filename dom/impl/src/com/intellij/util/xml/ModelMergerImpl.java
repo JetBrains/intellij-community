@@ -149,6 +149,13 @@ public class ModelMergerImpl implements ModelMerger {
           }
           return null;
         }
+        if (DomElement.class.equals(method.getDeclaringClass()) && "isValid".equals(method.getName())) {
+          for (final T implementation : myImplementations) {
+            if (!((Boolean) method.invoke(implementation, args))) {
+              return false;
+            }
+          }
+        }
 
         try {
           if (MergedObject.class.equals(method.getDeclaringClass())) {
