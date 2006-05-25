@@ -20,6 +20,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   private Object myValue;
   
   private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_MAP_KEY");
+  private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY");
   private static final Object NO_VALUE = new Object();
 
   private ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
@@ -363,7 +364,10 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     if (element == null) return null;
 
     Project project = element.getProject();
-    CachedValue<Map<PsiElement,Object>> cachedValue = project.getUserData(CONSTANT_VALUE_MAP_KEY);
+    final Key<CachedValue<Map<PsiElement, Object>>> key = myThrowExceptionOnOverflow ?
+                                                          CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY :
+                                                          CONSTANT_VALUE_MAP_KEY;
+    CachedValue<Map<PsiElement,Object>> cachedValue = project.getUserData(key);
     if (cachedValue == null) {
       cachedValue = PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<PsiElement,Object>>() {
         public CachedValueProvider.Result<Map<PsiElement,Object>> compute() {
@@ -371,7 +375,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
           return new Result<Map<PsiElement, Object>>(value, PsiModificationTracker.MODIFICATION_COUNT);
         }
       }, false);
-      project.putUserData(CONSTANT_VALUE_MAP_KEY, cachedValue);
+      project.putUserData(key, cachedValue);
     }
     Map<PsiElement, Object> map = cachedValue.getValue();
     Object value = map.get(element);
