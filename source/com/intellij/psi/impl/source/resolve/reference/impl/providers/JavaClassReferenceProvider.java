@@ -64,7 +64,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     EXTEND_CLASS_NAMES.putValue(myOptions, extendClassNames);
   }
 
-  public JavaClassReferenceProvider(String extendClassName) {
+  public JavaClassReferenceProvider(@NotNull String extendClassName) {
     this(new String[] {extendClassName});
   }
 
