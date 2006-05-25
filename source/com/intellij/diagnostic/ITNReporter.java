@@ -8,7 +8,6 @@ import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NewBuildException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.error.ThreadClosedException;
-import com.intellij.errorreport.itn.ITNProxy;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
@@ -18,7 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Component;
 import java.io.IOException;
 
 /**
@@ -63,11 +62,9 @@ public class ITNReporter extends ErrorReportSubmitter {
         EAPSendErrorDialog dlg = new EAPSendErrorDialog();
         dlg.show();
 
-        boolean anonymousLogin = false;
         @NonNls String itnLogin = ErrorReportConfigurable.getInstance().ITN_LOGIN;
         @NonNls String itnPassword = ErrorReportConfigurable.getInstance().getPlainItnPassword();
         if (itnLogin.trim().length() == 0 && itnPassword.trim().length() == 0) {
-          anonymousLogin = true;
           itnLogin = "idea_anonymous";
           itnPassword = "guest";
         }
@@ -77,27 +74,25 @@ public class ITNReporter extends ErrorReportSubmitter {
         String description = dlg.getErrorDescription();
         String message = event.getMessage();
 
-        errorBean.setDescription((description.length() > 0 ? "User description: " + description + "\n" : "")+
-                                 (message != null ? "Error message: " + message + "\n" : ""));
+        @NonNls StringBuilder descBuilder = new StringBuilder();
+        if (description.length() > 0) {
+          descBuilder.append("User description: ").append(description).append("\n");
+        }
+        if (message != null) {
+          descBuilder.append("Error message: ").append(message).append("\n");
+        }
+        if (previousExceptionThreadId != 0) {
+          descBuilder.append("Previous exception is: ").append(URL_HEADER).append(previousExceptionThreadId).append("\n");
+        }
+        if (wasException) {
+          descBuilder.append("There was at least one exception before this one.\n");
+        }
+
+        errorBean.setDescription(descBuilder.toString());
 
         if (dlg.isShouldSend()) {
           threadId = sender.sendError(notifierBean, errorBean);
-
-          if (previousExceptionThreadId != 0) {
-            ITNProxy.postNewComment(ErrorReportConfigurable.getInstance().ITN_LOGIN,
-                                    ErrorReportConfigurable.getInstance().getPlainItnPassword(),
-                                    threadId, "Previous exception is: " +
-                                              URL_HEADER +
-                                              previousExceptionThreadId);
-          }
           previousExceptionThreadId = threadId;
-
-          if (wasException) {
-            ITNProxy.postNewComment(ErrorReportConfigurable.getInstance().ITN_LOGIN,
-                                    ErrorReportConfigurable.getInstance().getPlainItnPassword(),
-                                    threadId, "There was at least one exception before this one.");
-          }
-
           wasException = true;
           submissionStatus = SubmittedReportInfo.SubmissionStatus.NEW_ISSUE;
 
@@ -118,7 +113,7 @@ public class ITNReporter extends ErrorReportSubmitter {
         }
       }
       catch (InternalEAPException e) {
-        if (Messages.showYesNoDialog(parentComponent, DiagnosticBundle.message("error.report.posting.failed"),
+        if (Messages.showYesNoDialog(parentComponent, DiagnosticBundle.message("error.report.posting.failed", e.getMessage()),
                                      ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
           break;
         }

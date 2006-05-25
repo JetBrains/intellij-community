@@ -234,29 +234,4 @@ public class ITNProxy {
 
     return threadId;
   }
-
-  public static void postNewComment (String userName, String password,
-                                     int threadId, @NonNls String comment)
-          throws IOException, InternalEAPException, NoSuchEAPUserException {
-    @NonNls Map<String,String> params = new HashMap<String, String>();
-    params.put("username", userName);
-    params.put("pwd", password);
-    params.put("publicId", Integer.toString(threadId));
-    params.put("body", comment);
-    params.put("command", "Submit");
-
-    HttpURLConnection connection = post(NEW_COMMENT_URL, params);
-    int responce = connection.getResponseCode();
-    switch (responce) {
-      case HttpURLConnection.HTTP_OK:
-        break;
-      case HttpURLConnection.HTTP_BAD_REQUEST:
-      case HttpURLConnection.HTTP_NOT_FOUND:
-        // user not found
-        throw new NoSuchEAPUserException(userName);
-      default:
-        // some problems
-        throw new InternalEAPException(DiagnosticBundle.message("error.http.result.code", responce));
-    }
-  }
 }
