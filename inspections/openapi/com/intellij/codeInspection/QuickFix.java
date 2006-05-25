@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Common base interface for quick fixes provided by local and global inspections.
@@ -30,10 +31,13 @@ public interface QuickFix<D extends CommonProblemDescriptor> {
    *
    * @return the name of the quick fix.
    */
+  @NotNull
   String getName();
 
-  //to appear in "Apply Fix" statement when multiple Quick Fixes exist
-  String getFamilyName();
+  /**
+   * To appear in "Apply Fix" statement when multiple Quick Fixes exist
+   */
+  @NotNull String getFamilyName();
 
   /**
    * Called to apply the fix.
@@ -41,5 +45,5 @@ public interface QuickFix<D extends CommonProblemDescriptor> {
    * @param project    {@link com.intellij.openapi.project.Project}
    * @param descriptor problem reported by the tool which provided this quick fix action
    */
-  void applyFix(Project project, D descriptor);
+  void applyFix(@NotNull Project project, D descriptor);
 }

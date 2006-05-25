@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -28,10 +29,12 @@ public class QuickFixWrapper implements IntentionAction {
     LOG.assertTrue(descriptor.getFixes() != null && descriptor.getFixes().length > fixNumber);
   }
 
+  @NotNull
   public String getText() {
     return getFamilyName();
   }
 
+  @NotNull
   public String getFamilyName() {
     return myDescriptor.getFixes()[myFixNumber].getName();
   }
@@ -43,7 +46,8 @@ public class QuickFixWrapper implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-    ((LocalQuickFix)myDescriptor.getFixes()[myFixNumber]).applyFix(project, myDescriptor);
+    LocalQuickFix fix = (LocalQuickFix)myDescriptor.getFixes()[myFixNumber];
+    fix.applyFix(project, myDescriptor);
     final PsiElement element = myDescriptor.getPsiElement();
     if (element != null) {
       final PsiFile fileForUndo = element.getContainingFile();
