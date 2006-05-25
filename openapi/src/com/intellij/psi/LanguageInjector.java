@@ -12,11 +12,11 @@ import org.jetbrains.annotations.NotNull;
 public interface LanguageInjector {
   /**
    * @param host PSI element inside which your language will be injected.
-   * @param placesToInject stores places where injection occurs. <br>
+   * @param injectionPlacesRegistrar stores places where injection occurs. <br>
    *        Call its {@link com.intellij.psi.InjectedLanguagePlaces#addPlace(com.intellij.lang.Language, com.intellij.openapi.util.TextRange)}
    *        method to register particular injection place.
    *        For example, to inject your language in string literal inside quotes, you might want to <br>
-   *        <code>placesToInject.addPlace(myLanguage, new TextRange(1,host.getTextLength()-1))</code>
+   *        <code>injectionPlacesRegistrar.addPlace(myLanguage, new TextRange(1,host.getTextLength()-1))</code>
    */
-  void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces placesToInject);
+  void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar);
 }
