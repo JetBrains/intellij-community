@@ -74,7 +74,7 @@ class ReloadClassesWorker {
 
                       if(method != null) {
                         PsiFile psiFile = method.getContainingFile();
-                        VirtualFile file;
+                        VirtualFile file = null;
                         int lineIndex = 0;
 
                         if (psiFile != null) {
@@ -192,10 +192,16 @@ class ReloadClassesWorker {
   }
 
   private void processException(Throwable e) {
+    if (e.getMessage() != null) {
+      myProgress.addMessage(MessageCategory.ERROR, e.getMessage());
+    }
+
     if (e instanceof ProcessCanceledException) {
       myProgress.addMessage(MessageCategory.INFORMATION, DebuggerBundle.message("error.operation.canceled"));
+      return;
     }
-    else if (e instanceof UnsupportedOperationException) {
+
+    if (e instanceof UnsupportedOperationException) {
       myProgress.addMessage(MessageCategory.ERROR, DebuggerBundle.message("error.operation.not.supported.by.vm"));
     }
     else if (e instanceof NoClassDefFoundError) {
@@ -221,7 +227,7 @@ class ReloadClassesWorker {
     }
   }
 
-  private static byte[] loadFile(VirtualFile file) {
+  private byte[] loadFile(VirtualFile file) {
     try {
       return file.contentsToByteArray();
     }
@@ -258,8 +264,8 @@ class ReloadClassesWorker {
         final HotSwapFile fileDescr = modifiedClasses.get(qualifiedName);
 
         //[max]: Generic enabled Computable<byte[]> confuses degenerator.
-        byte[] buffer = ApplicationManager.getApplication().runReadAction(new Computable<byte[]>() {
-          public byte[] compute() {
+        byte[] buffer = (byte[])ApplicationManager.getApplication().runReadAction(new Computable() {
+          public Object compute() {
             return loadFile(fileDescr.file);
           }
         });
