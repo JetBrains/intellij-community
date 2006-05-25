@@ -647,12 +647,7 @@ public class ControlFlowUtil {
         int throwToOffset = instruction.offset;
         boolean isNormal;
         if (throwToOffset == nextOffset) {
-          if (throwToOffset <= endOffset) {
-            isNormal = !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
-          }
-          else {
-            isNormal = false;
-          }
+          isNormal = throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
         }
         else {
           isNormal = canCompleteNormally[nextOffset];
@@ -787,17 +782,6 @@ public class ControlFlowUtil {
         }
       }
 
-      public void visitConditionalThrowToInstruction(ConditionalThrowToInstruction instruction, int offset, int nextOffset) {
-        if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
-        if (instruction.offset == nextOffset) {
-          boolean unassigned = !isLeaf(nextOffset) && maybeUnassigned[nextOffset];
-          maybeUnassigned[offset] |= unassigned;
-        }
-        else {
-          visitInstruction(instruction, offset, nextOffset);
-        }
-      }
-
       public void visitThrowToInstruction(ThrowToInstruction instruction, int offset, int nextOffset) {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
         boolean unassigned = !isLeaf(nextOffset) && maybeUnassigned[nextOffset];
@@ -829,12 +813,7 @@ public class ControlFlowUtil {
       public void visitWriteVariableInstruction(WriteVariableInstruction instruction, int offset, int nextOffset) {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
         boolean assigned;
-        if (instruction.variable == variable) {
-          assigned = true;
-        }
-        else {
-          assigned = maybeAssigned[nextOffset];
-        }
+        assigned = instruction.variable == variable || maybeAssigned[nextOffset];
         maybeAssigned[offset] |= assigned;
       }
 
@@ -1113,8 +1092,7 @@ public class ControlFlowUtil {
 
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof VariableInfo)) return false;
-      return variable.equals(((VariableInfo)o).variable);
+      return o instanceof VariableInfo && variable.equals(((VariableInfo)o).variable);
     }
 
     public int hashCode() {
@@ -1365,7 +1343,6 @@ public class ControlFlowUtil {
     }
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression.getParent();
     int startOffset = flow.getStartOffset(assignmentExpression);
-    if (startOffset == -1) return false;
-    return isInstructionReachable(flow, startOffset, startOffset);
+    return startOffset != -1 && isInstructionReachable(flow, startOffset, startOffset);
   }
 }
