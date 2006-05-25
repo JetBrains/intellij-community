@@ -11,9 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
 import java.util.EventListener;
-import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -25,8 +23,6 @@ public class EventDispatcher <T extends EventListener>{
   private final T myMulticaster;
 
   private CopyOnWriteArrayList<T> myListeners = new CopyOnWriteArrayList<T>();
-
-  private List<T> myCachedListeners = null;
 
   public static <T extends EventListener> EventDispatcher<T> create(Class<T> listenerClass) {
     return new EventDispatcher<T>(listenerClass);
@@ -89,7 +85,6 @@ public class EventDispatcher <T extends EventListener>{
 
   public synchronized void addListener(T listener) {
     myListeners.add(listener);
-    myCachedListeners = null;
   }
 
   public synchronized void addListener(final T listener, Disposable parentDisposable) {
@@ -103,14 +98,6 @@ public class EventDispatcher <T extends EventListener>{
 
   public synchronized void removeListener(T listener) {
     myListeners.remove(listener);
-    myCachedListeners = null;
-  }
-
-  public synchronized List<T> getListeners() {
-    if (myCachedListeners == null) {
-      myCachedListeners = new ArrayList<T>(myListeners);
-    }
-    return myCachedListeners;
   }
 
   public synchronized boolean hasListeners() {
