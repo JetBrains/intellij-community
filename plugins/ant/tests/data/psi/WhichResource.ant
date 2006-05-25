@@ -1,0 +1,4 @@
+<project default="A">
+  <whichresource property="prop" class="${ant.file}"/>
+  <target name="A"/>
+</project>

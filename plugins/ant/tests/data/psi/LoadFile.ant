@@ -1,0 +1,4 @@
+<project default="A">
+  <loadfile property="prop" srcfile="${ant.file}"/>
+  <target name="A"/>
+</project>

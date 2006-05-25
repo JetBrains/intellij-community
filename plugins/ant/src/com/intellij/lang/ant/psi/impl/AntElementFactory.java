@@ -11,6 +11,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import org.apache.tools.ant.Target;
 import org.apache.tools.ant.taskdefs.*;
+import org.apache.tools.ant.taskdefs.optional.extension.JarLibResolveTask;
+import org.apache.tools.ant.taskdefs.optional.perforce.P4Counter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -77,34 +79,9 @@ public class AntElementFactory {
                                      parent.getAntFile().getBaseTypeDefinition(Property.class.getName()));
         }
       });
-      ourAntTypeToKnownAntElementCreatorMap.put(Available.class.getName(), new AntElementCreator() {
-        public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntPropertyImpl(parent, tag,
-                                     parent.getAntFile().getBaseTypeDefinition(Available.class.getName()),
-                                     "property");
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(Checksum.class.getName(), new AntElementCreator() {
-        public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntPropertyImpl(parent, tag,
-                                     parent.getAntFile().getBaseTypeDefinition(Checksum.class.getName()),
-                                     "property");
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(ConditionTask.class.getName(), new AntElementCreator() {
-        public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntPropertyImpl(parent, tag,
-                                     parent.getAntFile().getBaseTypeDefinition(ConditionTask.class.getName()),
-                                     "property");
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(UpToDate.class.getName(), new AntElementCreator() {
-        public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntPropertyImpl(parent, tag,
-                                     parent.getAntFile().getBaseTypeDefinition(UpToDate.class.getName()),
-                                     "property");
-        }
-      });
+      for (final String clazz : PROPERTY_CLASSES) {
+        addPropertyCreator(clazz);
+      }
       ourAntTypeToKnownAntElementCreatorMap.put(CallTarget.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
           return new AntCallImpl(parent, tag,
@@ -129,27 +106,38 @@ public class AntElementFactory {
                                      parent.getAntFile().getBaseTypeDefinition(MacroDef.class.getName()));
         }
       });
-      ourAntTypeToKnownAntElementCreatorMap
-        .put(MacroDef.NestedSequential.class.getName(), new AntElementCreator() {
-          public AntElement create(final AntElement parent, final XmlTag tag) {
-            return new AntAllTasksContainerImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(
-              MacroDef.NestedSequential.class.getName()));
-          }
-        });
-      ourAntTypeToKnownAntElementCreatorMap.put(Sequential.class.getName(), new AntElementCreator() {
-        public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntAllTasksContainerImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(
-            Sequential.class.getName()));
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(Parallel.class.getName(), new AntElementCreator() {
-        public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntAllTasksContainerImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(
-            Parallel.class.getName()));
-        }
-      });
+      for (final String clazz : ALL_TASKS_CONTAINER_CLASSES) {
+        addAllTasksContainerCreator(clazz);
+      }
     }
   }
+
+  private static void addPropertyCreator(final String className) {
+    ourAntTypeToKnownAntElementCreatorMap.put(className, new AntElementCreator() {
+      public AntElement create(final AntElement parent, final XmlTag tag) {
+        return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(className),
+                                   "property");
+      }
+    });
+  }
+
+  private static void addAllTasksContainerCreator(final String className) {
+    ourAntTypeToKnownAntElementCreatorMap.put(className, new AntElementCreator() {
+      public AntElement create(final AntElement parent, final XmlTag tag) {
+        return new AntAllTasksContainerImpl(parent, tag,
+                                            parent.getAntFile().getBaseTypeDefinition(className));
+      }
+    });
+  }
+
+  private final static String[] PROPERTY_CLASSES = {Available.class.getName(), Checksum.class.getName(),
+    ConditionTask.class.getName(), UpToDate.class.getName(), Dirname.class.getName(),
+    Basename.class.getName(), LoadFile.class.getName(), TempFile.class.getName(), PathConvert.class.getName(),
+    Length.class.getName(), WhichResource.class.getName(), JarLibResolveTask.class.getName(),
+    P4Counter.class.getName()};
+
+  private final static String[] ALL_TASKS_CONTAINER_CLASSES =
+    {MacroDef.NestedSequential.class.getName(), Sequential.class.getName(), Parallel.class.getName()};
 
   private static interface AntElementCreator {
     AntElement create(final AntElement parent, final XmlTag tag);

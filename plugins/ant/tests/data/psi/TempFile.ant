@@ -1,0 +1,4 @@
+<project default="A">
+  <tempfile property="prop"/>
+  <target name="A"/>
+</project>

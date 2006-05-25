@@ -84,4 +84,40 @@ public class AntParsingTest extends ParsingTestCase {
   public void testUptodate() throws Exception {
     doTest(true);
   }
+
+  public void testDirname() throws Exception {
+    doTest(true);
+  }
+
+  public void testBasename() throws Exception {
+    doTest(true);
+  }
+
+  public void testLoadFile() throws Exception {
+    doTest(true);
+  }
+
+  public void testTempFile() throws Exception {
+    doTest(true);
+  }
+
+  public void testLength() throws Exception {
+    doTest(true);
+  }
+
+  public void testPathConvert() throws Exception {
+    doTest(true);
+  }
+
+  public void testWhichResource() throws Exception {
+    doTest(true);
+  }
+
+  public void testP4Counter() throws Exception {
+    doTest(true);
+  }
+
+  public void testJarLibResolve() throws Exception {
+    doTest(true);
+  }
 }
