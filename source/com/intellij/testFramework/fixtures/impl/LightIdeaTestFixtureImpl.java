@@ -9,14 +9,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.testFramework.fixtures.IdeaTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 
 import java.util.HashMap;
 
 /**
  * @author mike
  */
-public class LightIdeaTestFixtureImpl implements IdeaTestFixture {
+public class LightIdeaTestFixtureImpl implements IdeaProjectTestFixture {
   public void setUp() throws Exception {
     LightIdeaTestCase.initApplication(null);
     LightIdeaTestCase.doSetup(JavaSdkImpl.getMockJdk15("50"), new LocalInspectionTool[0], new HashMap<String, LocalInspectionTool>(), null);

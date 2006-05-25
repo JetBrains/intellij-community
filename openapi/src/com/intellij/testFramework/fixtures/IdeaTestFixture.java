@@ -4,16 +4,10 @@
 
 package com.intellij.testFramework.fixtures;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-
 /**
- * @author mike
+ * This is to be provided by IDEA and not by plugin authors.
  */
 public interface IdeaTestFixture {
   void setUp() throws Exception;
   void tearDown() throws Exception;
-
-  Project getProject();
-  Module getModule();
 }

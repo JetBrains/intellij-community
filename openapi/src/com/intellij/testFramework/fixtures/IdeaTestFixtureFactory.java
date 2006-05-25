@@ -5,7 +5,7 @@
 package com.intellij.testFramework.fixtures;
 
 /**
- * @author mike
+ * This is to be provided by IDEA and not by plugin authors.
  */
 public abstract class IdeaTestFixtureFactory {
   private static final IdeaTestFixtureFactory ourInstance;
@@ -24,5 +24,5 @@ public abstract class IdeaTestFixtureFactory {
     return ourInstance;
   }
 
-  public abstract IdeaTestFixture createLightFixture();
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
 }
