@@ -1,13 +1,12 @@
 package com.intellij.projectView;
 
-import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.uiDesigner.binding.FormMergerTreeStructureProvider;
+import com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider;
 
 
 public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase {
