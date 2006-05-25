@@ -315,7 +315,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         performInspectionsWithProgress(scope, runWithEditorSettings, manager);
         final HashMap<InspectionTool, HighlightDisplayLevel> tools = new HashMap<InspectionTool, HighlightDisplayLevel>();
         if (runWithEditorSettings){
-          final Set<String> profiles = myCurrentScope.getActiveInspectionProfiles();
+          final Set<String> profiles = scope.getActiveInspectionProfiles();
           for (String profileName : profiles) {
             collectProfileTools((InspectionProfileImpl)InspectionProjectProfileManager.getInstance(myProject).getProfile(profileName), tools);
           }
