@@ -93,7 +93,7 @@ public class SignatureParser {
     buf.append(it.current());
     it.next();     // consume 'L'
     parseSimpleClassTypeSignature(it, buf);
-    while (it.current() == '/') {
+    while (it.current() == '/' || it.current() == '.') { // Eclipse compiler generates '.' for inner classes 
       parseClassTypeSignatureSuffix(it, buf);
     }
     if (it.current() != ';') {
