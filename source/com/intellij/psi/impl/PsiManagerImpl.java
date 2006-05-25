@@ -1084,18 +1084,22 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   @Nullable
   public List<Pair<Language, TextRange>> getInjectedLanguages(PsiLanguageInjectionHost host) {
-    List<Pair<Language, TextRange>> result = null;
-    for (LanguageInjector injector : myLanguageInjectors) {
-      Pair<Language,TextRange> injected = injector.getLanguageToInject(host);
-      if (injected != null) {
+    class Collector implements InjectedLanguagePlaces {
+      List<Pair<Language, TextRange>> result;
+
+      public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost) {
         if (result == null) {
           result = new SmartList<Pair<Language, TextRange>>();
         }
-        result.add(injected);
+        result.add(new Pair<Language, TextRange>(language, rangeInsideHost));
       }
     }
+    Collector collector = new Collector();
+    for (LanguageInjector injector : myLanguageInjectors) {
+      injector.getLanguagesToInject(host,collector);
+    }
 
-    return result;
+    return collector.result;
   }
 
   private class MyExternalResourceListener implements ExternalResourceListener {
