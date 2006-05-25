@@ -53,7 +53,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
 
   public GenericAttributeValue getDomAttributeValue(DomElement parent) {
     try {
-      return (GenericAttributeValue)DomManagerImpl.getDomInvocationHandler(parent).doInvoke(myGetterMethod);
+      return (GenericAttributeValue)DomManagerImpl.getDomInvocationHandler(ModelMergerUtil.getImplementation(parent, DomElement.class)).doInvoke(myGetterMethod);
     }
     catch (ProcessCanceledException e) {
       throw e; 
