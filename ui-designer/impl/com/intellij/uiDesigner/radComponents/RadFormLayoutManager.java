@@ -450,6 +450,21 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     updateGridConstraintsFromCellConstraints(grid);
   }
 
+  @Override
+  public void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize) {
+    FormLayout formLayout = (FormLayout) container.getLayout();
+    if (isRow) {
+      RowSpec rowSpec = formLayout.getRowSpec(cell+1);
+      RowSpec newSpec = new RowSpec(rowSpec.getDefaultAlignment(), new ConstantSize(newSize, ConstantSize.PIXEL), rowSpec.getResizeWeight());
+      formLayout.setRowSpec(cell+1, newSpec);
+    }
+    else {
+      ColumnSpec colSpec = formLayout.getColumnSpec(cell+1);
+      ColumnSpec newSpec = new ColumnSpec(colSpec.getDefaultAlignment(), new ConstantSize(newSize, ConstantSize.PIXEL), colSpec.getResizeWeight());
+      formLayout.setColumnSpec(cell+1, newSpec);
+    }
+  }
+
   private static void updateGridConstraintsFromCellConstraints(RadContainer grid) {
     FormLayout layout = (FormLayout) grid.getLayout();
     for(RadComponent c: grid.getComponents()) {
