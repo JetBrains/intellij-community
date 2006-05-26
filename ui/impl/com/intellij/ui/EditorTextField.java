@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,8 +26,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -241,7 +240,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
       }
     };
 
-    if (application.isUnitTestMode()) {
+    if (application.isUnitTestMode() || application.isDispatchThread()) {
       runnable.run();
     } else {
       application.invokeLater(runnable);
