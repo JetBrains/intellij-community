@@ -145,6 +145,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
   }
 
   public void dispose() {
+    myBuilder.dispose();
     myDomManager.removeDomEventListener(myDomEventListener);
   }
 
