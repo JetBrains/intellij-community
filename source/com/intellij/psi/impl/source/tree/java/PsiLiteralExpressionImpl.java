@@ -31,30 +31,28 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     if (i == INTEGER_LITERAL) {
       return PsiType.INT;
     }
-    else if (i == LONG_LITERAL) {
+    if (i == LONG_LITERAL) {
       return PsiType.LONG;
     }
-    else if (i == FLOAT_LITERAL) {
+    if (i == FLOAT_LITERAL) {
       return PsiType.FLOAT;
     }
-    else if (i == DOUBLE_LITERAL) {
+    if (i == DOUBLE_LITERAL) {
       return PsiType.DOUBLE;
     }
-    else if (i == CHARACTER_LITERAL) {
+    if (i == CHARACTER_LITERAL) {
       return PsiType.CHAR;
     }
-    else if (i == STRING_LITERAL) {
+    if (i == STRING_LITERAL) {
       return PsiType.getJavaLangString(getManager(), getResolveScope());
     }
-    else if (i == TRUE_KEYWORD || i == FALSE_KEYWORD) {
+    if (i == TRUE_KEYWORD || i == FALSE_KEYWORD) {
       return PsiType.BOOLEAN;
     }
-    else if (i == NULL_KEYWORD) {
+    if (i == NULL_KEYWORD) {
       return PsiType.NULL;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   private static final @NonNls String _2_IN_63 = Long.toString(-1L << 63).substring(1);
@@ -73,24 +71,22 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
           final Long value = parseDigits(text.substring(2), 4, 32);
           return value == null ? null : new Integer(value.intValue());
         }
-        else if (StringUtil.startsWithChar(text, '0')) {
+        if (StringUtil.startsWithChar(text, '0')) {
           // should fit in 32 bits
           if (textLength <= 12) return Integer.valueOf(text, 8);
           final Long value = parseDigits(text, 3, 32);
           return value == null ? null : new Integer(value.intValue());
         }
-        else {
-          final long l = Long.parseLong(text, 10);
-          if (text.equals(_2_IN_31)) return new Integer((int)l);
-          long converted = (int)l;
-          return l == converted ? new Integer((int)l) : null;
-        }
+        final long l = Long.parseLong(text, 10);
+        if (text.equals(_2_IN_31)) return new Integer((int)l);
+        long converted = (int)l;
+        return l == converted ? new Integer((int)l) : null;
       }
       catch (Exception e) {
         return null;
       }
     }
-    else if (i == LONG_LITERAL) {
+    if (i == LONG_LITERAL) {
       if (StringUtil.endsWithChar(text, 'L') || StringUtil.endsWithChar(text, 'l')) {
         text = text.substring(0, textLength - 1);
         textLength = text.length();
@@ -100,21 +96,19 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
           if (textLength <= 17) return Long.valueOf(text.substring(2), 16);
           return parseDigits(text.substring(2), 4, 64);
         }
-        else if (StringUtil.startsWithChar(text, '0')) {
+        if (StringUtil.startsWithChar(text, '0')) {
           // should fit in 64 bits
           if (textLength <= 23) return Long.valueOf(text, 8);
           return parseDigits(text, 3, 64);
         }
-        else {
-          if (_2_IN_63.equals(text)) return new Long(-1L << 63);
-          return Long.valueOf(text, 10);
-        }
+        if (_2_IN_63.equals(text)) return new Long(-1L << 63);
+        return Long.valueOf(text, 10);
       }
       catch (Exception e) {
         return null;
       }
     }
-    else if (i == FLOAT_LITERAL) {
+    if (i == FLOAT_LITERAL) {
       try {
         return Float.valueOf(text);
       }
@@ -122,7 +116,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         return null;
       }
     }
-    else if (i == DOUBLE_LITERAL) {
+    if (i == DOUBLE_LITERAL) {
       try {
         return Double.valueOf(text);
       }
@@ -130,7 +124,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         return null;
       }
     }
-    else if (i == CHARACTER_LITERAL) {
+    if (i == CHARACTER_LITERAL) {
       if (StringUtil.endsWithChar(text, '\'')) {
         if (textLength == 1) return null;
         text = text.substring(1, textLength - 1);
@@ -143,7 +137,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
       if (s.length() != 1) return null;
       return new Character(s.charAt(0));
     }
-    else if (i == STRING_LITERAL) {
+    if (i == STRING_LITERAL) {
       if (StringUtil.endsWithChar(text, '\"')) {
         if (textLength == 1) return null;
         text = text.substring(1, textLength - 1);
@@ -158,18 +152,16 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
       }
       return parseStringCharacters(text);
     }
-    else if (i == TRUE_KEYWORD) {
+    if (i == TRUE_KEYWORD) {
       return Boolean.TRUE;
     }
-    else if (i == FALSE_KEYWORD) {
+    if (i == FALSE_KEYWORD) {
       return Boolean.FALSE;
     }
-    else if (i == NULL_KEYWORD) {
+    if (i == NULL_KEYWORD) {
       return null;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   // convert text to number according to radix specified

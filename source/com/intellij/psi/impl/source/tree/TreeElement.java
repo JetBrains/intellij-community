@@ -8,7 +8,6 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NonNls;
@@ -100,28 +99,24 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   }
 
   public boolean textMatches(CharSequence buffer, int startOffset, int endOffset) {
-    return textMatches(this, buffer, startOffset, endOffset) == endOffset;
+    return textMatches(this, buffer, startOffset) == endOffset;
   }
 
-  public int textStartsWith(CharSequence buffer, int startOffset, int endOffset) {
-    return textMatches(this, buffer, startOffset, endOffset);
-  }
-
-  private static int textMatches(ASTNode element, CharSequence buffer, int startOffset, int endOffset) {
-  synchronized (PsiLock.LOCK) {
-    if (element instanceof LeafElement) {
-      final LeafElement leaf = (LeafElement)element;
-      return leaf.textMatches(buffer, startOffset);
-    }
-    else {
-      int curOffset = startOffset;
-      for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        curOffset = textMatches(child, buffer, curOffset, endOffset);
-        if (curOffset == -1) return -1;
+  private static int textMatches(ASTNode element, CharSequence buffer, int startOffset) {
+    synchronized (PsiLock.LOCK) {
+      if (element instanceof LeafElement) {
+        final LeafElement leaf = (LeafElement)element;
+        return leaf.textMatches(buffer, startOffset);
       }
-      return curOffset;
+      else {
+        int curOffset = startOffset;
+        for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+          curOffset = textMatches(child, buffer, curOffset);
+          if (curOffset == -1) return -1;
+        }
+        return curOffset;
+      }
     }
-  }
   }
 
   public boolean textMatches(CharSequence seq) {
@@ -129,8 +124,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   }
 
   public boolean textMatches(PsiElement element) {
-    if (getTextLength() != element.getTextLength()) return false;
-    return textMatches(element.getText());
+    return getTextLength() == element.getTextLength() && textMatches(element.getText());
   }
 
   @NonNls
@@ -175,9 +169,5 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   }
 
   public abstract void acceptTree(TreeElementVisitor visitor);
-
-  public boolean isGenerated() {
-    return CodeEditUtil.isNodeGenerated(this);
-  }
 }
 
