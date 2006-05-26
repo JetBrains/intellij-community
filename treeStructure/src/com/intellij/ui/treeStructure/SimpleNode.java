@@ -205,7 +205,7 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     }
 
     public ColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
-      myText = aText;
+      myText = aText == null? "" : aText;
       myAttributes = aAttributes;
       myToolTip = toolTip;
     }
