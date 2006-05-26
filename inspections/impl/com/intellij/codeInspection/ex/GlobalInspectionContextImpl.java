@@ -6,7 +6,6 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
@@ -313,29 +312,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         performInspectionsWithProgress(scope, runWithEditorSettings, manager);
-        final HashMap<InspectionTool, HighlightDisplayLevel> tools = new HashMap<InspectionTool, HighlightDisplayLevel>();
-        if (runWithEditorSettings){
-          final Set<String> profiles = scope.getActiveInspectionProfiles();
-          for (String profileName : profiles) {
-            collectProfileTools((InspectionProfileImpl)InspectionProjectProfileManager.getInstance(myProject).getProfile(profileName), tools);
-          }
-        } else {
-          collectProfileTools(getCurrentProfile(), tools);
-        }
-        final HashMap<String, Set<InspectionTool>> groupedTools = new HashMap<String, Set<InspectionTool>>();
-        for (InspectionTool tool : tools.keySet()) {
-          final String shortName = tool.getShortName();
-          Set<InspectionTool> sameTools = groupedTools.get(shortName);
-          if (sameTools == null){
-            sameTools = new HashSet<InspectionTool>();
-            groupedTools.put(tool.getShortName(), sameTools);
-          }
-          sameTools.add(tool);
-        }
-        for (String toolName : groupedTools.keySet()) {
+        for (String toolName : myTools.keySet()) {
           final Element root = new Element(InspectionsBundle.message("inspection.problems"));
           final Document doc = new Document(root);
-          final Set<InspectionTool> sameTools = groupedTools.get(toolName);
+          final Set<InspectionTool> sameTools = myTools.get(toolName);
           boolean hasProblems = false;
           boolean isLocalTool = false;
           for (InspectionTool tool : sameTools) {
@@ -360,7 +340,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           catch (IOException e) {
             LOG.error(e);
           }
-          finally {
+          finally {            
             if (outStream != null){
               try {
                 outStream.close();}
@@ -372,16 +352,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         }
       }
     });
-  }
-
-  private static void collectProfileTools(final InspectionProfile profile, final HashMap<InspectionTool, HighlightDisplayLevel> tools) {
-    final InspectionTool[] inspectionTools = new InspectionProfileWrapper(profile).getInspectionTools();
-    for (InspectionTool tool : inspectionTools) {
-      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-      if (profile.isToolEnabled(key)){
-        tools.put(tool, profile.getErrorLevel(key));
-      }
-    }
   }
 
   public void processSearchRequests() {
@@ -766,7 +736,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             cleanup();
             throw e;
           } catch (Exception e){
-            cleanup();
             LOG.error(e);
           }
           finally {
