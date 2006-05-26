@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi;
 
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,10 +17,15 @@ public interface AntStructuredElement extends AntElement {
 
   void registerCustomType(final AntTypeDefinition def);
 
+  @Nullable
+  PsiFile findFileByName(final String name);
+
+  String computeAttributeValue(String value);
+
   void registerRefId(final String id, AntElement element);
 
   @Nullable
-  AntElement getElementByRefId(final String refid);
+  AntElement getElementByRefId(String refid);
 
   @NotNull
   String[] getRefIds();

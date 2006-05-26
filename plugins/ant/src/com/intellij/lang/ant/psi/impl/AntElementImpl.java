@@ -9,10 +9,7 @@ import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,7 +20,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -159,22 +155,6 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     if (parent != null) parent.subtreeChanged();
   }
 
-  @Nullable
-  public PsiFile findFileByName(final String name) {
-    if (name == null) return null;
-    AntFileImpl antFile = PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
-    if (antFile == null) return null;
-    VirtualFile vFile = antFile.getVirtualFile();
-    if (vFile == null) return null;
-    vFile = vFile.getParent();
-    if (vFile == null) return null;
-    final File file = new File(vFile.getPath(), name);
-    vFile =
-      LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
-    if (vFile == null) return null;
-    return antFile.getViewProvider().getManager().findFile(vFile);
-  }
-
   public void setProperty(final String name, final PsiElement element) {
     if (myProperties == null) {
       myProperties = new HashMap<String, PsiElement>();
@@ -254,5 +234,16 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     final AntElementImpl element = (AntElementImpl)super.clone();
     element.clearCaches();
     return element;
+  }
+
+  public static PsiElement resolveProperty(AntElement element, final String name) {
+    while (element != null) {
+      final PsiElement psiElement = element.getProperty(name);
+      if (psiElement != null) {
+        return psiElement;
+      }
+      element = element.getAntParent();
+    }
+    return null;
   }
 }

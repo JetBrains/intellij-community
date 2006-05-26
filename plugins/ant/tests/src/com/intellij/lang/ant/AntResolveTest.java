@@ -58,6 +58,11 @@ public class AntResolveTest extends ResolveTestCase {
     assertNotNull(ref.resolve());
   }
 
+  public void testIndirectRefid() throws Exception {
+    PsiReference ref = configure();
+    assertNotNull(ref.resolve());
+  }
+
   public void testPredefinedProperty() throws Exception {
     doPropertyTest();
   }

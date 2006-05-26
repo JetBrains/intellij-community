@@ -3,6 +3,7 @@ package com.intellij.lang.ant.psi.impl.reference;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -61,16 +62,7 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   public PsiElement resolve() {
-    final String name = getCanonicalText();
-    AntElement element = getElement();
-    while (element != null) {
-      final PsiElement psiElement = element.getProperty(name);
-      if (psiElement != null) {
-        return psiElement;
-      }
-      element = element.getAntParent();
-    }
-    return null;
+    return AntElementImpl.resolveProperty(getElement(), getCanonicalText());
   }
 
   public String getUnresolvedMessagePattern() {

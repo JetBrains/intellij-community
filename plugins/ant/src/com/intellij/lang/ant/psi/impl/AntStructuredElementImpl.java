@@ -5,7 +5,12 @@ import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
@@ -14,11 +19,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
 
 public class AntStructuredElementImpl extends AntElementImpl implements AntStructuredElement {
   protected AntTypeDefinition myDefinition;
@@ -133,6 +137,30 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     getAntFile().registerCustomType(def);
   }
 
+  @Nullable
+  public PsiFile findFileByName(final String name) {
+    if (name == null) return null;
+    AntFileImpl antFile = PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
+    if (antFile == null) return null;
+    VirtualFile vFile = antFile.getVirtualFile();
+    if (vFile == null) return null;
+    vFile = vFile.getParent();
+    if (vFile == null) return null;
+    final String fileName = computeAttributeValue(name);
+    File file = new File(fileName);
+    if (!file.isAbsolute()) {
+      file = new File(vFile.getPath(), fileName);
+    }
+    vFile =
+      LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
+    if (vFile == null) return null;
+    return antFile.getViewProvider().getManager().findFile(vFile);
+  }
+
+  public String computeAttributeValue(String value) {
+    return computeAttributeValue(value, new HashSet<PsiElement>());
+  }
+
   public void registerRefId(final String id, AntElement element) {
     if (myReferencedElements == null) {
       myReferencedElements = new HashMap<String, AntElement>();
@@ -140,7 +168,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     myReferencedElements.put(id, element);
   }
 
-  public AntElement getElementByRefId(final String refid) {
+  public AntElement getElementByRefId(String refid) {
+    refid = computeAttributeValue(refid);
     AntElement parent = this;
     while (true) {
       parent = parent.getAntParent();
@@ -270,5 +299,52 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   @NonNls
   protected String getNameElementAttribute() {
     return myNameElementAttribute;
+  }
+
+  /**
+   * Cycle-safe computation of an attribute value with resolving properties.
+   *
+   * @param value
+   * @param elementStack
+   * @return
+   */
+  protected String computeAttributeValue(String value, Set<PsiElement> elementStack) {
+    elementStack.add(this);
+    int startProp = 0;
+    while ((startProp = value.indexOf("${", startProp)) >= 0) {
+      int endProp = value.indexOf('}', startProp + 2);
+      if (endProp <= startProp + 2) {
+        startProp += 2;
+        continue;
+      }
+      final String prop = value.substring(startProp + 2, endProp);
+      final PsiElement propElement = resolveProperty(this, prop);
+      if (elementStack.contains(propElement)) {
+        return value;
+      }
+      String resolvedValue = null;
+      if (propElement instanceof AntPropertyImpl) {
+        final AntPropertyImpl antProperty = (AntPropertyImpl)propElement;
+        resolvedValue = antProperty.getValue();
+        if (resolvedValue != null) {
+          resolvedValue = antProperty.computeAttributeValue(resolvedValue, elementStack);
+        }
+      }
+      else if (propElement instanceof Property) {
+        resolvedValue = ((Property)propElement).getValue();
+      }
+      if (resolvedValue == null) {
+        startProp += 2;
+      }
+      else {
+        if (endProp < value.length() - 1) {
+          value = value.substring(0, startProp) + resolvedValue + value.substring(endProp + 1);
+        }
+        else {
+          value = value.substring(0, startProp) + resolvedValue;
+        }
+      }
+    }
+    return value;
   }
 }

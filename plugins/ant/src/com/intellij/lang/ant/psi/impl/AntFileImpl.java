@@ -15,7 +15,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -129,11 +128,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     myProject = new AntProjectImpl(this, tag, createProjectDefinition());
     ((AntProjectImpl)myProject).loadPredefinedProperties(myAntProject);
     return myProject;
-  }
-
-  @Nullable
-  public PsiFile findFileByName(final String name) {
-    return null;
   }
 
   public void setProperty(final String name, final PsiElement element) {

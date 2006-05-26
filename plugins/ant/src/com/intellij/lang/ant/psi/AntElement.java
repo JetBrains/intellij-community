@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.psi;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
@@ -22,9 +21,6 @@ public interface AntElement extends PsiNamedElement {
   void subtreeChanged();
 
   void clearCaches();
-
-  @Nullable
-  PsiFile findFileByName(final String name);
 
   void setProperty(final String name, final PsiElement element);
 
