@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -23,6 +24,7 @@ public class WrapExpressionFix implements IntentionAction {
     myExpectedType = expectedType;
   }
 
+  @NotNull
   public String getText() {
     PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType);
     PsiClass aClass = wrapper.getContainingClass();
@@ -36,11 +38,10 @@ public class WrapExpressionFix implements IntentionAction {
       PsiMethod[] methods = aClass.getMethods();
       for (PsiMethod method : methods) {
         if (method.hasModifierProperty(PsiModifier.STATIC) &&
-            method.getParameterList() != null &&
             method.getParameterList().getParameters().length == 1 &&
             method.getParameterList().getParameters()[0].getType().equals(type) &&
             method.getReturnType() != null &&
-            method.getReturnType().equals(expectedType)) {
+            expectedType.equals(method.getReturnType())) {
           return method;
         }
       }
@@ -49,6 +50,7 @@ public class WrapExpressionFix implements IntentionAction {
     return null;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("wrap.expression.using.static.accessor.family");
   }
@@ -84,24 +86,24 @@ public class WrapExpressionFix implements IntentionAction {
     for (int i = 0; i < candidates.length && expectedType == null; i++) {
       JavaResolveResult candidate = candidates[i];
       PsiSubstitutor substitutor = candidate.getSubstitutor();
-      PsiParameter[] parameters = ((PsiMethod) candidate.getElement()).getParameterList().getParameters();
+      final PsiElement element = candidate.getElement();
+      assert element != null;
+      PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
       if (parameters.length != expressions.length) continue;
       for (int j = 0; j < expressions.length; j++) {
         PsiExpression expression = expressions[j];
         if (expression.getType() != null) {
           PsiType paramType = parameters[j].getType();
-          if (paramType != null) {
-            paramType = substitutor != null ? substitutor.substitute(paramType) : paramType;
-            if (paramType.isAssignableFrom(expression.getType())) continue;
-            if (paramType instanceof PsiClassType) {
-              if (expectedType == null && findWrapper(expression.getType(), (PsiClassType) paramType) != null) {
-                expectedType = (PsiClassType) paramType;
-                expr = expression;
-              } else {
-                expectedType = null;
-                expr = null;
-                continue nextMethod;
-              }
+          paramType = substitutor != null ? substitutor.substitute(paramType) : paramType;
+          if (paramType.isAssignableFrom(expression.getType())) continue;
+          if (paramType instanceof PsiClassType) {
+            if (expectedType == null && findWrapper(expression.getType(), (PsiClassType) paramType) != null) {
+              expectedType = (PsiClassType) paramType;
+              expr = expression;
+            } else {
+              expectedType = null;
+              expr = null;
+              continue nextMethod;
             }
           }
         }
