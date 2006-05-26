@@ -227,9 +227,4 @@ public class MockPsiManager extends PsiManager {
   public PsiConstantEvaluationHelper getConstantEvaluationHelper() {
     return null;
   }
-
-  @Nullable
-  public List<Pair<Language,TextRange>> getInjectedLanguages(PsiLanguageInjectionHost host) {
-    return null;
-  }
 }

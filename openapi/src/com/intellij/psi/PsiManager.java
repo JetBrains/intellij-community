@@ -15,12 +15,9 @@
  */
 package com.intellij.psi;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -34,8 +31,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * The main entry point for accessing the PSI services for a project.
@@ -373,6 +368,4 @@ public abstract class PsiManager implements UserDataHolder {
 
   public abstract void unregisterLanguageInjector(@NotNull LanguageInjector injector);
 
-  @Nullable
-  public abstract List<Pair<Language,TextRange>> getInjectedLanguages(PsiLanguageInjectionHost host);
 }

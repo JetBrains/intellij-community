@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.tree.IElementType;
@@ -40,43 +41,14 @@ public class InjectedLanguageUtil {
   public static List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull final PsiLanguageInjectionHost host) {
     CachedValue<List<Pair<PsiElement, TextRange>>> cachedPsi = host.getUserData(INJECTED_PSI);
     if (cachedPsi == null) {
-      CachedValueProvider<List<Pair<PsiElement, TextRange>>> provider = new CachedValueProvider<List<Pair<PsiElement, TextRange>>>() {
-        public Result<List<Pair<PsiElement, TextRange>>> compute() {
-          TextRange hostRange = host.getTextRange();
-          final VirtualFile hostVirtualFile = host.getContainingFile().getVirtualFile();
-          final DocumentEx document = (DocumentEx)PsiDocumentManager.getInstance(host.getProject()).getDocument(host.getContainingFile());
-          List<Pair<Language,TextRange>> injectedLanguages = host.getManager().getInjectedLanguages(host);
-          List<Pair<PsiElement, TextRange>> result = null;
-          if (injectedLanguages != null) {
-            result = new SmartList<Pair<PsiElement, TextRange>>();
-            for (Pair<Language, TextRange> pair : injectedLanguages) {
-              TextRange range = pair.getSecond();
-              final TextRange documentWindow = hostRange.cutOut(range);
-              DocumentRange documentRange = new DocumentRange(document, documentWindow);
-              Language language = pair.getFirst();
-              String newText = documentRange.getText();
-              final VirtualFile virtualFile = new VirtualFileDelegate(hostVirtualFile, documentWindow, language, newText);
-              FileDocumentManagerImpl.registerDocument(documentRange, virtualFile);
-              PsiElement psi = parseInjectedPsiFile(newText, host.getManager(), language, virtualFile);
-              if (psi != null) {
-                psi.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, host);//.getContainingFile());
-              }
-              result.add(new Pair<PsiElement,TextRange>(psi, range));
-            }
-          }
-          return Result.createSingleDependency(result, host);
-        }
-      };
+      CachedValueProvider<List<Pair<PsiElement, TextRange>>> provider = new InjectedPsiProvider(host);
       cachedPsi = host.getManager().getCachedValuesManager().createCachedValue(provider, false);
       host.putUserData(INJECTED_PSI, cachedPsi);
     }
     return cachedPsi.getValue();
   }
-
   private static PsiElement parseInjectedPsiFile(final String text, final PsiManager psiManager,
                                                                   final Language language, final VirtualFile virtualFile) {
-    if (language == null) return null;
-
     final Project project = psiManager.getProject();
     final ParserDefinition parserDefinition = language.getParserDefinition();
     if (parserDefinition == null) return null;
@@ -127,6 +99,7 @@ public class InjectedLanguageUtil {
     return editor;
   }
 
+  @Nullable
   private static PsiLanguageInjectionHost findInjectionHost(final PsiElement element) {
     if (element instanceof PsiLanguageInjectionHost) {
       return (PsiLanguageInjectionHost)element;
@@ -138,4 +111,40 @@ public class InjectedLanguageUtil {
       return null;
     }
   }
+
+  private static class InjectedPsiProvider implements CachedValueProvider<List<Pair<PsiElement, TextRange>>> {
+    private final PsiLanguageInjectionHost myHost;
+
+    public InjectedPsiProvider(final PsiLanguageInjectionHost host) {
+      myHost = host;
+    }
+
+    public Result<List<Pair<PsiElement, TextRange>>> compute() {
+      final TextRange hostRange = myHost.getTextRange();
+      PsiFile hostPsiFile = myHost.getContainingFile();
+      final VirtualFile hostVirtualFile = hostPsiFile.getVirtualFile();
+      final DocumentEx hostDocument = (DocumentEx)PsiDocumentManager.getInstance(myHost.getProject()).getDocument(hostPsiFile);
+      final PsiManagerImpl psiManager = (PsiManagerImpl)myHost.getManager();
+      final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
+      InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
+        public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost) {
+          final TextRange documentWindow = hostRange.cutOut(rangeInsideHost);
+          DocumentRange documentRange = new DocumentRange(hostDocument, documentWindow);
+          String newText = documentRange.getText();
+          final VirtualFile virtualFile = new VirtualFileDelegate(hostVirtualFile, documentWindow, language, newText);
+          FileDocumentManagerImpl.registerDocument(documentRange, virtualFile);
+          PsiElement psi = parseInjectedPsiFile(newText, psiManager, language, virtualFile);
+          if (psi != null) {
+            psi.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, myHost);//.getContainingFile());
+          }
+          result.add(new Pair<PsiElement,TextRange>(psi, rangeInsideHost));
+        }
+      };
+      for (LanguageInjector injector : psiManager.getLanguageInjectors()) {
+        injector.getLanguagesToInject(myHost, placesRegistrar);
+      }
+      return Result.createSingleDependency(result, myHost);
+    }
+  }
+
 }

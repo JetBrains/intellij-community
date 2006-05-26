@@ -18,7 +18,9 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -54,9 +56,7 @@ import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1082,24 +1082,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return result.toArray(new PsiPackage[result.size()]);
   }
 
-  @Nullable
-  public List<Pair<Language, TextRange>> getInjectedLanguages(PsiLanguageInjectionHost host) {
-    class Collector implements InjectedLanguagePlaces {
-      List<Pair<Language, TextRange>> result;
-
-      public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost) {
-        if (result == null) {
-          result = new SmartList<Pair<Language, TextRange>>();
-        }
-        result.add(new Pair<Language, TextRange>(language, rangeInsideHost));
-      }
-    }
-    Collector collector = new Collector();
-    for (LanguageInjector injector : myLanguageInjectors) {
-      injector.getLanguagesToInject(host,collector);
-    }
-
-    return collector.result;
+  @NotNull
+  public List<? extends LanguageInjector> getLanguageInjectors() {
+    return myLanguageInjectors;
   }
 
   private class MyExternalResourceListener implements ExternalResourceListener {
