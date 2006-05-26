@@ -35,6 +35,12 @@ public class DomUtil {
       if (cause instanceof ProcessCanceledException) {
         throw (ProcessCanceledException)cause;
       }
+      else if (cause instanceof Error) {
+        throw (Error)cause;
+      }
+      else if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
+      }
       throw new RuntimeException(e);
     }
   }
