@@ -12,18 +12,22 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Mar 16, 2004
  */
-public class Javac extends Tag{
+public class Javac extends Tag {
 
   public Javac(GenerationOptions genOptions, String moduleName, final String outputDir) {
-    super(genOptions.enableFormCompiler? "javac2" : "javac", getAttributes(genOptions, outputDir, moduleName));
+    super(genOptions.enableFormCompiler ? "javac2" : "javac",
+          getAttributes(genOptions, outputDir, moduleName));
   }
 
   private static Pair[] getAttributes(GenerationOptions genOptions, String outputDir, String moduleName) {
     final List<Pair> pairs = new ArrayList<Pair>();
     pairs.add(pair("destdir", outputDir));
-    pairs.add(pair("debug", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_DEBUG_INFO)));
-    pairs.add(pair("nowarn", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_NO_WARNINGS)));
-    pairs.add(pair("memoryMaximumSize", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_MAX_MEMORY)));
+    pairs
+      .add(pair("debug", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_DEBUG_INFO)));
+    pairs.add(
+      pair("nowarn", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_NO_WARNINGS)));
+    pairs.add(
+      pair("memorymaximumsize", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_MAX_MEMORY)));
     pairs.add(pair("fork", "true"));
     if (genOptions.forceTargetJdk) {
       pairs.add(pair("executable", getExecutable(moduleName)));
