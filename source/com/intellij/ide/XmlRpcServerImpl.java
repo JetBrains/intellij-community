@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import org.apache.xmlrpc.WebServer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -21,6 +22,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
   private WebServer myWebServer;
   @NonNls private static final String PROPERTY_RPC_PORT = "rpc.port";
 
+  @NotNull
   @NonNls
   public String getComponentName() {
     return "XmlRpcServer";
@@ -39,7 +41,11 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     }
   }
 
-  private static int getPortNumber() {
+  public int getPortNumber() {
+    return getPortImpl();
+  }
+
+  private static int getPortImpl() {
     if (System.getProperty(PROPERTY_RPC_PORT) != null) return Integer.parseInt(System.getProperty(PROPERTY_RPC_PORT));
     return PORT_NUMBER;
   }
@@ -48,7 +54,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     ServerSocket socket = null;
 
     try {
-      socket = new ServerSocket(getPortNumber());
+      socket = new ServerSocket(getPortImpl());
     }
     catch (BindException e) {
       return false;
