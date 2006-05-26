@@ -26,7 +26,7 @@ public class RangeMarkerImpl extends DocumentAdapter implements RangeMarker {
 
   public RangeMarkerImpl(Document document, int start, int end) {
     if (!(start <= end && start >= 0 && end <= document.getTextLength())) {
-      LOG.assertTrue(start <= end);
+      LOG.assertTrue(start <= end, "start <= end");
       if (start < 0) {
         LOG.error("Wrong start: " + start);
       }
