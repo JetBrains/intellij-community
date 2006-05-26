@@ -8,7 +8,6 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.*;
@@ -141,7 +140,7 @@ public class FileStructureDialog extends DialogWrapper {
     }
 
     AbstractTreeStructure treeStructure = new MyStructureTreeStructure();
-    myCommanderPanel.setBuilder(new ProjectListBuilder(myProject, myCommanderPanel, treeStructure, AlphaComparator.INSTANCE, false){
+    myCommanderPanel.setBuilder(new ProjectListBuilder(myProject, myCommanderPanel, treeStructure, null, false){
       protected boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element) {
         return Comparing.equal(((StructureViewTreeElement)node.getValue()).getValue(), element);
       }
