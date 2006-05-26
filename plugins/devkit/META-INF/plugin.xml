@@ -3,6 +3,7 @@
   <name>Plugin DevKit</name>
   <id>DevKit</id>
   <version>1.0</version>
+  <category>inspection</category>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <idea-version since-build="3000"/>
   <resource-bundle xmlns="">org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
