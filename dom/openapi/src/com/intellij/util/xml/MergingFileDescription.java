@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
@@ -36,7 +37,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
   }
 
   @NotNull
-  protected abstract Collection<XmlFile> getFilesToMerge(DomElement element);
+  protected abstract Set<XmlFile> getFilesToMerge(DomElement element);
 
   public DomElement getResolveScope(GenericDomValue<?> reference) {
     final DomElement annotation = getScopeFromAnnotation(reference);
