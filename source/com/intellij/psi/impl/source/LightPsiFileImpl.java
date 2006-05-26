@@ -80,9 +80,9 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     final FileViewProvider provider = getViewProvider().clone();
     final LightPsiFileImpl clone = (LightPsiFileImpl)provider.getPsi(getLanguage());
 
-    final HashMap<Key,Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
-    if (copyableMap != null){
-      final HashMap<Key,Object> mapclone = (HashMap<Key, Object>)copyableMap.clone();
+    final HashMap<Key, Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
+    if (copyableMap != null) {
+      final HashMap<Key, Object> mapclone = (HashMap<Key, Object>)copyableMap.clone();
       clone.putUserData(COPYABLE_USER_MAP_KEY, mapclone);
     }
 
@@ -95,7 +95,8 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return clone;
   }
 
-  @NotNull public String getName() {
+  @NotNull
+  public String getName() {
     return getViewProvider().getVirtualFile().getName();
   }
 
@@ -204,7 +205,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     }
   }
 
-  public final PsiElement copy() {
+  public synchronized final PsiElement copy() {
     return clone();
   }
 
@@ -213,7 +214,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @NotNull
-  public PsiReference[] getReferences() {
+  public synchronized PsiReference[] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
 
@@ -224,7 +225,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return true;
   }
 
-  public PsiElement getContext() {
+  public synchronized PsiElement getContext() {
     return ResolveUtil.getContext(this);
   }
 
@@ -243,7 +244,9 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     PsiFile contFile = getContainingFile();
     if (contFile == null) return FileStatus.NOT_CHANGED;
     VirtualFile vFile = contFile.getVirtualFile();
-    return vFile != null ? FileStatusManager.getInstance(getProject()).getStatus(vFile) : FileStatus.NOT_CHANGED;
+    return vFile != null
+           ? FileStatusManager.getInstance(getProject()).getStatus(vFile)
+           : FileStatus.NOT_CHANGED;
   }
 
   public void navigate(boolean requestFocus) {
@@ -258,11 +261,11 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return canNavigate();
   }
 
-  public PsiElement findElementAt(int offset) {
+  public synchronized PsiElement findElementAt(int offset) {
     return getViewProvider().findElementAt(offset);
   }
 
-  public PsiReference findReferenceAt(int offset) {
+  public synchronized PsiReference findReferenceAt(int offset) {
     return getViewProvider().findReferenceAt(offset);
   }
 
@@ -282,12 +285,12 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   @NotNull
   public abstract PsiElement[] getChildren();
 
-  public PsiElement getFirstChild(){
+  public PsiElement getFirstChild() {
     final PsiElement[] children = getChildren();
     return children.length == 0 ? null : children[0];
   }
 
-  public PsiElement getLastChild(){
+  public PsiElement getLastChild() {
     final PsiElement[] children = getChildren();
     return children.length == 0 ? null : children[children.length - 1];
   }
