@@ -136,8 +136,8 @@ public class GridDropLocation implements DropLocation {
   protected Rectangle getGridFeedbackRect(ComponentDragObject dragObject) {
     Rectangle cellRect = getGridFeedbackCellRect(dragObject);
     if (cellRect == null) return null;
-    return getContainer().getLayoutManager().getGridCellRangeRect(getContainer(), cellRect.y, cellRect.x,
-                                                                  cellRect.y+cellRect.height, cellRect.x+cellRect.width);
+    return getContainer().getGridLayoutManager().getGridCellRangeRect(getContainer(), cellRect.y, cellRect.x,
+                                                                      cellRect.y+cellRect.height, cellRect.x+cellRect.width);
   }
 
   public void processDrop(final GuiEditor editor,

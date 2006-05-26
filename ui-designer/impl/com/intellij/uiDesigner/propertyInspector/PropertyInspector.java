@@ -131,7 +131,7 @@ public final class PropertyInspector extends JPanel{
     if (container == null) return false;
     final int[] selection = panel.getSelectedCells(null);
     myPropertiesPanelContainer = container;
-    final RowColumnPropertiesPanel propertiesPanel = container.getLayoutManager().getRowColumnPropertiesPanel(container, panel.isRow(), selection);
+    final RowColumnPropertiesPanel propertiesPanel = container.getGridLayoutManager().getRowColumnPropertiesPanel(container, panel.isRow(), selection);
     if (propertiesPanel == null) return false;
     if (!Comparing.equal(propertiesPanel, myColumnPropertiesPanel)) {
       if (myColumnPropertiesPanel != null) {

@@ -48,8 +48,8 @@ public class CachedGridImage {
       cols [i] = c.getColumn();
       colSpans [i] = c.getColSpan();
     }
-    int[] horzGridLines = container.getLayoutManager().getHorizontalGridLines(container);
-    int[] vertGridLines = container.getLayoutManager().getVerticalGridLines(container);
+    int[] horzGridLines = container.getGridLayoutManager().getHorizontalGridLines(container);
+    int[] vertGridLines = container.getGridLayoutManager().getVerticalGridLines(container);
     if (!arraysEqual(horzGridLines, myHorzGridLines) ||
         !arraysEqual(vertGridLines, myVertGridLines) ||
         !arraysEqual(rows, myRows) ||

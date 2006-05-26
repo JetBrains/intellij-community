@@ -19,6 +19,6 @@ public final class InsertBeforeAction extends RowColumnAction {
 
   protected void actionPerformed(CaptionSelection selection) {
     RadContainer container = selection.getContainer();
-    container.getLayoutManager().insertGridCells(container, selection.getFocusedIndex(), selection.isRow(), true, false);
+    container.getGridLayoutManager().insertGridCells(container, selection.getFocusedIndex(), selection.isRow(), true, false);
   }
 }

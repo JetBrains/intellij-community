@@ -19,6 +19,6 @@ public final class InsertAfterAction extends RowColumnAction {
 
   protected void actionPerformed(final CaptionSelection selection) {
     final RadContainer container = selection.getContainer();
-    container.getLayoutManager().insertGridCells(container, selection.getFocusedIndex(), selection.isRow(), false, false);
+    container.getGridLayoutManager().insertGridCells(container, selection.getFocusedIndex(), selection.isRow(), false, false);
   }
 }

@@ -82,7 +82,7 @@ public final class GridChangeUtil {
   public static void splitCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
     check(grid, isRow, cellIndex);
 
-    int insertedCells = grid.getLayoutManager().insertGridCells(grid, cellIndex, isRow, false, false);
+    int insertedCells = grid.getGridLayoutManager().insertGridCells(grid, cellIndex, isRow, false, false);
 
     for (int i=grid.getComponentCount() - 1; i >= 0; i--){
       final RadComponent component = grid.getComponent(i);
@@ -236,6 +236,7 @@ public final class GridChangeUtil {
     if (sourceCell < targetCell) targetCell--;
     for(RadComponent c: container.getComponents()) {
       GridConstraints constraints = c.getConstraints();
+      GridConstraints oldConstraints = (GridConstraints) constraints.clone();
       final int aCell = constraints.getCell(isRow);
       if (aCell == sourceCell) {
         constraints.setCell(isRow, targetCell);
@@ -243,6 +244,7 @@ public final class GridChangeUtil {
       else if (aCell >= startCell && aCell < endCell) {
         constraints.setCell(isRow, aCell + delta);
       }
+      c.fireConstraintsChanged(oldConstraints);
     }
   }
 }

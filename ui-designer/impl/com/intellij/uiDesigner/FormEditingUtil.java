@@ -155,12 +155,12 @@ public final class FormEditingUtil {
   public static void deleteEmptyGridCells(final RadContainer parent, final GridConstraints delConstraints) {
     for(int row=delConstraints.getRow() + delConstraints.getRowSpan()-1; row >= delConstraints.getRow(); row--) {
       if (row < parent.getGridRowCount() && GridChangeUtil.isRowEmpty(parent, row)) {
-        parent.getLayoutManager().deleteGridCells(parent, row, true);
+        parent.getGridLayoutManager().deleteGridCells(parent, row, true);
       }
     }
     for(int col=delConstraints.getColumn() + delConstraints.getColSpan()-1; col >= delConstraints.getColumn(); col--) {
       if (col < parent.getGridColumnCount() && GridChangeUtil.isColumnEmpty(parent, col)) {
-        parent.getLayoutManager().deleteGridCells(parent, col, false);
+        parent.getGridLayoutManager().deleteGridCells(parent, col, false);
       }
     }
   }
@@ -486,7 +486,7 @@ public final class FormEditingUtil {
       }
     }
 
-    container.getLayoutManager().deleteGridCells(container, cell, isRow);
+    container.getGridLayoutManager().deleteGridCells(container, cell, isRow);
     editor.refreshAndSave(true);
   }
 

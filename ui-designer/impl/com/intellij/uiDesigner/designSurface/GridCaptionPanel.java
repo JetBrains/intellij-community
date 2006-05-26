@@ -8,26 +8,23 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.dnd.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
+import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadLayoutManager;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -42,11 +39,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   private DefaultListSelectionModel mySelectionModel = new DefaultListSelectionModel();
   private int myResizeLine = -1;
   private int myDropInsertLine = -1;
-  private PreferredSizeProperty myPreferredSizeProperty = new PreferredSizeProperty();
   private LineFeedbackPainter myFeedbackPainter = new LineFeedbackPainter();
   private DeleteProvider myDeleteProvider = new MyDeleteProvider();
   private Alarm myAlarm = new Alarm();
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridCaptionPanel");
 
   public GridCaptionPanel(final GuiEditor editor, final boolean isRow) {
     myEditor = editor;
@@ -104,7 +99,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     if (container == null) {
       return;
     }
-    RadLayoutManager layout = container.getLayoutManager();
+    RadAbstractGridLayoutManager layout = container.getGridLayoutManager();
     int[] coords = layout.getGridCellCoords(container, myIsRow);
     int[] sizes = layout.getGridCellSizes(container, myIsRow);
     int count = myIsRow ? layout.getGridRowCount(container) : layout.getGridColumnCount(container);
@@ -281,7 +276,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       requestFocus();
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
-      RadLayoutManager layout = mySelectedContainer.getLayoutManager();
+      RadAbstractGridLayoutManager layout = mySelectedContainer.getGridLayoutManager();
       myResizeLine = layout.getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
       checkShowPopupMenu(e);
     }
@@ -318,7 +313,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       int cell = getCellAt(e.getPoint());
 
       if (cell >= 0 && e.isPopupTrigger()) {
-        ActionGroup group = mySelectedContainer.getLayoutManager().getCaptionActions();
+        ActionGroup group = mySelectedContainer.getGridLayoutManager().getCaptionActions();
         if (group != null) {
           final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
           popupMenu.getComponent().show(GridCaptionPanel.this, e.getX(), e.getY());
@@ -327,7 +322,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
 
     private void doResize(final Point pnt) {
-      int[] coords = mySelectedContainer.getLayoutManager().getGridCellCoords(mySelectedContainer, myIsRow);
+      int[] coords = mySelectedContainer.getGridLayoutManager().getGridCellCoords(mySelectedContainer, myIsRow);
       int prevCoord = coords [myResizeLine-1];
       int newCoord = myIsRow ? pnt.y : pnt.x;
       if (newCoord < prevCoord + MINIMUM_RESIZED_SIZE) {
@@ -352,30 +347,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         parentDelegee.revalidate();
       }
       else {
-        for(RadComponent component: mySelectedContainer.getComponents()) {
-          GridConstraints c = component.getConstraints();
-          if (c.getCell(myIsRow) == myResizeLine-1 && c.getSpan(myIsRow) == 1) {
-            Dimension preferredSize = new Dimension(c.myPreferredSize);
-            if (myIsRow) {
-              preferredSize.height = newSize;
-              if (preferredSize.width == -1) {
-                preferredSize.width = component.getDelegee().getPreferredSize().width;
-              }
-            }
-            else {
-              preferredSize.width = newSize;
-              if (preferredSize.height == -1) {
-                preferredSize.height = component.getDelegee().getPreferredSize().height;
-              }
-            }
-            try {
-              myPreferredSizeProperty.setValue(component, preferredSize);
-            }
-            catch (Exception e) {
-              LOG.error(e);
-            }
-          }
-        }
+        mySelectedContainer.getGridLayoutManager().processCellResized(mySelectedContainer, myIsRow, myResizeLine-1, newSize);
       }
 
       myEditor.refreshAndSave(false);
@@ -385,7 +357,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       if (mySelectedContainer == null) return;
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
-      int gridLine = mySelectedContainer.getLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
+      int gridLine = mySelectedContainer.getGridLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
 
       // first grid line may not be dragged
       if (gridLine <= 0) {
@@ -448,6 +420,14 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   private class MyDnDSource implements DnDSource {
     public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+      if (myResizeLine != -1) {
+        return false;
+      }
+      RadContainer container = getSelectedGridContainer();
+      if (container != null &&
+          container.getGridLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, dragOrigin, 4) != -1) {
+        return false;
+      }
       int[] selectedCells = getSelectedCells(dragOrigin);
       for(int cell: selectedCells) {
         if (!canDragCell(cell)) {
@@ -473,7 +453,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
     @Nullable
     public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return null;
     }
 
     public void dragDropEnd() {
@@ -504,7 +484,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
     private int getDropGridLine(final DnDEvent aEvent) {
       final Point point = aEvent.getPointOn(mySelectedContainer.getDelegee());
-      return mySelectedContainer.getLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, point, 20);
+      return mySelectedContainer.getGridLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, point, 20);
     }
 
     public void drop(DnDEvent aEvent) {
@@ -514,7 +494,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       MyDragBean dragBean = (MyDragBean) aEvent.getAttachedObject();
       int targetCell = getDropGridLine(aEvent);
       if (targetCell < 0) return;
-      GridChangeUtil.moveCells(mySelectedContainer, myIsRow, dragBean.cells, targetCell);
+      mySelectedContainer.getGridLayoutManager().processCellsMoved(mySelectedContainer, myIsRow, dragBean.cells, targetCell);
       mySelectionModel.clearSelection();
       mySelectedContainer.revalidate();
       myEditor.refreshAndSave(true);

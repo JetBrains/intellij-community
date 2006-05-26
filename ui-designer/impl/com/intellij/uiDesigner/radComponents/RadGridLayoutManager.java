@@ -28,7 +28,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-public class RadGridLayoutManager extends RadLayoutManager {
+public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
   private GridLayoutColumnProperties myPropertiesPanel;
 
   public String getName() {
@@ -356,5 +356,32 @@ public class RadGridLayoutManager extends RadLayoutManager {
   @Override
   public void deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow) {
     GridChangeUtil.deleteCell(grid, cellIndex, isRow);
+  }
+
+  @Override
+  public void processCellsMoved(final RadContainer container, final boolean isRow, final int[] cells, final int targetCell) {
+    GridChangeUtil.moveCells(container, isRow, cells, targetCell);
+  }
+
+  public void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize) {
+    for(RadComponent component: container.getComponents()) {
+      GridConstraints c = component.getConstraints();
+      if (c.getCell(isRow) == cell && c.getSpan(isRow) == 1) {
+        Dimension preferredSize = new Dimension(c.myPreferredSize);
+        if (isRow) {
+          preferredSize.height = newSize;
+          if (preferredSize.width == -1) {
+            preferredSize.width = component.getDelegee().getPreferredSize().width;
+          }
+        }
+        else {
+          preferredSize.width = newSize;
+          if (preferredSize.height == -1) {
+            preferredSize.height = component.getDelegee().getPreferredSize().height;
+          }
+        }
+        PreferredSizeProperty.getInstance(container.getProject()).setValueEx(component, preferredSize);
+      }
+    }
   }
 }

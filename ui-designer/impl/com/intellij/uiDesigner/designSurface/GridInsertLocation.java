@@ -89,7 +89,7 @@ public class GridInsertLocation extends GridDropLocation {
                       ? getColumn()+1 : getColumn();
       int row = getRow();
       for(int col = 0; col<endColumn; col++) {
-        RadComponent component = getContainer().getLayoutManager().getComponentAtGrid(getContainer(), row, col);
+        RadComponent component = getContainer().getGridLayoutManager().getComponentAtGrid(getContainer(), row, col);
         if (component != null) {
           GridConstraints constraints = component.getConstraints();
           if (constraints.getColumn() + constraints.getColSpan() > endColumn &&
@@ -105,7 +105,7 @@ public class GridInsertLocation extends GridDropLocation {
                    ? getRow()+1 : getRow();
       int col = getColumn();
       for(int row = 0; row<endRow; row++) {
-        RadComponent component = getContainer().getLayoutManager().getComponentAtGrid(getContainer(), row, col);
+        RadComponent component = getContainer().getGridLayoutManager().getComponentAtGrid(getContainer(), row, col);
         if (component != null) {
           GridConstraints constraints = component.getConstraints();
           if (constraints.getRow() + constraints.getRowSpan() > endRow &&
@@ -131,8 +131,8 @@ public class GridInsertLocation extends GridDropLocation {
     Rectangle cellRect = getGridFeedbackCellRect(dragObject);
     assert cellRect != null;
 
-    int[] vGridLines = getContainer().getLayoutManager().getVerticalGridLines(getContainer());
-    int[] hGridLines = getContainer().getLayoutManager().getHorizontalGridLines(getContainer());
+    int[] vGridLines = getContainer().getGridLayoutManager().getVerticalGridLines(getContainer());
+    int[] hGridLines = getContainer().getGridLayoutManager().getHorizontalGridLines(getContainer());
 
     FeedbackPainter painter = (myMode == GridInsertMode.ColumnBefore ||
                                myMode == GridInsertMode.ColumnAfter)
@@ -142,7 +142,7 @@ public class GridInsertLocation extends GridDropLocation {
 
     Rectangle rcFeedback = null;
     if (dragObject.getComponentCount() == 1 && myMode != GridInsertMode.InCell) {
-      RadComponent component = getContainer().getLayoutManager().getComponentAtGrid(getContainer(), insertRow, insertCol);
+      RadComponent component = getContainer().getGridLayoutManager().getComponentAtGrid(getContainer(), insertRow, insertCol);
       if (component != null) {
         Rectangle bounds = component.getBounds();
         int cellWidth = vGridLines [insertCol+1] - vGridLines [insertCol];
@@ -217,23 +217,23 @@ public class GridInsertLocation extends GridDropLocation {
     //noinspection EnumSwitchStatementWhichMissesCases
     switch(myMode) {
       case RowBefore:
-        insertedCells = container.getLayoutManager().insertGridCells(container, row, true, true, canVGrow);
+        insertedCells = container.getGridLayoutManager().insertGridCells(container, row, true, true, canVGrow);
         checkAdjustConstraints(constraintsToAdjust, true, row, insertedCells);
         break;
 
       case RowAfter:
-        insertedCells = container.getLayoutManager().insertGridCells(container, row, true, false, canVGrow);
+        insertedCells = container.getGridLayoutManager().insertGridCells(container, row, true, false, canVGrow);
         row += insertedCells;
         checkAdjustConstraints(constraintsToAdjust, true, row, insertedCells);
         break;
 
       case ColumnBefore:
-        insertedCells = container.getLayoutManager().insertGridCells(container, col, false, true, canHGrow);
+        insertedCells = container.getGridLayoutManager().insertGridCells(container, col, false, true, canHGrow);
         checkAdjustConstraints(constraintsToAdjust, false, col, insertedCells);
         break;
 
       case ColumnAfter:
-        insertedCells = container.getLayoutManager().insertGridCells(container, col, false, false, canHGrow);
+        insertedCells = container.getGridLayoutManager().insertGridCells(container, col, false, false, canHGrow);
         col += insertedCells;
         checkAdjustConstraints(constraintsToAdjust, false, col, insertedCells);
         break;

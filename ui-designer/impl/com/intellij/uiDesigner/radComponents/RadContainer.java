@@ -274,23 +274,23 @@ public class RadContainer extends RadComponent implements IContainer {
 
   @Nullable
   public RadComponent getComponentAtGrid(int row, int col) {
-    return getLayoutManager().getComponentAtGrid(this, row, col);
+    return getGridLayoutManager().getComponentAtGrid(this, row, col);
   }
 
   public int getGridRowCount() {
-    return myLayoutManager.getGridRowCount(this);
+    return getGridLayoutManager().getGridRowCount(this);
   }
 
   public int getGridColumnCount() {
-    return myLayoutManager.getGridColumnCount(this);
+    return getGridLayoutManager().getGridColumnCount(this);
   }
 
   public int getGridRowAt(int y) {
-    return myLayoutManager.getGridRowAt(this, y);
+    return getGridLayoutManager().getGridRowAt(this, y);
   }
 
   public int getGridColumnAt(int x) {
-    return myLayoutManager.getGridColumnAt(this, x);
+    return getGridLayoutManager().getGridColumnAt(this, x);
   }
 
   /**
@@ -568,6 +568,13 @@ public class RadContainer extends RadComponent implements IContainer {
         setBorderType(bevelBorder.getBevelType() == BevelBorder.RAISED ? BorderType.BEVEL_RAISED : BorderType.BEVEL_LOWERED);
       }
     }
+  }
+
+  public RadAbstractGridLayoutManager getGridLayoutManager() {
+    if (!(myLayoutManager instanceof RadAbstractGridLayoutManager)) {
+      throw new RuntimeException("Not a grid container");
+    }
+    return (RadAbstractGridLayoutManager) myLayoutManager;
   }
 
   private final class MyBorderTitleProperty extends Property<RadContainer, StringDescriptor> {

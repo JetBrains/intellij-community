@@ -194,8 +194,8 @@ public final class ResizeProcessor extends EventProcessor {
   private void putGridSpanFeedback(final Point point) {
     Rectangle rcGrid = getGridSpanGridRect(myOriginalParent, myOriginalConstraints, point, myResizeMask);
     if (rcGrid != null) {
-      Rectangle rc = myOriginalParent.getLayoutManager().getGridCellRangeRect(myOriginalParent, rcGrid.y, rcGrid.x,
-                                                                              rcGrid.y+rcGrid.height-1, rcGrid.x+rcGrid.width-1);
+      Rectangle rc = myOriginalParent.getGridLayoutManager().getGridCellRangeRect(myOriginalParent, rcGrid.y, rcGrid.x,
+                                                                                  rcGrid.y+rcGrid.height-1, rcGrid.x+rcGrid.width-1);
       myEditor.getActiveDecorationLayer().putFeedback(myOriginalParent.getDelegee(), rc);
       setCursor(isGridSpanDropAllowed(rcGrid) ? getResizeCursor() : FormEditingUtil.getMoveNoDropCursor());
     }
