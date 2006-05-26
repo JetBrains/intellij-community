@@ -54,7 +54,7 @@ public class TestAll implements Test {
   private static int CHECK_MEMORY = 8;
   private static int FILTER_CLASSES = 16;
 
-  public static int ourMode = SAVE_MEMORY_SNAPSHOT | START_GUARD | RUN_GC | CHECK_MEMORY | FILTER_CLASSES;
+  public static int ourMode = SAVE_MEMORY_SNAPSHOT | START_GUARD /*| RUN_GC | CHECK_MEMORY*/ | FILTER_CLASSES;
   private int myLastTestTestMethodCount = 0;
   public static final int MAX_FAILURE_TEST_COUNT = 150;
 
