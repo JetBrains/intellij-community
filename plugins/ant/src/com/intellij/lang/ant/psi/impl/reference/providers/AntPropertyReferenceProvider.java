@@ -2,6 +2,8 @@ package com.intellij.lang.ant.psi.impl.reference.providers;
 
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -10,6 +12,8 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -20,11 +24,23 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     AntStructuredElement antElement = (AntStructuredElement)element;
-    final XmlAttribute[] attributes = antElement.getSourceElement().getAttributes();
+    final XmlTag sourceElement = antElement.getSourceElement();
+    final XmlAttribute[] attributes = sourceElement.getAttributes();
     if (attributes.length > 0) {
       List<PsiReference> refs = new ArrayList<PsiReference>();
+      boolean isTarget = antElement instanceof AntTarget;
+      boolean isSet = "isset".equals(sourceElement.getName());
       for (XmlAttribute attr : attributes) {
-        getAttributeReferences(antElement, attr, refs);
+        @NonNls final String attName = attr.getName();
+        if (isTarget && ("if".equals(attName) || "unless".equals(attName))) {
+          getAttributeReference(antElement, attr, refs);
+        }
+        else if (isSet && "property".equals(attName)) {
+          getAttributeReference(antElement, attr, refs);
+        }
+        else {
+          getAttributeReferences(antElement, attr, refs);
+        }
       }
       if (refs.size() > 0) {
         return refs.toArray(new PsiReference[refs.size()]);
@@ -33,6 +49,13 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
+  /**
+   * Gets all references to the ${} properties.
+   *
+   * @param element
+   * @param attr
+   * @param refs
+   */
   private void getAttributeReferences(final AntElement element,
                                       final XmlAttribute attr,
                                       final List<PsiReference> refs) {
@@ -53,6 +76,27 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
             offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
         }
       }
+    }
+  }
+
+  /**
+   * Gets single reference on a property named as the attribute's and if the property is resolved.
+   *
+   * @param element
+   * @param attr
+   * @param refs
+   */
+  private void getAttributeReference(final AntElement element,
+                                     final XmlAttribute attr,
+                                     final List<PsiReference> refs) {
+    final String value = attr.getValue();
+    final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
+    if (xmlAttributeValue != null && AntElementImpl.resolveProperty(element, value) != null) {
+      final int offsetInPosition =
+        xmlAttributeValue.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1;
+      refs.add(new AntPropertyReference(this, element, value,
+                                        new TextRange(offsetInPosition, offsetInPosition + value.length()),
+                                        attr));
     }
   }
 

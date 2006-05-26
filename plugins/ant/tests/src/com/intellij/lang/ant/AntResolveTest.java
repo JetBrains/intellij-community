@@ -53,6 +53,50 @@ public class AntResolveTest extends ResolveTestCase {
     doPropertyTest();
   }
 
+  public void testPropValueInAttribute5() throws Exception {
+    doPropertyTest();
+  }
+
+  public void testPropValueInAttribute6() throws Exception {
+    doPropertyTest();
+  }
+
+  public void testPropValueInAttribute7() throws Exception {
+    doPropertyTest();
+  }
+
+  public void testPropValueInAttribute8() throws Exception {
+    doPropertyTest();
+  }
+
+  public void testPropValueInAttribute9() throws Exception {
+    doPropertyTest();
+  }
+
+  public void testPropValueInAttributeA() throws Exception {
+    doPropertyTest();
+  }
+
+  public void testPropValueInAttributeB() throws Exception {
+    doPropertyTest();
+  }
+
+  public void testPropValueInAttributeC() throws Exception {
+    doPropertyTest();
+  }
+
+  public void testPropValueInAttributeD() throws Exception {
+    doPropertyTest();
+  }
+
+  public void testPropValueInAttributeE() throws Exception {
+    doPropertyTest();
+  }
+
+  public void testPropValueInAttributeF() throws Exception {
+    doPropertyTest();
+  }
+
   public void testRefid() throws Exception {
     PsiReference ref = configure();
     assertNotNull(ref.resolve());

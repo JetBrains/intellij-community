@@ -1,0 +1,7 @@
+<project default="main">
+  <property name="p1" value="v1"/>
+  <target name="main" if="p1">
+    <echo message="p1=${p1}"/>
+    <isset property="<ref>p1"/>
+  </target>
+</project>

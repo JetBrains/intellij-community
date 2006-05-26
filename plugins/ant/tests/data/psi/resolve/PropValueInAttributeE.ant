@@ -1,0 +1,6 @@
+<project default="main">
+  <property name="p1" value="v1"/>
+  <target name="main" if="<ref>p1">
+    <echo message="p1=${p1}"/>
+  </target>
+</project>

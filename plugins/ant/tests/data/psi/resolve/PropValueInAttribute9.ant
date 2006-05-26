@@ -1,0 +1,6 @@
+<project default="main">
+  <basename property="p1"/>
+  <target name="main">
+    <echo message="p1=${<ref>p1}"/>
+  </target>
+</project>
