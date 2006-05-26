@@ -102,7 +102,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         clazz = loader.loadClass(classname);
       }
     }
-    catch (ClassNotFoundException e) {
+    catch (Exception e) {
       clazz = null;
     }
     final String name = getDefinedName();
