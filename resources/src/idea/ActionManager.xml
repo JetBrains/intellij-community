@@ -349,7 +349,7 @@
         <separator/>
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
-        <action id="OpenInBrowser" class="com.intellij.ide.actions.OpenFileInBrowserAction"/>
+        <action id="OpenInBrowser" class="com.intellij.javaee.actions.OpenFileInBrowserAction"/>
         <separator/>
         <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
         <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
