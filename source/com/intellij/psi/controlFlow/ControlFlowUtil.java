@@ -764,6 +764,9 @@ public class ControlFlowUtil {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
       // true if from this point below there may be branch with no variable assignment
       boolean[] maybeUnassigned = new boolean[flow.getSize() + 1];
+      {
+        maybeUnassigned[maybeUnassigned.length-1] = true;
+      }
 
       public void visitWriteVariableInstruction(WriteVariableInstruction instruction, int offset, int nextOffset) {
         if (instruction.variable == variable) {
@@ -772,6 +775,14 @@ public class ControlFlowUtil {
         else {
           visitInstruction(instruction, offset, nextOffset);
         }
+      }
+
+      public void visitConditionalThrowToInstruction(ConditionalThrowToInstruction instruction, int offset, int nextOffset) {
+        if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
+        boolean unassigned = offset == flow.getSize() - 1
+                             || !isLeaf(nextOffset) && maybeUnassigned[nextOffset];
+
+        maybeUnassigned[offset] |= unassigned;
       }
 
       public void visitCallInstruction(CallInstruction instruction, int offset, int nextOffset) {
