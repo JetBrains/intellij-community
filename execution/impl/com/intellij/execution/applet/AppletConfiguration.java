@@ -35,7 +35,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class AppletConfiguration extends SingleClassConfiguration {
+public class AppletConfiguration extends ModuleBasedConfiguration implements SingleClassConfiguration {
 
   public String MAIN_CLASS_NAME;
   public String HTML_FILE_NAME;
@@ -56,6 +56,11 @@ public class AppletConfiguration extends SingleClassConfiguration {
 
   public AppletConfiguration(final String name, final Project project, ConfigurationFactory factory) {
     super(name, new RunConfigurationModule(project, false), factory);
+  }
+
+  public void setMainClass(final PsiClass psiClass) {
+    setMainClassName(ExecutionUtil.getRuntimeQualifiedName(psiClass));
+    setModule(ExecutionUtil.findModule(psiClass));
   }
 
   public RunProfileState getState(final DataContext context,

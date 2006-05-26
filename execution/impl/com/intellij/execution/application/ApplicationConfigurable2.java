@@ -13,11 +13,11 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfiguration>{
+public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfiguration> {
   private CommonJavaParameters myCommonJavaParameters;
   private LabeledComponent<TextFieldWithBrowseButton> myMainClass;
   private LabeledComponent<JComboBox> myModule;

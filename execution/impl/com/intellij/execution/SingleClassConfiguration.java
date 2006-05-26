@@ -12,16 +12,9 @@ import com.intellij.psi.PsiClass;
 /**
  * @author dyoma
  */
-public abstract class SingleClassConfiguration extends ModuleBasedConfiguration  {
-  public SingleClassConfiguration(final String name, final RunConfigurationModule configurationModule, final ConfigurationFactory factory) {
-    super(name, configurationModule, factory);
-  }
+public interface SingleClassConfiguration {
+  void setMainClass(final PsiClass psiClass);
 
-  public void setMainClass(final PsiClass psiClass) {
-    setMainClassName(ExecutionUtil.getRuntimeQualifiedName(psiClass));
-    setModule(ExecutionUtil.findModule(psiClass));
-  }
-
-  public abstract PsiClass getMainClass();
-  public abstract void setMainClassName(String qualifiedName);
+  PsiClass getMainClass();
+  void setMainClassName(String qualifiedName);
 }

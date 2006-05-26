@@ -1,14 +1,13 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.*;
+import com.intellij.execution.filters.TextConsoleBuidlerFactory;
+import com.intellij.execution.junit.RefactoringListeners;
+import com.intellij.execution.junit.coverage.ApplicationCoverageConfigurable;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuidlerFactory;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.junit.RefactoringListeners;
-import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.ide.ui.LafManagerListener;
@@ -19,9 +18,11 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -32,16 +33,20 @@ import com.intellij.uiDesigner.snapShooter.SnapShooter;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.coverage.CoverageSuite;
+import com.intellij.coverage.CoverageDataManager;
 import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class ApplicationConfiguration extends SingleClassConfiguration implements RunJavaConfiguration {
+public class ApplicationConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, SingleClassConfiguration {
+  private static final Logger LOG = Logger.getInstance("com.intellij.execution.application.ApplicationConfiguration");
 
   public String MAIN_CLASS_NAME;
   public String VM_PARAMETERS;
@@ -58,6 +63,11 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
     super(name, new RunConfigurationModule(project, true), applicationConfigurationType.getConfigurationFactories()[0]);
   }
 
+  public void setMainClass(final PsiClass psiClass) {
+    setMainClassName(ExecutionUtil.getRuntimeQualifiedName(psiClass));
+    setModule(ExecutionUtil.findModule(psiClass));
+  }
+
   public RunProfileState getState(final DataContext context,
                                   final RunnerInfo runnerInfo,
                                   RunnerSettings runnerSettings,
@@ -69,7 +79,10 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new ApplicationConfigurable2(getProject());
+    SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<ApplicationConfiguration>();
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable2(getProject()));
+    group.addEditor(ExecutionBundle.message("coverage.tab.title"), new ApplicationCoverageConfigurable(getProject()));
+    return group;
   }
 
   public String getGeneratedName() {
@@ -177,6 +190,12 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
     writeModule(element);
   }
 
+  @NotNull
+  public String getCoverageFileName() {
+    LOG.assertTrue(MAIN_CLASS_NAME != null); //otherwise we won't be here
+    return MAIN_CLASS_NAME;
+  }
+
   public int getLastSnapShooterPort() {
     return myLastSnapShooterPort;
   }
@@ -230,6 +249,17 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
       else {
         params.setMainClass(MAIN_CLASS_NAME);
       }
+
+      if (isCoverageEnabled()) {
+        final String coverageFileName = getCoverageFilePath();
+        final long lastCoverageTime = System.currentTimeMillis();
+        String name = getName();
+        if (name == null) name = getGeneratedName();
+        CoverageSuite suite = new CoverageSuite(name, coverageFileName, getCoveragePatterns(), lastCoverageTime);
+        CoverageDataManager.getInstance(getProject()).addCoverageSuite(suite, false);
+        ApplicationConfiguration.this.appendCoverageArgument(params);
+      }
+
       return params;
     }
 
