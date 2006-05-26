@@ -3,6 +3,7 @@ package com.intellij.ide.commander;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -340,6 +341,10 @@ public abstract class AbstractListBuilder {
     if (myComparator != null) {
       Collections.sort(resultDescriptors, myComparator);
     }
+    else {
+      Collections.sort(resultDescriptors, IndexComparator.INSTANCE);
+    }
+
     myModel.removeAllElements();
     if (shouldAddTopElement()) {
       myModel.addElement(new TopLevelNode(myProject, parentDescriptor.getValue()));
