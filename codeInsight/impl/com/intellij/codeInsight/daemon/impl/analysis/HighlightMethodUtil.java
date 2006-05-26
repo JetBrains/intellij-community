@@ -901,13 +901,15 @@ public class HighlightMethodUtil {
 
       boolean allAbstracts = method.hasModifierProperty(PsiModifier.ABSTRACT);
       HighlightInfo highlightInfo = null;
+      final PsiClass containingClass = method.getContainingClass();
+      if (aClass.isInterface() && !containingClass.isInterface()) continue;
       if (!allAbstracts) {
-        if (!aClass.equals(method.getContainingClass())) {
+        if (!aClass.equals(containingClass)) {
           highlightInfo = checkMethodIncompatibleReturnType(signature, superSignatures, false);
         }
       }
       else {
-        if (!method.getContainingClass().equals(aClass)) {
+        if (!containingClass.equals(aClass)) {
           superSignatures = new ArrayList<HierarchicalMethodSignature>(superSignatures);
           superSignatures.add(signature);
         }
@@ -915,7 +917,7 @@ public class HighlightMethodUtil {
       }
       if (highlightInfo != null) errorDescription = highlightInfo.description;
 
-      if (aClass.equals(method.getContainingClass())) continue; //to be checked at method level
+      if (aClass.equals(containingClass)) continue; //to be checked at method level
 
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         for (HierarchicalMethodSignature superSignature : superSignatures) {
@@ -923,7 +925,7 @@ public class HighlightMethodUtil {
           if (!superMethod.hasModifierProperty(PsiModifier.STATIC)) {
             errorDescription = JavaErrorMessages.message("static.method.cannot.override.instance.method",
                                                          HighlightUtil.formatMethod(method),
-                                                         HighlightUtil.formatClass(method.getContainingClass()),
+                                                         HighlightUtil.formatClass(containingClass),
                                                          HighlightUtil.formatMethod(superMethod),
                                                          HighlightUtil.formatClass(superMethod.getContainingClass()));
             break Ultimate;
