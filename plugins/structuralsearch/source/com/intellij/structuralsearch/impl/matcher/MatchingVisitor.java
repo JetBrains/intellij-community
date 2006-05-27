@@ -1294,7 +1294,6 @@ public class MatchingVisitor extends PsiElementVisitor {
         regExpPredicate = Handler.getSimpleRegExpPredicate(handler);
 
         if (regExpPredicate != null) {
-          final PsiType type = type2;
           regExpPredicate.setNodeTextGenerator(new RegExpPredicate.NodeTextGenerator() {
             public String getText(PsiElement element) {
               StringBuilder builder = new StringBuilder(RegExpPredicate.getMeaningfulText(element));
