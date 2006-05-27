@@ -194,8 +194,12 @@ public class PredefinedConfiguration extends Configuration {
                                "  '_MethodType+ 'MethodName+('_ParameterType* '_ParameterName*);\n" +
                                "}", METADATA_TYPE),
 
-      // TODO: used annotation pattern
-
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.not.annotated.methods"),
+                                     "class '_Class {\n" +
+                                     "  @'_Annotation{0,0}\n" +
+                                     "  '_MethodType+ 'MethodName+('_ParameterType* '_ParameterName*);\n" +
+                                     "}", METADATA_TYPE),
+      
       // J2EE templates
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.struts.1.1.actions"),"public class 'StrutsActionClass extends '_ParentClass*:Action {\n" +
                                                                                                       "  public ActionForward 'AnActionMethod:*execute (ActionMapping '_action,\n" +

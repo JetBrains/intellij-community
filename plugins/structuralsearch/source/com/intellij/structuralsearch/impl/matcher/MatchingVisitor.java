@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.javadoc.*;
@@ -11,6 +12,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.openapi.util.text.StringUtil;
@@ -584,8 +586,7 @@ public class MatchingVisitor extends PsiElementVisitor {
              ( ( var.getParent() instanceof PsiClass && ((PsiClass)var.getParent()).isInterface()) ||
                match(var.getModifierList(),var2.getModifierList())
              ) &&
-             match(var.getTypeElement(),var2.getTypeElement()) &&
-             validateArrayDimensions(var.getType(), var2.getType());
+             match(var.getTypeElement(),var2.getTypeElement());
 
     if (result) {
       // Check initializer
@@ -601,12 +602,6 @@ public class MatchingVisitor extends PsiElementVisitor {
     if (result && isTypedVar) {
       result = handleTypedElement(var.getNameIdentifier(),var2.getNameIdentifier());
     }
-  }
-
-  private static boolean validateArrayDimensions(final PsiType type, final PsiType type2) {
-    return ( type.getArrayDimensions()== 0 ||
-             type.getArrayDimensions()==type2.getArrayDimensions()
-          );
   }
 
   public void visitMethodCallExpression(final PsiMethodCallExpression mcall) {
@@ -1217,23 +1212,27 @@ public class MatchingVisitor extends PsiElementVisitor {
              matchType(instanceOf.getCheckType(),instanceOf2.getCheckType());
   }
 
-  protected boolean matchType(PsiElement type, PsiElement type2) {
+  protected boolean matchType(final PsiElement _type, final PsiElement _type2) {
     boolean result;
-    PsiElement el = type;
-    PsiElement el2 = type2;
+    PsiElement el = _type;
+    PsiElement el2 = _type2;
+    PsiType type1 = null;
+    PsiType type2 = null;
 
     // check for generics
-    if (type instanceof PsiTypeElement &&
-        ((PsiTypeElement)type).getInnermostComponentReferenceElement()!=null
+    if (_type instanceof PsiTypeElement &&
+        ((PsiTypeElement)_type).getInnermostComponentReferenceElement()!=null
        ) {
-      el = ((PsiTypeElement)type).getInnermostComponentReferenceElement();
+      el = ((PsiTypeElement)_type).getInnermostComponentReferenceElement();
+      type1 = ((PsiTypeElement)_type).getType();
       PsiReferenceParameterList list = ((PsiJavaCodeReferenceElement)el).getParameterList();
       PsiElement[] typeparams = null;
 
-      if (type2 instanceof PsiTypeElement &&
-          ((PsiTypeElement)type2).getInnermostComponentReferenceElement()!=null
+      if (_type2 instanceof PsiTypeElement &&
+          ((PsiTypeElement)_type2).getInnermostComponentReferenceElement()!=null
          ) {
-        el2 = ((PsiTypeElement)type2).getInnermostComponentReferenceElement();
+        el2 = ((PsiTypeElement)_type2).getInnermostComponentReferenceElement();
+        type2 = ((PsiTypeElement)_type2).getType();
       }
 
       if (el2 instanceof PsiJavaCodeReferenceElement) {
@@ -1252,8 +1251,8 @@ public class MatchingVisitor extends PsiElementVisitor {
       } else if (el2 instanceof PsiMethod &&
                  ((PsiMethod)el2).getTypeParameters().length > 0
               ) {
-        typeparams = ((PsiMethod)type2).getTypeParameters();
-        el2 = ((PsiMethod)type2).getNameIdentifier();
+        typeparams = ((PsiMethod)_type2).getTypeParameters();
+        el2 = ((PsiMethod)_type2).getNameIdentifier();
       }
 
       if (list!=null && list.getTypeParameterElements().length>0) {
@@ -1266,60 +1265,113 @@ public class MatchingVisitor extends PsiElementVisitor {
         if (!result) return false;
         el = ((PsiJavaCodeReferenceElement)el).getReferenceNameElement();
       } else {
-        if (type2 instanceof PsiTypeElement) {
+        if (_type2 instanceof PsiTypeElement) {
+          type2 = ((PsiTypeElement)_type2).getType();
+
           if (typeparams == null || typeparams.length == 0) {
-            final PsiJavaCodeReferenceElement innermostComponentReferenceElement = ((PsiTypeElement)type2).getInnermostComponentReferenceElement();
+            final PsiJavaCodeReferenceElement innermostComponentReferenceElement = ((PsiTypeElement)_type2).getInnermostComponentReferenceElement();
             if (innermostComponentReferenceElement != null) el2 = innermostComponentReferenceElement;
           } else {
-            el2 = type2;
+            el2 = _type2;
           }
         }
       }
     }
 
-    type = el;
-    type2 = el2;
+    final int array2Dims = (type2 != null ? type2.getArrayDimensions():0) + countCStyleArrayDeclarationDims(_type2);
+    final int arrayDims = ( type1 != null ? type1.getArrayDimensions():0) + countCStyleArrayDeclarationDims(_type);
 
-    if (matchContext.getPattern().isTypedVar(type)) {
-      final SubstitutionHandler handler = (SubstitutionHandler) matchContext.getPattern().getHandler(type);
+    if (matchContext.getPattern().isTypedVar(el)) {
+      final SubstitutionHandler handler = (SubstitutionHandler) matchContext.getPattern().getHandler(el);
 
-      if (handler.isSubtype() ||
-          handler.isStrictSubtype()
-      ) {
-        // is type2 is (strict) subtype of type
-        final NodeIterator node = new HierarchyNodeIterator(type2, true, true);
+      RegExpPredicate regExpPredicate = null;
 
-        if (handler.isStrictSubtype()) {
-          node.advance();
-        }
-
-        while (node.hasNext() && !handler.validate(node.current(), 0, -1, matchContext)) {
-          node.advance();
-        }
-
-        if (node.hasNext()) {
-          handler.addResult(el2, 0, -1, matchContext);
-          return true;
-        } else {
+      if (arrayDims != 0) {
+        if (arrayDims != array2Dims) {
           return false;
         }
-      } else {
-        return handler.handle(type2, matchContext);
+      } else if (array2Dims != 0) {
+        regExpPredicate = Handler.getSimpleRegExpPredicate(handler);
+
+        if (regExpPredicate != null) {
+          final PsiType type = type2;
+          regExpPredicate.setNodeTextGenerator(new RegExpPredicate.NodeTextGenerator() {
+            public String getText(PsiElement element) {
+              StringBuilder builder = new StringBuilder(RegExpPredicate.getMeaningfulText(element));
+              for(int i = 0; i < array2Dims; ++i) builder.append("[]");
+              return builder.toString();
+            }
+          });
+        }
+      }
+
+      try {
+        if (handler.isSubtype() || handler.isStrictSubtype()) {
+          // is type2 is (strict) subtype of type
+          final NodeIterator node = new HierarchyNodeIterator(el2, true, true);
+
+          if (handler.isStrictSubtype()) {
+            node.advance();
+          }
+
+          while (node.hasNext() && !handler.validate(node.current(), 0, -1, matchContext)) {
+            node.advance();
+          }
+
+          if (node.hasNext()) {
+            handler.addResult(el2, 0, -1, matchContext);
+            return true;
+          } else {
+            return false;
+          }
+        } else {
+          return handler.handle(el2, matchContext);
+        }
+      }
+      finally {
+        if (regExpPredicate != null) regExpPredicate.setNodeTextGenerator( null );
       }
     }
 
-    final String text = type.getText();
+    if (array2Dims != arrayDims) {
+      return false;
+    }
+
+    final String text = el.getText();
     if (text.indexOf('.')==-1 || !(el2 instanceof PsiJavaReference)) {
-      return MatchUtils.compareWithNoDifferenceToPackage(text,type2.getText());
+      return MatchUtils.compareWithNoDifferenceToPackage(text,el2.getText());
     } else {
       PsiElement element2 = ((PsiJavaReference)el2).resolve();
 
       if (element2!=null) {
         return text.equals(((PsiClass)element2).getQualifiedName());
       } else {
-        return MatchUtils.compareWithNoDifferenceToPackage(text,type2.getText());
+        return MatchUtils.compareWithNoDifferenceToPackage(text,el2.getText());
       }
     }
+  }
+
+  private static int countCStyleArrayDeclarationDims(final PsiElement type2) {
+    if (type2 != null) {
+      final PsiElement parentElement = type2.getParent();
+
+      if (parentElement instanceof PsiVariable) {
+        final PsiIdentifier psiIdentifier = ((PsiVariable)parentElement).getNameIdentifier();
+        if (psiIdentifier == null) return 0;
+
+        int count = 0;
+        for(PsiElement sibling = psiIdentifier.getNextSibling();sibling != null; sibling = sibling.getNextSibling()) {
+          if (sibling instanceof PsiJavaToken) {
+            final IElementType tokenType = ((PsiJavaToken)sibling).getTokenType();
+            if (tokenType == JavaTokenType.LBRACKET) ++count;
+            if (tokenType != JavaTokenType.RBRACKET) break;
+          }
+        }
+
+        return count;
+      }
+    }
+    return 0;
   }
 
   public void visitNewExpression(final PsiNewExpression new1) {
@@ -1405,7 +1457,6 @@ public class MatchingVisitor extends PsiElementVisitor {
     final PsiTypeCastExpression cast2 = (PsiTypeCastExpression) element;
 
     result = ( match(cast.getCastType(),cast2.getCastType()) ) &&
-             validateArrayDimensions(cast.getCastType().getType(),cast2.getCastType().getType()) &&
              match(cast.getOperand(),cast2.getOperand());
   }
 

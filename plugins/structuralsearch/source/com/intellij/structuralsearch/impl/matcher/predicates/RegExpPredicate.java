@@ -30,6 +30,11 @@ public final class RegExpPredicate extends Handler {
   private boolean multiline;
   private boolean wholeWords;
   private boolean target;
+  private NodeTextGenerator myNodeTextGenerator;
+
+  public interface NodeTextGenerator {
+    String getText(PsiElement element);
+  }
 
   public RegExpPredicate(final String regexp, final boolean caseSensitive, final String _baseHandlerName, boolean _wholeWords, boolean _target) {
     couldBeOptimized = containsRegExp(regexp);
@@ -92,7 +97,7 @@ public final class RegExpPredicate extends Handler {
     if (matchedNode==null) return false;
     String text;
 
-    text = getMeaningfulText(matchedNode);
+    text = myNodeTextGenerator != null ? myNodeTextGenerator.getText(matchedNode) : getMeaningfulText(matchedNode);
 
     boolean result = doMatch(text, start, end, context, matchedNode);
 
@@ -180,6 +185,11 @@ public final class RegExpPredicate extends Handler {
     } else {
       return false;
     }
+  }
+
+
+  public void setNodeTextGenerator(final NodeTextGenerator nodeTextGenerator) {
+    myNodeTextGenerator = nodeTextGenerator;
   }
 
   public void setMultiline(boolean b) {

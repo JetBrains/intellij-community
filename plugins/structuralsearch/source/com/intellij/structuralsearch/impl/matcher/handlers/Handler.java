@@ -5,6 +5,9 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
 
@@ -82,11 +85,37 @@ public abstract class Handler {
     return unmatchedElementsListener;
   }
 
+  private static Handler findRegExpPredicate(Handler start) {
+    if (start==null) return null;
+    if (start instanceof RegExpPredicate) return start;
+
+    if(start instanceof BinaryPredicate) {
+      BinaryPredicate binary = (BinaryPredicate)start;
+      final Handler result = findRegExpPredicate(binary.getFirst());
+      if (result!=null) return result;
+
+      return findRegExpPredicate(binary.getSecond());
+    } else if (start instanceof NotPredicate) {
+      return null;
+    }
+    return null;
+  }
+
+  public static RegExpPredicate getSimpleRegExpPredicate(SubstitutionHandler handler) {
+    if (handler == null) return null;
+    return (RegExpPredicate)findRegExpPredicate(handler.getPredicate());
+  }
+
   static class ClearStateVisitor extends PsiRecursiveElementVisitor {
     private CompiledPattern pattern;
 
     public void visitElement(PsiElement element) {
-      if (!(element instanceof PsiJavaToken)) {
+      // We do not reset certain handlers because they are also bound to higher level nodes
+      // e.g. Identifier handler in name is also bound to PsiMethod
+      if (!(element instanceof PsiJavaToken) &&
+          (!(element instanceof PsiJavaCodeReferenceElement) ||
+           !(element.getParent() instanceof PsiAnnotation))
+         ) {
         Handler handler = pattern.getHandlerSimple(element);
         if (handler instanceof SubstitutionHandler) {
           ((SubstitutionHandler)handler).reset();

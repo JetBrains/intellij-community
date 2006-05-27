@@ -1,11 +1,5 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.idea.IdeaTestUtil;
-
-import java.util.Calendar;
-import java.util.Map;
-import java.util.HashMap;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -580,18 +574,63 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
   }
 
-  //public void testCovariantArraySearch() {
-  //  String s11 = "class A {\n" +
-  //               "  void main(String[] argv);" +
-  //               "}";
-  //  String s12 = "'t:[regex( *Object\\[\\] ) ] 't2";
-  //
-  //  assertEquals(
-  //    "Find array covariant types",
-  //    1,
-  //    findMatchesCount(s11,s12)
-  //  );
-  //}
+  public void testCovariantArraySearch() {
+    String s1 = "String[] argv;";
+    String s2 = "String argv;";
+    String s3 = "'T[] argv;";
+    String s3_2 = "'T:*Object [] argv;";
+
+    assertEquals(
+      "Find array types",
+      0,
+      findMatchesCount(s1,s2)
+    );
+
+    assertEquals(
+      "Find array types, 2",
+      0,
+      findMatchesCount(s2,s1)
+    );
+
+    assertEquals(
+      "Find array types, 3",
+      0,
+      findMatchesCount(s2,s3)
+    );
+
+    assertEquals(
+      "Find array types, 3",
+      1,
+      findMatchesCount(s1,s3_2)
+    );
+
+    String s11 = "class A {\n" +
+                 "  void main(String[] argv);" +
+                 "  void main(String argv[]);" +
+                 "  void main(String argv);" +
+                 "}";
+    String s12 = "'_t:[regex( *Object\\[\\] ) ] '_t2";
+    String s12_2 = "'_t:[regex( *Object ) ] '_t2 []";
+    String s12_3 = "'_t:[regex( *Object ) ] '_t2";
+
+    assertEquals(
+      "Find array covariant types",
+      2,
+      findMatchesCount(s11,s12)
+    );
+
+    assertEquals(
+      "Find array covariant types, 2",
+      2,
+      findMatchesCount(s11,s12_2)
+    );
+
+    assertEquals(
+      "Find array covariant types, 3",
+      1,
+      findMatchesCount(s11,s12_3)
+    );
+  }
 
   // @todo support back references (\1 in another reg exp or as fild member)
   //private static final String s1002 = " setSSS( instance.getSSS() ); " +
@@ -2220,11 +2259,26 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find annotated methods",2,findMatchesCount(s5,s6));
     assertEquals("Find annotated methods, 2",2,findMatchesCount(s5,s6_2));
 
-    //String s7 = "class A { void message(@NonNls String msg); }\n" +
-    //            "class B { void message2(String msg); }\n" +
-    //            "class C { void message2(String msg); }";
-    //String s8 = "class 'A { void '_b( @'_Ann{0,0}:NonNls String  '_); }";
-    //assertEquals("Find not annotated methods, 2",2,findMatchesCount(s7,s8));
+    String s7 = "class A { void message(@NonNls String msg); }\n" +
+                "class B { void message2(String msg); }\n" +
+                "class C { void message2(String msg); }";
+    String s8 = "class '_A { void 'b( @'_Ann{0,0}:NonNls String  '_); }";
+    assertEquals("Find not annotated methods",2,findMatchesCount(s7,s8));
+
+    String s9 = "class A {\n" +
+                "  Object[] method1() {}\n" +
+                "  Object method1_2() {}\n" +
+                "  Object method1_3() {}\n" +
+                "  Object method1_4() {}\n" +
+                "  @MyAnnotation Object[] method2(int a) {}\n" +
+                "  @NonNls Object[] method3() {}\n" +
+                "}";
+    String s10 = "class '_A { @'_Ann{0,0}:NonNls '_Type:Object\\[\\] 'b+( '_pt* '_p* ); }";
+    String s10_2 = "class '_A { @'_Ann{0,0}:NonNls '_Type [] 'b+( '_pt* '_p* ); }";
+    String s10_3 = "class '_A { @'_Ann{0,0}:NonNls '_Type:Object [] 'b+( '_pt* '_p* ); }";
+    assertEquals("Find not annotated methods, 2",2,findMatchesCount(s9,s10));
+    assertEquals("Find not annotated methods, 2",2,findMatchesCount(s9,s10_2));
+    assertEquals("Find not annotated methods, 2",2,findMatchesCount(s9,s10_3));
   }
 
   public void testBoxingAndUnboxing() {

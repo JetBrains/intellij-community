@@ -19,8 +19,6 @@ import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
-import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
-import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.*;
 import com.intellij.util.Processor;
@@ -164,7 +162,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       }
 
       if (context.findMatchingFiles) {
-        RegExpPredicate predicate = getSimpleRegExpPredicate( handler );
+        RegExpPredicate predicate = Handler.getSimpleRegExpPredicate( handler );
         if (!IsNotSuitablePredicate(predicate, handler)) {
           processTokenizedName(predicate.getRegExp(),true, OccurenceKind.COMMENT);
         }
@@ -285,7 +283,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         }
       }
 
-      RegExpPredicate predicate = getSimpleRegExpPredicate( handler );
+      RegExpPredicate predicate = Handler.getSimpleRegExpPredicate( handler );
 
       if (predicate == null || !predicate.isWholeWords())  buf.append("(.*?)");
       else {
@@ -422,7 +420,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
     if (context.pattern.isTypedVar( refname )) {
       SubstitutionHandler handler = (SubstitutionHandler)context.pattern.getHandler( refname );
-      RegExpPredicate predicate = getSimpleRegExpPredicate( handler );
+      RegExpPredicate predicate = Handler.getSimpleRegExpPredicate( handler );
       if (IsNotSuitablePredicate(predicate, handler)) {
         return;
       }
@@ -510,28 +508,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     context.scanRequest++;
   }
 
-  static Handler findRegExpPredicate(Handler start) {
-    if (start==null) return null;
-    if (start instanceof RegExpPredicate) return start;
-
-    if(start instanceof BinaryPredicate) {
-      BinaryPredicate binary = (BinaryPredicate)start;
-      final Handler result = findRegExpPredicate(binary.getFirst());
-      if (result!=null) return result;
-
-      return findRegExpPredicate(binary.getSecond());
-    } else if (start instanceof NotPredicate) {
-      return null;
-    }
-    return null;
-  }
-
-  private RegExpPredicate getSimpleRegExpPredicate(SubstitutionHandler handler) {
-    if (handler == null) return null;
-    return (RegExpPredicate)findRegExpPredicate(handler.getPredicate());
-  }
-
-  private void setFilter(Handler handler, NodeFilter filter) {
+  private static void setFilter(Handler handler, NodeFilter filter) {
     if (handler.getFilter()!=null &&
         handler.getFilter().getClass()!=filter.getClass()
         ) {
