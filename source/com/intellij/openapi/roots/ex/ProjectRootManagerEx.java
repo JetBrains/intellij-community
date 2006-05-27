@@ -1,11 +1,15 @@
 package com.intellij.openapi.roots.ex;
 
 import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.search.GlobalSearchScope;
 
 import java.util.EventListener;
+import java.util.List;
 
 public abstract class ProjectRootManagerEx extends ProjectRootManager {
   public static ProjectRootManagerEx getInstanceEx(Project project) {
@@ -27,6 +31,10 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
   public abstract void beforeRootsChange(boolean filetypes);
 
   public abstract void rootsChanged(boolean filetypes);
+
+  public abstract GlobalSearchScope getScopeForLibraryUsedIn(List<Module> modulesLibraryIsUsedIn);
+
+  public abstract GlobalSearchScope getScopeForJdk(final JdkOrderEntry jdkOrderEntry);
 
 
   public interface ProjectJdkListener extends EventListener {

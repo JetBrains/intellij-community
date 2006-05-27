@@ -13,6 +13,8 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.module.impl.scopes.JdkScope;
+import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -33,6 +35,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
@@ -76,6 +79,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
   private Runnable myReloadProjectRequest = null;
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
+
+  private Map<List<Module>, GlobalSearchScope> myLibraryScopes = new HashMap<List<Module>, GlobalSearchScope>();
+  private Map<String, GlobalSearchScope> myJdkScopes = new HashMap<String, GlobalSearchScope>();
 
   static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
@@ -327,7 +333,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return "ProjectRootManager";
   }
 
-  public void initComponent() {
+  public void initComponent() {                                                     
   }
 
   public void disposeComponent() {
@@ -419,6 +425,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       ((ModuleImpl)module).clearScopesCache();
     }
 
+    myJdkScopes.clear();
+    myLibraryScopes.clear();
+
     myModuleRootEventDispatcher.getMulticaster().rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
 
     for (Module module : modules) {
@@ -430,6 +439,55 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     addRootsToWatch();
 
     myModificationCount++;
+  }
+
+  private static class LibrariesOnlyScope extends GlobalSearchScope {
+    private final GlobalSearchScope myOriginal;
+
+    public LibrariesOnlyScope(final GlobalSearchScope original) {
+      myOriginal = original;
+    }
+
+    public boolean contains(VirtualFile file) {
+      return myOriginal.contains(file);
+    }
+
+    public int compare(VirtualFile file1, VirtualFile file2) {
+      return myOriginal.compare(file1, file2);
+    }
+
+    public boolean isSearchInModuleContent(Module aModule) {
+      return false;
+    }
+
+    public boolean isSearchInLibraries() {
+      return true;
+    }
+  }
+
+  public GlobalSearchScope getScopeForLibraryUsedIn(List<Module> modulesLibraryIsUsedIn) {
+    GlobalSearchScope scope = myLibraryScopes.get(modulesLibraryIsUsedIn);
+    if (scope == null) {
+      if (!modulesLibraryIsUsedIn.isEmpty()) {
+        scope = new LibraryRuntimeClasspathScope(myProject, modulesLibraryIsUsedIn);
+      }
+      else {
+        scope = new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject));
+      }
+      myLibraryScopes.put(modulesLibraryIsUsedIn, scope);
+    }
+    return scope;
+  }
+
+  public GlobalSearchScope getScopeForJdk(final JdkOrderEntry jdkOrderEntry) {
+    final String jdk = jdkOrderEntry.getJdkName();
+    if (jdk == null) return GlobalSearchScope.allScope(myProject);
+    GlobalSearchScope scope = myJdkScopes.get(jdk);
+    if (scope == null) {
+      scope = new JdkScope(myProject, jdkOrderEntry);
+      myJdkScopes.put(jdk, scope);
+    }
+    return scope;
   }
 
   private void doSynchronize() {

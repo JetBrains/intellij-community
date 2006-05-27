@@ -9,10 +9,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
@@ -268,13 +269,14 @@ public class FileManagerImpl implements FileManager {
     progressManager.checkCanceled();
 
     VirtualFile vFile;
+    final Project project = myManager.getProject();
     if (element instanceof PsiDirectory) {
       vFile = ((PsiDirectory)element).getVirtualFile();
     }
     else {
       final PsiFile contextFile = ResolveUtil.getContextFile(element);
       if (contextFile == null || contextFile instanceof XmlFile) {
-        return GlobalSearchScope.allScope(myManager.getProject());
+        return GlobalSearchScope.allScope(project);
       }
       vFile = contextFile.getVirtualFile();
       if (vFile == null) {
@@ -285,7 +287,7 @@ public class FileManagerImpl implements FileManager {
       }
     }
     if (vFile == null) {
-      return GlobalSearchScope.allScope(myManager.getProject());
+      return GlobalSearchScope.allScope(project);
     }
 
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
@@ -297,29 +299,22 @@ public class FileManagerImpl implements FileManager {
     }
     else {
       // resolve references in libraries in context of all modules which contain it
-      GlobalSearchScope allInclusiveModuleScope = null;
-
+      List<Module> modulesLibraryUsedIn = new ArrayList<Module>();
       List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
       for (OrderEntry entry : orderEntries) {
         progressManager.checkCanceled();
 
-        if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
+        if (entry instanceof JdkOrderEntry) {
+          ((ProjectRootManagerEx)myProjectRootManager).getScopeForJdk((JdkOrderEntry)entry);
+        }
+
+        if (entry instanceof LibraryOrderEntry) {
           Module ownerModule = entry.getOwnerModule();
-          final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(ownerModule);
-          if (allInclusiveModuleScope == null) {
-            allInclusiveModuleScope = moduleScope;
-          }
-          else {
-            allInclusiveModuleScope = allInclusiveModuleScope.uniteWith(moduleScope);
-          }
+          modulesLibraryUsedIn.add(ownerModule);
         }
       }
 
-      if (allInclusiveModuleScope == null) {
-        allInclusiveModuleScope = GlobalSearchScope.allScope(myManager.getProject());
-      }
-
-      return new LibrariesOnlyScope(allInclusiveModuleScope);
+      return ((ProjectRootManagerEx)myProjectRootManager).getScopeForLibraryUsedIn(modulesLibraryUsedIn);
     }
   }
 
@@ -446,28 +441,23 @@ public class FileManagerImpl implements FileManager {
     LOG.assertTrue(!myDisposed);
 
     if ("java.lang.Object".equals(qName)) { // optimization
-    synchronized (PsiLock.LOCK) {
+      synchronized (PsiLock.LOCK) {
         if (myCachedObjectClassMap == null) {
           myCachedObjectClassMap = new HashMap<GlobalSearchScope, PsiClass>();
-
-          Module[] modules = ModuleManager.getInstance(myManager.getProject()).getModules();
-          for (Module aModule : modules) {
-            GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(aModule);
-            PsiClass objectClass = _findClass(qName, moduleScope);
-            myCachedObjectClassMap.put(moduleScope, objectClass);
-          }
-
-          GlobalSearchScope allScope = GlobalSearchScope.allScope(myManager.getProject());
-          PsiClass objectClass = _findClass(qName, allScope);
-          myCachedObjectClassMap.put(allScope, objectClass);
         }
-        final PsiClass cachedClass = myCachedObjectClassMap.get(scope);
-        return cachedClass == null ? _findClass(qName, scope) : cachedClass;
+
+        PsiClass cached = myCachedObjectClassMap.get(scope);
+        if (cached == null) {
+          cached = _findClass(qName, scope);
+          myCachedObjectClassMap.put(scope, cached);
+        }
+
+        return cached;
       }
     }
 
-      return _findClass(qName, scope);
-    }
+    return _findClass(qName, scope);
+  }
 
   private PsiClass findClassWithoutRepository(String qName) {
     synchronized (PsiLock.LOCK) {
@@ -1244,30 +1234,6 @@ public class FileManagerImpl implements FileManager {
         out.write(fileCacheEntry.getPresentableUrl());
         out.write("\n");
       }
-    }
-  }
-
-  private static class LibrariesOnlyScope extends GlobalSearchScope {
-    private final GlobalSearchScope myOriginal;
-
-    public LibrariesOnlyScope(final GlobalSearchScope original) {
-      myOriginal = original;
-    }
-
-    public boolean contains(VirtualFile file) {
-      return myOriginal.contains(file);
-    }
-
-    public int compare(VirtualFile file1, VirtualFile file2) {
-      return myOriginal.compare(file1, file2);
-    }
-
-    public boolean isSearchInModuleContent(Module aModule) {
-      return false;
-    }
-
-    public boolean isSearchInLibraries() {
-      return true;
     }
   }
 
