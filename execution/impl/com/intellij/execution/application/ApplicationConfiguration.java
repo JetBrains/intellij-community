@@ -1,7 +1,9 @@
 package com.intellij.execution.application;
 
+import com.intellij.coverage.CoverageDataManager;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.junit.coverage.ApplicationCoverageConfigurable;
@@ -15,6 +17,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -22,7 +25,6 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -33,8 +35,6 @@ import com.intellij.uiDesigner.snapShooter.SnapShooter;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.coverage.CoverageSuite;
-import com.intellij.coverage.CoverageDataManager;
 import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -255,8 +255,8 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
         final long lastCoverageTime = System.currentTimeMillis();
         String name = getName();
         if (name == null) name = getGeneratedName();
-        CoverageSuite suite = new CoverageSuite(name, coverageFileName, getCoveragePatterns(), lastCoverageTime);
-        CoverageDataManager.getInstance(getProject()).addCoverageSuite(suite, false);
+        CoverageDataManager.getInstance(getProject()).addCoverageSuite(name, coverageFileName, getCoveragePatterns(),
+                                                                       lastCoverageTime, false);
         ApplicationConfiguration.this.appendCoverageArgument(params);
       }
 

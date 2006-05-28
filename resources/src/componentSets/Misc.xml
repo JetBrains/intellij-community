@@ -116,7 +116,8 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.coverage.CoverageDataManager</implementation-class>
+      <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
+      <implementation-class>com.intellij.coverage.CoverageDataManagerImpl</implementation-class>
     </component>
 
     <component>

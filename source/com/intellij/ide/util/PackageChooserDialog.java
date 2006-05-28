@@ -40,7 +40,7 @@ import java.awt.*;
 import java.util.Comparator;
 import java.util.Enumeration;
 
-public class PackageChooserDialog extends DialogWrapper {
+public class PackageChooserDialog extends PackageChooser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.PackageChooserDialog");
 
   private Tree myTree;

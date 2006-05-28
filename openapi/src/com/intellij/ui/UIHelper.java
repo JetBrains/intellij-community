@@ -19,8 +19,10 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
+import com.intellij.ide.util.PackageChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ui.Table;
@@ -82,4 +84,6 @@ public interface UIHelper {
   CopyPasteSupport createPsiBasedCopyPasteSupport(Project project, JComponent keyReceiver, PsiElementSelector dataSelector);
 
   DeleteProvider createPsiBasedDeleteProvider();
+
+  PackageChooser createPackageChooser(String title, Project project); 
 }

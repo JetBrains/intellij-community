@@ -9,6 +9,8 @@ import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.DeleteHandler;
+import com.intellij.ide.util.PackageChooser;
+import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
@@ -65,6 +67,8 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.io.File;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent {
   private ProcessProxyFactory myProxyFactory = null;
   private PackageSetFactory myPackageSetFactory;
@@ -79,6 +83,7 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
     myFileStatusFactory = new FileStatusFactoryImpl();
   }
 
+  @NotNull
   public String getComponentName() {
     return "PeerFactory";
   }
@@ -212,6 +217,10 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
 
     public DeleteProvider createPsiBasedDeleteProvider() {
       return new DeleteHandler.DefaultDeleteProvider();
+    }
+
+    public PackageChooser createPackageChooser(String title, Project project) {
+      return new PackageChooserDialog(title, project);
     }
 
     private static String getPsiElementText(PsiElement psiElement) {
