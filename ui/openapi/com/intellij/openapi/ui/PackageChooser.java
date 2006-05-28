@@ -1,6 +1,5 @@
-package com.intellij.ide.util;
+package com.intellij.openapi.ui;
 
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiPackage;
 

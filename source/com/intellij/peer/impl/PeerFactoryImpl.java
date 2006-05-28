@@ -9,7 +9,7 @@ import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.ide.util.PackageChooser;
+import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
