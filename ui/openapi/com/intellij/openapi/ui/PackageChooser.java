@@ -12,4 +12,6 @@ public abstract class PackageChooser extends DialogWrapper {
   }
 
   public abstract PsiPackage getSelectedPackage();
+
+  public abstract void selectPackage(String qualifiedName);
 }
