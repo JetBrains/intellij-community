@@ -34,33 +34,44 @@ public class AntElementFactory {
     AntTypeDefinition typeDef = null;
     final AntTypeId id = new AntTypeId(tag.getName());
     final AntFile file = parent.getAntFile();
-    if (parent instanceof AntStructuredElement) {
-      final AntTypeDefinition parentDef = ((AntStructuredElement)parent).getTypeDefinition();
-      if (parentDef != null) {
-        final String className = parentDef.getNestedClassName(id);
-        if (className != null) {
-          typeDef = file.getBaseTypeDefinition(className);
+
+    while (true) {
+      if (parent instanceof AntStructuredElement) {
+        final AntTypeDefinition parentDef = ((AntStructuredElement)parent).getTypeDefinition();
+        if (parentDef != null) {
+          final String className = parentDef.getNestedClassName(id);
+          if (className != null) {
+            typeDef = file.getBaseTypeDefinition(className);
+          }
         }
       }
-    }
-    if (typeDef == null) {
-      for (AntTypeDefinition def : file.getBaseTypeDefinitions()) {
-        if (id.equals(def.getTypeId())) {
-          typeDef = def;
-          break;
+      if (typeDef == null) {
+        for (AntTypeDefinition def : file.getBaseTypeDefinitions()) {
+          if (id.equals(def.getTypeId())) {
+            typeDef = def;
+            break;
+          }
         }
       }
-    }
-    if (typeDef != null) {
-      AntElementCreator antElementCreator = ourAntTypeToKnownAntElementCreatorMap.get(typeDef.getClassName());
-      if (antElementCreator != null) {
-        return antElementCreator.create(parent, tag);
+      if (typeDef == null) {
+        final AntFileImpl antFile = (AntFileImpl)file;
+        if (!antFile.getSecondPassMade()) {
+          antFile.invokeSecondPass();
+          continue;
+        }
       }
-      if (typeDef.isTask()) {
-        return new AntTaskImpl(parent, tag, typeDef);
+      else {
+        AntElementCreator antElementCreator =
+          ourAntTypeToKnownAntElementCreatorMap.get(typeDef.getClassName());
+        if (antElementCreator != null) {
+          return antElementCreator.create(parent, tag);
+        }
+        if (typeDef.isTask()) {
+          return new AntTaskImpl(parent, tag, typeDef);
+        }
       }
+      return new AntStructuredElementImpl(parent, tag, typeDef);
     }
-    return new AntStructuredElementImpl(parent, tag, typeDef);
   }
 
   private static void instantiate() {

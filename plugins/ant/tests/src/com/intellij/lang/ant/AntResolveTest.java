@@ -2,6 +2,7 @@ package com.intellij.lang.ant;
 
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -111,6 +112,10 @@ public class AntResolveTest extends ResolveTestCase {
     doPropertyTest();
   }
 
+  public void testMacroDef() throws Exception {
+    doTaskTest();
+  }
+
   private void doTargetTest() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ref.resolve();
@@ -121,6 +126,12 @@ public class AntResolveTest extends ResolveTestCase {
     PsiReference ref = configure();
     PsiElement property = ref.resolve();
     assertTrue(property instanceof AntProperty);
+  }
+
+  private void doTaskTest() throws Exception {
+    PsiReference ref = configure();
+    PsiElement property = ref.resolve();
+    assertTrue(property instanceof AntTask);
   }
 
   protected String getTestDataPath() {

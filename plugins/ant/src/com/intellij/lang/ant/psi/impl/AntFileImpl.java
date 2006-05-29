@@ -34,6 +34,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private AntElement myEpilogueElement;
   private PsiElement[] myChildren;
   private Project myAntProject;
+  private boolean mySecondPassMade;
   /**
    * Map of class names to task definitions.
    */
@@ -201,6 +202,22 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     if (myTargetDefinition != null && myTargetDefinition != definition) {
       myTargetDefinition = null;
     }
+  }
+
+  /**
+   * Clears caches and invokes the second pass of getting children if it wasn't already invoked.
+   * This is necessary in case if a task is defined after it is used.
+   */
+  public synchronized void invokeSecondPass() {
+    if (!mySecondPassMade) {
+      mySecondPassMade = true;
+      clearCaches();
+      getAntProject();
+    }
+  }
+
+  public boolean getSecondPassMade() {
+    return mySecondPassMade;
   }
 
   private void updateTypeDefinitions(final Hashtable ht, final boolean isTask) {

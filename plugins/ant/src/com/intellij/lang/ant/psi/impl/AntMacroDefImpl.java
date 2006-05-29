@@ -38,9 +38,8 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
     final String thisClassName = toString();
     final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
     final HashMap<AntTypeId, String> nestedElements = new HashMap<AntTypeId, String>();
-    final AntElement[] children = getChildren();
 
-    for (AntElement child : children) {
+    for (AntElement child : getChildren()) {
       if (child instanceof AntStructuredElement) {
         AntStructuredElement se = (AntStructuredElement)child;
         final String name = se.getName();
