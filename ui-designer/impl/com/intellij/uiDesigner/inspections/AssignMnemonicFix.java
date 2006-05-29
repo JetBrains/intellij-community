@@ -38,6 +38,9 @@ public class AssignMnemonicFix extends QuickFix {
                                                       UIDesignerBundle.message("inspection.missing.mnemonics.quickfix.title"),
                                                       Messages.getQuestionIcon(), variants, variants [0], null);
     if (result != null) {
+      if (!myEditor.ensureEditable()) {
+        return;
+      }
       IntroStringProperty prop = (IntroStringProperty) textProperty;
       try {
         if (descriptor.getBundleName() == null) {
