@@ -172,34 +172,40 @@ public class GridInsertLocation extends GridDropLocation {
       }
     }
 
-    int w=4;
-    //noinspection EnumSwitchStatementWhichMissesCases
-    switch (myMode) {
-      case ColumnBefore:
-        rc = new Rectangle(vGridLines [cellRect.x] - w, feedbackRect.y - INSERT_ARROW_SIZE,
-                           2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
-        break;
-
-      case ColumnAfter:
-        rc = new Rectangle(vGridLines [cellRect.x + cellRect.width+1] - w, feedbackRect.y - INSERT_ARROW_SIZE,
-                           2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
-        break;
-
-      case RowBefore:
-        rc = new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y] - w,
-                           feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
-        break;
-
-      case RowAfter:
-        rc = new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y+cellRect.height+1] - w,
-                           feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
-        break;
-
-      default:
-        rc = feedbackRect;
-        painter = null;
+    rc = getInsertFeedbackPosition(myMode, getContainer(), cellRect, feedbackRect);
+    if (myMode == GridInsertMode.InCell) {
+      painter = null;
     }
     feedbackLayer.putFeedback(getContainer().getDelegee(), rc, painter);
+  }
+
+  public static Rectangle getInsertFeedbackPosition(final GridInsertMode mode, final RadContainer container, final Rectangle cellRect,
+                                                    final Rectangle feedbackRect) {
+    int[] vGridLines = container.getGridLayoutManager().getVerticalGridLines(container);
+    int[] hGridLines = container.getGridLayoutManager().getHorizontalGridLines(container);
+
+    int w=4;
+    //noinspection EnumSwitchStatementWhichMissesCases
+    switch (mode) {
+      case ColumnBefore:
+        return new Rectangle(vGridLines [cellRect.x] - w, feedbackRect.y - INSERT_ARROW_SIZE,
+                             2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
+
+      case ColumnAfter:
+        return new Rectangle(vGridLines [cellRect.x + cellRect.width+1] - w, feedbackRect.y - INSERT_ARROW_SIZE,
+                             2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
+
+      case RowBefore:
+        return new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y] - w,
+                             feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
+
+      case RowAfter:
+        return new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y+cellRect.height+1] - w,
+                             feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
+
+      default:
+        return feedbackRect;
+    }
   }
 
 

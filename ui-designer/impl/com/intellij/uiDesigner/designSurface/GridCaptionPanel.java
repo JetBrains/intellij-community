@@ -479,6 +479,17 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       int gridLine = getDropGridLine(aEvent);
       setDropInsertLine(gridLine);
       aEvent.setDropPossible(gridLine >= 0, null);
+      if (gridLine >= 0) {
+        FeedbackPainter painter = myIsRow ? HorzInsertFeedbackPainter.INSTANCE : VertInsertFeedbackPainter.INSTANCE;
+        Rectangle rcFeedback = new Rectangle(mySelectedContainer.getDelegee().getSize());
+        Rectangle cellRect = new Rectangle(gridLine, gridLine, 1, 1);
+        rcFeedback = GridInsertLocation.getInsertFeedbackPosition(myIsRow ? GridInsertMode.RowBefore : GridInsertMode.ColumnBefore,
+                                                                  mySelectedContainer, cellRect, rcFeedback);
+        myEditor.getActiveDecorationLayer().putFeedback(mySelectedContainer.getDelegee(), rcFeedback, painter);
+      }
+      else {
+        myEditor.getActiveDecorationLayer().removeFeedback();
+      }
       return false;
     }
 
@@ -498,11 +509,12 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       mySelectionModel.clearSelection();
       mySelectedContainer.revalidate();
       myEditor.refreshAndSave(true);
-      setDropInsertLine(-1);
+      cleanUpOnLeave();
     }
 
     public void cleanUpOnLeave() {
       setDropInsertLine(-1);
+      myEditor.getActiveDecorationLayer().removeFeedback();
     }
 
     public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
