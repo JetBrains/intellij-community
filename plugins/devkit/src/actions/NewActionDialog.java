@@ -78,6 +78,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
 
     myActionNameEdit.setText(actionClass.getQualifiedName());
     myActionNameEdit.setEditable(false);
+    myActionIdEdit.setText(actionClass.getQualifiedName());
     if (ActionType.GROUP.isOfType(actionClass)) {
       myShortcutPanel.setVisible(false);
     }
