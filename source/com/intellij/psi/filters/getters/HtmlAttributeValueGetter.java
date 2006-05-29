@@ -38,6 +38,8 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
           "section", "subsection", "appendix", "help", "bookmark", "script"};
       } else if ("media".equals(name)) {
         return new String[] { "screen", "tty", "tv", "projection", "handheld", "print", "all", "aural", "braille" };
+      } else if ("language".equals(name)) {
+        return new String[] { "JavaScript", "VBScript", "JScript", "JavaScript1.2", "JavaScript1.3", "JavaScript1.4", "JavaScript1.5" };
       }
     }
 
