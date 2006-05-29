@@ -187,8 +187,14 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
 
   private static CellConstraints gridToCellConstraints(final RadComponent component) {
     GridConstraints gc = component.getConstraints();
+    CellConstraints.Alignment hAlign = CellConstraints.DEFAULT;
+    CellConstraints.Alignment vAlign = CellConstraints.DEFAULT;
     CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
-    return new CellConstraints(gc.getColumn()+1, gc.getRow()+1, gc.getColSpan(), gc.getRowSpan(), cc.hAlign, cc.vAlign);
+    if (cc != null) {
+      hAlign = cc.hAlign;
+      vAlign = cc.vAlign;
+    }
+    return new CellConstraints(gc.getColumn()+1, gc.getRow()+1, gc.getColSpan(), gc.getRowSpan(), hAlign, vAlign);
   }
 
   @Override
@@ -392,20 +398,39 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
 
   @Override
   public int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore, final boolean grow) {
+    FormSpec formSpec;
+    if (isRow) {
+      formSpec = grow ? new RowSpec(ENCODED_FORMSPEC_GROW) : new RowSpec(new ConstantSize(10, ConstantSize.DLUY));
+    }
+    else {
+      formSpec = grow ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : new ColumnSpec(new ConstantSize(10, ConstantSize.DLUX));
+    }
+    insertGridCells(grid, cellIndex, isRow, isBefore, formSpec);
+    return 2;
+  }
+
+  /**
+   * @return index where new column or row was actually inserted (0-based)
+   */
+  private static int insertGridCells(final RadContainer grid,
+                                     final int cellIndex,
+                                     final boolean isRow,
+                                     final boolean isBefore,
+                                     final FormSpec formSpec) {
     FormLayout formLayout = (FormLayout) grid.getLayout();
     int index = isBefore ? cellIndex+1 : cellIndex+2;
     if (isRow) {
       insertOrAppendRow(formLayout, index, FormFactory.RELATED_GAP_ROWSPEC);
       if (!isBefore) index++;
-      insertOrAppendRow(formLayout, index, grow ? new RowSpec(ENCODED_FORMSPEC_GROW) : new RowSpec("10dlu"));
+      insertOrAppendRow(formLayout, index, (RowSpec) formSpec);
     }
     else {
       insertOrAppendColumn(formLayout, index, FormFactory.RELATED_GAP_COLSPEC);
       if (!isBefore) index++;
-      insertOrAppendColumn(formLayout, index, grow ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : new ColumnSpec("10dlu"));
+      insertOrAppendColumn(formLayout, index, (ColumnSpec)formSpec);
     }
     updateGridConstraintsFromCellConstraints(grid);
-    return 2;
+    return index-1;
   }
 
   private static void insertOrAppendRow(final FormLayout formLayout, final int index, final RowSpec rowSpec) {
@@ -427,7 +452,8 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   }
 
   @Override
-  public void deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow) {
+  public int deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow) {
+    int result = 1;
     FormLayout formLayout = (FormLayout) grid.getLayout();
     if (isRow) {
       formLayout.removeRow(cellIndex+1);
@@ -435,6 +461,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
         int gapRowIndex = (cellIndex >= grid.getGridRowCount()) ? cellIndex-1 : cellIndex;
         if (GridChangeUtil.isRowEmpty(grid, gapRowIndex)) {
           formLayout.removeRow(gapRowIndex+1);
+          result++;
         }
       }
     }
@@ -444,10 +471,12 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
         int gapColumnIndex = (cellIndex >= grid.getGridColumnCount()) ? cellIndex-1 : cellIndex;
         if (GridChangeUtil.isColumnEmpty(grid, gapColumnIndex)) {
           formLayout.removeColumn(gapColumnIndex+1);
+          result++;
         }
       }
     }
     updateGridConstraintsFromCellConstraints(grid);
+    return result;
   }
 
   @Override
@@ -462,6 +491,42 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       ColumnSpec colSpec = formLayout.getColumnSpec(cell+1);
       ColumnSpec newSpec = new ColumnSpec(colSpec.getDefaultAlignment(), new ConstantSize(newSize, ConstantSize.PIXEL), colSpec.getResizeWeight());
       formLayout.setColumnSpec(cell+1, newSpec);
+    }
+  }
+
+  @Override
+  public void processCellsMoved(final RadContainer container, final boolean isRow, final int[] cellsToMove, int targetCell) {
+    for(int i=0; i<cellsToMove.length; i++) {
+      final int sourceCell = cellsToMove[i];
+      moveCells(container, isRow, sourceCell, targetCell);
+      if (sourceCell < targetCell) {
+        for(int j=i+1; j<cellsToMove.length; j++) {
+          cellsToMove [j] -= 2;
+        }
+      }
+      else {
+        targetCell += 2;
+      }
+    }
+  }
+
+  private void moveCells(final RadContainer container, final boolean isRow, final int cell, int targetCell) {
+    FormLayout layout = (FormLayout) container.getLayout();
+    List<RadComponent> componentsToMove = new ArrayList<RadComponent>();
+    FormSpec oldSpec = isRow ? layout.getRowSpec(cell+1) : layout.getColumnSpec(cell+1);
+    for(RadComponent c: container.getComponents()) {
+      if (c.getConstraints().getCell(isRow) == cell) {
+        componentsToMove.add(c);
+        container.removeComponent(c);
+      }
+    }
+    int count = deleteGridCells(container, cell, isRow);
+    int insertCell = (targetCell > cell) ? targetCell - count - 1 : targetCell;
+    final boolean isBefore = targetCell < cell;
+    int newIndex = insertGridCells(container, insertCell, isRow, isBefore, oldSpec);
+    for(RadComponent c: componentsToMove) {
+      c.getConstraints().setCell(isRow, newIndex);
+      container.addComponent(c);
     }
   }
 
@@ -532,6 +597,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     component.getParent().revalidate();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   @Override
   public void createSnapshotLayout(final SnapshotContext context,
                                    final JComponent parent,
@@ -611,6 +677,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     CellConstraints cc;
     try {
       LayoutManager layout = parent.getLayout();
+      //noinspection HardCodedStringLiteral
       Method method = layout.getClass().getMethod("getConstraints", Component.class);
       cc = (CellConstraints)createSerializedCopy(method.invoke(layout, child));
     }

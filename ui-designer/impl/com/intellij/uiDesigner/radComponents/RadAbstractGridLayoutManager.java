@@ -69,7 +69,11 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
    * @return the number of inserted rows or columns
    */
   public abstract int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore, final boolean grow);
-  public abstract void deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow);
+
+  /**
+   * @return the number of deleted rows or columns
+   */
+  public abstract int deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow);
   public abstract void processCellsMoved(final RadContainer container, final boolean isRow, final int[] cells, final int targetCell);
   public abstract void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize);
 }

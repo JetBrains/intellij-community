@@ -354,8 +354,9 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   @Override
-  public void deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow) {
+  public int deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow) {
     GridChangeUtil.deleteCell(grid, cellIndex, isRow);
+    return 1;
   }
 
   @Override
