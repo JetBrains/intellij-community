@@ -27,7 +27,8 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
     /**
          * @noinspection StaticCollection
          */
-    @NonNls private static final Set<String> queryNames = new HashSet<String>(33);
+    @NonNls private static final Set<String> queryNames =
+            new HashSet<String>(34);
     static{
         queryNames.add("clone");
         queryNames.add("contains");
@@ -36,6 +37,7 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         queryNames.add("containsValue");
         queryNames.add("copyInto");
         queryNames.add("entrySet");
+        queryNames.add("element");
         queryNames.add("elements");
         queryNames.add("empty");
         queryNames.add("enumeration");

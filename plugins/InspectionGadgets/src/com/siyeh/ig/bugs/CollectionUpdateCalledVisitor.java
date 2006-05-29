@@ -29,7 +29,7 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
          * @noinspection StaticCollection
          */
     @NonNls private static final Set<String> updateNames =
-            new HashSet<String>(25);
+            new HashSet<String>(29);
     static{
         updateNames.add("add");
         updateNames.add("addAll");
@@ -38,6 +38,7 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         updateNames.add("addFirst");
         updateNames.add("addLast");
         updateNames.add("clear");
+        updateNames.add("drainTo");
         updateNames.add("insertElementAt");
         updateNames.add("load");
         updateNames.add("loadFromXml");
@@ -45,9 +46,11 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         updateNames.add("push");
         updateNames.add("put");
         updateNames.add("putAll");
+        updateNames.add("putIfAbsent");
         updateNames.add("remove");
         updateNames.add("removeAll");
         updateNames.add("removeAllElements");
+        updateNames.add("replace");
         updateNames.add("retainAll");
         updateNames.add("removeElementAt");
         updateNames.add("removeFirst");
@@ -56,6 +59,7 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         updateNames.add("set");
         updateNames.add("setElementAt");
         updateNames.add("setProperty");
+        updateNames.add("take");
     }
 
     private boolean updated = false;
@@ -86,24 +90,24 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         }
         final PsiExpression qualifier =
                 methodExpression.getQualifierExpression();
-        if (qualifier == null || qualifier instanceof PsiThisExpression) {
+        if(qualifier == null || qualifier instanceof PsiThisExpression){
             final PsiElement method = methodExpression.resolve();
-            if (method == null) {
+            if(method == null){
                 return;
             }
             final PsiClass aClass = (PsiClass)method.getParent();
-            if (CollectionUtils.isCollectionClassOrInterface(aClass)) {
+            if (CollectionUtils.isCollectionClassOrInterface(aClass)){
                 updated = true;
             }
-        } else {
-            if (!(qualifier instanceof PsiReferenceExpression)) {
+        } else{
+            if(!(qualifier instanceof PsiReferenceExpression)){
                 return;
             }
             final PsiElement referent = ((PsiReference)qualifier).resolve();
-            if (referent == null) {
+            if(referent == null){
                 return;
             }
-            if (referent.equals(variable)) {
+            if(referent.equals(variable)){
                 updated = true;
             }
         }

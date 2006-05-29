@@ -83,7 +83,7 @@ public class MismatchedCollectionQueryUpdateInspection
                     collectionContentsAreUpdated(field, containingClass);
             final boolean read =
                     collectionContentsAreQueried(field, containingClass);
-            if (read == written) {
+            if(read == written){
                 return;
             }
             registerFieldError(field, Boolean.valueOf(written));
@@ -111,8 +111,8 @@ public class MismatchedCollectionQueryUpdateInspection
         }
 
         private static boolean collectionContentsAreUpdated(
-                PsiVariable variable, PsiElement context) {
-            if (collectionUpdateCalled(variable, context)){
+                PsiVariable variable, PsiElement context){
+            if(collectionUpdateCalled(variable, context)){
                 return true;
             }
             final PsiExpression initializer = variable.getInitializer();
@@ -120,13 +120,13 @@ public class MismatchedCollectionQueryUpdateInspection
                     !isEmptyCollectionInitializer(initializer)){
                 return true;
             }
-            if (initializer instanceof PsiNewExpression) {
+            if(initializer instanceof PsiNewExpression){
                 final PsiNewExpression newExpression =
                         (PsiNewExpression)initializer;
                 final PsiAnonymousClass anonymousClass =
                         newExpression.getAnonymousClass();
-                if (anonymousClass != null) {
-                    if (collectionUpdateCalled(variable, anonymousClass)) {
+                if(anonymousClass != null){
+                    if(collectionUpdateCalled(variable, anonymousClass)){
                         return true;
                     }
                 }
@@ -149,8 +149,8 @@ public class MismatchedCollectionQueryUpdateInspection
         }
 
         private static boolean collectionContentsAreQueried(
-                PsiVariable variable, PsiElement context) {
-            if (collectionQueryCalled(variable, context)){
+                PsiVariable variable, PsiElement context){
+            if(collectionQueryCalled(variable, context)){
                 return true;
             }
             final PsiExpression initializer = variable.getInitializer();
