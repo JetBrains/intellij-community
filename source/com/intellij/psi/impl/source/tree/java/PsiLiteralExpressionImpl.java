@@ -132,7 +132,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
       else {
         text = text.substring(1, textLength);
       }
-      String s = parseStringCharacters(text);
+      String s = internedParseStringCharacters(text);
       if (s == null) return null;
       if (s.length() != 1) return null;
       return new Character(s.charAt(0));
@@ -150,7 +150,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
           return null;
         }
       }
-      return parseStringCharacters(text);
+      return internedParseStringCharacters(text);
     }
     if (i == TRUE_KEYWORD) {
       return Boolean.TRUE;
@@ -222,7 +222,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         else {
           return JavaErrorMessages.message("illegal.line.end.in.character.literal");
         }
-        String s = parseStringCharacters(text);
+        String s = internedParseStringCharacters(text);
         if (s == null) return JavaErrorMessages.message("illegal.escape.character.in.character.literal");
         if (s.length() > 1) {
           return JavaErrorMessages.message("too.many.characters.in.character.literal");
@@ -239,7 +239,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         else {
           return JavaErrorMessages.message("illegal.line.end.in.string.literal");
         }
-        if (parseStringCharacters(text) == null) return JavaErrorMessages.message("illegal.escape.character.in.string.literal");
+        if (internedParseStringCharacters(text) == null) return JavaErrorMessages.message("illegal.escape.character.in.string.literal");
       }
     }
 
@@ -269,115 +269,133 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     return true;
   }
 
-  private static String parseStringCharacters(String chars) {
+  private static String internedParseStringCharacters(String chars) {
+    StringBuilder outChars = new StringBuilder(chars.length());
+    boolean success = parseStringCharacters(chars, outChars, null);
+    if (!success) return null;
     // should return interned strings since ConstantEvaluator should compute ("0" == "0") to true
-    if (chars.indexOf('\\') < 0) return chars.intern();
-    StringBuffer buffer = new StringBuffer(chars.length());
+    return outChars.toString().intern();
+  }
+
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
+    if (chars.indexOf('\\') < 0) {
+      outChars.append(chars);
+      if (sourceOffsets != null) {
+        for (int i=0;i<chars.length()+1;i++) {
+          sourceOffsets[i] = i;
+        }
+      }
+      return true;
+    }
     int index = 0;
     while(index < chars.length()){
       char c = chars.charAt(index++);
-      if (c != '\\'){
-        buffer.append(c);
+      if (sourceOffsets != null) {
+        sourceOffsets[outChars.length()] = index-1;
+        sourceOffsets[outChars.length()+1] = index;
       }
-      else{
-        if (index == chars.length()) return null;
-        c = chars.charAt(index++);
-        switch(c){
+      if (c != '\\'){
+        outChars.append(c);
+        continue;
+      }
+      if (index == chars.length()) return false;
+      c = chars.charAt(index++);
+      switch(c){
           case 'b':
-            buffer.append('\b');
-            break;
+          outChars.append('\b');
+          break;
 
-          case 't':
-            buffer.append('\t');
-            break;
+        case 't':
+          outChars.append('\t');
+          break;
 
-          case 'n':
-            buffer.append('\n');
-            break;
+        case 'n':
+          outChars.append('\n');
+          break;
 
-          case 'f':
-            buffer.append('\f');
-            break;
+        case 'f':
+          outChars.append('\f');
+          break;
 
-          case 'r':
-            buffer.append('\r');
-            break;
+        case 'r':
+          outChars.append('\r');
+          break;
 
-          case '"':
-            buffer.append('"');
-            break;
+        case '"':
+          outChars.append('"');
+          break;
 
-          case '\'':
-            buffer.append('\'');
-            break;
+        case '\'':
+          outChars.append('\'');
+          break;
 
-          case '\\':
-            buffer.append('\\');
-            break;
+        case '\\':
+          outChars.append('\\');
+          break;
 
-          case '0':
-          case '1':
-          case '2':
-          case '3':
-          case '4':
-          case '5':
-          case '6':
-          case '7':
-            {
-              char startC = c;
-              int v = (int)c - '0';
-              if (index < chars.length()){
-                c = chars.charAt(index++);
-                if ('0' <= c && c <= '7'){
-                  v <<= 3;
-                  v += c - '0';
-                  if (startC <= '3' && index < chars.length()){
-                    c = chars.charAt(index++);
-                    if ('0' <= c && c <= '7'){
-                      v <<= 3;
-                      v += c - '0';
-                    }
-                    else{
-                      index--;
-                    }
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+          {
+            char startC = c;
+            int v = (int)c - '0';
+            if (index < chars.length()){
+              c = chars.charAt(index++);
+              if ('0' <= c && c <= '7'){
+                v <<= 3;
+                v += c - '0';
+                if (startC <= '3' && index < chars.length()){
+                  c = chars.charAt(index++);
+                  if ('0' <= c && c <= '7'){
+                    v <<= 3;
+                    v += c - '0';
+                  }
+                  else{
+                    index--;
                   }
                 }
-                else{
-                  index--;
-                }
               }
-              buffer.append((char)v);
+              else{
+                index--;
+              }
             }
-            break;
+            outChars.append((char)v);
+          }
+          break;
 
-          case 'u':
-            if (index + 4 <= chars.length()){
-              try{
-                int v = Integer.parseInt(chars.substring(index, index + 4), 16);
-                //line separators are invalid here
-                if (v == 0x000a || v == 0x000d) return null;
-                c = chars.charAt(index);
-                if (c == '+' || c == '-'){
-                  return null;
-                }
-                buffer.append((char)v);
-                index += 4;
-              }
-              catch(Exception e){
-                return null;
-              }
+        case 'u':
+          if (index + 4 <= chars.length()) {
+            try {
+              int v = Integer.parseInt(chars.substring(index, index + 4), 16);
+              //line separators are invalid here
+              if (v == 0x000a || v == 0x000d) return false;
+              c = chars.charAt(index);
+              if (c == '+' || c == '-') return false;
+              outChars.append((char)v);
+              index += 4;
             }
-            else{
-              return null;
+            catch (Exception e) {
+              return false;
             }
-            break;
+          }
+          else {
+            return false;
+          }
+          break;
 
-          default:
-            return null;
-        }
+        default:
+          return false;
+      }
+      if (sourceOffsets != null) {
+        sourceOffsets[outChars.length()] = index;
       }
     }
-    return buffer.toString().intern();
+    return true;
   }
 
   public void accept(PsiElementVisitor visitor) {
@@ -398,8 +416,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     Object value = getValue();
     if (!(value instanceof String)) return null;
 
-    return InjectedLanguageUtil.getInjectedPsiFiles(this);
+    return InjectedLanguageUtil.getInjectedPsiFiles(this, InjectedLanguageUtil.StringLiteralEscaper.INSTANCE);
   }
-
 }
 

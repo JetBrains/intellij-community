@@ -20,12 +20,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlTagTextUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 public class XmlTextImpl extends XmlElementImpl implements XmlText {
@@ -54,8 +53,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     if (myDisplayText != null) return myDisplayText;
     StringBuffer buffer = new StringBuffer();
     ASTNode child = getFirstChildNode();
-    final List<Integer> gapsStarts = new ArrayList<Integer>();
-    final List<Integer> gapsShifts = new ArrayList<Integer>();
+    final TIntArrayList gapsStarts = new TIntArrayList();
+    final TIntArrayList gapsShifts = new TIntArrayList();
     while (child != null) {
       final int start = buffer.length();
       IElementType elementType = child.getElementType();
@@ -78,8 +77,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
       int end = buffer.length();
       int originalLength = child.getTextLength();
       if (end - start != originalLength) {
-        gapsStarts.add(new Integer(start));
-        gapsShifts.add(new Integer(originalLength - (end - start)));
+        gapsStarts.add(start);
+        gapsShifts.add(originalLength - (end - start));
       }
       final ASTNode next = child.getTreeNext();
       if (next == null && child.getTreeParent().getElementType() == XmlElementType.XML_CDATA) {
@@ -91,16 +90,11 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     }
     myGapDisplayStarts = new int[gapsShifts.size()];
     myGapPhysicalStarts = new int[gapsShifts.size()];
-    int index = 0;
-    final Iterator<Integer> startsIterator = gapsStarts.iterator();
-    final Iterator<Integer> shiftsIterator = gapsShifts.iterator();
     int currentGapsSum = 0;
-    while (startsIterator.hasNext()) {
-      final Integer integer = shiftsIterator.next();
-      currentGapsSum += integer.intValue();
-      myGapDisplayStarts[index] = startsIterator.next().intValue();
-      myGapPhysicalStarts[index] = myGapDisplayStarts[index] + currentGapsSum;
-      index++;
+    for (int i=0; i<myGapDisplayStarts.length;i++) {
+      currentGapsSum += gapsShifts.get(i);
+      myGapDisplayStarts[i] = gapsStarts.get(i);
+      myGapPhysicalStarts[i] = myGapDisplayStarts[i] + currentGapsSum;
     }
 
     return myDisplayText = buffer.toString();
@@ -247,6 +241,6 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
 
   @Nullable
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this);
+    return InjectedLanguageUtil.getInjectedPsiFiles(this, InjectedLanguageUtil.XmlLiteralEscaper.INSTANCE);
   }
 }

@@ -28,6 +28,6 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiJav
 
   @Nullable
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this);
+    return InjectedLanguageUtil.getInjectedPsiFiles(this, null);
   }
 }

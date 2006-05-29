@@ -57,6 +57,6 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
 
   @Nullable
   public List<Pair<PsiElement,TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this);
+    return InjectedLanguageUtil.getInjectedPsiFiles(this, null); //todo
   }
 }

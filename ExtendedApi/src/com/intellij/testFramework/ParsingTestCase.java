@@ -1,31 +1,29 @@
 
 package com.intellij.testFramework;
 
+import com.intellij.lang.jsp.JspxFileViewProviderImpl;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.jsp.JspFileImpl;
-import com.intellij.lang.jsp.JspxFileViewProviderImpl;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 
 public abstract class ParsingTestCase extends LightIdeaTestCase {
-  private final String myDataPath;
   protected String myFileExt;
-  private final String myFullDataPath;
+  @NonNls private final String myFullDataPath;
   protected PsiFile myFile;
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public ParsingTestCase(String dataPath, String fileExt) {
-    myDataPath = dataPath;
-    myFullDataPath = getTestDataPath() + "/psi/" + myDataPath;
+    myFullDataPath = getTestDataPath() + "/psi/" + dataPath;
     myFileExt = fileExt;
   }
 
@@ -51,7 +49,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     if(myFile instanceof JspFileImpl) ((JspxFileViewProviderImpl)((JspFileImpl)myFile).getViewProvider()).checkAllTreesEqual();
   }
 
-  protected void checkResult(String targetDataName, final PsiFile file) throws Exception {
+  protected void checkResult(@NonNls String targetDataName, final PsiFile file) throws Exception {
     final PsiElement[] psiRoots = file.getPsiRoots();
     if(psiRoots.length > 1){
       for (int i = 0; i < psiRoots.length; i++) {
@@ -88,11 +86,11 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
       FileWriter writer = new FileWriter(fullName);
       writer.write(text);
       writer.close();
-      assertTrue("No output text found. File " + fullName + " created.", false);
+      fail("No output text found. File " + fullName + " created.");
     }
   }
 
-  protected String toParseTreeText(final PsiElement file) {
+  protected static String toParseTreeText(final PsiElement file) {
     return DebugUtil.psiToString(file, false);
   }
 
