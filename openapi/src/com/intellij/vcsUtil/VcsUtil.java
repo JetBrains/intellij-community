@@ -20,13 +20,16 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LocalVcsBundle;
 import com.intellij.openapi.localVcs.LvcsObject;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -36,8 +39,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
@@ -259,9 +260,14 @@ public class VcsUtil {
   public static boolean isPathUnderProject( Project project, final String path )
   {
     VirtualFile vfPath = getVirtualFile( path );
-    if( vfPath != null )
+    return isPathUnderProject( project, vfPath );
+  }
+
+  public static boolean isPathUnderProject( Project project, final VirtualFile vf )
+  {
+    if( vf != null && !FileTypeManager.getInstance().isFileIgnored( vf.getPath() ) )
     {
-      Module mod = ProjectRootManager.getInstance( project ).getFileIndex().getModuleForFile( vfPath );
+      Module mod = ProjectRootManager.getInstance( project ).getFileIndex().getModuleForFile( vf );
       return mod != null;
     }
     return false;
