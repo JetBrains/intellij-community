@@ -70,15 +70,15 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor {
   }
 
   public void setAccessClass(PsiClass accessClass) {
-    if (isConstructor() && accessClass instanceof PsiAnonymousClass) {
+/*    if (isConstructor() && accessClass instanceof PsiAnonymousClass) {
       myAccessClass = ((PsiAnonymousClass)accessClass).getBaseClassType().resolve();
     }
-    else {
+    else*/ {
       myAccessClass = accessClass;
     }
-    if (isConstructor() && myAccessClass != null) {
+    /*if (isConstructor() && myAccessClass != null) {
       setName(myAccessClass.getName());
-    }
+    }*/
   }
 
   public boolean isConstructor() {

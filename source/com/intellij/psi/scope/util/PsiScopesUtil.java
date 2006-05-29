@@ -219,8 +219,11 @@ public class PsiScopesUtil {
               } while (aClass != null);
 
               processor.setIsConstructor(true);
-              processor.setAccessClass(superClass);
-              processScope(superClass, processor, substitutor, null, call);
+              processor.setAccessClass(null);
+              final PsiMethod[] constructors = superClass.getConstructors();
+              for (PsiMethod constructor : constructors) {
+                if (!processor.execute(constructor, substitutor)) return;
+              }
 
               if (dummyImplicitConstructor) processDummyConstructor(processor, superClass);
             }

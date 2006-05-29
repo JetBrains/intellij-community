@@ -1,6 +1,7 @@
 package com.intellij.psi.scope.processor;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -18,6 +19,7 @@ import java.util.List;
  */
 public class MethodCandidatesProcessor extends MethodsProcessor{
   private PsiElement myPlace;
+  protected boolean myHasAccessibleStaticCorrectCandidate = false;
 
   protected MethodCandidatesProcessor(PsiElement place, PsiConflictResolver[] resolvers, List container){
     super(null, resolvers, container);
@@ -33,14 +35,26 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     if (element instanceof PsiMethod){
       final PsiMethod currentMethod = (PsiMethod)element;
       boolean staticProblem = isInStaticScope() && !currentMethod.hasModifierProperty(PsiModifier.STATIC);
+      boolean isAccessible = ResolveUtil.isAccessible(currentMethod, currentMethod.getContainingClass(), currentMethod.getModifierList(),
+                                                      myPlace, myAccessClass, myCurrentFileContext);
+      myHasAccessibleStaticCorrectCandidate |= isAccessible && !staticProblem;
 
-      if ((!isConstructor() && getName().equals(currentMethod.getName()))
-        || (currentMethod.isConstructor()
-            && myAccessClass != null
-            && myAccessClass == currentMethod.getContainingClass())){
-        add(new MethodCandidateInfo(currentMethod, substitutor, myPlace, currentMethod.isConstructor() ? null : myAccessClass, staticProblem,
-                                    getArgumentList(), myCurrentFileContext, getTypeArguments()));
+      if (isAccepted(currentMethod)){
+        add(new MethodCandidateInfo(currentMethod, substitutor, !isAccessible, staticProblem, getArgumentList(), myCurrentFileContext, getTypeArguments()));
       }
+    }
+  }
+
+  private boolean isAccepted(final PsiMethod candidate) {
+    if (!isConstructor()) {
+      return !candidate.isConstructor() && getName().equals(candidate.getName());
+    } else {
+      if (!candidate.isConstructor()) return false;
+      if (myAccessClass == null) return true;
+      if (myAccessClass instanceof PsiAnonymousClass) {
+        return candidate.getContainingClass().equals(myAccessClass.getSuperClass());
+      }
+      return myAccessClass.equals(candidate.getContainingClass());
     }
   }
 

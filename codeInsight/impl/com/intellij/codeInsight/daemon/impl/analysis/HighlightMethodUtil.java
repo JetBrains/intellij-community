@@ -1077,7 +1077,13 @@ public class HighlightMethodUtil {
       }
     }
     else {
-      JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, list);
+      PsiElement place = list;
+      if (constructorCall instanceof PsiNewExpression) {
+        final PsiAnonymousClass anonymousClass = ((PsiNewExpression)constructorCall).getAnonymousClass();
+        if (anonymousClass != null) place = anonymousClass;
+      }
+
+      JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, place);
       MethodCandidateInfo result = null;
       if (results.length == 1) result = (MethodCandidateInfo)results[0];
 

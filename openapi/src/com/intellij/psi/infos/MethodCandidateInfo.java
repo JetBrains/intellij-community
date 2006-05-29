@@ -29,13 +29,12 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   public MethodCandidateInfo(PsiElement candidate,
                              PsiSubstitutor substitutor,
-                             PsiElement place,
-                             PsiClass accessClass,
+                             boolean accessProblem,
                              boolean staticsProblem,
                              PsiExpressionList argumentList,
-                             final PsiElement currFileContext,
+                             PsiElement currFileContext,
                              PsiType[] typeArguments) {
-    super(candidate, substitutor, place, accessClass, staticsProblem, currFileContext);
+    super(candidate, substitutor, accessProblem, staticsProblem, currFileContext);
     myArgumentList = argumentList;
     myTypeArguments = typeArguments;
   }

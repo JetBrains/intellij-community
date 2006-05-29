@@ -88,15 +88,14 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
       }
     }
     else{
-      ASTNode anonymousClass = TreeUtil.findChild(this, ANONYMOUS_CLASS);
-      if (anonymousClass != null) {
-        PsiType aClass = ((PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClass)).getBaseClassType();
-        if (aClass != null) {
-          ASTNode argumentList = TreeUtil.findChild(anonymousClass, EXPRESSION_LIST);
-          return getManager().getResolveHelper().resolveConstructor((PsiClassType)aClass,
-                                                                    (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
-                                                                    this);
-        }
+      ASTNode anonymousClassElement = TreeUtil.findChild(this, ANONYMOUS_CLASS);
+      if (anonymousClassElement != null) {
+        final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClassElement);
+        PsiType aClass = anonymousClass.getBaseClassType();
+        ASTNode argumentList = TreeUtil.findChild(anonymousClassElement, EXPRESSION_LIST);
+        return getManager().getResolveHelper().resolveConstructor((PsiClassType)aClass,
+                                                                  (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
+                                                                  anonymousClass);
       }
     }
 

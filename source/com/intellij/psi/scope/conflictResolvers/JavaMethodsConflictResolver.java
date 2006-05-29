@@ -54,9 +54,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       conflictsCount = conflicts.size();
       if(conflictsCount == 1) return conflicts.get(0);
 
+      /*
       checkInnerMostClass(conflicts);
       conflictsCount = conflicts.size();
       if(conflictsCount == 1) return conflicts.get(0);
+      */
 
       checkParametersNumber(conflicts, myArgumentsList.getExpressions().length);
       conflictsCount = conflicts.size();
