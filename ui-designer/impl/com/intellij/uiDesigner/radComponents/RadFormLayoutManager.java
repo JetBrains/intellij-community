@@ -341,7 +341,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       }
     }
 
-    g2d.setColor(Color.BLACK);
+    g2d.setColor(Color.BLUE);
     drawGroupLine(rc, isRow, g2d, true, haveTopLeft, haveTopRight, haveTopLine);
     drawGroupLine(rc, isRow, g2d, false, haveBottomLeft, haveBottomRight, haveBottomLine);
   }
@@ -349,13 +349,13 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   private static void drawGroupLine(final Rectangle rc, final boolean isRow, final Graphics2D g2d, boolean isTop,
                                     final boolean haveLeft, final boolean haveRight, final boolean haveLine) {
 
-    Point linePos = isTop ? new Point(rc.x+3, rc.y+3) : new Point((int) rc.getMaxX()-2, (int) rc.getMaxY()-2);
-    Point markerPos = isTop ?  new Point((int) rc.getMaxX()-4, (int) rc.getMaxY()-4) : new Point(rc.x+5, rc.y+5);
+    int maxX = (int) rc.getMaxX();
+    int maxY = (int) rc.getMaxY();
+    Point linePos = isTop ? new Point(rc.x+1, rc.y+1) : new Point(rc.x+3, rc.y+3);
+    Point markerPos = new Point(rc.x+6, rc.y+6);
 
     int midX = (int) rc.getCenterX();
     int midY = (int) rc.getCenterY();
-    int maxX = (int) rc.getMaxX();
-    int maxY = (int) rc.getMaxY();
     if (haveLine) {
       if (isRow) {
         g2d.drawLine(linePos.x, midY, markerPos.x, midY);

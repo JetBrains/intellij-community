@@ -86,7 +86,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   @Override public Dimension getPreferredSize() {
-    return new Dimension(12, 12);
+    return new Dimension(16, 16);
   }
 
   @Override public void paintComponent(Graphics g) {
@@ -94,6 +94,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     Graphics2D g2d = (Graphics2D) g;
 
     final Rectangle bounds = getBounds();
+    final int paintedSize = 7;
+    final int paintOffset = 8;
 
     RadContainer container = getSelectedGridContainer();
     if (container == null) {
@@ -110,13 +112,16 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       Point pnt = SwingUtilities.convertPoint(container.getDelegee(), x, y, this);
 
       Rectangle rc = myIsRow
-                     ? new Rectangle(bounds.x, pnt.y, bounds.width-1, sizes [i])
-                     : new Rectangle(pnt.x, bounds.y, sizes [i], bounds.height-1);
+                     ? new Rectangle(bounds.x+paintOffset, pnt.y, paintedSize, sizes [i])
+                     : new Rectangle(pnt.x, bounds.y+paintOffset, sizes [i], paintedSize);
 
       g.setColor(getCaptionColor(i));
       g.fillRect(rc.x, rc.y, rc.width, rc.height);
 
-      layout.paintCaptionDecoration(container, myIsRow, i, g2d, rc);
+      Rectangle rcDecoration = myIsRow
+                               ? new Rectangle(bounds.x, pnt.y, bounds.width, sizes [i])
+                               : new Rectangle(pnt.x, bounds.y, sizes [i], bounds.height);
+      layout.paintCaptionDecoration(container, myIsRow, i, g2d, rcDecoration);
 
       Stroke oldStroke = g2d.getStroke();
       int deltaX = 0;
@@ -136,10 +141,10 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
     g.setColor(Color.DARK_GRAY);
     if (myIsRow) {
-      g.drawLine(bounds.width-1, 0, bounds.width-1, bounds.height);
+      g.drawLine(paintOffset+paintedSize, 0, paintOffset+paintedSize, bounds.height);
     }
     else {
-      g.drawLine(0, bounds.height-1, bounds.width, bounds.height-1);
+      g.drawLine(0, paintOffset+paintedSize, bounds.width, paintOffset+paintedSize);
     }
 
     if (myDropInsertLine >= 0) {
