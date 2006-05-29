@@ -4,7 +4,9 @@
 
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.util.ui.MappingListCellRenderer;
 import com.jgoodies.forms.layout.*;
 import org.jetbrains.annotations.NonNls;
 
@@ -22,8 +24,6 @@ import java.util.List;
  * @author yole
  */
 public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.FormLayoutColumnProperties");
-
   private JPanel myRootPanel;
   private JRadioButton myDefaultRadioButton;
   private JRadioButton myPreferredRadioButton;
@@ -43,6 +43,9 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
   private JRadioButton myCenterRadioButton;
   private JRadioButton myRightRadioButton;
   private JRadioButton myFillRadioButton;
+  private JLabel myTitleLabel;
+  private JPanel myAlignmentPanel;
+  private JPanel mySizePanel;
   private FormLayout myLayout;
   private int myIndex;
   private boolean myIsRow;
@@ -51,10 +54,20 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
   private boolean mySaving = false;
 
   public FormLayoutColumnProperties() {
-    String[] unitNames = new String[] { "px", "dlu", "pt", "in", "cm", "mm" };
+    @NonNls String[] unitNames = new String[] { "px", "dlu", "pt", "in", "cm", "mm" };
+    final ListCellRenderer unitListCellRenderer = new MappingListCellRenderer(
+      new Pair<Object, String>("px", UIDesignerBundle.message("unit.pixels")),
+      new Pair<Object, String>("dlu", UIDesignerBundle.message("unit.dialog.units")),
+      new Pair<Object, String>("pt", UIDesignerBundle.message("unit.points")),
+      new Pair<Object, String>("in", UIDesignerBundle.message("unit.inches")),
+      new Pair<Object, String>("cm", UIDesignerBundle.message("unit.centimeters")),
+      new Pair<Object, String>("mm", UIDesignerBundle.message("unit.millimeters")));
     myConstantSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
     myMinSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
     myMaxSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
+    myConstantSizeUnitsCombo.setRenderer(unitListCellRenderer);
+    myMinSizeUnitsCombo.setRenderer(unitListCellRenderer);
+    myMaxSizeUnitsCombo.setRenderer(unitListCellRenderer);
     final MyRadioListener listener = new MyRadioListener();
     myDefaultRadioButton.addActionListener(listener);
     myPreferredRadioButton.addActionListener(listener);
@@ -104,18 +117,22 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
   public void showProperties(final RadContainer container, final boolean row, final int[] selectedIndices) {
     if (mySaving) return;
     if (selectedIndices.length == 1) {
+      showControls(true);
       myShowing = true;
       try {
         myLayout = (FormLayout) container.getLayout();
         myIndex = selectedIndices [0] + 1;
         myIsRow = row;
 
-        myLeftRadioButton.setText(row ? "Top" : "Left");
-        myRightRadioButton.setText(row ? "Bottom" : "Right");
+        myTitleLabel.setText(myIsRow
+                             ? UIDesignerBundle.message("title.row.properties", myIndex)
+                             : UIDesignerBundle.message("title.column.properties", myIndex));
+        myLeftRadioButton.setText(row ? UIDesignerBundle.message("alignment.top") : UIDesignerBundle.message("alignment.left"));
+        myRightRadioButton.setText(row ? UIDesignerBundle.message("alignment.bottom") : UIDesignerBundle.message("alignment.right"));
 
         FormSpec formSpec = row ? myLayout.getRowSpec(myIndex) : myLayout.getColumnSpec(myIndex);
         showAlignment(formSpec.getDefaultAlignment());
-        showSize(formSpec.getSize(), row);
+        showSize(formSpec.getSize());
         if (formSpec.getResizeWeight() < 0.01) {
           myGrowCheckBox.setSelected(false);
           myGrowSpinner.setValue(1.0);
@@ -129,6 +146,26 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
         myShowing = false;
       }
     }
+    else {
+      showControls(false);
+      if (selectedIndices.length > 1) {
+        myTitleLabel.setText(myIsRow
+                             ? UIDesignerBundle.message("title.multiple.rows.selected")
+                             : UIDesignerBundle.message("title.multiple.columns.selected"));
+      }
+      else {
+        myTitleLabel.setText(myIsRow
+                             ? UIDesignerBundle.message("title.no.rows.selected")
+                             : UIDesignerBundle.message("title.no.columns.selected"));
+      }
+    }
+  }
+
+  private void showControls(final boolean visible) {
+    mySizePanel.setVisible(visible);
+    myAlignmentPanel.setVisible(visible);
+    myGrowCheckBox.setVisible(visible);
+    myGrowSpinner.setVisible(visible);
   }
 
   private void showAlignment(final FormSpec.DefaultAlignment defaultAlignment) {
@@ -147,7 +184,7 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
     }
   }
 
-  private void showSize(Size size, final boolean row) {
+  private void showSize(Size size) {
     Size minimumSize = null;
     Size maximumSize = null;
     if (size instanceof BoundedSize) {
@@ -299,6 +336,9 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
     public void stateChanged(ChangeEvent e) {
       myUnitsCombo.setEnabled(myButton.isSelected());
       mySpinner.setEnabled(myButton.isSelected());
+      if (myButton.isSelected() && mySpinner.getValue().equals(new Integer(0))) {
+        mySpinner.setValue(100);
+      }
       updateSpec();
     }
   }
