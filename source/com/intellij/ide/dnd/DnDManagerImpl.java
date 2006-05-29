@@ -8,9 +8,11 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,6 +62,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "FabriqueDnDManager";
   }
@@ -72,12 +75,33 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
     myTooltipTimer.stop();
   }
 
+  public void registerSource(@NotNull final AdvancedDnDSource source) {
+    if (!GraphicsEnvironment.isHeadless()) {
+      final JComponent c = source.getComponent();
+      registerSource(source, c);
+
+      final DnDEnabler enabler = new DnDEnabler(source);
+      c.putClientProperty(DnDEnabler.KEY, enabler);
+    }
+  }
+
   public void registerSource(DnDSource source, JComponent component) {
     if (!GraphicsEnvironment.isHeadless()) {
       component.putClientProperty(SOURCE_KEY, source);
       final DragSource defaultDragSource = DragSource.getDefaultDragSource();
       defaultDragSource.createDefaultDragGestureRecognizer(component, DnDConstants.ACTION_COPY_OR_MOVE, myDragGestureListener);
     }
+  }
+
+  public void unregisterSource(AdvancedDnDSource source) {
+    final JComponent c = source.getComponent();
+    final DnDEnabler enabler = (DnDEnabler) c.getClientProperty(DnDEnabler.KEY);
+    if (enabler != null) {
+      Disposer.dispose(enabler);
+      c.putClientProperty(DnDEnabler.KEY, null);
+    }
+
+    unregisterSource(source, c);
   }
 
   public void unregisterSource(DnDSource source, JComponent component) {
@@ -462,7 +486,6 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
         }
       }
     }
-
   }
 
   private static DnDAction getDnDActionForPlatformAction(int platformAction) {

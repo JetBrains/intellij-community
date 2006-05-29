@@ -14,26 +14,24 @@
  * limitations under the License.
  *
  */
+
 package com.intellij.ide.dnd;
 
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseEvent;
 
-public abstract class DnDManager {
-  public static DnDManager getInstance(Project project) {
-    return project.getComponent(DnDManager.class);
-  }
+/**
+ * @author spleaner
+ */
+public interface AdvancedDnDSource extends DnDSource {
 
-  public abstract void registerSource(DnDSource source, JComponent component);
+  void processMouseEvent(final MouseEvent e);
 
-  public abstract void registerSource(AdvancedDnDSource source);
+  boolean isOverSelection(final Point point);
 
-  public abstract void unregisterSource(DnDSource source, JComponent component);
-
-  public abstract void unregisterSource(AdvancedDnDSource source);
-
-  public abstract void registerTarget(DnDTarget target, JComponent component);
-
-  public abstract void unregisterTarget(DnDTarget target, JComponent component);
+  @NotNull
+  JComponent getComponent();
 }

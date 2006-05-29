@@ -8,15 +8,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 
-import javax.swing.*;
+import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 
 public class UiNotifyConnector implements Disposable, HierarchyListener{
-  private final JComponent myComponent;
-  private final MergingUpdateQueue myTarget;
+  private final Component myComponent;
+  private final Activatable myTarget;
 
-  public UiNotifyConnector(final JComponent component, final MergingUpdateQueue target) {
+  public UiNotifyConnector(final Component component, final Activatable target) {
     myComponent = component;
     myTarget = target;
     if (!component.isShowing()) {

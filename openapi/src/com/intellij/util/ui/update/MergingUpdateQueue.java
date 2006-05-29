@@ -15,7 +15,7 @@ import javax.swing.*;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class MergingUpdateQueue implements Runnable, Disposable {
+public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   private boolean myActive;
 

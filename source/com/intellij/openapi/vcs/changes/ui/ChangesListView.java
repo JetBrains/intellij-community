@@ -21,6 +21,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUtils;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -36,6 +37,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -46,8 +49,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class ChangesListView extends Tree implements DataProvider, DeleteProvider {
-  private ChangesListView.DragSource myDragSource;
+public class ChangesListView extends Tree implements DataProvider, DeleteProvider, AdvancedDnDSource {
   private ChangesListView.DropTarget myDropTarget;
   private DnDManager myDndManager;
   private ChangeListOwner myDragOwner;
@@ -79,6 +81,12 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     return null;
   }
 
+  public synchronized void addMouseListener(MouseListener l) {
+    super.addMouseListener(l);    //To change body of overridden methods use File | Settings | File Templates.
+  }
+
+
+
   public static String getRelativePath(FilePath parent, FilePath child) {
     if (parent == null) return child.getPath();
     return child.getPath().substring(parent.getPath().length() + 1).replace('/', File.separatorChar);
@@ -86,20 +94,18 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
   public void installDndSupport(ChangeListOwner owner) {
     myDragOwner = owner;
-    myDragSource = new DragSource();
     myDropTarget = new DropTarget();
     myDndManager = DnDManager.getInstance(myProject);
 
-    myDndManager.registerSource(myDragSource, this);
+    myDndManager.registerSource(this);
     myDndManager.registerTarget(myDropTarget, this);
   }
 
   public void dispose() {
-    if (myDragSource != null) {
-      myDndManager.unregisterSource(myDragSource, this);
+    if (myDropTarget != null) {
+      myDndManager.unregisterSource(this);
       myDndManager.unregisterTarget(myDropTarget, this);
 
-      myDragSource = null;
       myDropTarget = null;
       myDndManager = null;
       myDragOwner = null;
@@ -288,27 +294,6 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   public void setMenuActions(final ActionGroup menuGroup) {
     PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(this);
-  }
-
-  public class DragSource implements DnDSource {
-    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-      return action == DnDAction.MOVE && getSelectedChanges().length > 0;
-    }
-
-    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
-      return new DnDDragStartBean(new ChangeListDragBean(ChangesListView.this, getSelectedChanges()));
-    }
-
-    @Nullable
-    public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-      return new Pair<Image, Point>(DragImageFactory.createImage(ChangesListView.this), new Point());
-    }
-
-    public void dragDropEnd() {
-    }
-
-    public void dropActionChanged(final int gestureModifiers) {
-    }
   }
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
@@ -515,5 +500,37 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
       return node.toString();
     }
+  }
+
+  public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+    return action == DnDAction.MOVE && getSelectedChanges().length > 0;
+  }
+
+  public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    return new DnDDragStartBean(new ChangeListDragBean(this, getSelectedChanges()));
+  }
+
+  @Nullable
+  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+    return new Pair<Image, Point>(DragImageFactory.createImage(this), new Point());
+  }
+
+  public void dragDropEnd() {
+  }
+
+  public void dropActionChanged(final int gestureModifiers) {
+  }
+
+  @NotNull
+  public JComponent getComponent() {
+    return this;
+  }
+
+  public void processMouseEvent(final MouseEvent e) {
+    super.processMouseEvent(e);
+  }
+
+  public boolean isOverSelection(final Point point) {
+    return TreeUtils.isOverSelection(this, point);
   }
 }
