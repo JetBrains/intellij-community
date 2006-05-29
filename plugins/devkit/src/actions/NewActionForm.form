@@ -1,27 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.devkit.actions.NewActionDialog">
-  <grid id="a7288" binding="myRootPanel" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="a7288" binding="myRootPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="59" y="24" width="536" height="399"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="450dd" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="450dd" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="115" width="536" height="194"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.add.to.group"/>
         <children>
           <scrollpane id="fe8a">
             <constraints>
-              <xy x="6" y="45" width="216" height="143"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -36,8 +33,7 @@
           </scrollpane>
           <component id="d15d0" class="javax.swing.JLabel">
             <constraints>
-              <xy x="232" y="23" width="43" height="14"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.actions"/>
@@ -45,8 +41,7 @@
           </component>
           <scrollpane id="c0ce9">
             <constraints>
-              <xy x="232" y="45" width="217" height="143"/>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -59,19 +54,17 @@
               </component>
             </children>
           </scrollpane>
-          <grid id="d4854" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="d4854" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="459" y="20" width="71" height="168"/>
-              <grid row="0" column="2" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <grid row="0" column="2" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.group.anchor"/>
             <children>
               <component id="f4be7" class="javax.swing.JRadioButton" binding="myAnchorFirstRadio">
                 <constraints>
-                  <xy x="6" y="20" width="48" height="22"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor.first"/>
@@ -79,8 +72,7 @@
               </component>
               <component id="74ccc" class="javax.swing.JRadioButton" binding="myAnchorLastRadio">
                 <constraints>
-                  <xy x="6" y="47" width="47" height="22"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor."/>
@@ -88,8 +80,7 @@
               </component>
               <component id="8b7" class="javax.swing.JRadioButton" binding="myAnchorBeforeRadio">
                 <constraints>
-                  <xy x="6" y="74" width="59" height="22"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor.before"/>
@@ -97,8 +88,7 @@
               </component>
               <component id="a46a8" class="javax.swing.JRadioButton" binding="myAnchorAfterRadio">
                 <constraints>
-                  <xy x="6" y="101" width="52" height="22"/>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor.after"/>
@@ -106,16 +96,14 @@
               </component>
               <vspacer id="73244">
                 <constraints>
-                  <xy x="30" y="123" width="11" height="39"/>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
             </children>
           </grid>
           <component id="de6c0" class="javax.swing.JLabel">
             <constraints>
-              <xy x="6" y="23" width="42" height="14"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.groups"/>
@@ -123,19 +111,17 @@
           </component>
         </children>
       </grid>
-      <grid id="69b17" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="69b17" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="536" height="110"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
           <component id="5645" class="javax.swing.JTextField" binding="myActionNameEdit">
             <constraints>
-              <xy x="73" y="31" width="463" height="20"/>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
@@ -143,17 +129,16 @@
           </component>
           <component id="47ab9" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="5" width="52" height="14"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="ce44f"/>
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.id"/>
             </properties>
           </component>
           <component id="26274" class="javax.swing.JTextField" binding="myActionTextEdit">
             <constraints>
-              <xy x="73" y="60" width="463" height="20"/>
-              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
@@ -161,8 +146,7 @@
           </component>
           <component id="27b6b" class="javax.swing.JTextField" binding="myActionDescriptionEdit">
             <constraints>
-              <xy x="73" y="88" width="463" height="20"/>
-              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
@@ -170,35 +154,34 @@
           </component>
           <component id="3c736" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="91" width="61" height="14"/>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="27b6b"/>
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.description"/>
             </properties>
           </component>
           <component id="2f01e" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="34" width="63" height="14"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="5645"/>
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.class.name"/>
             </properties>
           </component>
           <component id="7cf7b" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="63" width="30" height="14"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="26274"/>
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.text"/>
             </properties>
           </component>
           <component id="ce44f" class="javax.swing.JTextField" binding="myActionIdEdit">
             <constraints>
-              <xy x="73" y="2" width="463" height="20"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
@@ -206,19 +189,17 @@
           </component>
         </children>
       </grid>
-      <grid id="3f8c6" binding="myShortcutPanel" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="3f8c6" binding="myShortcutPanel" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="314" width="536" height="85"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.keyboard.shortcuts"/>
         <children>
           <component id="d5e7e" class="javax.swing.JLabel">
             <constraints>
-              <xy x="6" y="26" width="29" height="14"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.keyboard.first"/>
@@ -226,28 +207,25 @@
           </component>
           <component id="5ce08" class="javax.swing.JLabel">
             <constraints>
-              <xy x="6" y="58" width="43" height="14"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.keyboard.second"/>
             </properties>
           </component>
-          <grid id="24949" binding="myFirstKeystrokeEditPlaceholder" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="24949" binding="myFirstKeystrokeEditPlaceholder" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="59" y="23" width="441" height="20"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children/>
           </grid>
-          <grid id="3ba64" binding="mySecondKeystrokeEditPlaceholder" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="3ba64" binding="mySecondKeystrokeEditPlaceholder" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="59" y="55" width="441" height="20"/>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -255,8 +233,7 @@
           </grid>
           <component id="bcafe" class="javax.swing.JButton" binding="myClearFirstKeystroke">
             <constraints>
-              <xy x="510" y="23" width="20" height="20"/>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0">
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false">
                 <minimum-size width="20" height="20"/>
                 <preferred-size width="20" height="20"/>
                 <maximum-size width="20" height="20"/>
@@ -269,8 +246,7 @@
           </component>
           <component id="986ce" class="javax.swing.JButton" binding="myClearSecondKeystroke">
             <constraints>
-              <xy x="510" y="55" width="20" height="20"/>
-              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0">
+              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false">
                 <minimum-size width="20" height="20"/>
                 <preferred-size width="20" height="20"/>
                 <maximum-size width="20" height="20"/>
