@@ -511,6 +511,9 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   }
 
   private void moveCells(final RadContainer container, final boolean isRow, final int cell, int targetCell) {
+    if (targetCell >= cell && targetCell <= cell+2) {
+      return;
+    }
     FormLayout layout = (FormLayout) container.getLayout();
     List<RadComponent> componentsToMove = new ArrayList<RadComponent>();
     FormSpec oldSpec = isRow ? layout.getRowSpec(cell+1) : layout.getColumnSpec(cell+1);
