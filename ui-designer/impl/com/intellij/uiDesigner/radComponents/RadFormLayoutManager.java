@@ -315,6 +315,11 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     }
 
     FormLayout layout = (FormLayout) container.getLayout();
+    FormSpec spec = isRow ? layout.getRowSpec(index+1) : layout.getColumnSpec(index+1);
+    if (spec.getResizeWeight() > 0.01d) {
+      drawGrowMarker(isRow, g2d, rc);
+    }
+
     int[][] groups = isRow ? layout.getRowGroups() : layout.getColumnGroups();
     //noinspection MultipleVariablesInDeclaration
     boolean haveTopLeft = false, haveTopRight = false, haveTopLine = false;
@@ -344,6 +349,32 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     g2d.setColor(Color.BLUE);
     drawGroupLine(rc, isRow, g2d, true, haveTopLeft, haveTopRight, haveTopLine);
     drawGroupLine(rc, isRow, g2d, false, haveBottomLeft, haveBottomRight, haveBottomLine);
+  }
+
+  private static void drawGrowMarker(final boolean isRow, final Graphics2D g2d, final Rectangle rc) {
+    g2d.setColor(Color.BLACK);
+    if (!isRow) {
+      int maxX = (int) rc.getMaxX();
+      int midY = (int) rc.getCenterY()+3;
+      final int xStart = Math.max(maxX - 10, rc.x + 2);
+      final int xEnd = maxX - 2;
+      g2d.drawLine(xStart, midY, xEnd, midY);
+      g2d.drawLine(xStart, midY, xStart+2, midY-2);
+      g2d.drawLine(xStart, midY, xStart+2, midY+2);
+      g2d.drawLine(xEnd, midY, xEnd-2, midY-2);
+      g2d.drawLine(xEnd, midY, xEnd-2, midY+2);
+    }
+    else {
+      int maxY = (int) rc.getMaxY();
+      int midX = (int) rc.getCenterX()+3;
+      final int yStart = Math.max(maxY - 10, rc.y + 2);
+      final int yEnd = maxY - 2;
+      g2d.drawLine(midX, yStart, midX, yEnd);
+      g2d.drawLine(midX, yStart, midX-2, yStart+2);
+      g2d.drawLine(midX, yStart, midX+2, yStart+2);
+      g2d.drawLine(midX, yEnd, midX-2, yEnd-2);
+      g2d.drawLine(midX, yEnd, midX+2, yEnd-2);
+    }
   }
 
   private static void drawGroupLine(final Rectangle rc, final boolean isRow, final Graphics2D g2d, boolean isTop,

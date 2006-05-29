@@ -99,8 +99,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     Graphics2D g2d = (Graphics2D) g;
 
     final Rectangle bounds = getBounds();
-    final int paintedSize = 7;
-    final int paintOffset = 8;
+    final int paintedSize = 8;
+    final int paintOffset = 7;
 
     RadContainer container = getSelectedGridContainer();
     if (container == null) {
