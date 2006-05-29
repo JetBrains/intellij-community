@@ -19,10 +19,8 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 
 import java.util.Comparator;
 
-class InspectionComparator implements Comparator<Class<? extends InspectionProfileEntry>> {
-    InspectionComparator() {
-        super();
-    }
+class InspectionComparator
+        implements Comparator<Class<? extends InspectionProfileEntry>> {
 
     public int compare(Class<? extends InspectionProfileEntry> class1,
                        Class<? extends InspectionProfileEntry> class2) {
@@ -48,20 +46,18 @@ class InspectionComparator implements Comparator<Class<? extends InspectionProfi
         displayName2 = displayName2.toUpperCase();
         displayName1 = stripQuotes(displayName1);
         displayName2 = stripQuotes(displayName2);
-
         return displayName1.compareTo(displayName2);
     }
 
     private static String stripQuotes(String str) {
-        if(str.indexOf((int) '\'') <0 && str.indexOf((int) '"')<0)
-        {
+        if(str.indexOf((int) '\'') <0 && str.indexOf((int) '"')<0) {
             return str;
         }
         final int length = str.length();
         final StringBuffer buffer = new StringBuffer(length);
         for (int i = 0; i < length; i++) {
             final char ch = str.charAt(i);
-            if(ch != '"' && ch != '\''){
+            if (ch != '"' && ch != '\'') {
                 buffer.append(ch);
             }
         }
