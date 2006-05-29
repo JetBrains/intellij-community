@@ -1,7 +1,7 @@
 <component>
   <actions>
-    <action id="CaptureMemorySnapShot" class="com.intellij.util.CaptureMemorySnapshotAction" icon="/actions/profileMemory.png" />
-    <action id="CaptureCPUUsageData" class = "com.intellij.util.CaptureCPUUsageDataAction" icon="/actions/profuleCPU.png" />
+    <action id="CaptureMemorySnapShot" class="com.intellij.util.CaptureMemorySnapshotAction" icon="/actions/profileMemory.png"/>
+    <action id="CaptureCPUUsageData" class="com.intellij.util.CaptureCPUUsageDataAction" icon="/actions/profuleCPU.png"/>
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationAction"/>
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
@@ -121,7 +121,8 @@
 
     <group id="JavaeeMigrationGroup">
       <action id="ApplyJavaeeStyle" class="com.intellij.javaee.module.view.ApplyJavaeeStyleAction"/>
-      <group id="GeneratePersistenceMapping" class="com.intellij.javaee.persistence.view.GeneratePersistenceMappingActionGroup" popup="true"/>
+      <group id="GeneratePersistenceMapping" class="com.intellij.javaee.persistence.view.GeneratePersistenceMappingActionGroup"
+             popup="true"/>
     </group>
     <group id="JavaeeEditorGenerateGroup">
       <action id="GenerateEJBReference" class="com.intellij.codeInsight.generation.actions.GenerateEJBReference"/>
@@ -131,21 +132,32 @@
     </group>
 
     <group id="J2EEGenerateGroup">
-      <action id="CreatePersistenceUnit" class="com.intellij.javaee.persistence.view.CreatePersistenceUnitAction" icon="/nodes/persistenceUnit.png"/>
-      <action id="CreateEntityListener" class="com.intellij.javaee.persistence.view.actions.CreateEntityListenerAction" icon="/nodes/entityListener.png"/>
+      <action id="CreatePersistenceUnit" class="com.intellij.javaee.persistence.view.CreatePersistenceUnitAction"
+              icon="/nodes/persistenceUnit.png"/>
+      <action id="CreateEntityListener" class="com.intellij.javaee.persistence.view.actions.CreateEntityListenerAction"
+              icon="/nodes/entityListener.png"/>
 
-      <action id="CreatePersistentEntity" class="com.intellij.javaee.persistence.view.actions.CreatePersistentEntity" icon="/nodes/persistentEntity.png"/>
-      <action id="CreateMappedSuperclass" class="com.intellij.javaee.persistence.view.actions.CreateMappedSuperclass" icon="/nodes/mappedSuperclass.png"/>
+      <action id="CreatePersistentEntity" class="com.intellij.javaee.persistence.view.actions.CreatePersistentEntity"
+              icon="/nodes/persistentEntity.png"/>
+      <action id="CreateMappedSuperclass" class="com.intellij.javaee.persistence.view.actions.CreateMappedSuperclass"
+              icon="/nodes/mappedSuperclass.png"/>
       <action id="CreateEmbeddable" class="com.intellij.javaee.persistence.view.actions.CreateEmbeddable" icon="/nodes/embeddable.png"/>
 
-      <action id="CreateSessionBean" class="com.intellij.javaee.module.view.ejb.actions.CreateSessionBeanAction" icon="/javaee/sessionBean.png"/>
-      <action id="CreateContainerManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateCMPEntityBeanAction" icon="/javaee/entityBean.png"/>
-      <action id="CreateBeanManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateBMPEntityBeanAction" icon="/javaee/entityBean.png"/>
-      <action id="CreateMessageBean" class="com.intellij.javaee.module.view.ejb.actions.CreateMessageBeanAction" icon="/javaee/messageBean.png"/>
-      <action id="CreateTransferObject" class="com.intellij.javaee.module.view.ejb.actions.CreateTransferObjectAction" icon="/nodes/class.png"/>
+      <action id="CreateSessionBean" class="com.intellij.javaee.module.view.ejb.actions.CreateSessionBeanAction"
+              icon="/javaee/sessionBean.png"/>
+      <action id="CreateContainerManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateCMPEntityBeanAction"
+              icon="/javaee/entityBean.png"/>
+      <action id="CreateBeanManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateBMPEntityBeanAction"
+              icon="/javaee/entityBean.png"/>
+      <action id="CreateMessageBean" class="com.intellij.javaee.module.view.ejb.actions.CreateMessageBeanAction"
+              icon="/javaee/messageBean.png"/>
+      <action id="CreateTransferObject" class="com.intellij.javaee.module.view.ejb.actions.CreateTransferObjectAction"
+              icon="/nodes/class.png"/>
       <action id="CreateCMPField" class="com.intellij.javaee.module.view.ejb.actions.CreateCmpFieldAction" icon="/nodes/ejbCmpField.png"/>
-      <action id="CreateEJBRelationship" class="com.intellij.javaee.module.view.ejb.actions.CreateEjbRelationshipAction" icon="/nodes/ejbCmrField.png"/>
-      <action id="CreateEJBInterceptor" class="com.intellij.javaee.module.view.ejb.actions.CreateInterceptorAction" icon="/javaee/interceptorClass.png"/>
+      <action id="CreateEJBRelationship" class="com.intellij.javaee.module.view.ejb.actions.CreateEjbRelationshipAction"
+              icon="/nodes/ejbCmrField.png"/>
+      <action id="CreateEJBInterceptor" class="com.intellij.javaee.module.view.ejb.actions.CreateInterceptorAction"
+              icon="/javaee/interceptorClass.png"/>
 
       <action id="CreateJSPAction" class="com.intellij.javaee.module.view.web.CreateJspAction" icon="/fileTypes/jsp.png"/>
       <action id="CreateJSPXAction" class="com.intellij.javaee.module.view.web.CreateJspxAction" icon="/fileTypes/jspx.png"/>
@@ -181,7 +193,8 @@
     <action id="Compare.SameVersion" class="com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction"/>
     <action id="Compare.LastVersion" class="com.intellij.openapi.vcs.actions.CompareWithLastVersion"/>
     <action id="Compare.Selected" class="com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction" popup="true"/>
-    <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction" text="Compare with Specified Revision..." popup="true"/>
+    <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction"
+            text="Compare with Specified Revision..." popup="true"/>
 
     <group id="NewGroup" popup="true">
       <action id="NewClass" class="com.intellij.ide.actions.CreateClassAction"/>
@@ -209,7 +222,7 @@
       <action id="LocalVcs.AddLabel" class="com.intellij.localVcs.actions.AddLabelAction"/>
     </group>
 
-    <group id ="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsActionGroup" popup="true">
+    <group id="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsActionGroup" popup="true">
       <reference ref="LocalVcsGroup"/>
       <separator/>
       <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control">
@@ -393,7 +406,8 @@
         <action id="GotoDefinition" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoDefinitionAction"/>
         <action id="GotoUsage" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoUsageAction"/>
         <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
-        <action id="SmartGotoImplementation" internal="true" class="com.intellij.codeInsight.navigation.actions.SmartGotoImplementationAction"/>
+        <action id="SmartGotoImplementation" internal="true"
+                class="com.intellij.codeInsight.navigation.actions.SmartGotoImplementationAction"/>
         <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
         <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
         <separator/>
@@ -415,8 +429,10 @@
         <action id="PreviousOccurence" class="com.intellij.ide.actions.PreviousOccurenceAction" icon="/actions/previousOccurence.png"/>
         <action id="NextOccurence" class="com.intellij.ide.actions.NextOccurenceAction" icon="/actions/nextOccurence.png"/>
         <separator/>
-        <action id="VcsShowNextChangeMarker" class="com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction" icon="/actions/nextOccurence.png"/>
-        <action id="VcsShowPrevChangeMarker" class="com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction" icon="/actions/previousOccurence.png"/>
+        <action id="VcsShowNextChangeMarker" class="com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction"
+                icon="/actions/nextOccurence.png"/>
+        <action id="VcsShowPrevChangeMarker" class="com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction"
+                icon="/actions/previousOccurence.png"/>
       </group>
 
       <!--  Code  -->
@@ -522,7 +538,7 @@
       <group id="RunMenu" popup="true">
         <group id="RunnerActions"/>
         <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
-        <action id="Stop" class="com.intellij.execution.actions.StopAction" icon = "/actions/suspend.png"/>
+        <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="/actions/suspend.png"/>
         <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
         <separator/>
         <action id="StepOver" class="com.intellij.debugger.actions.StepOverAction" icon="/actions/traceOver.png"/>
@@ -537,7 +553,8 @@
         <separator/>
         <action id="EvaluateExpression" class="com.intellij.debugger.actions.EvaluateAction" icon="/debugger/evaluateExpression.png"/>
         <action id="QuickEvaluateExpression" class="com.intellij.debugger.actions.QuickEvaluateAction"/>
-        <action id="ShowExecutionPoint" class="com.intellij.debugger.actions.ShowExecutionPointAction" icon="/debugger/showCurrentFrame.png"/>
+        <action id="ShowExecutionPoint" class="com.intellij.debugger.actions.ShowExecutionPointAction"
+                icon="/debugger/showCurrentFrame.png"/>
         <separator/>
         <action id="ToggleLineBreakpoint" class="com.intellij.debugger.actions.ToggleLineBreakpointAction"/>
         <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
@@ -621,13 +638,13 @@
         <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
         <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction"/>
         <separator/>
-        <action id="SplitVertically"        class="com.intellij.ide.actions.SplitVerticallyAction" icon="/actions/splitVertically.png"/>
-        <action id="SplitHorizontally"      class="com.intellij.ide.actions.SplitHorizontallyAction" icon="/actions/splitHorizontally.png"/>
+        <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="/actions/splitVertically.png"/>
+        <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="/actions/splitHorizontally.png"/>
         <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction"/>
-        <action id="Unsplit"                class="com.intellij.ide.actions.UnsplitAction"/>
-        <action id="UnsplitAll"             class="com.intellij.ide.actions.UnsplitAllAction"/>
-        <action id="NextSplitter"           class="com.intellij.ide.actions.NextSplitAction"/>
-        <action id="PrevSplitter"           class="com.intellij.ide.actions.PrevSplitAction"/>
+        <action id="Unsplit" class="com.intellij.ide.actions.UnsplitAction"/>
+        <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
+        <action id="NextSplitter" class="com.intellij.ide.actions.NextSplitAction"/>
+        <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
       </group>
 
       <!-- Help -->
@@ -674,13 +691,19 @@
       <separator/>
       <reference ref="ShowSettings"/>
       <separator/>
-      <action id="GuiDesigner.PreviewForm" class="com.intellij.uiDesigner.actions.PreviewFormAction" icon="/com/intellij/uiDesigner/icons/preview.png"/>
-      <action id="GuiDesigner.DataBindingWizard" class="com.intellij.uiDesigner.actions.DataBindingWizardAction" icon="/com/intellij/uiDesigner/icons/dataBindingWizard.png"/>
+      <action id="GuiDesigner.PreviewForm" class="com.intellij.uiDesigner.actions.PreviewFormAction"
+              icon="/com/intellij/uiDesigner/icons/preview.png"/>
+      <action id="GuiDesigner.DataBindingWizard" class="com.intellij.uiDesigner.actions.DataBindingWizardAction"
+              icon="/com/intellij/uiDesigner/icons/dataBindingWizard.png"/>
       <action id="GuiDesigner.ChooseLocale" class="com.intellij.uiDesigner.actions.ChooseLocaleAction"/>
-      <action id="GuiDesigner.LayOutHorizontally" class="com.intellij.uiDesigner.actions.LayOutHorizontallyAction" icon="/com/intellij/uiDesigner/icons/horizontal.png"/>
-      <action id="GuiDesigner.LayOutVertically" class="com.intellij.uiDesigner.actions.LayOutVerticallyAction" icon="/com/intellij/uiDesigner/icons/vertical.png"/>
-      <action id="GuiDesigner.LayOutInGrid" class="com.intellij.uiDesigner.actions.LayOutInAGridAction" icon="/com/intellij/uiDesigner/icons/grid.png"/>
-      <action id="GuiDesigner.BreakLayout" class="com.intellij.uiDesigner.actions.BreakLayoutAction" icon="/com/intellij/uiDesigner/icons/break.png"/>
+      <action id="GuiDesigner.LayOutHorizontally" class="com.intellij.uiDesigner.actions.LayOutHorizontallyAction"
+              icon="/com/intellij/uiDesigner/icons/horizontal.png"/>
+      <action id="GuiDesigner.LayOutVertically" class="com.intellij.uiDesigner.actions.LayOutVerticallyAction"
+              icon="/com/intellij/uiDesigner/icons/vertical.png"/>
+      <action id="GuiDesigner.LayOutInGrid" class="com.intellij.uiDesigner.actions.LayOutInAGridAction"
+              icon="/com/intellij/uiDesigner/icons/grid.png"/>
+      <action id="GuiDesigner.BreakLayout" class="com.intellij.uiDesigner.actions.BreakLayoutAction"
+              icon="/com/intellij/uiDesigner/icons/break.png"/>
       <separator/>
       <reference ref="HelpTopics"/>
       <separator/>
@@ -737,8 +760,10 @@
       <action id="Debugger.ShowFrame" class="com.intellij.debugger.actions.ShowFrameAction"/>
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
-      <action id="Debugger.MuteBreakpoints" class="com.intellij.debugger.actions.MuteBreakpointsAction" icon="/debugger/muteBreakpoints.png"/>
-      <action id="Debugger.ToggleStepThreadSuspendPolicy" class="com.intellij.debugger.actions.ToggleStepThreadSuspendPolicyAction" icon="/debugger/suspend_all.png"/>
+      <action id="Debugger.MuteBreakpoints" class="com.intellij.debugger.actions.MuteBreakpointsAction"
+              icon="/debugger/muteBreakpoints.png"/>
+      <action id="Debugger.ToggleStepThreadSuspendPolicy" class="com.intellij.debugger.actions.ToggleStepThreadSuspendPolicyAction"
+              icon="/debugger/suspend_all.png"/>
       <action id="Debugger.AddToWatch" class="com.intellij.debugger.actions.AddToWatchAction"/>
     </group>
 
@@ -802,27 +827,27 @@
     </group>
 
     <group id="EditorTabPopupMenu">
-      <reference ref="CloseEditor" />
+      <reference ref="CloseEditor"/>
       <reference ref="CloseAllEditorsButActive"/>
       <reference ref="CloseAllEditors"/>
-      <reference ref="CloseAllUnmodifiedEditors" />
-      <separator />
+      <reference ref="CloseAllUnmodifiedEditors"/>
+      <separator/>
       <reference ref="SplitVertically"/>
       <reference ref="SplitHorizontally"/>
       <action id="MoveEditorToOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction"/>
       <reference ref="ChangeSplitOrientation"/>
       <reference ref="PinActiveTab"/>
-      <separator />
+      <separator/>
       <reference ref="NextTab"/>
       <reference ref="PreviousTab"/>
-      <separator />
-      <reference ref="Unsplit" />
-      <reference ref="UnsplitAll" />
+      <separator/>
+      <reference ref="Unsplit"/>
+      <reference ref="UnsplitAll"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <separator />
+      <separator/>
       <reference ref="AddAllToFavorites"/>
-      <separator />
+      <separator/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
       <reference ref="ValidateXml"/>
@@ -851,7 +876,7 @@
       <reference ref="AddAntBuildFile"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <separator />
+      <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
@@ -897,7 +922,7 @@
       <reference ref="AddAntBuildFile"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <separator />
+      <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
@@ -936,7 +961,7 @@
       <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.DeleteFavoritesListAction"/>
       <action id="RemoveAllFavoritesListsButThis" class="com.intellij.ide.favoritesTreeView.DeleteAllFavoritesListsButThisAction"/>
       <reference ref="SendToFavoritesGroup"/>
-      <separator />
+      <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
@@ -1021,8 +1046,8 @@
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
-        <reference ref="AddToFavorites"/>
-      <separator />
+      <reference ref="AddToFavorites"/>
+      <separator/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
@@ -1041,17 +1066,17 @@
 
     <group id="TypeHierarchyPopupMenu">
       <action id="TypeHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction"/>
-      <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.type.ViewClassHierarchyAction" />
-      <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.type.ViewSubtypesHierarchyAction" />
-      <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.type.ViewSupertypesHierarchyAction" />
+      <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.type.ViewClassHierarchyAction"/>
+      <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.type.ViewSubtypesHierarchyAction"/>
+      <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.type.ViewSupertypesHierarchyAction"/>
       <separator/>
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
-        <reference ref="AddToFavorites"/>
-      <separator />
+      <reference ref="AddToFavorites"/>
+      <separator/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
       <reference ref="ReformatCode"/>
@@ -1078,8 +1103,8 @@
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
-        <reference ref="AddToFavorites"/>
-      <separator />
+      <reference ref="AddToFavorites"/>
+      <separator/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
@@ -1101,7 +1126,7 @@
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
-        <reference ref="AddToFavorites"/>
+      <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
@@ -1133,8 +1158,8 @@
       <reference ref="ShowPackageDeps"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
-        <reference ref="AddToFavorites"/>
-      <separator />
+      <reference ref="AddToFavorites"/>
+      <separator/>
       <reference ref="ValidateXml"/>
       <reference ref="AddAntBuildFile"/>
       <separator/>
@@ -1345,7 +1370,7 @@
       <action id="GuiDesigner.ShowComponentTags" class="com.intellij.uiDesigner.actions.ShowComponentTagsAction"/>
       <separator/>
       <action id="GuiDesigner.CreateComponent" class="com.intellij.uiDesigner.actions.CreateComponentAction"
-        use-shortcut-of="Generate"/>
+              use-shortcut-of="Generate"/>
       <separator/>
       <reference ref="EditSource"/>
       <action id="GuiDesigner.ExpandSelection" class="com.intellij.uiDesigner.actions.ExpandSelectionAction"/>
@@ -1356,15 +1381,15 @@
       <action id="GuiDesigner.UngroupButtons" class="com.intellij.uiDesigner.actions.UngroupButtonsAction"/>
       <action id="GuiDesigner.AddTab" class="com.intellij.uiDesigner.actions.AddTabAction"/>
       <action id="GuiDesigner.Duplicate" class="com.intellij.uiDesigner.actions.DuplicateComponentsAction"
-        use-shortcut-of="EditorDuplicate"/>
+              use-shortcut-of="EditorDuplicate"/>
       <action id="GuiDesigner.Morph" class="com.intellij.uiDesigner.actions.MorphAction"/>
       <action id="GuiDesigner.CreateListener" class="com.intellij.uiDesigner.actions.CreateListenerAction"
-        use-shortcut-of="OverrideMethods"/>
+              use-shortcut-of="OverrideMethods"/>
       <action id="GuiDesigner.GoToListener" class="com.intellij.uiDesigner.actions.NavigateToListenerAction"
-        use-shortcut-of="GotoImplementation"/>
+              use-shortcut-of="GotoImplementation"/>
       <separator/>
       <action id="GuiDesigner.SurroundPopup" class="com.intellij.uiDesigner.actions.SurroundPopupAction"
-        use-shortcut-of="SurroundWith"/>
+              use-shortcut-of="SurroundWith"/>
       <action id="GuiDesigner.Flatten" class="com.intellij.uiDesigner.actions.FlattenAction"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
@@ -1431,7 +1456,7 @@
               icon="/debugger/console.png"/>
     </group>
 
-     <!-- ***** java server faces actions *************************************** -->
+    <!-- ***** java server faces actions *************************************** -->
     <action id="Faces.EnableSupport" class="com.intellij.jsf.actions.AddFacesSupportAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
     </action>
@@ -1483,8 +1508,9 @@
     <action id="Faces.Navigation.Graph.PageTree.GotoSourceAction" class="com.intellij.jsf.graph.ui.renderers.actions.GotoSourceAction"
             text="_Jump to source">
     </action>
-    <action id="Faces.Navigation.Graph.PageTree.GotoDeclarationAction" class="com.intellij.jsf.graph.ui.renderers.actions.GotoDeclarationAction"
-            text="_Goto declaration" >
+    <action id="Faces.Navigation.Graph.PageTree.GotoDeclarationAction"
+            class="com.intellij.jsf.graph.ui.renderers.actions.GotoDeclarationAction"
+            text="_Goto declaration">
     </action>
 
     <group id="Faces.Navigation.Graph.LayoutGroup" text="Layout" popup="true">
@@ -1526,31 +1552,34 @@
       <separator/>
       <reference ref="Faces.Navigation.Graph.LayoutGroup"/>
     </group>
-     <group id="Faces.MainPageTreePopup">
-        <reference ref="Faces.Navigation.Graph.PageTree.GotoSourceAction"/>
-        <reference ref="Faces.Navigation.Graph.PageTree.GotoDeclarationAction"/>
+    <group id="Faces.MainPageTreePopup">
+      <reference ref="Faces.Navigation.Graph.PageTree.GotoSourceAction"/>
+      <reference ref="Faces.Navigation.Graph.PageTree.GotoDeclarationAction"/>
     </group>
 
-    <action id="DomElementsTreeView.GotoDomElementDeclarationAction" class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"
-      text="Goto Element" >
+    <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
+            class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"
+            text="Goto Element">
       <keyboard-shortcut first-keystroke="F4" keymap="$default"/>
     </action>
 
     <action id="DomElementsTreeView.AddElement" class="com.intellij.util.xml.tree.actions.AddElementInCollectionAction"
-      text ="Insert element">
+            text="Insert element">
       <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
     </action>
     <action id="DomElementsTreeView.DeleteElement" class="com.intellij.util.xml.tree.actions.DeleteDomElement"
-      text="Delete element">
+            text="Delete element">
       <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
     </action>
 
-    <group id="DomElementsTreeView.TreePopup" >
-        <reference ref="DomElementsTreeView.GotoDomElementDeclarationAction"/>
+    <group id="DomElementsTreeView.AddElementGroup" class="com.intellij.util.xml.tree.actions.AddDomElementActionGroup"/>
 
-        <separator/>
-        <reference ref="DomElementsTreeView.AddElement" popup="true"/>
-        <reference ref="DomElementsTreeView.DeleteElement"/>
+    <group id="DomElementsTreeView.TreePopup">
+      <reference ref="DomElementsTreeView.GotoDomElementDeclarationAction"/>
+
+      <separator/>
+      <reference ref="DomElementsTreeView.AddElementGroup"/>
+      <reference ref="DomElementsTreeView.DeleteElement"/>
     </group>
 
   </actions>
