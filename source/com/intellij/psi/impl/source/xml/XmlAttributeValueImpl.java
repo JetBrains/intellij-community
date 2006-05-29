@@ -23,7 +23,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   private static final Class ourReferenceClass = XmlAttributeValue.class;
 
   public XmlAttributeValueImpl() {
-    super(XML_ATTRIBUTE_VALUE);
+    super(XML_ATTRIBUTE_VALUE);                            
   }
 
   public void accept(PsiElementVisitor visitor) {
@@ -57,6 +57,6 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
 
   @Nullable
   public List<Pair<PsiElement,TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this, null); //todo
+    return InjectedLanguageUtil.getInjectedPsiFiles(this, InjectedLanguageUtil.XmlAttributeLiteralEscaper.INSTANCE);
   }
 }

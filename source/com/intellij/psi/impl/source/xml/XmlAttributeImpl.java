@@ -7,13 +7,11 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
-import com.intellij.pom.xml.XmlChangeSet;
-import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
+import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -24,12 +22,14 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author Mike
@@ -105,6 +105,104 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   public String getValue() {
     final XmlAttributeValue valueElement = getValueElement();
     return valueElement != null ? valueElement.getValue() : null;
+  }
+
+  private String myDisplayText = null;
+  private int[] myGapDisplayStarts = null;
+  private int[] myGapPhysicalStarts = null;
+  private TextRange myValueTextRange; // text inside quotes, if there are any
+
+  public String getDisplayValue() {
+    if (myDisplayText != null) return myDisplayText;
+    XmlAttributeValue value = getValueElement();
+    if (value == null) return null;
+    PsiElement firstChild = value.getFirstChild();
+    if (firstChild == null) return null;
+    ASTNode child = firstChild.getNode();
+    myValueTextRange = new TextRange(0, value.getTextLength());
+    if (child != null && child.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
+      myValueTextRange = new TextRange(child.getTextLength(), myValueTextRange.getEndOffset());
+      child = child.getTreeNext();
+    }
+    final TIntArrayList gapsStarts = new TIntArrayList();
+    final TIntArrayList gapsShifts = new TIntArrayList();
+    StringBuffer buffer = new StringBuffer(getTextLength());
+    while (child != null) {
+      final int start = buffer.length();
+      IElementType elementType = child.getElementType();
+      if (elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
+        myValueTextRange = new TextRange(myValueTextRange.getStartOffset(), child.getTextRange().getStartOffset() - value.getTextRange().getStartOffset());
+        break;
+      }
+      if (elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
+        buffer.append(XmlUtil.getCharFromEntityRef(child.getText()));
+      }
+      else {
+        buffer.append(child.getText());
+      }
+
+      int end = buffer.length();
+      int originalLength = child.getTextLength();
+      if (end - start != originalLength) {
+        gapsStarts.add(start);
+        gapsShifts.add(originalLength - (end - start));
+      }
+      child = child.getTreeNext();
+    }
+    myGapDisplayStarts = new int[gapsShifts.size()];
+    myGapPhysicalStarts = new int[gapsShifts.size()];
+    int currentGapsSum = 0;
+    for (int i=0; i<myGapDisplayStarts.length;i++) {
+      currentGapsSum += gapsShifts.get(i);
+      myGapDisplayStarts[i] = gapsStarts.get(i);
+      myGapPhysicalStarts[i] = myGapDisplayStarts[i] + currentGapsSum;
+    }
+
+    return myDisplayText = buffer.toString();
+  }
+  public int physicalToDisplay(int physicalIndex) {
+    getDisplayValue();
+    if (myGapPhysicalStarts.length == 0) return physicalIndex;
+
+    final int bsResult = Arrays.binarySearch(myGapPhysicalStarts, physicalIndex);
+
+    final int gapIndex;
+    if(bsResult > 0) gapIndex = bsResult;
+    else if(bsResult < -1) gapIndex = -bsResult - 2;
+    else gapIndex = -1;
+
+    if(gapIndex < 0) return physicalIndex;
+    final int shift = myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex];
+    return Math.max(myGapDisplayStarts[gapIndex], physicalIndex - shift);
+  }
+
+  public int displayToPhysical(int displayIndex) {
+    getDisplayValue();
+    if (myGapDisplayStarts.length == 0) return displayIndex;
+
+    final int bsResult = Arrays.binarySearch(myGapDisplayStarts, displayIndex);
+    final int gapIndex;
+
+    if(bsResult > 0) gapIndex = bsResult - 1;
+    else if(bsResult < -1) gapIndex = -bsResult - 2;
+    else gapIndex = -1;
+
+    if(gapIndex < 0) return displayIndex;
+    final int shift = myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex];
+    return displayIndex + shift;
+  }
+
+  public TextRange getValueTextRange() {
+    getDisplayValue();
+    return myValueTextRange;
+  }
+
+  public void clearCaches() {
+    super.clearCaches();
+    myDisplayText = null;
+    myGapDisplayStarts = null;
+    myGapPhysicalStarts = null;
+    myValueTextRange = null;
   }
 
   @NotNull

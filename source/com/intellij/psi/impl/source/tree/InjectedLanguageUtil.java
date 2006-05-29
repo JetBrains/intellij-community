@@ -28,6 +28,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -216,8 +218,8 @@ public class InjectedLanguageUtil {
     }
   }
 
-  public static class XmlLiteralEscaper implements LiteralTextEscaper<XmlText> {
-    public static final XmlLiteralEscaper INSTANCE = new XmlLiteralEscaper();
+  public static class XmlTextLiteralEscaper implements LiteralTextEscaper<XmlText> {
+    public static final XmlTextLiteralEscaper INSTANCE = new XmlTextLiteralEscaper();
     private XmlText myXmlText;
 
     public boolean decode(XmlText host, final TextRange rangeInsideHost, StringBuilder outChars) {
@@ -230,6 +232,23 @@ public class InjectedLanguageUtil {
 
     public int getOffsetInSource(final int offsetInDecoded) {
       return myXmlText.displayToPhysical(offsetInDecoded);
+    }
+  }
+  public static class XmlAttributeLiteralEscaper implements LiteralTextEscaper<XmlAttributeValue> {
+    public static final XmlAttributeLiteralEscaper INSTANCE = new XmlAttributeLiteralEscaper();
+    private XmlAttribute myXmlAttribute;
+
+    public boolean decode(XmlAttributeValue host, final TextRange rangeInsideHost, StringBuilder outChars) {
+      myXmlAttribute = (XmlAttribute)host.getParent();
+      TextRange valueTextRange = myXmlAttribute.getValueTextRange();
+      int startInDecoded = myXmlAttribute.physicalToDisplay(rangeInsideHost.getStartOffset() - valueTextRange.getStartOffset());
+      int endInDecoded = myXmlAttribute.physicalToDisplay(rangeInsideHost.getEndOffset() - valueTextRange.getStartOffset());
+      outChars.append(myXmlAttribute.getDisplayValue(), startInDecoded, endInDecoded);
+      return true;
+    }
+
+    public int getOffsetInSource(final int offsetInDecoded) {
+      return myXmlAttribute.displayToPhysical(offsetInDecoded);
     }
   }
 }

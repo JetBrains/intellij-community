@@ -18,6 +18,7 @@ package com.intellij.psi.xml;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,32 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
 
   XmlTag getParent();
 
+  /**
+   * @return text inside XML attribute with quotes stripped off
+   */
   String getValue();
+
+  /**
+   * @return text inside XML attribute with quotes stripped off and XML char entities replaced with corresponding characters
+   */
+  String getDisplayValue();
+
+  /**
+   * @param offset in string returned by {@link #getText()} (with quotes stripped)
+   * @return offset in the string returned from {@link #getDisplayValue()}
+   */
+  int physicalToDisplay(int offset);
+  /**
+   * @param offset in the string returned from {@link #getDisplayValue()}
+   * @return offset in string returned by {@link #getText()} (with quotes stripped)
+   */
+  int displayToPhysical(int offset);
+
+  /**
+   * @return TextRange of the XML attribute value.
+   * If quotes are present, it returns <code>new TextRange(1, getTextLength()-1)</code>, otherwise it is <code>new TextRange(0, getTextLength())</code>
+   */
+  TextRange getValueTextRange();
 
   boolean isNamespaceDeclaration();
 

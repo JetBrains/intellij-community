@@ -21,5 +21,8 @@ import com.intellij.psi.PsiLanguageInjectionHost;
  * @author Mike
  */
 public interface XmlAttributeValue extends XmlElement, PsiLanguageInjectionHost {
+  /**
+   * @return text inside XML attribute with quotes stripped off
+   */
   String getValue();
 }

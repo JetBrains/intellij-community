@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,58 +50,56 @@ import java.util.*;
 /**
  * @author Mike
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class XmlUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlUtil");
 
-  public static final String TAGLIB_1_1_URI = "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd";
-  public static final String TAGLIB_1_2_URI = "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd";
-  public static final String TAGLIB_1_2_a_URI = "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_2.dtd";
-  public static final String TAGLIB_1_2_b_URI = "http://java.sun.com/JSP/TagLibraryDescriptor";
-  public static final String TAGLIB_2_0_URI = "http://java.sun.com/xml/ns/j2ee";
-  public static final String TAGLIB_2_1_URI = "http://java.sun.com/xml/ns/javaee";
+  @NonNls public static final String TAGLIB_1_1_URI = "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd";
+  @NonNls public static final String TAGLIB_1_2_URI = "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd";
+  @NonNls public static final String TAGLIB_1_2_a_URI = "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_2.dtd";
+  @NonNls public static final String TAGLIB_1_2_b_URI = "http://java.sun.com/JSP/TagLibraryDescriptor";
+  @NonNls public static final String TAGLIB_2_0_URI = "http://java.sun.com/xml/ns/j2ee";
+  @NonNls public static final String TAGLIB_2_1_URI = "http://java.sun.com/xml/ns/javaee";
 
-  public static final String XML_SCHEMA_URI = "http://www.w3.org/2001/XMLSchema";
-  public static final String XML_SCHEMA_URI2 = "http://www.w3.org/1999/XMLSchema";
-  public static final String XML_SCHEMA_URI3 = "http://www.w3.org/2000/10/XMLSchema";
-  public static final String XML_SCHEMA_INSTANCE_URI = "http://www.w3.org/2001/XMLSchema-instance";
+  @NonNls public static final String XML_SCHEMA_URI = "http://www.w3.org/2001/XMLSchema";
+  @NonNls public static final String XML_SCHEMA_URI2 = "http://www.w3.org/1999/XMLSchema";
+  @NonNls public static final String XML_SCHEMA_URI3 = "http://www.w3.org/2000/10/XMLSchema";
+  @NonNls public static final String XML_SCHEMA_INSTANCE_URI = "http://www.w3.org/2001/XMLSchema-instance";
 
-  public static final String XSLT_URI = "http://www.w3.org/1999/XSL/Transform";
+  @NonNls public static final String XSLT_URI = "http://www.w3.org/1999/XSL/Transform";
 
-  public static final String ANT_URI = "http://ant.apache.org/schema.xsd";
-  public static final String XHTML_URI = "http://www.w3.org/1999/xhtml";
-  public static final String HTML_URI = "http://www.w3.org/1999/html";
-  public static final String EMPTY_URI = "";
-  public static final Key<String> TEST_PATH = Key.create("TEST PATH");
-  public static final String JSP_URI = "http://java.sun.com/JSP/Page";
-  public static final String ANY_URI = "http://www.intellij.net/ns/any";
+  @NonNls public static final String ANT_URI = "http://ant.apache.org/schema.xsd";
+  @NonNls public static final String XHTML_URI = "http://www.w3.org/1999/xhtml";
+  @NonNls public static final String HTML_URI = "http://www.w3.org/1999/html";
+  @NonNls public static final String EMPTY_URI = "";
+  @NonNls public static final Key<String> TEST_PATH = Key.create("TEST PATH");
+  @NonNls public static final String JSP_URI = "http://java.sun.com/JSP/Page";
+  @NonNls public static final String ANY_URI = "http://www.intellij.net/ns/any";
 
-  private static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
-  private static final String JSTL_CORE_URI2 = "http://java.sun.com/jstl/core";
-  private static final String JSTL_CORE_URI3 = "http://java.sun.com/jstl/core_rt";
-  public static final String[] JSTL_CORE_URIS = {JSTL_CORE_URI, JSTL_CORE_URI2, JSTL_CORE_URI3};
+  @NonNls private static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
+  @NonNls private static final String JSTL_CORE_URI2 = "http://java.sun.com/jstl/core";
+  @NonNls private static final String JSTL_CORE_URI3 = "http://java.sun.com/jstl/core_rt";
+  @NonNls public static final String[] JSTL_CORE_URIS = {JSTL_CORE_URI, JSTL_CORE_URI2, JSTL_CORE_URI3};
 
-  public static final String JSF_HTML_URI = "http://java.sun.com/jsf/html";
-  public static final String JSF_CORE_URI = "http://java.sun.com/jsf/core";
+  @NonNls public static final String JSF_HTML_URI = "http://java.sun.com/jsf/html";
+  @NonNls public static final String JSF_CORE_URI = "http://java.sun.com/jsf/core";
 
-  private static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
-  private static final String JSTL_FORMAT_URI2 = "http://java.sun.com/jstl/fmt";
-  private static final String JSTL_FORMAT_URI3 = "http://java.sun.com/jstl/fmt_rt";
-  public static final String[] JSTL_FORMAT_URIS = {JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3};
+  @NonNls private static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
+  @NonNls private static final String JSTL_FORMAT_URI2 = "http://java.sun.com/jstl/fmt";
+  @NonNls private static final String JSTL_FORMAT_URI3 = "http://java.sun.com/jstl/fmt_rt";
+  @NonNls public static final String[] JSTL_FORMAT_URIS = {JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3};
 
-  public static final String SPRING_URI = "http://www.springframework.org/tags";
-  public static final String STRUTS_BEAN_URI = "http://struts.apache.org/tags-bean";
-  public static final String STRUTS_LOGIC_URI = "http://struts.apache.org/tags-logic";
-  public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
+  @NonNls public static final String SPRING_URI = "http://www.springframework.org/tags";
+  @NonNls public static final String STRUTS_BEAN_URI = "http://struts.apache.org/tags-bean";
+  @NonNls public static final String STRUTS_LOGIC_URI = "http://struts.apache.org/tags-logic";
+  @NonNls public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
 
-  private static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
-  private static final String SPRING_CORE_URI2 = "http://www.springframework.org/schema/beans";
-  public static final String[] SPRING_CORE_URIS = {SPRING_CORE_URI, SPRING_CORE_URI2};
+  @NonNls private static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
+  @NonNls private static final String SPRING_CORE_URI2 = "http://www.springframework.org/schema/beans";
+  @NonNls public static final String[] SPRING_CORE_URIS = {SPRING_CORE_URI, SPRING_CORE_URI2};
 
-  public static final String[] HIBERNATE_URIS =
-    {"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd", "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd"};
+  @NonNls public static final String[] HIBERNATE_URIS = {"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd", "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd"};
 
-  public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
+  @NonNls public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
   public static final @NonNls String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
   public static final @NonNls String SCHEMA_LOCATION_ATT = "schemaLocation";
   private static final @NonNls String JSF_URI = "http://java.sun.com/dtd/web-facesconfig_1_0.dtd";
@@ -267,6 +266,24 @@ public class XmlUtil {
 
   public static boolean tagFromTemplateFramework(@NotNull final XmlTag tag) {
     return XSLT_URI.equals(tag.getNamespace());
+  }
+
+  public static char getCharFromEntityRef(@NonNls String text) {
+    //LOG.assertTrue(text.startsWith("&#") && text.endsWith(";"));
+    if (text.charAt(1) != '#') {
+      text = text.substring(1, text.length() - 1);
+      return XmlTagTextUtil.getCharacterByEntityName(text).charValue();
+    }
+    text = text.substring(2, text.length() - 1);
+    int code;
+    if (StringUtil.startsWithChar(text,'x')) {
+      text = text.substring(1);
+      code = Integer.parseInt(text, 16);
+    }
+    else {
+      code = Integer.parseInt(text);
+    }
+    return (char)code;
   }
 
   private static class XmlElementProcessor {
@@ -558,6 +575,7 @@ public class XmlUtil {
     return false;
   }
 
+  @NonNls
   public static String[][] getDefaultNamespaces(final XmlDocument document) {
     final XmlFile file = getContainingFile(document);
 
@@ -714,7 +732,7 @@ public class XmlUtil {
   public static void collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
 
     for (final XmlTag tag : element.getSubTags()) {
-      final String localName = tag.getLocalName();
+      @NonNls final String localName = tag.getLocalName();
 
       if (localName.equals("enumeration")) {
         final String attributeValue = tag.getAttributeValue("value");
@@ -744,7 +762,7 @@ public class XmlUtil {
       qname = localName;
     }
     try {
-      StringBuilder tagStartBuilder = StringBuilderSpinAllocator.alloc();
+      @NonNls StringBuilder tagStartBuilder = StringBuilderSpinAllocator.alloc();
       String tagStart;
       try {
         tagStartBuilder.append(qname);
@@ -914,7 +932,6 @@ public class XmlUtil {
   }
 
   public static String generateDocumentDTD(XmlDocument doc) {
-    final StringBuffer buffer = new StringBuffer();
     final Map<String, List<String>> tags = new HashMap<String, List<String>>();
     final Map<String, List<MyAttributeInfo>> attributes = new HashMap<String, List<MyAttributeInfo>>();
     final XmlTag rootTag = doc.getRootTag();
@@ -927,6 +944,7 @@ public class XmlUtil {
       }
     }
 
+    final StringBuffer buffer = new StringBuffer();
     for (final String tagName : tags.keySet()) {
       buffer.append(generateElementDTD(tagName, tags.get(tagName), attributes.get(tagName)));
     }
@@ -937,7 +955,7 @@ public class XmlUtil {
     if (name == null || "".equals(name)) return "";
     if (name.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) return "";
 
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
       buffer.append("<!ELEMENT ").append(name).append(" ");
       if (tags.isEmpty()) {
@@ -974,7 +992,7 @@ public class XmlUtil {
 
   private static String generateAttributeDTD(MyAttributeInfo info) {
     if (info.myName.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) return "";
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
       buffer.append(info.myName).append(" ");
       //if ("id".equals(info.myName)) {
@@ -998,7 +1016,7 @@ public class XmlUtil {
     }
   }
 
-  public static String trimLeadingSpacesInMultilineTagValue(String tagValue) {
+  public static String trimLeadingSpacesInMultilineTagValue(@NonNls String tagValue) {
     return tagValue == null ? null : tagValue.replaceAll("\n\\s*", "\n");
   }
 
@@ -1023,7 +1041,7 @@ public class XmlUtil {
     if (str == null) return null;
     StringBuffer buffer = null;
     for (int i = 0; i < str.length(); i++) {
-      String entity;
+      @NonNls String entity;
       char ch = str.charAt(i);
       switch (ch) {
         case'\"':
@@ -1116,7 +1134,7 @@ public class XmlUtil {
     }
   }
 
-  public static String decode(String text) {
+  public static String decode(@NonNls String text) {
     if (text.length() == 0) return text;
     if (text.charAt(0) != '&' || text.length() < 3) {
       if (text.indexOf('<') < 0 && text.indexOf('>') < 0) return text;
@@ -1157,7 +1175,7 @@ public class XmlUtil {
     return text;
   }
 
-  private static final String[] REPLACES =
+  @NonNls private static final String[] REPLACES =
     new String[]{"&lt;", "<", "&nbsp;", " ", "&gt;", ">", "&amp;", "&", "&apos;", "'", "&quot;", "\"",};
 
   public static String unescape(String text) {
@@ -1186,7 +1204,7 @@ public class XmlUtil {
     }
   }
 
-  private static final String ENCODING_XML_PROLOG = "<?xml version=\"1.0\" encoding=\"";
+  @NonNls private static final String ENCODING_XML_PROLOG = "<?xml version=\"1.0\" encoding=\"";
   private static final byte[] ENCODING_XML_PROLOG_BYTES = ENCODING_XML_PROLOG.getBytes();
 
   @Nullable

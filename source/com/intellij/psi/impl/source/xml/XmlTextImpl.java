@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -19,9 +18,8 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlTagTextUtil;
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -29,6 +27,8 @@ import java.util.List;
 
 public class XmlTextImpl extends XmlElementImpl implements XmlText {
   private String myDisplayText = null;
+  private int[] myGapDisplayStarts = null;
+  private int[] myGapPhysicalStarts = null;
 
   public XmlTextImpl() {
     super(XML_TEXT);
@@ -46,9 +46,6 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     return null;
   }
 
-  private int[] myGapDisplayStarts = null;
-  private int[] myGapPhysicalStarts = null;
-
   public String getValue() {
     if (myDisplayText != null) return myDisplayText;
     StringBuffer buffer = new StringBuffer();
@@ -63,7 +60,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
         child = cdata.getFirstChildNode();
       }
       else if (elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
-        buffer.append(getCharFromEntityRef(child.getText()));
+        buffer.append(XmlUtil.getCharFromEntityRef(child.getText()));
       }
       else if (elementType == XmlTokenType.XML_WHITE_SPACE
                || elementType == XmlTokenType.XML_DATA_CHARACTERS
@@ -98,24 +95,6 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     }
 
     return myDisplayText = buffer.toString();
-  }
-
-  private static char getCharFromEntityRef(@NonNls String text) {
-    //LOG.assertTrue(text.startsWith("&#") && text.endsWith(";"));
-    if (text.charAt(1) != '#') {
-      text = text.substring(1, text.length() - 1);
-      return XmlTagTextUtil.getCharacterByEntityName(text).charValue();
-    }
-    text = text.substring(2, text.length() - 1);
-    int code;
-    if (StringUtil.startsWithChar(text,'x')) {
-      text = text.substring(1);
-      code = Integer.parseInt(text, 16);
-    }
-    else {
-      code = Integer.parseInt(text);
-    }
-    return (char)code;
   }
 
   public int physicalToDisplay(int physicalIndex) {
@@ -241,6 +220,6 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
 
   @Nullable
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this, InjectedLanguageUtil.XmlLiteralEscaper.INSTANCE);
+    return InjectedLanguageUtil.getInjectedPsiFiles(this, InjectedLanguageUtil.XmlTextLiteralEscaper.INSTANCE);
   }
 }
