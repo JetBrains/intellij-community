@@ -89,6 +89,11 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     return new Dimension(16, 16);
   }
 
+  @Override
+  public Dimension getMinimumSize() {
+    return getPreferredSize();
+  }
+
   @Override public void paintComponent(Graphics g) {
     super.paintComponent(g);
     Graphics2D g2d = (Graphics2D) g;
