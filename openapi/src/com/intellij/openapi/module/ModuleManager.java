@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ public abstract class ModuleManager {
    * @return the module instance.
    * @throws LoadCancelledException in case of internal error while creating the module.
    */
-  @NotNull public abstract Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType) throws LoadCancelledException;
+  @NotNull public abstract Module newModule(@NotNull @NonNls String filePath, @NotNull ModuleType moduleType) throws LoadCancelledException;
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.

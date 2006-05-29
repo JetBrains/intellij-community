@@ -4,11 +4,14 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.builders.WebModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -16,19 +19,19 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
  * @author mike
  */
 public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
-  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
-    return new TestFixtureBuilder<IdeaProjectTestFixture>() {
-      public IdeaProjectTestFixture setModuleType(final ModuleType moduleType) {
-        throw new UnsupportedOperationException("setModuleType is not implemented in : " + getClass());
-      }
+  static final Map<Class, Class> ourBuilder2Implementation = new HashMap<Class, Class>();
 
-      public IdeaProjectTestFixture setLanguageLevel(final LanguageLevel languageLevel) {
-        throw new UnsupportedOperationException("setLanguageLevel is not implemented in : " + getClass());
-      }
-
-      public IdeaProjectTestFixture getFixture() {
-        return new LightIdeaTestFixtureImpl();
-      }
-    };
+  static {
+    ourBuilder2Implementation.put(JavaModuleFixtureBuilder.class, JavaModuleFixtureBuilderImpl.class);
+    ourBuilder2Implementation.put(WebModuleFixtureBuilder.class, WebModuleFixtureBuilderImpl.class);
   }
+
+  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
+    return new LightTestFixtureBuilderImpl();
+  }
+
+  public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
+    return new HeavyTestFixtureBuilderImpl();
+  }
+
 }

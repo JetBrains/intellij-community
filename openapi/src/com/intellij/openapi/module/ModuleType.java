@@ -73,4 +73,20 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public String toString() {
     return getName();
   }
+
+  static {
+    WEB = instantiate("com.intellij.openapi.module.WebModuleType");
+    JAVA = instantiate("com.intellij.openapi.module.JavaModuleType");
+    EJB = instantiate("com.intellij.openapi.module.EjbModuleType");
+    J2EE_APPLICATION = instantiate("com.intellij.openapi.module.J2EEApplicationModuleType");
+  }
+
+  private static ModuleType instantiate(String className) {
+    try {
+      return (ModuleType)Class.forName(className).newInstance();
+    }
+    catch (Exception e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
 }

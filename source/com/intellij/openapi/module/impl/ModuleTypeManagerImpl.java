@@ -32,7 +32,9 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.module.UnknownModuleType;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -83,7 +85,6 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   private void registerDefaultTypes() {
-    ModuleType.JAVA = new JavaModuleType();
     registerModuleType(ModuleType.JAVA);
   }
 

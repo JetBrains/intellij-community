@@ -15,12 +15,15 @@
  *
  */
 
-package com.intellij.testFramework.fixtures;
+package com.intellij.testFramework.builders;
+
+import com.intellij.testFramework.fixtures.ModuleFixture;
 
 /**
- * This is to be provided by IDEA and not by plugin authors.
+ * @author mike
  */
-public interface IdeaTestFixture {
-  void setUp() throws Exception;
-  void tearDown() throws Exception;
+public interface ModuleFixtureBuilder<T extends ModuleFixture> {
+  ModuleFixtureBuilder<T> addContentRoot(final String contentRootPath);
+
+  T getFixture();
 }
