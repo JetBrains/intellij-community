@@ -469,8 +469,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if(parentDescriptor != null){
-        final XmlElementDescriptor elementDescriptorFromParent = parentDescriptor.getElementDescriptor(tag);
+        XmlElementDescriptor elementDescriptorFromParent = parentDescriptor.getElementDescriptor(tag);
 
+        if (elementDescriptorFromParent == null) {
+          elementDescriptorFromParent = getDescriptorFromParent(tag, elementDescriptorFromParent);
+        }
         if (elementDescriptorFromParent instanceof AnyXmlElementDescriptor) {
           final XmlElementDescriptor elementDescriptor = getElementDescriptor(tag.getLocalName(), namespace);
           if (elementDescriptor != null) return elementDescriptor;
@@ -485,15 +488,20 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       XmlElementDescriptor elementDescriptor = getElementDescriptor(tag.getLocalName(), tag.getNamespace());
       
       if (elementDescriptor == null) {
-        parent = tag.getParent();
-        if (parent instanceof XmlTag) {
-          final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
-          if (descriptor != null) elementDescriptor = descriptor.getElementDescriptor(tag);
-        }
+        elementDescriptor = getDescriptorFromParent(tag, elementDescriptor);
       }
 
       return elementDescriptor;
     }
+  }
+
+  private static XmlElementDescriptor getDescriptorFromParent(final XmlTag tag, XmlElementDescriptor elementDescriptor) {
+    final PsiElement parent = tag.getParent();
+    if (parent instanceof XmlTag) {
+      final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
+      if (descriptor != null) elementDescriptor = descriptor.getElementDescriptor(tag);
+    }
+    return elementDescriptor;
   }
 
   public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument doc) {
