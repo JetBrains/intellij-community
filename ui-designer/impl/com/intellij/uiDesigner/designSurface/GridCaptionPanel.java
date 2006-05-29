@@ -288,20 +288,15 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
                                               mySelectedContainer.getDelegee());
       RadAbstractGridLayoutManager layout = mySelectedContainer.getGridLayoutManager();
       myResizeLine = layout.getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
-      checkShowPopupMenu(e);
-    }
-
-    @Override public void mouseClicked(MouseEvent e) {
-      int cell = getCellAt(e.getPoint());
-      if (cell == -1) return;
-      if ((e.getModifiers() & MouseEvent.CTRL_MASK) != 0) {
-        mySelectionModel.addSelectionInterval(cell, cell);
-      }
-      else if ((e.getModifiers() & MouseEvent.SHIFT_MASK) != 0) {
-        mySelectionModel.addSelectionInterval(mySelectionModel.getAnchorSelectionIndex(), cell);
-      }
-      else {
-        mySelectionModel.setSelectionInterval(cell, cell);
+      if (!checkShowPopupMenu(e)) {
+        int cell = getCellAt(e.getPoint());
+        if (cell == -1) return;
+        if ((e.getModifiers() & MouseEvent.CTRL_MASK) != 0) {
+          mySelectionModel.addSelectionInterval(cell, cell);
+        }
+        else if ((e.getModifiers() & MouseEvent.SHIFT_MASK) != 0) {
+          mySelectionModel.addSelectionInterval(mySelectionModel.getAnchorSelectionIndex(), cell);
+        }
       }
     }
 
@@ -316,10 +311,16 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         myResizeLine = -1;
       }
 
-      checkShowPopupMenu(e);
+      if (!checkShowPopupMenu(e)) {
+        int cell = getCellAt(e.getPoint());
+        if (cell == -1) return;
+        if ((e.getModifiers() & (MouseEvent.CTRL_MASK | MouseEvent.SHIFT_MASK)) == 0) {
+          mySelectionModel.setSelectionInterval(cell, cell);
+        }
+      }
     }
 
-    private void checkShowPopupMenu(final MouseEvent e) {
+    private boolean checkShowPopupMenu(final MouseEvent e) {
       int cell = getCellAt(e.getPoint());
 
       if (cell >= 0 && e.isPopupTrigger()) {
@@ -327,8 +328,10 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         if (group != null) {
           final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
           popupMenu.getComponent().show(GridCaptionPanel.this, e.getX(), e.getY());
+          return true;
         }
       }
+      return false;
     }
 
     private void doResize(final Point pnt) {
