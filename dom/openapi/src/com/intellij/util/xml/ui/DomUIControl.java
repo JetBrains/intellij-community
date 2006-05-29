@@ -12,9 +12,9 @@ import javax.swing.*;
  * 
  * @see DomUIFactory
  */
-public interface DomUIControl extends CommittablePanel {
+public interface DomUIControl<T extends DomElement> extends CommittablePanel {
 
-  DomElement getDomElement();
+  T getDomElement();
 
   void bind(JComponent component);
 

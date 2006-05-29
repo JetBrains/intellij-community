@@ -41,11 +41,11 @@ public abstract class DomUIFactory implements ApplicationComponent {
   }
 
 
-  public static DomUIControl createControl(GenericDomValue element) {
+  public static DomUIControl<GenericDomValue> createControl(GenericDomValue element) {
     return createControl(element, false);
   }
 
-  public static DomUIControl createControl(GenericDomValue element, boolean commitOnEveryChange) {
+  public static DomUIControl<GenericDomValue> createControl(GenericDomValue element, boolean commitOnEveryChange) {
     return createGenericValueControl(DomUtil.getGenericValueType(element.getDomElementType()), element, commitOnEveryChange);
   }
 
