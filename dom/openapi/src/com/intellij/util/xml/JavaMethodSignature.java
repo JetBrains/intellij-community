@@ -4,6 +4,9 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.SmartList;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -19,8 +22,9 @@ public class JavaMethodSignature {
   private static final Map<Pair<String, Class[]>, JavaMethodSignature> ourSignatures2 = new HashMap<Pair<String, Class[]>, JavaMethodSignature>();
   private final String myMethodName;
   private final Class[] myMethodParameters;
-  private final Map<Class,List<Method>> myAllMethods = new HashMap<Class, List<Method>>();
-  private final Map<Class,Method> myMethods = new HashMap<Class, Method>();
+  private final Set<Class> myKnownClasses = new THashSet<Class>();
+  private final List<Method> myAllMethods = new SmartList<Method>();
+  private final Map<Class,Method> myMethods = new THashMap<Class, Method>();
 
   private JavaMethodSignature(final String methodName, final Class[] methodParameters) {
     myMethodName = methodName;
@@ -43,16 +47,9 @@ public class JavaMethodSignature {
     Method method = myMethods.get(aClass);
     if (method == null) {
       try {
-        method = findBestMethod(aClass, aClass.getMethod(myMethodName, myMethodParameters).getReturnType());
+        method = aClass.getMethod(myMethodName, myMethodParameters);
       }
       catch (NoSuchMethodException e) {
-        if (aClass.isInterface()) {
-          try {
-            method = Object.class.getMethod(myMethodName, myMethodParameters);
-          }
-          catch (NoSuchMethodException e1) {
-          }
-        }
         throw new AssertionError(e);
       }
       myMethods.put(aClass, method);
@@ -60,20 +57,38 @@ public class JavaMethodSignature {
     return method;
   }
 
-  public final List<Method> findAllMethods(final Class aClass) {
-    List<Method> methods = myAllMethods.get(aClass);
-    if (methods == null) {
-      methods = new ArrayList<Method>();
-      addMethods(aClass, methods);
+  private void addMethodsIfNeeded(final Class aClass) {
+    if (!myKnownClasses.contains(aClass)) {
+      try {
+        myKnownClasses.add(aClass);
+        myAllMethods.add(aClass.getDeclaredMethod(myMethodName, myMethodParameters));
+      }
+      catch (NoSuchMethodException e) {
+      }
+      final Class superClass = aClass.getSuperclass();
+      if (superClass != null) {
+        addMethodsIfNeeded(superClass);
+      } else {
+        if (aClass.isInterface()) {
+          addMethodsIfNeeded(Object.class);
+        }
+      }
+      for (final Class anInterface : aClass.getInterfaces()) {
+        addMethodsIfNeeded(anInterface);
+      }
     }
-    return methods;
+  }
+
+  private List<Method> findAllMethods(final Class aClass) {
+    addMethodsIfNeeded(aClass);
+    return myAllMethods;
   }
 
   @Nullable
   public final <T extends Annotation> T findAnnotation(final Class<T> annotationClass, final Class startFrom) {
     for (final Method method : findAllMethods(startFrom)) {
       final T annotation = method.getAnnotation(annotationClass);
-      if (annotation != null) {
+      if (annotation != null && method.getDeclaringClass().isAssignableFrom(startFrom)) {
         return annotation;
       }
     }
@@ -84,33 +99,11 @@ public class JavaMethodSignature {
   public final <T extends Annotation> Method findAnnotatedMethod(final Class<T> annotationClass, final Class startFrom) {
     for (final Method method : findAllMethods(startFrom)) {
       final T annotation = method.getAnnotation(annotationClass);
-      if (annotation != null) {
+      if (annotation != null && method.getDeclaringClass().isAssignableFrom(startFrom)) {
         return method;
       }
     }
     return null;
-  }
-
-  private void addMethods(final Class aClass, final List<Method> methods) {
-    List<Method> cachedMethods = myAllMethods.get(aClass);
-    if (cachedMethods == null) {
-      cachedMethods = new ArrayList<Method>();
-      for (final Method method : aClass.getDeclaredMethods()) {
-        if (method.getName().equals(myMethodName) && Arrays.equals(myMethodParameters, method.getParameterTypes())) {
-          cachedMethods.add(method);
-        }
-      }
-      final Class superclass = aClass.getSuperclass();
-      if (superclass != null) {
-        addMethods(superclass, cachedMethods);
-      }
-      for (final Class aClass1 : aClass.getInterfaces()) {
-        addMethods(aClass1, cachedMethods);
-      }
-      cachedMethods = Collections.unmodifiableList(cachedMethods);
-      myAllMethods.put(aClass, cachedMethods);
-    }
-    methods.addAll(cachedMethods);
   }
 
   public String toString() {
