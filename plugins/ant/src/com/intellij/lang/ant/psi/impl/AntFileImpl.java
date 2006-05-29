@@ -15,6 +15,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -56,20 +57,22 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   @NotNull
-  public synchronized PsiElement[] getChildren() {
-    if (myChildren == null) {
-      final AntProject project = getAntProject();
-      final ArrayList<PsiElement> children = new ArrayList<PsiElement>(3);
-      if (myPrologElement != null) {
-        children.add(myPrologElement);
+  public PsiElement[] getChildren() {
+    synchronized (PsiLock.LOCK) {
+      if (myChildren == null) {
+        final AntProject project = getAntProject();
+        final ArrayList<PsiElement> children = new ArrayList<PsiElement>(3);
+        if (myPrologElement != null) {
+          children.add(myPrologElement);
+        }
+        children.add(project);
+        if (myEpilogueElement != null) {
+          children.add(myEpilogueElement);
+        }
+        myChildren = children.toArray(new PsiElement[children.size()]);
       }
-      children.add(project);
-      if (myEpilogueElement != null) {
-        children.add(myEpilogueElement);
-      }
-      myChildren = children.toArray(new PsiElement[children.size()]);
+      return myChildren;
     }
-    return myChildren;
   }
 
   public PsiElement getFirstChild() {
@@ -86,11 +89,13 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return "AntFile[" + getName() + "]";
   }
 
-  public synchronized void clearCaches() {
-    myChildren = null;
-    myPrologElement = null;
-    myProject = null;
-    myEpilogueElement = null;
+  public void clearCaches() {
+    synchronized (PsiLock.LOCK) {
+      myChildren = null;
+      myPrologElement = null;
+      myProject = null;
+      myEpilogueElement = null;
+    }
   }
 
   public void subtreeChanged() {
@@ -110,25 +115,28 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return this;
   }
 
-  public synchronized AntProject getAntProject() {
-    if (myProject != null) return myProject;
-    final XmlFile baseFile = getSourceElement();
-    final XmlDocument document = baseFile.getDocument();
-    assert document != null;
-    final XmlTag tag = document.getRootTag();
-    assert tag != null;
-    final String fileText = baseFile.getText();
-    final int projectStart = tag.getTextRange().getStartOffset();
-    if (projectStart > 0) {
-      myPrologElement = new AntOuterProjectElement(this, 0, fileText.substring(0, projectStart));
+  public AntProject getAntProject() {
+    // the following line is necessary only to satisfy the "sync/unsync context" inspection
+    synchronized (PsiLock.LOCK) {
+      if (myProject != null) return myProject;
+      final XmlFile baseFile = getSourceElement();
+      final XmlDocument document = baseFile.getDocument();
+      assert document != null;
+      final XmlTag tag = document.getRootTag();
+      assert tag != null;
+      final String fileText = baseFile.getText();
+      final int projectStart = tag.getTextRange().getStartOffset();
+      if (projectStart > 0) {
+        myPrologElement = new AntOuterProjectElement(this, 0, fileText.substring(0, projectStart));
+      }
+      final int projectEnd = tag.getTextRange().getEndOffset();
+      if (projectEnd < fileText.length()) {
+        myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.substring(projectEnd));
+      }
+      myProject = new AntProjectImpl(this, tag, createProjectDefinition());
+      ((AntProjectImpl)myProject).loadPredefinedProperties(myAntProject);
+      return myProject;
     }
-    final int projectEnd = tag.getTextRange().getEndOffset();
-    if (projectEnd < fileText.length()) {
-      myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.substring(projectEnd));
-    }
-    myProject = new AntProjectImpl(this, tag, createProjectDefinition());
-    ((AntProjectImpl)myProject).loadPredefinedProperties(myAntProject);
-    return myProject;
   }
 
   public void setProperty(final String name, final PsiElement element) {
@@ -144,15 +152,17 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  public synchronized AntElement lightFindElementAt(int offset) {
-    if (myProject == null) return this;
-    final TextRange projectRange = myProject.getTextRange();
-    if (offset < projectRange.getStartOffset() || offset >= projectRange.getEndOffset()) return this;
-    return myProject.lightFindElementAt(offset);
+  public AntElement lightFindElementAt(int offset) {
+    synchronized (PsiLock.LOCK) {
+      if (myProject == null) return this;
+      final TextRange projectRange = myProject.getTextRange();
+      if (offset < projectRange.getStartOffset() || offset >= projectRange.getEndOffset()) return this;
+      return myProject.lightFindElementAt(offset);
+    }
   }
 
   @NotNull
-  public synchronized AntTypeDefinition[] getBaseTypeDefinitions() {
+  public AntTypeDefinition[] getBaseTypeDefinitions() {
     final int defCount = myTypeDefinitions.size();
     if (myTypeDefinitionArray == null || myTypeDefinitionArray.length != defCount) {
       getBaseTypeDefinition(null);
@@ -162,7 +172,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   @Nullable
-  public synchronized AntTypeDefinition getBaseTypeDefinition(final String className) {
+  public AntTypeDefinition getBaseTypeDefinition(final String className) {
     if (myTypeDefinitions == null) {
       myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
       myAntProject = new Project();
@@ -176,7 +186,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   @NotNull
-  public synchronized AntTypeDefinition getTargetDefinition() {
+  public AntTypeDefinition getTargetDefinition() {
     getBaseTypeDefinition(null);
     if (myTargetDefinition == null) {
       @NonNls final HashMap<String, AntAttributeType> targetAttrs = new HashMap<String, AntAttributeType>();
@@ -196,7 +206,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return myTargetDefinition;
   }
 
-  public synchronized void registerCustomType(final AntTypeDefinition definition) {
+  public void registerCustomType(final AntTypeDefinition definition) {
     myTypeDefinitionArray = null;
     myTypeDefinitions.put(definition.getClassName(), definition);
     if (myTargetDefinition != null && myTargetDefinition != definition) {
@@ -208,11 +218,11 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
    * Clears caches and invokes the second pass of getting children if it wasn't already invoked.
    * This is necessary in case if a task is defined after it is used.
    */
-  public synchronized void invokeSecondPass() {
+  public void invokeSecondPass() {
     if (!mySecondPassMade) {
       mySecondPassMade = true;
       clearCaches();
-      getAntProject();
+      getChildren();
     }
   }
 

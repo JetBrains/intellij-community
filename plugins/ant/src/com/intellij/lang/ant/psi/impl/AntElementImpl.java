@@ -10,6 +10,7 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -92,8 +93,10 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
 
   @NotNull
   public AntElement[] getChildren() {
-    if (myChildren != null) return myChildren;
-    return myChildren = getChildrenInner();
+    synchronized (PsiLock.LOCK) {
+      if (myChildren != null) return myChildren;
+      return myChildren = getChildrenInner();
+    }
   }
 
   @Nullable
@@ -143,8 +146,10 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public void clearCaches() {
+    synchronized (PsiLock.LOCK) {
+      myChildren = null;
+    }
     myReferences = null;
-    myChildren = null;
     myProperties = null;
     myPropertiesArray = null;
   }
@@ -180,15 +185,17 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public AntElement lightFindElementAt(int offset) {
-    if (myChildren == null) return this;
-    final int offsetInFile = offset + getTextRange().getStartOffset();
-    for (final AntElement element : getChildren()) {
-      final TextRange textRange = element.getTextRange();
-      if (textRange.contains(offsetInFile)) {
-        return element.lightFindElementAt(offsetInFile - textRange.getStartOffset());
+    synchronized (PsiLock.LOCK) {
+      if (myChildren == null) return this;
+      final int offsetInFile = offset + getTextRange().getStartOffset();
+      for (final AntElement element : getChildren()) {
+        final TextRange textRange = element.getTextRange();
+        if (textRange.contains(offsetInFile)) {
+          return element.lightFindElementAt(offsetInFile - textRange.getStartOffset());
+        }
       }
+      return getTextRange().contains(offsetInFile) ? this : null;
     }
-    return getTextRange().contains(offsetInFile) ? this : null;
   }
 
   public PsiElement findElementAt(int offset) {

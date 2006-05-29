@@ -5,7 +5,6 @@
 package com.intellij.psi;
 
 
-
 public class PsiLock {
   public static final Object LOCK = new Object();
 }

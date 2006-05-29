@@ -93,6 +93,9 @@ public class AntElementFactory {
       for (final String clazz : PROPERTY_CLASSES) {
         addPropertyCreator(clazz);
       }
+      for (final String clazz : ALL_TASKS_CONTAINER_CLASSES) {
+        addAllTasksContainerCreator(clazz);
+      }
       ourAntTypeToKnownAntElementCreatorMap.put(CallTarget.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
           return new AntCallImpl(parent, tag,
@@ -117,9 +120,12 @@ public class AntElementFactory {
                                      parent.getAntFile().getBaseTypeDefinition(MacroDef.class.getName()));
         }
       });
-      for (final String clazz : ALL_TASKS_CONTAINER_CLASSES) {
-        addAllTasksContainerCreator(clazz);
-      }
+      ourAntTypeToKnownAntElementCreatorMap.put(ImportTask.class.getName(), new AntElementCreator() {
+        public AntElement create(final AntElement parent, final XmlTag tag) {
+          return new AntImportImpl(parent, tag,
+                                   parent.getAntFile().getBaseTypeDefinition(ImportTask.class.getName()));
+        }
+      });
     }
   }
 
