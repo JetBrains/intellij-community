@@ -76,7 +76,7 @@ public class JavaParameters {
   }
 
   public void setMainClass(@NonNls final String mainClass) {
-    this.myMainClass = mainClass;
+    myMainClass = mainClass;
   }
 
   public void setWorkingDirectory(final File path) {
