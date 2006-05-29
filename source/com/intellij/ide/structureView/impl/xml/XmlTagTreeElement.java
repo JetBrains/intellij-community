@@ -45,7 +45,12 @@ import com.intellij.jsf.FacesManager;
 import java.util.Collection;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
+  @NonNls private static final String ID_ATTR_NAME = "id";
+  @NonNls private static final String NAME_ATTR_NAME = "name";
+
   public XmlTagTreeElement(XmlTag tag) {
     super(tag);
   }
@@ -78,17 +83,47 @@ public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
   }
 
   public String getPresentableText() {
-    return getElement().getName();
+    final XmlTag element = getElement();
+    String id = element.getAttributeValue(ID_ATTR_NAME);
+    if (id == null) id = element.getAttributeValue(NAME_ATTR_NAME);
+    id = toCanonicalForm(id);
+
+    if (id != null) return id + ":" + element.getLocalName();
+    return element.getName();
   }
 
   public String getLocationString() {
     final StringBuffer buffer = new StringBuffer();
-    final XmlAttribute[] attributes = getElement().getAttributes();
+    final XmlTag element = getElement();
+    final XmlAttribute[] attributes = element.getAttributes();
+
+    String id = element.getAttributeValue(ID_ATTR_NAME);
+    String usedAttrName = null;
+
+    if (id == null) {
+      id = element.getAttributeValue(NAME_ATTR_NAME);
+      if (id != null) usedAttrName = NAME_ATTR_NAME;
+    }
+    else {
+      usedAttrName = ID_ATTR_NAME;
+    }
+
+    id = toCanonicalForm(id);
+
     for (XmlAttribute attribute : attributes) {
       if (buffer.length() != 0) {
         buffer.append(" ");
       }
-      buffer.append(attribute.getName());
+
+      final String name = attribute.getName();
+      if (usedAttrName != null &&
+          id != null &&
+          usedAttrName.equals(name)
+        ) {
+        continue; // we output this name in name
+      }
+
+      buffer.append(name);
       buffer.append("=");
       buffer.append("\"");
       buffer.append(attribute.getValue());
@@ -97,4 +132,11 @@ public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
     return buffer.toString();
   }
 
+  private static String toCanonicalForm(String id) {
+    if (id != null) {
+      id = id.trim();
+      if (id.length() == 0) id = null;
+    }
+    return id;
+  }
 }
