@@ -78,6 +78,7 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
 
     for (String contentRoot : myContentRoots) {
       final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(contentRoot);
+      assert virtualFile != null : "cannot find content root: " + contentRoot;
       rootModel.addContentEntry(virtualFile);
     }
 
