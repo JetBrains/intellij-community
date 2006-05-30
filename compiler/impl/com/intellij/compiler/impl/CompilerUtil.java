@@ -95,12 +95,13 @@ public class CompilerUtil {
     }
     doRefresh(new Runnable() {
       public void run() {
-        for (File file1 : files) {
+        /*for (File file1 : files) {
           final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
           if (file != null) {
             file.refresh(false, false);
           }
-        }
+        }*/
+        LocalFileSystem.getInstance().refreshFiles(files);
       }
     });
   }

@@ -1473,9 +1473,9 @@ public class CompileDriver {
       }
       final Boolean refreshSuccess = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
           public Boolean compute() {
+            LocalFileSystem.getInstance().refreshFiles(nonExistingOutputPaths);
             for (File file : nonExistingOutputPaths) {
-              final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-              if (vFile == null) {
+              if (LocalFileSystem.getInstance().findFileByIoFile(file) == null) {
                 return Boolean.FALSE;
               }
             }

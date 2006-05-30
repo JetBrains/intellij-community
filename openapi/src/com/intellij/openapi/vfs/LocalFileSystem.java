@@ -16,14 +16,12 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.Set;
 
@@ -40,6 +38,13 @@ public abstract class LocalFileSystem extends VirtualFileSystem {
 
   @Nullable
   public abstract VirtualFile refreshAndFindFileByIoFile(File file);
+
+  /**
+   * Performs a nonrecursive synchronous refresh of specified files
+   * @param files files to refresh
+   * @since 6.0
+   */
+  public abstract void refreshFiles(Iterable<File> files);
 
   public abstract byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException;
 
