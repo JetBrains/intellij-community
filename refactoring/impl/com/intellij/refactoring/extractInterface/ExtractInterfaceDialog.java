@@ -237,6 +237,13 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
           try {
+            final PsiPackage aPackage = manager.findPackage(packageName);
+            if (aPackage != null) {
+              final PsiDirectory[] directories = aPackage.getDirectories(myClass.getResolveScope());
+              if (directories.length >= 1) {
+                myTargetDirectory = directories[0];
+              }
+            }
             myTargetDirectory =
             PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myTargetDirectory, true);
             if (myTargetDirectory == null) {
