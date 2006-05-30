@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -36,6 +37,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -84,7 +86,6 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   public synchronized void addMouseListener(MouseListener l) {
     super.addMouseListener(l);    //To change body of overridden methods use File | Settings | File Templates.
   }
-
 
 
   public static String getRelativePath(FilePath parent, FilePath child) {
@@ -365,15 +366,49 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     }
 
     public static Image createImage(final JTree tree) {
-      final int height = Math.max(20, Math.min(100, tree.getSelectionCount() * tree.getRowHeight()));
-      final int width = tree.getWidth();
+      final TreeSelectionModel model = tree.getSelectionModel();
+      final TreePath[] paths = model.getSelectionPaths();
 
-      final BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+      int count = 0;
+      final List<ChangesBrowserNode> nodes = new ArrayList<ChangesBrowserNode>();
+      for (final TreePath path : paths) {
+        final ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
+        if (!node.isLeaf()) {
+          nodes.add(node);
+          count += node.getCount();
+        }
+      }
+
+      for (TreePath path : paths) {
+        final ChangesBrowserNode element = (ChangesBrowserNode)path.getLastPathComponent();
+        boolean child = false;
+        for (final ChangesBrowserNode node : nodes) {
+          if (node.isNodeChild(element)) {
+            child = true;
+            break;
+          }
+        }
+
+        if (!child) {
+          if (element.isLeaf()) count++;
+        } else if (!element.isLeaf()) {
+          count -= element.getCount();
+        }
+      }
+
+      final JLabel label = new JLabel(VcsBundle.message("changes.view.dnd.label", count));
+      label.setOpaque(true);
+      label.setForeground(tree.getForeground());
+      label.setBackground(tree.getBackground());
+      label.setFont(tree.getFont());
+      label.setSize(label.getPreferredSize());
+      final BufferedImage image = new BufferedImage(label.getWidth(), label.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
       Graphics2D g2 = (Graphics2D)image.getGraphics();
-
       g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+      label.paint(g2);
+      g2.dispose();
 
-      drawSelection(tree, g2, width);
       return image;
     }
 
@@ -512,7 +547,8 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
   @Nullable
   public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-    return new Pair<Image, Point>(DragImageFactory.createImage(this), new Point());
+    final Image image = DragImageFactory.createImage(this);
+    return new Pair<Image, Point>(image, new Point(-image.getWidth(null), -image.getHeight(null)));
   }
 
   public void dragDropEnd() {
