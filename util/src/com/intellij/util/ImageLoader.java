@@ -16,7 +16,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import sun.reflect.Reflection;
 
@@ -26,14 +25,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URL;
-import java.util.Map;
 
+@Deprecated
 public class ImageLoader implements Serializable {
   private final static Component ourComponent = new Component() {};
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
-
-  private static Map<String,Image> myUrl2Image = new THashMap<String, Image>(48, 0.9f);
 
   private static boolean waitForImage(Image image) {
     if (image == null) return false;
@@ -67,10 +64,6 @@ public class ImageLoader implements Serializable {
 
   public static Image loadFromURL(final URL url) {
     try {
-      Image image = myUrl2Image.get(url.toString());
-      if (image != null) {
-        return image;
-      }
 
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       final InputStream inputStream = url.openStream();
@@ -86,10 +79,9 @@ public class ImageLoader implements Serializable {
         inputStream.close();
       }
 
-      image = Toolkit.getDefaultToolkit().createImage(outputStream.toByteArray());
+      Image image = Toolkit.getDefaultToolkit().createImage(outputStream.toByteArray());
       waitForImage(image);
 
-      myUrl2Image.put(url.toString(), image);
       return image;
     } catch (Exception ex) {
       LOG.error(ex);

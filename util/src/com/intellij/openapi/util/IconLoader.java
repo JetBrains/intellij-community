@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
@@ -25,16 +26,17 @@ import sun.reflect.Reflection;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.lang.ref.Reference;
 import java.net.URL;
 import java.util.Map;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
   private static final Color ourTransparentColor = new Color(0, 0, 0, 0);
-  /**
-   * This cache contains mapping between loaded images and <code>IJImage</code> icons.
-   */
-  private static final Map<Image,Icon> ourImage2Icon = new THashMap<Image, Icon>(200, 0.9f);
+
+  private static final Map<URL, Icon> ourIconsCache = new THashMap<URL, Icon>(100, 0.9f);
+
+
   /**
    * This cache contains mapping between icons and disabled icons.
    */
@@ -49,21 +51,15 @@ public final class IconLoader {
       return "Empty icon " + super.toString();
     }
   };
+
   private static boolean ourIsActivated = false;
 
   private IconLoader() {}
 
+    @Deprecated
   public static Icon getIcon(final Image image) {
     LOG.assertTrue(image != null);
-    Icon icon = ourImage2Icon.get(image);
-    if (icon != null) {
-      return icon;
-    }
-    else {
-      icon = new MyImageIcon(image);
-      ourImage2Icon.put(image, icon);
-      return icon;
-    }
+    return new MyImageIcon(image);
   }
 
   public static Icon getIcon(@NonNls final String path) {
@@ -110,20 +106,28 @@ public final class IconLoader {
   public static Icon findIcon(final String path, final Class aClass) {
     if (isLoaderDisabled()) return EMPTY_ICON;
 
-    final Image image = ImageLoader.loadFromResource(path, aClass);
-    return checkIcon(image, path);
+    URL url = aClass.getResource(path);
+      return findIcon(url);
   }
 
-  public static Icon findIcon(final String path, final ClassLoader aClassLoader) {
+    private static Icon findIcon(URL url) {
+        if (url == null) return null;
+
+        Icon icon = ourIconsCache.get(url);
+        if (icon == null) {
+            icon = new CachedImageIcon(url);
+            ourIconsCache.put(url, icon);
+        }
+        return icon;
+    }
+
+    public static Icon findIcon(final String path, final ClassLoader aClassLoader) {
     if (isLoaderDisabled()) return EMPTY_ICON;
 
     if (!path.startsWith("/")) return null;
 
     final URL url = aClassLoader.getResource(path.substring(1));
-    if (url == null) return null;
-
-    final Image image = ImageLoader.loadFromURL(url);
-    return checkIcon(image, path);
+        return findIcon(url);
   }
 
   private static Icon checkIcon(final Image image, final String path) {
@@ -191,6 +195,49 @@ public final class IconLoader {
       }
     };
   }
+
+    private static final class CachedImageIcon implements Icon {
+        private boolean myIsBroken = false;
+        private URL myURL;
+        private Reference<Icon> myRealIcon;
+
+        public CachedImageIcon(URL myURL) {
+            this.myURL = myURL;
+        }
+
+        private synchronized Icon getRealIcon() {
+            if (myIsBroken) return EMPTY_ICON;
+
+            Icon icon;
+            if (myRealIcon != null) {
+                icon = myRealIcon.get();
+                if (icon != null) return icon;
+            }
+
+            Image image = ImageLoader.loadFromURL(myURL);
+            if (image == null) {
+                myIsBroken = true;
+                return EMPTY_ICON;
+            }
+
+            icon = new ImageIcon(image);
+            myRealIcon = new SoftReference<Icon>(icon);
+            return icon;
+        }
+
+
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            getRealIcon().paintIcon(c, g, x, y);
+        }
+
+        public int getIconWidth() {
+            return getRealIcon().getIconWidth();
+        }
+
+        public int getIconHeight() {
+            return getRealIcon().getIconHeight();
+        }
+    }
 
   private static final class MyImageIcon extends ImageIcon {
     public MyImageIcon(final Image image) {
