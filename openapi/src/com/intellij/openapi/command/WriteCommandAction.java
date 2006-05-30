@@ -6,6 +6,7 @@ package com.intellij.openapi.command;
 
 import com.intellij.openapi.application.BaseActionRunnable;
 import com.intellij.openapi.application.RunResult;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -118,5 +119,24 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return result;
   }
 
+  public static abstract class Simple extends WriteCommandAction {
+    protected Simple(final Project project, PsiFile... files) {
+      super(project, files);
+    }
+
+    protected Simple(final Project project, final String commandName, final PsiFile... files) {
+      super(project, commandName, files);
+    }
+
+    protected Simple(final Project project, final String name, final String groupID, final PsiFile... files) {
+      super(project, name, groupID, files);
+    }
+
+    protected void run(final Result result) throws Throwable {
+      run();
+    }
+
+    protected abstract void run() throws Throwable;
+  }
 }
 
