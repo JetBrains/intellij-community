@@ -54,6 +54,8 @@ public class AntChangeVisitor implements XmlChangeVisitor {
 
   @Nullable
   private static void clearParentCaches(final XmlElement el) {
+    if (!el.isValid()) return;  // TODO: Remove after AntLanguageExtension is fixed.
+
     final TextRange textRange = el.getTextRange();
     final AntFile antFile =
       (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
