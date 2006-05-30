@@ -83,7 +83,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   public AntAttributeType getAttributeType(final String attr) {
     for (int i = 0; i < attr.length(); ++i) {
       if (!Character.isLowerCase(attr.charAt(i))) {
-        myAttributes.get(attr.toLowerCase(Locale.US));
+        return myAttributes.get(attr.toLowerCase(Locale.US));
       }
     }
     return myAttributes.get(attr);
