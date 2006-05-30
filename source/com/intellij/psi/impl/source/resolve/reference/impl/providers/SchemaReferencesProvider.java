@@ -1,15 +1,18 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiBundle;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.meta.MetaRegistry;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,16 +30,15 @@ import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 
 /**
  * Created by IntelliJ IDEA.
@@ -156,6 +158,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     @NonNls private static final String ELEMENT_TAG_NAME = "element";
     @NonNls private static final String SIMPLE_TYPE_TAG_NAME = "simpleType";
     @NonNls private static final String COMPLEX_TYPE_TAG_NAME = "complexType";
+    @NonNls private static final String REF_ATTR_NAME = "ref";
 
     enum ReferenceType {
       ElementReference, AttributeReference, GroupReference, AttributeGroupReference, TypeReference
@@ -176,7 +179,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       final String localName = tag.getLocalName();
       final String attributeLocalName = attribute.getLocalName();
 
-      if ("ref".equals(attributeLocalName) || "substitutionGroup".equals(attributeLocalName)) {
+      if (REF_ATTR_NAME.equals(attributeLocalName) || "substitutionGroup".equals(attributeLocalName)) {
         if (localName.equals(GROUP_TAG_NAME)) {
           myType = ReferenceType.GroupReference;
         } else if (localName.equals(ATTRIBUTE_GROUP_TAG_NAME)) {
@@ -230,8 +233,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
           case AttributeGroupReference: return nsDescriptor.findAttributeGroup(canonicalText);
           case ElementReference: {
             XmlElementDescriptor descriptor = nsDescriptor.getElementDescriptor(
-              XmlUtil.findLocalNameByQualifiedName(canonicalText),
-              tag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(canonicalText)),
+              XmlUtil.findLocalNameByQualifiedName(canonicalText), getNamespace(tag, canonicalText),
               new HashSet<XmlNSDescriptorImpl>(),
               true
             );
@@ -243,7 +245,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
             final String localNameByQualifiedName = XmlUtil.findLocalNameByQualifiedName(canonicalText);
             XmlAttributeDescriptor descriptor = nsDescriptor.getAttribute(
               localNameByQualifiedName,
-              tag.getNamespaceByPrefix(prefixByQualifiedName)
+              getNamespace(tag, canonicalText)
             );
 
             if (descriptor != null) return descriptor.getDeclaration();
@@ -274,8 +276,50 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
 
     private XmlNSDescriptorImpl getDescriptor(final XmlTag tag, String text) {
-      XmlNSDescriptor nsDescriptor = nsDescriptor = tag.getNSDescriptor(
-        tag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(text)),
+      if (myType != ReferenceType.ElementReference &&
+          myType != ReferenceType.AttributeReference) {
+        final PsiElement parentElement = myElement.getParent();
+        final PsiElement grandParentElement = parentElement != null ? parentElement.getParent() : null;
+        boolean doRedefineCheck = false;
+
+        if (parentElement instanceof XmlAttribute &&
+            grandParentElement instanceof XmlTag
+           ) {
+          final String attrName = ((XmlAttribute)parentElement).getName();
+          final String tagLocalName = ((XmlTag)grandParentElement).getLocalName();
+
+          doRedefineCheck = (REF_ATTR_NAME.equals(attrName) &&
+            ( GROUP_TAG_NAME.equals(tagLocalName) ||
+              ATTRIBUTE_GROUP_TAG_NAME.equals(tagLocalName)
+            )
+           ) ||
+           ( BASE_XML_NS_ATTR_NAME.equals(attrName) ||
+             MEMBER_TYPES_ATTR_NAME.equals(attrName)
+           );
+        }
+
+        if (doRedefineCheck) {
+          for(XmlTag parentTag = tag.getParentTag(); parentTag != null; parentTag = parentTag.getParentTag()) {
+            if ("redefine".equals(parentTag.getLocalName())) {
+              final String schemaL = parentTag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
+
+              if (schemaL != null) {
+                final PsiReference[] references = parentTag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, null).getValueElement().getReferences();
+
+                if (references.length > 0) {
+                  final PsiElement psiElement = references[references.length - 1].resolve();
+
+                  if (psiElement instanceof XmlFile) {
+                    final PsiMetaData metaData = ((XmlFile)psiElement).getDocument().getMetaData();
+                    if (metaData instanceof XmlNSDescriptorImpl) return (XmlNSDescriptorImpl)metaData;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      XmlNSDescriptor nsDescriptor = nsDescriptor = tag.getNSDescriptor(getNamespace(tag, text),
         true
       );
 
@@ -284,6 +328,20 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       }
 
       return nsDescriptor instanceof XmlNSDescriptorImpl ? (XmlNSDescriptorImpl)nsDescriptor:null;
+    }
+
+    private static String getNamespace(final XmlTag tag, final String text) {
+      final String namespaceByPrefix = tag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(text));
+      if (namespaceByPrefix.length() > 0) return namespaceByPrefix;
+      final XmlTag rootTag = ((XmlFile)tag.getContainingFile()).getDocument().getRootTag();
+
+      if (rootTag != null &&
+          "schema".equals(rootTag.getLocalName()) &&
+          Arrays.asList(MetaRegistry.SCHEMA_URIS).indexOf(rootTag.getNamespace()) != -1 ) {
+        final String targetNS = rootTag.getAttributeValue("targetNamespace");
+        if (targetNS != null) return targetNS;
+      }
+      return namespaceByPrefix;
     }
 
     public String getCanonicalText() {

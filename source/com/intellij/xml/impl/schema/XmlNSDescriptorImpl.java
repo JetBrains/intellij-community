@@ -335,6 +335,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     else if (visited.contains(rootTag)) return null;
     visited.add(rootTag);
 
+    return doFindIn(tags, name, pair, rootTag, visited);
+  }
+
+  private TypeDescriptor doFindIn(final XmlTag[] tags, final String name, final Pair<String, XmlTag> pair, final XmlTag rootTag, final Set<XmlTag> visited) {
+    XmlNSDescriptorImpl nsDescriptor;
+
     for (final XmlTag tag : tags) {
       if (equalsToSchemaName(tag, "complexType")) {
         if (name == null) {
@@ -396,7 +402,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
                 nsDescriptor = this;
               }
 
-              
+
               final Set<XmlTag> visited1 = visited;
               final XmlNSDescriptorImpl nsDescriptor1 = nsDescriptor;
 
@@ -404,12 +410,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
                 tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
                   public Result<TypeDescriptor> compute() {
                     final String currentName = tag.getAttributeValue("name");
-        
+
                     if (currentName != null && !currentName.equals(XmlUtil.findLocalNameByQualifiedName(name))) {
                       myTypesMap.remove(pair);
                       return new Result<TypeDescriptor>(null);
                     }
-                    
+
                     final TypeDescriptor complexTypeDescriptor =
                       (nsDescriptor1 != XmlNSDescriptorImpl.this)?
                       nsDescriptor1.findTypeDescriptor(rTag, name):
@@ -418,7 +424,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
                   }
                 }, false
               );
-              
+
               if (value.getValue() != null) {
                 myTypesMap.put(pair, value);
                 return value.getValue();
@@ -426,6 +432,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             }
           }
         }
+      } else if (equalsToSchemaName(tag, "redefine")) {
+        final XmlTag[] subTags = tag.getSubTags();
+        final TypeDescriptor descriptor = doFindIn(subTags, name, pair, rootTag, visited);
+        if (descriptor != null) return descriptor;
       }
     }
     return null;
@@ -592,6 +602,14 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
     XmlTag[] tags = rootTag.getSubTags();
 
+    return findSpecialTagIn(tags, specialName, name, rootTag, descriptor, visited);
+  }
+
+  private static XmlTag findSpecialTagIn(final XmlTag[] tags,
+                                         final String specialName,
+                                         final String name,
+                                         final XmlTag rootTag,
+                                         final XmlNSDescriptorImpl descriptor, final HashSet<XmlTag> visited) {
     for (XmlTag tag : tags) {
       if (equalsToSchemaName(tag, specialName)) {
         String attribute = tag.getAttributeValue("name");
@@ -621,6 +639,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             }
           }
         }
+      } else if (equalsToSchemaName(tag, "redefine")) {
+        final XmlTag rTag = findSpecialTagIn(tag.getSubTags(), specialName, name, rootTag, descriptor, visited);
+        if (rTag != null) return rTag;
       }
     }
 
