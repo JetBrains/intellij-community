@@ -35,7 +35,7 @@ public final class CreateFieldFix extends QuickFix{
     @NotNull final String fieldClass,
     @NotNull final String fieldName
   ) {
-    super(editor, UIDesignerBundle.message("action.create.field", fieldName));
+    super(editor, UIDesignerBundle.message("action.create.field", fieldName), null);
     myClass = aClass;
     myFieldClassName = fieldClass;
     myFieldName = fieldName;

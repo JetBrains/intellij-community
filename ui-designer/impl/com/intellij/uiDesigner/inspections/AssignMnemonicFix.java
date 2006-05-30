@@ -22,11 +22,8 @@ import java.util.ArrayList;
 public class AssignMnemonicFix extends QuickFix {
   private static Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.inspections.AssignMnemonicFix");
 
-  private RadComponent myComponent;
-
   public AssignMnemonicFix(final GuiEditor editor, final RadComponent component, final String name) {
-    super(editor, name);
-    myComponent = component;
+    super(editor, name, component);
   }
 
   public void run() {

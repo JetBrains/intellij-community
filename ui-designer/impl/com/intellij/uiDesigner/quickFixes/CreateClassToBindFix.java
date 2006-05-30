@@ -32,7 +32,7 @@ public final class CreateClassToBindFix extends QuickFix{
   private final String myClassName;
 
   public CreateClassToBindFix(final GuiEditor editor, @NotNull final String className) {
-    super(editor, UIDesignerBundle.message("action.create.class", className));
+    super(editor, UIDesignerBundle.message("action.create.class", className), null);
     myClassName = className;
   }
 

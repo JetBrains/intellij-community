@@ -29,7 +29,7 @@ public class ChangeFieldTypeFix extends QuickFix {
 
   public ChangeFieldTypeFix(GuiEditor uiEditor, PsiField field, PsiType uiComponentType) {
     super(uiEditor, MessageFormat.format(UIDesignerBundle.message("action.change.field.type"),
-                                         field.getName(), field.getType().getCanonicalText(), uiComponentType.getCanonicalText()));
+                                         field.getName(), field.getType().getCanonicalText(), uiComponentType.getCanonicalText()), null);
     myField = field;
     myNewType = uiComponentType;
   }

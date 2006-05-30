@@ -51,9 +51,9 @@ public class FormEditorErrorCollector extends FormErrorCollector {
       quickFixes [0] = editorQuickFixProvider.createQuickFix(myEditor, myComponent);
     }
 
-    myResults.add(new ErrorInfo(prop == null ? null : prop.getName(),
-                                errorMessage,
-                                myProfile.getErrorLevel(HighlightDisplayKey.find(inspectionId)),
-                                quickFixes));
+    final ErrorInfo errorInfo = new ErrorInfo(prop == null ? null : prop.getName(), errorMessage,
+                                              myProfile.getErrorLevel(HighlightDisplayKey.find(inspectionId)), quickFixes);
+    errorInfo.setInspectionId(inspectionId);
+    myResults.add(errorInfo);
   }
 }

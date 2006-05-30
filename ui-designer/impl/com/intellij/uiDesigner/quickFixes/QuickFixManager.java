@@ -1,22 +1,20 @@
 package com.intellij.uiDesigner.quickFixes;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.HeavyweightHint;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 /**
  * @author Anton Katilin
@@ -199,22 +197,35 @@ public abstract class QuickFixManager <T extends JComponent>{
       return;
     }
 
-    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    final ArrayList<QuickFix> fixList = new ArrayList<QuickFix>();
     for(ErrorInfo errorInfo: errorInfos) {
       for (QuickFix fix: errorInfo.myFixes) {
-        actionGroup.add(new QuickFixActionImpl(fix));
+        fixList.add(fix);
       }
     }
 
-    final DataContext dataContext = DataManager.getInstance().getDataContext(myComponent);
-    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-      null,
-      actionGroup,
-      dataContext,
-      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-      true);
-    
+    final ListPopup popup = JBPopupFactory.getInstance().createWizardStep(new QuickFixPopupStep(fixList));
     popup.showUnderneathOf(myHint.getComponent());
+  }
+
+  private static class QuickFixPopupStep extends BaseListPopupStep<QuickFix> {
+    public QuickFixPopupStep(final ArrayList<QuickFix> fixList) {
+      super(null, fixList);
+    }
+
+    @NotNull
+    public String getTextFor(final QuickFix value) {
+      return value.getName();
+    }
+
+    public PopupStep onChosen(final QuickFix selectedValue, final boolean finalChoice) {
+      selectedValue.run();
+      return FINAL_CHOICE;
+    }
+
+    public boolean hasSubstep(final QuickFix selectedValue) {
+      return false;
+    }
   }
 
   private final class MyShowHintRequest implements Runnable{

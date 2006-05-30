@@ -28,11 +28,9 @@ import java.util.Collection;
  */
 public abstract class I18nizeFormQuickFix extends QuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.i18n.I18nizeFormQuickFix");
-  protected final RadComponent myComponent;
 
   public I18nizeFormQuickFix(final GuiEditor editor, final String name, final RadComponent component) {
-    super(editor, name);
-    myComponent = component;
+    super(editor, name, component);
   }
 
   public void run() {

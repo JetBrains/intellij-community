@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner.inspections;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,6 +14,7 @@ import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 
@@ -24,8 +24,6 @@ import javax.swing.*;
  * @author yole
  */
 public class NoLabelForInspection extends BaseFormInspection {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.inspections.NoLabelForInspection");
-
   public NoLabelForInspection() {
     super("NoLabelFor");
   }
@@ -81,13 +79,11 @@ public class NoLabelForInspection extends BaseFormInspection {
   }
 
   private static class MyQuickFix extends QuickFix {
-    private RadComponent myComponent;
     private RadComponent myLabel;
 
     public MyQuickFix(final GuiEditor editor, RadComponent component, RadComponent label) {
       super(editor, UIDesignerBundle.message("inspection.no.label.for.quickfix",
-                                             ComponentTree.getComponentTitle(label)));
-      myComponent = component;
+                                             ComponentTree.getComponentTitle(label)), component);
       myLabel = label;
     }
 
@@ -98,14 +94,10 @@ public class NoLabelForInspection extends BaseFormInspection {
       final Palette palette = Palette.getInstance(myEditor.getProject());
       IntrospectedProperty[] props = palette.getIntrospectedProperties(myLabel);
       for(IntrospectedProperty prop: props) {
-        if (prop.getName().equals(SwingProperties.LABEL_FOR)) {
-          try {
-            prop.setValue(myLabel, myComponent.getId());
-            myEditor.refreshAndSave(false);
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
+        if (prop.getName().equals(SwingProperties.LABEL_FOR) && prop instanceof IntroComponentProperty) {
+          IntroComponentProperty icp = (IntroComponentProperty) prop;
+          icp.setValueEx(myLabel, myComponent.getId());
+          myEditor.refreshAndSave(false);
           break;
         }
       }

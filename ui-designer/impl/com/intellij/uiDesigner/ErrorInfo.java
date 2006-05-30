@@ -9,12 +9,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladimir Kondratyev
  */
 public final class ErrorInfo {
-  public static ErrorInfo[] EMPTY_ARRAY = new ErrorInfo[0];
+  public static final ErrorInfo[] EMPTY_ARRAY = new ErrorInfo[0];
 
   public final String myDescription;
   private final String myPropertyName;
   public final QuickFix[] myFixes;
   private final HighlightDisplayLevel myHighlightDisplayLevel;
+  private String myInspectionId;
 
   public ErrorInfo(final String propertyName, @NotNull final String description,
                    @NotNull HighlightDisplayLevel highlightDisplayLevel, @NotNull final QuickFix[] fixes) {
@@ -30,5 +31,13 @@ public final class ErrorInfo {
 
   public HighlightDisplayLevel getHighlightDisplayLevel() {
     return myHighlightDisplayLevel;
+  }
+
+  public String getInspectionId() {
+    return myInspectionId;
+  }
+
+  public void setInspectionId(final String inspectionId) {
+    myInspectionId = inspectionId;
   }
 }

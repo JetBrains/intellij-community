@@ -42,11 +42,8 @@ public class NoScrollPaneInspection extends BaseFormInspection {
   }
 
   private static class MyQuickFix extends QuickFix {
-    private RadComponent myComponent;
-
     public MyQuickFix(final GuiEditor editor, RadComponent component) {
-      super(editor, UIDesignerBundle.message("inspection.no.scroll.pane.quickfix"));
-      myComponent = component;
+      super(editor, UIDesignerBundle.message("inspection.no.scroll.pane.quickfix"), component);
     }
 
     public void run() {

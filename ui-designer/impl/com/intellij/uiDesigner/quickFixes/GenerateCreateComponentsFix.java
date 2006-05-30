@@ -17,7 +17,7 @@ public class GenerateCreateComponentsFix extends QuickFix {
   private final PsiClass myClass;
 
   public GenerateCreateComponentsFix(@NotNull final GuiEditor editor, PsiClass aClass) {
-    super(editor, UIDesignerBundle.message("quickfix.generate.custom.create"));
+    super(editor, UIDesignerBundle.message("quickfix.generate.custom.create"), null);
     myClass = aClass;
   }
 
