@@ -29,8 +29,11 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   final static AntTarget[] EMPTY_TARGETS = new AntTarget[0];
   private AntTarget[] myTargets;
   private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
+  @NonNls private List<String> myEnvPrefixes;
 
-  public AntProjectImpl(final AntFileImpl parent, final XmlTag tag, final AntTypeDefinition projectDefinition) {
+  public AntProjectImpl(final AntFileImpl parent,
+                        final XmlTag tag,
+                        final AntTypeDefinition projectDefinition) {
     super(parent, tag);
     myDefinition = projectDefinition;
   }
@@ -57,6 +60,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   public void clearCaches() {
     super.clearCaches();
     myTargets = null;
+    myEnvPrefixes = null;
   }
 
   @Nullable
@@ -90,6 +94,21 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       }
     }
     return null;
+  }
+
+  public void addEnvironmentPropertyPrefix(@NotNull final String envPrefix) {
+    checkEnvList();
+    myEnvPrefixes.add(envPrefix);
+  }
+
+  public boolean isEnvironmentProperty(@NotNull final String propName) {
+    checkEnvList();
+    for (String prefix : myEnvPrefixes) {
+      if (propName.startsWith(prefix)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -193,6 +212,13 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     if (myProperties == null) {
       myProperties = new HashMap<String, PsiElement>(myPredefinedProps.size());
       setPredefinedProperties();
+    }
+  }
+
+  private void checkEnvList() {
+    if (myEnvPrefixes == null) {
+      myEnvPrefixes = new ArrayList<String>();
+      myEnvPrefixes.add("env.");
     }
   }
 }

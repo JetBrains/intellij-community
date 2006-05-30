@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
@@ -59,6 +60,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
   private void getAttributeReferences(final AntElement element,
                                       final XmlAttribute attr,
                                       final List<PsiReference> refs) {
+    final AntProject project = element.getAntProject();
     final String value = attr.getValue();
     final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
     if (xmlAttributeValue != null) {
@@ -72,6 +74,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
         if (endIndex < 0) break;
         if (endIndex > startIndex) {
           final String propName = value.substring(startIndex, endIndex);
+          if (project.isEnvironmentProperty(propName)) continue;
           refs.add(new AntPropertyReference(this, element, propName, new TextRange(
             offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
         }
@@ -89,7 +92,9 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
   private void getAttributeReference(final AntElement element,
                                      final XmlAttribute attr,
                                      final List<PsiReference> refs) {
+    final AntProject project = element.getAntProject();
     final String value = attr.getValue();
+    if (project.isEnvironmentProperty(value)) return;
     final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
     if (xmlAttributeValue != null && AntElementImpl.resolveProperty(element, value) != null) {
       final int offsetInPosition =

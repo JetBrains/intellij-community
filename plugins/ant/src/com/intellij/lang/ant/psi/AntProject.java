@@ -19,4 +19,8 @@ public interface AntProject extends AntStructuredElement {
 
   @Nullable
   AntTarget getDefaultTarget();
+
+  void addEnvironmentPropertyPrefix(@NotNull final String envPrefix);
+
+  boolean isEnvironmentProperty(@NotNull final String propName);
 }

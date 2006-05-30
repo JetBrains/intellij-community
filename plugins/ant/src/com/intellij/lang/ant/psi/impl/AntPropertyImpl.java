@@ -35,14 +35,27 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     else if (getFileName() != null) {
       final PropertiesFile file = getPropertiesFile();
       if (file != null) {
+        String prefix = getPrefix();
+        if (prefix != null && !prefix.endsWith(".")) {
+          prefix += '.';
+        }
         for (Property prop : file.getProperties()) {
-          propHolder.setProperty(prop.getKey(), prop);
+          propHolder.setProperty((prefix == null) ? prop.getKey() : prefix + prop.getKey(), prop);
         }
       }
     }
+    else if (getEnvironment() != null) {
+      String env = getEnvironment();
+      if (!env.endsWith(".")) {
+        env += '.';
+      }
+      getAntProject().addEnvironmentPropertyPrefix(env);
+    }
   }
 
-  public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntPropertyImpl(final AntElement parent,
+                         final XmlElement sourceElement,
+                         final AntTypeDefinition definition) {
     this(parent, sourceElement, definition, "name");
   }
 
@@ -127,5 +140,13 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   public void clearCaches() {
     super.clearCaches();
     propHolder.clearCaches();
+  }
+
+  private String getPrefix() {
+    return getSourceElement().getAttributeValue("prefix");
+  }
+
+  private String getEnvironment() {
+    return getSourceElement().getAttributeValue("environment");
   }
 }
