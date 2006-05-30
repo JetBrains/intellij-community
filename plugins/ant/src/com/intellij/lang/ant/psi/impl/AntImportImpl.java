@@ -15,9 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class AntImportImpl extends AntTaskImpl implements AntImport {
 
-  public AntImportImpl(final AntElement parent,
-                       final XmlElement sourceElement,
-                       final AntTypeDefinition definition) {
+  public AntImportImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
     final AntFile imported = getFile();
     if (imported != null) {
@@ -37,8 +35,7 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
         for (PsiElement prop : importedProject.getProperties()) {
           project.setProperty(((PsiNamedElement)prop).getName(), prop);
         }
-        AntStructuredElement firstChild =
-          PsiTreeUtil.getChildOfType(importedProject, AntStructuredElement.class);
+        AntStructuredElement firstChild = PsiTreeUtil.getChildOfType(importedProject, AntStructuredElement.class);
         if (firstChild != null) {
           // copy project ids
           for (String id : importedProject.getRefIds()) {
@@ -60,6 +57,10 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
+  }
+
+  public boolean canContainFileReference() {
+    return true;
   }
 
   @Nullable

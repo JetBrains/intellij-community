@@ -37,4 +37,6 @@ public interface AntStructuredElement extends AntElement {
   boolean isNameElement(PsiElement element);
 
   boolean isIdElement(PsiElement element);
+
+  boolean canContainFileReference();
 }

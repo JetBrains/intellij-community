@@ -16,12 +16,15 @@ public class AntFileReferenceProvider extends GenericReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     AntStructuredElement antElement = (AntStructuredElement)element;
+    if (!antElement.canContainFileReference()) {
+      return PsiReference.EMPTY_ARRAY;
+    }
     final XmlAttribute attr = antElement.getSourceElement().getAttribute("file", null);
     if (attr == null) {
       return PsiReference.EMPTY_ARRAY;
     }
     final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
-    if( xmlAttributeValue == null) {
+    if (xmlAttributeValue == null) {
       return PsiReference.EMPTY_ARRAY;
     }
     final int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset() + 1;

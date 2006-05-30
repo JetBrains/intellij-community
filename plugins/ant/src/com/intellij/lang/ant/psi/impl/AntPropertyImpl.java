@@ -42,9 +42,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     }
   }
 
-  public AntPropertyImpl(final AntElement parent,
-                         final XmlElement sourceElement,
-                         final AntTypeDefinition definition) {
+  public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     this(parent, sourceElement, definition, "name");
   }
 
@@ -73,6 +71,10 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
+  }
+
+  public boolean canContainFileReference() {
+    return true;
   }
 
   @Nullable

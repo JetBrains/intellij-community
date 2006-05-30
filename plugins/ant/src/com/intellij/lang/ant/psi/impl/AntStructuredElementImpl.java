@@ -216,6 +216,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return getIdElement() == element;
   }
 
+  public boolean canContainFileReference() {
+    return false;
+  }
+
   public void clearCaches() {
     super.clearCaches();
     myReferencedElements = null;
