@@ -17,6 +17,18 @@ import java.util.ArrayList;
  * @author peter
  */
 public class ModelMergerUtil {
+
+  @Nullable
+  public static <T, V> V getImplementation(final Class<V> clazz, final T... elements) {
+    for (final T element : elements) {
+      final V implementation = getImplementation(element, clazz);
+      if (implementation != null) {
+        return implementation;
+      }
+    }
+    return null;
+  }
+
   @Nullable
   public static <T, V> V getImplementation(final T element, final Class<V> clazz) {
     if (element == null) return null;

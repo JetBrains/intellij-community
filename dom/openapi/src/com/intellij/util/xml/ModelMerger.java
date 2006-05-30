@@ -16,7 +16,11 @@
  */
 package com.intellij.util.xml;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collection;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author peter
@@ -25,4 +29,20 @@ public interface ModelMerger {
   <T> T mergeModels(Class<? extends T> aClass, T... implementations);
 
   <T> T mergeModels(Class<? extends T> aClass, Collection<? extends T> implementations);
+
+  <T> void addInvocationStrategy(Class<T> aClass, InvocationStrategy<T> strategy);
+
+  <T> void addMergingStrategy(Class<T> aClass, MergingStrategy<T> strategy);
+
+
+  abstract class InvocationStrategy<T> {
+    public abstract boolean accepts(Method method);
+    public abstract Object invokeMethod(Method method, final Object[] args, T[] implementations) throws IllegalAccessException,
+                                                                                                        InvocationTargetException;
+  }
+
+  abstract class MergingStrategy<T> {
+    @Nullable
+    public abstract T mergeChildren(Class<? extends T> type, T[] implementations);
+  }
 }
