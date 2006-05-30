@@ -56,7 +56,6 @@ public class PluginManagerMain
   @NonNls public static final String HTML_PREFIX = "<html><body><a href=\"\">";
   @NonNls public static final String HTML_SUFIX = "</a></body></html>";
 
-  public static final String NOT_SPECIFIED = IdeBundle.message("plugin.status.not.specified");
   private boolean requireShutdown = false;
 
   private JPanel myToolbarPanel;
@@ -421,7 +420,7 @@ public class PluginManagerMain
     private static void setHtmlValue( final String val, JLabel label)
     {
         boolean isValid = (val != null && val.trim().length() > 0);
-        String setVal = isValid ? HTML_PREFIX + val.trim() + HTML_SUFIX : NOT_SPECIFIED;
+        String setVal = isValid ? HTML_PREFIX + val.trim() + HTML_SUFIX : IdeBundle.message("plugin.status.not.specified");
 
         label.setText( setVal );
         label.setCursor( new Cursor( isValid ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR ));
