@@ -16,6 +16,8 @@ import java.lang.reflect.Method;
  * @author peter
  */
 public class InvocationStack<T> {
+  public static final InvocationStack INSTANCE = new InvocationStack();
+  
   private final Map<Thread, Stack<Pair<JavaMethodSignature,T>>> myCallStacks = Collections.synchronizedMap(new WeakHashMap<Thread, Stack<Pair<JavaMethodSignature, T>>>());
 
   public final void push(Method method, T o) {

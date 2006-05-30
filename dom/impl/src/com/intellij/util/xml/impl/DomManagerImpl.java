@@ -103,10 +103,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return (DomManagerImpl)project.getComponent(DomManager.class);
   }
 
-  public static InvocationStack getInvocationStack() {
-    return ourInvocationStack;
-  }
-
   public final void addDomEventListener(DomEventListener listener) {
     myListeners.addListener(listener);
   }

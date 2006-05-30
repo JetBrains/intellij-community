@@ -5,7 +5,6 @@ package com.intellij.util.xml;
 
 import com.intellij.util.containers.WeakArrayHashMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
-import com.intellij.util.xml.impl.DomManagerImpl;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +195,7 @@ public class ModelMergerImpl implements ModelMerger {
 
 
     public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-      DomManagerImpl.getInvocationStack().push(method, proxy);
+      InvocationStack.INSTANCE.push(method, proxy);
       try {
         for (int i = myInvocationStrategies.size() - 1; i >= 0; i--) {
           InvocationStrategy strategy = myInvocationStrategies.get(i);
@@ -212,7 +211,7 @@ public class ModelMergerImpl implements ModelMerger {
         throw new AssertionError("impossible");
       }
       finally {
-        DomManagerImpl.getInvocationStack().pop();
+        InvocationStack.INSTANCE.pop();
       }
     }
   }
