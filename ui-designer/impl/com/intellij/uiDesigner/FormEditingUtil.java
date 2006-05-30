@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -743,7 +742,7 @@ public final class FormEditingUtil {
   public static PsiClass findClassToBind(@NotNull final Module module, @NotNull final String classToBindName) {
     return PsiManager.getInstance(module.getProject()).findClass(
       classToBindName.replace('$','.'),
-      GlobalSearchScope.moduleScope(module)
+      module.getModuleWithDependenciesScope()
     );
   }
 
