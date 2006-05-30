@@ -20,6 +20,7 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -142,6 +143,14 @@ public abstract class ModuleManager {
    * @param listener the listener instance.
    */
   public abstract void addModuleListener(@NotNull ModuleListener listener);
+
+  /**
+   * Adds a listener for receiving notifications to the module structure of the project.
+   *
+   * @param listener the listener instance.
+   * @param parentDisposable object, after whose disposing the listener should be removed
+   */
+  public abstract void addModuleListener(@NotNull ModuleListener listener, Disposable parentDisposable);
 
   /**
    * Removes a listener for receiving notifications to the module structure of the project.

@@ -34,6 +34,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.EventDispatcher;
@@ -137,6 +138,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void addModuleRootListener(final ModuleRootListener listener) {
     myModuleRootEventDispatcher.addListener(listener);
+  }
+
+  public void addModuleRootListener(ModuleRootListener listener, Disposable parentDisposable) {
+    myModuleRootEventDispatcher.addListener(listener, parentDisposable);
   }
 
   public void removeModuleRootListener(ModuleRootListener listener) {

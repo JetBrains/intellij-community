@@ -21,6 +21,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.PomModel;
 import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
@@ -365,6 +366,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   public void addModuleListener(ModuleListener listener) {
     myModuleEventDispatcher.addListener(listener);
+  }
+
+  public void addModuleListener(@NotNull ModuleListener listener, Disposable parentDisposable) {
+    myModuleEventDispatcher.addListener(listener, parentDisposable);
   }
 
   public void removeModuleListener(ModuleListener listener) {

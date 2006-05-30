@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +52,14 @@ public abstract class ProjectRootManager implements ModificationTracker {
    *
    * @param listener the listener instance.
    */
-  public abstract void addModuleRootListener(ModuleRootListener listener);
+  public abstract void addModuleRootListener(ModuleRootListener listener);/**
+
+   * Adds a listener for receiving notifications about changes in project roots.
+   *
+   * @param listener the listener instance.
+   * @param parentDisposable object, after whose disposing the listener should be removed
+   */
+  public abstract void addModuleRootListener(ModuleRootListener listener, Disposable parentDisposable);
 
   /**
    * Removes a listener for receiving notifications about changes in project roots.

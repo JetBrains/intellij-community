@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.Disposable;
 
 import java.awt.*;
 
@@ -38,6 +39,7 @@ public abstract class FileStatusManager {
   public abstract void fileStatusChanged(VirtualFile file);
 
   public abstract void addFileStatusListener(FileStatusListener listener);
+  public abstract void addFileStatusListener(FileStatusListener listener, Disposable parentDisposable);
   public abstract void removeFileStatusListener(FileStatusListener listener);
 
   /**

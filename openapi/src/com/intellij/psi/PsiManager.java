@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.JavadocManager;
@@ -139,6 +140,14 @@ public abstract class PsiManager implements UserDataHolder {
    * @param listener the listener instance.
    */
   public abstract void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener);
+
+  /**
+   * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
+   *
+   * @param listener the listener instance.
+   * @param parentDisposable object, after whose disposing the listener should be removed
+   */
+  public abstract void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, Disposable parentDisposable);
 
   /**
    * Removes a listener for receiving notifications about all changes in the PSI tree of the project.

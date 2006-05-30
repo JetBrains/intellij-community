@@ -21,9 +21,11 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -600,6 +602,15 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   public void addPsiTreeChangeListener(PsiTreeChangeListener listener) {
     myTreeChangeListeners.add(listener);
     myCachedTreeChangeListeners = null;
+  }
+
+  public void addPsiTreeChangeListener(@NotNull final PsiTreeChangeListener listener, Disposable parentDisposable) {
+    addPsiTreeChangeListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removePsiTreeChangeListener(listener);
+      }
+    });
   }
 
   public void removePsiTreeChangeListener(PsiTreeChangeListener listener) {

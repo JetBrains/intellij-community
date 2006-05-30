@@ -1,12 +1,11 @@
 package com.intellij.mock;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -108,6 +107,9 @@ public class MockPsiManager extends PsiManager {
   }
 
   public void addPsiTreeChangeListener(PsiTreeChangeListener listener) {
+  }
+
+  public void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, Disposable parentDisposable) {
   }
 
   public void removePsiTreeChangeListener(PsiTreeChangeListener listener) {

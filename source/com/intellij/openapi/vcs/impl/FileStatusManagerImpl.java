@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -13,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
@@ -21,6 +23,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -128,6 +131,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     myVFSToProviderMap.clear();
   }
 
+  @NotNull
   public String getComponentName() {
     return "FileStatusManager";
   }
@@ -136,6 +140,15 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
   public void addFileStatusListener(FileStatusListener listener) {
     myListeners.add(listener);
+  }
+
+  public void addFileStatusListener(final FileStatusListener listener, Disposable parentDisposable) {
+    addFileStatusListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeFileStatusListener(listener);
+      }
+    });
   }
 
   public void fileStatusesChanged() {
