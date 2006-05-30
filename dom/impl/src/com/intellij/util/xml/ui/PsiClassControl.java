@@ -7,14 +7,13 @@ package com.intellij.util.xml.ui;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.xml.ExtendClass;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -51,9 +50,18 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     final GlobalSearchScope resolveScope = control.getDomWrapper().getResolveScope();
     editor.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final Condition<PsiClass> c = Conditions.alwaysTrue();
+//        final Condition<PsiClass> c = Conditions.alwaysTrue();
+
+        ExtendClass extend = control.getDomElement().getAnnotation(ExtendClass.class);
+        final PsiClass baseClass;
+        if (extend != null) {
+          baseClass = PsiManager.getInstance(control.getProject()).findClass(extend.value(), resolveScope);
+        } else {
+          baseClass = null;
+        }
+
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(control.getProject())
-          .createInheritanceClassChooser(UIBundle.message("choose.class"), resolveScope, null, true, true, c);
+          .createInheritanceClassChooser(UIBundle.message("choose.class"), resolveScope, baseClass, true, true, null);
         chooser.showDialog();
         final PsiClass psiClass = chooser.getSelectedClass();
         if (psiClass != null) {

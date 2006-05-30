@@ -13,6 +13,8 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlElementDescriptor;
 
 import java.util.*;
 import java.util.List;
@@ -50,7 +52,14 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     if (!element.isValid()) return NO_CHILDREN;
 
     List<SimpleNode> children = new ArrayList<SimpleNode>();
+    final XmlTag tag = element.getXmlTag();
+    final XmlElementDescriptor xmlElementDescriptor = tag == null ? null : tag.getDescriptor();
+    final XmlElementDescriptor[] xmlDescriptors = xmlElementDescriptor == null ? null : xmlElementDescriptor.getElementsDescriptors(tag);
+
     for (DomFixedChildDescription description : element.getGenericInfo().getFixedChildrenDescriptions()) {
+      if (xmlDescriptors != null) {
+        
+      }
       final List<? extends DomElement> values = description.getStableValues(element);
       if (shouldBeShown(description.getType())) {
         if (DomUtil.isGenericValueType(description.getType())) {

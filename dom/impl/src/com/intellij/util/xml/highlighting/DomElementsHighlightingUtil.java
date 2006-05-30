@@ -27,8 +27,9 @@ public class DomElementsHighlightingUtil {
     List<ProblemDescriptor>  descritors = new ArrayList<ProblemDescriptor>();
     final DomElement domElement = problemDescriptor.getDomElement();
 
-    if (domElement.getXmlTag() != null) {
-      descritors.add(manager.createProblemDescriptor(getPsiElement(domElement), problemDescriptor.getDescriptionTemplate(),
+    final PsiElement psiElement = getPsiElement(domElement);
+    if (psiElement != null) {
+      descritors.add(manager.createProblemDescriptor(psiElement, problemDescriptor.getDescriptionTemplate(),
                                              problemDescriptor.getFixes(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     } else {
       final XmlTag tag = getParentXmlTag(domElement);
