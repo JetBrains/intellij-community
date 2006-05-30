@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -1026,12 +1027,14 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         if(pointerElement instanceof PsiClass){
           if (!(ref instanceof PsiImportStaticReferenceElement)) {
             PsiJavaCodeReferenceElement newRef = (PsiJavaCodeReferenceElement)ref.bindToElement(pointerElement);
+            newRef = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(newRef);
             final TextRange textRange = newRef.getTextRange();
             endOffset = textRange.getEndOffset();
             newStartOffset = textRange.getStartOffset();
           }
           else {
-            final PsiImportStaticStatement statement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass) pointerElement);
+            PsiImportStaticStatement statement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass) pointerElement);
+            statement = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(statement);
             final TextRange textRange = statement.getTextRange();
             endOffset = textRange.getEndOffset();
             newStartOffset = textRange.getStartOffset();
