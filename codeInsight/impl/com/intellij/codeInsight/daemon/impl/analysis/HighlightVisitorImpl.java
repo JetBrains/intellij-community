@@ -624,6 +624,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitAnnotation(PsiAnnotation annotation) {
+    super.visitAnnotation(annotation);
     myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
