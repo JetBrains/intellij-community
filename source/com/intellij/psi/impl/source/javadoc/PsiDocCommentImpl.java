@@ -210,7 +210,12 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
         while (prev != null && prev.getElementType() == DOC_COMMENT_DATA) {
           prev = prev.getTreePrev();
         }
-        if (prev != null && prev.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) {
+        ASTNode next = child.getTreeNext();
+        while (next != null && (next.getElementType() == DOC_COMMENT_DATA || next.getElementType() == WHITE_SPACE)) {
+          next = next.getTreeNext();
+        }
+
+        if (prev != null && prev.getElementType() == DOC_COMMENT_LEADING_ASTERISKS && !(next instanceof PsiDocTag)) {
           ASTNode leadingAsterisk = prev;
           if (leadingAsterisk.getTreePrev() != null) {
             super.deleteChildInternal(leadingAsterisk.getTreePrev());
@@ -227,9 +232,9 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
           if (prevChild != null && prevChild.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) {
             ASTNode current = prevChild;
             while (current != null) {
-              final ASTNode next = current.getTreeNext();
+              final ASTNode nextChild = current.getTreeNext();
               compositePrev.deleteChildInternal(current);
-              current = next;
+              current = nextChild;
             }
           }
         }
