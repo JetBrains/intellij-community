@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.misc.PsiElementHashSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -38,7 +39,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private int myLastFoundElementOffset = -1;
   private AntElement myLastFoundElement;
 
-  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, @NonNls final String nameElementAttribute) {
+  public AntStructuredElementImpl(final AntElement parent,
+                                  final XmlElement sourceElement,
+                                  @NonNls final String nameElementAttribute) {
     super(parent, sourceElement);
     myNameElementAttribute = nameElementAttribute;
     getIdElement();
@@ -63,7 +66,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
   }
 
-  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntStructuredElementImpl(final AntElement parent,
+                                  final XmlElement sourceElement,
+                                  final AntTypeDefinition definition) {
     this(parent, sourceElement, definition, "name");
   }
 
@@ -151,13 +156,20 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     if (!file.isAbsolute()) {
       file = new File(vFile.getPath(), fileName);
     }
-    vFile = LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
+    vFile =
+      LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
     if (vFile == null) return null;
     return antFile.getViewProvider().getManager().findFile(vFile);
   }
 
   public String computeAttributeValue(String value) {
-    return computeAttributeValue(value, new HashSet<PsiElement>());
+    final HashSet<PsiElement> set = PsiElementHashSetSpinAllocator.alloc();
+    try {
+      return computeAttributeValue(value, set);
+    }
+    finally {
+      PsiElementHashSetSpinAllocator.dispose(set);
+    }
   }
 
   public void registerRefId(final String id, AntElement element) {
