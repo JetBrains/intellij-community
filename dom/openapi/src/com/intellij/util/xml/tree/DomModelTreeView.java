@@ -4,8 +4,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.*;
@@ -17,7 +15,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventAdapter;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -63,13 +60,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider {
     TreeUtil.installActions(myTree);
 
     final SimpleTreeStructure treeStructure = rootElement != null ? new DomModelTreeStructure(rootElement) : getTreeStructure();
-    myBuilder = new LazySimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE) {
-
-      @NotNull
-      protected ProgressIndicator createProgressIndicator() {
-        return new StatusBarProgress();
-      }
-    };
+    myBuilder = new LazySimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE);
 
     myBuilder.setNodeDescriptorComparator(null);
 

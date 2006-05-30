@@ -1,6 +1,5 @@
 package com.intellij.util.xml.tree;
 
-import com.intellij.javaee.J2EEBundle;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomElement;
@@ -9,6 +8,7 @@ import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
         .REGULAR_ATTRIBUTES
         .getFgColor()));
 
-      addColoredFragment(" (" + childrenCount + ')', showErrors ? J2EEBundle.message("dom.elements.tree.childs.contain.errors") : null,
+      addColoredFragment(" (" + childrenCount + ')', showErrors ? IdeBundle.message("dom.elements.tree.childs.contain.errors") : null,
                          SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
     } else {
       addColoredFragment(getNodeName(), SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);

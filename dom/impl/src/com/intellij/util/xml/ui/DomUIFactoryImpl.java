@@ -6,7 +6,9 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.xml.DomElement;
@@ -24,6 +26,10 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public class DomUIFactoryImpl extends DomUIFactory {
+
+  public TableCellEditor createPsiClasssTableCellEditor(Project project, GlobalSearchScope searchScope) {
+    return new PsiClassTableCellEditor(project, searchScope);
+  }
 
   protected TableCellEditor createCellEditor(DomElement element, Class type) {
     if (Boolean.class.equals(type) || boolean.class.equals(type)) {
