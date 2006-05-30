@@ -27,7 +27,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.InstanceMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
@@ -52,8 +51,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
   private static final Key<DomFileDescription> CACHED_FILE_DESCRIPTION = Key.create("CachedFileDescription");
 
-  private static final InstanceMap<ScopeProvider> ourScopeProviders = new InstanceMap<ScopeProvider>();
-  private static final Map<Type, GenericInfoImpl> ourMethodsMaps = new HashMap<Type, GenericInfoImpl>();
+  private final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
 
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
 
@@ -137,21 +135,17 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     myListeners.getMulticaster().eventOccured(event);
   }
 
-  public static ScopeProvider getScopeProvider(Class<? extends ScopeProvider> aClass) {
-    return ourScopeProviders.get(aClass);
-  }
-
   public final GenericInfoImpl getGenericInfo(final Type type) {
-    GenericInfoImpl genericInfoImpl = ourMethodsMaps.get(type);
+    GenericInfoImpl genericInfoImpl = myMethodsMaps.get(type);
     if (genericInfoImpl == null) {
       if (type instanceof Class) {
         genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)type, this);
-        ourMethodsMaps.put(type, genericInfoImpl);
+        myMethodsMaps.put(type, genericInfoImpl);
       }
       else if (type instanceof ParameterizedType) {
         ParameterizedType parameterizedType = (ParameterizedType)type;
         genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)parameterizedType.getRawType(), this);
-        ourMethodsMaps.put(type, genericInfoImpl);
+        myMethodsMaps.put(type, genericInfoImpl);
       }
       else {
         assert false : "Type not supported " + type;
