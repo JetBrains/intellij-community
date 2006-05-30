@@ -54,12 +54,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       conflictsCount = conflicts.size();
       if(conflictsCount == 1) return conflicts.get(0);
 
-      /*
-      checkInnerMostClass(conflicts);
-      conflictsCount = conflicts.size();
-      if(conflictsCount == 1) return conflicts.get(0);
-      */
-
       checkParametersNumber(conflicts, myArgumentsList.getExpressions().length);
       conflictsCount = conflicts.size();
       if(conflictsCount == 1) return conflicts.get(0);
@@ -133,27 +127,6 @@ outer:
             iterator.remove();
           }
         }
-      }
-    }
-  }
-
-  private void checkInnerMostClass(final List<CandidateInfo> conflicts) {
-    PsiClass innerMostClass = null;
-    for (CandidateInfo info : conflicts) {
-      if (!(info.getCurrentFileResolveScope() instanceof PsiClass)) return;
-      final PsiClass resolveScope = (PsiClass)info.getCurrentFileResolveScope();
-      if (innerMostClass == null || PsiTreeUtil.isAncestor(innerMostClass, resolveScope, true)) {
-        innerMostClass = resolveScope;
-      }
-    }
-
-    if (innerMostClass == null) return;
-
-    for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
-      CandidateInfo info = iterator.next();
-      final PsiElement resolveScope = info.getCurrentFileResolveScope();
-      if (resolveScope != innerMostClass) {
-        iterator.remove();
       }
     }
   }
