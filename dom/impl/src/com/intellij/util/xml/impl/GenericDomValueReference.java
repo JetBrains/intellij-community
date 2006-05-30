@@ -166,30 +166,4 @@ public class GenericDomValueReference<T> extends GenericReference {
     }
     return super.getVariants();
   }
-
-  private final static Function<DomElement, String> DEFAULT_NAMER = new Function<DomElement, String>() {
-    public String fun(final DomElement element) {
-      return element.getGenericInfo().getElementName(element);
-    }
-  };
-
-  @NotNull
-  public static Object[] createVariants(Collection<? extends DomElement> elements) {
-    return createVariants(elements, DEFAULT_NAMER);
-  }
-
-  @NotNull
-  public static Object[] createVariants(Collection<? extends DomElement> elements, Function<DomElement, String> namer) {
-
-    ArrayList<Object> result = new ArrayList<Object>(elements.size());
-    for (DomElement element: elements) {
-      String name = namer.fun(element);
-      if (name != null) {
-        Icon icon = ElementPresentationManager.getIcon(element);
-        Object value = LookupValueFactory.createLookupValue(name, icon);
-        result.add(value);
-      }
-    }
-    return result.toArray();
-  }
 }
