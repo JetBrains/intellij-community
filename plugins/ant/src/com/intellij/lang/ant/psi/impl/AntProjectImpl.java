@@ -5,6 +5,7 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -29,9 +30,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private AntTarget[] myTargets;
   private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
 
-  public AntProjectImpl(final AntFileImpl parent,
-                        final XmlTag tag,
-                        final AntTypeDefinition projectDefinition) {
+  public AntProjectImpl(final AntFileImpl parent, final XmlTag tag, final AntTypeDefinition projectDefinition) {
     super(parent, tag);
     myDefinition = projectDefinition;
   }
@@ -151,6 +150,15 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         builder.append(file.getPath());
         builder.append("\"/>");
       }
+      builder.append("<property name=\"ant.version\" value=\"1.6");
+      builder.append("\"/>");
+      builder.append("<property name=\"ant.project.name\" value=\"");
+      final String name = getName();
+      builder.append((name == null) ? "" : name);
+      builder.append("\"/>");
+      builder.append("<property name=\"ant.java.version\" value=\"");
+      builder.append(SystemInfo.JAVA_VERSION);
+      builder.append("\"/>");
       builder.append("</project>");
       final PsiElementFactory elementFactory = getManager().getElementFactory();
       final XmlFile fakeFile = (XmlFile)elementFactory.createFileFromText("dummy.xml", builder.toString());
