@@ -3,6 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.javaee.web.PsiReferenceConverter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -14,15 +15,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.javaee.web.PsiReferenceConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author peter
@@ -50,12 +49,15 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
     if (element instanceof XmlAttributeValue) {
       final XmlAttributeValue value = (XmlAttributeValue)element;
-      final String name = ((XmlAttribute)value.getParent()).getLocalName();
-      final DomAttributeChildDescription childDescription = domElement.getGenericInfo().getAttributeChildDescription(name);
-      if (childDescription != null) {
-        final PsiReference[] reference = createReference(childDescription.getValues(domElement).get(0));
-        if (reference != null) {
-          return reference;
+      final PsiElement parent = value.getParent();
+      if (parent instanceof XmlAttribute) {
+        final String name = ((XmlAttribute)parent).getLocalName();
+        final DomAttributeChildDescription childDescription = domElement.getGenericInfo().getAttributeChildDescription(name);
+        if (childDescription != null) {
+          final PsiReference[] reference = createReference(childDescription.getValues(domElement).get(0));
+          if (reference != null) {
+            return reference;
+          }
         }
       }
     } else {
