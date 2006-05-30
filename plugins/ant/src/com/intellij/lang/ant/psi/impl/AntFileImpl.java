@@ -199,16 +199,25 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       for (AntTypeDefinition def : getBaseTypeDefinitions()) {
         targetElements.put(def.getTypeId(), def.getClassName());
       }
-      myTargetDefinition = new AntTypeDefinitionImpl(new AntTypeId("target"), Target.class.getName(), false, targetAttrs, targetElements);
+      myTargetDefinition = new AntTypeDefinitionImpl(new AntTypeId("target"), Target.class.getName(), false,
+                                                     targetAttrs, targetElements);
       registerCustomType(myTargetDefinition);
     }
     return myTargetDefinition;
   }
 
-  public void registerCustomType(final AntTypeDefinition definition) {
+  public void registerCustomType(final AntTypeDefinition def) {
     myTypeDefinitionArray = null;
-    myTypeDefinitions.put(definition.getClassName(), definition);
-    if (myTargetDefinition != null && myTargetDefinition != definition) {
+    myTypeDefinitions.put(def.getClassName(), def);
+    if (myTargetDefinition != null && myTargetDefinition != def) {
+      myTargetDefinition = null;
+    }
+  }
+
+  public void unregisterCustomType(final AntTypeDefinition def) {
+    myTypeDefinitionArray = null;
+    myTypeDefinitions.remove(def.getClassName());
+    if (myTargetDefinition != null && myTargetDefinition != def) {
       myTargetDefinition = null;
     }
   }
@@ -273,10 +282,13 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
     final AntTypeDefinition def = getTargetDefinition();
     projectElements.put(def.getTypeId(), def.getClassName());
-    return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs, projectElements);
+    return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs,
+                                     projectElements);
   }
 
-  static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class typeClass, final boolean isTask) {
+  static AntTypeDefinition createTypeDefinition(final AntTypeId id,
+                                                final Class typeClass,
+                                                final boolean isTask) {
     final IntrospectionHelper helper = getHelperExceptionSafe(typeClass);
     if (helper == null) return null;
     final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();

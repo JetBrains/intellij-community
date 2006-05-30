@@ -24,5 +24,7 @@ public interface AntTypeDefinition {
 
   void registerNestedType(final AntTypeId typeId, final String className);
 
+  void unregisterNestedType(final AntTypeId typeId);
+
   PsiElement getDefiningElement();
 }

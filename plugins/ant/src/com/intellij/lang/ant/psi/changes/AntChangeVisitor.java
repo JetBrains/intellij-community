@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,8 @@ public class AntChangeVisitor implements XmlChangeVisitor {
   }
 
   public void visitDocumentChanged(final XmlDocumentChanged xmlDocumentChanged) {
-    final AntFile antFile = (AntFile)xmlDocumentChanged.getDocument().getContainingFile().getViewProvider()
+    final XmlDocument doc = xmlDocumentChanged.getDocument();
+    final AntFile antFile = (AntFile)doc.getContainingFile().getViewProvider()
       .getPsi(AntSupport.getLanguage());
     if (antFile != null) {
       antFile.clearCaches();
@@ -31,15 +33,15 @@ public class AntChangeVisitor implements XmlChangeVisitor {
   }
 
   public void visitXmlTagChildAdd(final XmlTagChildAdd xmlTagChildAdd) {
-    clearParentCaches(xmlTagChildAdd.getTag());
+    clearParentCaches(xmlTagChildAdd.getChild());
   }
 
   public void visitXmlTagChildChanged(final XmlTagChildChanged xmlTagChildChanged) {
-    clearParentCaches(xmlTagChildChanged.getTag());
+    clearParentCaches(xmlTagChildChanged.getChild());
   }
 
   public void visitXmlTagChildRemoved(final XmlTagChildRemoved xmlTagChildRemoved) {
-    clearParentCaches(xmlTagChildRemoved.getTag());
+    clearParentCaches(xmlTagChildRemoved.getChild());
   }
 
   public void visitXmlTagNameChanged(final XmlTagNameChanged xmlTagNameChanged) {

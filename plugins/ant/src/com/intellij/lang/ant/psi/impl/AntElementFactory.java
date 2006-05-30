@@ -116,7 +116,7 @@ public class AntElementFactory {
       });
       ourAntTypeToKnownAntElementCreatorMap.put(MacroDef.class.getName(), new AntElementCreator() {
         public AntElement create(final AntElement parent, final XmlTag tag) {
-          return new AntMacroDefImpl(parent, tag,
+          return new AntMacroDefImpl((AntStructuredElement)parent, tag,
                                      parent.getAntFile().getBaseTypeDefinition(MacroDef.class.getName()));
         }
       });

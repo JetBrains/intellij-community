@@ -142,6 +142,13 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     getAntFile().registerCustomType(def);
   }
 
+  public void unregisterCustomType(final AntTypeDefinition def) {
+    if (myDefinition != null && myDefinitionCloned) {
+      myDefinition.unregisterNestedType(def.getTypeId());
+    }
+    getAntFile().unregisterCustomType(def);
+  }
+
   @Nullable
   public PsiFile findFileByName(final String name) {
     if (name == null) return null;

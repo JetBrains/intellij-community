@@ -15,4 +15,6 @@ public interface AntFile extends AntElement {
   AntTypeDefinition getTargetDefinition();
 
   void registerCustomType(final AntTypeDefinition def);
+
+  void unregisterCustomType(final AntTypeDefinition def);
 }

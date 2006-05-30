@@ -30,7 +30,8 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   private AntTypeId[] myNestedElementsArray;
 
   public AntTypeDefinitionImpl(final AntTypeDefinitionImpl base) {
-    this(base.getTypeId(), base.getClassName(), base.isTask(), new HashMap<String, AntAttributeType>(base.myAttributes),
+    this(base.getTypeId(), base.getClassName(), base.isTask(),
+         new HashMap<String, AntAttributeType>(base.myAttributes),
          new HashMap<AntTypeId, String>(base.myNestedClassNames));
   }
 
@@ -104,6 +105,10 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
   public void registerNestedType(final AntTypeId id, String taskClassName) {
     myNestedClassNames.put(id, taskClassName);
+  }
+
+  public void unregisterNestedType(final AntTypeId typeId) {
+    myNestedClassNames.remove(typeId);
   }
 
   public PsiElement getDefiningElement() {
