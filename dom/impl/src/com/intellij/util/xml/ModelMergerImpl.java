@@ -289,7 +289,7 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
   protected Object mergeImplementations(final Class returnType, final Object... implementations) {
-    for (int i = 0; i < myMergingStrategies.size(); i++) {
+    for (int i = myMergingStrategies.size() - 1; i >= 0; i--) {
       if (myMergingStrategyClasses.get(i).isAssignableFrom(returnType)) {
         MergingStrategy function = myMergingStrategies.get(i);
         final Object o = function.mergeChildren(returnType, implementations);
