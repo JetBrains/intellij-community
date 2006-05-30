@@ -15,7 +15,7 @@ import java.util.Calendar;
 import java.util.LinkedHashSet;
 
 public class MoveMembersTest extends MultiFileTestCase {
-  @Bombed(user = "lesya", day = 30, month = Calendar.MAY, description = "Need to fix javadoc formatter", year = 2006, time = 15)
+  @Bombed(user = "lesya", day = 30, month = Calendar.JUNE, description = "Need to fix javadoc formatter", year = 2006, time = 15)
   public void testJavadocRefs() throws Exception {
     doTest("Class1", "Class2", new int[]{0});
   }
