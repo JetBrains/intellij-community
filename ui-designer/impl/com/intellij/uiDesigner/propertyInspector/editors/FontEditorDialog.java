@@ -16,6 +16,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.Font;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -35,6 +37,9 @@ public class FontEditorDialog extends DialogWrapper {
   private JSpinner myFontSizeEdit;
   private JList mySwingFontList;
   private JTabbedPane myTabbedPane;
+  private JCheckBox myFontNameCheckbox;
+  private JCheckBox myFontStyleCheckbox;
+  private JCheckBox myFontSizeCheckbox;
   private FontDescriptor myValue;
 
   protected FontEditorDialog(final Project project, String propertyName) {
@@ -53,7 +58,8 @@ public class FontEditorDialog extends DialogWrapper {
     myFontSizeList.setListData(UIUtil.getStandardFontSizes());
     myFontSizeList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        myFontSizeEdit.setValue(Integer.valueOf(myFontSizeList.getSelectedValue().toString()));
+        final Integer selValue = Integer.valueOf(myFontSizeList.getSelectedValue().toString());
+        myFontSizeEdit.setValue(selValue);
         updateValue();
       }
     });
@@ -71,7 +77,7 @@ public class FontEditorDialog extends DialogWrapper {
         clear();
         append(descriptor.getSwingFont(),
                selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-        append(" (" + IntroFontProperty.fontToString(descriptor.getResolvedFont()) + ")",
+        append(" (" + fontToString(UIManager.getFont(descriptor.getSwingFont())) + ")",
                selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     });
@@ -79,12 +85,44 @@ public class FontEditorDialog extends DialogWrapper {
       public void valueChanged(ListSelectionEvent e) {
         myValue = (FontDescriptor)mySwingFontList.getSelectedValue();
         updatePreview();
-        showFont(myValue.getResolvedFont());
+        //showFont(myValue.getResolvedFont());
+      }
+    });
+
+    myFontNameCheckbox.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        myFontNameList.setEnabled(myFontNameCheckbox.isSelected());
+        updateValue();
+      }
+    });
+    myFontStyleCheckbox.addItemListener(new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
+        myFontStyleList.setEnabled(myFontStyleCheckbox.isSelected());
+        updateValue();
+      }
+    });
+    myFontSizeCheckbox.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        myFontSizeList.setEnabled(myFontSizeCheckbox.isSelected());
+        myFontSizeEdit.setEnabled(myFontSizeCheckbox.isSelected());
+        updateValue();
       }
     });
   }
 
-  private FontDescriptor[] collectSwingFontDescriptors() {
+  private static String fontToString(final Font font) {
+    StringBuilder result = new StringBuilder(font.getFamily());
+    result.append(" ").append(font.getSize());
+    if ((font.getStyle() & Font.BOLD) != 0) {
+      result.append(" ").append(UIDesignerBundle.message("font.chooser.bold"));
+    }
+    if ((font.getStyle() & Font.ITALIC) != 0) {
+      result.append(" ").append(UIDesignerBundle.message("font.chooser.bold"));
+    }
+    return result.toString();
+  }
+
+  private static FontDescriptor[] collectSwingFontDescriptors() {
     ArrayList<FontDescriptor> result = new ArrayList<FontDescriptor>();
     UIDefaults defaults = UIManager.getDefaults();
     Enumeration e = defaults.keys ();
@@ -109,37 +147,40 @@ public class FontEditorDialog extends DialogWrapper {
 
   public void setValue(@NotNull final FontDescriptor value) {
     myValue = value;
-    final Font font = myValue.getFont();
-    if (font != null) {
-      showFont(font);
-    }
-    else {
+    if (value.getSwingFont() != null) {
       myTabbedPane.setSelectedIndex(1);
       mySwingFontList.setSelectedValue(myValue, true);
-      showFont(myValue.getResolvedFont());
     }
-  }
-
-  private void showFont(final Font font) {
-    myFontNameList.setSelectedValue(font.getFamily(), true);
-    myFontStyleList.setSelectedIndex(font.getStyle());
-    final int fontSize = font.getSize();
-    myFontSizeList.setSelectedValue(Integer.toString(fontSize), true);
-    if (myFontSizeList.getSelectedIndex() < 0) {
-      myFontSizeEdit.setValue(new Integer(fontSize));
+    else {
+      myFontNameCheckbox.setSelected(value.getFontName() != null);
+      myFontSizeCheckbox.setSelected(value.getFontSize() >= 0);
+      myFontStyleCheckbox.setSelected(value.getFontStyle() >= 0);
+      myFontNameList.setSelectedValue(value.getFontName(), true);
+      myFontStyleList.setSelectedIndex(value.getFontStyle());
+      if (value.getFontSize() >= 0) {
+        myFontSizeList.setSelectedValue(Integer.toString(value.getFontSize()), true);
+        if (myFontSizeList.getSelectedIndex() < 0) {
+          myFontSizeEdit.setValue(new Integer(value.getFontSize()));
+        }
+      }
+      else {
+        myFontSizeList.setSelectedIndex(-1);
+        myFontSizeEdit.setValue(0);
+      }
     }
   }
 
   private void updateValue() {
-    myValue = new FontDescriptor(new Font((String) myFontNameList.getSelectedValue(),
-                                          myFontStyleList.getSelectedIndex(),
-                                          ((Integer)myFontSizeEdit.getValue()).intValue()));
+    final int fontSize = ((Integer)myFontSizeEdit.getValue()).intValue();
+    myValue = new FontDescriptor(myFontNameCheckbox.isSelected() ? (String) myFontNameList.getSelectedValue() : null,
+                                 myFontStyleCheckbox.isSelected() ? myFontStyleList.getSelectedIndex() : -1,
+                                 myFontSizeCheckbox.isSelected() ? fontSize : -1);
     updatePreview();
   }
 
   private void updatePreview() {
-    myPreviewTextLabel.setText(IntroFontProperty.fontToString(myValue.getResolvedFont()));
-    myPreviewTextLabel.setFont(myValue.getResolvedFont());
+    myPreviewTextLabel.setText(IntroFontProperty.descriptorToString(myValue));
+    myPreviewTextLabel.setFont(myValue.getResolvedFont(myRootPane.getFont()));
   }
 
   protected JComponent createCenterPanel() {
@@ -155,7 +196,13 @@ public class FontEditorDialog extends DialogWrapper {
 
     public void valueChanged(ListSelectionEvent e) {
       JList sourceList = (JList) e.getSource();
-      myTextField.setText(sourceList.getSelectedValue().toString());
+      final Object selValue = sourceList.getSelectedValue();
+      if (selValue != null) {
+        myTextField.setText(selValue.toString());
+      }
+      else {
+        myTextField.setText("");
+      }
       updateValue();
     }
   }

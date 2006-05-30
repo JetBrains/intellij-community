@@ -431,7 +431,7 @@ public final class FormSourceCodeGenerator {
         pushColor((ColorDescriptor) value);
       }
       else if (propertyClass.equals(Font.class.getName())) {
-        pushFont((FontDescriptor) value);
+        pushFont(variable, (FontDescriptor) value);
       }
       else if (propertyClass.equals(Icon.class.getName())) {
         pushIcon((IconDescriptor) value);
@@ -562,7 +562,7 @@ public final class FormSourceCodeGenerator {
             push((String) null);
           }
           else {
-            pushFont(container.getBorderTitleFont());
+            pushFont(variable, container.getBorderTitleFont());
           }
           if (container.getBorderTitleColor() != null) {
             pushColor(container.getBorderTitleColor());
@@ -742,22 +742,33 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private void pushFont(final FontDescriptor fontDescriptor) {
-    Font font = fontDescriptor.getFont();
-    if (font != null) {
-      startConstructor(Font.class.getName());
-      push(font.getName());
-      push(font.getStyle(), ourFontStyleMap);
-      push(font.getSize());
-      endMethod();
-    }
-    else if (fontDescriptor.getSwingFont() != null) {
+  private void pushFont(final String variable, final FontDescriptor fontDescriptor) {
+    if (fontDescriptor.getSwingFont() != null) {
       startStaticMethodCall(UIManager.class, "getFont");
       push(fontDescriptor.getSwingFont());
       endMethod();
     }
     else {
-      throw new IllegalStateException("Unknown font type");
+      startConstructor(Font.class.getName());
+      if (fontDescriptor.getFontName() != null) {
+        push(fontDescriptor.getFontName());
+      }
+      else {
+        pushVar(variable + ".getFont().getName()");
+      }
+      if (fontDescriptor.getFontStyle() >= 0) {
+        push(fontDescriptor.getFontStyle(), ourFontStyleMap);
+      }
+      else {
+        pushVar(variable + ".getFont().getStyle()");
+      }
+      if (fontDescriptor.getFontSize() >= 0) {
+        push(fontDescriptor.getFontSize());
+      }
+      else {
+        pushVar(variable + ".getFont().getSize()");
+      }
+      endMethod();
     }
   }
 

@@ -15,11 +15,10 @@
  */
 package com.intellij.uiDesigner.lw;
 
-import org.jdom.Element;
-import org.jdom.Attribute;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import org.jdom.Attribute;
+import org.jdom.Element;
 
-import java.awt.Font;
 import java.awt.Color;
 import java.awt.Insets;
 
@@ -127,13 +126,15 @@ public final class LwXmlReader {
   }
 
   public static FontDescriptor getFontDescriptor(final Element element) {
-    String fontName = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_NAME);
-    if (fontName != null) {
-      int fontSize = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_SIZE);
-      int fontStyle = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_STYLE);
-      return new FontDescriptor(new Font(fontName, fontStyle, fontSize));
+    String swingFont = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_SWING_FONT);
+    if (swingFont != null) {
+      return FontDescriptor.fromSwingFont(swingFont);
     }
-    return FontDescriptor.fromSwingFont(LwXmlReader.getRequiredString(element, UIFormXmlConstants.ATTRIBUTE_SWING_FONT));
+
+    String fontName = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_NAME);
+    int fontStyle = getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_STYLE, -1);
+    int fontSize = getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_SIZE, -1);
+    return new FontDescriptor(fontName, fontStyle, fontSize);
   }
 
   public static ColorDescriptor getColorDescriptor(final Element element) throws Exception {

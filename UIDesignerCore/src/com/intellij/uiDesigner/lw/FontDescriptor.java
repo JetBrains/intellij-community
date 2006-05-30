@@ -16,20 +16,32 @@
 package com.intellij.uiDesigner.lw;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.Font;
 
 /**
  * @author yole
  */
 public class FontDescriptor {
-  private Font myFont;
+  private String myFontName;
+  private int myFontSize;
+  private int myFontStyle;
   private String mySwingFont;
 
   private FontDescriptor() {
   }
 
-  public FontDescriptor(final Font font) {
-    myFont = font;
+  public FontDescriptor(final String fontName, final int fontStyle, final int fontSize) {
+    myFontName = fontName;
+    myFontSize = fontSize;
+    myFontStyle = fontStyle;
+  }
+
+  public boolean isFixedFont() {
+    return mySwingFont == null;
+  }
+
+  public boolean isFullyDefinedFont() {
+    return myFontName != null && myFontSize >= 0 && myFontStyle >= 0;
   }
 
   public static FontDescriptor fromSwingFont(String swingFont) {
@@ -38,15 +50,33 @@ public class FontDescriptor {
     return result;
   }
 
-  public Font getFont() {
-    return myFont;
+  public String getFontName() {
+    return myFontName;
   }
 
-  public Font getResolvedFont() {
+  public int getFontSize() {
+    return myFontSize;
+  }
+
+  public int getFontStyle() {
+    return myFontStyle;
+  }
+
+  public Font getFont(Font defaultFont) {
+    return new Font(myFontName != null ? myFontName : defaultFont.getFontName(),
+                    myFontStyle >= 0 ? myFontStyle : defaultFont.getStyle(),
+                    myFontSize >= 0 ? myFontSize : defaultFont.getSize());
+  }
+
+  public String getSwingFont() {
+    return mySwingFont;
+  }
+
+  public Font getResolvedFont(Font defaultFont) {
     if (mySwingFont != null) {
       return UIManager.getFont(mySwingFont);
     }
-    return myFont;
+    return getFont(defaultFont);
   }
 
   public boolean equals(Object obj) {
@@ -54,16 +84,14 @@ public class FontDescriptor {
       return false;
     }
     FontDescriptor rhs = (FontDescriptor) obj;
-    if (myFont != null) {
-      return myFont.equals(rhs.myFont);
-    }
     if (mySwingFont != null) {
       return mySwingFont.equals(rhs.mySwingFont);
     }
-    return false;
-  }
-
-  public String getSwingFont() {
-    return mySwingFont;
+    else {
+      if (myFontName == null && rhs.myFontName != null) return false;
+      if (myFontName != null && rhs.myFontName == null) return false;
+      if (myFontName != null && !myFontName.equals(rhs.myFontName)) return false;
+      return myFontSize == rhs.myFontSize && myFontStyle == rhs.myFontStyle;
+    }
   }
 }

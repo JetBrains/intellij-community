@@ -49,7 +49,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   @Override public FontDescriptor getValue(final RadComponent component) {
     final FontDescriptor fontDescriptor = (FontDescriptor) component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
     if (fontDescriptor == null) {
-      return new FontDescriptor((Font) invokeGetter(component));
+      return new FontDescriptor(null, -1, -1);
     }
     return fontDescriptor;
   }
@@ -57,7 +57,9 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   @Override protected void setValueImpl(final RadComponent component, final FontDescriptor value) throws Exception {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
     if (value != null) {
-      invokeSetter(component, value.getResolvedFont());
+      Font defaultFont = (Font) invokeGetter(component);
+      final Font resolvedFont = value.getResolvedFont(defaultFont);
+      invokeSetter(component, resolvedFont);
     }
   }
 
@@ -65,26 +67,35 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
     if (value == null) {
       return "";
     }
-    Font font = value.getFont();
-    if (font != null) {
-      return fontToString(font);
-    }
     if (value.getSwingFont() != null) {
       return value.getSwingFont();
     }
-    throw new IllegalStateException("Unknown font type");
-  }
+    StringBuilder builder = new StringBuilder();
+    if (value.getFontName() != null) {
+      builder.append(value.getFontName());
+    }
+    if (value.getFontSize() >= 0) {
+      builder.append(' ').append(value.getFontSize()).append(" pt");
+    }
+    if (value.getFontStyle() >= 0) {
+      if (value.getFontStyle() == 0) {
+        builder.append(UIDesignerBundle.message("font.chooser.regular"));
+      }
+      else {
+        if ((value.getFontStyle() & Font.BOLD) != 0) {
+          builder.append(' ').append(UIDesignerBundle.message("font.chooser.bold"));
+        }
+        if ((value.getFontStyle() & Font.ITALIC) != 0) {
+          builder.append(" ").append(UIDesignerBundle.message("font.chooser.italic"));
+        }
 
-  public static String fontToString(final Font font) {
-    StringBuilder result = new StringBuilder(font.getFamily());
-    result.append(" ").append(font.getSize());
-    if ((font.getStyle() & Font.BOLD) != 0) {
-      result.append(" ").append(UIDesignerBundle.message("font.chooser.bold"));
+      }
     }
-    if ((font.getStyle() & Font.ITALIC) != 0) {
-      result.append(" ").append(UIDesignerBundle.message("font.chooser.italic"));
+    String result = builder.toString().trim();
+    if (result.length() > 0) {
+      return result;
     }
-    return result.toString();
+    return UIDesignerBundle.message("font.default");
   }
 
   @Override public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
@@ -93,7 +104,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
         Font componentFont = (Font) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
         Font parentFont = (Font) myReadMethod.invoke(component.getParent(), EMPTY_OBJECT_ARRAY);
         if (!Comparing.equal(componentFont, parentFont)) {
-          setValue(radComponent, new FontDescriptor(componentFont));
+          setValue(radComponent, new FontDescriptor(componentFont.getName(), componentFont.getStyle(), componentFont.getSize()));
         }
       }
     }

@@ -390,7 +390,7 @@ public class RadContainer extends RadComponent implements IContainer {
     if (myBorderTitle != null) {
       title = StringDescriptorManager.getInstance(getModule()).resolve(this, myBorderTitle);
     }
-    Font font = (myBorderTitleFont != null) ? myBorderTitleFont.getResolvedFont() : null;
+    Font font = (myBorderTitleFont != null) ? myBorderTitleFont.getResolvedFont(getDelegee().getFont()) : null;
     Color color = (myBorderTitleColor != null) ? myBorderTitleColor.getResolvedColor() : null;
     getDelegee().setBorder(myBorderType.createBorder(title, myBorderTitleJustification, myBorderTitlePosition,
                                                      font, color));
@@ -555,7 +555,8 @@ public class RadContainer extends RadComponent implements IContainer {
         setBorderTitle(StringDescriptor.create(titledBorder.getTitle()));
         setBorderTitleJustification(titledBorder.getTitleJustification());
         setBorderTitlePosition(titledBorder.getTitlePosition());
-        setBorderTitleFont(new FontDescriptor(titledBorder.getTitleFont()));
+        final Font titleFont = titledBorder.getTitleFont();
+        setBorderTitleFont(new FontDescriptor(titleFont.getName(), titleFont.getStyle(), titleFont.getSize()));
         setBorderTitleColor(new ColorDescriptor(titledBorder.getTitleColor()));
         border = titledBorder.getBorder();
       }

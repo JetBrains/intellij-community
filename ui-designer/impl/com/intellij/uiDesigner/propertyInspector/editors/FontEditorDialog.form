@@ -1,54 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.uiDesigner.propertyInspector.editors.FontEditorDialog" layout-manager="GridLayoutManager">
-  <grid id="4ec1a" binding="myRootPane" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.uiDesigner.propertyInspector.editors.FontEditorDialog">
+  <grid id="4ec1a" binding="myRootPane" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="63" y="14" width="484" height="340"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <tabbedpane id="d5ff" binding="myTabbedPane">
         <constraints>
-          <xy x="2" y="2" width="480" height="231"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <preferred-size width="200" height="200"/>
           </grid>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="883e2" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+          <grid id="883e2" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="5" bottom="5" right="5"/>
             <constraints>
               <tabbedpane title-resource-bundle="messages/UIDesignerBundle" title-key="font.chooser.font.tab"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
-              <component id="68c7" class="javax.swing.JLabel">
+              <component id="3daf" class="javax.swing.JCheckBox" binding="myFontNameCheckbox">
                 <constraints>
-                  <xy x="2" y="5" width="26" height="14"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/UIDesignerBundle" key="font.chooser.font"/>
                 </properties>
               </component>
-              <component id="329c" class="javax.swing.JLabel">
+              <component id="25ffd" class="javax.swing.JCheckBox" binding="myFontStyleCheckbox">
                 <constraints>
-                  <xy x="202" y="5" width="28" height="14"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/UIDesignerBundle" key="font.chooser.style"/>
                 </properties>
               </component>
-              <component id="9e61b" class="javax.swing.JLabel">
+              <component id="e2068" class="javax.swing.JCheckBox" binding="myFontSizeCheckbox">
                 <constraints>
-                  <xy x="402" y="5" width="23" height="14"/>
-                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/UIDesignerBundle" key="font.chooser.size"/>
@@ -56,8 +51,7 @@
               </component>
               <scrollpane id="9b2dc">
                 <constraints>
-                  <xy x="2" y="54" width="190" height="150"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -65,6 +59,7 @@
                   <component id="c39f5" class="javax.swing.JList" binding="myFontNameList">
                     <constraints/>
                     <properties>
+                      <enabled value="false"/>
                       <selectionMode value="0"/>
                     </properties>
                   </component>
@@ -72,8 +67,7 @@
               </scrollpane>
               <scrollpane id="4dbe5">
                 <constraints>
-                  <xy x="202" y="54" width="190" height="150"/>
-                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3"/>
+                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -81,6 +75,7 @@
                   <component id="d9ed5" class="javax.swing.JList" binding="myFontStyleList">
                     <constraints/>
                     <properties>
+                      <enabled value="false"/>
                       <selectionMode value="0"/>
                     </properties>
                   </component>
@@ -88,8 +83,7 @@
               </scrollpane>
               <scrollpane id="d7122">
                 <constraints>
-                  <xy x="402" y="54" width="70" height="150"/>
-                  <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3"/>
+                  <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -97,6 +91,7 @@
                   <component id="774ff" class="javax.swing.JList" binding="myFontSizeList">
                     <constraints/>
                     <properties>
+                      <enabled value="false"/>
                       <selectionMode value="0"/>
                     </properties>
                   </component>
@@ -104,8 +99,7 @@
               </scrollpane>
               <component id="180c7" class="javax.swing.JTextField" binding="myFontNameEdit">
                 <constraints>
-                  <xy x="2" y="28" width="190" height="20"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                     <preferred-size width="150" height="-1"/>
                   </grid>
                 </constraints>
@@ -115,8 +109,7 @@
               </component>
               <component id="86dc0" class="javax.swing.JTextField" binding="myFontStyleEdit">
                 <constraints>
-                  <xy x="202" y="28" width="190" height="20"/>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1">
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false">
                     <preferred-size width="150" height="-1"/>
                   </grid>
                 </constraints>
@@ -126,14 +119,15 @@
               </component>
               <component id="ae67d" class="javax.swing.JSpinner" binding="myFontSizeEdit">
                 <constraints>
-                  <xy x="402" y="27" width="70" height="22"/>
-                  <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
+                  <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
-                <properties/>
+                <properties>
+                  <enabled value="false"/>
+                </properties>
               </component>
             </children>
           </grid>
-          <grid id="d5111" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="d5111" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <tabbedpane title-resource-bundle="messages/UIDesignerBundle" title-key="font.chooser.swing.tab"/>
@@ -143,8 +137,7 @@
             <children>
               <scrollpane id="c1ffd">
                 <constraints>
-                  <xy x="2" y="2" width="470" height="202"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -161,19 +154,17 @@
           </grid>
         </children>
       </tabbedpane>
-      <grid id="874c3" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="874c3" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="2" y="238" width="480" height="100"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none" title-resource-bundle="messages/UIDesignerBundle" title-key="font.chooser.preview.text"/>
         <children>
           <component id="4b9a" class="javax.swing.JLabel" binding="myPreviewTextLabel">
             <constraints>
-              <xy x="8" y="37" width="207" height="40"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
                 <preferred-size width="200" height="40"/>
               </grid>
             </constraints>
