@@ -49,6 +49,10 @@ public class CommitLegendPanel {
     myNewLabel.putClientProperty("Quaqua.Component.visualMargin", new Insets(0, 0, 0, 0));
     myDeletedLabel.setForeground(FileStatus.DELETED.getColor());
     myDeletedLabel.putClientProperty("Quaqua.Component.visualMargin", new Insets(0, 0, 0, 0));
+
+    boldLabel(myModifiedLabel, true);
+    boldLabel(myNewLabel, true);
+    boldLabel(myDeletedLabel, true);
   }
 
   public JComponent getComponent() {
@@ -110,6 +114,10 @@ public class CommitLegendPanel {
   private static void updateLabel(JLabel label, int count, boolean bold) {
     label.setText(String.valueOf(count));
     label.setEnabled(bold || count != 0);
+    boldLabel(label, bold);
+  }
+
+  private static void boldLabel(final JLabel label, final boolean bold) {
     label.setFont(label.getFont().deriveFont(bold ? Font.BOLD : Font.PLAIN));
   }
 }
