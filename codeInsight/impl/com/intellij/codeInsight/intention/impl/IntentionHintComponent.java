@@ -148,7 +148,6 @@ public class IntentionHintComponent extends JPanel {
       }
 
       return new IntentionListStep(quickFixes, intentions){
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public String getTitle() {
           return XmlUtil.escapeString(action.getToolName());
         }
