@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class AntTypeDefinitionImpl implements AntTypeDefinition {
@@ -21,14 +22,15 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
    * Attribute names to their types.
    */
   private final Map<String, AntAttributeType> myAttributes;
+  private String[] myAttributesArray;
   /**
    * Task ids to their class names.
    */
   private final Map<AntTypeId, String> myNestedClassNames;
+  private AntTypeId[] myNestedElementsArray;
 
   public AntTypeDefinitionImpl(final AntTypeDefinitionImpl base) {
-    this(base.getTypeId(), base.getClassName(), base.isTask(),
-         new HashMap<String, AntAttributeType>(base.myAttributes),
+    this(base.getTypeId(), base.getClassName(), base.isTask(), new HashMap<String, AntAttributeType>(base.myAttributes),
          new HashMap<AntTypeId, String>(base.myNestedClassNames));
   }
 
@@ -72,16 +74,27 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   }
 
   public String[] getAttributes() {
-    return myAttributes.keySet().toArray(new String[myAttributes.size()]);
+    if (myAttributesArray == null || myAttributesArray.length != myAttributes.size()) {
+      myAttributesArray = myAttributes.keySet().toArray(new String[myAttributes.size()]);
+    }
+    return myAttributesArray;
   }
 
   public AntAttributeType getAttributeType(final String attr) {
+    for (int i = 0; i < attr.length(); ++i) {
+      if (!Character.isLowerCase(attr.charAt(i))) {
+        myAttributes.get(attr.toLowerCase(Locale.US));
+      }
+    }
     return myAttributes.get(attr);
   }
 
   @SuppressWarnings({"unchecked"})
   public AntTypeId[] getNestedElements() {
-    return myNestedClassNames.keySet().toArray(new AntTypeId[myNestedClassNames.size()]);
+    if (myNestedElementsArray == null || myNestedElementsArray.length != myNestedClassNames.size()) {
+      myNestedElementsArray = myNestedClassNames.keySet().toArray(new AntTypeId[myNestedClassNames.size()]);
+    }
+    return myNestedElementsArray;
   }
 
   @Nullable

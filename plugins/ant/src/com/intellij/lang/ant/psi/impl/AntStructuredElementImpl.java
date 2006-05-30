@@ -25,18 +25,20 @@ import java.io.File;
 import java.util.*;
 
 public class AntStructuredElementImpl extends AntElementImpl implements AntStructuredElement {
+
+  private static final String[] EMPTY_STRING_ARRAY = new String[0];
+
   protected AntTypeDefinition myDefinition;
-  private boolean myDefinitionCloned = false;
+  private boolean myDefinitionCloned;
   private AntElement myIdElement;
   private AntElement myNameElement;
   @NonNls private String myNameElementAttribute;
-  private Map<String, AntElement> myReferencedElements = null;
+  private Map<String, AntElement> myReferencedElements;
+  private String[] myRefIdsArray;
   private int myLastFoundElementOffset = -1;
   private AntElement myLastFoundElement;
 
-  public AntStructuredElementImpl(final AntElement parent,
-                                  final XmlElement sourceElement,
-                                  @NonNls final String nameElementAttribute) {
+  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, @NonNls final String nameElementAttribute) {
     super(parent, sourceElement);
     myNameElementAttribute = nameElementAttribute;
     getIdElement();
@@ -61,9 +63,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
   }
 
-  public AntStructuredElementImpl(final AntElement parent,
-                                  final XmlElement sourceElement,
-                                  final AntTypeDefinition definition) {
+  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     this(parent, sourceElement, definition, "name");
   }
 
@@ -151,8 +151,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     if (!file.isAbsolute()) {
       file = new File(vFile.getPath(), fileName);
     }
-    vFile =
-      LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
+    vFile = LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
     if (vFile == null) return null;
     return antFile.getViewProvider().getManager().findFile(vFile);
   }
@@ -190,10 +189,15 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   @NotNull
   public String[] getRefIds() {
-    if (myReferencedElements == null) {
-      return new String[0];
+    if (myRefIdsArray == null) {
+      if (myReferencedElements == null) {
+        myRefIdsArray = EMPTY_STRING_ARRAY;
+      }
+      else {
+        myRefIdsArray = myReferencedElements.keySet().toArray(new String[myReferencedElements.size()]);
+      }
     }
-    return myReferencedElements.keySet().toArray(new String[myReferencedElements.size()]);
+    return myRefIdsArray;
   }
 
   public boolean hasNameElement() {
@@ -215,6 +219,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public void clearCaches() {
     super.clearCaches();
     myReferencedElements = null;
+    myRefIdsArray = null;
     myIdElement = null;
     myNameElement = null;
     myLastFoundElementOffset = -1;
