@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.ArrayList;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.jar.JarFile;
 
 public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase implements J2EEModuleBuildInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.make.J2EEModuleBuildInstructionImpl");
@@ -152,13 +153,18 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     final BuildRecipe buildRecipe = getChildInstructions(context);
     final Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
     if (manifest == null) {
-      context.addMessage(CompilerMessageCategory.WARNING, J2EEBundle.message("message.text.using.user.supplied.manifest"),null,-1,-1);
+      File file = MakeUtil.getInstance().findUserSuppliedManifestFile(buildRecipe);
+      LOG.assertTrue(file != null);
+      context.addMessage(CompilerMessageCategory.WARNING, J2EEBundle.message("message.text.using.user.supplied.manifest", file.getAbsolutePath()), null, -1, -1);
     }
     FileUtil.createParentDirs(jarFile);
     final BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(jarFile));
     final JarOutputStream jarOutputStream = manifest == null ? new JarOutputStream(out) : new JarOutputStream(out, manifest);
 
     final Set<String> tempWrittenRelativePaths = new THashSet<String>();
+    if (manifest != null) {
+      tempWrittenRelativePaths.add(JarFile.MANIFEST_NAME);
+    }
     try {
       buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
         public boolean visitInstruction(BuildInstruction instruction) throws IOException {

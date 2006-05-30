@@ -15,6 +15,7 @@ import java.io.*;
 import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.jar.JarFile;
 
 /**
  * Created by IntelliJ IDEA.
@@ -82,8 +83,11 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
       ManifestBuilder.setGlobalAttributes(manifest.getMainAttributes());
 
       final JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)), manifest);
+
       try {
-        boolean ok = ZipUtil.addDirToZipRecursively(jarOutputStream, jarFile, getFile(), "", fileFilter, new THashSet<String>());
+        final THashSet<String> writtenPaths = new THashSet<String>();
+        writtenPaths.add(JarFile.MANIFEST_NAME);
+        boolean ok = ZipUtil.addDirToZipRecursively(jarOutputStream, jarFile, getFile(), "", fileFilter, writtenPaths);
         if (!ok) {
           String dirPath = getFile().getPath();
           MakeUtil.reportRecursiveCopying(context, dirPath, jarFile.getPath(), "",
