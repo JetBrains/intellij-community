@@ -458,7 +458,20 @@ public class AsmCodeGenerator {
         final String propertyClass = property.getCodeGenPropertyClassName();
         if (myIgnoreCustomCreation) {
           try {
-            componentClass.getMethod(property.getWriteMethodName(), new Class[] { Class.forName(propertyClass) } );
+            Class setterClass;
+            if (propertyClass.equals(Integer.class.getName())) {
+              setterClass = int.class;
+            }
+            else if (propertyClass.equals(Boolean.class.getName())) {
+              setterClass = boolean.class;
+            }
+            else if (propertyClass.equals(Double.class.getName())) {
+              setterClass = double.class;
+            }
+            else {
+              setterClass = Class.forName(propertyClass);
+            }
+            componentClass.getMethod(property.getWriteMethodName(), new Class[] { setterClass } );
           }
           catch (Exception e) {
             continue;
