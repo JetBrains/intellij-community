@@ -144,14 +144,13 @@ public class DnDEnabler implements Activatable, Disposable {
         //}
 
         if (e.getComponent() == comp) {
-          if (myOriginalDragGestureRecognizer != null) {
-            dispatchMouseEvent(myOriginalDragGestureRecognizer, e);
-            if (e.isConsumed()) return;
-          }
-
           if (isPressedToSelection(e)) {
             if (myDnDSource.getComponent().isFocusable()) {
               myDnDSource.getComponent().requestFocus();
+            }
+
+            if (myOriginalDragGestureRecognizer != null) {
+              dispatchMouseEvent(myOriginalDragGestureRecognizer, e);
             }
           }
           else {
