@@ -588,12 +588,17 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       FormSpec formSpec = horizontal
                           ? formLayout.getColumnSpec(component.getConstraints().getColumn()+1)
                           : formLayout.getRowSpec(component.getConstraints().getRow()+1);
-      switch(formSpec.getDefaultAlignment().abbreviation()) {
-        case 'f': return GridConstraints.ALIGN_FILL;
-        case 'l': case 't': return GridConstraints.ALIGN_LEFT;
-        case 'c': return GridConstraints.ALIGN_CENTER;
-        default: return GridConstraints.ALIGN_RIGHT;
+      final FormSpec.DefaultAlignment defaultAlignment = formSpec.getDefaultAlignment();
+      if (defaultAlignment.equals(RowSpec.FILL)) {
+        return GridConstraints.ALIGN_FILL;
       }
+      if (defaultAlignment.equals(RowSpec.TOP) || defaultAlignment.equals(ColumnSpec.LEFT)) {
+        return GridConstraints.ALIGN_LEFT;
+      }
+      if (defaultAlignment.equals(RowSpec.CENTER)) {
+        return GridConstraints.ALIGN_CENTER;
+      }
+      return GridConstraints.ALIGN_RIGHT;
     }
     return Utils.alignFromConstraints(component.getConstraints(), horizontal);
   }

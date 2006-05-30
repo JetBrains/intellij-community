@@ -169,14 +169,13 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
   }
 
   private void showAlignment(final FormSpec.DefaultAlignment defaultAlignment) {
-    char abbreviation = defaultAlignment.abbreviation();
-    if (abbreviation == 'l' || abbreviation == 't') {
+    if (defaultAlignment.equals(RowSpec.TOP) || defaultAlignment.equals(ColumnSpec.LEFT)) {
       myLeftRadioButton.setSelected(true);
     }
-    else if (abbreviation == 'c') {
+    else if (defaultAlignment.equals(RowSpec.CENTER)) {
       myCenterRadioButton.setSelected(true);
     }
-    else if (abbreviation == 'r' || abbreviation == 'b') {
+    else if (defaultAlignment.equals(RowSpec.BOTTOM) || defaultAlignment.equals(ColumnSpec.RIGHT)) {
       myRightRadioButton.setSelected(true);
     }
     else {
@@ -222,12 +221,12 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
   private static void showConstantSize(final ConstantSize size, final JComboBox unitsCombo, final JSpinner spinner) {
     double value = size.getValue();
     ConstantSize.Unit unit = size.getUnit();
-
-    @NonNls String abbreviation = unit.abbreviation();
-    if (abbreviation.startsWith("dlu")) {
-      abbreviation = "dlu";
+    if (unit.equals(ConstantSize.DIALOG_UNITS_X) || unit.equals(ConstantSize.DIALOG_UNITS_Y)) {
+      unitsCombo.setSelectedItem("dlu");
     }
-    unitsCombo.setSelectedItem(abbreviation);
+    else {
+      unitsCombo.setSelectedItem(unit.abbreviation());
+    }
 
     spinner.setModel(new SpinnerNumberModel(0.0, 0.0, Double.MAX_VALUE, 1.0));
     spinner.setValue(value);
