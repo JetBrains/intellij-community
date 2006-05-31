@@ -32,8 +32,4 @@ class IdeaJHelp extends JHelp{
 
     updateUI();
   }
-
-  public void updateUI(){
-    setUI(new IdeaHelpUI());
-  }
 }
