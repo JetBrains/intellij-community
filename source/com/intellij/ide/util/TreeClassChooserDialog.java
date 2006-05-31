@@ -54,7 +54,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   private GlobalSearchScope myScope;
   private TreeClassChooser.ClassFilter myClassFilter;
   private final PsiClass myBaseClass;
-  private final PsiClass myInitialClass;
+  private PsiClass myInitialClass;
   private final PsiClassChildrenSource myClassChildrens;
 
   public TreeClassChooserDialog(String title, Project project) {
@@ -220,6 +220,14 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
         IdeFocusTraversalPolicy.getPreferredFocusedComponent(myGotoByNamePanel.getPanel()).requestFocus();
       }
 
+      protected void showList() {
+        super.showList();
+        if (myInitialClass != null && myList.getModel().getSize() > 0) {
+          myList.setSelectedValue(myInitialClass, true);
+          myInitialClass = null;
+        }
+      }
+
       protected void choosenElementMightChange() {
         handleSelectionChanged();
       }
@@ -242,7 +250,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   }
 
   protected ChooseByNameModel createChooseByNameModel() {
-    return myBaseClass == null ? new MyGotoClassModel(myProject) : new SubclassGotoClassModel(myProject, myBaseClass);
+    return myBaseClass == null ? new MyGotoClassModel(myProject) : new SubclassGotoClassModel(myProject);
   }
 
   private void handleSelectionChanged(){
@@ -358,19 +366,18 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   }
 
   private class SubclassGotoClassModel extends MyGotoClassModel {
-    private final PsiClass myBaseClass;
 
-    public SubclassGotoClassModel(final Project project, PsiClass baseClass) {
+    public SubclassGotoClassModel(final Project project) {
       super(project);
-      myBaseClass = baseClass;
     }
 
     public String[] getNames(boolean checkBoxState) {
       final PsiManager manager = PsiManager.getInstance(myProject);
       PsiClass[] classes = manager.getSearchHelper().findInheritors(myBaseClass, myScope, true);
-      String[] names = new String[classes.length];
+      String[] names = new String[classes.length + 1];
+      names[0] = myBaseClass.getName();
       for (int i = 0; i < classes.length; i++) {
-        names[i] = classes[i].getName();
+        names[i + 1] = classes[i].getName();
       }
       return names;
     }

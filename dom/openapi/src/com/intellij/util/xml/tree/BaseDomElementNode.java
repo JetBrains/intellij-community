@@ -57,8 +57,16 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     final XmlElementDescriptor[] xmlDescriptors = xmlElementDescriptor == null ? null : xmlElementDescriptor.getElementsDescriptors(tag);
 
     for (DomFixedChildDescription description : element.getGenericInfo().getFixedChildrenDescriptions()) {
+      String childName = description.getXmlElementName();
       if (xmlDescriptors != null) {
-        
+        boolean found = false;
+        for (XmlElementDescriptor xmlDescriptor: xmlDescriptors) {
+          if (xmlDescriptor.getDefaultName().equals(childName)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) continue;
       }
       final List<? extends DomElement> values = description.getStableValues(element);
       if (shouldBeShown(description.getType())) {
