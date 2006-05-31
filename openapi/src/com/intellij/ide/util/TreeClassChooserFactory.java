@@ -29,24 +29,64 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: Jan 25, 2005
  */
-public abstract class TreeClassChooserFactory implements ProjectComponent{
+public abstract class TreeClassChooserFactory implements ProjectComponent {
   public static TreeClassChooserFactory getInstance(Project project) {
     return project.getComponent(TreeClassChooserFactory.class);
   }
 
-  public abstract @NotNull TreeClassChooser createWithInnerClassesScopeChooser(String title, GlobalSearchScope scope, final TreeClassChooser.ClassFilter classFilter, PsiClass initialClass);
 
-  public abstract @NotNull TreeClassChooser createNoInnerClassesScopeChooser(String title, GlobalSearchScope scope, TreeClassChooser.ClassFilter classFilter, PsiClass initialClass);
+  @NotNull
+  public abstract TreeClassChooser createWithInnerClassesScopeChooser(String title,
+                                                                      GlobalSearchScope scope,
+                                                                      final TreeClassChooser.ClassFilter classFilter,
+                                                                      PsiClass initialClass);
 
-  public abstract @NotNull TreeClassChooser createProjectScopeChooser(String title, PsiClass initialClass);
 
-  public abstract @NotNull TreeClassChooser createProjectScopeChooser(String title);
+  @NotNull
+  public abstract TreeClassChooser createNoInnerClassesScopeChooser(String title,
+                                                                    GlobalSearchScope scope,
+                                                                    TreeClassChooser.ClassFilter classFilter,
+                                                                    PsiClass initialClass);
 
-  public abstract @NotNull TreeClassChooser createAllProjectScopeChooser(String title);
 
-  public abstract @NotNull TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, boolean acceptsSelf, boolean acceptInner, Condition<? super PsiClass> additionalCondition);
+  @NotNull
+  public abstract TreeClassChooser createProjectScopeChooser(String title, PsiClass initialClass);
 
-  public abstract @NotNull TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter);
 
-  public abstract @NotNull TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter, boolean disableStructureProviders);
+  @NotNull
+  public abstract TreeClassChooser createProjectScopeChooser(String title);
+
+
+  @NotNull
+  public abstract TreeClassChooser createAllProjectScopeChooser(String title);
+
+
+  @NotNull
+  public abstract TreeClassChooser createInheritanceClassChooser(String title,
+                                                                 GlobalSearchScope scope,
+                                                                 PsiClass base,
+                                                                 boolean acceptsSelf,
+                                                                 boolean acceptInner,
+                                                                 Condition<? super PsiClass> additionalCondition);
+
+  @NotNull
+  public abstract TreeClassChooser createInheritanceClassChooser(String title,
+                                                                 GlobalSearchScope scope,
+                                                                 PsiClass base,
+                                                                 PsiClass initialClass);
+
+
+  @NotNull
+  public abstract TreeFileChooser createFileChooser(@NotNull String title,
+                                                    @Nullable PsiFile initialFile,
+                                                    @Nullable FileType fileType,
+                                                    @Nullable TreeFileChooser.PsiFileFilter filter);
+
+
+  @NotNull
+  public abstract TreeFileChooser createFileChooser(@NotNull String title,
+                                                    @Nullable PsiFile initialFile,
+                                                    @Nullable FileType fileType,
+                                                    @Nullable TreeFileChooser.PsiFileFilter filter,
+                                                    boolean disableStructureProviders);
 }

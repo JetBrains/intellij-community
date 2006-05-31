@@ -6,10 +6,7 @@ import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
-import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
-import com.intellij.ide.util.gotoByName.GotoClassModel2;
+import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.IdeBundle;
@@ -56,6 +53,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   private ChooseByNamePanel myGotoByNamePanel;
   private GlobalSearchScope myScope;
   private TreeClassChooser.ClassFilter myClassFilter;
+  private final PsiClass myBaseClass;
   private final PsiClass myInitialClass;
   private final PsiClassChildrenSource myClassChildrens;
 
@@ -80,16 +78,20 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     TreeClassChooser.ClassFilter classFilter,
     PsiClass initialClass
   ){
-    this(title, project, scope, classFilter, initialClass, PsiClassChildrenSource.NONE);
+    this(title, project, scope, classFilter, null, initialClass, PsiClassChildrenSource.NONE);
   }
 
-  private TreeClassChooserDialog (String title,
+  public TreeClassChooserDialog (String title,
                                   Project project,
                                   GlobalSearchScope scope,
-                                  TreeClassChooser.ClassFilter classFilter, PsiClass initialClass, PsiClassChildrenSource classChildrens) {
+                                  TreeClassChooser.ClassFilter classFilter,
+                                  PsiClass baseClass,
+                                  PsiClass initialClass,
+                                  PsiClassChildrenSource classChildrens) {
     super(project, true);
     myScope = scope;
     myClassFilter = classFilter;
+    myBaseClass = baseClass;
     myInitialClass = initialClass;
     myClassChildrens = classChildrens;
     setTitle(title);
@@ -102,9 +104,13 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     handleSelectionChanged();
   }
 
-  public static TreeClassChooserDialog withInnerClasses(String title, Project project, GlobalSearchScope scope,
-                                                        final TreeClassChooser.ClassFilter classFilter, PsiClass initialClass) {
-    return new TreeClassChooserDialog(title, project, scope, classFilter, initialClass, new PsiClassChildrenSource() {
+  public static TreeClassChooserDialog withInnerClasses(String title,
+                                                        Project project,
+                                                        GlobalSearchScope scope,
+                                                        final TreeClassChooser.ClassFilter classFilter,
+                                                        PsiClass initialClass) {
+
+    return new TreeClassChooserDialog(title, project, scope, classFilter, null, initialClass, new PsiClassChildrenSource() {
       public void addChildren(PsiClass psiClass, java.util.List<PsiElement> children) {
         ArrayList<PsiElement> innerClasses = new ArrayList<PsiElement>();
         PsiClassChildrenSource.CLASSES.addChildren(psiClass, innerClasses);
@@ -191,10 +197,12 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
 
     final JPanel dummyPanel = new JPanel(new BorderLayout());
     String name = null;
+/*
     if (myInitialClass != null) {
       name = myInitialClass.getName();
     }
-    myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoClassModel(myProject), name, myScope.isSearchInLibraries()) {
+*/
+    myGotoByNamePanel = new ChooseByNamePanel(myProject, createChooseByNameModel(), name, myScope.isSearchInLibraries()) {
       protected void close(boolean isOk) {
         super.close(isOk);
 
@@ -233,6 +241,10 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     return myTabbedPane.getComponent();
   }
 
+  protected ChooseByNameModel createChooseByNameModel() {
+    return myBaseClass == null ? new MyGotoClassModel(myProject) : new SubclassGotoClassModel(myProject, myBaseClass);
+  }
+
   private void handleSelectionChanged(){
     PsiClass selection = calcSelectedClass();
     setOKActionEnabled(selection != null);
@@ -261,7 +273,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   }
 
   public void showPopup() {
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, new MyGotoClassModel(myProject));
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, createChooseByNameModel());
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose () {
 
@@ -342,6 +354,25 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
 
     public String getPromptText() {
       return null;
+    }
+  }
+
+  private class SubclassGotoClassModel extends MyGotoClassModel {
+    private final PsiClass myBaseClass;
+
+    public SubclassGotoClassModel(final Project project, PsiClass baseClass) {
+      super(project);
+      myBaseClass = baseClass;
+    }
+
+    public String[] getNames(boolean checkBoxState) {
+      final PsiManager manager = PsiManager.getInstance(myProject);
+      PsiClass[] classes = manager.getSearchHelper().findInheritors(myBaseClass, myScope, true);
+      String[] names = new String[classes.length];
+      for (int i = 0; i < classes.length; i++) {
+        names[i] = classes[i].getName();
+      }
+      return names;
     }
   }
 

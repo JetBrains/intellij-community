@@ -1,11 +1,11 @@
 package com.intellij.ide.util;
 
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +58,17 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                                         boolean acceptsSelf,
                                                         boolean acceptInner,
                                                         Condition<? super PsiClass> additionalCondition) {
-    return new TreeClassChooserDialog(title, myProject, scope, new TreeClassChooserDialog.InheritanceClassFilterImpl(base, acceptsSelf, acceptInner, additionalCondition), null);
+    return new TreeClassChooserDialog(title, myProject, scope, new TreeClassChooserDialog.InheritanceClassFilterImpl(base, acceptsSelf,
+                                                                                                                     acceptInner,
+                                                                                                                     additionalCondition),
+                                                               base,
+                                                               null,
+                                                               null);
+  }
+
+  @NotNull
+  public TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass) {
+    return new TreeClassChooserDialog(title, myProject, scope, null, base, initialClass, null);
   }
 
   @NotNull

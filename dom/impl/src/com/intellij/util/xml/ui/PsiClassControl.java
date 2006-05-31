@@ -13,7 +13,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ExtendClass;
+import com.intellij.util.xml.GenericDomValue;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -40,28 +42,38 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     if (boundedComponent == null) {
       boundedComponent = new PsiClassPanel();
     }
-    return initReferenceEditorWithBrowseButton(boundedComponent, new ReferenceEditorWithBrowseButton(null, "", PsiManager.getInstance(project), true), this);
+    return initReferenceEditorWithBrowseButton(boundedComponent,
+                                               new ReferenceEditorWithBrowseButton(null, "", PsiManager.getInstance(project), true), this);
   }
 
   protected static <T extends JPanel> T initReferenceEditorWithBrowseButton(final T boundedComponent,
-                                                            final ReferenceEditorWithBrowseButton editor,
-                                                            final EditorTextFieldControl control) {
+                                                                            final ReferenceEditorWithBrowseButton editor,
+                                                                            final EditorTextFieldControl control) {
     boundedComponent.add(editor);
     final GlobalSearchScope resolveScope = control.getDomWrapper().getResolveScope();
     editor.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
 //        final Condition<PsiClass> c = Conditions.alwaysTrue();
 
-        ExtendClass extend = control.getDomElement().getAnnotation(ExtendClass.class);
+        final DomElement domElement = control.getDomElement();
+        ExtendClass extend = domElement.getAnnotation(ExtendClass.class);
         final PsiClass baseClass;
         if (extend != null) {
           baseClass = PsiManager.getInstance(control.getProject()).findClass(extend.value(), resolveScope);
-        } else {
+        }
+        else {
           baseClass = null;
+        }
+        PsiClass initialClass;
+        if (domElement instanceof GenericDomValue) {
+          initialClass = (PsiClass)((GenericDomValue)domElement).getValue();
+        }
+        else {
+          initialClass = null;
         }
 
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(control.getProject())
-          .createInheritanceClassChooser(UIBundle.message("choose.class"), resolveScope, baseClass, true, true, null);
+          .createInheritanceClassChooser(UIBundle.message("choose.class"), resolveScope, baseClass, initialClass);
         chooser.showDialog();
         final PsiClass psiClass = chooser.getSelectedClass();
         if (psiClass != null) {
