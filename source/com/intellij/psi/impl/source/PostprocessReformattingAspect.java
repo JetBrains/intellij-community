@@ -161,7 +161,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   public boolean isViewProviderLocked(final FileViewProvider fileViewProvider) {
-    return myReformatElements.containsKey(fileViewProvider);
+    return myUpdatedProviders.contains(fileViewProvider);
   }
 
   public static PostprocessReformattingAspect getInstance(Project project) {
