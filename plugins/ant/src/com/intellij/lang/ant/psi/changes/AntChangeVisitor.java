@@ -55,10 +55,9 @@ public class AntChangeVisitor implements XmlChangeVisitor {
   @Nullable
   private static void clearParentCaches(final XmlElement el) {
     final TextRange textRange = el.getTextRange();
-    final AntFile antFile =
-      (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
-    if (antFile == null) return;
-    AntElement antElement = antFile.lightFindElementAt(textRange.getStartOffset());
+    final AntFile file = (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
+    if (file == null) return;
+    AntElement antElement = file.lightFindElementAt(textRange.getStartOffset());
     while (!(antElement instanceof AntFile) && (antElement.getTextLength() < textRange.getLength() ||
                                                 antElement instanceof AntOuterProjectElement)) {
       antElement = antElement.getAntParent();
@@ -66,7 +65,9 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     antElement.clearCaches();
     AntMacroDef macrodef = PsiTreeUtil.getParentOfType(antElement, AntMacroDef.class);
     if (macrodef != null) {
+      // it's necessary to clear macrodef's caches, not only file's, in order to update type information
       macrodef.clearCaches();
+      file.clearCaches();
     }
   }
 }
