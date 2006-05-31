@@ -2,7 +2,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -16,6 +15,8 @@ import java.util.*;
  */
 public class ExceptionUtil {
   private static final @NonNls String CLONE_METHOD_NAME = "clone";
+
+  private ExceptionUtil() {}
 
   public static PsiClassType[] getThrownExceptions(PsiElement[] elements) {
     List<PsiClassType> array = new ArrayList<PsiClassType>();
@@ -49,12 +50,12 @@ public class ExceptionUtil {
     }
     else if (element instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodRef = ((PsiMethodCallExpression)element).getMethodExpression();
-      PsiMethod method = (PsiMethod)methodRef.resolve();
-      return getExceptionsByMethodAndChildren(element, method);
+      JavaResolveResult result = methodRef.advancedResolve(false);
+      return getExceptionsByMethodAndChildren(element, result);
     }
     else if (element instanceof PsiNewExpression) {
-      PsiMethod constructor = ((PsiNewExpression)element).resolveConstructor();
-      return getExceptionsByMethodAndChildren(element, constructor);
+      JavaResolveResult result = ((PsiNewExpression)element).resolveMethodGenerics();
+      return getExceptionsByMethodAndChildren(element, result);
     }
     else if (element instanceof PsiThrowStatement) {
       PsiExpression expr = ((PsiThrowStatement)element).getException();
@@ -121,16 +122,25 @@ public class ExceptionUtil {
     }
   }
 
-  private static PsiClassType[] getExceptionsByMethodAndChildren(PsiElement element, PsiMethod method) {
-    List<PsiClassType> array = new ArrayList<PsiClassType>();
+  private static PsiClassType[] getExceptionsByMethodAndChildren(PsiElement element, JavaResolveResult resolveResult) {
+    PsiMethod method = (PsiMethod)resolveResult.getElement();
+    List<PsiClassType> result = new ArrayList<PsiClassType>();
     if (method != null) {
-      array.addAll(Arrays.asList(method.getThrowsList().getReferencedTypes()));
+      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+      final PsiClassType[] referenceTypes = method.getThrowsList().getReferencedTypes();
+      for (PsiType type : referenceTypes) {
+        type = substitutor.substitute(type);
+        if (type instanceof PsiClassType) {
+          result.add((PsiClassType)type);
+        }
+      }
     }
+
     PsiElement[] children = element.getChildren();
     for (PsiElement child : children) {
-      addExceptions(array, getThrownExceptions(child));
+      addExceptions(result, getThrownExceptions(child));
     }
-    return array.toArray(new PsiClassType[array.size()]);
+    return result.toArray(new PsiClassType[result.size()]);
   }
 
   private static void addExceptions(List<PsiClassType> array, PsiClassType[] exceptions) {
