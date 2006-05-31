@@ -3,14 +3,12 @@ package com.intellij.compiler.impl.javaCompiler.eclipse;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.cl.IdeaClassLoader;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -45,7 +42,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   }
 
   public boolean checkCompiler() {
-    return myEclipseExternalCompiler.checkCompiler();
+    return myEclipseCompilerDriver != null && myEclipseExternalCompiler.checkCompiler();
   }
 
   @NotNull
@@ -169,30 +166,11 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   }
 
   private void createCompileDriver() throws Exception {
-    URL jarUrl = new File(EclipseCompiler.PATH_TO_COMPILER_JAR).toURI().toURL();
-    final ClassLoader classLoader = PluginManager.class.getClassLoader();
-    final Class<? extends ClassLoader> pluginClass = classLoader.getClass();
-    if (!pluginClass.getName().equals(IdeaClassLoader.class.getName())) {
-      throw new Exception();
-    }
-    ArrayList<URL> urls = null;
+    URL jarUrl = new File(EclipseCompiler.PATH_TO_COMPILER_JAR).toURL();
+    final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    ClassLoader myclassLoader = new MyClassLoader(new URL[]{jarUrl}, classLoader);
     try {
-      @NonNls final String getUrlsMethod = "getUrls";
-      urls = new ArrayList<URL>((ArrayList<URL>)pluginClass.getDeclaredMethod(getUrlsMethod).invoke(classLoader));
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
-    catch (NoSuchMethodException e) {
-      LOG.error(e);
-    }
-    urls.add(jarUrl);
-    ClassLoader myclassLoader = new MyClassLoader(urls.toArray(new URL[urls.size()]), classLoader);
-    try {
-      String name = EclipseCompilerDriver.class.getName();
+      String name = "com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerDriver";
       Class<?> aClass = myclassLoader.loadClass(name);
       myEclipseCompilerDriver = (IEclipseCompilerDriver)aClass.newInstance();
     }
