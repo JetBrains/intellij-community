@@ -158,7 +158,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
     }
 
     // Create new icon
-    if(myIconPath != null) {
+    if(myIconPath != null && myIconPath.length() > 0) {
       final VirtualFile iconFile = ModuleUtil.findResourceFileInProject(myProject, myIconPath);
       if (iconFile != null) {
         try {
@@ -174,7 +174,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
     }
     if(myIcon == null){
       myIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown.png");
-    }
+     }
     LOG.assertTrue(myIcon != null);
     return myIcon;
   }
@@ -192,8 +192,15 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
 
     // [vova] It's safe to cast to ImageIcon here because all icons loaded by IconLoader
     // are ImageIcon(s).
-    final ImageIcon icon = (ImageIcon)getIcon();
-    mySmallIcon = new MySmallIcon(icon.getImage());
+    final Icon icon = getIcon();
+    if (icon instanceof ImageIcon) {
+      final ImageIcon imageIcon = (ImageIcon)icon;
+      mySmallIcon = new MySmallIcon(imageIcon.getImage());
+    }
+    else {
+      mySmallIcon = icon;
+    }
+
     return mySmallIcon;
   }
 
