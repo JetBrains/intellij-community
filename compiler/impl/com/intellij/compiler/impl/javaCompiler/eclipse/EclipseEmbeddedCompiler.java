@@ -80,25 +80,29 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   }
 
   private static class MyClassLoader extends URLClassLoader {
+    private ClassLoader parent;
     public MyClassLoader(final URL[] urls, ClassLoader parent) {
       super(urls, parent);
+      this.parent = parent;
     }
+
     protected Class loadClass(String name, boolean resolve) throws ClassNotFoundException {
       if (canDelegate(name)) {
         return super.loadClass(name, resolve);
       }
-      Class<?> c = findLoadedClass(name);
+      // First, check if the class has already been loaded
+      Class c = findLoadedClass(name);
       if (c == null) {
-        try {
-          c = findClass(name);
-          return c;
-        }
-        catch (ClassNotFoundException e) {
-          return super.loadClass(name, resolve);
-        }
+          try {
+            c = parent.loadClass(name);
+          } catch (ClassNotFoundException e) {
+              // If still not found, then invoke findClass in order
+              // to find the class.
+              c = findClass(name);
+          }
       }
       if (resolve) {
-        resolveClass(c);
+          resolveClass(c);
       }
       return c;
     }
