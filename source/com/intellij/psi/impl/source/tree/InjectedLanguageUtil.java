@@ -130,8 +130,10 @@ public class InjectedLanguageUtil {
     if (file == null) return editor;
 
     int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-    PsiLanguageInjectionHost injectionHost = findInjectionHost(element);
+    PsiLanguageInjectionHost injectionHost = findInjectionHost(file.findElementAt(offset));
+    if (injectionHost == null && offset != 0) {
+      injectionHost = findInjectionHost(file.findElementAt(offset-1));
+    }
     List<Pair<PsiElement, TextRange>> injectedPsi = injectionHost == null ? null : injectionHost.getInjectedPsi();
     if (injectedPsi == null) {
       return editor;
