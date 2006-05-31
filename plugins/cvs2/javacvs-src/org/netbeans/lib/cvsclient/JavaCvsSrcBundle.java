@@ -3,9 +3,9 @@
  */
 package org.netbeans.lib.cvsclient;
 
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
-import com.intellij.CommonBundle;
 
 import java.util.ResourceBundle;
 
@@ -18,10 +18,9 @@ import java.util.ResourceBundle;
  */
 public class JavaCvsSrcBundle {
   @NonNls protected static final String PATH_TO_BUNDLE = "org.netbeans.lib.cvsclient.JavaCvsSrcBundle";
-  private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@PropertyKey(resourceBundle = "org.netbeans.lib.cvsclient.JavaCvsSrcBundle") String key, Object... params) {
-    return CommonBundle.message(ourResourceBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(PATH_TO_BUNDLE), key, params);
   }
 
 }

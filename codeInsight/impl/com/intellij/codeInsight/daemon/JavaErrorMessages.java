@@ -13,11 +13,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class JavaErrorMessages {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.JavaErrorMessages");
+  @NonNls private static final String BUNDLE = "messages.JavaErrorMessages";
 
   private JavaErrorMessages() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.JavaErrorMessages") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

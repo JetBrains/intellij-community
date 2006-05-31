@@ -27,13 +27,13 @@ import java.util.ResourceBundle;
  *         Date: Sep 9, 2005
  */
 public class CompilerBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.CompilerBundle");
+  @NonNls private static final String BUNDLE = "messages.CompilerBundle";
 
   private CompilerBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = "messages.CompilerBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 
   public static String jdkHomeNotFoundMessage(final ProjectJdk jdk) {

@@ -14,11 +14,11 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class JavadocBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.JavadocBundle");
+  @NonNls private static final String BUNDLE = "messages.JavadocBundle";
 
   private JavadocBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.JavadocBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

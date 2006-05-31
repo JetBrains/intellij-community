@@ -25,11 +25,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class InspectionsBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.InspectionsBundle");
+  @NonNls private static final String BUNDLE = "messages.InspectionsBundle";
 
   private InspectionsBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.InspectionsBundle") String key, @NonNls Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, @NonNls Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

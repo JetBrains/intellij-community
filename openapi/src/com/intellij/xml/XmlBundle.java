@@ -18,13 +18,12 @@ import java.util.ResourceBundle;
  */
 public class XmlBundle {
   @NonNls protected static final String PATH_TO_BUNDLE = "messages.XmlBundle";
-  private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
   private XmlBundle() {
   }
 
   public static String message(@NonNls @PropertyKey(resourceBundle = "messages.XmlBundle") String key, Object... params) {
-    return CommonBundle.message(ourResourceBundle, key, params);
+    return CommonBundle.message(ResourceBundle.getBundle(PATH_TO_BUNDLE), key, params);
   }
 
 }

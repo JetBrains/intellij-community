@@ -18,13 +18,12 @@ import java.util.ResourceBundle;
  */
 public class DiffBundle {
   @NonNls protected static final String PATH_TO_BUNDLE = "messages.DiffBundle";
-  private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
   private DiffBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = "messages.DiffBundle") String key, Object... params) {
-    return CommonBundle.message(ourResourceBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(PATH_TO_BUNDLE), key, params);
   }
 
 }

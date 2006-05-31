@@ -14,11 +14,11 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class CodeEditorBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.CodeEditorBundle");
+  @NonNls private static final String BUNDLE = "messages.CodeEditorBundle";
 
   private CodeEditorBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.CodeEditorBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

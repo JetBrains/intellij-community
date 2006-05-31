@@ -4,8 +4,8 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.CommonBundle;
-import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
@@ -13,11 +13,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class XmlErrorMessages {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.XmlErrorMessages");
+  @NonNls private static final String BUNDLE = "messages.XmlErrorMessages";
 
   private XmlErrorMessages() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.XmlErrorMessages") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

@@ -19,13 +19,12 @@ import java.util.ResourceBundle;
 public class ExecutionBundle {
   @NonNls
   protected static final String PATH_TO_BUNDLE = "messages.ExecutionBundle";
-  private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
   private ExecutionBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = "messages.ExecutionBundle") String key, Object... params) {
-    return CommonBundle.message(ourResourceBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(PATH_TO_BUNDLE), key, params);
   }
 
 }

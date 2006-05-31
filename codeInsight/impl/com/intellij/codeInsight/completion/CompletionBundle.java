@@ -13,11 +13,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class CompletionBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.CompletionBundle");
+  @NonNls private static final String BUNDLE = "messages.CompletionBundle";
 
   private CompletionBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.CompletionBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

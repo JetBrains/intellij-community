@@ -21,12 +21,11 @@ import java.util.ResourceBundle;
 
 public class CvsBundle {
   @NonNls private static final String BUNDLE_NAME = "com.intellij.cvsSupport2.CvsBundle";
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle(BUNDLE_NAME);
 
   private CvsBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.cvsSupport2.CvsBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE_NAME) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE_NAME), key, params);
   }
 
   public static String getCvsDisplayName() {return message("general.cvs.display.name");}

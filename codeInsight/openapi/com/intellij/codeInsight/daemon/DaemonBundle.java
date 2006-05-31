@@ -13,11 +13,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class DaemonBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.DaemonBundle");
+  @NonNls private static final String BUNDLE = "messages.DaemonBundle";
 
   private DaemonBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.DaemonBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

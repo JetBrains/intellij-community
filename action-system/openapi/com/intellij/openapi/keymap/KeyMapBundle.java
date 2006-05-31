@@ -15,13 +15,12 @@ import java.util.ResourceBundle;
 public class KeyMapBundle {
   @NonNls
   protected static final String PATH_TO_BUNDLE = "messages.KeyMapBundle";
-  private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
   private KeyMapBundle() {
   }
 
   public static String message(@PropertyKey(resourceBundle = "messages.KeyMapBundle") String key, Object... params) {
-    return CommonBundle.message(ourResourceBundle, key, params);
+    return CommonBundle.message(ResourceBundle.getBundle(PATH_TO_BUNDLE), key, params);
   }
 
 }

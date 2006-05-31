@@ -4,8 +4,8 @@
 package com.intellij.psi;
 
 import com.intellij.CommonBundle;
-import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
@@ -13,11 +13,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class PsiBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.PsiBundle");
+  @NonNls private static final String BUNDLE = "messages.PsiBundle";
 
   private PsiBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.PsiBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

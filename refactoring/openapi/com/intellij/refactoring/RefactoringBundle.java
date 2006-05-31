@@ -10,12 +10,12 @@ import java.util.ResourceBundle;
  * @author ven
  */
 public class RefactoringBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.RefactoringBundle");
+  @NonNls private static final String BUNDLE = "messages.RefactoringBundle";
 
   private RefactoringBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.RefactoringBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 
   public static String getSearchInCommentsAndStringsText() {

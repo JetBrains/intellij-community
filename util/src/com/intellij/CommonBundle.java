@@ -17,12 +17,12 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class CommonBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.CommonBundle");
+  @NonNls private static final String BUNDLE = "messages.CommonBundle";
 
   private CommonBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.CommonBundle") String key, Object... params) {
-    return message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 
   public static String messageOrDefault(@Nullable final ResourceBundle bundle, final String key, String defaultValue, final Object... params) {

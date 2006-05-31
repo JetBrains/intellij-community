@@ -23,13 +23,12 @@ import java.util.ResourceBundle;
 
 public class UIBundle {
   @NonNls protected static final String PATH_TO_BUNDLE = "messages.UIBundle";
-  private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
   private UIBundle() {
   }
 
   public static String message(@PropertyKey(resourceBundle = "messages.UIBundle") String key, Object... params) {
-    return CommonBundle.message(ourResourceBundle, key, params);
+    return CommonBundle.message(ResourceBundle.getBundle(PATH_TO_BUNDLE), key, params);
   }
 
 }

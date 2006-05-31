@@ -18,13 +18,12 @@ import java.util.ResourceBundle;
  */
 public class OptionsBundle {
   @NonNls protected static final String PATH_TO_BUNDLE = "messages.OptionsBundle";
-  private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
   private OptionsBundle() {
   }
 
-  public static String message(@NonNls @PropertyKey(resourceBundle = "messages.OptionsBundle") String key, Object... params) {
-    return CommonBundle.message(ourResourceBundle, key, params);
+  public static String message(@NonNls @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(PATH_TO_BUNDLE), key, params);
   }
 
 }

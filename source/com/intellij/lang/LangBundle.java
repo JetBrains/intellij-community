@@ -14,11 +14,11 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class LangBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.LangBundle");
+  @NonNls private static final String BUNDLE = "messages.LangBundle";
 
   private LangBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.LangBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

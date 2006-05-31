@@ -14,11 +14,11 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class VfsBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.VfsBundle");
+  @NonNls private static final String BUNDLE = "messages.VfsBundle";
 
   private VfsBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.VfsBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

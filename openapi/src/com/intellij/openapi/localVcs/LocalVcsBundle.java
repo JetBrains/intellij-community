@@ -18,12 +18,11 @@ import java.util.ResourceBundle;
  */
 public class LocalVcsBundle {
   @NonNls protected static final String PATH_TO_BUNDLE = "messages.LocalVcsBundle";
-  private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
   private LocalVcsBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = "messages.LocalVcsBundle") String key, Object... params) {
-    return CommonBundle.message(ourResourceBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(PATH_TO_BUNDLE), key, params);
   }
 }

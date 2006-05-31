@@ -13,11 +13,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class QuickFixBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.QuickFixBundle");
+  @NonNls private static final String BUNDLE = "messages.QuickFixBundle";
 
   private QuickFixBundle() {}
 
-  public static String message(@NonNls @PropertyKey(resourceBundle = "messages.QuickFixBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@NonNls @PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

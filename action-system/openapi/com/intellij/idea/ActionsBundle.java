@@ -27,7 +27,6 @@ import java.util.ResourceBundle;
  */
 public class ActionsBundle {
   @NonNls private static final String IDEA_ACTIONS_BUNDLE = "messages.ActionsBundle";
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle(IDEA_ACTIONS_BUNDLE);
 
   @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
   public static String actionText(@NonNls String actionId) {
@@ -40,6 +39,6 @@ public class ActionsBundle {
   }
 
   public static String message(@PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+    return CommonBundle.message(ResourceBundle.getBundle(IDEA_ACTIONS_BUNDLE), key, params);
   }
 }

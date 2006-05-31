@@ -14,12 +14,12 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class UsageViewBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.UsageView");
+  @NonNls private static final String BUNDLE = "messages.UsageView";
 
   private UsageViewBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.UsageView")  String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE)  String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 
   @SuppressWarnings({"AutoBoxing"})

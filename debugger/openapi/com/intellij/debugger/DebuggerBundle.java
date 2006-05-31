@@ -23,13 +23,13 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.ResourceBundle;
 
 public class DebuggerBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.DebuggerBundle");
+  @NonNls private static final String BUNDLE = "messages.DebuggerBundle";
 
   private DebuggerBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = "messages.DebuggerBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 
   public static String getAddressDisplayName(final RemoteConnection connection) {

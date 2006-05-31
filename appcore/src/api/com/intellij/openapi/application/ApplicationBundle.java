@@ -25,11 +25,11 @@ import java.util.ResourceBundle;
  * Provides access to localized properties for the application component of IDEA.
  */
 public class ApplicationBundle {
-  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.ApplicationBundle");
+  @NonNls private static final String BUNDLE = "messages.ApplicationBundle";
 
   private ApplicationBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.ApplicationBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }
