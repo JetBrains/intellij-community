@@ -210,7 +210,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   public void afterRefreshFinish(final boolean asynchronous, ModalityState modalityState) {
     Runnable action = new Runnable() {
       public void run() {
-        myRefreshCount--;
 
         Runnable postRunnable = myPostRefreshRunnables.pop();
 
@@ -228,7 +227,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                 }
               }
 
-              if (myRefreshCount > 0) {
+              if (myRefreshCount > 1) {
+                myRefreshCount--;
                 myRefreshEventsToFire.clear();
               }
               else {
@@ -248,6 +248,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                 }
 
                 myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
+                myRefreshCount--;
 
                 if (asynchronous) {
                   int filesCount = synchronizer.collectFilesToUpdate();
