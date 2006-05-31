@@ -4,11 +4,15 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +34,8 @@ public class IntentionDescriptionPanel {
   private JEditorPane myDescriptionBrowser;
   private TitledSeparator myBeforeSeparator;
   private TitledSeparator myAfterSeparator;
+  private JPanel myPoweredByPanel;
+  private JPanel myPoweredByContainer;
   private List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<IntentionUsagePanel>();
   private List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<IntentionUsagePanel>();
   private static final @NonNls String BEFORE_TEMPLATE = "before.java.template";
@@ -38,8 +44,11 @@ public class IntentionDescriptionPanel {
   public void reset(IntentionActionMetaData actionMetaData, String filter)  {
     try {
       final URL url = actionMetaData.getDescription();
-      final String description = url != null ? SearchUtil.markup(ResourceUtil.loadText(url), filter) : CodeInsightBundle.message("under.construction.string");
+      final String description = url == null ?
+                                 CodeInsightBundle.message("under.construction.string") :
+                                 SearchUtil.markup(ResourceUtil.loadText(url), filter);
       myDescriptionBrowser.setText(description);
+      setupPoweredByPanel(actionMetaData);
 
       showUsages(myBeforePanel, myBeforeSeparator, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
       showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
@@ -56,12 +65,35 @@ public class IntentionDescriptionPanel {
     }
   }
 
+  private void setupPoweredByPanel(final IntentionActionMetaData actionMetaData) {
+    PluginId pluginId = actionMetaData == null ? null : actionMetaData.getPluginId();
+    JComponent owner;
+    if (pluginId == null) {
+      owner = new JLabel("<html><body><b>Intellij IDEA</b></body></html>");
+    }
+    else {
+      IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
+      HyperlinkLabel label = new HyperlinkLabel("'" + pluginDescriptor.getName() + "' plugin.");
+      //label.addHyperlinkListener(new HyperlinkListener() {
+      //  public void hyperlinkUpdate(HyperlinkEvent e) {
+      //    //todo
+      //    Messages.showInfoMessage("Hold on the line please", "Thanks for calling");
+      //  }
+      //});
+      owner = label;
+    }
+    //myPoweredByContainer.setVisible(true);
+    myPoweredByPanel.removeAll();
+    myPoweredByPanel.add(owner, BorderLayout.CENTER);
+  }
+
 
   public void reset(String intentionCategory)  {
     try {
       String text = CodeInsightBundle.message("intention.settings.category.text", intentionCategory);
 
       myDescriptionBrowser.setText(text);
+      setupPoweredByPanel(null);
 
       URL beforeURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/" + BEFORE_TEMPLATE);
       showUsages(myBeforePanel, myBeforeSeparator, myBeforeUsagePanels, new URL[]{beforeURL});

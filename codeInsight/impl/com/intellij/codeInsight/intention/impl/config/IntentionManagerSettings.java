@@ -19,6 +19,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ResourceUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.URL;
@@ -40,7 +41,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
 
   private SearchableOptionsRegistrar mySearchableOptionsRegistrar;
 
-  public IntentionManagerSettings(final SearchableOptionsRegistrar searchableOptionsRegistrar) {
+  public IntentionManagerSettings(@NotNull final SearchableOptionsRegistrar searchableOptionsRegistrar) {
     mySearchableOptionsRegistrar = searchableOptionsRegistrar;
   }
 
@@ -52,27 +53,28 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     return ApplicationManager.getApplication().getComponent(IntentionManagerSettings.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "IntentionManagerSettings";
   }
 
   public void initComponent() { }
 
-  public void registerIntentionMetaData(IntentionAction intentionAction, String[] category) {
+  public void registerIntentionMetaData(@NotNull IntentionAction intentionAction, @NotNull String[] category) {
     registerIntentionMetaData(intentionAction, category, intentionAction.getFamilyName());
   }
-  public void registerIntentionMetaData(IntentionAction intentionAction, String[] category, String descriptionDirectoryName) {
+  public void registerIntentionMetaData(@NotNull IntentionAction intentionAction, @NotNull String[] category, @NotNull String descriptionDirectoryName) {
     registerMetaData(new IntentionActionMetaData(intentionAction.getFamilyName(), intentionAction.getClass().getClassLoader(), category, descriptionDirectoryName));
   }
 
   public void disposeComponent() {
   }
 
-  public boolean isShowLightBulb(IntentionAction action) {
+  public boolean isShowLightBulb(@NotNull IntentionAction action) {
     return !myIgnoredActions.contains(action.getFamilyName());
   }
 
-  public void setShowLightBulb(IntentionAction action, boolean show) {
+  public void setShowLightBulb(@NotNull IntentionAction action, boolean show) {
     if (show) {
       myIgnoredActions.remove(action.getFamilyName());
     }
@@ -96,7 +98,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     }
   }
 
-  public List<IntentionActionMetaData> getMetaData() {
+  @NotNull public List<IntentionActionMetaData> getMetaData() {
     return new ArrayList<IntentionActionMetaData>(myMetaData.values());
   }
 
@@ -128,7 +130,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
 
   public void buildIndex(){
     try {
-      final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
+      final List<IntentionActionMetaData> list = getMetaData();
       for (IntentionActionMetaData metaData : list) {
         processMetaData(metaData);
       }
@@ -138,7 +140,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     }
   }
 
-  private void processMetaData(final IntentionActionMetaData metaData) throws IOException {
+  private void processMetaData(@NotNull final IntentionActionMetaData metaData) throws IOException {
     final URL description = metaData.getDescription();
     if (description != null) {
       @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();

@@ -94,7 +94,7 @@ public class PluginClassLoader extends IdeaClassLoader{
   }
 
 
-  private URL fetchResource(ClassLoader cl, String resourceName) {
+  private static URL fetchResource(ClassLoader cl, String resourceName) {
     //protected URL findResource(String s)
     try {
       //noinspection HardCodedStringLiteral
@@ -107,7 +107,7 @@ public class PluginClassLoader extends IdeaClassLoader{
     }
   }
 
-  private Enumeration fetchResources(ClassLoader cl, String resourceName) {
+  private static Enumeration fetchResources(ClassLoader cl, String resourceName) {
     //protected Enumeration findResources(String s) throws IOException
     try {
       //noinspection HardCodedStringLiteral
@@ -123,7 +123,7 @@ public class PluginClassLoader extends IdeaClassLoader{
     }
   }
 
-  private Method getFindResourceMethod(final Class clClass, final String methodName) {
+  private static Method getFindResourceMethod(final Class clClass, final String methodName) {
     try {
       final Method declaredMethod = clClass.getDeclaredMethod(methodName, String.class);
       declaredMethod.setAccessible(true);
@@ -136,5 +136,9 @@ public class PluginClassLoader extends IdeaClassLoader{
       }
       return getFindResourceMethod(superclass, methodName);
     }
+  }
+
+  public PluginId getPluginId() {
+    return myPluginId;
   }
 }

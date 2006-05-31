@@ -6,7 +6,11 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,12 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+
 public final class IntentionActionMetaData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData");
-  public final String myFamily;
+  @NotNull public final String myFamily;
   private final ClassLoader myIntentionLoader;
-  private final String myDescriptionDirectoryName;
-  public final String[] myCategory;
+  @NotNull private final String myDescriptionDirectoryName;
+  @NotNull public final String[] myCategory;
 
   private URL[] myExampleUsagesBefore = null;
   private URL[] myExampleUsagesAfter = null;
@@ -34,9 +39,10 @@ public final class IntentionActionMetaData {
   private static final @NonNls String DESCRIPTION_FILE_NAME = "description.html";
   private static final @NonNls String INTENTION_DESCRIPTION_FOLDER = "intentionDescriptions";
 
-  public IntentionActionMetaData(String family,
-                                 ClassLoader loader,
-                                 String[] category, final String descriptionDirectoryName) {
+  public IntentionActionMetaData(@NotNull String family,
+                                 @Nullable ClassLoader loader,
+                                 @NotNull String[] category,
+                                 @NotNull String descriptionDirectoryName) {
     myFamily = family;
     myIntentionLoader = loader;
     myCategory = category;
@@ -85,7 +91,7 @@ public final class IntentionActionMetaData {
     return myDescription;
   }
 
-  private static URL[] retrieveURLs(URL descriptionDirectory, String prefix, String suffix) throws MalformedURLException {
+  private static URL[] retrieveURLs(@NotNull URL descriptionDirectory, @NotNull String prefix, @NotNull String suffix) throws MalformedURLException {
     List<URL> urls = new ArrayList<URL>();
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
@@ -109,7 +115,7 @@ public final class IntentionActionMetaData {
     return urls.toArray(new URL[urls.size()]);
   }
 
-  public static URL getIntentionDescriptionDirURL(ClassLoader aClassLoader, String intentionFolderName) {
+  private static URL getIntentionDescriptionDirURL(ClassLoader aClassLoader, String intentionFolderName) {
     final URL pageURL = aClassLoader.getResource(INTENTION_DESCRIPTION_FOLDER + "/" + intentionFolderName);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Path:"+"intentionDescriptions/" + intentionFolderName);
@@ -119,11 +125,19 @@ public final class IntentionActionMetaData {
   }
 
   public URL getDirURL() {
-    if(myDirURL == null)
+    if (myDirURL == null) {
       myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, myDescriptionDirectoryName);
-    if (myDirURL == null){ //plugin compatibility
+    }
+    if (myDirURL == null) { //plugin compatibility
       myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, myFamily);
     }
     return myDirURL;
+  }
+
+  @Nullable public PluginId getPluginId() {
+    if (myIntentionLoader instanceof PluginClassLoader) {
+      return ((PluginClassLoader)myIntentionLoader).getPluginId();
+    }
+    return null;
   }
 }

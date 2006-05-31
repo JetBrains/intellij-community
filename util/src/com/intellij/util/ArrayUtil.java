@@ -17,11 +17,10 @@ package com.intellij.util;
 
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.Equality;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Author: msk
@@ -198,5 +197,17 @@ public class ArrayUtil {
       newArray[array.length - i - 1] = array[i];
     }
     return newArray;
+  }
+
+  public static int lexicographicCompare(@NotNull String[] obj1, @NotNull String[] obj2) {
+    for (int i = 0; i < Math.max(obj1.length, obj2.length); i++) {
+      String o1 = i < obj1.length ? obj1[i] : null;
+      String o2 = i < obj2.length ? obj2[i] : null;
+      if (o1 == null) return -1;
+      if (o2 == null) return 1;
+      int res = o1.compareToIgnoreCase(o2);
+      if (res != 0) return res;
+    }
+    return 0;
   }
 }

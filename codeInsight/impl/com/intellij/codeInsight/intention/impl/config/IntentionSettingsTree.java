@@ -13,6 +13,7 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -23,7 +24,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.List;
 
 public abstract class IntentionSettingsTree {
@@ -144,6 +145,7 @@ public abstract class IntentionSettingsTree {
   public void reset(List<IntentionActionMetaData> intentionsToShow) {
     CheckedTreeNode root = new CheckedTreeNode(null);
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
+    intentionsToShow = sort(intentionsToShow);
 
     for (final IntentionActionMetaData metaData : intentionsToShow) {
       String[] category = metaData.myCategory;
@@ -163,6 +165,22 @@ public abstract class IntentionSettingsTree {
     resetCheckMark(root);
     treeModel.setRoot(root);
     treeModel.nodeChanged(root);
+  }
+
+  private static List<IntentionActionMetaData> sort(final List<IntentionActionMetaData> intentionsToShow) {
+    List<IntentionActionMetaData> copy = new ArrayList<IntentionActionMetaData>(intentionsToShow);
+    Collections.sort(copy, new Comparator<IntentionActionMetaData>() {
+      public int compare(final IntentionActionMetaData data1, final IntentionActionMetaData data2) {
+        String[] category1 = data1.myCategory;
+        String[] category2 = data2.myCategory;
+        int result = ArrayUtil.lexicographicCompare(category1, category2);
+        if (result!= 0) {
+          return result;
+        }
+        return data1.myFamily.compareTo(data2.myFamily);
+      }
+    });
+    return copy;
   }
 
   private CheckedTreeNode getRoot() {

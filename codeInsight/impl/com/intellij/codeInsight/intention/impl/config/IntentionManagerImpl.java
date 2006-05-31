@@ -10,6 +10,7 @@ import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,12 +60,13 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(action, category, getDescriptionDirectoryName(action));
   }
 
+  @NotNull
   private static String getDescriptionDirectoryName(final IntentionAction action) {
     final String fqn = action.getClass().getName();
     return fqn.substring(fqn.lastIndexOf('.') + 1);
   }
 
-  public void registerIntentionAndMetaData(IntentionAction action, String[] category, String descriptionDirectoryName) {
+  public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String[] category, @NotNull String descriptionDirectoryName) {
     addAction(action);
     mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName);
   }

@@ -30,6 +30,7 @@
     <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntry type="module" module-name="ejb-openapi" />
     <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="plugins-management" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
