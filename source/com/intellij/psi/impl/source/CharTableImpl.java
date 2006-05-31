@@ -29,14 +29,14 @@ public class CharTableImpl extends THashSet<CharSequence> implements CharTable {
       return (CharSequence)_set[idx];
     }
 
-    final CharTableEntry entry = createEntry(text);
+    final CharSequence entry = text.toString();
     boolean added = add(entry);
     assert added;
 
     return entry;
   }
 
-  private CharTableEntry createEntry(CharSequence text) {
+  private CharSequence createEntry(CharSequence text) {
     final int length = text.length();
     if (length > PAGE_SIZE) {
       // creating new page in case of long (>PAGE_SIZE) token
