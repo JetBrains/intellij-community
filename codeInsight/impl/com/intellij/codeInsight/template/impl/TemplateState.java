@@ -609,6 +609,7 @@ public class TemplateState implements Disposable {
           PsiJavaCodeReferenceElement ref = t.getInnermostComponentReferenceElement();
           if (ref != null) {
             myCodeStyleManager.shortenClassReferences(ref);
+            PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
           }
         }
         catch (IncorrectOperationException e) {
