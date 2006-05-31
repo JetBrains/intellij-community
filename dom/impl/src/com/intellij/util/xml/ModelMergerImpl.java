@@ -3,10 +3,13 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.WeakArrayHashMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
@@ -17,7 +20,7 @@ import java.util.*;
  * @author peter
  */
 public class ModelMergerImpl implements ModelMerger {
-  private final WeakArrayHashMap<Object,Object> myMergedMap = new WeakArrayHashMap<Object, Object>();
+  private final WeakArrayHashMap<Object, Object> myMergedMap = new WeakArrayHashMap<Object, Object>();
   private final List<InvocationStrategy> myInvocationStrategies = new ArrayList<InvocationStrategy>();
   private final List<Class> myInvocationStrategyClasses = new ArrayList<Class>();
   private final List<MergingStrategy> myMergingStrategies = new ArrayList<MergingStrategy>();
@@ -44,10 +47,11 @@ public class ModelMergerImpl implements ModelMerger {
       public Object invokeMethod(final Method method, final Object[] args, final Object[] implementations)
         throws IllegalAccessException, InvocationTargetException {
 
-        return getMergedImplementations(method, args, DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())), implementations);
+        return getMergedImplementations(method, args,
+                                        DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())),
+                                        implementations);
       }
     });
-
 
 
     addInvocationStrategy(Object.class, new InvocationStrategy<Object>() {
@@ -78,18 +82,16 @@ public class ModelMergerImpl implements ModelMerger {
         return "isValid".equals(method.getName());
       }
 
-      public Object invokeMethod(final Method method, final Object[] args, final Object[] implementations) throws IllegalAccessException,
-                                                                                                                  InvocationTargetException {
+      public Object invokeMethod(final Method method, final Object[] args, final Object[] implementations)
+        throws IllegalAccessException, InvocationTargetException {
         for (final Object implementation : implementations) {
-          if (!((Boolean) method.invoke(implementation, args))) {
+          if (!((Boolean)method.invoke(implementation, args))) {
             return Boolean.FALSE;
           }
         }
         return Boolean.TRUE;
       }
     });
-
-
 
     addInvocationStrategy(Object.class, new InvocationStrategy<Object>() {
       public boolean accepts(final Method method) {
@@ -132,7 +134,7 @@ public class ModelMergerImpl implements ModelMerger {
   public <T> T mergeModels(final Class<? extends T> aClass, final T... implementations) {
     final Object o = myMergedMap.get(implementations);
     if (o != null) {
-      return (T) o;
+      return (T)o;
     }
     if (implementations.length == 1) return implementations[0];
     final MergingInvocationHandler<T> handler = new MergingInvocationHandler<T>(implementations);
@@ -140,7 +142,7 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
   public <T> T mergeModels(final Class<? extends T> aClass, final Collection<? extends T> implementations) {
-    return (T) mergeModels(aClass, implementations.toArray());
+    return (T)mergeModels(aClass, implementations.toArray());
   }
 
 
@@ -177,7 +179,7 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
 
-  private static final Map<Class<? extends Object>,Method> ourPrimaryKeyMethods = new HashMap<Class<? extends Object>, Method>();
+  private static final Map<Class<? extends Object>, Method> ourPrimaryKeyMethods = new HashMap<Class<? extends Object>, Method>();
 
   public class MergingInvocationHandler<T> implements InvocationHandler {
     private T[] myImplementations;
@@ -242,32 +244,50 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
   private static Method findPrimaryKeyAnnotatedMethod(final Method method, final Class aClass) {
-    return method.getReturnType() != void.class && method.getParameterTypes().length == 0? JavaMethodSignature.getSignature(method).findAnnotatedMethod(PrimaryKey.class, aClass): null;
+    return method.getReturnType() != void.class && method.getParameterTypes().length == 0 ? JavaMethodSignature.getSignature(method)
+      .findAnnotatedMethod(PrimaryKey.class, aClass) : null;
   }
 
-  private List<Object> getMergedImplementations(final Method method, final Object[] args, final Class returnType, final Object[] implementations)
-    throws IllegalAccessException, InvocationTargetException {
+  private List<Object> getMergedImplementations(final Method method,
+                                                final Object[] args,
+                                                final Class returnType,
+                                                final Object[] implementations) throws IllegalAccessException, InvocationTargetException {
 
     final List<Object> results = new ArrayList<Object>();
 
     if (returnType.isInterface()) {
-      final List<Object> orderedPrimaryKeys = new ArrayList<Object>();
-      final Map<Object, List<Object>> map = new HashMap<Object, List<Object>>();
-      for (final Object t : implementations) {
+      final List<Object> orderedPrimaryKeys = new SmartList<Object>();
+      final FactoryMap<Object, List<Set<Object>>> map = new FactoryMap<Object, List<Set<Object>>>() {
+        @NotNull
+        protected List<Set<Object>> create(final Object key) {
+          orderedPrimaryKeys.add(key);
+          return new SmartList<Set<Object>>();
+        }
+      };
+      final FactoryMap<Object, int[]> counts = new FactoryMap<Object, int[]>() {
+        @NotNull
+        protected int[] create(final Object key) {
+          return new int[implementations.length];
+        }
+      };
+      for (int i = 0; i < implementations.length; i++) {
+        Object t = implementations[i];
         final Object o = method.invoke(t, args);
         if (o instanceof Collection) {
           for (final Object o1 : (Collection)o) {
-            addToMaps(o1, orderedPrimaryKeys, map, results, false);
+            addToMaps(o1, counts, map, i, results, false);
           }
         }
         else if (o != null) {
-          addToMaps(o, orderedPrimaryKeys, map, results, true);
+          addToMaps(o, counts, map, i, results, true);
         }
 
       }
 
       for (final Object primaryKey : orderedPrimaryKeys) {
-        results.add(mergeImplementations(returnType, map.get(primaryKey).toArray()));
+        for (final Set<Object> objects : map.get(primaryKey)) {
+          results.add(mergeImplementations(returnType, objects.toArray()));
+        }
       }
     }
     else {
@@ -303,25 +323,26 @@ public class ModelMergerImpl implements ModelMerger {
     return mergeModels(returnType, implementations);
   }
 
-  private boolean addToMaps(final Object o, final List<Object> orderedPrimaryKeys, final Map<Object, List<Object>> map, final List<Object> results,
+  private boolean addToMaps(final Object o,
+                            final FactoryMap<Object, int[]> counts,
+                            final FactoryMap<Object, List<Set<Object>>> map,
+                            final int index,
+                            final List<Object> results,
                             final boolean mergeIfPKNull) throws IllegalAccessException, InvocationTargetException {
     final Object primaryKey = getPrimaryKey(o);
     if (primaryKey != null || mergeIfPKNull) {
-      List<Object> list;
-      if (!map.containsKey(primaryKey)) {
-        orderedPrimaryKeys.add(primaryKey);
-        list = new ArrayList<Object>();
-        map.put(primaryKey, list);
+      final List<Set<Object>> list = map.get(primaryKey);
+      int objIndex = counts.get(primaryKey)[index]++;
+      if (list.size() <= objIndex) {
+        list.add(new LinkedHashSet<Object>());
       }
-      else {
-        list = map.get(primaryKey);
-      }
-      list.add(o);
+      list.get(objIndex).add(o);
       return false;
     }
 
     results.add(o);
     return true;
   }
+
 
 }

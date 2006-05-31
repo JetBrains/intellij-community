@@ -37,4 +37,8 @@ public abstract class FactoryMap<T,V> {
     return v;
   }
 
+  public final boolean containsKey(T key) {
+    return myMap.containsKey(key);
+  }
+
 }
