@@ -16,6 +16,7 @@
 package org.intellij.images;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -24,11 +25,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class IconsBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("org.intellij.images.IconsBundle");
+  @NonNls private static final String BUNDLE = "org.intellij.images.IconsBundle";
 
   private IconsBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "org.intellij.images.IconsBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

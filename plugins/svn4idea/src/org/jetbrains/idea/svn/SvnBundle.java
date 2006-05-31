@@ -10,9 +10,12 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.ResourceBundle;
 
 public class SvnBundle {
-  @NonNls private final static ResourceBundle ourBundle = ResourceBundle.getBundle("org.jetbrains.idea.svn.SvnBundle");
+  @NonNls private static final String BUNDLE = "org.jetbrains.idea.svn.SvnBundle";
 
-  public static String message(@PropertyKey(resourceBundle = "org.jetbrains.idea.svn.SvnBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  private SvnBundle() {
+  }
+
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }

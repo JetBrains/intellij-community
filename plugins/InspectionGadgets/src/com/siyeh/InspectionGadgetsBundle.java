@@ -16,6 +16,7 @@
 package com.siyeh;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -24,11 +25,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class InspectionGadgetsBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.siyeh.InspectionGadgetsBundle");
+  @NonNls private static final String BUNDLE = "com.siyeh.InspectionGadgetsBundle";
 
   private InspectionGadgetsBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.siyeh.InspectionGadgetsBundle") String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
   }
 }
