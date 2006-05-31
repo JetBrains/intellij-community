@@ -20,17 +20,22 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
 
-    private final InlineCallFix fix = new InlineCallFix();
+    /** @noinspection PublicField*/
+    public boolean ignoreGetterCallsOnOtherObjects = false;
 
     public String getID(){
         return "CallToSimpleGetterFromWithinClass";
@@ -51,8 +56,15 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
                 "call.to.simple.getter.in.class.problem.descriptor");
     }
 
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "call.to.simple.getter.in.class.display.name.ignore.option"),
+                this, "ignoreGetterCallsOnOtherObjects");
+    }
+
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new InlineCallFix();
     }
 
     private static class InlineCallFix extends InspectionGadgetsFix{
@@ -92,7 +104,7 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
                 return;
             }
             final PsiField field = (PsiField)returnValue.resolve();
-            if (field == null) {
+            if (field == null){
                 return;
             }
             final String fieldName = field.getName();
@@ -105,7 +117,7 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
                 final PsiVariable variable =
                         resolveHelper.resolveReferencedVariable(fieldName,
                                 call);
-                if (variable == null) {
+                if (variable == null){
                     return;
                 }
                 if (variable.equals(field)){
@@ -123,7 +135,7 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
         return new CallToSimpleGetterInClassVisitor();
     }
 
-    private static class CallToSimpleGetterInClassVisitor
+    private class CallToSimpleGetterInClassVisitor
             extends BaseInspectionVisitor{
 
         public void visitMethodCallExpression(
@@ -139,6 +151,14 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
                 return;
             }
             if(!containingClass.equals(method.getContainingClass())){
+                return;
+            }
+            final PsiReferenceExpression methodExpression =
+                    call.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (ignoreGetterCallsOnOtherObjects && qualifier != null &&
+                    !(qualifier instanceof PsiThisExpression)) {
                 return;
             }
             if(!MethodUtils.isSimpleGetter(method)){
