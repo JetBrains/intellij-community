@@ -41,7 +41,7 @@ public class AntChangeVisitor implements XmlChangeVisitor {
   }
 
   public void visitXmlTagChildRemoved(final XmlTagChildRemoved xmlTagChildRemoved) {
-    clearParentCaches(xmlTagChildRemoved.getChild());
+    clearParentCaches(xmlTagChildRemoved.getTag());
   }
 
   public void visitXmlTagNameChanged(final XmlTagNameChanged xmlTagNameChanged) {
@@ -54,8 +54,6 @@ public class AntChangeVisitor implements XmlChangeVisitor {
 
   @Nullable
   private static void clearParentCaches(final XmlElement el) {
-    if (!el.isValid()) return;  // TODO: Remove after AntLanguageExtension is fixed.
-
     final TextRange textRange = el.getTextRange();
     final AntFile antFile =
       (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
