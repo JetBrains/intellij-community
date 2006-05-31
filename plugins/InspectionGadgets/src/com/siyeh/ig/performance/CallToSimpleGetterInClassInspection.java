@@ -159,9 +159,20 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
                     call.getMethodExpression();
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if (ignoreGetterCallsOnOtherObjects && qualifier != null &&
+            if (qualifier != null &&
                     !(qualifier instanceof PsiThisExpression)) {
-                return;
+                if (ignoreGetterCallsOnOtherObjects) {
+                    return;
+                }
+                final PsiType type = qualifier.getType();
+                if (!(type instanceof PsiClassType)) {
+                    return;
+                }
+                final PsiClassType classType = (PsiClassType)type;
+                final PsiClass qualifierClass = classType.resolve();
+                if (!containingClass.equals(qualifierClass)) {
+                    return;
+                }
             }
             if(!MethodUtils.isSimpleGetter(method)){
                 return;

@@ -167,9 +167,20 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
                     call.getMethodExpression();
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if(ignoreSetterCallsOnOtherObjects && qualifier != null &&
-                    !(qualifier instanceof PsiThisExpression)){
-                return;
+            if (qualifier != null &&
+                    !(qualifier instanceof PsiThisExpression)) {
+                if (ignoreSetterCallsOnOtherObjects) {
+                    return;
+                }
+                final PsiType type = qualifier.getType();
+                if (!(type instanceof PsiClassType)) {
+                    return;
+                }
+                final PsiClassType classType = (PsiClassType)type;
+                final PsiClass qualifierClass = classType.resolve();
+                if (!containingClass.equals(qualifierClass)) {
+                    return;
+                }
             }
             if(!MethodUtils.isSimpleSetter(method)){
                 return;
