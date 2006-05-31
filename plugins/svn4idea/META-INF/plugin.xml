@@ -66,7 +66,7 @@
       <action id="Subversion.Clenaup" class="org.jetbrains.idea.svn.actions.CleanupAction"/>
       <separator/>
       <reference id="Compare.SameVersion" text="Compare with BASE revision"/>
-      <reference id="Compare.LastVersion" text="Comparet with revision at HEAD"/>
+      <reference id="Compare.LastVersion" text="Compare with revision at HEAD"/>
       <reference id="Compare.Selected"/>
       <reference id="Annotate"/>
       <action id="Subversion.Copy" class="org.jetbrains.idea.svn.actions.CopyAction"/>
