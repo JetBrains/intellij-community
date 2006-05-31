@@ -178,7 +178,8 @@ public class LightweightHint implements Hint, UserDataHolder {
         finally {
           LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
         }
-        layeredPane.paintImmediately(bounds.x, bounds.y, bounds.width, bounds.height);
+        
+        layeredPane.repaint(bounds.x, bounds.y, bounds.width, bounds.height);
       }
     }
     if (myEscListener != null) {
