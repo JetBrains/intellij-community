@@ -175,7 +175,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     synchronized (PsiLock.LOCK) {
       try {
         XmlTag tag = handler.getXmlTag();
-        final Class abstractInterface = DomUtil.getRawType(handler.getDomElementType());
+        final Class abstractInterface = DomReflectionUtil.getRawType(handler.getDomElementType());
         final ClassChooser<? extends DomElement> classChooser = ClassChooserManager.getClassChooser(abstractInterface);
         final Class<? extends DomElement> concreteInterface = classChooser.chooseClass(tag);
         final DomElement element = doCreateDomElement(concreteInterface, handler);
@@ -224,7 +224,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       myCachedImplementationClasses.put(concreteInterface, aClass);
       return aClass;
     }
-    final Implementation implementation = DomUtil.findAnnotationDFS(concreteInterface, Implementation.class);
+    final Implementation implementation = DomReflectionUtil.findAnnotationDFS(concreteInterface, Implementation.class);
     final Class<? extends DomElement> aClass1 = implementation == null ? null : implementation.value();
     myCachedImplementationClasses.put(concreteInterface, aClass1);
     return aClass1;
@@ -368,7 +368,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         final XmlFile originalFile = (XmlFile)xmlFile.getOriginalFile();
         final DomInvocationHandler originalElement = getDomFileElement(originalFile);
         if (originalElement != null) {
-          final Class<? extends DomElement> aClass = (Class<? extends DomElement>)DomUtil.getRawType(originalElement.getDomElementType());
+          final Class<? extends DomElement> aClass = (Class<? extends DomElement>)DomReflectionUtil.getRawType(originalElement.getDomElementType());
           final String rootTagName = originalElement.getXmlElementName();
           return getFileElement(xmlFile, aClass, rootTagName).getRootHandler();
         }
@@ -484,7 +484,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     public boolean isAcceptable(Object element, PsiElement context) {
       if (element instanceof XmlElement) {
         final DomRootInvocationHandler handler = getDomFileElement((XmlFile)((PsiElement)element).getContainingFile());
-        if (handler != null && myRootClass.isAssignableFrom(DomUtil.getRawType(handler.getDomElementType()))) {
+        if (handler != null && myRootClass.isAssignableFrom(DomReflectionUtil.getRawType(handler.getDomElementType()))) {
           return true;
         }
       }

@@ -7,6 +7,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -43,6 +44,10 @@ public class DomFixedWrapper<T> implements DomWrapper<T>{
 
   public GlobalSearchScope getResolveScope() {
     return myDomElement.getResolveScope();
+  }
+
+  public XmlFile getFile() {
+    return myDomElement.getRoot().getFile();
   }
 
 }

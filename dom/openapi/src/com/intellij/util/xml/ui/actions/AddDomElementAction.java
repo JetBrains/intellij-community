@@ -89,7 +89,7 @@ public abstract class AddDomElementAction extends AnAction {
     DomCollectionChildDescription[] descriptions = getDomCollectionChildDescriptions(e);
     final List<AnAction> actions = new ArrayList<AnAction>();
     for (DomCollectionChildDescription description : descriptions) {
-      final ClassChooser chooser = ClassChooserManager.getClassChooser(DomUtil.getRawType(description.getType()));
+      final ClassChooser chooser = ClassChooserManager.getClassChooser(DomReflectionUtil.getRawType(description.getType()));
       for (Class clazz : chooser.getChooserClasses()) {
         String name = ElementPresentationManager.getTypeName(clazz);
         Icon icon = null;

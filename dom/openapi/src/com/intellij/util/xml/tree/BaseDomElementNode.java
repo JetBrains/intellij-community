@@ -2,10 +2,7 @@ package com.intellij.util.xml.tree;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.ui.TooltipUtils;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
@@ -146,7 +143,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     }
     final List<Class> classes = getDomElement().getRoot().getUserData(key);
     if (classes != null) {
-      Class clazz = DomUtil.getRawType(type);
+      Class clazz = DomReflectionUtil.getRawType(type);
       return classes.contains(clazz);
     }
     return false;

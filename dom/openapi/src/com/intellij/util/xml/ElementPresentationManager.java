@@ -201,7 +201,7 @@ public class ElementPresentationManager {
 
   public static Method findNameValueMethod(final Class<? extends Object> aClass) {
     for (final Method method : aClass.getMethods()) {
-      if (DomUtil.findAnnotationDFS(method, NameValue.class) != null) {
+      if (DomReflectionUtil.findAnnotationDFS(method, NameValue.class) != null) {
         return method;
       }
     }

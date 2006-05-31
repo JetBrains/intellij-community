@@ -90,7 +90,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     }
 
     GenericDomValue domElement = (GenericDomValue) element;
-    final Class clazz = DomUtil.getGenericValueType(domElement.getDomElementType());
+    final Class clazz = DomUtil.getGenericValueParameter(domElement.getDomElementType());
     if (PsiType.class.isAssignableFrom(clazz)) {
       return new PsiReference[] {new PsiTypeReference(this, (GenericDomValue<PsiType>)domElement)};
     }

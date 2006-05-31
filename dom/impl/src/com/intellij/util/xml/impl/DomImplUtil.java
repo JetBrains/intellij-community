@@ -39,7 +39,7 @@ public class DomImplUtil {
   static void tryInvoke(final DomElementVisitor visitor, @NonNls final String name, final Class aClass, DomElement proxy) throws NoSuchMethodException {
     final Method method = visitor.getClass().getMethod(name, aClass);
     method.setAccessible(true);
-    DomUtil.invokeMethod(method, visitor, proxy);
+    DomReflectionUtil.invokeMethod(method, visitor, proxy);
   }
 
 
@@ -62,7 +62,7 @@ public class DomImplUtil {
   }
 
   static boolean hasTagValueAnnotation(final Method method) {
-    return DomUtil.findAnnotationDFS(method, TagValue.class) != null;
+    return DomReflectionUtil.findAnnotationDFS(method, TagValue.class) != null;
   }
 
   public static boolean isGetter(final Method method) {
@@ -75,7 +75,7 @@ public class DomImplUtil {
       return returnType != void.class;
     }
     if (name.startsWith("is")) {
-      return DomUtil.canHaveIsPropertyGetterPrefix(method.getGenericReturnType());
+      return DomReflectionUtil.canHaveIsPropertyGetterPrefix(method.getGenericReturnType());
     }
     return false;
   }
@@ -89,13 +89,13 @@ public class DomImplUtil {
   public static DomNameStrategy getDomNameStrategy(final Class<?> rawType, boolean isAttribute) {
     Class aClass = null;
     if (isAttribute) {
-      NameStrategyForAttributes annotation = DomUtil.findAnnotationDFS(rawType, NameStrategyForAttributes.class);
+      NameStrategyForAttributes annotation = DomReflectionUtil.findAnnotationDFS(rawType, NameStrategyForAttributes.class);
       if (annotation != null) {
         aClass = annotation.value();
       }
     }
     if (aClass == null) {
-      NameStrategy annotation = DomUtil.findAnnotationDFS(rawType, NameStrategy.class);
+      NameStrategy annotation = DomReflectionUtil.findAnnotationDFS(rawType, NameStrategy.class);
       if (annotation != null) {
         aClass = annotation.value();
       }

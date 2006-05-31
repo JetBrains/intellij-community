@@ -12,7 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.javaee.web.WebPath;
 import org.jetbrains.annotations.NonNls;
 
@@ -78,7 +78,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
   public BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
     // todo registry for custom controls
-    if (WebPath.class.isAssignableFrom(DomUtil.getRawType(type))) {
+    if (WebPath.class.isAssignableFrom(DomReflectionUtil.getRawType(type))) {
       return new WebPathControl(wrapper, commitOnEveryChange);
     }
     return null;

@@ -10,7 +10,6 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,43 +34,23 @@ class ConverterManagerImpl implements ConverterManager {
     mySimpleConverters.put(clazz, converter);
   }
 
-
   @NotNull
-  public final Converter getConverter(Method method, Class aClass, Converter genericConverter) throws IllegalAccessException, InstantiationException {
-    final Resolve resolveAnnotation = DomUtil.findAnnotationDFS(method, Resolve.class);
-    if (resolveAnnotation != null) {
-      return DomResolveConverter.createConverter(resolveAnnotation.value());
-    }
-
-    final Convert convertAnnotation = DomUtil.findAnnotationDFS(method, Convert.class);
-    if (convertAnnotation != null) {
-      return getConverterInstance(convertAnnotation.value());
-    }
-    if (genericConverter != null) {
-      return genericConverter;
-    }
-    final Converter converter = getConverter(aClass);
-    assert converter != null : "No converter specified: String<->" + aClass.getName();
-    return converter;
-  }
-
-  @NotNull
-  private Converter getConverterInstance(final Class<? extends Converter> converterClass) throws InstantiationException, IllegalAccessException {
+  public final Converter getConverterInstance(final Class<? extends Converter> converterClass) {
     return myConverterInstances.get(converterClass);
   }
 
   @Nullable
-  final Converter getConverter(final Class<?> aClass) throws InstantiationException, IllegalAccessException {
-    final Converter converter = mySimpleConverters.get(aClass);
+  public final Converter getConverterByClass(final Class<?> convertingClass) {
+    final Converter converter = mySimpleConverters.get(convertingClass);
     if (converter != null) {
       return converter;
     }
 
-    if (Enum.class.isAssignableFrom(aClass)) {
-      return EnumConverter.createEnumConverter((Class<? extends Enum>)aClass);
+    if (Enum.class.isAssignableFrom(convertingClass)) {
+      return EnumConverter.createEnumConverter((Class<? extends Enum>)convertingClass);
     }
-    if (DomElement.class.isAssignableFrom(aClass)) {
-      return DomResolveConverter.createConverter((Class<? extends DomElement>)aClass);
+    if (DomElement.class.isAssignableFrom(convertingClass)) {
+      return DomResolveConverter.createConverter((Class<? extends DomElement>)convertingClass);
     }
     return null;
   }

@@ -37,7 +37,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
 
 
   protected Class<? extends T> getElementClass() {
-    return (Class<? extends T>)DomUtil.getRawType(getDomCollectionChildDescription().getType());
+    return (Class<? extends T>)DomReflectionUtil.getRawType(getDomCollectionChildDescription().getType());
   }
 
   protected T doAdd() {
@@ -66,7 +66,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
           final T result = new WriteCommandAction<T>(domManager.getProject(), parent.getRoot().getFile()) {
             protected void run(Result<T> result) throws Throwable {
               final T t = doAdd();
-              aClass[0] = DomUtil.getRawType(parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType());
+              aClass[0] = DomReflectionUtil.getRawType(parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType());
               oldChooser[0] = ClassChooserManager.getClassChooser(aClass[0]);
               final SmartPsiElementPointer pointer =
                 SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(t.getXmlTag());

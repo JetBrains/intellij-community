@@ -19,5 +19,11 @@ package com.intellij.openapi.util;
  * @author dsl
  */
 public interface Factory<T> {
+  Factory NULL_FACTORY = new Factory() {
+    public Object create() {
+      return null;
+    }
+  };
+
   T create();
 }

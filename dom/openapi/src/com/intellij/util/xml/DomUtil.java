@@ -4,14 +4,11 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import com.intellij.openapi.util.text.StringUtil;import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -23,34 +20,10 @@ public class DomUtil {
   private DomUtil() {
   }
 
-  public static Object invokeMethod(final Method method, final Object object, final Object... args) {
-    try {
-      return method.invoke(object, args);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)cause;
-      }
-      else if (cause instanceof Error) {
-        throw (Error)cause;
-      }
-      else if (cause instanceof RuntimeException) {
-        throw (RuntimeException) cause;
-      }
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static Class getGenericValueType(Type type) {
-    return getClassFromGenericType(GenericValue.class.getTypeParameters()[0], type);
-  }
-
   public static Class extractParameterClassFromGenericType(Type type) {
-    if (type instanceof ParameterizedType) {
+    return getGenericValueParameter(type);
+
+    /*if (type instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType)type;
       final Type rawType = parameterizedType.getRawType();
 
@@ -75,7 +48,7 @@ public class DomUtil {
         }
       }
     }
-    return null;
+    return null;*/
   }
 
   private static boolean isGenericValue(final Type rawType) {
@@ -83,89 +56,7 @@ public class DomUtil {
   }
 
   public static boolean isGenericValueType(Type type) {
-    return getGenericValueType(type) != null;
-  }
-
-  private static Type resolveVariable(TypeVariable variable, final Class classType) {
-    final Class aClass = DomUtil.getRawType(classType);
-    int index = ContainerUtil.findByEquals(aClass.getTypeParameters(), variable);
-    if (index >= 0) {
-      return variable;
-    }
-
-    final Class[] classes = aClass.getInterfaces();
-    final Type[] genericInterfaces = aClass.getGenericInterfaces();
-    for (int i = 0; i < classes.length; i++) {
-      Class anInterface = classes[i];
-      final Type resolved = resolveVariable(variable, anInterface);
-      if (resolved instanceof Class || resolved instanceof ParameterizedType) {
-        return resolved;
-      }
-      if (resolved instanceof TypeVariable) {
-        final TypeVariable typeVariable = (TypeVariable)resolved;
-        index = ContainerUtil.findByEquals(anInterface.getTypeParameters(), typeVariable);
-        assert index >= 0 : typeVariable + " " + Arrays.asList(anInterface.getTypeParameters());
-        final Type type = genericInterfaces[i];
-        if (type instanceof Class) {
-          return Object.class;
-        }
-        if (type instanceof ParameterizedType) {
-          return ((ParameterizedType)type).getActualTypeArguments()[index];
-        }
-        throw new AssertionError("Invalid type: " + type);
-      }
-    }
-    return null;
-  }
-
-  public static Class<?> getClassFromGenericType(final Type genericType, final Type classType) {
-    if (genericType instanceof TypeVariable) {
-      final Class<?> aClass = getRawType(classType);
-      final Type type = resolveVariable((TypeVariable)genericType, aClass);
-      if (type instanceof Class) {
-        return (Class)type;
-      }
-      if (type instanceof ParameterizedType) {
-        return (Class<?>)((ParameterizedType)type).getRawType();
-      }
-      if (type instanceof TypeVariable && classType instanceof ParameterizedType) {
-        final int index = ContainerUtil.findByEquals(aClass.getTypeParameters(), type);
-        if (index >= 0) {
-          return getRawType(((ParameterizedType)classType).getActualTypeArguments()[index]);
-        }
-      }
-    } else {
-      return getRawType(genericType);
-    }
-    return null;
-  }
-
-  public static Class<?> getRawType(Type type) {
-    if (type instanceof Class) {
-      return (Class)type;
-    }
-    if (type instanceof ParameterizedType) {
-      return getRawType(((ParameterizedType)type).getRawType());
-    }
-    assert false : type;
-    return null;
-  }
-
-  public static <T extends Annotation> T findAnnotationDFS(final Class<?> rawType, final Class<T> annotationType) {
-    T annotation = rawType.getAnnotation(annotationType);
-    if (annotation != null) return annotation;
-
-    for (Class aClass : rawType.getInterfaces()) {
-      annotation = findAnnotationDFS(aClass, annotationType);
-      if (annotation != null) {
-        return annotation;
-      }
-    }
-    return null;
-  }
-
-  public static <T extends Annotation> T findAnnotationDFS(final Method method, final Class<T> annotationClass) {
-    return JavaMethodSignature.getSignature(method).findAnnotation(annotationClass, method.getDeclaringClass());
+    return getGenericValueParameter(type) != null;
   }
 
   @Nullable
@@ -219,76 +110,6 @@ public class DomUtil {
   }
 
   @Nullable
-  public static Type extractCollectionElementType(Type returnType) {
-    if (returnType instanceof ParameterizedType) {
-      ParameterizedType parameterizedType = (ParameterizedType)returnType;
-      final Type rawType = parameterizedType.getRawType();
-      if (rawType instanceof Class) {
-        final Class<?> rawClass = (Class<?>)rawType;
-        if (List.class.equals(rawClass) || Collection.class.equals(rawClass)) {
-          final Type[] arguments = parameterizedType.getActualTypeArguments();
-          if (arguments.length == 1) {
-            final Type argument = arguments[0];
-            if (argument instanceof WildcardType) {
-              final Type[] upperBounds = ((WildcardType)argument).getUpperBounds();
-              if (upperBounds.length == 1) {
-                return upperBounds[0];
-              }
-            }
-            else if (argument instanceof ParameterizedType) {
-              if (getGenericValueType(argument) != null) {
-                return argument;
-              }
-            }
-            else if (argument instanceof Class) {
-              return argument;
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  public static boolean canHaveIsPropertyGetterPrefix(final Type type) {
-    return boolean.class.equals(type) || Boolean.class.equals(type)
-           || Boolean.class.equals(DomUtil.getGenericValueType(type));
-  }
-
-  public static Method[] getGetterMethods(final String[] path, final Class<? extends DomElement> startClass) {
-    final Method[] methods = new Method[path.length];
-    Class aClass = startClass;
-    for (int i = 0; i < path.length; i++) {
-      final Method getter = findGetter(aClass, path[i]);
-      assert getter != null : "Couldn't find getter for property " + path[i] + " in class " + aClass;
-      methods[i] = getter;
-      aClass = getter.getReturnType();
-      if (List.class.isAssignableFrom(aClass)) {
-        aClass = DomUtil.getRawType(DomUtil.extractCollectionElementType(getter.getGenericReturnType()));
-      }
-    }
-    return methods;
-  }
-
-  @Nullable
-  private static Method findGetter(Class aClass, String propertyName) {
-    final String capitalized = StringUtil.capitalize(propertyName);
-    try {
-      return aClass.getMethod("get" + capitalized);
-    }
-    catch (NoSuchMethodException e) {
-      final Method method;
-      try {
-        method = aClass.getMethod("is" + capitalized);
-        return DomUtil.canHaveIsPropertyGetterPrefix(method.getGenericReturnType()) ? method : null;
-      }
-      catch (NoSuchMethodException e1) {
-        return null;
-      }
-    }
-  }
-
-  @Nullable
   public static List<Method> getFixedPath(DomElement element) {
     assert element.isValid();
     final LinkedList<Method> methods = new LinkedList<Method>();
@@ -309,5 +130,9 @@ public class DomUtil {
       element = element.getParent();
     }
     return methods;
+  }
+
+  public static Class getGenericValueParameter(Type type) {
+    return DomReflectionUtil.substituteGenericType(GenericValue.class.getTypeParameters()[0], type);
   }
 }

@@ -62,7 +62,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       public Result<DomElementsProblemsHolder> compute() {
         final DomElementsProblemsHolder holder = new DomElementsProblemsHolderImpl();
         final DomElement rootElement = fileElement.getRootElement();
-        final Class<?> type = DomUtil.getRawType(rootElement.getDomElementType());
+        final Class<?> type = DomReflectionUtil.getRawType(rootElement.getDomElementType());
         final List<DomElementsAnnotator> list = myClass2Annotator.get(type);
         if (list != null) {
           for (DomElementsAnnotator annotator : list) {

@@ -29,7 +29,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   public DomNameStrategy getDomNameStrategy(DomElement parent) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomUtil.getRawType(getType()), true);
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomReflectionUtil.getRawType(getType()), true);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
 

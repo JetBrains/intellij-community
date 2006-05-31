@@ -3,8 +3,8 @@ package com.intellij.util.xml.tree;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -92,7 +92,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
 
 
   public Icon getNodeIcon() {
-    Class clazz = DomUtil.getRawType(myChildDescription.getType());
+    Class clazz = DomReflectionUtil.getRawType(myChildDescription.getType());
 //        Class arrayClass = Array.newInstance(clazz, 0).getClass();
     return ElementPresentationManager.getIconForClass(clazz);
   }

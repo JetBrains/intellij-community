@@ -8,7 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
 
   @Nullable
   public <T extends Annotation> T getAnnotation(int index, Class<? extends T> annotationClass) {
-    return DomUtil.findAnnotationDFS(getGetterMethod(index), annotationClass);
+    return DomReflectionUtil.findAnnotationDFS(getGetterMethod(index), annotationClass);
   }
 
   public int getCount() {

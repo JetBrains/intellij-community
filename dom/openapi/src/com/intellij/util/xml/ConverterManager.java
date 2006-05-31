@@ -17,12 +17,18 @@
 
 package com.intellij.util.xml;
 
-import java.lang.reflect.Method;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
 public interface ConverterManager {
   void addConverter(Class clazz, Converter converter);
-  Converter getConverter(Method method, Class aClass, Converter genericConverter) throws IllegalAccessException, InstantiationException;
+
+  @NotNull
+  Converter getConverterInstance(Class<? extends Converter> converterClass);
+
+  @Nullable
+  Converter getConverterByClass(Class<?> convertingClass);
 }

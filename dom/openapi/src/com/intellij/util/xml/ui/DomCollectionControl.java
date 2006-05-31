@@ -14,7 +14,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.highlighting.DomCollectionProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
@@ -134,7 +134,7 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
 
 
   public boolean canNavigate(DomElement element) {
-    final Class<DomElement> aClass = (Class<DomElement>)DomUtil.getRawType(myChildDescription.getType());
+    final Class<DomElement> aClass = (Class<DomElement>)DomReflectionUtil.getRawType(myChildDescription.getType());
 
     final DomElement domElement = element.getParentOfType(aClass, false);
 
@@ -142,7 +142,7 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
   }
 
   public void navigate(DomElement element) {
-    final Class<DomElement> aClass = (Class<DomElement>)DomUtil.getRawType(myChildDescription.getType());
+    final Class<DomElement> aClass = (Class<DomElement>)DomReflectionUtil.getRawType(myChildDescription.getType());
     final DomElement domElement = element.getParentOfType(aClass, false);
 
     int index = myData.indexOf(domElement);
@@ -318,7 +318,7 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
   }
 
   protected final Class<? extends T> getCollectionElementClass() {
-    return (Class<? extends T>)DomUtil.getRawType(myChildDescription.getType());
+    return (Class<? extends T>)DomReflectionUtil.getRawType(myChildDescription.getType());
   }
 
 

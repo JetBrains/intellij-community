@@ -5,8 +5,8 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import javax.swing.table.DefaultTableCellRenderer;
@@ -38,7 +38,7 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
   }
 
   public final Class<T> getColumnClass() {
-    return (Class<T>)DomUtil.getRawType(myChildDescription.getType());
+    return (Class<T>)DomReflectionUtil.getRawType(myChildDescription.getType());
   }
 
   public TableCellRenderer getCustomizedRenderer(final T domElement, final TableCellRenderer renderer) {

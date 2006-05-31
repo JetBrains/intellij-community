@@ -4,10 +4,11 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -25,8 +26,8 @@ public class DomCollectionWrapper<T> implements DomWrapper<T>{
   public DomCollectionWrapper(final DomElement domElement,
                               final DomCollectionChildDescription childDescription) {
     this(domElement, childDescription, 
-         DomUIFactory.findMethod(DomUtil.getRawType(childDescription.getType()), "setValue"),
-         DomUIFactory.findMethod(DomUtil.getRawType(childDescription.getType()), "getValue"));
+         DomUIFactory.findMethod(DomReflectionUtil.getRawType(childDescription.getType()), "setValue"),
+         DomUIFactory.findMethod(DomReflectionUtil.getRawType(childDescription.getType()), "getValue"));
   }
 
   public DomCollectionWrapper(final DomElement domElement,
@@ -71,5 +72,9 @@ public class DomCollectionWrapper<T> implements DomWrapper<T>{
 
   public GlobalSearchScope getResolveScope() {
     return myDomElement.getResolveScope();
+  }
+
+  public XmlFile getFile() {
+    return myDomElement.getRoot().getFile();
   }
 }

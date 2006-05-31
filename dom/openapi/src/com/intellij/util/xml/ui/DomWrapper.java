@@ -6,6 +6,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.util.xml.DomElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
@@ -24,4 +25,6 @@ public interface DomWrapper<T> {
   Project getProject();
 
   GlobalSearchScope getResolveScope();
+
+  XmlFile getFile();
 }

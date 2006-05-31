@@ -8,13 +8,12 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.ClassChooserManager;
-import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
-import java.lang.reflect.Type;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
 /**
  * @author peter
@@ -28,10 +27,8 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
                                          final XmlTag tag,
                                          final DomInvocationHandler parent,
                                          final String tagName,
-                                         final int index,
-                                         final Converter genericConverter,
-                                         final boolean indicator) {
-    super(aClass, tag, parent, tagName, parent.getManager(), genericConverter);
+                                         final int index, final boolean indicator) {
+    super(aClass, tag, parent, tagName, parent.getManager());
     myIndex = index;
     myIndicator = indicator;
   }
@@ -50,7 +47,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     final XmlTag newTag = (XmlTag)parent.getXmlTag().add(tag);
     if (getParentHandler().getFixedChildrenClass(tag.getName()) != null) {
       final Type type = getChildDescription().getType();
-      ClassChooserManager.getClassChooser(DomUtil.getRawType(type)).distinguishTag(newTag, DomUtil.getRawType(getDomElementType()));
+      ClassChooserManager.getClassChooser(DomReflectionUtil.getRawType(type)).distinguishTag(newTag, DomReflectionUtil.getRawType(getDomElementType()));
     }
     return newTag;
   }

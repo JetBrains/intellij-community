@@ -14,6 +14,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.ui.UserActivityWatcher;
 
@@ -48,7 +49,7 @@ public abstract class DomUIFactory implements ApplicationComponent {
   }
 
   public static DomUIControl<GenericDomValue> createControl(GenericDomValue element, boolean commitOnEveryChange) {
-    return createGenericValueControl(DomUtil.getGenericValueType(element.getDomElementType()), element, commitOnEveryChange);
+    return createGenericValueControl(DomUtil.getGenericValueParameter(element.getDomElementType()), element, commitOnEveryChange);
   }
 
   public static DomUIControl createSmallDescriptionControl(DomElement parent, final boolean commitOnEveryChange) {
@@ -61,7 +62,7 @@ public abstract class DomUIFactory implements ApplicationComponent {
 
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element, boolean commitOnEveryChange) {
     final DomStringWrapper stringWrapper = new DomStringWrapper(element);
-    final Class rawType = DomUtil.getRawType(type);
+    final Class rawType = DomReflectionUtil.getRawType(type);
     if (PsiClass.class.isAssignableFrom(rawType)) {
       return getDomUIFactory().createPsiClassControl(stringWrapper, commitOnEveryChange);
     }

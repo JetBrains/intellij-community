@@ -3,7 +3,7 @@ package com.intellij.util.xml.tree;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.DomReflectionUtil;
 
 import javax.swing.*;
 import java.lang.reflect.Type;
@@ -48,7 +48,7 @@ abstract public class AbstractDomElementNode extends SimpleNode {
     final Map<Class, Boolean> hiders = getDomElement().getRoot().getUserData(TREE_NODES_HIDERS_KEY);
     if (type == null || hiders == null || hiders.size() == 0) return true;
 
-    final Class aClass = DomUtil.getRawType(type);
+    final Class aClass = DomReflectionUtil.getRawType(type);
 
     List<Class> allParents = new ArrayList<Class>();
     for (Map.Entry<Class, Boolean> entry : hiders.entrySet()) {

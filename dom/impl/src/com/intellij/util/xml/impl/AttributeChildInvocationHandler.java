@@ -29,9 +29,8 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
                                             final XmlTag tag,
                                             final DomInvocationHandler parent,
                                             final String attributeName,
-                                            final DomManagerImpl manager,
-                                            final Converter genericConverter) {
-    super(type, tag, parent, attributeName, manager, genericConverter);
+                                            final DomManagerImpl manager) {
+    super(type, tag, parent, attributeName, manager);
     if (tag != null && tag.getAttributeValue(attributeName) != null) {
       myWasDefined = true;
     }

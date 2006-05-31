@@ -74,7 +74,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
 
     Object o = getMergedRoot(element);
     for (final Method method : methods) {
-      o = DomUtil.invokeMethod(method, o);
+      o = DomReflectionUtil.invokeMethod(method, o);
     }
     return (DomElement)o;
   }

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,7 +118,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
   @Nullable
   public <T extends Annotation> T getAnnotation(Class<? extends T> annotationClass) {
-    return DomUtil.findAnnotationDFS(getGetterMethod(), annotationClass);
+    return DomReflectionUtil.findAnnotationDFS(getGetterMethod(), annotationClass);
   }
 
   public boolean equals(final Object o) {

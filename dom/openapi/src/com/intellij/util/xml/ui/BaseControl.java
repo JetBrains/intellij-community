@@ -168,7 +168,7 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
     if (myCommitting) return;
     myCommitting = true;
     try {
-      new WriteCommandAction(getProject(), getDomElement().getRoot().getFile()) {
+      new WriteCommandAction(getProject(), getDomWrapper().getFile()) {
         protected void run(Result result) throws Throwable {
           final CommitListener multicaster = myDispatcher.getMulticaster();
           multicaster.beforeCommit(BaseControl.this);

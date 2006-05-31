@@ -23,7 +23,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
   public CollectionElementInvocationHandler(final Type type,
                                             @NotNull final XmlTag tag,
                                             final DomInvocationHandler parent) {
-    super(type, tag, parent, tag.getName(), parent.getManager(), null);
+    super(type, tag, parent, tag.getName(), parent.getManager());
   }
 
   protected final XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException {

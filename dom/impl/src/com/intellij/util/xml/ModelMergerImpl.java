@@ -48,7 +48,7 @@ public class ModelMergerImpl implements ModelMerger {
         throws IllegalAccessException, InvocationTargetException {
 
         return getMergedImplementations(method, args,
-                                        DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())),
+                                        DomReflectionUtil.getRawType(DomReflectionUtil.extractCollectionElementType(method.getGenericReturnType())),
                                         implementations);
       }
     });

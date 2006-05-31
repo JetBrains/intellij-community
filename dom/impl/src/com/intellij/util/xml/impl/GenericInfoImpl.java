@@ -129,7 +129,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   @NotNull
   private DomNameStrategy getNameStrategy(boolean isAttribute) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomUtil.getRawType(myClass), isAttribute);
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomReflectionUtil.getRawType(myClass), isAttribute);
     if (strategy != null) {
       return strategy;
     }
@@ -169,7 +169,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       final Method method = iterator.next();
 
       final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
-      final Required required = DomUtil.findAnnotationDFS(method, Required.class);
+      final Required required = DomReflectionUtil.findAnnotationDFS(method, Required.class);
       if (isCoreMethod(method) || DomImplUtil.isTagValueSetter(method) || isCustomMethod(signature)) {
         if (signature.findAnnotation(NameValue.class, myClass) != null) {
           myNameValueGetter = method;
@@ -235,7 +235,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     if (tagName == null) return false;
 
     final Type childrenClass = getCollectionChildrenType(tagName);
-    if (childrenClass == null || !DomUtil.getRawType(childrenClass).isAssignableFrom(method.getReturnType())) return false;
+    if (childrenClass == null || !DomReflectionUtil.getRawType(childrenClass).isAssignableFrom(method.getReturnType())) return false;
 
     return ADDER_PARAMETER_TYPES.containsAll(Arrays.asList(method.getParameterTypes()));
   }
@@ -295,7 +295,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       }
     }
 
-    final Type type = DomUtil.extractCollectionElementType(method.getGenericReturnType());
+    final Type type = DomReflectionUtil.extractCollectionElementType(method.getGenericReturnType());
     if (isDomElement(type)) {
       final SubTagsList subTagsList = method.getAnnotation(SubTagsList.class);
       if (subTagsList != null) {
@@ -432,7 +432,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   private Invocation createPropertyAccessorInvocation(final PropertyAccessor accessor) {
-    final Method[] methods = DomUtil.getGetterMethods(accessor.value(), myClass);
+    final Method[] methods = DomReflectionUtil.getGetterMethods(accessor.value(), myClass);
     final int lastElement = methods.length - 1;
     return new Invocation() {
       public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
@@ -602,7 +602,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   final Required isRequired(Method method) {
-    return DomUtil.findAnnotationDFS(method, Required.class);
+    return DomReflectionUtil.findAnnotationDFS(method, Required.class);
   }
 
   @Nullable
@@ -663,7 +663,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   public static boolean isDomElement(final Type type) {
-    return type != null && DomElement.class.isAssignableFrom(DomUtil.getRawType(type));
+    return type != null && DomElement.class.isAssignableFrom(DomReflectionUtil.getRawType(type));
   }
 
   public final Set<String> getReferenceTagNames() {
@@ -693,8 +693,8 @@ public class GenericInfoImpl implements DomGenericInfo {
     if (classes.length == 1 && classes[0].equals(myClass)) {
       for (final DomChildDescriptionImpl description : getChildrenDescriptions()) {
         final Type type = description.getType();
-        if (condition.value(DomUtil.getRawType(type))) {
-          if (!String.class.equals(DomUtil.getGenericValueType(type))) {
+        if (condition.value(DomReflectionUtil.getRawType(type))) {
+          if (!String.class.equals(DomUtil.getGenericValueParameter(type))) {
             set.add(description.getXmlElementName());
           }
         } else {
