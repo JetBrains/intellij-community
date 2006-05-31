@@ -3,14 +3,11 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 
-import java.util.Stack;
-import java.util.Map;
-import java.util.Collections;
-import java.util.WeakHashMap;
 import java.lang.reflect.Method;
+import java.util.Stack;
 
 /**
  * @author peter
@@ -18,20 +15,19 @@ import java.lang.reflect.Method;
 public class InvocationStack<T> {
   public static final InvocationStack<Object> INSTANCE = new InvocationStack<Object>();
 
-  private final Map<Thread, Stack<Pair<JavaMethodSignature,T>>> myCallStacks = Collections.synchronizedMap(new WeakHashMap<Thread, Stack<Pair<JavaMethodSignature, T>>>());
+  private final ThreadLocal<Stack<Pair<JavaMethodSignature,T>>> myCallStacks = new ThreadLocal<Stack<Pair<JavaMethodSignature, T>>>();
 
   public final void push(Method method, T o) {
     JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
-    final Thread thread = Thread.currentThread();
-    Stack<Pair<JavaMethodSignature, T>> stack = myCallStacks.get(thread);
+    Stack<Pair<JavaMethodSignature, T>> stack = myCallStacks.get();
     if (stack == null) {
-      myCallStacks.put(thread, stack = new Stack<Pair<JavaMethodSignature, T>>());
+      myCallStacks.set(stack = new Stack<Pair<JavaMethodSignature, T>>());
     }
     stack.push(Pair.create(signature, o));
   }
-
+                                                 
   public final T findDeepestInvocation(Method method, Condition<T> stopAt) {
-    final Stack<Pair<JavaMethodSignature, T>> stack = myCallStacks.get(Thread.currentThread());
+    final Stack<Pair<JavaMethodSignature, T>> stack = myCallStacks.get();
 
     JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
     for (int i = stack.size() - 2; i >= 0; i--) {
@@ -47,6 +43,6 @@ public class InvocationStack<T> {
   }
 
   public final Pair<JavaMethodSignature,T> pop() {
-    return myCallStacks.get(Thread.currentThread()).pop();
+    return myCallStacks.get().pop();
   }
 }
