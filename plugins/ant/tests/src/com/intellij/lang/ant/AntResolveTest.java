@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.ResolveTestCase;
+import junit.framework.AssertionFailedError;
 
 public class AntResolveTest extends ResolveTestCase {
 
@@ -96,6 +97,28 @@ public class AntResolveTest extends ResolveTestCase {
 
   public void testPropValueInAttributeF() throws Exception {
     doPropertyTest();
+  }
+
+  public void testNonExistingEnvProperty() throws Exception {
+    boolean isNull = false;
+    try {
+      configure();
+    }
+    catch (AssertionFailedError e) {
+      isNull = true;
+    }
+    assertTrue(isNull);
+  }
+
+  public void testNonExistingEnvProperty1() throws Exception {
+    boolean isNull = false;
+    try {
+      configure();
+    }
+    catch (AssertionFailedError e) {
+      isNull = true;
+    }
+    assertTrue(isNull);
   }
 
   public void testRefid() throws Exception {

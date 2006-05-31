@@ -45,11 +45,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       }
     }
     else if (getEnvironment() != null) {
-      String env = getEnvironment();
-      if (!env.endsWith(".")) {
-        env += '.';
-      }
-      getAntProject().addEnvironmentPropertyPrefix(env);
+      getAntProject().addEnvironmentPropertyPrefix(getEnvironment());
     }
   }
 

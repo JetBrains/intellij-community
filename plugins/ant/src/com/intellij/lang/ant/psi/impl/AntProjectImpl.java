@@ -7,10 +7,7 @@ import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlDocument;
@@ -30,6 +27,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private AntTarget[] myTargets;
   private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
   @NonNls private List<String> myEnvPrefixes;
+  @NonNls private static final String myDefaultEnvPrefix = "env.";
 
   public AntProjectImpl(final AntFileImpl parent,
                         final XmlTag tag,
@@ -98,7 +96,16 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   public void addEnvironmentPropertyPrefix(@NotNull final String envPrefix) {
     checkEnvList();
-    myEnvPrefixes.add(envPrefix);
+    final String env = (envPrefix.endsWith(".")) ? envPrefix : envPrefix + '.';
+    if (myEnvPrefixes.indexOf(env) < 0) {
+      myEnvPrefixes.add(env);
+      for (PsiElement element : getProperties()) {
+        final String name = ((PsiNamedElement)element).getName();
+        if (name != null && name.startsWith(myDefaultEnvPrefix)) {
+          setProperty(env + name.substring(myDefaultEnvPrefix.length()), element);
+        }
+      }
+    }
   }
 
   public boolean isEnvironmentProperty(@NotNull final String propName) {
@@ -150,6 +157,15 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       while (props.hasMoreElements()) {
         final String name = (String)props.nextElement();
         final String value = (String)ht.get(name);
+        builder.append("<property name=\"");
+        builder.append(name);
+        builder.append("\" value=\"");
+        builder.append(value);
+        builder.append("\"/>");
+      }
+      final Map<String, String> envMap = System.getenv();
+      for (String name : envMap.keySet()) {
+        final String value = envMap.get(name);
         builder.append("<property name=\"");
         builder.append(name);
         builder.append("\" value=\"");
@@ -218,7 +234,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private void checkEnvList() {
     if (myEnvPrefixes == null) {
       myEnvPrefixes = new ArrayList<String>();
-      myEnvPrefixes.add("env.");
+      myEnvPrefixes.add(myDefaultEnvPrefix);
     }
   }
 }
