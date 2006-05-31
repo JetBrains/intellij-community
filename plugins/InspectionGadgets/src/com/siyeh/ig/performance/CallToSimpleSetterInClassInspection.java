@@ -19,7 +19,9 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -170,6 +172,12 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
                 return;
             }
             if(!MethodUtils.isSimpleSetter(method)){
+                return;
+            }
+            final Query<PsiMethod> query = OverridingMethodsSearch.search(
+                    method, method.getUseScope(), true);
+            final PsiMethod overridingMethod = query.findFirst();
+            if (overridingMethod != null) {
                 return;
             }
             registerMethodCallError(call);
