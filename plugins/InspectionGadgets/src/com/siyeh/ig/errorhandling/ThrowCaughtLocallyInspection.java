@@ -21,10 +21,22 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class ThrowCaughtLocallyInspection extends StatementInspection {
+
+    /** @noinspection PublicField*/
+    public boolean ignoreRethrownExceptions = false;
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "throw.caught.locally.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.ERRORHANDLING_GROUP_NAME;
@@ -36,11 +48,18 @@ public class ThrowCaughtLocallyInspection extends StatementInspection {
                 "throw.caught.locally.problem.descriptor");
     }
 
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "throw.caught.locally.ignore.option"), this,
+                "ignoreRethrownExceptions");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new ThrowCaughtLocallyVisitor();
     }
 
-    private static class ThrowCaughtLocallyVisitor
+    private class ThrowCaughtLocallyVisitor
             extends StatementInspectionVisitor {
 
         public void visitThrowStatement(PsiThrowStatement statement) {
@@ -65,18 +84,51 @@ public class ThrowCaughtLocallyInspection extends StatementInspection {
                 if (PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
                     final PsiParameter[] catchBlockParameters =
                             containingTryStatement.getCatchBlockParameters();
-                    for (final PsiParameter parameter : catchBlockParameters) {
+                    for (PsiParameter parameter : catchBlockParameters) {
                         final PsiType parameterType = parameter.getType();
-                        if (parameterType.isAssignableFrom(exceptionType)) {
-                            registerStatementError(statement);
-                            return;
+                        if (!parameterType.isAssignableFrom(exceptionType)) {
+                            continue;
                         }
+                        if (ignoreRethrownExceptions) {
+                            final PsiCatchSection section =
+                                    (PsiCatchSection)parameter.getParent();
+                            final PsiCodeBlock catchBlock =
+                                    section.getCatchBlock();
+                            if (isExceptionRethrown(parameter, catchBlock)) {
+                                return;
+                            }
+                        }
+                        registerStatementError(statement);
+                        return;
                     }
                 }
                 containingTryStatement =
                         PsiTreeUtil.getParentOfType(containingTryStatement,
                                 PsiTryStatement.class);
             }
+        }
+
+        private boolean isExceptionRethrown(PsiParameter parameter,
+                                            PsiCodeBlock catchBlock) {
+            final PsiStatement[] statements = catchBlock.getStatements();
+            if (statements.length <= 0) {
+                return false;
+            }
+            final PsiStatement lastStatement =
+                    statements[statements.length - 1];
+            if (!(lastStatement instanceof PsiThrowStatement)) {
+                return false;
+            }
+            final PsiThrowStatement throwStatement =
+                    (PsiThrowStatement)lastStatement;
+            final PsiExpression expression = throwStatement.getException();
+            if (!(expression instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)expression;
+            final PsiElement element = referenceExpression.resolve();
+            return parameter.equals(element);
         }
     }
 }
