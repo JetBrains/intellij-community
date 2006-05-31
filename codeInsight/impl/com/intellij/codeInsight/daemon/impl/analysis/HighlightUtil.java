@@ -476,6 +476,7 @@ public class HighlightUtil {
       if (rType == null || lType == null || TypeConversionUtil.isAssignable(lType, rType)) return null;
     }
     else if (TypeConversionUtil.areTypesAssignmentCompatible(lType, expression)) {
+      if (rType == null) return null;
       return GenericsHighlightUtil.checkRawToGenericAssignment(lType, rType, expression);
     }
     if (rType == null) {
@@ -1451,6 +1452,7 @@ public class HighlightUtil {
   private static HighlightInfo checkReferenceToOurInstanceInsideThisOrSuper(final PsiElement expression,
                                                                             final PsiClass referencedClass,
                                                                             final String resolvedName) {
+    if (PsiTreeUtil.getParentOfType(expression, PsiReferenceParameterList.class) != null) return null;
     PsiElement element = expression.getParent();
     while (element != null) {
       // check if expression inside super()/this() call
