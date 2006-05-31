@@ -152,8 +152,10 @@ public class Parsing implements Constants{
     CompositeElement type = context.getStatementParsing().parseTypeWithEllipsis(lexer);
     if (type == null) return null;
     if (lexer.getTokenType() != null) return null;
+    final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
+    TreeUtil.addChildren(dummyRoot, type);
 
-    ParseUtil.insertMissingTokens(type, originalLexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return type;
   }
 
