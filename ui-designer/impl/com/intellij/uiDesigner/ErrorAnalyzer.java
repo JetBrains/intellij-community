@@ -249,7 +249,7 @@ public final class ErrorAnalyzer {
         final List<FormInspectionTool> formInspectionTools = new ArrayList<FormInspectionTool>();
         for(Object object: Extensions.getRootArea().getExtensionPoint(ExtensionPoints.FORM_INSPECTION_TOOL).getExtensions()) {
           final FormInspectionTool formInspectionTool = (FormInspectionTool)object;
-          if (formInspectionTool.isActive(formPsiFile)) {
+          if (formInspectionTool.isActive(formPsiFile) && !rootContainer.isInspectionSuppressed(formInspectionTool.getShortName(), null)) {
             formInspectionTools.add(formInspectionTool);
           }
         }
@@ -265,6 +265,7 @@ public final class ErrorAnalyzer {
                 if (progress != null && progress.isCanceled()) return false;
 
                 for(FormInspectionTool tool: formInspectionTools) {
+                  if (rootContainer.isInspectionSuppressed(tool.getShortName(), component.getId())) continue;
                   ErrorInfo[] errorInfos = tool.checkComponent(editor, component);
                   if (errorInfos != null) {
                     ArrayList<ErrorInfo> errorList = (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);

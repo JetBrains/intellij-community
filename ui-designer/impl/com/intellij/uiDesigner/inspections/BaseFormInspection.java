@@ -73,11 +73,16 @@ public abstract class BaseFormInspection extends LocalInspectionTool implements 
         return null;
       }
 
+      if (rootContainer.isInspectionSuppressed(getShortName(), null)) {
+        return null;
+      }
       final FormFileErrorCollector collector = new FormFileErrorCollector(file, manager);
       startCheckForm(rootContainer);
       FormEditingUtil.iterate(rootContainer, new FormEditingUtil.ComponentVisitor() {
         public boolean visit(final IComponent component) {
-          checkComponentProperties(module, component, collector);
+          if (!rootContainer.isInspectionSuppressed(getShortName(), component.getId())) {
+            checkComponentProperties(module, component, collector);
+          }
           return true;
         }
       });

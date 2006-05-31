@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2006 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intellij.uiDesigner.lw;
 
-public interface IRootContainer extends IContainer {
-  String getClassToBind();
-  String getButtonGroupName(IComponent component);
-  String[] getButtonGroupComponentIds(String groupName);
-  boolean isInspectionSuppressed(final String inspectionId, final String componentId);
+/**
+ * @author yole
+ */
+public class LwInspectionSuppression {
+  public static final LwInspectionSuppression[] EMPTY_ARRAY = new LwInspectionSuppression[0];
+
+  private String myInspectionId;
+  private String myComponentId;
+
+  public LwInspectionSuppression(final String inspectionId, final String componentId) {
+    myInspectionId = inspectionId;
+    myComponentId = componentId;
+  }
+
+  public String getInspectionId() {
+    return myInspectionId;
+  }
+
+  public String getComponentId() {
+    return myComponentId;
+  }
 }

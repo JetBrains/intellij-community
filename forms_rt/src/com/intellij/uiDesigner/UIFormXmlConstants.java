@@ -64,6 +64,7 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_INDEX = "index";
   public static final String ATTRIBUTE_DEFAULTALIGN_HORZ = "defaultalign-horz";
   public static final String ATTRIBUTE_DEFAULTALIGN_VERT = "defaultalign-vert";
+  public static final String ATTRIBUTE_INSPECTION = "inspection";
 
   public static final String ELEMENT_BUTTON_GROUPS = "buttonGroups";
   public static final String ELEMENT_GROUP = "group";
@@ -84,6 +85,8 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_ROWGROUP = "rowgroup";
   public static final String ELEMENT_COLGROUP = "colgroup";
   public static final String ELEMENT_FORMS = "forms";
+  public static final String ELEMENT_INSPECTION_SUPPRESSIONS = "inspectionSuppressions";
+  public static final String ELEMENT_SUPPRESS = "suppress";
 
   public static final String LAYOUT_INTELLIJ = "GridLayoutManager";
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";

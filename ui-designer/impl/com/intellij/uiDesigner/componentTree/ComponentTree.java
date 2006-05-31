@@ -4,6 +4,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -24,6 +25,7 @@ import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.lw.LwInspectionSuppression;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -70,13 +72,14 @@ public final class ComponentTree extends Tree implements DataProvider {
   private final QuickFixManager myQuickFixManager;
   private RadComponent myDropTargetComponent = null;
   private StartInplaceEditingAction myStartInplaceEditingAction;
+  private MyDeleteProvider myDeleteProvider = new MyDeleteProvider();
 
   public ComponentTree() {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
 
     setCellRenderer(new MyTreeCellRenderer());
     setRootVisible(false);
-    setShowsRootHandles(false);
+    setShowsRootHandles(true);
 
     // Enable tooltips
     ToolTipManager.sharedInstance().registerComponent(this);
@@ -120,6 +123,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   public void setEditor(final GuiEditor editor) {
     myEditor = editor;
+    myDeleteProvider.setEditor(editor);
     myQuickFixManager.setEditor(editor);
     myStartInplaceEditingAction.setEditor(editor);
   }
@@ -205,13 +209,19 @@ public final class ComponentTree extends Tree implements DataProvider {
       return myEditor;
     }
 
+    if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+      return myDeleteProvider;
+    }
+
     if (
       DataConstantsEx.COPY_PROVIDER.equals(dataId) ||
       DataConstantsEx.CUT_PROVIDER.equals(dataId) ||
-      DataConstantsEx.PASTE_PROVIDER.equals(dataId) ||
-      DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)
-    ) {
+      DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
       return myEditor == null ? null : myEditor.getData(dataId);
+    }
+
+    if (LwInspectionSuppression.class.getName().equals(dataId)) {
+      return getSelectedSuppressions();
     }
 
     if (!DataConstants.NAVIGATABLE.equals(dataId)) {
@@ -251,6 +261,24 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
 
     return null;
+  }
+
+  private LwInspectionSuppression[] getSelectedSuppressions() {
+    final TreePath[] paths = getSelectionPaths();
+    if (paths == null) {
+      return LwInspectionSuppression.EMPTY_ARRAY;
+    }
+    final ArrayList<LwInspectionSuppression> result = new ArrayList<LwInspectionSuppression>(paths.length);
+    for (TreePath path : paths) {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      if (node.getUserObject() instanceof SuppressionDescriptor) {
+        result.add(((SuppressionDescriptor) node.getUserObject()).getSuppression());
+      }
+    }
+    if (result.size() == 0) {
+      return null;
+    }
+    return result.toArray(new LwInspectionSuppression[result.size()]);
   }
 
   private SimpleTextAttributes getAttribute(@NotNull final SimpleTextAttributes attrs,
@@ -398,7 +426,6 @@ public final class ComponentTree extends Tree implements DataProvider {
           }
         }
 
-
         final String componentClassName = component.getComponentClassName();
 
         if (component instanceof RadVSpacer) {
@@ -451,6 +478,12 @@ public final class ComponentTree extends Tree implements DataProvider {
 
         if (component == myDropTargetComponent) {
           setBorder(BorderFactory.createLineBorder(Color.BLUE, 2));
+        }
+      }
+      else if (node.getUserObject() != null) {
+        final String fragment = node.getUserObject().toString();
+        if (fragment != null) {
+          append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
     }
@@ -520,6 +553,47 @@ public final class ComponentTree extends Tree implements DataProvider {
         }
       }
       setDropTargetComponent(null);
+    }
+  }
+
+  private static class MyDeleteProvider implements DeleteProvider {
+    private GuiEditor myEditor;
+
+    public void setEditor(final GuiEditor editor) {
+      myEditor = editor;
+    }
+
+    public void deleteElement(DataContext dataContext) {
+      if (myEditor != null) {
+        LwInspectionSuppression[] suppressions = (LwInspectionSuppression[]) dataContext.getData(LwInspectionSuppression.class.getName());
+        if (suppressions != null) {
+          if (!myEditor.ensureEditable()) return;
+          for(LwInspectionSuppression suppression: suppressions) {
+            myEditor.getRootContainer().removeInspectionSuppression(suppression);
+          }
+          myEditor.refreshAndSave(true);
+        }
+        else {
+          DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(DataConstants.DELETE_ELEMENT_PROVIDER);
+          if (baseProvider != null) {
+            baseProvider.deleteElement(dataContext);
+          }
+        }
+      }
+    }
+
+    public boolean canDeleteElement(DataContext dataContext) {
+      if (myEditor != null) {
+        LwInspectionSuppression[] suppressions = (LwInspectionSuppression[]) dataContext.getData(LwInspectionSuppression.class.getName());
+        if (suppressions != null) {
+          return true;
+        }
+        DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(DataConstants.DELETE_ELEMENT_PROVIDER);
+        if (baseProvider != null) {
+          return baseProvider.canDeleteElement(dataContext);
+        }
+      }
+      return false;
     }
   }
 }

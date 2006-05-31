@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
@@ -8,6 +9,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.lw.LwButtonGroup;
+import com.intellij.uiDesigner.lw.LwInspectionSuppression;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +19,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Collections;
 
 /**
  * @author Anton Katilin
@@ -27,6 +30,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   private String myMainComponentBinding;
   private Locale myStringDescriptorLocale;
   private List<RadButtonGroup> myButtonGroups = new ArrayList<RadButtonGroup>();
+  private List<LwInspectionSuppression> myInspectionSuppressions = new ArrayList<LwInspectionSuppression>();
 
   public RadRootContainer(final Module module, final String id) {
     super(module, JPanel.class, id);
@@ -86,8 +90,25 @@ public final class RadRootContainer extends RadContainer implements IRootContain
         }
         writer.endElement();
       }
-    }finally{
+      writeInspectionSuppressions(writer);
+    }
+    finally{
       writer.endElement(); // form
+    }
+  }
+
+  private void writeInspectionSuppressions(final XmlWriter writer) {
+    if (myInspectionSuppressions.size() > 0) {
+      writer.startElement(UIFormXmlConstants.ELEMENT_INSPECTION_SUPPRESSIONS);
+      for(LwInspectionSuppression suppression: myInspectionSuppressions) {
+        writer.startElement(UIFormXmlConstants.ELEMENT_SUPPRESS);
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_INSPECTION, suppression.getInspectionId());
+        if (suppression.getComponentId() != null) {
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_ID, suppression.getComponentId());
+        }
+        writer.endElement();
+      }
+      writer.endElement();
     }
   }
 
@@ -195,5 +216,49 @@ public final class RadRootContainer extends RadContainer implements IRootContain
 
   public void setStringDescriptorLocale(final Locale stringDescriptorLocale) {
     myStringDescriptorLocale = stringDescriptorLocale;
+  }
+
+  public void suppressInspection(String inspectionId, @Nullable RadComponent component) {
+    for(int i=myInspectionSuppressions.size()-1; i >= 0; i--) {
+      LwInspectionSuppression suppression = myInspectionSuppressions.get(i);
+      if (suppression.getInspectionId().equals(inspectionId)) {
+        if (component != null && (component.getId().equals(suppression.getComponentId()) || suppression.getComponentId() == null)) {
+          return;
+        }
+        if (component == null && suppression.getComponentId() != null) {
+          myInspectionSuppressions.remove(i);
+        }
+      }
+    }
+    myInspectionSuppressions.add(new LwInspectionSuppression(inspectionId, component == null ? null : component.getId()));
+  }
+
+  public boolean isInspectionSuppressed(final String inspectionId, final String componentId) {
+    for(LwInspectionSuppression suppression: myInspectionSuppressions) {
+      if ((suppression.getComponentId() == null || suppression.getComponentId().equals(componentId)) &&
+          suppression.getInspectionId().equals(inspectionId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public LwInspectionSuppression[] getInspectionSuppressions() {
+    return myInspectionSuppressions.toArray(new LwInspectionSuppression[myInspectionSuppressions.size()]);
+  }
+
+  public void setInspectionSuppressions(final LwInspectionSuppression[] inspectionSuppressions) {
+    myInspectionSuppressions.clear();
+    Collections.addAll(myInspectionSuppressions, inspectionSuppressions);
+  }
+
+  public void removeInspectionSuppression(final LwInspectionSuppression suppression) {
+    for(LwInspectionSuppression existing: myInspectionSuppressions) {
+      if (existing.getInspectionId().equals(suppression.getInspectionId()) &&
+        Comparing.equal(existing.getComponentId(), suppression.getComponentId())) {
+        myInspectionSuppressions.remove(existing);
+        break;
+      }
+    }
   }
 }

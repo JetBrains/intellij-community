@@ -3,11 +3,15 @@ package com.intellij.uiDesigner.quickFixes;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.HeavyweightHint;
 import com.intellij.uiDesigner.ErrorInfo;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -197,34 +201,78 @@ public abstract class QuickFixManager <T extends JComponent>{
       return;
     }
 
-    final ArrayList<QuickFix> fixList = new ArrayList<QuickFix>();
+    final ArrayList<ErrorWithFix> fixList = new ArrayList<ErrorWithFix>();
     for(ErrorInfo errorInfo: errorInfos) {
       for (QuickFix fix: errorInfo.myFixes) {
-        fixList.add(fix);
+        fixList.add(new ErrorWithFix(errorInfo, fix));
       }
     }
 
-    final ListPopup popup = JBPopupFactory.getInstance().createWizardStep(new QuickFixPopupStep(fixList));
+    final ListPopup popup = JBPopupFactory.getInstance().createWizardStep(new QuickFixPopupStep(fixList, true));
     popup.showUnderneathOf(myHint.getComponent());
   }
 
-  private static class QuickFixPopupStep extends BaseListPopupStep<QuickFix> {
-    public QuickFixPopupStep(final ArrayList<QuickFix> fixList) {
+  private static class ErrorWithFix extends Pair<ErrorInfo, QuickFix> {
+    public ErrorWithFix(final ErrorInfo first, final QuickFix second) {
+      super(first, second);
+    }
+  }
+
+  private static class QuickFixPopupStep extends BaseListPopupStep<ErrorWithFix> {
+    private final boolean myShowSuppresses;
+
+    public QuickFixPopupStep(final ArrayList<ErrorWithFix> fixList, boolean showSuppresses) {
       super(null, fixList);
+      myShowSuppresses = showSuppresses;
     }
 
     @NotNull
-    public String getTextFor(final QuickFix value) {
-      return value.getName();
+    public String getTextFor(final ErrorWithFix value) {
+      return value.second.getName();
     }
 
-    public PopupStep onChosen(final QuickFix selectedValue, final boolean finalChoice) {
-      selectedValue.run();
+    public PopupStep onChosen(final ErrorWithFix selectedValue, final boolean finalChoice) {
+      if (finalChoice || !myShowSuppresses) {
+        selectedValue.second.run();
+        return FINAL_CHOICE;
+      }
+      if (selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null) {
+        ArrayList<ErrorWithFix> suppressList = new ArrayList<ErrorWithFix>();
+        final SuppressFix suppressFix = new SuppressFix(selectedValue.second.myEditor,
+                                                        UIDesignerBundle.message("action.suppress.for.component"),
+                                                        selectedValue.first.getInspectionId(), selectedValue.second.myComponent);
+        final SuppressFix suppressAllFix = new SuppressFix(selectedValue.second.myEditor,
+                                                           UIDesignerBundle.message("action.suppress.for.all.components"),
+                                                           selectedValue.first.getInspectionId(), null);
+        suppressList.add(new ErrorWithFix(selectedValue.first, suppressFix));
+        suppressList.add(new ErrorWithFix(selectedValue.first, suppressAllFix));
+        return new QuickFixPopupStep(suppressList, false);
+      }
       return FINAL_CHOICE;
     }
 
-    public boolean hasSubstep(final QuickFix selectedValue) {
+    public boolean hasSubstep(final ErrorWithFix selectedValue) {
+      return myShowSuppresses && selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null;
+    }
+
+    @Override public boolean isAutoSelectionEnabled() {
       return false;
+    }
+  }
+
+  private static class SuppressFix extends QuickFix {
+    private final String myInspectionId;
+
+    public SuppressFix(final GuiEditor editor, final String name, final String inspectionId, final RadComponent component) {
+      super(editor, name, component);
+      myInspectionId = inspectionId;
+    }
+
+    public void run() {
+      if (!myEditor.ensureEditable()) return;
+      myEditor.getRootContainer().suppressInspection(myInspectionId, myComponent);
+      myEditor.refreshAndSave(true);
+      DaemonCodeAnalyzer.getInstance(myEditor.getProject()).restart();
     }
   }
 

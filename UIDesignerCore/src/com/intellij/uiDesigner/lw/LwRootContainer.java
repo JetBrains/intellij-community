@@ -15,10 +15,10 @@
  */
 package com.intellij.uiDesigner.lw;
 
-import com.intellij.uiDesigner.compiler.AlienFormFileException;
-import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.compiler.AlienFormFileException;
+import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
+import com.intellij.uiDesigner.compiler.Utils;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -34,6 +34,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
   private String myClassToBind;
   private String myMainComponentBinding;
   private ArrayList myButtonGroups = new ArrayList();
+  private ArrayList myInspectionSuppressions = new ArrayList();
 
   public LwRootContainer() throws Exception{
     super(JPanel.class.getName());
@@ -74,6 +75,9 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
       if (child.getName().equals(UIFormXmlConstants.ELEMENT_BUTTON_GROUPS)) {
         readButtonGroups(child);
       }
+      else if (child.getName().equals(UIFormXmlConstants.ELEMENT_INSPECTION_SUPPRESSIONS)) {
+        readInspectionSuppressions(child);
+      }
       else {
         final LwComponent component = createComponentFromTag(child);
         addComponent(component);
@@ -90,6 +94,15 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
       LwButtonGroup group = new LwButtonGroup();
       group.read(child);
       myButtonGroups.add(group);
+    }
+  }
+
+  private void readInspectionSuppressions(final Element element) {
+    for(Iterator i=element.getChildren().iterator(); i.hasNext();){
+      final Element child = (Element)i.next();
+      String inspectionId = LwXmlReader.getRequiredString(child, UIFormXmlConstants.ATTRIBUTE_INSPECTION);
+      String componentId = LwXmlReader.getString(child, UIFormXmlConstants.ATTRIBUTE_ID);
+      myInspectionSuppressions.add(new LwInspectionSuppression(inspectionId, componentId));
     }
   }
 
@@ -118,5 +131,20 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
       }
     }
     throw new IllegalArgumentException("Cannot find group " + groupName);
+  }
+
+  public boolean isInspectionSuppressed(final String inspectionId, final String componentId) {
+    for (Iterator iterator = myInspectionSuppressions.iterator(); iterator.hasNext();) {
+      LwInspectionSuppression suppression = (LwInspectionSuppression)iterator.next();
+      if ((suppression.getComponentId() == null || suppression.getComponentId().equals(componentId)) &&
+          suppression.getInspectionId().equals(inspectionId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public LwInspectionSuppression[] getInspectionSuppressions() {
+    return (LwInspectionSuppression[]) myInspectionSuppressions.toArray(new LwInspectionSuppression[myInspectionSuppressions.size()]);
   }
 }

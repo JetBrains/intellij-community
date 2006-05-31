@@ -7,11 +7,14 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author yole
  */
 public interface FormInspectionTool {
+  @NonNls
+  String getShortName();
   void startCheckForm(IRootContainer radRootContainer);
   void doneCheckForm(IRootContainer radRootContainer);
 

@@ -251,23 +251,21 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
           final DefaultMutableTreeNode lastComponent=(DefaultMutableTreeNode)paths[i].getLastPathComponent();
           LOG.assertTrue(lastComponent!=null);
 
-          final ComponentPtrDescriptor descriptor=(ComponentPtrDescriptor)lastComponent.getUserObject();
-          if(descriptor==null){
-            // It can happen when  node is being collapsing and some of its children
-            // is selected. In that case AbstractTreeBuilder (Valentin) destroyProcess all children nodes and
-            // mutable nodes contain nulls.
-            return;
+          ComponentPtrDescriptor descriptor=null;
+          if (lastComponent.getUserObject() instanceof ComponentPtrDescriptor) {
+            descriptor = (ComponentPtrDescriptor) lastComponent.getUserObject();
           }
-
-          final ComponentPtr ptr=(ComponentPtr)descriptor.getElement();
-          if(ptr != null && ptr.isValid()){
-            final RadComponent component=ptr.getComponent();
-            LOG.assertTrue(component!=null);
-            if (!hasComponentInTab) {
-              hasComponentInTab = FormEditingUtil.selectComponent(myEditor, component);
-            }
-            else {
-              component.setSelected(true);
+          if(descriptor!=null){
+            final ComponentPtr ptr=(ComponentPtr)descriptor.getElement();
+            if(ptr != null && ptr.isValid()){
+              final RadComponent component=ptr.getComponent();
+              LOG.assertTrue(component!=null);
+              if (!hasComponentInTab) {
+                hasComponentInTab = FormEditingUtil.selectComponent(myEditor, component);
+              }
+              else {
+                component.setSelected(true);
+              }
             }
           }
         }
