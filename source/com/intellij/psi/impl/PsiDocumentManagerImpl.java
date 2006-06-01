@@ -20,9 +20,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
@@ -158,6 +158,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public void commitDocument(final Document document) {
+    if (!isUncommited(document)) return;
+
     ApplicationManager.getApplication().runWriteAction(
       new CommitToPsiFileAction() {
         public void run() {
