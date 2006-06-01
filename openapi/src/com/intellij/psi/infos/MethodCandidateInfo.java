@@ -22,7 +22,7 @@ import com.intellij.psi.util.PsiUtil;
  * @author ik, dsl
  */
 public class MethodCandidateInfo extends CandidateInfo{
-  private Boolean myApplicableFlag = null;
+  private int myApplicabilityLevel = 0;
   private PsiExpressionList myArgumentList;
   private PsiType[] myTypeArguments;
   private PsiSubstitutor myCalcedSubstitutor = null;
@@ -41,17 +41,31 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   public MethodCandidateInfo(PsiElement element, PsiSubstitutor substitutor) {
     super(element, substitutor, false, false);
-    myApplicableFlag = Boolean.TRUE;
+    myApplicabilityLevel = ApplicabilityLevel.FIXED_ARITY;
     myArgumentList = null;
   }
 
   public boolean isApplicable(){
-    if(myApplicableFlag == null){
-      boolean applicable = PsiUtil.isApplicable(getElement(), getSubstitutor(), myArgumentList) &&
-                               isTypeArgumentsApplicable();
-      myApplicableFlag = applicable ? Boolean.TRUE : Boolean.FALSE;
+    if(myApplicabilityLevel == 0){
+      myApplicabilityLevel = getApplicabilityLevelInner();
     }
-    return myApplicableFlag.booleanValue();
+    return myApplicabilityLevel != ApplicabilityLevel.NOT_APPLICABLE;
+  }
+
+  private int getApplicabilityLevelInner() {
+    int level = PsiUtil.getApplicabilityLevel(getElement(), getSubstitutor(), myArgumentList);
+    if (level > ApplicabilityLevel.NOT_APPLICABLE) {
+      if (!isTypeArgumentsApplicable()) level = ApplicabilityLevel.NOT_APPLICABLE;
+    }
+    return level;
+  }
+
+
+  public int getApplicabilityLevel() {
+    if(myApplicabilityLevel == 0){
+      myApplicabilityLevel = getApplicabilityLevelInner();
+    }
+    return myApplicabilityLevel;
   }
 
   public PsiSubstitutor getSubstitutor() {
@@ -114,7 +128,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     return partialSubstitutor;
   }
 
-  private PsiSubstitutor createRawSubstitutor(PsiSubstitutor substitutor, PsiTypeParameter[] typeParameters) {
+  private static PsiSubstitutor createRawSubstitutor(PsiSubstitutor substitutor, PsiTypeParameter[] typeParameters) {
     for (PsiTypeParameter typeParameter : typeParameters) {
       substitutor = substitutor.put(typeParameter, null);
     }
@@ -122,4 +136,9 @@ public class MethodCandidateInfo extends CandidateInfo{
     return substitutor;
   }
 
+  public static class ApplicabilityLevel {
+    public static final int NOT_APPLICABLE = 1;
+    public static final int VARARGS = 2;
+    public static final int FIXED_ARITY = 3;
+  }
 }

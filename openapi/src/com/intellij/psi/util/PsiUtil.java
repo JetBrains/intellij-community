@@ -26,7 +26,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import static com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -774,68 +776,67 @@ public final class PsiUtil {
   }
 
   public static boolean isApplicable(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {
+    return getApplicabilityLevel(method, substitutorForMethod, argList) != NOT_APPLICABLE;
+  }
+
+  public static int getApplicabilityLevel(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {
     PsiExpression[] args = argList.getExpressions();
     final PsiParameter[] parms = method.getParameterList().getParameters();
+    if (args.length < parms.length - 1) return NOT_APPLICABLE;
 
     final LanguageLevel languageLevel = getLanguageLevel(argList);
-    if (!method.isVarArgs() || languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
-      if (args.length != parms.length) return false;
+    if (!areFirstArgumentsApplicable(args, parms, languageLevel, substitutorForMethod)) return NOT_APPLICABLE;
+    if (args.length == parms.length) {
+      if (parms.length == 0) return FIXED_ARITY;
+      PsiType parmType = getParameterType(parms[parms.length - 1], languageLevel, substitutorForMethod);
+      PsiType argType = args[args.length - 1].getType();
+      if (parmType.isAssignableFrom(argType)) return FIXED_ARITY;
+    }
 
-      for (int i = 0; i < args.length; i++) {
-        final PsiExpression arg = args[i];
-        final PsiType type = arg.getType();
-        if (type == null) return false; //?
-        PsiType parmType = parms[i].getType();
-        if (parmType instanceof PsiClassType) {
-          parmType = ((PsiClassType)parmType).setLanguageLevel(languageLevel);
-        }
-        final PsiType substitutedParmType = substitutorForMethod.substituteAndCapture(parmType);
-        if (!TypeConversionUtil.isAssignable(substitutedParmType, type)) {
-          return false;
-        }
-      }
-    } else {
-      if (args.length < parms.length - 1) return false;
-
+    if (method.isVarArgs() && languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
+      if (args.length < parms.length) return FIXED_ARITY;
       PsiParameter lastParameter = parms[parms.length - 1];
-      PsiType lastParmType = lastParameter.getType();
-      if (!(lastParmType instanceof PsiArrayType)) return false;
-      lastParmType = substitutorForMethod.substituteAndCapture(lastParmType);
+      if (!lastParameter.isVarArgs()) return NOT_APPLICABLE;
+      PsiType lastParmType = getParameterType(lastParameter, languageLevel, substitutorForMethod);
+      if (!(lastParmType instanceof PsiArrayType)) return NOT_APPLICABLE;
+      lastParmType = ((PsiArrayType)lastParmType).getComponentType();
 
-      if (lastParameter.isVarArgs()) {
-        for (int i = 0; i < parms.length - 1; i++) {
-          PsiParameter parm = parms[i];
-          if (parm.isVarArgs()) return false;
-
-          final PsiExpression arg = args[i];
-          final PsiType argType = arg.getType();
-          if (argType == null) return false;
-          final PsiType parmType = parms[i].getType();
-          final PsiType substitutedParmType = substitutorForMethod.substituteAndCapture(parmType);
-          if (!TypeConversionUtil.isAssignable(substitutedParmType, argType)) {
-            return false;
-          }
-        }
-
-        if (args.length == parms.length) { //call with array as vararg parameter
-          PsiType lastArgType = args[args.length - 1].getType();
-          if (lastArgType != null && TypeConversionUtil.isAssignable(lastParmType, lastArgType)) return true;
-        }
-
-        lastParmType = ((PsiArrayType)lastParmType).getComponentType();
-        for (int i = parms.length - 1; i < args.length; i++) {
-          PsiType argType = args[i].getType();
-          if (argType == null || !TypeConversionUtil.isAssignable(lastParmType, argType)) {
-            return false;
-          }
+      for (int i = parms.length - 1; i < args.length; i++) {
+        PsiType argType = args[i].getType();
+        if (argType == null || !TypeConversionUtil.isAssignable(lastParmType, argType)) {
+          return NOT_APPLICABLE;
         }
       }
-      else {
+      return VARARGS;
+    }
+
+    return NOT_APPLICABLE;
+  }
+
+  private static boolean areFirstArgumentsApplicable(final PsiExpression[] args, final PsiParameter[] parms, final LanguageLevel languageLevel,
+                                                final PsiSubstitutor substitutorForMethod) {
+
+    for (int i = 0; i < parms.length - 1; i++) {
+      final PsiExpression arg = args[i];
+      final PsiType type = arg.getType();
+      if (type == null) return false;
+      final PsiParameter parameter = parms[i];
+      final PsiType substitutedParmType = getParameterType(parameter, languageLevel, substitutorForMethod);
+      if (!TypeConversionUtil.isAssignable(substitutedParmType, type)) {
         return false;
       }
     }
-
     return true;
+  }
+
+  private static PsiType getParameterType(final PsiParameter parameter,
+                                 final LanguageLevel languageLevel,
+                                 final PsiSubstitutor substitutor) {
+    PsiType parmType = parameter.getType();
+    if (parmType instanceof PsiClassType) {
+      parmType = ((PsiClassType)parmType).setLanguageLevel(languageLevel);
+    }
+    return substitutor.substituteAndCapture(parmType);
   }
 
   public static boolean equalOnClass(PsiSubstitutor s1, PsiSubstitutor s2, PsiClass aClass) {

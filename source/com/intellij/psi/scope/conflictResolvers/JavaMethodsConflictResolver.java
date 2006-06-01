@@ -1,18 +1,18 @@
 package com.intellij.psi.scope.conflictResolvers;
 
+import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.util.TypeConversionUtil;
 
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -131,23 +131,30 @@ outer:
     }
   }
 
-  private boolean checkApplicability(List<CandidateInfo> conflicts) {
-    boolean applicableFound = false;
-    for (int i = conflicts.size() - 1; i >= 0; i--) {
-      final MethodCandidateInfo info = (MethodCandidateInfo)conflicts.get(i);
-      final boolean applicable = info.isApplicable();
-      if(applicableFound){
-        if(!applicable) conflicts.remove(i);
+  private static boolean checkApplicability(List<CandidateInfo> conflicts) {
+    int maxApplicabilityLevel = 0;
+    boolean toFilter = false;
+    for (CandidateInfo conflict : conflicts) {
+      final int level = ((MethodCandidateInfo)conflict).getApplicabilityLevel();
+      if (maxApplicabilityLevel > 0 && maxApplicabilityLevel != level) {
+        toFilter = true;
       }
-      else if(applicable){
-        for(int k = conflicts.size() - 1; k > i; k--){
-          conflicts.remove(k);
-        }
-        applicableFound = true;
+      if (level > maxApplicabilityLevel) {
+        maxApplicabilityLevel = level;
       }
     }
 
-    return applicableFound;
+    if (toFilter) {
+      for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
+        CandidateInfo info = iterator.next();
+        final int level = ((MethodCandidateInfo)info).getApplicabilityLevel();  //cached
+        if (level < maxApplicabilityLevel) {
+          iterator.remove();
+        }
+      }
+    }
+
+    return maxApplicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
   }
 
   private static int getCheckLevel(MethodCandidateInfo method){
