@@ -124,7 +124,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
   }
 
   public static void generateCreateComponentsMethod(final PsiClass aClass) {
-    final Ref<PsiMethod> refMethod = new Ref<PsiMethod>();
+    final Ref<SmartPsiElementPointer> refMethod = new Ref<SmartPsiElementPointer>();
     CommandProcessor.getInstance().executeCommand(
       aClass.getProject(),
       new Runnable() {
@@ -138,8 +138,9 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
                                                       AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME +
                                                       "() { \n // TODO: place custom component creation code here \n }",
                                                       aClass);
-                refMethod.set((PsiMethod) aClass.add(method));
-                CodeStyleManager.getInstance(aClass.getProject()).reformat(refMethod.get());
+                final PsiMethod psiMethod = (PsiMethod)aClass.add(method);
+                refMethod.set(SmartPointerManager.getInstance(aClass.getProject()).createSmartPsiElementPointer(psiMethod));
+                CodeStyleManager.getInstance(aClass.getProject()).reformat(psiMethod);
               }
               catch (IncorrectOperationException e) {
                 LOG.error(e);
@@ -153,12 +154,15 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     if (!refMethod.isNull()) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          final PsiCodeBlock body = refMethod.get().getBody();
-          assert body != null;
-          final PsiComment comment = PsiTreeUtil.getChildOfType(body, PsiComment.class);
-          if (comment != null) {
-            new OpenFileDescriptor(comment.getProject(), comment.getContainingFile().getVirtualFile(),
-                                   comment.getTextOffset()).navigate(true);
+          final PsiMethod element = (PsiMethod) refMethod.get().getElement();
+          if (element != null) {
+            final PsiCodeBlock body = element.getBody();
+            assert body != null;
+            final PsiComment comment = PsiTreeUtil.getChildOfType(body, PsiComment.class);
+            if (comment != null) {
+              new OpenFileDescriptor(comment.getProject(), comment.getContainingFile().getVirtualFile(),
+                                     comment.getTextOffset()).navigate(true);
+            }
           }
         }
       });
