@@ -803,6 +803,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
               try {
                 ((LocalInspectionToolWrapper)tool).processFile(file, true, manager);
               }
+              catch (ProcessCanceledException e) {
+                throw e;
+              }
               catch (Exception e) {
                 LOG.error(e);
               }
@@ -828,6 +831,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           if (tool.queryExternalUsagesRequests(manager)) {
             needRepeatSearchRequest.add(tool);
           }
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Exception e) {
           LOG.error(e);
