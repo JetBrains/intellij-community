@@ -22,9 +22,9 @@ import java.awt.Dimension;
  * @author yole
  */
 public class FirstComponentInsertLocation extends GridDropLocation {
-  private final Rectangle myCellRect;
-  private final int myXPart;
-  private final int myYPart;
+  protected final Rectangle myCellRect;
+  protected final int myXPart;
+  protected final int myYPart;
 
   public FirstComponentInsertLocation(final RadContainer container,
                                       final int row,
@@ -176,18 +176,22 @@ public class FirstComponentInsertLocation extends GridDropLocation {
   @Nullable
   public DropLocation getAdjacentLocation(Direction direction) {
     if (direction == Direction.DOWN && myYPart < 2) {
-      return new FirstComponentInsertLocation(myContainer, myRow, myColumn, myCellRect, myXPart, myYPart+1);
+      return createAdjacentLocation(myXPart, myYPart+1);
     }
     if (direction == Direction.UP && myYPart > 0) {
-      return new FirstComponentInsertLocation(myContainer, myRow, myColumn, myCellRect, myXPart, myYPart-1);
+      return createAdjacentLocation(myXPart, myYPart-1);
     }
     if (direction == Direction.RIGHT && myXPart < 2) {
-      return new FirstComponentInsertLocation(myContainer, myRow, myColumn, myCellRect, myXPart+1, myYPart);
+      return createAdjacentLocation(myXPart+1, myYPart);
     }
     if (direction == Direction.LEFT && myXPart > 0) {
-      return new FirstComponentInsertLocation(myContainer, myRow, myColumn, myCellRect, myXPart-1, myYPart);
+      return createAdjacentLocation(myXPart-1, myYPart);
     }
     return null;
+  }
+
+  protected FirstComponentInsertLocation createAdjacentLocation(final int xPart, final int yPart) {
+    return new FirstComponentInsertLocation(myContainer, myRow, myColumn, myCellRect, xPart, yPart);
   }
 
   private void insertSpacer(InsertComponentProcessor icp, ComponentItem spacerItem, GridInsertMode mode) {

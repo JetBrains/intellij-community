@@ -212,7 +212,7 @@ public class GridInsertLocation extends GridDropLocation {
   @Override
   public void processDrop(final GuiEditor editor,
                           final RadComponent[] components,
-                          final GridConstraints[] constraintsToAdjust,
+                          @Nullable final GridConstraints[] constraintsToAdjust,
                           final ComponentDragObject dragObject) {
     int row = getRow();
     int col = getColumn();
@@ -244,10 +244,12 @@ public class GridInsertLocation extends GridDropLocation {
         checkAdjustConstraints(constraintsToAdjust, false, col, insertedCells);
         break;
     }
-    dropIntoGrid(container, components, row, col, dragObject);
+    if (components.length > 0) {
+      dropIntoGrid(container, components, row, col, dragObject);
+    }
   }
 
-  private static void checkAdjustConstraints(final GridConstraints[] constraintsToAdjust,
+  private static void checkAdjustConstraints(@Nullable final GridConstraints[] constraintsToAdjust,
                                              final boolean isRow,
                                              final int index, final int count) {
     if (constraintsToAdjust != null) {

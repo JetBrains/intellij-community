@@ -10,10 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.designSurface.DropLocation;
-import com.intellij.uiDesigner.designSurface.NoDropLocation;
-import com.intellij.uiDesigner.designSurface.GridInsertLocation;
-import com.intellij.uiDesigner.designSurface.GridInsertMode;
+import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -296,6 +293,16 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       }
       return new GridInsertLocation(container, getGridRowCount(container)-1, column, GridInsertMode.RowAfter);
     }
+
+    if (container.getGridRowCount() == 1 && container.getGridColumnCount() == 1 &&
+        getComponentAtGrid(container, 0, 0) == null) {
+      final Rectangle rc = getGridCellRangeRect(container, 0, 0, 0, 0);
+      if (location == null) {
+        return new FormFirstComponentInsertLocation(container, 0, 0, rc, 0, 0);
+      }
+      return new FormFirstComponentInsertLocation(container, 0, 0, location, rc);
+    }
+
     return super.getDropLocation(container, location);
   }
 

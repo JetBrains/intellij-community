@@ -23,7 +23,7 @@ public interface DropLocation {
 
   void processDrop(GuiEditor editor,
                    RadComponent[] components,
-                   GridConstraints[] constraintsToAdjust,
+                   @Nullable GridConstraints[] constraintsToAdjust,
                    ComponentDragObject dragObject);
 
   @Nullable
