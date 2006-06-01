@@ -324,7 +324,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int index, final Graphics2D g2d,
                                      final Rectangle rc) {
     // don't paint gap rows/columns with red background
-    if (index % 2 == 1) {
+    if (index % 2 == 1 && GridChangeUtil.canDeleteCell(container, index, isRow, true)) {
       g2d.setColor(Color.LIGHT_GRAY);
       g2d.fillRect(rc.x, rc.y, rc.width, rc.height);
     }
@@ -477,25 +477,28 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     FormLayout formLayout = (FormLayout) grid.getLayout();
     if (isRow) {
       formLayout.removeRow(cellIndex+1);
+      updateGridConstraintsFromCellConstraints(grid);
       if (formLayout.getRowCount() % 2 == 0) {
         int gapRowIndex = (cellIndex >= grid.getGridRowCount()) ? cellIndex-1 : cellIndex;
         if (GridChangeUtil.isRowEmpty(grid, gapRowIndex)) {
           formLayout.removeRow(gapRowIndex+1);
+          updateGridConstraintsFromCellConstraints(grid);
           result++;
         }
       }
     }
     else {
       formLayout.removeColumn(cellIndex+1);
+      updateGridConstraintsFromCellConstraints(grid);
       if (formLayout.getColumnCount() % 2 == 0) {
         int gapColumnIndex = (cellIndex >= grid.getGridColumnCount()) ? cellIndex-1 : cellIndex;
         if (GridChangeUtil.isColumnEmpty(grid, gapColumnIndex)) {
           formLayout.removeColumn(gapColumnIndex+1);
+          updateGridConstraintsFromCellConstraints(grid);
           result++;
         }
       }
     }
-    updateGridConstraintsFromCellConstraints(grid);
     return result;
   }
 
