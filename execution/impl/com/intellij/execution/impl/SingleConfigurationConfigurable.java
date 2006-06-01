@@ -111,37 +111,21 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       catch (ConfigurationException e) {
         myLastValidationResult = new ValidationResult(e.getLocalizedMessage(), ExecutionBundle.message("invalid.data.dialog.title"), null);
       }
-      catch (Throwable throwable) {
-        // Skip. Caused by calling outdated method through reflection.
-      }
 
       myValidationResultValid = true;
     }
     return myLastValidationResult;
   }
 
-  private static void checkConfiguration(final JavaProgramRunner runner, final RunnerAndConfigurationSettings snapshot) throws Throwable {
+  private static void checkConfiguration(final JavaProgramRunner runner, final RunnerAndConfigurationSettings snapshot) throws
+                                                                                                                        RuntimeConfigurationException {
     final RunnerSettings runnerSettings = snapshot.getRunnerSettings(runner);
     final ConfigurationPerRunnerSettings configurationSettings = snapshot.getConfigurationSettings(runner);
     try {
       runner.checkConfiguration(runnerSettings, configurationSettings);
     }
     catch (AbstractMethodError e) {
-      try {
-        //noinspection HardCodedStringLiteral
-        final Method meth =
-          runner.getClass().getDeclaredMethod("chechConfiguration", RunnerSettings.class, ConfigurationPerRunnerSettings.class);
-        meth.invoke(runner, runnerSettings, configurationSettings);
-      }
-      catch (IllegalAccessException e1) {
-        // Skip
-      }
-      catch (NoSuchMethodException e1) {
-        // Skip
-      }
-      catch (InvocationTargetException e1) {
-        throw e1.getTargetException();
-      }
+      //backward compatibility
     }
   }
 
