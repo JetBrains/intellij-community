@@ -653,7 +653,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     XmlElementDescriptor elementDescriptor = tag.getDescriptor();
-    if (elementDescriptor == null || ourDoJaxpTesting) return;
+    if (elementDescriptor == null ||
+        elementDescriptor instanceof AnyXmlElementDescriptor ||
+        ourDoJaxpTesting) {
+      return;
+    }
+
     XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
 
     final String name = attribute.getName();
