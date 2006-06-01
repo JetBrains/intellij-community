@@ -20,6 +20,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
+import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -134,8 +135,10 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
         if (!project.isOpen() || domElement == null || !domElement.isValid()) return;
 
         final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
-        final List<DomElementProblemDescriptor> errorProblems = manager.getProblems(domElement, true);
-        final List<DomElementProblemDescriptor> warningProblems = manager.getProblems(domElement, true, true, HighlightSeverity.WARNING);
+        final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement);
+        final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement, true);
+        final List<DomElementProblemDescriptor> warningProblems =
+          holder.getProblems(domElement, true, true, HighlightSeverity.WARNING);
 
         Color background = getDefaultBackground();
         if (errorProblems.size() > 0 && textField.getText().trim().length() == 0) {

@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.Disposable;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
@@ -44,6 +45,10 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
 
   public void addProblemListener(ProblemListener listener) {
     if (myDelegate != null) myDelegate.addProblemListener(listener);
+  }
+
+  public void addProblemListener(ProblemListener listener, Disposable parentDisposable) {
+    if (myDelegate != null) myDelegate.addProblemListener(listener, parentDisposable);
   }
 
   public void removeProblemListener(ProblemListener listener) {

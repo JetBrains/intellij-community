@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
@@ -26,7 +27,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DomModelTreeView extends Wrapper implements DataProvider {
+public class DomModelTreeView extends Wrapper implements DataProvider, Disposable {
 
   @NonNls public static String DOM_MODEL_TREE_VIEW_KEY = "DOM_MODEL_TREE_VIEW_KEY";
   @NonNls public static String DOM_MODEL_TREE_VIEW_POPUP = "DOM_MODEL_TREE_VIEW_POPUP";

@@ -49,7 +49,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
 
     final Document document = PsiDocumentManager.getInstance(myDomManager.getProject()).getDocument(file);
 
-    setPreferredSize(getDimention());
+    setPreferredSize(getDimension());
 
     myErrorStripeRenderer = new DomElementsRefreshStatusRenderer(myDomManager.getProject(), document, file);
 
@@ -110,7 +110,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
 
   }
 
-  protected Dimension getDimention() {
+  protected static Dimension getDimension() {
     return new Dimension(ERRORS_FOUND_ICON.getIconWidth() + 2, ERRORS_FOUND_ICON.getIconHeight() + 2);
   }
 
@@ -123,10 +123,11 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
       int sum = 0;
       for (DomElement element : myDomElements) {
         final Project project = getProject();
+        final DomElementsProblemsHolder holder = DomElementAnnotationsManager.getInstance(project).getCachedProblemHolder(element);
         if (minSeverity.equals(HighlightSeverity.WARNING)) {
-          sum += DomElementAnnotationsManager.getInstance(project).getProblems(element, true, true).size();
+          sum += holder.getProblems(element, true, true).size();
         } else {
-          sum += DomElementAnnotationsManager.getInstance(project).getProblems(element, true, true, minSeverity).size();
+          sum += holder.getProblems(element, true, true, minSeverity).size();
         }
       }
       return sum;

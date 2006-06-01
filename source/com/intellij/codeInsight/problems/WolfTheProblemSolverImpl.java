@@ -20,11 +20,13 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -271,6 +273,15 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   public void addProblemListener(ProblemListener listener) {
     myProblemListeners.add(listener);
+  }
+
+  public void addProblemListener(final ProblemListener listener, Disposable parentDisposable) {
+    addProblemListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeProblemListener(listener);
+      }
+    });
   }
 
   public void removeProblemListener(ProblemListener listener) {

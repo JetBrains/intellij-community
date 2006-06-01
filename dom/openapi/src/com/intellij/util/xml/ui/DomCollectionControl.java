@@ -249,7 +249,9 @@ public class DomCollectionControl<T extends DomElement> implements DomUIControl 
   }
 
   private void validate() {
-    final List<DomElementProblemDescriptor> list = DomElementAnnotationsManager.getInstance(getProject()).getProblems(getDomElement());
+    DomElement domElement = getDomElement();
+    final List<DomElementProblemDescriptor> list =
+      DomElementAnnotationsManager.getInstance(getProject()).getCachedProblemHolder(domElement).getProblems(domElement);
     final List<String> messages = new ArrayList<String>();
     for (final DomElementProblemDescriptor descriptor : list) {
       if (descriptor instanceof DomCollectionProblemDescriptor

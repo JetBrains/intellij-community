@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,5 +43,6 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
   }
 
   public abstract void addProblemListener(ProblemListener listener);
+  public abstract void addProblemListener(ProblemListener listener, Disposable parentDisposable);
   public abstract void removeProblemListener(ProblemListener listener);
 }

@@ -17,15 +17,14 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface DomElementsProblemsHolder {
+public interface DomElementsProblemsHolder extends Iterable<DomElementProblemDescriptor>{
 
   void createProblem(DomElement domElement, @Nullable String message);
 

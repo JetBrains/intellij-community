@@ -22,6 +22,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
+import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -45,8 +46,11 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     final Component component = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(myRowDomElement.getManager().getProject());
-    final List<DomElementProblemDescriptor> errorProblems = annotationsManager.getProblems(myCellValueDomElement, true);
-    final List<DomElementProblemDescriptor> warningProblems = annotationsManager.getProblems(myCellValueDomElement, true, true, HighlightSeverity.WARNING);
+    final DomElementsProblemsHolder holder = annotationsManager.getCachedProblemHolder(myCellValueDomElement);
+    final List<DomElementProblemDescriptor> errorProblems =
+      holder.getProblems(myCellValueDomElement, true);
+    final List<DomElementProblemDescriptor> warningProblems =
+      holder.getProblems(myCellValueDomElement, true, true, HighlightSeverity.WARNING);
 
 
     final boolean hasErrors = errorProblems.size() > 0;
@@ -67,7 +71,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     }
 
     final List<DomElementProblemDescriptor> errorDescriptors =
-      annotationsManager.getProblems(myRowDomElement, true, true);
+      annotationsManager.getCachedProblemHolder(myRowDomElement).getProblems(myRowDomElement, true, true);
 
     if (table.getModel().getColumnCount() - 1 == column && errorDescriptors.size() > 0) {
       final JPanel wrapper = new JPanel(new BorderLayout());
