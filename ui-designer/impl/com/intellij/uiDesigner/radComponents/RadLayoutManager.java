@@ -46,7 +46,7 @@ public abstract class RadLayoutManager {
   }
 
   @NotNull public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
-    return new NoDropLocation();
+    return NoDropLocation.INSTANCE;
   }
 
   public abstract void addComponentToContainer(final RadContainer container, final RadComponent component, final int index);

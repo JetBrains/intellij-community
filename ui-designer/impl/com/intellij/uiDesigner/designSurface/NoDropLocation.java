@@ -13,6 +13,11 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class NoDropLocation implements DropLocation {
+  public static final NoDropLocation INSTANCE = new NoDropLocation();
+
+  private NoDropLocation() {
+  }
+
   public RadContainer getContainer() {
     return null;
   }

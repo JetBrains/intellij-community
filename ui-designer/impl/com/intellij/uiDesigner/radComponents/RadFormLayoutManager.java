@@ -10,6 +10,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.NoDropLocation;
+import com.intellij.uiDesigner.designSurface.GridInsertLocation;
+import com.intellij.uiDesigner.designSurface.GridInsertMode;
 import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -272,6 +276,27 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       if (coord >= origins [i] && coord < origins [i+1]) return i;
     }
     return -1;
+  }
+
+  @NotNull @Override
+  public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+    FormLayout formLayout = getFormLayout(container);
+    final FormLayout.LayoutInfo layoutInfo = formLayout.getLayoutInfo(container.getDelegee());
+    if (location.x > layoutInfo.getWidth()) {
+      int row = findCell(layoutInfo.rowOrigins, location.y);
+      if (row == -1) {
+        return NoDropLocation.INSTANCE;
+      }
+      return new GridInsertLocation(container, row, getGridColumnCount(container)-1, GridInsertMode.ColumnAfter);
+    }
+    if (location.y > layoutInfo.getHeight()) {
+      int column = findCell(layoutInfo.columnOrigins, location.x);
+      if (column == -1) {
+        return NoDropLocation.INSTANCE;
+      }
+      return new GridInsertLocation(container, getGridRowCount(container)-1, column, GridInsertMode.RowAfter);
+    }
+    return super.getDropLocation(container, location);
   }
 
   @Override
